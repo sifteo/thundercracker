@@ -227,6 +227,14 @@ public:
         FlashVolume parent = FlashMapBlock::invalid());
 
     /**
+     * Map a writeable copy of the portion of the type-specific data region
+     * which fits in the header block.
+     *
+     * May not be interleaved with appendPayload()!
+     */
+    uint8_t *mapTypeSpecificData(unsigned &size);
+
+    /**
      * Write any amount of payload data, starting at the beginning of the volume
      * or at the end of the last appendPayload() chunk. This data is buffered
      * in the flash cache until we have a complete page, then it's written to

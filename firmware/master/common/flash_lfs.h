@@ -438,6 +438,33 @@ public:
 
     FlashVolume slots[MAX_VOLUMES];
     unsigned numSlotsInUse;
+
+    FlashLFSVolumeVector() : numSlotsInUse(0) {}
+
+    FlashVolume last() const
+    {
+        // Returns the last volume in the vector. If the last volume
+        // is marked as deleted or there are no volumes in the vector,
+        // returns a volume with an invalid FlashMapBlock.
+        if (numSlotsInUse)
+            return slots[numSlotsInUse - 1];
+        else
+            return FlashMapBlock::invalid();
+    }
+
+    bool full() const
+    {
+        ASSERT(numSlotsInUse <= MAX_VOLUMES);
+        return numSlotsInUse == MAX_VOLUMES;
+    }
+
+    void append(FlashVolume vol)
+    {
+        ASSERT(!full());
+        slots[numSlotsInUse++] = vol;
+    }
+
+    void compact();
 };
 
 
@@ -450,16 +477,20 @@ public:
  */
 class FlashLFS
 {
-private:
-    FlashVolume parent;
-    FlashLFSVolumeVector volumes;
-
 public:
     FlashLFS(FlashVolume parent);
 
     bool findObject(unsigned key, uint32_t &addr, uint32_t &size);
     bool newObject(unsigned key, uint32_t size, uint32_t crc, uint32_t &addr);
     bool collectGarbage();
+
+private:
+    uint32_t lastSequenceNumber;
+    FlashVolume parent;
+    FlashLFSVolumeVector volumes;
+
+    bool newObjectInVolume(unsigned key, uint32_t size, uint32_t crc, uint32_t &addr, FlashVolume vol);
+    bool newVolume();
 };
 
 

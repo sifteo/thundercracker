@@ -194,9 +194,59 @@ bool FlashLFSIndexBlockIter::next()
     }
 }
 
+void FlashLFSVolumeVector::compact()
+{
+    /*
+     * Look for invalid (deleted) volumes to remove,
+     * in order to make more room in our vector.
+     */
+
+    unsigned readIdx = 0;
+    unsigned writeIdx = 0;
+
+    while (readIdx < numSlotsInUse) {
+        FlashVolume vol = slots[readIdx++];
+        if (vol.block.isValid())
+            slots[writeIdx++] = vol;
+    }
+
+    numSlotsInUse = writeIdx;
+}
+
 FlashLFS::FlashLFS(FlashVolume parent)
     : parent(parent)
 {
+    /*
+     * Locate all of the existing LFS volumes under this parent.
+     */
+
+    FlashVolumeIter vi;
+    FlashVolume vol;
+    unsigned sequence = 0;
+
+    vi.begin();
+    while (vi.next(vol)) {
+        if (vol.getParent().block.code == parent.block.code
+            && vol.getType() == FlashVolume::T_LFS) {
+
+            // Found a matching volume. Look at its sequence number.
+            FlashBlockRef ref;
+            unsigned hdrSize = sizeof(FlashLFSVolumeHeader);
+            FlashLFSVolumeHeader *hdr = (FlashLFSVolumeHeader*)vol.mapTypeSpecificData(ref, hdrSize);
+            ASSERT(hdrSize == sizeof(FlashLFSVolumeHeader));
+            uint32_t volSequence = hdr->sequence;
+
+            // Store volume info
+            sequence = MAX(sequence, volSequence);
+            volumes.append(vol);
+        }
+    }
+    
+    // XXX: Sort this
+    // XXX: Refactor the 'anonymous array' stuff we use for erase counts
+    // XXX: Sorting! We need some sorting.
+
+    lastSequenceNumber = sequence;
 }
 
 bool FlashLFS::findObject(unsigned key, uint32_t &addr, uint32_t &size)
@@ -210,26 +260,18 @@ bool FlashLFS::findObject(unsigned key, uint32_t &addr, uint32_t &size)
 
 bool FlashLFS::newObject(unsigned key, uint32_t size, uint32_t crc, uint32_t &addr)
 {
-    // Jump to last block in meta-index. If it's full, allocate a new block and write an anchor
-    // Write an index record (allocates space for the object)
-    // Return location at which object data can be written.
-    // Write the object data (may be split among multiple flash blocks)
+    /*
+     * Allocate space for a new object, and write an index record for it.
+     * We delegate this to newObjectInVolume() if we have a candidate volume
+     * to write to. Otherwise, we'll try to allocate a new volume.
+     */
+#if 0
+    FlashVolume vol = volumes.last();
+    if (vol.block.isValid() && newObjectInVolume(key, size, crc, addr, vol))
+        return true;
+#endif
 
-    FlashVolumeWriter vw;
-    
-    if (!vw.begin(FlashVolume::T_LFS, FlashLFSVolumeVector::VOL_PAYLOAD_SIZE,
-        sizeof(FlashLFSVolumeHeader), parent))
-        return false;
-
-    vw.commit();
-
-    FlashBlockRef ref;
-    FlashMapSpan span = vw.volume.getPayload(ref);
-
-    if (!span.offsetToFlashAddr(0, addr))
-        return false;
-
-    return true;
+    return newVolume() && newObjectInVolume(key, size, crc, addr, volumes.last());
 }
 
 bool FlashLFS::collectGarbage()
@@ -241,4 +283,55 @@ bool FlashLFS::collectGarbage()
     //       all non-superceded keys, then delete it.
     //       XXX - how to do this for more than one volume at a time?
     return false;
+}
+
+bool FlashLFS::newObjectInVolume(unsigned key, uint32_t size, uint32_t crc,
+    uint32_t &addr, FlashVolume vol)
+{
+    ASSERT(vol.isValid());
+
+    FlashBlockRef ref;
+    FlashMapSpan span = vol.getPayload(ref);
+
+    // Jump to last block in meta-index. If it's full, allocate a new block and write an anchor
+    // Write an index record (allocates space for the object)
+    // Return location at which object data can be written.
+
+    if (!span.offsetToFlashAddr(0, addr))
+        return false;
+
+    return true;
+}
+
+bool FlashLFS::newVolume()
+{
+    /*
+     * Allocate a new volume with the next sequence number.
+     *
+     * Fails if we have too many volumes in our vector, or if there
+     * isn't any more space to allocate volumes.
+     */
+
+    if (volumes.full()) {
+        // Try to reclaim wasted space in our vector
+        volumes.compact();
+        if (volumes.full())
+            return false;
+    }
+
+    FlashVolumeWriter vw;
+    unsigned hdrSize = sizeof(FlashLFSVolumeHeader);
+    unsigned payloadSize = FlashLFSVolumeVector::VOL_PAYLOAD_SIZE;
+    
+    if (!vw.begin(FlashVolume::T_LFS, payloadSize, hdrSize, parent))
+        return false;
+
+    FlashLFSVolumeHeader *hdr = (FlashLFSVolumeHeader*)vw.mapTypeSpecificData(hdrSize);
+    ASSERT(hdrSize == sizeof(FlashLFSVolumeHeader));
+
+    hdr->sequence = ++lastSequenceNumber;
+    vw.commit();
+    volumes.append(vw.volume);
+
+    return true;
 }

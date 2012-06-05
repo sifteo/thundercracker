@@ -574,6 +574,14 @@ void FlashVolumeWriter::commit()
     ASSERT(volume.isValid());
 }
 
+uint8_t *FlashVolumeWriter::mapTypeSpecificData(unsigned &size)
+{
+    FlashBlockRef ref;
+    uint8_t *data = volume.mapTypeSpecificData(ref, size);
+    payloadWriter.beginBlock(ref);
+    return data;
+}
+
 void FlashVolumeWriter::appendPayload(const uint8_t *bytes, uint32_t count)
 {
     FlashBlockRef spanRef;
