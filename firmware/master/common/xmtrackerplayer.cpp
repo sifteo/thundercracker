@@ -1044,7 +1044,7 @@ void XmTrackerPlayer::commit()
 
             // Apply envelope
             if (channel.instrument.volumeType) {
-                finalVolume = (finalVolume * channel.envelope.value) >> 6;
+                finalVolume = (finalVolume * (channel.envelope.value + 1)) >> 7;
             }
 
             // Apply fadeout
