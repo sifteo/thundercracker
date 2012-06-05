@@ -303,12 +303,41 @@ function testVolumeSizes()
     assertEquals(measureVolumeSize(0xbffd01, 8), 97)
 end
 
+function testAllocFail()
+    -- Keep allocating until we fail
+
+    print "Testing allocation failure"
+
+    local volumes = {}
+    local volId = 0
+
+    assertVolumes{}
+
+    repeat
+        volId = volId + 1
+        if volId > 128 then
+            error("Filesystem isn't filling up when it should?")
+        end
+
+        volumes[volId] = fs:newVolume(TEST_VOL_TYPE, "Foo")
+        assertVolumes(volumes)
+
+    until not volumes[volId]
+
+    for index, v in ipairs(volumes) do
+        fs:deleteVolume(v)
+    end
+
+    assertVolumes{}
+end
+
 function testFilesystem()
     -- Dump the volumes that existed on entry
     dumpFilesystem()
 
     -- Individual filesystem exercises
     testHierarchy()
+    testAllocFail()
     testVolumeSizes()
     testRandomVolumes()
 end

@@ -466,6 +466,14 @@ bool FlashVolumeWriter::begin(unsigned type, unsigned payloadBytes,
         FlashBlockRecycler::EraseCount ec;
 
         if (!br.next(block, ec)) {
+            /*
+             * If this is the first block, we can exit now without
+             * losing information. In fact, we must: there's nowhere to
+             * store a header.
+             */
+            if (I == 0)
+                return false;
+            
             success = false;
             break;
         }
