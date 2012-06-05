@@ -49,6 +49,7 @@ bool GLRenderer::init()
     glUseProgramObjectARB(backgroundProgram);
     glUniform1iARB(glGetUniformLocationARB(backgroundProgram, "texture"), 0);
     glUniform1iARB(glGetUniformLocationARB(backgroundProgram, "lightmap"), 1);
+    glUniform1iARB(glGetUniformLocationARB(backgroundProgram, "logo"), 2);
 
     extern const uint8_t scope_fp[];
     extern const uint8_t scope_vp[];
@@ -69,6 +70,7 @@ bool GLRenderer::init()
     extern const uint8_t img_wood[];
     extern const uint8_t img_bg_light[];
     extern const uint8_t img_scope_bg[];
+    extern const uint8_t img_logo[];
     extern const uint8_t ui_font_data_0[];
 
     cubeFaceTexture = loadTexture(img_cube_face);
@@ -76,6 +78,7 @@ bool GLRenderer::init()
     cubeFaceHilightMaskTexture = loadTexture(img_cube_face_hilight_mask);
     backgroundTexture = loadTexture(img_wood, GL_REPEAT);
     bgLightTexture = loadTexture(img_bg_light);
+    logoTexture = loadTexture(img_logo, GL_CLAMP, GL_LINEAR_MIPMAP_LINEAR, 0.5f);
     fontTexture = loadTexture(ui_font_data_0, GL_CLAMP, GL_NEAREST);
     scopeSampleTexture = 0;
     scopeBackgroundTexture = loadTexture(img_scope_bg, GL_REPEAT, GL_LINEAR_MIPMAP_LINEAR);
@@ -413,6 +416,10 @@ void GLRenderer::drawDefaultBackground(float extent, float scale)
     glEnable(GL_TEXTURE_2D);
     glBindTexture(GL_TEXTURE_2D, bgLightTexture);
 
+    glActiveTexture(GL_TEXTURE2);
+    glEnable(GL_TEXTURE_2D);
+    glBindTexture(GL_TEXTURE_2D, logoTexture);
+
     glInterleavedArrays(GL_T2F_N3F_V3F, 0, bg);
     glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
     
@@ -420,9 +427,11 @@ void GLRenderer::drawDefaultBackground(float extent, float scale)
      * Clean up GL state.
      */
 
-    glActiveTexture(GL_TEXTURE0);
+    glActiveTexture(GL_TEXTURE2);
     glDisable(GL_TEXTURE_2D);
     glActiveTexture(GL_TEXTURE1);
+    glDisable(GL_TEXTURE_2D);
+    glActiveTexture(GL_TEXTURE0);
     glDisable(GL_TEXTURE_2D);
     glEnable(GL_DEPTH_TEST);
 }
@@ -747,7 +756,7 @@ void GLRenderer::drawCubeFace(unsigned id, const uint16_t *framebuffer)
     glDisable(GL_TEXTURE_2D);
 }
 
-GLuint GLRenderer::loadTexture(const uint8_t *pngData, GLenum wrap, GLenum filter)
+GLuint GLRenderer::loadTexture(const uint8_t *pngData, GLenum wrap, GLenum filter, float border)
 {
     LodePNG::Decoder decoder;
     std::vector<unsigned char> pixels;
@@ -769,6 +778,9 @@ GLuint GLRenderer::loadTexture(const uint8_t *pngData, GLenum wrap, GLenum filte
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, filter);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, wrap);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, wrap);
+
+    GLfloat borderFV[4] = { border, border, border, border };
+    glTexParameterfv(GL_TEXTURE_2D, GL_TEXTURE_BORDER_COLOR, borderFV);
 
     glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA,
                  decoder.getWidth(),

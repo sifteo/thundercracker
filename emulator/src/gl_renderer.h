@@ -118,7 +118,7 @@ class GLRenderer {
     void drawCubeBody();
     void drawCubeFace(unsigned id, const uint16_t *framebuffer);
     
-    GLuint loadTexture(const uint8_t *pngData, GLenum wrap=GL_CLAMP, GLenum filter=GL_LINEAR);
+    GLuint loadTexture(const uint8_t *pngData, GLenum wrap=GL_CLAMP, GLenum filter=GL_LINEAR, float border=0.f);
     GLhandleARB loadShader(GLenum type, const uint8_t *source, const char *prefix="");
     GLhandleARB linkProgram(GLhandleARB fp, GLhandleARB vp);
     GLhandleARB loadCubeFaceProgram(const char *prefix);
@@ -142,6 +142,7 @@ class GLRenderer {
     GLhandleARB backgroundProgram;
     GLuint backgroundTexture;
     GLuint bgLightTexture;
+    GLuint logoTexture;
 
     GLhandleARB scopeProgram;
     GLuint scopeSampleTexture;
