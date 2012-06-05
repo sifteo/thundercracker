@@ -17,28 +17,10 @@ const AudioChannel sine1Channel(1);
 const AudioChannel sine2Channel(2);
 
 static int16_t sineWave[64];
-static const AssetAudio sineAsset = {{
-    /* sampleRate  */  0,
-    /* loopStart   */  0,
-    /* loopEnd     */  arraysize(sineWave) - 1,
-    /* loopType    */  _SYS_LOOP_REPEAT,
-    /* type        */  _SYS_PCM,
-    /* volume      */  0,
-    /* dataSize    */  sizeof sineWave,
-    /* pData       */  reinterpret_cast<uint32_t>(sineWave),
-}};
+static const AssetAudio sineAsset = AssetAudio::fromPCM(sineWave);
 
 static int16_t squareWave[256];
-static const AssetAudio squareAsset = {{
-    /* sampleRate  */  0,
-    /* loopStart   */  0,
-    /* loopEnd     */  arraysize(squareWave) - 1,
-    /* loopType    */  _SYS_LOOP_REPEAT,
-    /* type        */  _SYS_PCM,
-    /* volume      */  0,
-    /* dataSize    */  sizeof squareWave,
-    /* pData       */  reinterpret_cast<uint32_t>(squareWave),
-}};
+static const AssetAudio squareAsset = AssetAudio::fromPCM(squareWave);
 
 void synthInit()
 {

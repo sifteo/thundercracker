@@ -662,6 +662,39 @@ struct AssetAudio {
     unsigned speed() {
         return sys.sampleRate;
     }
+
+    /**
+     * @ Create an AssetAudio object programmatically, from uncompressed PCM data
+     *
+     * This creates an AssetAudio instance which references the specified
+     * buffer of 16-bit uncompressed PCM samples. You can use this to wrap
+     * dynamically synthesized audio data for playback on an AudioChannel.
+     *
+     * This is intended mostly for creating software "instruments" for
+     * real-time audio synthesis, so we default to looping mode, and
+     * there is no default sample rate or volume. These parameters
+     * can all be set via AudioChannel at runtime.
+     */
+    static AssetAudio fromPCM(const int16_t *samples, unsigned numSamples)
+    {
+        const AssetAudio result = {{
+            /* sampleRate  */  0,
+            /* loopStart   */  0,
+            /* loopEnd     */  numSamples - 1,
+            /* loopType    */  _SYS_LOOP_REPEAT,
+            /* type        */  _SYS_PCM,
+            /* volume      */  _SYS_AUDIO_DEFAULT_VOLUME,
+            /* dataSize    */  numSamples * sizeof samples[0],
+            /* pData       */  reinterpret_cast<uint32_t>(samples),
+        }};
+        return result;
+    }
+
+    /// Templatized version of fromPCM(), for fixed-size sample arrays.
+    template <typename T>
+    static AssetAudio fromPCM(const T &samples) {
+        return fromPCM(&samples[0], arraysize(samples));
+    }
 };
 
 /**

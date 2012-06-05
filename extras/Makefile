@@ -5,7 +5,6 @@ SUBDIRS = \
 	monster \
 	loopy \
 	thrasher \
-	synth \
 	trackycat \
 	lfsmunch
 
