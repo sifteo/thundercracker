@@ -144,6 +144,16 @@ unsigned inline umod(int a, int b)
 }
 
 /**
+ * Swap two values of any assignable type.
+ */
+template <typename T> inline void swap(T &a, T &b)
+{
+    T temp = a;
+    a = b;
+    b = temp;
+}
+
+/**
  * Saturating 16x16=32 multiply.
  *
  * If the operands are greater than 0xFFFF, the result will automatically

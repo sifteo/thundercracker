@@ -218,16 +218,35 @@ FlashLFS::FlashLFS(FlashVolume parent)
 {
     /*
      * Locate all of the existing LFS volumes under this parent.
+     * We need to:
+     *
+     *  1) Filter all volumes by type and parent, to locate the ones
+     *     that are part of this LFS.
+     *  2) Sort all volumes in order of ascending sequence number
+     *  3) Save the sorted volumes as well as the peak sequence number
+     *
+     * Because the list of volumes is so tiny (only 13 currently) we don't
+     * need any fancy methods to store the sequence numbers or sort the
+     * array. 
      */
 
     FlashVolumeIter vi;
     FlashVolume vol;
-    unsigned sequence = 0;
+
+    // Store sequence numbers on the stack (Parallel to the volumes array)
+    uint32_t sequences[FlashLFSVolumeVector::MAX_VOLUMES];
+    unsigned index = 0;
 
     vi.begin();
     while (vi.next(vol)) {
         if (vol.getParent().block.code == parent.block.code
             && vol.getType() == FlashVolume::T_LFS) {
+
+            if (index == FlashLFSVolumeVector::MAX_VOLUMES) {
+                // Too many volumes!
+                ASSERT(0);
+                break;
+            }
 
             // Found a matching volume. Look at its sequence number.
             FlashBlockRef ref;
@@ -237,25 +256,40 @@ FlashLFS::FlashLFS(FlashVolume parent)
             uint32_t volSequence = hdr->sequence;
 
             // Store volume info
-            sequence = MAX(sequence, volSequence);
-            volumes.append(vol);
+            sequences[index] = hdr->sequence;
+            volumes.slots[index] = vol;
+            index++;
         }
     }
-    
-    // XXX: Sort this
-    // XXX: Refactor the 'anonymous array' stuff we use for erase counts
-    // XXX: Sorting! We need some sorting.
 
-    lastSequenceNumber = sequence;
-}
+    volumes.numSlotsInUse = index;
+    if (index == 0) {
+        lastSequenceNumber = 0;
+        return;
+    }
 
-bool FlashLFS::findObject(unsigned key, uint32_t &addr, uint32_t &size)
-{
-    // Scan meta-index backwards, for candidate blocks
-    // Scan blocks forward, to establish anchor
-    // Scan backwards until we match
-    // Return address and size of object (guaranteed linear)
-    return false;
+    /*
+     * Bubble sort actually shouldn't be too bad here... it should be common
+     * for volumes to already be sorted, based on the FlashVolume allocator's
+     * algorithms. And besides, with so few elements, I care more about
+     * memory than CPU.
+     *
+     * (Also, qsort() is kind of ugly for this use case, and newlib
+     * doesn't have qsort_r() yet. Blah.)
+     */
+
+    for (unsigned limit = index; limit;) {
+        unsigned nextLimit = 0;
+        for (unsigned i = 1; i < limit; i++)
+            if (sequences[i-1] > sequences[i]) {
+                swap(sequences[i-1], sequences[i]);
+                swap(volumes.slots[i-1], volumes.slots[i]);
+                nextLimit = i;
+            }
+        limit = nextLimit;
+    }
+
+    lastSequenceNumber = sequences[index - 1];
 }
 
 bool FlashLFS::newObject(unsigned key, uint32_t size, uint32_t crc, uint32_t &addr)
@@ -265,42 +299,12 @@ bool FlashLFS::newObject(unsigned key, uint32_t size, uint32_t crc, uint32_t &ad
      * We delegate this to newObjectInVolume() if we have a candidate volume
      * to write to. Otherwise, we'll try to allocate a new volume.
      */
-#if 0
+
     FlashVolume vol = volumes.last();
     if (vol.block.isValid() && newObjectInVolume(key, size, crc, addr, vol))
         return true;
-#endif
 
     return newVolume() && newObjectInVolume(key, size, crc, addr, volumes.last());
-}
-
-bool FlashLFS::collectGarbage()
-{
-    // Scan backwards, keeping a bitmap of all keys we've found
-    // Any volume consisting of only superceded keys is deleted
-    
-    // Also: If the oldest volume is less than X amount full, copy
-    //       all non-superceded keys, then delete it.
-    //       XXX - how to do this for more than one volume at a time?
-    return false;
-}
-
-bool FlashLFS::newObjectInVolume(unsigned key, uint32_t size, uint32_t crc,
-    uint32_t &addr, FlashVolume vol)
-{
-    ASSERT(vol.isValid());
-
-    FlashBlockRef ref;
-    FlashMapSpan span = vol.getPayload(ref);
-
-    // Jump to last block in meta-index. If it's full, allocate a new block and write an anchor
-    // Write an index record (allocates space for the object)
-    // Return location at which object data can be written.
-
-    if (!span.offsetToFlashAddr(0, addr))
-        return false;
-
-    return true;
 }
 
 bool FlashLFS::newVolume()
@@ -335,3 +339,42 @@ bool FlashLFS::newVolume()
 
     return true;
 }
+
+bool FlashLFS::newObjectInVolume(unsigned key, uint32_t size, uint32_t crc,
+    uint32_t &addr, FlashVolume vol)
+{
+    ASSERT(vol.isValid());
+
+    FlashBlockRef ref;
+    FlashMapSpan span = vol.getPayload(ref);
+
+    // Jump to last block in meta-index. If it's full, allocate a new block and write an anchor
+    // Write an index record (allocates space for the object)
+    // Return location at which object data can be written.
+
+    if (!span.offsetToFlashAddr(0, addr))
+        return false;
+
+    return true;
+}
+
+bool FlashLFS::findObject(unsigned key, uint32_t &addr, uint32_t &size)
+{
+    // Scan meta-index backwards, for candidate blocks
+    // Scan blocks forward, to establish anchor
+    // Scan backwards until we match
+    // Return address and size of object (guaranteed linear)
+    return false;
+}
+
+bool FlashLFS::collectGarbage()
+{
+    // Scan backwards, keeping a bitmap of all keys we've found
+    // Any volume consisting of only superceded keys is deleted
+    
+    // Also: If the oldest volume is less than X amount full, copy
+    //       all non-superceded keys, then delete it.
+    //       XXX - how to do this for more than one volume at a time?
+    return false;
+}
+
