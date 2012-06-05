@@ -11,7 +11,7 @@
 
 
 PortAudioOutDevice::PortAudioOutDevice() :
-    outStream(0) {}
+    outStream(0), upsampleCounter(0) {}
 
 int PortAudioOutDevice::portAudioCallback(const void *inputBuffer, void *outputBuffer,
     unsigned long framesPerBuffer, const PaStreamCallbackTimeInfo* timeInfo,
@@ -46,27 +46,38 @@ int PortAudioOutDevice::portAudioCallback(const void *inputBuffer, void *outputB
          * end of all playing samples.
          */
 
-        unsigned avail = ring.readAvailable();
-        unsigned count = MIN(framesPerBuffer, avail);
+        int lastSample = self->lastSample;
+        unsigned upsampleCounter = self->upsampleCounter;
 
-        framesPerBuffer -= count;
-        while (count--)
-            *outBuf++ = ring.dequeue();
+        while (framesPerBuffer) {
+            if (upsampleCounter == 0) {
+                if (ring.empty()) {
+                    /*
+                     * An underrun happened, oh noes. To make sure
+                     * we can recover from this, give the ring buffer
+                     * time to completely fill before we start pulling
+                     * from it again.
+                     */
+                    self->bufferFilling = true;
+                    break;
+                }
+                lastSample = ring.dequeue();
+                upsampleCounter = kUpsampleFactor;
+            }
+            upsampleCounter--;
 
-        if (framesPerBuffer) {
-            /*
-             * An underrun happened, oh noes. To make sure
-             * we can recover from this, give the ring buffer
-             * time to completely fill before we start pulling
-             * from it again.
-             */
-            self->bufferFilling = true;
+            *outBuf++ = self->upsampleFilter(lastSample);
+            framesPerBuffer--;
         }
+
+        self->lastSample = lastSample;
+        self->upsampleCounter = upsampleCounter;
     }
 
-    // Underrun or mixer is disabled. Nothing to play.
+    // Underrun or mixer is disabled. Nothing to play but silence.
+    // (But make sure to filter the silence, to avoid discontinuities)
     while (framesPerBuffer--)
-        *outBuf++ = 0;
+        *outBuf++ = self->upsampleFilter(0);
 
     return paContinue;
 }
@@ -107,7 +118,7 @@ void PortAudioOutDevice::init(AudioOutDevice::SampleRate samplerate, AudioMixer 
     PaError err = Pa_OpenStream(&outStream,
                                 NULL,                           //inputParameters,
                                 &outParams,
-                                rate,
+                                rate * kUpsampleFactor,
                                 paFramesPerBufferUnspecified,
                                 paClipOff | paDitherOff,        // turn off additional processing
                                 PortAudioOutDevice::portAudioCallback,
@@ -141,4 +152,30 @@ void PortAudioOutDevice::stop()
         LOG(("AUDIO: Couldn't stop stream :(\n"));
         return;
     }
+}
+
+
+int16_t PortAudioOutDevice::upsampleFilter(int16_t sample)
+{
+    /*
+     * This filter is designed for 3x upsampling, i.e. from 16000 to 48000 Hz.
+     * It's a fourth order Bessel low-pass filter, with a corner frequency
+     * of 1/3 the sample rate.
+     *
+     * Note that we scale the overall gain by 0.9 to ensure that we
+     * won't clip even if the filter overshoots.
+     *
+     * Designed with http://www-users.cs.york.ac.uk/~fisher/mkfilter
+     */
+
+    const double kInvGain = 0.9 / 3.053118488;
+
+    xv[0] = xv[1]; xv[1] = xv[2]; xv[2] = xv[3]; xv[3] = xv[4]; 
+    xv[4] = sample * kInvGain;
+    yv[0] = yv[1]; yv[1] = yv[2]; yv[2] = yv[3]; yv[3] = yv[4]; 
+    yv[4] = (xv[0] + xv[4]) + 4 * (xv[1] + xv[3]) + 6 * xv[2]
+        + ( -0.0870913158 * yv[0]) + ( -0.5963772949 * yv[1])
+        + ( -1.5885494090 * yv[2]) + ( -1.9685253995 * yv[3]);
+
+    return clamp(int(yv[4]), -32768, 32767);
 }
