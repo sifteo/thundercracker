@@ -154,7 +154,7 @@ void XmTrackerPattern::nextNote(struct XmTrackerNote &note)
     }
 
     // Clean up note
-    if (note.note > kNoteOff)
+    if (note.note > kNoteOff && note.note != kNoNote)
         note.note = kNoNote;
 
     if (note.note == 0)
