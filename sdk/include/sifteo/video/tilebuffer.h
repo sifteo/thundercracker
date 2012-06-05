@@ -24,8 +24,10 @@ namespace Sifteo {
  */
 
 /**
- * A TileBuffer is a drawable that's backed by plain memory, instead of
- * by a VideoBuffer. You can draw on a TileBuffer in the same manner you'd
+ * @brief A drawable that's backed by plain memory, instead of
+ * by a VideoBuffer.
+ *
+ * You can draw on a TileBuffer in the same manner you'd
  * draw on BG0, for example.
  *
  * In memory, we store a flat array of 16-bit relocated tile indices.
@@ -68,14 +70,14 @@ struct TileBuffer {
     operator _SYSAssetImage* () { return sys.image; }
 
     /**
-     * Return the CubeID associated with this drawable.
+     * @brief Return the CubeID associated with this drawable.
      */
     CubeID cube() const {
         return sys.cube;
     }
 
     /**
-     * Change the CubeID associated with this drawable.
+     * @brief Change the CubeID associated with this drawable.
      *
      * Note that this buffer holds relocated tile indices, and
      * there is no way to efficiently retarget an already-rendered
@@ -88,7 +90,7 @@ struct TileBuffer {
     }
 
     /**
-     * Initialize the TileBuffer's AssetImage header.
+     * @brief Initialize the TileBuffer's AssetImage header.
      *
      * You must pass in a CubeID which represents the cube that
      * this buffer will be drawn to. Each cube may have assets
@@ -110,84 +112,84 @@ struct TileBuffer {
     }
 
     /**
-     * Return the width, in tiles, of this mode
+     * @brief Return the width, in tiles, of this mode
      */
     static unsigned tileWidth() {
         return tTileWidth;
     }
 
     /**
-     * Return the height, in tiles, of this mode
+     * @brief Return the height, in tiles, of this mode
      */
     static unsigned tileHeight() {
         return tTileHeight;
     }
 
     /**
-     * Return the size of this mode as a vector, in tiles.
+     * @brief Return the size of this mode as a vector, in tiles.
      */
     static UInt2 tileSize() {
         return vec(tileWidth(), tileHeight());
     }
 
     /**
-     * Return the width, in pixels, of this mode
+     * @brief Return the width, in pixels, of this mode
      */
     static unsigned pixelWidth() {
         return tileWidth() * 8;
     }
 
     /**
-     * Return the height, in pixel, of this mode
+     * @brief Return the height, in pixel, of this mode
      */
     static unsigned pixelHeight() {
         return tileHeight() * 8;
     }
 
     /**
-     * Return the size of this mode as a vector, in pixels.
+     * @brief Return the size of this mode as a vector, in pixels.
      */
     static UInt2 pixelSize() {
         return vec(pixelWidth(), pixelHeight());
     }
 
     /**
-     * Return the number of frames in this image.
+     * @brief Return the number of frames in this image.
      */
     static int numFrames() {
         return tFrames;
     }
 
     /**
-     * Return the number of tiles in each frame of the image.
+     * @brief Return the number of tiles in each frame of the image.
      */
     static int numTilesPerFrame() {
         return tileWidth() * tileHeight();
     }
 
     /**
-     * Return the total number of tiles in every frame of the image.
+     * @brief Return the total number of tiles in every frame of the image.
      */
     static int numTiles() {
         return numFrames() * numTilesPerFrame();
     }
 
     /**
-     * Returns the size of this drawable's tile data, in bytes
+     * @brief Returns the size of this drawable's tile data, in bytes
      */
     static unsigned sizeInBytes() {
         return numTiles() * 2;
     }
 
     /**
-     * Returns the size of this drawable's tile data, in 16-bit words
+     * @brief Returns the size of this drawable's tile data, in 16-bit words
      */
     static unsigned sizeInWords() {
         return numTiles();
     }
 
     /**
-     * Erase the buffer, filling it with the specified
+     * @brief Erase the buffer, filling it with the specified
      * absolute tile index value.
      */
     void erase(uint16_t index = 0) {
@@ -195,7 +197,7 @@ struct TileBuffer {
     }
 
     /**
-     * Erase the buffer, filling it with the first tile
+     * @brief Erase the buffer, filling it with the first tile
      * from the specified PinnedAssetImage.
      */
     void erase(const PinnedAssetImage &image) {
@@ -203,7 +205,8 @@ struct TileBuffer {
     }
 
     /**
-     * Calculate the video buffer address of a particular tile.
+     * @brief Calculate the video buffer address of a particular tile.
+     *
      * All coordinates must be in range. This function performs no clipping.
      */
     uint16_t tileAddr(UInt2 pos, unsigned frame = 0) {
@@ -211,7 +214,7 @@ struct TileBuffer {
     }
 
     /**
-     * Plot a single tile, by absolute tile index,
+     * @brief Plot a single tile, by absolute tile index,
      * at linear position 'i'.
      *
      * All coordinates must be in range. This function performs no clipping.
@@ -222,7 +225,7 @@ struct TileBuffer {
     }
 
     /**
-     * Plot a single tile, by absolute tile index,
+     * @brief Plot a single tile, by absolute tile index,
      * at location 'pos' in tile units, on the given frame.
      *
      * All coordinates must be in range. This function performs no clipping.
@@ -233,7 +236,7 @@ struct TileBuffer {
     }
 
     /**
-     * Returns the index of the tile at linear position 'i' in the image.
+     * @brief Returns the index of the tile at linear position 'i' in the image.
      */
     uint16_t tile(unsigned i) const {
         ASSERT(i < numTiles());
@@ -241,7 +244,7 @@ struct TileBuffer {
     }
 
     /**
-     * Return the index of the tile at the specified (x, y) tile coordinates,
+     * @brief Return the index of the tile at the specified (x, y) tile coordinates,
      * and optionally on the specified frame number.
      */
     uint16_t tile(Int2 pos, unsigned frame = 0) const {
@@ -250,7 +253,7 @@ struct TileBuffer {
     }
 
     /**
-     * Plot a horizontal span of tiles, by absolute tile index,
+     * @brief Plot a horizontal span of tiles, by absolute tile index,
      * given the position of the leftmost tile and the number of tiles to plot.
      *
      * All coordinates must be in range. This function performs no clipping.
@@ -263,7 +266,8 @@ struct TileBuffer {
     }
 
     /**
-     * Plot a horizontal span of tiles, using the first tile of a pinned asset.
+     * @brief Plot a horizontal span of tiles, using the first tile of a pinned asset.
+     *
      * All coordinates must be in range. This function performs no clipping.
      */
     void span(UInt2 pos, unsigned width, const PinnedAssetImage &image, unsigned frame = 0)
@@ -272,7 +276,7 @@ struct TileBuffer {
     }
 
     /**
-     * Fill a rectangle of identical tiles, specified as a top-left corner
+     * @brief Fill a rectangle of identical tiles, specified as a top-left corner
      * location and a size.
      *
      * All coordinates must be in range. This function performs no clipping.
@@ -287,7 +291,7 @@ struct TileBuffer {
     }
 
     /**
-     * Fill a rectangle of identical tiles, using the first tile of a
+     * @brief Fill a rectangle of identical tiles, using the first tile of a
      * pinned asset.
      *
      * All coordinates must be in range. This function performs no clipping.
@@ -298,8 +302,10 @@ struct TileBuffer {
     }
 
     /**
-     * Draw a full AssetImage frame, with its top-left corner at the
-     * specified location. Locations are specified in tile units, relative
+     * @brief Draw a full AssetImage frame, with its top-left corner at the
+     * specified location.
+     *
+     * Locations are specified in tile units, relative
      * to the top-left of the 18x18 grid.
      *
      * All coordinates must be in range. This function performs no clipping.
@@ -313,8 +319,10 @@ struct TileBuffer {
     }
 
     /**
-     * Draw part of an AssetImage frame, with its top-left corner at the
-     * specified location. Locations are specified in tile units, relative
+     * @brief Draw part of an AssetImage frame, with its top-left corner at the
+     * specified location.
+     *
+     * Locations are specified in tile units, relative
      * to the top-left of the 18x18 grid.
      *
      * All coordinates must be in range. This function performs no clipping.
@@ -330,9 +338,10 @@ struct TileBuffer {
     }
 
     /**
-     * Draw text, using an AssetImage as a fixed width font. Each character
-     * is represented by a consecutive 'frame' in the image. Characters not
-     * present in the font will be skipped.
+     * @brief Draw text, using an AssetImage as a fixed width font.
+     *
+     * Each character is represented by a consecutive 'frame' in the image.
+     * Characters not present in the font will be skipped.
      */
     void text(Int2 topLeft, const AssetImage &font, const char *str,
         unsigned destFrame = 0, char firstChar = ' ')

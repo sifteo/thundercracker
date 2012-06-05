@@ -21,9 +21,9 @@ namespace Sifteo {
  */
 
 /**
- * Provides audio sample playback support.
+ * @brief One mixer channel, capable of playing AudioAssets.
  *
- * Supported sample formats are ADPCM and standard PCM format. stir processes
+ * Supported sample formats are ADPCM and standard PCM format. `stir` processes
  * your audio samples as part of the application packaging process.
  */
 struct AudioChannel {
@@ -39,9 +39,7 @@ struct AudioChannel {
     /// The maximum volume for an AudioChannel.
     static const int32_t MAX_VOLUME = _SYS_AUDIO_MAX_VOLUME;
 
-    /**
-     * Loop modes available for use in play()
-     */
+    /// Loop modes available for use in play()
     enum LoopMode {
         UNDEF_LOOP = _SYS_LOOP_UNDEF,       /**< Default to the loop mode specified in Stir */
         ONCE = _SYS_LOOP_ONCE,              /**< Play once only (do not loop) */
@@ -49,9 +47,10 @@ struct AudioChannel {
     };
 
     /**
-     * Default constructor. By default, an AudioChannel is initialized to a
-     * special UNDEFINED value - initialize this value via init() before using
-     * the channel.
+     * @brief Default constructor
+     *
+     * By default, an AudioChannel is initialized to a special UNDEFINED
+     * value - initialize this value via init() before using the channel.
      */
     AudioChannel() : sys(UNDEFINED)
     {}
@@ -168,14 +167,15 @@ struct AudioChannel {
 };
 
 /**
- * Provides module playback support.
+ * @brief Playback interface for Tracker modules.
  *
- * Supported module format is standard XM. stir processes
- * your modules as part of the application packaging process.
+ * Supported module format is standard XM. `stir` processes
+ * your modules as part of the application packaging process, resulting
+ * in an AssetTracker instance for each.
  */
 struct AudioTracker {
     /**
-     * Begin playback of a module.
+     * @brief Begin playback of a module.
      * @param asset specifies the module for playback.
      */
     static bool play(const AssetTracker &asset) {
@@ -183,21 +183,22 @@ struct AudioTracker {
     }
 
     /**
-     * Resume playback of a paused module.
+     * @brief Resume playback of a paused module.
      */
     static bool resume() {
         return _SYS_tracker_play(0);
     }
 
     /**
-     * Pause playback of a module.
+     * @brief Pause playback of a module.
      */
     static void pause() {
         _SYS_tracker_pause();
     }
 
     /**
-     * Stop playback of the current module.
+     * @brief Stop playback of the current module.
+     *
      * Has no effect if a module is not currently playing.
      */
     static void stop() {
@@ -205,21 +206,22 @@ struct AudioTracker {
     }
 
     /**
-     * Is the tracker currently playing a module?
+     * @brief Is the tracker currently playing a module?
      */
     static bool isStopped() {
         return _SYS_tracker_isStopped();
     }
 
     /**
-     * Is the tracker currently playing a module?
+     * @brief Is the tracker currently playing a module?
      */
     static bool isPaused() {
         return _SYS_tracker_isPaused();
     }
 
     /**
-     * Scale volume for current channel.
+     * @brief Scale volume for current channel.
+     *
      * Must only be called while a module is playing.
      * @param volume from 0 to MAX_VOLUME.
      * @param ch specifies the index of the channel in the module. Leave empty to set global volume.

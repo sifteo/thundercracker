@@ -43,8 +43,9 @@ namespace Sifteo {
 #define NAN         __builtin_nanf("0x7fc00000")            ///< Not a Number constant
 
 /**
- * For any type, clamp a value to the extremes 'low' and 'high'. If the
- * value is less than 'low' we return 'low', and if it's greater than 'high'
+ * @brief For any type, clamp a value to the extremes 'low' and 'high'.
+ *
+ * If the value is less than 'low' we return 'low', and if it's greater than 'high'
  * we return 'high'. Otherwise we return the value unmodified.
  */
 
@@ -60,8 +61,10 @@ template <typename T> inline T clamp(const T& value, const T& low, const T& high
 }
 
 /**
- * For any type, return the absolute value. If the value is less than zero,
- * we return -value. Otherwise, we return the unmodified value.
+ * @brief For any type, return the absolute value.
+ *
+ * If the value is less than zero, we return -value. Otherwise, we return
+ * the unmodified value.
  */
 
 template <typename T> inline T abs(const T& value)
@@ -73,7 +76,9 @@ template <typename T> inline T abs(const T& value)
 }
 
 /**
- * Logical shift left with clamping. If the shift amount is negative,
+ * @brief Logical shift left with clamping.
+ *
+ * If the shift amount is negative,
  * it is treated as zero. Shift amounts greater than or equal to the word
  * width will always return zero.
  */
@@ -88,9 +93,10 @@ template <typename T> inline T lslc(const T& value, int bits)
 }
 
 /**
- * Logical shift right with clamping. If the shift amount is negative,
- * it is treated as zero. Shift amounts greater than or equal to the word
- * width will always return zero.
+ * @brief Logical shift right with clamping.
+ *
+ * If the shift amount is negative, it is treated as zero.
+ * Shift amounts greater than or equal to the word width will always return zero.
  */
 
 template <typename T> inline T lsrc(const T& value, int bits)
@@ -103,8 +109,10 @@ template <typename T> inline T lsrc(const T& value, int bits)
 }
 
 /**
- * Return a value of type T which has bits set in the half-open
- * interval [begin, end). The range may include negative values
+ * @brief Return a value of type T which has bits set in the half-open
+ * interval [begin, end).
+ *
+ * The range may include negative values
  * and/or values greater than the width of the type.
  */
 
@@ -113,22 +121,14 @@ template <typename T> inline T bitRange(int begin, int end)
     return lslc((T)-1, begin) & ~lslc((T)-1, end);
 }
 
-/**
- * @brief Compute the remainder (modulo) operation for two floating point numbers.
- * This variant operates on single-precision floats.
- */
-
+/// Compute the remainder (modulo) operation for two floating point numbers. Single-precision.
 float inline fmod(float a, float b)
 {
     uint32_t r = _SYS_fmodf(reinterpret_cast<uint32_t&>(a), reinterpret_cast<uint32_t&>(b));
     return reinterpret_cast<float&>(r);
 }
 
-/**
- * @brief Compute the remainder (modulo) operation for two floating point numbers.
- * This variant operates on double-precision floats.
- */
-
+/// Compute the remainder (modulo) operation for two floating point numbers. Double-precision.
 double inline fmod(double a, double b)
 {
     uint64_t ia = reinterpret_cast<uint64_t&>(a);
@@ -137,22 +137,14 @@ double inline fmod(double a, double b)
     return reinterpret_cast<double&>(r);
 }
 
-/**
- * @brief Compute 'x' raised to the power 'y'.
- * This variant operates on single-precision floats.
- */
-
+/// Compute 'x' raised to the power 'y'. Single-precision.
 float inline pow(float a, float b)
 {
     uint32_t r = _SYS_powf(reinterpret_cast<uint32_t&>(a), reinterpret_cast<uint32_t&>(b));
     return reinterpret_cast<float&>(r);
 }
 
-/**
- * @brief Compute 'x' raised to the power 'y'.
- * This variant operates on double-precision floats.
- */
-
+/// Compute 'x' raised to the power 'y'. Double-precision.
 double inline pow(double a, double b)
 {
     uint64_t ia = reinterpret_cast<uint64_t&>(a);
@@ -161,10 +153,7 @@ double inline pow(double a, double b)
     return reinterpret_cast<double&>(r);
 }
 
-/**
- * Compute the unsigned remainder from dividing two signed integers.
- */
-
+/// Compute the unsigned remainder from dividing two signed integers.
 unsigned inline umod(int a, int b)
 {
     int r = a % b;
@@ -173,22 +162,14 @@ unsigned inline umod(int a, int b)
     return r;
 }
 
-/**
- * Compute the natural log of a floating point number.
- * This variant operates on single-precision floats.
- */
-
+/// Compute the natural log of a floating point number. Single-precision.
 float inline log(float a)
 {
     uint32_t r = _SYS_logf(reinterpret_cast<uint32_t&>(a));
     return reinterpret_cast<float&>(r);
 }
 
-/**
- * Compute the natural log of a floating point number.
- * This variant operates on double-precision floats.
- */
-
+/// Compute the natural log of a floating point number. Double-precision.
 double inline log(double a)
 {
     uint64_t ia = reinterpret_cast<uint64_t&>(a);
@@ -196,22 +177,14 @@ double inline log(double a)
     return reinterpret_cast<double&>(r);
 }
 
-/**
- * Compute the square root of a floating point number.
- * This variant operates on single-precision floats.
- */
-
+/// Compute the square root of a floating point number. Single-precision.
 float inline sqrt(float a)
 {
     uint32_t r = _SYS_sqrtf(reinterpret_cast<uint32_t&>(a));
     return reinterpret_cast<float&>(r);
 }
 
-/**
- * Compute the square root of a floating point number.
- * This variant operates on double-precision floats.
- */
-
+/// Compute the square root of a floating point number. Double-precision.
 double inline sqrt(double a)
 {
     uint64_t ia = reinterpret_cast<uint64_t&>(a);
@@ -220,8 +193,10 @@ double inline sqrt(double a)
 }
 
 /**
- * Simultaneously compute the sine and cosine of a specified angle,
- * in radians. This yields two single-precision floating point results,
+ * @brief Simultaneously compute the sine and cosine of a specified angle,
+ * in radians.
+ *
+ * This yields two single-precision floating point results,
  * returned via the pointers 's' and 'c'.
  */
 
@@ -230,11 +205,7 @@ void inline sincos(float x, float *s, float *c)
     _SYS_sincosf(reinterpret_cast<uint32_t&>(x), s, c);
 }
 
-/**
- * Calculate the sine of a specified angle, in radians.
- * Returns a single-precision floating point result.
- */
-
+/// Calculate the sine of a specified angle, in radians. Single-precision.
 float inline sin(float x)
 {
     float s;
@@ -242,11 +213,7 @@ float inline sin(float x)
     return s;
 }
 
-/**
- * Calculate the cosine of a specified angle, in radians.
- * Returns a single-precision floating point result.
- */
-
+/// Calculate the cosine of a specified angle, in radians. Single-precision.
 float inline cos(float x)
 {
     float c;
@@ -255,7 +222,9 @@ float inline cos(float x)
 }
 
 /**
- * Unordered comparison. Given one or two single-precision floating point
+ * @brief Unordered comparison.
+ *
+ * Given one or two single-precision floating point
  * numbers, is there no defined sort order between them?
  *
  * Returns true if either or both arguments are NaN.
@@ -267,7 +236,9 @@ bool inline isunordered(float a, float b = 0.f)
 }
 
 /**
- * Unordered comparison. Given one or two double-precision floating point
+ * @brief Unordered comparison.
+ *
+ * Given one or two double-precision floating point
  * numbers, is there no defined sort order between them?
  *
  * Returns true if either or both arguments are NaN.
@@ -279,7 +250,7 @@ bool inline isunordered(double a, double b = 0.f)
 }
 
 /**
- * Returns the next integer value closer to positive infinity from 'value'.
+ * @brief Returns the next integer value closer to positive infinity from 'value'.
  *
  * E.g.:
  *
@@ -300,7 +271,7 @@ template <typename T> inline long ceil(const T value)
 }
 
 /**
- *  Returns the next integer value closer to negative infinity from 'value'.
+ *  @brief Returns the next integer value closer to negative infinity from 'value'.
  *
  *  E.g.:
  *
@@ -321,7 +292,7 @@ template <typename T> inline long floor(const T value)
 }
 
 /**
- * Rounds 'value' to the nearest whole value.
+ * @brief Rounds 'value' to the nearest whole value.
  *
  * E.g.:
  *
@@ -339,7 +310,7 @@ template <typename T> inline long round(const T value)
 }
 
 /**
- * Returns true when 'a' and 'b' are within 'epsilon' of each other.
+ * @brief Returns true when 'a' and 'b' are within 'epsilon' of each other.
  */
 
 template <typename T> inline bool almostEqual(const T a, const T b, const T epsilon)
@@ -349,7 +320,7 @@ template <typename T> inline bool almostEqual(const T a, const T b, const T epsi
 
 
 /**
- * Generalized two-element cartesian coordinate vector.
+ * @brief Generalized two-element cartesian coordinate vector.
  */
 
 template <typename T> struct Vector2 {
@@ -357,7 +328,7 @@ template <typename T> struct Vector2 {
     T y;    ///< Vector component Y
 
     /**
-     * Modify this vector's value in-place.
+     * @brief Modify this vector's value in-place.
      */
     void set(T _x, T _y) {
         x = _x;
@@ -365,7 +336,7 @@ template <typename T> struct Vector2 {
     }
 
     /**
-     * Set this vector to a new cartesian value, given a value in polar coordinates.
+     * @brief Set this vector to a new cartesian value, given a value in polar coordinates.
      */
     void setPolar(float angle, float magnitude) {
         float s, c;
@@ -375,7 +346,7 @@ template <typename T> struct Vector2 {
     }
 
     /**
-     * Rotate this vector about the origin counterclockwise by 'angle' radians.
+     * @brief Rotate this vector about the origin counterclockwise by 'angle' radians.
      */
     Vector2<T> rotate(float angle) const {
         float s, c;
@@ -385,8 +356,10 @@ template <typename T> struct Vector2 {
     }
 
     /**
-     * Rotate this vector about the origin counterclockwise by an integer
-     * multiple of 90 degrees. The angle must be 0, 1, 2, or 3. If you
+     * @brief Rotate this vector about the origin counterclockwise by an integer
+     * multiple of 90 degrees.
+     *
+     * The angle must be 0, 1, 2, or 3. If you
      * must pass larger angles, you can use umod(a, 4) to fold them into
      * this range.
      */
@@ -404,7 +377,7 @@ template <typename T> struct Vector2 {
     }
 
     /**
-     * Create a unit vector corresponding to the given integer 'side':
+     * @brief Create a unit vector corresponding to the given integer 'side'
      *
      *      0 = -Y (Up)
      *      1 = -X (Left)
@@ -426,7 +399,8 @@ template <typename T> struct Vector2 {
     }
 
     /**
-     * Calculate the scalar length (magnitude) of this vector, squared.
+     * @brief Calculate the scalar length (magnitude) of this vector, squared.
+     *
      * This avoids the costly square root calculation.
      */
     T len2() const {
@@ -434,14 +408,15 @@ template <typename T> struct Vector2 {
     }
 
     /**
-     * Calculate the scalar length (magnitude) of this vector.
+     * @brief Calculate the scalar length (magnitude) of this vector.
      */
     T len() const {
         return sqrt(len2());
     }
 
     /**
-     * Return a normalized version of this vector.
+     * @brief Return a normalized version of this vector.
+     *
      * The returned vector will have a magnitude of 1.0.
      */
     Vector2<T> normalize() const {
@@ -449,7 +424,7 @@ template <typename T> struct Vector2 {
     }
     
     /**
-     * Round a floating point vector to the nearest integer.
+     * @brief Round a floating point vector to the nearest integer.
      */
     Vector2<int> round() const {
         Vector2<int> result = { x + 0.5f, y + 0.5f };
@@ -457,7 +432,7 @@ template <typename T> struct Vector2 {
     }
 
     /**
-     * Explicitly cast this vector to another vector type, using
+     * @brief Explicitly cast this vector to another vector type, using
      * default C++ truncation or extension rules.
      */
     template <typename R> Vector2<R> cast() const {
@@ -476,9 +451,11 @@ template <typename T> struct Vector2 {
         return result;
     }
 
-    // Shortcuts for common explicit casts
+    /// Explicit cast to int
     Vector2<int> toInt() const { return cast<int>(); }
+    /// Explicit cast to float
     Vector2<float> toFloat() const { return cast<float>(); }
+    /// Explicit cast to double
     Vector2<double> toDouble() const { return cast<double>(); }
     
     // Implicit casts
@@ -492,17 +469,18 @@ template <typename T> struct Vector2 {
     operator Vector2<double>         () const { return cast<double>(); }
 };
 
-typedef Vector2<int>                Int2;
-typedef Vector2<unsigned>           UInt2;
-typedef Vector2<short>              Short2;
-typedef Vector2<unsigned short>     UShort2;
-typedef Vector2<int8_t>             Byte2;
-typedef Vector2<uint8_t>            UByte2;
-typedef Vector2<float>              Float2;
-typedef Vector2<double>             Double2;
+typedef Vector2<int>                Int2;       ///< Typedef for a 2-vector of ints
+typedef Vector2<unsigned>           UInt2;      ///< Typedef for a 2-vector of unsigned ints
+typedef Vector2<short>              Short2;     ///< Typedef for a 2-vector of shorts
+typedef Vector2<unsigned short>     UShort2;    ///< Typedef for a 2-vector of unsigned shorts
+typedef Vector2<int8_t>             Byte2;      ///< Typedef for a 2-vector of bytes
+typedef Vector2<uint8_t>            UByte2;     ///< Typedef for a 2-vector of unsigned bytes
+typedef Vector2<float>              Float2;     ///< Typedef for a 2-vector of floats
+typedef Vector2<double>             Double2;    ///< Typedef for a 2-vector of double-precision floats
 
 /**
- * Create a Vector2, from a set of (x,y) coordinates.
+ * @brief Create a Vector2, from a set of (x,y) coordinates.
+ *
  * This is a standalone function, instead of a constructor,
  * so that Vector2 can remain a POD type, and it can be used
  * in unions.
@@ -513,10 +491,12 @@ template <typename T> inline Vector2<T> vec(T x, T y) {
     return result;
 }
 
+/// Vector dot-product
 template <typename T> inline T dot(Vector2<T> u, Vector2<T> v) {
     return u.x * v.x + u.y * v.y;
 }
 
+/// Convert polar to cartesian
 template <typename T> inline Vector2<T> polar(T angle, T magnitude) {
     Vector2<T> result;
     result.setPolar(angle, magnitude);
@@ -568,7 +548,7 @@ inline Vector2<float> operator*(Int2 u, Vector2<float> v) { return vec(u.x*v.x, 
 
 
 /**
- * Generalized three-element cartesian coordinate vector.
+ * @brief Generalized three-element cartesian coordinate vector.
  */
 
 template <typename T> struct Vector3 {
@@ -591,7 +571,8 @@ template <typename T> struct Vector3 {
     Vector2<T> zy() const { return vec(z, y); } ///< Extract a 2-vector with only the ZY components
 
     /**
-     * Calculate the scalar length (magnitude) of this vector, squared.
+     * @brief Calculate the scalar length (magnitude) of this vector, squared.
+     *
      * This avoids the costly square root calculation.
      */
     T len2() const {
@@ -599,14 +580,15 @@ template <typename T> struct Vector3 {
     }
 
     /**
-     * Calculate the scalar length (magnitude) of this vector.
+     * @brief Calculate the scalar length (magnitude) of this vector.
      */
     T len() const {
         return sqrt(len2());
     }
 
     /**
-     * Return a normalized version of this vector.
+     * @brief Return a normalized version of this vector.
+     *
      * The returned vector will have a magnitude of 1.0.
      */
     T normalize() const {
@@ -614,7 +596,7 @@ template <typename T> struct Vector3 {
     }
 
     /**
-     * Round a floating point vector to the nearest integer.
+     * @brief Round a floating point vector to the nearest integer.
      */
     Vector3<int> round() const {
         Vector3<int> result = { x + 0.5f, y + 0.5f, z + 0.5f };
@@ -622,7 +604,7 @@ template <typename T> struct Vector3 {
     }
 
     /**
-     * Rotate the vector about the Z axis counterclockwise by 'angle' radians.
+     * @brief Rotate the vector about the Z axis counterclockwise by 'angle' radians.
      */
     Vector3<T> zRotate(float angle) const {
         float s, c;
@@ -632,8 +614,10 @@ template <typename T> struct Vector3 {
     }
 
     /**
-     * Rotate this vector about the Z axis counterclockwise by an integer
-     * multiple of 90 degrees. The angle must be 0, 1, 2, or 3. If you
+     * @brief Rotate this vector about the Z axis counterclockwise by an integer
+     * multiple of 90 degrees.
+     * 
+     * The angle must be 0, 1, 2, or 3. If you
      * must pass larger angles, you can use umod(a, 4) to fold them into
      * this range.
      */
@@ -651,7 +635,7 @@ template <typename T> struct Vector3 {
     }
 
     /**
-     * Explicitly cast this vector to another vector type, using
+     * @brief Explicitly cast this vector to another vector type, using
      * default C++ truncation or extension rules.
      */
     template <typename R> Vector3<R> cast() const {
@@ -659,9 +643,11 @@ template <typename T> struct Vector3 {
         return result;
     }
     
-    // Shortcuts for common explicit casts
+    /// Explicit cast to int
     Vector3<int> toInt() const { return cast<int>(); }
+    /// Explicit cast to float
     Vector3<float> toFloat() const { return cast<float>(); }
+    /// Explicit cast to double
     Vector3<double> toDouble() const { return cast<double>(); }
     
     // Implicit casts
@@ -675,17 +661,18 @@ template <typename T> struct Vector3 {
     operator Vector3<double>         () const { return cast<double>(); }
 };
 
-typedef Vector3<int>                Int3;
-typedef Vector3<unsigned>           UInt3;
-typedef Vector3<short>              Short3;
-typedef Vector3<unsigned short>     UShort3;
-typedef Vector3<int8_t>             Byte3;
-typedef Vector3<uint8_t>            UByte3;
-typedef Vector3<float>              Float3;
-typedef Vector3<double>             Double3;
+typedef Vector3<int>                Int3;       ///< Typedef for a 2-vector of ints
+typedef Vector3<unsigned>           UInt3;      ///< Typedef for a 2-vector of unsigned ints
+typedef Vector3<short>              Short3;     ///< Typedef for a 2-vector of shorts
+typedef Vector3<unsigned short>     UShort3;    ///< Typedef for a 2-vector of unsigned shorts
+typedef Vector3<int8_t>             Byte3;      ///< Typedef for a 2-vector of bytes
+typedef Vector3<uint8_t>            UByte3;     ///< Typedef for a 2-vector of unsigned bytes
+typedef Vector3<float>              Float3;     ///< Typedef for a 2-vector of floats
+typedef Vector3<double>             Double3;    ///< Typedef for a 2-vector of double-precision floats
 
 /**
- * Create a Vector3, from a set of (x, y, z) coordinates.
+ * @brief Create a Vector3, from a set of (x, y, z) coordinates.
+ *
  * This is a standalone function, instead of a constructor,
  * so that Vector3 can remain a POD type, and it can be used
  * in unions.
@@ -741,7 +728,8 @@ inline Float3 operator*(Int3 u, Float3 v) { return vec(u.x*v.x, u.y*v.y, u.z*v.z
 
 
 /**
- * Pseudo-random number generator.
+ * @brief Pseudo-random number generator.
+ *
  * Each instance of the Random class has a distinct PRNG state.
  *
  * When possible, method semantics here have been designed to match
@@ -762,15 +750,17 @@ struct Random {
     }
     
     /**
-     * Re-seed this random number generator. For a given seed, the subsequent
-     * random numbers are guaranteed to be deterministic.
+     * @brief Re-seed this random number generator.
+     * 
+     * For a given seed, the subsequent random numbers are guaranteed to be deterministic.
      */
     void seed(uint32_t s) {
         _SYS_prng_init(&state, s);
     }
 
     /**
-     * Re-seed this random number generator arbitrarily.
+     * @brief Re-seed this random number generator arbitrarily.
+     *
      * This implementation uses the system's nanosecond timer.
      */
     void seed() {
@@ -788,7 +778,7 @@ struct Random {
     }
 
     /**
-     * Take a chance. Returns a boolean that has a 'probability'
+     * @brief Take a chance. Returns a boolean that has a 'probability'
      * chance of being 'true'.
      *
      * If the argument is constant, all floating point math folds
@@ -803,7 +793,7 @@ struct Random {
     }
 
     /**
-     * Returns a uniformly distributed floating point number in the range [a, b) or
+     * @brief Returns a uniformly distributed floating point number in the range [a, b) or
      * [a, b], depending on rounding.
      */
     float uniform(float a, float b) {
@@ -812,7 +802,7 @@ struct Random {
     }
 
     /**
-     * Returns a uniformly distributed random integer in the range [a, b], including both
+     * @brief Returns a uniformly distributed random integer in the range [a, b], including both
      * end points.
      */
     template <typename T>
@@ -821,7 +811,7 @@ struct Random {
     }
 
     /**
-     * Returns a uniformly distributed random integer in the half-open interval [a, b),
+     * @brief Returns a uniformly distributed random integer in the half-open interval [a, b),
      * including the lower but not the upper end point.
      */
     template <typename T>
@@ -830,9 +820,10 @@ struct Random {
     }
 
     /**
-     * The one-argument variant of randrange() always starts at zero, and
-     * returns an integer up to but not including 'count'. It is guaranteed
-     * to be capable of returning 'count' distinct values, starting at zero.
+     * @brief The one-argument variant of randrange() always starts at zero, and
+     * returns an integer up to but not including 'count'.
+     *
+     * Guaranteed to be capable of returning 'count' distinct values, starting at zero.
      */
     template <typename T>
     T randrange(T count) {
@@ -842,7 +833,7 @@ struct Random {
 
 
 /**
- * An augmented 3x2 matrix, for doing 2D affine transforms.
+ * @brief An augmented 3x2 matrix, for doing 2D affine transforms.
  *
  *      [ xx  yx  cx ]
  *      [ xy  yy  cy ]
@@ -865,6 +856,7 @@ struct AffineMatrix {
     /// Create an uninitialized matrix
     AffineMatrix() {}
 
+    /// Create a matrix from six scalar values
     AffineMatrix(float _xx, float _yx, float _cx,
                  float _xy, float _yy, float _cy)
         : cx(_cx), cy(_cy), xx(_xx),

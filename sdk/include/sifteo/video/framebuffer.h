@@ -21,7 +21,7 @@ namespace Sifteo {
  */
 
 /**
- * An FBDrawable object is a VRAM accessor for drawing pixel graphics,
+ * @brief A templatized VRAM accessor for drawing pixel graphics,
  * in one of the cube's supported framebuffer drawing modes.
  *
  * FBDrawable is a template which is parameterized for each of the
@@ -33,28 +33,28 @@ struct FBDrawable {
     _SYSAttachedVideoBuffer sys;
 
     /**
-     * Return the width, in pixels, of this mode
+     * @brief Return the width, in pixels, of this mode
      */
     static unsigned width() {
         return tWidth;
     }
 
     /**
-     * Return the height, in pixels, of this mode
+     * @brief Return the height, in pixels, of this mode
      */
     static unsigned height() {
         return tHeight;
     }
 
     /**
-     * Return the size of this mode as a vector, in pixels.
+     * @brief Return the size of this mode as a vector, in pixels.
      */
     static UInt2 size() {
         return vec(tWidth, tHeight);
     }
 
     /**
-     * Return the total number of colors this mode supports. This is
+     * @brief Return the total number of colors this mode supports. This is
      * equal to the number of colormap entries used by the mode.
      */
     static unsigned numColors() {
@@ -62,7 +62,7 @@ struct FBDrawable {
     }
 
     /**
-     * Returns the number of bits per pixel this framebuffer mode uses
+     * @brief Returns the number of bits per pixel this framebuffer mode uses
      * to store color indices.
      */
     static unsigned bitsPerPixel() {
@@ -70,23 +70,24 @@ struct FBDrawable {
     }
 
     /**
-     * Returns the size of this framebuffer's data, in bytes
+     * @brief Returns the size of this framebuffer's data, in bytes
      */
     static unsigned sizeInBytes() {
         return tWidth * tHeight * tBitsPerPixel / 8;
     }
 
     /**
-     * Returns the size of this framebuffer's data, in 16-bit words
+     * @brief Returns the size of this framebuffer's data, in 16-bit words
      */
     static unsigned sizeInWords() {
         return tWidth * tHeight * tBitsPerPixel / 16;
     }
 
     /**
-     * Plot a single pixel, at the specified location. Locations are
-     * specified in pixels, with (0,0) at the top-left corner, +X to the
-     * right, and +Y down.
+     * @brief Plot a single pixel, at the specified location.
+     *
+     * Locations are specified in pixels, with (0,0) at the top-left
+     * corner, +X to the right, and +Y down.
      *
      * The pixel coordinates must be in range. This call does not perform
      * any clipping.
@@ -109,8 +110,9 @@ struct FBDrawable {
     }
 
     /**
-     * Given a single color index, return an expanded version where
+     * @brief Given a single color index, return an expanded version where
      * the single color has been replicated to fill a 16-bit word.
+     *
      * This can be used to implement fills, since VideoBuffers operate
      * in units of 16 bits at a time.
      */
@@ -127,7 +129,7 @@ struct FBDrawable {
     }
 
     /**
-     * Plot a horizontal span of pixels, given the position of the
+     * @brief Plot a horizontal span of pixels, given the position of the
      * leftmost pixel, and the number of pixels to plot.
      *
      * All coordinates must be in range. This function performs no clipping.
@@ -174,7 +176,7 @@ struct FBDrawable {
     }
 
     /**
-     * Fill a rectangle of pixels, specified as a top-left corner
+     * @brief Fill a rectangle of pixels, specified as a top-left corner
      * location and a size.
      *
      * All coordinates must be in range. This function performs no clipping.
@@ -189,7 +191,7 @@ struct FBDrawable {
     }
 
     /**
-     * Fill the entire framebuffer with a specific color index.
+     * @brief Fill the entire framebuffer with a specific color index.
      */
     void fill(unsigned colorIndex)
     {
@@ -197,7 +199,7 @@ struct FBDrawable {
     }
 
     /**
-     * Draw a span of pixels from a packed-pixel bitmap, of the
+     * @brief Draw a span of pixels from a packed-pixel bitmap, of the
      * same color depth as this framebuffer mode.
      *
      * All coordinates must be in range. This function performs no clipping.
@@ -251,10 +253,11 @@ struct FBDrawable {
     }
 
     /**
-     * Draw a packed-pixel bitmap, of the same color depth as
-     * this framebuffer mode. The destination rectangle
-     * is specified as a top-left corner and size, both in
-     * pixels.
+     * @brief Draw a packed-pixel bitmap, of the same color depth as
+     * this framebuffer mode.
+     *
+     * The destination rectangle is specified as a top-left corner
+     * and size, both in pixels.
      *
      * The bitmap does not need any special alignment.
      * The source bitmap stride is specified in bytes.
@@ -272,22 +275,23 @@ struct FBDrawable {
     }
 
     /**
-     * Draw a pre-formatted bitmap to this framebuffer. The bitmap
-     * must already be in the proper format, and it must be 16-bit-aligned.
+     * @brief Draw a pre-formatted bitmap to this framebuffer
+     *
+     * The bitmap must already be in the proper format, and it must be 16-bit-aligned.
      */
     void set(const uint16_t *data) {
         _SYS_vbuf_write(&sys.vbuf, 0, data, sizeInWords());
     }
 
     /**
-     * Return the VideoBuffer associated with this drawable.
+     * @brief Return the VideoBuffer associated with this drawable.
      */
     _SYSVideoBuffer &videoBuffer() {
         return sys.vbuf;
     }
 
     /**
-     * Return the CubeID associated with this drawable.
+     * @brief Return the CubeID associated with this drawable.
      */
     CubeID cube() const {
         return sys.cube;
@@ -295,16 +299,22 @@ struct FBDrawable {
 };
 
 
-// Specific typedefs for each framebuffer mode
+/// Typedef for the FBDrawable instance used in FB32 mode
 typedef FBDrawable<32,32,4> FB32Drawable;
+
+/// Typedef for the FBDrawable instance used in FB64 mode
 typedef FBDrawable<64,64,1> FB64Drawable;
+
+/// Typedef for the FBDrawable instance used in FB128 mode
 typedef FBDrawable<128,48,1> FB128Drawable;
 
 
 /**
- * A StampDrawable object VRAM accessor for the STAMP mode, a special
+ * @brief A VRAM accessor for the STAMP mode, a special
  * purpose 16-color framebuffer mode which supports color-keying and
- * tiling. It is so named because it can be used like a rubber stamp,
+ * tiling.
+ *
+ * It is so named because it can be used like a rubber stamp,
  * to draw patterns or images over top of whatever already exists on the
  * display.
  */
@@ -312,7 +322,7 @@ struct StampDrawable {
     _SYSAttachedVideoBuffer sys;
 
     /**
-     * Change the geometry of the framebuffer memory used by this stamp.
+     * @brief Change the geometry of the framebuffer memory used by this stamp.
      *
      * The framebuffer can be any size, so long as the width is an even
      * number of pixels (corresponding to an integer number of bytes),
@@ -329,7 +339,7 @@ struct StampDrawable {
     }
 
     /**
-     * Obtain an FBDrawable accessor for the framebuffer memory, using
+     * @brief Obtain an FBDrawable accessor for the framebuffer memory, using
      * the supplied framebuffer dimensions.
      *
      * Does not automatically resize the framebuffer to those dimensions;
@@ -347,8 +357,10 @@ struct StampDrawable {
     }
 
     /**
-     * Obtain an FBDrawable accessor for the framebuffer memory, using
-     * the supplied framebuffer dimensions. Automatically resizes the
+     * @brief Obtain an FBDrawable accessor for the framebuffer memory, using
+     * the supplied framebuffer dimensions.
+     *
+     * Automatically resizes the
      * framebuffer to the specified dimensions, if necessary. Just like
      * VideoBuffer::initMode() we automatically issue a System::finish()
      * before resizing the framebuffer.
@@ -362,7 +374,7 @@ struct StampDrawable {
     }
     
     /**
-     * Set the horizontal window. This is the mode-specific X-axis
+     * @brief Set the horizontal window. This is the mode-specific X-axis
      * counterpart to VideoBuffer::setWindow().
      *
      * We start drawing at 'firstColumn', and draw a total of 'numColumns' pixels
@@ -375,8 +387,10 @@ struct StampDrawable {
     }
 
     /**
-     * Set both the horizontal and vertical windows, to define a 2D
-     * box of pixels that we'll draw into. If either dimension of this
+     * @brief Set both the horizontal and vertical windows, to define a 2D
+     * box of pixels that we'll draw into.
+     *
+     * If either dimension of this
      * box is larger than our framebuffer, the framebuffer will be tiled.
      */
     void setBox(Int2 topLeft, Int2 size) {
@@ -386,30 +400,33 @@ struct StampDrawable {
     }
 
     /**
-     * Set the palette index of the "key" color. Any pixel with this
-     * palette index is skipped, leaving a transparent "hole" at that pixel.
+     * @brief Set the palette index of the "key" color. 
+     *
+     * Any pixel with this palette index is skipped, leaving a
+     * transparent "hole" at that pixel.
      */
     void setKeyIndex(unsigned index) {
         _SYS_vbuf_pokeb(&sys.vbuf, offsetof(_SYSVideoRAM, stamp_key), index);
     }
 
     /**
-     * Disable transparency. This is equivalent to setting the key index to
-     * a color which is never used.
+     * @brief Disable transparency
+     *
+     * This is equivalent to setting the key index to a color which is never used.
      */
     void disableKey() {
         setKeyIndex(16);
     }
 
     /**
-     * Return the VideoBuffer associated with this drawable.
+     * @brief Return the VideoBuffer associated with this drawable.
      */
     _SYSVideoBuffer &videoBuffer() {
         return sys.vbuf;
     }
 
     /**
-     * Return the CubeID associated with this drawable.
+     * @brief Return the CubeID associated with this drawable.
      */
     CubeID cube() const {
         return sys.cube;

@@ -21,7 +21,8 @@ namespace Sifteo {
  */
 
 /**
- * This is a VRAM accessor for drawing graphics in the BG0_ROM mode.
+ * @brief A VRAM accessor for drawing graphics in the BG0_ROM mode.
+ *
  * We have an 18x18 tile grid, just like the normal BG0 mode, but
  * the tile data in our case comes from a built-in image ROM in
  * the cube firmware.
@@ -29,11 +30,12 @@ namespace Sifteo {
  * This mode can be used to draw specific built-in graphics, or it
  * can be used to draw debug text using the cube's built-in ROM font.
  */
+
 struct BG0ROMDrawable {
     _SYSAttachedVideoBuffer sys;
 
     /**
-     * Palette IDs, XOR'ed with the tile IDs below.
+     * @brief Palette IDs, XOR'ed with the tile IDs below.
      *
      * XXX: The ROM artwork is not currently finalized. These color palettes may change.
      */
@@ -51,19 +53,19 @@ struct BG0ROMDrawable {
     };
 
     /**
-     * Well-known tile numbers.
+     * @brief Well-known tile numbers.
      *
      * XXX: The ROM artwork is not currently finalized. These tiles may change.
      */
     enum Tiles {
-        FONT_SPACE  = 0,        // First character in the font, ASCII space
-        SOLID_BG    = 0,        // Solid background-colored tile (space)
-        SOLID_FG    = 0x1fe,    // Solid foreground-colored tile
-        BARGRAPH    = 0x060,    // First tile in the horizontal bargraph series
+        FONT_SPACE  = 0,        ///< First character in the font, ASCII space
+        SOLID_BG    = 0,        ///< Solid background-colored tile (space)
+        SOLID_FG    = 0x1fe,    ///< Solid foreground-colored tile
+        BARGRAPH    = 0x060,    ///< First tile in the horizontal bargraph series
     };
 
     /**
-     * Color modes, XOR'ed with the tile IDs below.
+     * @brief Color modes, XOR'ed with the tile IDs below.
      */
     enum ColorMode {
         TWO_COLOR   = 0 << 9,
@@ -71,63 +73,64 @@ struct BG0ROMDrawable {
     };
 
     /**
-     * Return the width, in tiles, of this mode
+     * @brief Return the width, in tiles, of this mode
      */
     static unsigned tileWidth() {
         return _SYS_VRAM_BG0_WIDTH;
     }
 
     /**
-     * Return the height, in tiles, of this mode
+     * @brief Return the height, in tiles, of this mode
      */
     static unsigned tileHeight() {
         return _SYS_VRAM_BG0_WIDTH;
     }
 
     /**
-     * Return the size of this mode as a vector, in tiles.
+     * @brief Return the size of this mode as a vector, in tiles.
      */
     static UInt2 tileSize() {
         return vec(tileWidth(), tileHeight());
     }
 
     /**
-     * Return the width, in pixels, of this mode
+     * @brief Return the width, in pixels, of this mode
      */
     static unsigned pixelWidth() {
         return tileWidth() * 8;
     }
 
     /**
-     * Return the height, in pixel, of this mode
+     * @brief Return the height, in pixel, of this mode
      */
     static unsigned pixelHeight() {
         return tileHeight() * 8;
     }
 
     /**
-     * Return the size of this mode as a vector, in pixels.
+     * @brief Return the size of this mode as a vector, in pixels.
      */
     static UInt2 pixelSize() {
         return vec(pixelWidth(), pixelHeight());
     }
 
     /**
-     * Returns the size of this drawable's tile data, in bytes
+     * @brief Returns the size of this drawable's tile data, in bytes
      */
     static unsigned sizeInBytes() {
         return tileWidth() * tileHeight() * 2;
     }
 
     /**
-     * Returns the size of this drawable's tile data, in 16-bit words
+     * @brief Returns the size of this drawable's tile data, in 16-bit words
      */
     static unsigned sizeInWords() {
         return tileWidth() * tileHeight();
     }
 
     /**
-     * Calculate the video buffer address of a particular tile.
+     * @brief Calculate the video buffer address of a particular tile.
+     *
      * All coordinates must be in range. This function performs no clipping.
      */
     uint16_t tileAddr(UInt2 pos) {
@@ -135,7 +138,7 @@ struct BG0ROMDrawable {
     }
 
     /**
-     * Erase mode-specific VRAM, filling the BG0 buffer with the specified
+     * @brief Erase mode-specific VRAM, filling the BG0 buffer with the specified
      * value and resetting the panning registers.
      */
     void erase(uint16_t index = 0) {
@@ -144,8 +147,9 @@ struct BG0ROMDrawable {
     }
 
     /**
-     * Change the hardware pixel-panning origin for this mode. The supplied
-     * vector is interpreted as the location on the tile buffer, in pixels,
+     * @brief Change the hardware pixel-panning origin for this mode.
+     *
+     * The supplied vector is interpreted as the location on the tile buffer, in pixels,
      * where the origin of the LCD will begin.
      *
      * BG0 is an 18x18 buffer that wraps around in both directions.
@@ -157,7 +161,7 @@ struct BG0ROMDrawable {
     }
 
     /**
-     * Retrieve the last value set by setPanning(), modulo the layer size
+     * @brief Retrieve the last value set by setPanning(), modulo the layer size
      * in pixels.
      */
     Int2 getPanning() const {
@@ -166,14 +170,14 @@ struct BG0ROMDrawable {
     }
 
     /**
-     * Calculate the tile index of one character in the ROM font.
+     * @brief Calculate the tile index of one character in the ROM font.
      */
     static uint16_t charTile(char c, enum Palette palette = BLACK) {
         return palette ^ (c - ' ' + FONT_SPACE);
     }
 
     /**
-     * Plot a single tile, at location 'pos', in tile units.
+     * @brief Plot a single tile, at location 'pos', in tile units.
      *
      * All coordinates must be in range. This function performs no clipping.
      */
@@ -183,7 +187,7 @@ struct BG0ROMDrawable {
     }
 
     /**
-     * Plot a horizontal span of tiles, given the position of the
+     * @brief Plot a horizontal span of tiles, given the position of the
      * leftmost tile, and the number of tiles to plot.
      *
      * All coordinates must be in range. This function performs no clipping.
@@ -196,7 +200,7 @@ struct BG0ROMDrawable {
     }
 
     /**
-     * Fill a rectangle of identical tiles, specified as a top-left corner
+     * @brief Fill a rectangle of identical tiles, specified as a top-left corner
      * location and a size.
      *
      * All coordinates must be in range. This function performs no clipping.
@@ -211,7 +215,7 @@ struct BG0ROMDrawable {
     }
 
     /**
-     * Draw a horizontal bargraph, with its top-left corner position
+     * @brief Draw a horizontal bargraph, with its top-left corner position
      * specified in tiles, and its width in pixels.
      *
      * The progress bar is drawn using tiles from the ROM. Fully empty tiles
@@ -236,8 +240,10 @@ struct BG0ROMDrawable {
     }
 
     /**
-     * Draw text, using the builtin ROM font, starting at location 'topLeft'
-     * in tiles. Drawing characters not present in the ROM font will have
+     * @brief Draw text, using the builtin ROM font, starting at
+     * location 'topLeft' in tiles.
+     *
+     * Drawing characters not present in the ROM font will have
      * undefined results.
      */
     void text(Int2 topLeft, const char *str, enum Palette palette = BLACK)
@@ -256,14 +262,14 @@ struct BG0ROMDrawable {
     }
 
     /**
-     * Return the VideoBuffer associated with this drawable.
+     * @brief Return the VideoBuffer associated with this drawable.
      */
     _SYSVideoBuffer &videoBuffer() {
         return sys.vbuf;
     }
 
     /**
-     * Return the CubeID associated with this drawable.
+     * @brief Return the CubeID associated with this drawable.
      */
     CubeID cube() const {
         return sys.cube;
