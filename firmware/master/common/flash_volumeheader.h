@@ -129,19 +129,6 @@ struct FlashVolumeHeader
         ASSERT(isHeaderValid());
     }
 
-    /// Worst-case size of the header, assuming the largest possible Map.
-    unsigned worstCaseSizeInBytes() const
-    {
-        ASSERT(isHeaderValid());
-        return
-            roundup<FlashBlock::BLOCK_SIZE>(
-                sizeof(*this) +                                 // Fixed header
-                roundup<4>(sizeof(FlashMap)) +                  // Map
-                roundup<4>(dataBytes) +                         // Type-specific data
-                sizeof(EraseCount) * FlashMap::NUM_MAP_BLOCKS   // Erase counts
-            );
-    }
-
     /// Payload size, in bytes
     unsigned payloadBytes() const
     {
@@ -151,50 +138,79 @@ struct FlashVolumeHeader
     /// Number of map entries, equal to the number of FlashMapBlocks we cover
     unsigned numMapEntries() const
     {
-        /// Since the exact size of the header depends on the total size of
-        /// header plus payload, that means that we can easily end up with a
-        /// circular dependency here. We break that dependency by using the
-        /// worst-case map size to calculate the actual map size.
+        /*
+         * This is actually kind of tricky to calculate!
+         *
+         * Since the exact size of the header depends on the total size of
+         * header plus payload, that means that we can easily end up with a
+         * circular dependency here.
+         *
+         * We can't use the worst-case size of the map here, since that will
+         * cause us to waste ~600 bytes of space in the worst case. It's
+         * especially noticeable on LFS blocks, where we size the payload
+         * to exactly fit the volume.
+         *
+         * We also can't solve this as a system of linear equations, because
+         * rounding up for alignment makes this nonlinear.
+         *
+         * On the bright side, it isn't possible for the header to add more
+         * than a single map block to the size of the volume. So, calculate
+         * it once assuming a minimum header size, then if that turns out
+         * to be too small for the actual header we'd need, add one.
+         */
 
-        unsigned bytes = worstCaseSizeInBytes() + payloadBytes();
-        return (bytes + FlashMapBlock::BLOCK_MASK) / FlashMapBlock::BLOCK_SIZE;
+        unsigned minResult = ceildiv<unsigned>(
+            payloadBlocks + 1,
+            FlashMapBlock::BLOCK_SIZE / FlashBlock::BLOCK_SIZE);
+
+        unsigned minHdrBlocks = ceildiv<unsigned>(
+            sizeof(*this) +                                     // Fixed header
+            roundup<4>(sizeof(FlashMapBlock) * minResult) +     // Map
+            roundup<4>(dataBytes) +                             // Type-specific data
+            sizeof(EraseCount) * minResult,                     // Erase counts
+            FlashBlock::BLOCK_SIZE);
+
+        if (ceildiv<unsigned>(payloadBlocks + minHdrBlocks,
+            FlashMapBlock::BLOCK_SIZE / FlashBlock::BLOCK_SIZE) == minResult)
+            return minResult;
+        else
+            return minResult + 1;
     }
 
     /// Offset to the beginning of the FlashMap, in bytes
-    unsigned mapOffsetBytes() const
+    static unsigned mapOffsetBytes()
     {
-        ASSERT(isHeaderValid());
-        return sizeof(*this);
+        return sizeof(FlashVolumeHeader);
     }
 
     /// Size of the in-use portion of our FlashMap, in bytes
-    unsigned mapSizeBytes() const
+    static unsigned mapSizeBytes(unsigned numMapEntries)
     {
-        return roundup<4>(sizeof(FlashMapBlock) * numMapEntries());
+        return roundup<4>(sizeof(FlashMapBlock) * numMapEntries);
     }
 
     /// Offset to the type-specific data, in bytes
-    unsigned dataOffsetBytes() const
+    static unsigned dataOffsetBytes(unsigned numMapEntries)
     {
-        return mapOffsetBytes() + mapSizeBytes();
+        return mapOffsetBytes() + mapSizeBytes(numMapEntries);
     }
 
     /// Offset to the erase counts, in bytes
-    unsigned eraseCountOffsetBytes() const
+    static unsigned eraseCountOffsetBytes(unsigned numMapEntries, unsigned dataBytes)
     {
-        return dataOffsetBytes() + roundup<4>(dataBytes);
+        return dataOffsetBytes(numMapEntries) + roundup<4>(dataBytes);
     }
 
     /// Offset to the payload data, in bytes
-    unsigned payloadOffsetBytes() const
+    static unsigned payloadOffsetBytes(unsigned numMapEntries, unsigned dataBytes)
     {
-        return eraseCountOffsetBytes() + (sizeof(EraseCount) * numMapEntries());
+        return eraseCountOffsetBytes(numMapEntries, dataBytes) + (sizeof(EraseCount) * numMapEntries);
     }
 
     /// Offset to the payload data, in cache blocks
-    unsigned payloadOffsetBlocks() const
+    static unsigned payloadOffsetBlocks(unsigned numMapEntries, unsigned dataBytes)
     {
-        return (payloadOffsetBytes() + FlashBlock::BLOCK_MASK) / FlashBlock::BLOCK_SIZE;
+        return (payloadOffsetBytes(numMapEntries, dataBytes) + FlashBlock::BLOCK_MASK) / FlashBlock::BLOCK_SIZE;
     }
 
     /// Retrieve a pointer to the FlashMap, always part of the same cache block.
@@ -211,23 +227,23 @@ struct FlashVolumeHeader
     }
 
     /// Calculate the CRC of our FlashMap
-    uint32_t calculateMapCRC() const
+    uint32_t calculateMapCRC(unsigned numMapEntries) const
     {
         return Crc32::block(reinterpret_cast<const uint32_t*>(getMap()),
-            mapSizeBytes() / sizeof(uint32_t));
+            mapSizeBytes(numMapEntries) / sizeof(uint32_t));
     }
 
     /// Retrieve the absolute address of a single erase count
-    unsigned eraseCountAddress(FlashMapBlock mb, unsigned index) const
+    static unsigned eraseCountAddress(FlashMapBlock mb, unsigned index, unsigned numMapEntries, unsigned dataBytes)
     {
-        ASSERT(index < numMapEntries());
-        return mb.address() + eraseCountOffsetBytes() + index * sizeof(EraseCount);
+        ASSERT(index < numMapEntries);
+        return mb.address() + eraseCountOffsetBytes(numMapEntries, dataBytes) + index * sizeof(EraseCount);
     }
 
     /// Retrieve an erase count value
-    EraseCount getEraseCount(FlashBlockRef &ref, FlashMapBlock mb, unsigned index) const
+    EraseCount getEraseCount(FlashBlockRef &ref, FlashMapBlock mb, unsigned index, unsigned numMapEntries) const
     {
-        unsigned addr = eraseCountAddress(mb, index);
+        unsigned addr = eraseCountAddress(mb, index, numMapEntries, dataBytes);
         unsigned blockPart = addr & ~FlashBlock::BLOCK_MASK;
         unsigned bytePart = addr & FlashBlock::BLOCK_MASK;
         ASSERT((bytePart % sizeof(EraseCount)) == 0);
@@ -237,12 +253,12 @@ struct FlashVolumeHeader
     }
 
     /// Calculate the CRC of our erase count array
-    uint32_t calculateEraseCountCRC(FlashMapBlock mb) const
+    uint32_t calculateEraseCountCRC(FlashMapBlock mb, unsigned numMapEntries) const
     {
         FlashBlockRef ref;
         Crc32::reset();
-        for (unsigned I = 0, E = numMapEntries(); I != E; ++I)
-            Crc32::add(getEraseCount(ref, mb, I));
+        for (unsigned I = 0; I != numMapEntries; ++I)
+            Crc32::add(getEraseCount(ref, mb, I, numMapEntries));
         return Crc32::get();
     }
 };

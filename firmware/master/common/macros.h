@@ -126,6 +126,13 @@ template <unsigned a> inline unsigned roundup(unsigned value)
 }
 
 /**
+ * Ceiling division. Divide, rounding up instead of down.
+ */
+template <typename T> inline T ceildiv(T numerator, T denominator) {
+    return (numerator + (denominator - 1)) / denominator;
+}
+
+/**
  * Compute the unsigned remainder from dividing two signed integers.
  */
 unsigned inline umod(int a, int b)

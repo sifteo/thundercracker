@@ -786,12 +786,13 @@ int LuaFilesystem::volumeEraseCounts(lua_State *L)
 
     FlashBlockRef hdrRef, eraseRef;
     FlashVolumeHeader *hdr = FlashVolumeHeader::get(hdrRef, vol.block);
+    unsigned numMapEntries = hdr->numMapEntries();
 
     lua_newtable(L);
 
-    for (unsigned I = 0, E = hdr->numMapEntries(); I != E; ++I) {
+    for (unsigned I = 0; I != numMapEntries; ++I) {
         lua_pushnumber(L, I + 1);
-        lua_pushnumber(L, hdr->getEraseCount(eraseRef, vol.block, I));
+        lua_pushnumber(L, hdr->getEraseCount(eraseRef, vol.block, I, numMapEntries));
         lua_settable(L, -3);
     }
 

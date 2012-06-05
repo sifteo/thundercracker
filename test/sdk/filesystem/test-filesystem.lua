@@ -116,7 +116,7 @@ function checkEndurance()
     local idealEraseCount = writeTotal / DEVICE_SIZE
     local maxEC = getMaxEraseCount()
     local ratio = maxEC / idealEraseCount
-    local ratioLimit = 1.3
+    local ratioLimit = 1.5
 
     print(string.format("--        Ideal erase count: %.2f", idealEraseCount))
     print(string.format("--  Actual peak erase count: %d", maxEC))
@@ -247,16 +247,69 @@ function testHierarchy(verbose)
     end
 end
 
+function measureVolumeSize(payloadSize, hdrDataSize)
+    -- Creates a volume, measures its size (in map blocks), and deletes it.
+
+    local vol = fs:newVolume(TEST_VOL_TYPE, string.rep("x", payloadSize), string.rep("y", hdrDataSize))
+    local size = table.maxn(fs:volumeMap(vol))
+    fs:deleteVolume(vol)
+
+    writeTotal = writeTotal + payloadSize + hdrDataSize + 256
+    return size
+end
+
+function testVolumeSizes()
+    -- Test some edge cases for volume payload and header-data size,
+    -- and be sure the volume itself gets the correct size.
+
+    print "Testing volume size edge-cases"
+
+    -- Various small size combinations (< one cache block)
+    assertEquals(measureVolumeSize(0, 0), 1)
+    assertEquals(measureVolumeSize(100, 0), 1)
+    assertEquals(measureVolumeSize(0, 100), 1)
+    assertEquals(measureVolumeSize(100, 100), 1)
+
+    -- Greater than one cache block, still one volume
+    assertEquals(measureVolumeSize(0, 0), 1)
+    assertEquals(measureVolumeSize(10000, 0), 1)
+    assertEquals(measureVolumeSize(0, 10000), 1)
+    assertEquals(measureVolumeSize(10000, 10000), 1)
+
+    -- Payload size overflow from 1 to 2 volumes
+    assertEquals(measureVolumeSize(128*1024 - 256, 0), 1)
+    assertEquals(measureVolumeSize(128*1024 - 256 + 1, 0), 2)
+
+    -- Payload size overflow from 1 to 2 volumes, with max hdrdata size
+    assertEquals(measureVolumeSize(128*1024 - 256, 216), 1)
+    assertEquals(measureVolumeSize(128*1024 - 256 + 1, 216), 2)
+    assertEquals(measureVolumeSize(128*1024 - 256, 217), 2)
+    assertEquals(measureVolumeSize(128*1024 - 256 + 1, 217), 2)
+
+    -- Here's where the overflows get nonlinear, due to the header exceeding one cache block
+    assertEquals(measureVolumeSize(0x57ff00, 0), 44)
+    assertEquals(measureVolumeSize(0x57ff01, 0), 45)
+    assertEquals(measureVolumeSize(0x57fe00, 8), 44)
+    assertEquals(measureVolumeSize(0x57fe01, 8), 45)
+
+    -- And the next discontiguous bit..
+    assertEquals(measureVolumeSize(0xbdfe00, 0), 95)
+    assertEquals(measureVolumeSize(0xbdfe01, 0), 96)
+    assertEquals(measureVolumeSize(0xbdfd00, 8), 95)
+    assertEquals(measureVolumeSize(0xbdfd01, 8), 96)
+    assertEquals(measureVolumeSize(0xbffe00, 0), 96)
+    assertEquals(measureVolumeSize(0xbffe01, 0), 97)
+    assertEquals(measureVolumeSize(0xbffd00, 8), 96)
+    assertEquals(measureVolumeSize(0xbffd01, 8), 97)
+end
 
 function testFilesystem()
-
     -- Dump the volumes that existed on entry
-
     dumpFilesystem()
 
     -- Individual filesystem exercises
-
     testHierarchy()
+    testVolumeSizes()
     testRandomVolumes()
 end
 
