@@ -11,7 +11,7 @@
 #include "systime.h"
 
 static GPIOPin homeButton = BTN_HOME_GPIO;
-static SysTime::Ticks holdStartTime;
+static SysTime::Ticks shutdownDeadline;
 
 namespace HomeButton {
 
@@ -38,7 +38,7 @@ void onChange()
      * Begin our countdown to shutdown.
      * Turn on the LED to provide some responsiveness.
      */
-    holdStartTime = SysTime::ticks();
+    shutdownDeadline = SysTime::ticks() + SysTime::sTicks(3);
 
     GPIOPin green = LED_GREEN_GPIO;
     green.setLow();
@@ -70,10 +70,7 @@ void task(void *p)
         return;
     }
 
-    /*
-     * wait for three seconds before starting shutdown
-     */
-    if (SysTime::ticks() - holdStartTime < SysTime::sTicks(3))
+    if (SysTime::ticks() < shutdownDeadline)
         return;
 
     // power off sequence
