@@ -1028,8 +1028,6 @@ void XmTrackerPlayer::processEnvelope(XmTrackerChannel &channel)
         envelope.value = v1 + envelope.tick * (v2 - v1) / pointLength;
     }
 
-// if (instrument.nVolumeEnvelopePoints == 3) LOG(("envelope point: %u (tick: %u)\n", envelope.point, envelope.tick));
-
     // Progress!
     if (envelope.point < instrument.nVolumeEnvelopePoints - 1) {
         envelope.tick++;
