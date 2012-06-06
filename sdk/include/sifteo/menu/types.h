@@ -113,7 +113,7 @@ class Menu {
     static const uint8_t kNumVisibleTilesX = 16;
     static const uint8_t kNumTilesY = 18;
     static const uint8_t kNumVisibleTilesY = 16;
-    static const float kAccelThresholdOn = 1.15f;
+    static const float kAccelThresholdOn = 7.15f;
     static const float kAccelThresholdOff = 0.85f;
     static const uint8_t kDefaultIconYOffset = 16;
     static const uint8_t kDefaultPeekTiles = 1;
