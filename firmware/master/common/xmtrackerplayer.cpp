@@ -786,7 +786,6 @@ void XmTrackerPlayer::processEffects(XmTrackerChannel &channel)
             break;
         }
         case fxSetEnvelopePos: {
-            LOG(("%s:%d: NOT_TESTED: fxSetEnvelopePos fx(0x%02x).\n", __FILE__, __LINE__, type));
             if (!ticks) {
                 if (param >= channel.instrument.nVolumeEnvelopePoints) {
                     LOG((LGPFX"Warning: Position %u is out of bounds "
