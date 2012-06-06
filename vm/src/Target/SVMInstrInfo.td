@@ -361,6 +361,12 @@ def UDIVr : T32_DIV<0b1, (outs GPReg:$Rd), (ins GPReg:$Rn, GPReg:$Rm),
 def SDIVr : T32_DIV<0b0, (outs GPReg:$Rd), (ins GPReg:$Rn, GPReg:$Rm),
     "sdiv\t$Rd, $Rn, $Rm", [(set GPReg:$Rd, (sdiv GPReg:$Rn, GPReg:$Rm))]>;
 
+def CLZr : T32_CLZ<(outs GPReg:$Rd), (ins GPReg:$Rm),
+    "clz\t$Rd, $Rm", []>;
+
+// CLZ: Validator only allows a source operand of R7
+def : Pat< (ctlz R7), (CLZr R7) >;
+
 
 /****************************************************************
  * Memory operations

@@ -835,6 +835,24 @@ static void emulateDIV(uint32_t instr)
     svmCyclesElapsed += MCTiming::CPU_DIVIDE;
 }
 
+static void emulateCLZ(uint32_t instr)
+{
+    unsigned Rm1 = (instr >> 16) & 0xF;
+    unsigned Rd  = (instr >> 8) & 0xF;
+    unsigned Rm2 = instr & 0xF;
+
+    // ARM ARM states that the two Rm fields must be consistent
+    if (Rm1 != Rm2)
+        return emulateFault(F_CPU_SIM);
+    uint32_t m32 = (uint32_t) regs[Rm1];
+
+    // Note that GCC leaves __builtin_clz(0) undefined, whereas for ARM it's 32.
+    if (m32 == 0)
+        regs[Rd] = 32;
+    else
+        regs[Rd] = __builtin_clz(m32);
+}
+
 
 /***************************************************************************
  * Instruction Dispatch
@@ -1039,6 +1057,10 @@ static void execute32(uint32_t instr)
     }
     if ((instr & DivMask) == DivTest) {
         emulateDIV(instr);
+        return;
+    }
+    if ((instr & ClzMask) == ClzTest) {
+        emulateCLZ(instr);
         return;
     }
 
