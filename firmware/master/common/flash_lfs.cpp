@@ -167,6 +167,8 @@ bool FlashLFSIndexBlockIter::previous(unsigned key)
      */
 
     FlashLFSIndexRecord *ptr = currentRecord;
+    unsigned offset = currentOffset;
+
     ASSERT(ptr);
     ASSERT(ptr->isValid());
 
@@ -175,11 +177,16 @@ bool FlashLFSIndexBlockIter::previous(unsigned key)
         if (ptr < LFS::firstRecord(anchor))
             return false;
 
-        if (ptr->isValid() && (key == LFS::KEY_ANY || key == ptr->getKey())) {
+        if (ptr->isValid()) {
             // Only valid records have a meaningful size
-            currentRecord = ptr;
-            currentOffset -= ptr->getSizeInBytes();
-            return true;
+            offset -= ptr->getSizeInBytes();
+
+            if (key == LFS::KEY_ANY || key == ptr->getKey()) {
+                // Matched!
+                currentRecord = ptr;
+                currentOffset = offset;
+                return true;
+            }
         }
     }
 }
@@ -204,6 +211,7 @@ bool FlashLFSIndexBlockIter::next()
         ptr = LFS::firstRecord(anchor);
         if (ptr->isValid()) {
             currentRecord = ptr;
+            ASSERT(currentOffset == anchor->getOffsetInBytes());
             return true;
         }
     }
@@ -596,7 +604,9 @@ bool FlashLFSObjectIter::readAndCheck(uint8_t *buffer, unsigned size)
     CrcStream cs;
     cs.reset();
     cs.addBytes(buffer, size);
-    return record()->checkCRC(cs.get(FlashLFSIndexRecord::SIZE_UNIT));
+    uint32_t crc = cs.get(FlashLFSIndexRecord::SIZE_UNIT);
+
+    return record()->checkCRC(crc);
 }
 
 bool FlashLFSObjectIter::previous(unsigned key)
