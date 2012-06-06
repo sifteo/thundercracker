@@ -13,7 +13,6 @@ include $(TC_DIR)/Makefile.platform
 
 # Cross-platform tests
 TESTS = \
-	firmware/cube \
 	sdk/array \
 	sdk/compatibility \
 	sdk/crc \
@@ -33,6 +32,7 @@ endif
 # Tests that are broken on Windows currently
 ifneq ($(BUILD_PLATFORM), windows32)
     TESTS += \
+	firmware/cube \
 	firmware/master \
 	sdk/adpcm \
 	sdk/tracker
