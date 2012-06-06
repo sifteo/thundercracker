@@ -157,14 +157,18 @@ bool FlashLFSIndexBlockIter::beginBlock(uint32_t blockAddr)
     return true;
 }
 
-bool FlashLFSIndexBlockIter::prev()
+bool FlashLFSIndexBlockIter::previous(unsigned key)
 {
     /*
      * Seek to the previous valid index record. Invalid records are skipped.
      * Returns false if no further index records are available.
+     *
+     * If 'key' is not KEY_ANY, skips records that don't match this key.
      */
 
     FlashLFSIndexRecord *ptr = currentRecord;
+    unsigned offset = currentOffset;
+
     ASSERT(ptr);
     ASSERT(ptr->isValid());
 
@@ -175,9 +179,14 @@ bool FlashLFSIndexBlockIter::prev()
 
         if (ptr->isValid()) {
             // Only valid records have a meaningful size
-            currentRecord = ptr;
-            currentOffset -= ptr->getSizeInBytes();
-            return true;
+            offset -= ptr->getSizeInBytes();
+
+            if (key == LFS::KEY_ANY || key == ptr->getKey()) {
+                // Matched!
+                currentRecord = ptr;
+                currentOffset = offset;
+                return true;
+            }
         }
     }
 }
@@ -202,6 +211,7 @@ bool FlashLFSIndexBlockIter::next()
         ptr = LFS::firstRecord(anchor);
         if (ptr->isValid()) {
             currentRecord = ptr;
+            ASSERT(currentOffset == anchor->getOffsetInBytes());
             return true;
         }
     }
@@ -569,11 +579,10 @@ bool FlashLFSObjectAllocator::allocInVolumeRow(FlashVolume vol,
     return true;
 }
 
+// Start just past the last volume
 FlashLFSObjectIter::FlashLFSObjectIter(FlashLFS &lfs)
-    : lfs(lfs), volumeCount(lfs.volumes.numSlotsInUse)
-{
-    beginVolume();
-}
+    : lfs(lfs), volumeCount(lfs.volumes.numSlotsInUse + 1), rowCount(0)
+{}
 
 bool FlashLFSObjectIter::readAndCheck(uint8_t *buffer, unsigned size)
 {
@@ -595,18 +604,68 @@ bool FlashLFSObjectIter::readAndCheck(uint8_t *buffer, unsigned size)
     CrcStream cs;
     cs.reset();
     cs.addBytes(buffer, size);
-    return record()->checkCRC(cs.get(FlashLFSIndexRecord::SIZE_UNIT));
+    uint32_t crc = cs.get(FlashLFSIndexRecord::SIZE_UNIT);
+
+    return record()->checkCRC(crc);
 }
 
-bool FlashLFSObjectIter::next(unsigned key)
+bool FlashLFSObjectIter::previous(unsigned key)
 {
+    while (volumeCount) {
+
+        if (rowCount) {
+            // We have a valid volume and row. Previous record within a block
+            if (indexIter.previous(key))
+                return true;
+
+        } else {
+            /*
+             * Out of rows? Go to the next volume, and reset the index and
+             * meta-index iterators to the end of that volume.
+             * Sets 'hdr' and 'rowCount'.
+             */
+
+            if (!--volumeCount)
+                break;
+            
+            unsigned hdrSize = sizeof(FlashLFSVolumeHeader);
+            hdr = (FlashLFSVolumeHeader*) volume().mapTypeSpecificData(hdrRef, hdrSize);
+            ASSERT(hdrSize == sizeof(FlashLFSVolumeHeader));
+
+            // Just past the last row
+            rowCount = hdr->numNonEmptyRows() + 1;
+        }
+        
+        /*
+         * Out of records in this row. Find the next row, skipping any
+         * that either don't have a valid anchor, and any we can rule
+         * out via the FlashLFSKeyFilter.
+         */
+        
+        while (--rowCount) {
+            unsigned i = rowCount - 1;
+            if ((key == LFS::KEY_ANY || hdr->test(i, key)) &&
+                indexIter.beginBlock(LFS::indexBlockAddr(volume(), i))) {
+
+                /*
+                 * We have a candidate row which may contain the key we're
+                 * looking for. Iterate to the end, then either we'll be
+                 * pointing to a matching key, or we can loop back up to
+                 * previous() above and we'll find one.
+                 */
+                
+                while (indexIter.next());
+                if (key == LFS::KEY_ANY || indexIter->getKey() == key)
+                    return true;
+                else
+                    break;
+            }
+        }
+    }            
+
+    // End of iteration
+    ASSERT(volumeCount == 0);
+    rowCount = 0;
+    hdr = 0;
     return false;
-}
-
-void FlashLFSObjectIter::beginVolume()
-{
-}
-
-void FlashLFSObjectIter::beginRow()
-{
 }
