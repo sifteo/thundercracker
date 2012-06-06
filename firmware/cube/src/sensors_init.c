@@ -28,14 +28,13 @@ __bit nb_rx_mask_state0;
 __bit nb_rx_mask_state1;
 __bit nb_rx_mask_state2;
 __bit nb_rx_mask_bit0;
-__bit nb_rx_mask_bit1;
 __bit touch;
 
 #ifdef DEBUG_NBR
 	uint8_t __idata nbr_data[4];
 	uint8_t	nbr_temp;
-	uint8_t __idata nbr_data_valid;
-	uint8_t __idata nbr_data_invalid;
+	uint8_t __idata nbr_data_valid[2];
+	uint8_t __idata nbr_data_invalid[2];
 #endif
 
 #ifdef DEBUG_TOUCH
