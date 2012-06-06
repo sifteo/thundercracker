@@ -386,7 +386,7 @@ const char *TilePalette::colorModeName(ColorMode m)
 }
 
 TileStack::TileStack()
-    : index(NO_INDEX), mPinned(false)
+    : index(NO_INDEX), mPinned(false), mLossless(false)
     {}
 
 void TileStack::add(TileRef t)
@@ -397,11 +397,14 @@ void TileStack::add(TileRef t)
     if (maxMSE < epsilon) {
         // Lossless. Replace the entire stack, yielding a trivial median.
         tiles.clear();
+        mLossless = true;
     }
 
-    // Add to stack, invalidating cache
-    tiles.push_back(t);
-    cache = TileRef();
+    // Add to stack, invalidating cache. (Don't modify lossless stacks)
+    if (tiles.empty() || !mLossless) {
+        tiles.push_back(t);
+        cache = TileRef();
+    }
 
     // A stack with any pinned tiles in it is itself pinned.
     if (t->options().pinned)

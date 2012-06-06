@@ -220,6 +220,10 @@ class TileStack {
         return mPinned;
     }
 
+    bool isLossless() const {
+        return mLossless;
+    }
+
  private:
     static const unsigned MAX_SIZE = 128;
     static const unsigned NO_INDEX = (unsigned)-1;
@@ -230,6 +234,7 @@ class TileStack {
     TileRef cache;
     unsigned index;
     bool mPinned;
+    bool mLossless;
 };
 
 
