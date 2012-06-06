@@ -35,8 +35,7 @@ const uint8_t XmTrackerPlayer::kEnvelopeLoop;
 enum PlayStates {
     STATE_START = 0,    // Set by renderer ->
     STATE_PLAYING,      // Set by commit()
-    STATE_COAST,        // Set by renderer ->
-    STATE_COASTING,     // Set by commit()
+    STATE_COAST,        // Set by renderer -> STOP
     STATE_FINISH,       // Set by renderer ->
     STATE_STOP,         // Set by renderer ->
     STATE_STOPPED       // Set by commit()
@@ -958,19 +957,17 @@ void XmTrackerPlayer::processEnvelope(XmTrackerChannel &channel)
         return;
     }
 
-    if (channel.state != STATE_FINISH) {
-        if (instrument.volumeType & kEnvelopeSustain) {
-            // volumeSustainPoint is a maxima, don't exceed it.
-            if (envelope.point >= instrument.volumeSustainPoint) {
-                envelope.point = instrument.volumeSustainPoint;
-                envelope.tick = 0;
-            }
-        } else if (instrument.volumeType & kEnvelopeLoop) {
-            // Loop the loop
-            if (envelope.point >= instrument.volumeLoopEndPoint) {
-                envelope.point = instrument.volumeLoopStartPoint;
-                envelope.tick = 0;
-            }
+    if (channel.state != STATE_FINISH && instrument.volumeType & kEnvelopeSustain) {
+        // volumeSustainPoint is a maxima, don't exceed it.
+        if (envelope.point >= instrument.volumeSustainPoint) {
+            envelope.point = instrument.volumeSustainPoint;
+            envelope.tick = 0;
+        }
+    } else if (instrument.volumeType & kEnvelopeLoop) {
+        // Loop the loop
+        if (envelope.point >= instrument.volumeLoopEndPoint) {
+            envelope.point = instrument.volumeLoopStartPoint;
+            envelope.tick = 0;
         }
     }
 
@@ -1074,13 +1071,6 @@ void XmTrackerPlayer::commit()
                 }
                 channel.state = STATE_PLAYING;
             }
-    
-            if (channel.state == STATE_COAST || channel.state == STATE_FINISH) {
-                mixer.setLoop(CHANNEL_FOR(i), _SYS_LOOP_ONCE);
-                if (channel.state == STATE_COAST) {
-                    channel.state = STATE_COASTING;
-                }
-            }
         }
 
         if (channel.state == STATE_STOPPED || !mixer.isPlaying(CHANNEL_FOR(i))) continue;
@@ -1103,7 +1093,7 @@ void XmTrackerPlayer::commit()
             }
 
             // Apply fadeout
-            if (channel.note.note == XmTrackerPattern::kNoteOff) {
+            if (channel.state == STATE_COAST || channel.state == STATE_FINISH) {
                 if (channel.instrument.volumeFadeout > 0xFFF ||
                     channel.instrument.volumeFadeout > channel.fadeout ||
                     !channel.instrument.volumeFadeout)
@@ -1111,6 +1101,10 @@ void XmTrackerPlayer::commit()
                     channel.fadeout = 0;
                 } else {
                     channel.fadeout -= channel.instrument.volumeFadeout;
+                }
+
+                if (channel.instrument.nVolumeEnvelopePoints == 0) {
+                    channel.fadeout = 0;
                 }
 
                 // Completely faded -> stop playing sample.
