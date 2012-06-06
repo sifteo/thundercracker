@@ -12,13 +12,14 @@ static Metadata M = Metadata()
 
 void main()
 {
-    for (unsigned i = 0; i <= StoredObject::LIMIT; i++) {
+    for (unsigned i = 0;; i++) {
         LOG("Writing object #%d\n", i);
 
-        String<10> obj;
+        String<199> obj;
         obj << "Obj #" << i;
 
-        StoredObject(i).write(obj);
+        if (StoredObject(i % StoredObject::LIMIT).write(obj) <= 0)
+            break;
     }
     
     LOG("Done\n");
