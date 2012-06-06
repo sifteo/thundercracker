@@ -105,7 +105,7 @@ inline int strncmp(const char *a, const char *b, unsigned count)
  * be ASCII or UTF-8.
  */
 
-template <unsigned _capacity>
+template <unsigned tCapacity>
 class String {
 public:
 
@@ -139,12 +139,12 @@ public:
 
     /// Retrieve the size of the buffer, in bytes, including space for NUL termination.
     static unsigned capacity() {
-        return _capacity;
+        return tCapacity;
     }
 
     /// Get the current size of the string, in characters, excluding NUL termination.
     unsigned size() const {
-        return _SYS_strnlen(buffer, _capacity-1);
+        return _SYS_strnlen(buffer, tCapacity-1);
     }
 
     /// Return an iterator, pointing to the first character in the string.
@@ -205,13 +205,13 @@ public:
 
     /// Overwrite this with another string
     String& operator=(const char *src) {
-        _SYS_strlcpy(buffer, src, _capacity);
+        _SYS_strlcpy(buffer, src, tCapacity);
         return *this;
     }
 
     /// Append another string to this one
     String& operator+=(const char *src) {
-        _SYS_strlcat(buffer, src, _capacity);
+        _SYS_strlcat(buffer, src, tCapacity);
         return *this;
     }
 
@@ -237,25 +237,25 @@ public:
 
     /// STL-style formatting operator, append a string
     String& operator<<(const char *src) {
-        _SYS_strlcat(buffer, src, _capacity);
+        _SYS_strlcat(buffer, src, tCapacity);
         return *this;
     }
 
     /// STL-style formatting operator, append a decimal integer
     String& operator<<(int src) {
-        _SYS_strlcat_int(buffer, src, _capacity);
+        _SYS_strlcat_int(buffer, src, tCapacity);
         return *this;
     }
 
     /// STL-style formatting operator, append a fixed-width decimal integer
     String& operator<<(const Fixed &src) {
-        _SYS_strlcat_int_fixed(buffer, src.value, src.width, src.leadingZeroes, _capacity);
+        _SYS_strlcat_int_fixed(buffer, src.value, src.width, src.leadingZeroes, tCapacity);
         return *this;
     }
 
     /// STL-style formatting operator, append a fixed-width hexadecimal integer
     String& operator<<(const Hex &src) {
-        _SYS_strlcat_int_hex(buffer, src.value, src.width, src.leadingZeroes, _capacity);
+        _SYS_strlcat_int_hex(buffer, src.value, src.width, src.leadingZeroes, tCapacity);
         return *this;
     }
 
@@ -264,10 +264,10 @@ public:
         uint32_t high = src.value >> 32;
         uint32_t low = src.value;
         if (src.width > 8 || high != 0) {
-            _SYS_strlcat_int_hex(buffer, high, src.width - 8, src.leadingZeroes, _capacity);
-            _SYS_strlcat_int_hex(buffer, low, 8, true, _capacity);
+            _SYS_strlcat_int_hex(buffer, high, src.width - 8, src.leadingZeroes, tCapacity);
+            _SYS_strlcat_int_hex(buffer, low, 8, true, tCapacity);
         } else {
-            _SYS_strlcat_int_hex(buffer, low, src.width, src.leadingZeroes, _capacity);
+            _SYS_strlcat_int_hex(buffer, low, src.width, src.leadingZeroes, tCapacity);
         }
         return *this;
     }
@@ -303,7 +303,7 @@ public:
     }
 
 private:
-    char buffer[_capacity];
+    char buffer[tCapacity];
 };
 
 /**

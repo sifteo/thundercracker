@@ -113,6 +113,92 @@ void findInArrayOfPointers()
     ASSERT(-1 == a.find(&other));
 }
 
+void bitArraySizeEdgeCases()
+{
+    BitArray<0> a0;
+    BitArray<1> a1;
+    BitArray<31> a31;
+    BitArray<32> a32;
+    BitArray<33> a33;
+    BitArray<63> a63;
+    BitArray<64> a64;
+    BitArray<65> a65;
+
+    ASSERT(sizeof a0 == 0);
+    ASSERT(sizeof a1 == 4);
+    ASSERT(sizeof a31 == 4);
+    ASSERT(sizeof a32 == 4);
+    ASSERT(sizeof a33 == 8);
+    ASSERT(sizeof a63 == 8);
+    ASSERT(sizeof a64 == 8);
+    ASSERT(sizeof a65 == 12);
+
+    a0.mark();
+    a1.mark();
+    a31.mark();
+    a32.mark();
+    a33.mark();
+    a63.mark();
+    a64.mark();
+    a65.mark();
+
+    ASSERT(a0.empty() == true);
+    ASSERT(a1.empty() == false);
+    ASSERT(a31.empty() == false);
+    ASSERT(a32.empty() == false);
+    ASSERT(a33.empty() == false);
+    ASSERT(a63.empty() == false);
+    ASSERT(a64.empty() == false);
+    ASSERT(a65.empty() == false);
+
+    unsigned index = 100;
+    ASSERT(a0.findFirst(index) == false && index == 100);
+    ASSERT(a0.clearFirst(index) == false && index == 100);
+    ASSERT(a0.findFirst(index) == false && index == 100);
+
+    ASSERT(a1.findFirst(index) == true && index == 0);
+    ASSERT(a31.findFirst(index) == true && index == 0);
+    ASSERT(a32.findFirst(index) == true && index == 0);
+    ASSERT(a33.findFirst(index) == true && index == 0);
+    ASSERT(a63.findFirst(index) == true && index == 0);
+    ASSERT(a64.findFirst(index) == true && index == 0);
+    ASSERT(a65.findFirst(index) == true && index == 0);
+
+    ASSERT(a1.clearFirst(index) == true && index == 0);
+    ASSERT(a1.clearFirst(index) == false && index == 0);
+    ASSERT(a1.findFirst(index) == false && index == 0);
+
+    for (unsigned x = 0; x < 31; x++)
+        ASSERT(a31.clearFirst(index) == true && index == x);
+    ASSERT(a31.clearFirst(index) == false && index == 30);
+    ASSERT(a31.findFirst(index) == false && index == 30);
+
+    for (unsigned x = 0; x < 32; x++)
+        ASSERT(a32.clearFirst(index) == true && index == x);
+    ASSERT(a32.clearFirst(index) == false && index == 31);
+    ASSERT(a32.findFirst(index) == false && index == 31);
+
+    for (unsigned x = 0; x < 33; x++)
+        ASSERT(a33.clearFirst(index) == true && index == x);
+    ASSERT(a33.clearFirst(index) == false && index == 32);
+    ASSERT(a33.findFirst(index) == false && index == 32);
+
+    for (unsigned x = 0; x < 63; x++)
+        ASSERT(a63.clearFirst(index) == true && index == x);
+    ASSERT(a63.clearFirst(index) == false && index == 62);
+    ASSERT(a63.findFirst(index) == false && index == 62);
+
+    for (unsigned x = 0; x < 64; x++)
+        ASSERT(a64.clearFirst(index) == true && index == x);
+    ASSERT(a64.clearFirst(index) == false && index == 63);
+    ASSERT(a64.findFirst(index) == false && index == 63);
+
+    for (unsigned x = 0; x < 65; x++)
+        ASSERT(a65.clearFirst(index) == true && index == x);
+    ASSERT(a65.clearFirst(index) == false && index == 64);
+    ASSERT(a65.findFirst(index) == false && index == 64);
+}
+
 void main()
 {
     arrayOfObjects();
@@ -122,6 +208,7 @@ void main()
     eraseChar();
     eraseInt();
     findInArrayOfPointers();
+    bitArraySizeEdgeCases();
     
     LOG("Success.\n");
 }
