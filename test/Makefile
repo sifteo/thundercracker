@@ -48,10 +48,10 @@ SDK_DIR := $(TC_DIR)/sdk
 tests: $(TESTS)
 
 $(TESTS):
-	@PATH="$(SDK_DIR)/bin:$(PATH)" TC_DIR="$(TC_DIR)" SDK_DIR="$(SDK_DIR)" $(MAKE) -C $@
+	@PATH="$(SDK_DIR)/bin:/bin:/usr/bin:/usr/local/bin" TC_DIR="$(TC_DIR)" SDK_DIR="$(SDK_DIR)" $(MAKE) -C $@
 
 clean:
-	@PATH="$(SDK_DIR)/bin:$(PATH)" TC_DIR="$(TC_DIR)" SDK_DIR="$(SDK_DIR)" $(MAKE) _clean
+	@PATH="$(SDK_DIR)/bin:/bin:/usr/bin:/usr/local/bin" TC_DIR="$(TC_DIR)" SDK_DIR="$(SDK_DIR)" $(MAKE) _clean
 
 # Internal target for 'clean', with environment vars set up. I couldn't
 # see a better way to set up environment vars and do the 'for' loop in one step.
