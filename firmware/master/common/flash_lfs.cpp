@@ -45,6 +45,19 @@ bool LFS::isEmpty(const uint8_t *bytes, unsigned count)
     return true;
 }
 
+uint32_t LFS::indexBlockAddr(FlashVolume vol, unsigned row)
+{
+    // Calculate the raw flash address of an index block
+
+    ASSERT(vol.isValid());
+    ASSERT(vol.getType() == FlashVolume::T_LFS);
+    ASSERT(row < FlashLFSVolumeHeader::NUM_ROWS);
+
+    return vol.block.address()
+        + FlashMapBlock::BLOCK_SIZE
+        - (row + 1) * FlashBlock::BLOCK_SIZE;
+}
+
 FlashLFSVolumeHeader *FlashLFSVolumeHeader::fromVolume(FlashBlockRef &ref, FlashVolume vol)
 {
     /*
@@ -133,14 +146,11 @@ bool FlashLFSIndexBlockIter::beginBlock(uint32_t blockAddr)
             return false;
     }
 
+    // Point just prior to the first record
     anchor = ptr;
     currentOffset = anchor->getOffsetInBytes();
-    currentRecord = LFS::firstRecord(ptr);
-
-    if (currentRecord->isValid())
-        return true;
-    else
-        return next();
+    currentRecord = 0;
+    return true;
 }
 
 bool FlashLFSIndexBlockIter::prev()
@@ -176,14 +186,28 @@ bool FlashLFSIndexBlockIter::next()
      */
 
     FlashLFSIndexRecord *ptr = currentRecord;
-    ASSERT(ptr);
-    ASSERT(ptr->isValid());
+    unsigned nextOffset = currentOffset;
 
-    unsigned nextOffset = currentOffset + ptr->getSizeInBytes();
+    if (ptr) {
+        // Already pointing to a valid record
+        ASSERT(ptr->isValid());
+        nextOffset += ptr->getSizeInBytes();
+
+    } else {
+        // Iterating from anchor to first record
+        ptr = LFS::firstRecord(anchor);
+        if (ptr->isValid()) {
+            currentRecord = ptr;
+            return true;
+        }
+    }
 
     while (1) {
         ptr++;
         if (ptr > LFS::lastRecord(&*blockRef))
+            return false;
+
+        if (ptr->isEmpty())
             return false;
 
         if (ptr->isValid()) {
@@ -192,6 +216,47 @@ bool FlashLFSIndexBlockIter::next()
             return true;
         }
     }
+}
+
+FlashLFSIndexRecord *FlashLFSIndexBlockIter::beginAppend(FlashBlockWriter &writer)
+{
+    /*
+     * Start writing to the first unused record slot in this index block.
+     * If we're out of space, returns 0. Otherwise, points 'writer' at the
+     * proper block and returns a writable mapped pointer to the new record.
+     *
+     * Advances the iterator to this new record.
+     */
+
+    // Advance through all valid records
+    while (next());
+
+    FlashLFSIndexRecord *ptr = currentRecord;
+    unsigned nextOffset = currentOffset;
+
+    if (ptr) {
+        // Pointing to a valid record; advance past it.
+        ASSERT(ptr->isValid());
+        nextOffset += ptr->getSizeInBytes();
+        ptr++;
+    } else {
+        // Empty! Start at the beginning.
+        ptr = LFS::firstRecord(anchor);
+        ASSERT(!ptr->isValid());
+        ASSERT(nextOffset == anchor->getOffsetInBytes());
+    }
+
+    // Skip any invalid records until we get to the first empty one.
+    do {
+        if (ptr > LFS::lastRecord(&*blockRef))
+            return 0;
+    } while (!ptr->isEmpty());
+
+    // Write here.
+    writer.beginBlock(&*blockRef);
+    currentRecord = ptr;
+    currentOffset = nextOffset;
+    return ptr;
 }
 
 void FlashLFSVolumeVector::compact()
@@ -292,21 +357,6 @@ FlashLFS::FlashLFS(FlashVolume parent)
     lastSequenceNumber = sequences[index - 1];
 }
 
-bool FlashLFS::newObject(unsigned key, uint32_t size, uint32_t crc, uint32_t &addr)
-{
-    /*
-     * Allocate space for a new object, and write an index record for it.
-     * We delegate this to newObjectInVolume() if we have a candidate volume
-     * to write to. Otherwise, we'll try to allocate a new volume.
-     */
-
-    FlashVolume vol = volumes.last();
-    if (vol.block.isValid() && newObjectInVolume(key, size, crc, addr, vol))
-        return true;
-
-    return newVolume() && newObjectInVolume(key, size, crc, addr, volumes.last());
-}
-
 bool FlashLFS::newVolume()
 {
     /*
@@ -340,41 +390,177 @@ bool FlashLFS::newVolume()
     return true;
 }
 
-bool FlashLFS::newObjectInVolume(unsigned key, uint32_t size, uint32_t crc,
-    uint32_t &addr, FlashVolume vol)
+FlashLFSObjectAllocator::FlashLFSObjectAllocator(FlashLFS &lfs, unsigned key,
+    unsigned size, unsigned crc)
+    : lfs(lfs), key(key),
+      size(roundup<FlashLFSIndexRecord::SIZE_UNIT>(size)),
+      crc(crc), addr(FlashBlock::INVALID_ADDRESS)
 {
+    ASSERT(FlashLFSIndexRecord::isKeyAllowed(key));
+    ASSERT(FlashLFSIndexRecord::isSizeAllowed(size));
+    ASSERT(FlashLFSIndexRecord::isSizeAllowed(this->size));
+}
+
+bool FlashLFSObjectAllocator::allocate()
+{
+    /*
+     * Allocate space for a new object, and write an index record for it.
+     * We delegate this to allocInVolume() if we have a candidate volume
+     * to write to. Otherwise, we'll try to allocate a new volume.
+     */
+
+    FlashVolume vol = lfs.volumes.last();
+    if (vol.block.isValid() && allocInVolume(vol))
+        return true;
+
+    return lfs.newVolume() && allocInVolume(lfs.volumes.last());
+}
+
+bool FlashLFSObjectAllocator::allocInVolume(FlashVolume vol)
+{
+    /*
+     * Try to allocate a new object within a specific volume. This looks for
+     * the last meta-index row, and tries to allocate a volume there. If
+     * there isn't enough space, we try again on a new meta-index row.
+     */
+
     ASSERT(vol.isValid());
 
-    FlashBlockRef ref;
-    FlashMapSpan span = vol.getPayload(ref);
+    // Map the FlashVolume header
+    FlashBlockRef hdrRef;
+    unsigned hdrSize = sizeof(FlashLFSVolumeHeader);
+    FlashLFSVolumeHeader *hdr = (FlashLFSVolumeHeader*)vol.mapTypeSpecificData(hdrRef, hdrSize);
+    ASSERT(hdrSize == sizeof(FlashLFSVolumeHeader));
 
-    // Jump to last block in meta-index. If it's full, allocate a new block and write an anchor
-    // Write an index record (allocates space for the object)
-    // Return location at which object data can be written.
+    // How full is this volume?
+    unsigned numNonEmptyRows = hdr->numNonEmptyRows();
+    ASSERT(numNonEmptyRows <= FlashLFSVolumeHeader::NUM_ROWS);
 
-    if (!span.offsetToFlashAddr(0, addr))
+    // Can we add it to the last row?
+    if (numNonEmptyRows && allocInVolumeRow(vol, hdrRef, hdr, numNonEmptyRows - 1))
+        return true;
+
+    // Okay, how about a new row?
+    return (numNonEmptyRows < FlashLFSVolumeHeader::NUM_ROWS)
+        && allocInVolumeRow(vol, hdrRef, hdr, numNonEmptyRows);
+}
+
+uint32_t FlashLFSObjectAllocator::findAnchorOffset(FlashVolume vol, unsigned row)
+{
+    /*
+     * Look for the proper anchor offset to set in the index block for 'row'.
+     * Assumes 'row' is a new, empty index block. We search backwards for an
+     * index block that we can calculate a valid anchor offset from.
+     */
+
+    while (row) {
+        // Examine the previous row.
+        row--;
+
+        FlashLFSIndexBlockIter iter;
+        if (iter.beginBlock(LFS::indexBlockAddr(vol, row))) {
+            // This row has a valid anchor. Iterate to the end.
+            while (iter.next());
+            return iter.getNextOffset();
+        }
+    }
+
+    // Base case: No previous objects, start at zero.
+    return 0;
+}
+
+void FlashLFSObjectAllocator::writeAnchor(FlashBlockWriter &writer, uint32_t anchorOffset)
+{
+    /*
+     * Using a FlashBlockWriter that's already pointing at an index block,
+     * try to write an anchor into that block. Fails silently; we detect
+     * failures in FlashLFSIndexBlockIter.
+     */
+
+    FlashLFSIndexAnchor *ptr = LFS::firstAnchor(&*writer.ref);
+    FlashLFSIndexAnchor *limit = LFS::lastAnchor(&*writer.ref);
+
+    while (ptr <= limit) {
+        // Shouldn't already have an anchor!
+        ASSERT(!ptr->isValid());
+
+        if (ptr->isEmpty()) {
+            ptr->init(anchorOffset);
+            return;
+        }
+
+        ptr++;
+    }
+}
+
+bool FlashLFSObjectAllocator::allocInVolumeRow(FlashVolume vol,
+    FlashBlockRef &hdrRef, FlashLFSVolumeHeader *hdr, unsigned row)
+{
+    /*
+     * Try to allocate a new object, with a specific volume and
+     * index block (meta-index row). The specified row is guaranteed
+     * to either be the last one in the volume, or a blank new row.
+     *
+     * We need to return false if either the index block is full or
+     * the volume has no room for both the object and the current
+     * index block.
+     */
+
+    /*
+     * First thing's first: Make sure this index block has an anchor.
+     * If not, we'll have to scan the previous block in order to
+     * compute the proper anchor offset.
+     */
+
+    FlashBlockWriter writer;
+    FlashLFSIndexBlockIter iter;
+    uint32_t indexBlockAddr = LFS::indexBlockAddr(vol, row);
+
+    if (!iter.beginBlock(indexBlockAddr)) {
+        // Write an anchor to this block
+
+        writer.beginBlock(indexBlockAddr);
+        writeAnchor(writer, findAnchorOffset(vol, row));
+
+        if (!iter.beginBlock(indexBlockAddr)) {
+            /*
+             * We couldn't write (or successfully read) the anchor.
+             * This really should never happen in normal operation, but
+             * in theory this could mean we had power failures during
+             * every attempt at using this block, and we've filled it up
+             * with invalid anchors. ASSERT on emulator builds.
+             */
+            ASSERT(0);
+            return false;
+        }
+    }
+
+    // Point to the last record in this index block
+    while (iter.next());
+
+    // Try to write an index record; we'll fail if the block is full.
+    FlashLFSIndexRecord *newRecord = iter.beginAppend(writer);
+    if (!newRecord)
         return false;
+
+    /*
+     * Now we can calculate the offset of this new object. Make
+     * sure we haven't filled up the volume; if we have, we'll see
+     * a collision between the object addresses (growing up) and the
+     * index blocks (growing down).
+     */
+
+    ASSERT((size % FlashLFSIndexRecord::SIZE_UNIT) == 0);
+    addr = vol.block.address() + FlashBlock::BLOCK_SIZE + iter.getCurrentOffset();
+    if (addr + size > writer.ref->getAddress())
+        return false;
+
+    // Finish writing the record
+    newRecord->init(key, size, crc);
+
+    // Write to the meta-index's FlashLFSKeyFilter for this row.
+    writer.beginBlock(&*hdrRef);
+    hdr->add(row, key);
 
     return true;
 }
-
-bool FlashLFS::findObject(unsigned key, uint32_t &addr, uint32_t &size)
-{
-    // Scan meta-index backwards, for candidate blocks
-    // Scan blocks forward, to establish anchor
-    // Scan backwards until we match
-    // Return address and size of object (guaranteed linear)
-    return false;
-}
-
-bool FlashLFS::collectGarbage()
-{
-    // Scan backwards, keeping a bitmap of all keys we've found
-    // Any volume consisting of only superceded keys is deleted
-    
-    // Also: If the oldest volume is less than X amount full, copy
-    //       all non-superceded keys, then delete it.
-    //       XXX - how to do this for more than one volume at a time?
-    return false;
-}
-

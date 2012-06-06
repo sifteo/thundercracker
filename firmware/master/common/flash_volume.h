@@ -57,6 +57,10 @@ public:
      *
      *    - If userspace volumes are ever allowed, they will
      *      follow a still-TBD namespacing scheme.
+     *
+     * Note that some volume types imply special behaviour in the filesystem.
+     * Both DELETED and INCOMPLETE volumes are automatically garbage-collected.
+     * LFS volumes are guaranteed to always be exactly one map-block in length.
      */
     enum Type {
         T_LAUNCHER      = _SYS_FS_VOL_LAUNCHER,     // "LN"

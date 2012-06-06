@@ -193,10 +193,10 @@ int32_t _SYS_fs_objectWrite(unsigned key, const uint8_t *data, unsigned dataSize
      */
 
     FlashLFS lfs(parentVol);
-    uint32_t objectAddr;
-    if (!lfs.newObject(key, dataSize, crc, objectAddr)) {
+    FlashLFSObjectAllocator allocator(lfs, key, dataSize, crc);
+
+    if (!allocator.allocate())
         return 0;
-    }
 
     /*
      * Write the actual object data. We effectively do a non-cache-polluting
@@ -205,9 +205,9 @@ int32_t _SYS_fs_objectWrite(unsigned key, const uint8_t *data, unsigned dataSize
      * involve an extra copy from userspace memory to cache memory).
      */
 
-    FlashBlock::invalidate(objectAddr, objectAddr + dataSize);
+    FlashBlock::invalidate(allocator.address(), allocator.address() + dataSize);
 
-    uint32_t currentAddr = objectAddr;
+    uint32_t currentAddr = allocator.address();
     uint32_t remainingBytes = dataSize;
 
     while (remainingBytes) {
@@ -222,10 +222,18 @@ int32_t _SYS_fs_objectWrite(unsigned key, const uint8_t *data, unsigned dataSize
         }
 
         ASSERT(chunk > 0);
-        ASSERT(currentAddr >= objectAddr);
-        ASSERT(currentAddr + chunk <= objectAddr + dataSize);
+        ASSERT(currentAddr >= allocator.address());
+        ASSERT(currentAddr + chunk <= allocator.address() + dataSize);
 
         FlashDevice::write(currentAddr, pa, chunk);
+
+        // Verify, on siftulator only
+        DEBUG_ONLY({
+            uint8_t buffer[FlashLFSIndexRecord::MAX_SIZE];
+            ASSERT(chunk <= sizeof buffer);
+            FlashDevice::read(currentAddr, buffer, chunk);
+            ASSERT(0 == memcmp(buffer, pa, chunk));
+        });
 
         va += chunk;
         remainingBytes -= chunk;
