@@ -554,13 +554,15 @@ class FlashLFSObjectIter
 public:
     FlashLFSObjectIter(FlashLFS &lfs);
 
-    bool next();
-    bool nextWithKey(unsigned key);
+    static const unsigned KEY_ANY = unsigned(-1);
+
+    bool next(unsigned key = KEY_ANY);
     bool readAndCheck(uint8_t *buffer, unsigned size);
 
     // Address of the current object
     unsigned address() const {
-        return addr;
+        return volume().block.address()
+            + FlashBlock::BLOCK_SIZE + indexIter.getCurrentOffset();
     }
 
     // Index record for the current object
@@ -570,9 +572,20 @@ public:
 
 private:
     FlashLFS &lfs;
-    unsigned row;
-    unsigned addr;
+    unsigned volumeCount;               // Number of volumes remaining
+    unsigned rowCount;                  // Number of meta-index rows remaining
     FlashLFSIndexBlockIter indexIter;
+
+    // Current volume
+    FlashVolume volume() const {
+        ASSERT(volumeCount > 0 && volumeCount <= lfs.volumes.MAX_VOLUMES);
+        FlashVolume v = lfs.volumes.slots[volumeCount - 1];
+        ASSERT(v.isValid());
+        return v;
+    }
+
+    void beginVolume();
+    void beginRow();
 };
 
 

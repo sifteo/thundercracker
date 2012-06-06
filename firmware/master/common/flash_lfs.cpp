@@ -6,6 +6,7 @@
 #include "flash_lfs.h"
 #include "macros.h"
 #include "bits.h"
+#include "crc.h"
 
 
 uint8_t LFS::computeCheckByte(uint8_t a, uint8_t b)
@@ -569,22 +570,43 @@ bool FlashLFSObjectAllocator::allocInVolumeRow(FlashVolume vol,
 }
 
 FlashLFSObjectIter::FlashLFSObjectIter(FlashLFS &lfs)
-    : lfs(lfs)
+    : lfs(lfs), volumeCount(lfs.volumes.numSlotsInUse)
 {
-}
-
-bool FlashLFSObjectIter::next()
-{
-    return false;
-}
-
-bool FlashLFSObjectIter::nextWithKey(unsigned key)
-{
-    return false;
+    beginVolume();
 }
 
 bool FlashLFSObjectIter::readAndCheck(uint8_t *buffer, unsigned size)
 {
+    /*
+     * Read 'size' bytes from the current address in flash into 'buffer',
+     * CRC them, and return 'true' iff the CRC matches.
+     *
+     * Generally this will be the buffer we're reading an object into,
+     * therefore avoiding a separate copy or any cache pollution. The
+     * buffer may not generally be smaller than the stored object. This
+     * is only permissible if the truncated object matches the original
+     * object when padded out to a SIZE_UNIT boundary with 0xFF bytes,
+     * as you'd see when reading or writing an object which is not a
+     * multiple of our SIZE_UNIT.
+     */
+
+    FlashDevice::read(address(), buffer, size);
+
+    CrcStream cs;
+    cs.reset();
+    cs.addBytes(buffer, size);
+    return record()->checkCRC(cs.get(FlashLFSIndexRecord::SIZE_UNIT));
+}
+
+bool FlashLFSObjectIter::next(unsigned key)
+{
     return false;
 }
 
+void FlashLFSObjectIter::beginVolume()
+{
+}
+
+void FlashLFSObjectIter::beginRow()
+{
+}
