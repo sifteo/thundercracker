@@ -299,21 +299,29 @@ inline void XmTrackerPlayer::loadNextNotes()
         // Apply any state changes immediately
         channel.applyStateOnTick = ticks;
 
-        if (channel.state == STATE_START) {
-            // Volume
-            channel.fadeout = UINT16_MAX;
-
-            // Remember old/current period for portamento slide.
+        if (!recNote && channel.realNote(note.note)) {
+            /* A new explicit note is a potential new target for portamento.
+             * Cache the old period and reset the portamento effect state in
+             * case the note involves a tone portamento.
+             */
+            channel.porta.active = false;
             channel.porta.period = channel.period;
-            if (!recNote) {
-                channel.period = getPeriod(channel.realNote(note.note), channel.instrument.finetune);
-                if (note.instrument != channel.note.instrument || !channel.porta.period) {
-                    channel.porta.period = channel.period;
-                }
-            }
-            if (channel.period) {
-                channel.frequency = getFrequency(channel.period);
-            }
+            channel.period = getPeriod(channel.realNote(note.note), channel.instrument.finetune);
+
+            // New notes get a fresh fadeout
+            channel.fadeout = UINT16_MAX;
+        }
+
+        /* If the instrument has changed or there is no previous note (as
+         * indicated by the lack of a porta period), reset the portamento
+         * period to the new period.
+         */
+        if (note.instrument != channel.note.instrument || !channel.porta.period) {
+            channel.porta.period = channel.period;
+        }
+
+        if (channel.period) {
+            channel.frequency = getFrequency(channel.period);
         }
 
         channel.note = note;
@@ -403,11 +411,22 @@ void XmTrackerPlayer::processVibrato(XmTrackerChannel &channel)
 
 void XmTrackerPlayer::processPorta(XmTrackerChannel &channel)
 {
-    if (!ticks) {
-        uint32_t tmp;
-        tmp = channel.period;
+    if (!channel.porta.active) {
+        channel.porta.active = true;
+        /* Frequency shifting from channel.period to channel.porta.period, so
+         * apply the porta.period to the channel state and cache the target.
+         *
+         * This is all done because once the porta effect ends, if it did not
+         * make it to the target period, the channel should keep playing the
+         * incompletely-shifted period (as affected by effects) until a new
+         * note comes along in the pattern and resets the period.
+         */
+        uint32_t tmp = channel.period;
         channel.period = channel.porta.period;
         channel.porta.period = tmp;
+    }
+
+    if (!ticks) {
         // Not playing a new note anymore, sustain-shifting to another.
         // XXX: ASSERT that we were already playing
         channel.state = STATE_PLAYING;
@@ -777,6 +796,7 @@ void XmTrackerPlayer::processEffects(XmTrackerChannel &channel)
                     channel.envelope.point = 0;
                 } else {
                     channel.envelope.point = param;
+                    channel.envelope.tick = 0;
                 }
             }
             break;

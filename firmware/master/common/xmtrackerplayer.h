@@ -45,6 +45,7 @@ struct XmTrackerChannel {
                 fineSlideUp:4;
         struct {
             uint32_t period;
+            bool active;
         } porta;
         struct {
             uint8_t phase;
