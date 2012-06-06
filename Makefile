@@ -8,6 +8,9 @@ DOCS := docs/doxygen
 USERSPACE := launcher sdk/examples extras
 TESTS := test
 
+# Default parallelization for make. Override on the command line
+PARALLEL := -j 4
+
 # Build order matters
 ALL_SUBDIRS := $(USERSPACE_DEPS) $(DOCS) $(USERSPACE) $(TEST_DEPS) $(TESTS)
 NONUSER_SUBDIRS := $(USERSPACE_DEPS) $(DOCS) $(TEST_DEPS) $(TESTS)
@@ -24,9 +27,13 @@ all: sdk-deps $(ALL_SUBDIRS)
 $(USERSPACE):
 	@PATH="$(SDK_DIR)/bin:/bin:/usr/bin:/usr/local/bin" SDK_DIR="$(SDK_DIR)" make -C $@
 
-# All other subdirs are a normal make invocation
-$(NONUSER_SUBDIRS):
+# Plain subdir builds (Don't parallelize tests or docs)
+$(DOCS) $(TESTS):
 	@$(MAKE) -C $@
+
+# Parallelize our large builds
+$(USERSPACE_DEPS) $(TEST_DEPS):
+	@$(MAKE) $(PARALLEL) -C $@
 
 clean: sdk-deps-clean docs-clean nonuser-clean userspace-clean
 
