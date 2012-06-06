@@ -155,6 +155,10 @@ bool XmTrackerLoader::readNextInstrument()
     if (nSamples == 0) {
         log->error("%s, instrument %u: Instruments with no samples have not been tested",
                    filename, instruments.size());
+
+        // Instruments with no samples have no envelopes to read.
+        instrument.volumeEnvelopePoints = -1;
+
         /* There is nothing more to read, padding aside, the next thing in the
          * file is the next instrument.
          */
