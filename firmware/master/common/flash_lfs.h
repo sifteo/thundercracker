@@ -401,7 +401,7 @@ public:
     {
         FlashLFSIndexRecord *p = currentRecord;
         ASSERT(p == 0 || p->isValid());
-        return currentOffset + p ? p->getSizeInBytes() : 0;
+        return currentOffset + (p ? p->getSizeInBytes() : 0);
     }
 };
 

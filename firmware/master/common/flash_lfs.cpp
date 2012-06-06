@@ -22,9 +22,12 @@ uint8_t LFS::computeCheckByte(uint8_t a, uint8_t b)
      * This pattern of bit rotations means that it's always legal
      * to chop off the MSB. We only actually do this, though, if
      * the result otherwise would have been 0xFF.
+     *
+     * XOR'ing in a constant ensures that a run of zeroes isn't
+     * misinterpreted as valid data.
      */
 
-    uint8_t result = a ^ ROR8(b, 1) ^ ROR8(a, 3) ^ ROR8(b, 5);
+    uint8_t result = 0x42 ^ a ^ ROR8(b, 1) ^ ROR8(a, 3) ^ ROR8(b, 5);
 
     if (result == 0xFF)
         result = 0x7F;
