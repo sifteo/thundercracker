@@ -55,6 +55,36 @@ public:
 };
 
 
+/**
+ * A stateful utility class for CRC'ing streams of unaligned bytes.
+ * This buffers partial words of data, and allows the end of the stream
+ * to be padded up until a specified alignment boundary.
+ */
+
+class CrcStream {
+public:
+    void reset() {
+        byteTotal = 0;
+        Crc32::reset();
+    }
+
+    uint32_t get(unsigned alignment = 4) {
+        padToAlignment(alignment);
+        return Crc32::get();
+    }
+
+    void addBytes(const uint8_t *bytes, uint32_t count);
+    void padToAlignment(unsigned alignment, uint8_t padByte = 0xFF);
+
+private:
+    unsigned byteTotal;
+    union {
+        uint32_t word;
+        uint8_t bytes[4];
+    } buffer;
+};
+
+
 /**********************************************************************
  *
  * Implementation is inlined on hardware, since these entry points are

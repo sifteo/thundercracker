@@ -567,3 +567,24 @@ bool FlashLFSObjectAllocator::allocInVolumeRow(FlashVolume vol,
 
     return true;
 }
+
+FlashLFSObjectIter::FlashLFSObjectIter(FlashLFS &lfs)
+    : lfs(lfs)
+{
+}
+
+bool FlashLFSObjectIter::next()
+{
+    return false;
+}
+
+bool FlashLFSObjectIter::nextWithKey(unsigned key)
+{
+    return false;
+}
+
+bool FlashLFSObjectIter::readAndCheck(uint8_t *buffer, unsigned size)
+{
+    return false;
+}
+

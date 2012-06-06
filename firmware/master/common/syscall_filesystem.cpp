@@ -157,7 +157,29 @@ int32_t _SYS_fs_objectRead(unsigned key, uint8_t *buffer,
         return 0;
     }
 
-    // XXX
+    /*
+     * Search for the requested object in the index.
+     *
+     * Traverse backwards from the newest to the oldest, returning
+     * the first instance of this key which has a valid CRC.
+     *
+     * Note that we use the userspace buffer to CRC the object,
+     * obviating the need for any separate buffer space. This means
+     * it's required that the entire object, excepting any trailing
+     * 0xFF padding, must fit in the buffer. If not, we'll notice
+     * a CRC failure.
+     */
+
+    FlashLFS lfs(parentVol);
+    FlashLFSObjectIter iter(lfs);
+
+    while (iter.nextWithKey(key)) {
+        unsigned size = iter.record()->getSizeInBytes();
+        size = MIN(size, bufferSize);
+        if (iter.readAndCheck(buffer, size))
+            return size;
+    }
+
     return 0;
 }
 

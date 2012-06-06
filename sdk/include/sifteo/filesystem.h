@@ -93,6 +93,10 @@ public:
      * stored data for this object or the size of the provided buffer,
      * whichever is smaller.
      *
+     * The provided 'bufferSize' _must_ be large enough to hold the entire
+     * stored object, excepting only any trailing 0xFF bytes. It is not,
+     * in general, possible to perform partial reads of a stored object.
+     *
      * If no data has been stored for this object yet, returns zero.
      * Note that the object store does not distinguish between zero-length
      * values and missing values.

@@ -387,6 +387,12 @@ public:
 
     FlashLFSIndexRecord *beginAppend(FlashBlockWriter &writer);
 
+    const FlashLFSIndexRecord& operator*() const
+    {
+        ASSERT(currentRecord);
+        return *currentRecord;
+    }
+
     const FlashLFSIndexRecord* operator->() const
     {
         ASSERT(currentRecord);
@@ -531,6 +537,42 @@ private:
 
     uint32_t findAnchorOffset(FlashVolume vol, unsigned row);
     void writeAnchor(FlashBlockWriter &writer, uint32_t anchorOffset);
+};
+
+
+/**
+ * Iterate through stored objects, starting with the most recent ones.
+ * This is used for anything that needs to read from the LFS, including
+ * object retrieval and garbage collection.
+ *
+ * Only supports iteration in one direction: newest to oldest. At construction,
+ * it points just past the most recent object. The first successful call
+ * to next() points it at the most recent object.
+ */
+class FlashLFSObjectIter
+{
+public:
+    FlashLFSObjectIter(FlashLFS &lfs);
+
+    bool next();
+    bool nextWithKey(unsigned key);
+    bool readAndCheck(uint8_t *buffer, unsigned size);
+
+    // Address of the current object
+    unsigned address() const {
+        return addr;
+    }
+
+    // Index record for the current object
+    const FlashLFSIndexRecord *record() const {
+        return &*indexIter;
+    }
+
+private:
+    FlashLFS &lfs;
+    unsigned row;
+    unsigned addr;
+    FlashLFSIndexBlockIter indexIter;
 };
 
 
