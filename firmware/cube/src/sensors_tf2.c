@@ -28,7 +28,11 @@ void tf2_isr(void) __interrupt(VECTOR_TF2) __naked
         ; Squelch immediately. Doesnt matter if it is Tx
 
         #ifdef NBR_SQUELCH_ENABLE
+        ; no squelch for data bits (since side-mask already set)
+        jb		_nb_rx_mask_state2, no_squelch
+squelch:
         anl     _MISC_DIR, #~MISC_NB_OUT        ; Squelch all sides
+no_squelch:
         #endif
 
         push    acc
@@ -45,95 +49,87 @@ void tf2_isr(void) __interrupt(VECTOR_TF2) __naked
         mov     a, TL1                          ; Capture count from Timer 1
         add     a, #0xFF                        ; Nonzero -> C
         mov     a, (_nb_buffer + 1)             ; Previous shift reg contents -> A
-		#ifdef DEBUG_NBR_IO
-        clr		DEBUG_NBR_IO
-		#endif
         mov     TL1, #0                         ; Reset Timer 1.
 
         ; Any transition from this point on, will be accounted towards the next bit
 
-        jb      _nb_rx_mask_state0, 1$          ; First state
-        #ifdef NBR_RX
+h_bit:
+
+        jb		_nb_rx_mask_state0, s0_bit		; First bit?
+		#ifdef NBR_RX
         mov     _MISC_DIR, #(MISC_DIR_VALUE & ~MISC_NB_MASK0)
-        #endif
-		#ifdef DEBUG_NBR_IO
-        setb	DEBUG_NBR_IO
 		#endif
         setb    _nb_rx_mask_state0
-        sjmp    10$                             ;    End of masking
+        sjmp    read_buf                    	; End of masking
 
-1$:
+s0_bit:
 
-        jb      _nb_rx_mask_state1, 2$          ; Second state
+        jb		_nb_rx_mask_state1, s1_bit		; s0 bit?
 		#ifdef NBR_RX
-        mov     _MISC_DIR, #(MISC_DIR_VALUE & ~MISC_NB_MASK1)
+        mov		_MISC_DIR, #(MISC_DIR_VALUE & ~MISC_NB_MASK1)
 		#endif
-		#ifdef DEBUG_NBR_IO
-        setb	DEBUG_NBR_IO
-		#endif
-        mov     _nb_rx_mask_bit0, c             ;    Store first mask bit
+        mov     _nb_rx_mask_bit0, c             ; Store first mask bit
         setb    _nb_rx_mask_state1
-        sjmp    10$                             ;    End of masking
+        sjmp    read_buf
 
-2$:
+s1_bit:
 
-        #ifdef NBR_SQUELCH_ENABLE
-        ; since we are squelching we have to setup side mask every time
-        jb      _nb_rx_mask_state2, 3$       	; Finished second mask bit?
-        #else
-        ; otherwise we setup side mask only once (before receiving first payload bit)
-        jb      _nb_rx_mask_state2, 7$         ; Finished second mask bit?
-        #endif
-        setb    _nb_rx_mask_state2
-        mov     _nb_rx_mask_bit1, c             ;    Store mask bit
-3$:
+        jb		_nb_rx_mask_state2, read_buf	; s1 bit?
+
+s_mask:
+        ; We set the side mask only once (after receiving s1_bit).
 
         ; Finished receiving the mask bits. For future bits, we want to set the mask only
         ; to the exact side that we need. This serves as a check for the side bits we
         ; received. This check is important, since there is otherwise no way to valdiate
         ; the received side bits.
         ;
-        ; At this point, the side bits have been stored independently in nb_rx_mask_bit*.
+        ; At this point, the side bits have been stored independently in nb_rx_mask_bit0 and cy.
         ; We decode them rapidly using a jump tree.
 
-        #ifdef NBR_RX
-        jb      _nb_rx_mask_bit0, 4$
-         jb     _nb_rx_mask_bit1, 5$
-          #ifdef NBR_SQUELCH_ENABLE
-          orl   _MISC_DIR, #(MISC_NB_0_TOP)
-          #else
-          mov   _MISC_DIR, #((MISC_DIR_VALUE ^ MISC_NB_OUT) | MISC_NB_0_TOP)
-          #endif
-          sjmp  7$
-5$:
-          #ifdef NBR_SQUELCH_ENABLE
-          orl   _MISC_DIR, #(MISC_NB_1_LEFT)
-          #else
-          mov   _MISC_DIR, #((MISC_DIR_VALUE ^ MISC_NB_OUT) | MISC_NB_1_LEFT)
-          #endif
-          sjmp  7$
-4$:
-         jb     _nb_rx_mask_bit1, 6$
-          #ifdef NBR_SQUELCH_ENABLE
-          orl   _MISC_DIR, #(MISC_NB_2_BOTTOM)
-          #else
-          mov   _MISC_DIR, #((MISC_DIR_VALUE ^ MISC_NB_OUT) | MISC_NB_2_BOTTOM)
-          #endif
-          sjmp  7$
-6$:
-          #ifdef NBR_SQUELCH_ENABLE
-          orl   _MISC_DIR, #(MISC_NB_3_RIGHT)
-          #else
-          mov   _MISC_DIR, #((MISC_DIR_VALUE ^ MISC_NB_OUT) | MISC_NB_3_RIGHT)
-          #endif
-        #endif
+       	#ifdef NBR_RX
+top:
+        jb  	_nb_rx_mask_bit0, bottom
+        jc		left
+  	  	#ifdef NBR_SQUELCH_ENABLE
+        orl   	_MISC_DIR, #(MISC_NB_0_TOP)
+  	  	#else
+        mov   	_MISC_DIR, #((MISC_DIR_VALUE ^ MISC_NB_OUT) | MISC_NB_0_TOP)
+  	    #endif
+        sjmp  	s_mask_done
 
-7$:
-		#ifdef  DEBUG_NBR_IO
-        setb	DEBUG_NBR_IO
-		#endif
+left:
+  	    #ifdef NBR_SQUELCH_ENABLE
+        orl   	_MISC_DIR, #(MISC_NB_1_LEFT)
+  	  	#else
+        mov   	_MISC_DIR, #((MISC_DIR_VALUE ^ MISC_NB_OUT) | MISC_NB_1_LEFT)
+  	  	#endif
+        sjmp  	s_mask_done
 
-10$:
+bottom:
+        jc		right
+  	    #ifdef NBR_SQUELCH_ENABLE
+        orl   	_MISC_DIR, #(MISC_NB_2_BOTTOM)
+        #else
+        mov   	_MISC_DIR, #((MISC_DIR_VALUE ^ MISC_NB_OUT) | MISC_NB_2_BOTTOM)
+  	  	#endif
+        sjmp  	s_mask_done
+
+right:
+  	    #ifdef NBR_SQUELCH_ENABLE
+        orl   	_MISC_DIR, #(MISC_NB_3_RIGHT)
+  	    #else
+        mov   	_MISC_DIR, #((MISC_DIR_VALUE ^ MISC_NB_OUT) | MISC_NB_3_RIGHT)
+  	    #endif
+
+		#endif	//NBR_RX
+
+s_mask_done:
+
+        setb    _nb_rx_mask_state2
+
+read_buf:
+
         ; Done with masking.
         ; Shift in the received bit, MSB-first, to our 16-bit packet
         ; _nb_buffer+1 is in already in A
@@ -146,12 +142,12 @@ void tf2_isr(void) __interrupt(VECTOR_TF2) __naked
 
         sjmp    nb_bit_done
 
+
         ;--------------------------------------------------------------------
         ; Neighbor Bit Transmit
         ;--------------------------------------------------------------------
 
 nb_tx:
-
         ; We are shifting one bit out of a 16-bit register, then transmitting
         ; a timed pulse if it's a 1. Since we'll be busy-waiting on the pulse
         ; anyway, we organize this code so that we can start the pulse ASAP,
@@ -277,9 +273,6 @@ nb_packet_done:
 #if defined(NBR_TX) || defined(NBR_RX)
         orl     _MISC_DIR, #MISC_NB_OUT         ; Let the LC tanks float
 #endif
-		#ifdef DEBUG_NBR_IO
-        clr		DEBUG_NBR_IO
-		#endif
 
 nb_irq_ret:
 

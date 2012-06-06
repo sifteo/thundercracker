@@ -28,7 +28,6 @@ extern volatile uint8_t sensor_tick_counter_high;
 	extern uint8_t __idata nbr_data_valid[2];
 	extern uint8_t __idata nbr_data_invalid[2];
 #endif
-//#define DEBUG_NBR_IO	P3.1
 
 extern __bit touch;
 #ifdef DEBUG_TOUCH

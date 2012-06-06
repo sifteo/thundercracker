@@ -28,7 +28,6 @@ __bit nb_rx_mask_state0;
 __bit nb_rx_mask_state1;
 __bit nb_rx_mask_state2;
 __bit nb_rx_mask_bit0;
-__bit nb_rx_mask_bit1;
 __bit touch;
 
 #ifdef DEBUG_NBR
