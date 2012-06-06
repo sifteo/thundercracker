@@ -59,6 +59,8 @@
  * Common methods used by multiple LFS components.
  */
 namespace LFS {
+    const unsigned KEY_ANY = unsigned(-1);
+
     uint8_t computeCheckByte(uint8_t a, uint8_t b);
     bool isEmpty(const uint8_t *bytes, unsigned count);
     uint32_t indexBlockAddr(FlashVolume vol, unsigned row);
@@ -382,7 +384,7 @@ class FlashLFSIndexBlockIter
 public:
     bool beginBlock(uint32_t blockAddr);
 
-    bool prev();
+    bool previous(unsigned key = LFS::KEY_ANY);
     bool next();
 
     FlashLFSIndexRecord *beginAppend(FlashBlockWriter &writer);
@@ -547,16 +549,14 @@ private:
  *
  * Only supports iteration in one direction: newest to oldest. At construction,
  * it points just past the most recent object. The first successful call
- * to next() points it at the most recent object.
+ * to previous() points it at the most recent object.
  */
 class FlashLFSObjectIter
 {
 public:
     FlashLFSObjectIter(FlashLFS &lfs);
 
-    static const unsigned KEY_ANY = unsigned(-1);
-
-    bool next(unsigned key = KEY_ANY);
+    bool previous(unsigned key = LFS::KEY_ANY);
     bool readAndCheck(uint8_t *buffer, unsigned size);
 
     // Address of the current object
@@ -572,9 +572,14 @@ public:
 
 private:
     FlashLFS &lfs;
-    unsigned volumeCount;               // Number of volumes remaining
-    unsigned rowCount;                  // Number of meta-index rows remaining
     FlashLFSIndexBlockIter indexIter;
+
+    // Counts of remaining volumes/rows, including the 'current' one
+    unsigned volumeCount;
+    unsigned rowCount;
+
+    FlashBlockRef hdrRef;               // Mapped header from current volume
+    FlashLFSVolumeHeader *hdr;
 
     // Current volume
     FlashVolume volume() const {
@@ -583,9 +588,6 @@ private:
         ASSERT(v.isValid());
         return v;
     }
-
-    void beginVolume();
-    void beginRow();
 };
 
 

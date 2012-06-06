@@ -157,11 +157,13 @@ bool FlashLFSIndexBlockIter::beginBlock(uint32_t blockAddr)
     return true;
 }
 
-bool FlashLFSIndexBlockIter::prev()
+bool FlashLFSIndexBlockIter::previous(unsigned key)
 {
     /*
      * Seek to the previous valid index record. Invalid records are skipped.
      * Returns false if no further index records are available.
+     *
+     * If 'key' is not KEY_ANY, skips records that don't match this key.
      */
 
     FlashLFSIndexRecord *ptr = currentRecord;
@@ -173,7 +175,7 @@ bool FlashLFSIndexBlockIter::prev()
         if (ptr < LFS::firstRecord(anchor))
             return false;
 
-        if (ptr->isValid()) {
+        if (ptr->isValid() && (key == LFS::KEY_ANY || key == ptr->getKey())) {
             // Only valid records have a meaningful size
             currentRecord = ptr;
             currentOffset -= ptr->getSizeInBytes();
@@ -569,11 +571,10 @@ bool FlashLFSObjectAllocator::allocInVolumeRow(FlashVolume vol,
     return true;
 }
 
+// Start just prior to the first volume
 FlashLFSObjectIter::FlashLFSObjectIter(FlashLFS &lfs)
-    : lfs(lfs), volumeCount(lfs.volumes.numSlotsInUse)
-{
-    beginVolume();
-}
+    : lfs(lfs), volumeCount(lfs.volumes.numSlotsInUse + 1), rowCount(0)
+{}
 
 bool FlashLFSObjectIter::readAndCheck(uint8_t *buffer, unsigned size)
 {
@@ -598,15 +599,53 @@ bool FlashLFSObjectIter::readAndCheck(uint8_t *buffer, unsigned size)
     return record()->checkCRC(cs.get(FlashLFSIndexRecord::SIZE_UNIT));
 }
 
-bool FlashLFSObjectIter::next(unsigned key)
+bool FlashLFSObjectIter::previous(unsigned key)
 {
+    while (volumeCount) {
+
+        if (rowCount) {
+            // We have a valid volume and row. Previous record within a block
+            if (indexIter.previous(key))
+                return true;
+
+            /*
+             * Out of records in this row. Find the next row, skipping any
+             * that either don't have a valid anchor, and any we can rule
+             * out via the FlashLFSKeyFilter.
+             *
+             * This loop ends with rowCount==0 if no rows could possibly have
+             * the key, or it ends with a nonzero rowCount and indexIter pointing
+             * just before the first record in this index block. In the latter
+             * case, we'll loop back around to the call to previous() above.
+             */
+            
+            while (--rowCount) {
+                unsigned i = rowCount - 1;
+                if ((key == LFS::KEY_ANY || hdr->test(i, key)) &&
+                    indexIter.beginBlock(LFS::indexBlockAddr(volume(), i)))
+                    break;
+            }
+
+        } else {
+            /*
+             * Out of rows? Go to the next volume, and reset the index and
+             * meta-index iterators to the end of that volume.
+             * Sets 'hdr' and 'rowCount'.
+             */
+
+            volumeCount--;
+
+            unsigned hdrSize = sizeof(FlashLFSVolumeHeader);
+            hdr = (FlashLFSVolumeHeader*) volume().mapTypeSpecificData(hdrRef, hdrSize);
+            ASSERT(hdrSize == sizeof(FlashLFSVolumeHeader));
+
+            rowCount = hdr->numNonEmptyRows();
+        }
+    }            
+
+    // End of iteration
+    ASSERT(volumeCount == 0);
+    rowCount = 0;
+    hdr = 0;
     return false;
-}
-
-void FlashLFSObjectIter::beginVolume()
-{
-}
-
-void FlashLFSObjectIter::beginRow()
-{
 }
