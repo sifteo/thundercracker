@@ -59,6 +59,7 @@ bool GLRenderer::init()
     glUseProgramObjectARB(scopeProgram);
     glUniform1iARB(glGetUniformLocationARB(scopeProgram, "sampleBuffer"), 0);
     glUniform1iARB(glGetUniformLocationARB(scopeProgram, "background"), 1);
+    scopeAlphaAttr = glGetUniformLocationARB(scopeProgram, "alphaAttr");
 
     /*
      * Load textures
@@ -360,6 +361,13 @@ void GLRenderer::overlayText(int x, int y, const float color[4], const char *str
 void GLRenderer::overlayRect(int x, int y, int w, int h,
     const float color[4], GLhandleARB program)
 {
+    glUseProgramObjectARB(program);
+    glColor4fv(color);
+    overlayRect(x, y, w, h);
+}
+
+void GLRenderer::overlayRect(int x, int y, int w, int h)
+{
     overlayVA.clear();
     VertexT a, b, c, d;
            
@@ -388,13 +396,11 @@ void GLRenderer::overlayRect(int x, int y, int w, int h,
     overlayVA.push_back(a);
     overlayVA.push_back(c);
     overlayVA.push_back(d);
-        
-    glUseProgramObjectARB(program);
-    glColor4fv(color);
+
     glInterleavedArrays(GL_T2F_V3F, 0, &overlayVA[0]);
     glDrawArrays(GL_TRIANGLES, 0, (GLsizei) overlayVA.size());
 }
-                    
+
 void GLRenderer::drawDefaultBackground(float extent, float scale)
 {
     float tc = scale * extent;
@@ -1043,12 +1049,13 @@ void GLRenderer::overlayAudioVisualizer(float alpha)
 
     // Make each channel's scope a square
     const unsigned height = viewportWidth / MCAudioVisData::NUM_CHANNELS;
-    const float color[4] = { 1, 1, 1, alpha };
-
+    
     if (alpha > 0.999)
         glDisable(GL_BLEND);
 
-    overlayRect(0, viewportHeight - height, viewportWidth, height, color, scopeProgram);
+    glUseProgramObjectARB(scopeProgram);
+    glUniform1fARB(scopeAlphaAttr, alpha);
+    overlayRect(0, viewportHeight - height, viewportWidth, height);
 
     glEnable(GL_BLEND);
     glActiveTexture(GL_TEXTURE1);
