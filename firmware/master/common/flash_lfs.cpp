@@ -571,7 +571,7 @@ bool FlashLFSObjectAllocator::allocInVolumeRow(FlashVolume vol,
     return true;
 }
 
-// Start just prior to the first volume
+// Start just past the last volume
 FlashLFSObjectIter::FlashLFSObjectIter(FlashLFS &lfs)
     : lfs(lfs), volumeCount(lfs.volumes.numSlotsInUse + 1), rowCount(0)
 {}
@@ -608,24 +608,6 @@ bool FlashLFSObjectIter::previous(unsigned key)
             if (indexIter.previous(key))
                 return true;
 
-            /*
-             * Out of records in this row. Find the next row, skipping any
-             * that either don't have a valid anchor, and any we can rule
-             * out via the FlashLFSKeyFilter.
-             *
-             * This loop ends with rowCount==0 if no rows could possibly have
-             * the key, or it ends with a nonzero rowCount and indexIter pointing
-             * just before the first record in this index block. In the latter
-             * case, we'll loop back around to the call to previous() above.
-             */
-            
-            while (--rowCount) {
-                unsigned i = rowCount - 1;
-                if ((key == LFS::KEY_ANY || hdr->test(i, key)) &&
-                    indexIter.beginBlock(LFS::indexBlockAddr(volume(), i)))
-                    break;
-            }
-
         } else {
             /*
              * Out of rows? Go to the next volume, and reset the index and
@@ -633,13 +615,41 @@ bool FlashLFSObjectIter::previous(unsigned key)
              * Sets 'hdr' and 'rowCount'.
              */
 
-            volumeCount--;
-
+            if (!--volumeCount)
+                break;
+            
             unsigned hdrSize = sizeof(FlashLFSVolumeHeader);
             hdr = (FlashLFSVolumeHeader*) volume().mapTypeSpecificData(hdrRef, hdrSize);
             ASSERT(hdrSize == sizeof(FlashLFSVolumeHeader));
 
-            rowCount = hdr->numNonEmptyRows();
+            // Just past the last row
+            rowCount = hdr->numNonEmptyRows() + 1;
+        }
+        
+        /*
+         * Out of records in this row. Find the next row, skipping any
+         * that either don't have a valid anchor, and any we can rule
+         * out via the FlashLFSKeyFilter.
+         */
+        
+        while (--rowCount) {
+            unsigned i = rowCount - 1;
+            if ((key == LFS::KEY_ANY || hdr->test(i, key)) &&
+                indexIter.beginBlock(LFS::indexBlockAddr(volume(), i))) {
+
+                /*
+                 * We have a candidate row which may contain the key we're
+                 * looking for. Iterate to the end, then either we'll be
+                 * pointing to a matching key, or we can loop back up to
+                 * previous() above and we'll find one.
+                 */
+                
+                while (indexIter.next());
+                if (key == LFS::KEY_ANY || indexIter->getKey() == key)
+                    return true;
+                else
+                    break;
+            }
         }
     }            
 

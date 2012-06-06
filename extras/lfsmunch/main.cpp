@@ -12,17 +12,24 @@ static Metadata M = Metadata()
 
 void main()
 {
-    for (unsigned i = 0;; i++) {
+    for (unsigned i = 0; i < 10; i++) {
         LOG("Writing object #%d\n", i);
 
-        String<199> obj;
+        String<15> obj;
         obj << "Obj #" << i;
 
         if (StoredObject(i % StoredObject::LIMIT).write(obj) <= 0)
             break;
     }
     
-    LOG("Done\n");
+    LOG("Done writing, trying to read\n");
+
+    {
+        String<15> obj;
+        if (StoredObject(0).read(obj)) {
+            LOG("Found object: '%s'\n", obj.c_str());
+        }
+    }
 
     while (1)
         System::paint();
