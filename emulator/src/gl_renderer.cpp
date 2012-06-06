@@ -78,10 +78,13 @@ bool GLRenderer::init()
     cubeFaceHilightMaskTexture = loadTexture(img_cube_face_hilight_mask);
     backgroundTexture = loadTexture(img_wood, GL_REPEAT);
     bgLightTexture = loadTexture(img_bg_light);
-    logoTexture = loadTexture(img_logo, GL_CLAMP, GL_LINEAR_MIPMAP_LINEAR, 0.5f);
     fontTexture = loadTexture(ui_font_data_0, GL_CLAMP, GL_NEAREST);
     scopeSampleTexture = 0;
     scopeBackgroundTexture = loadTexture(img_scope_bg, GL_REPEAT, GL_LINEAR_MIPMAP_LINEAR);
+
+    logoTexture = loadTexture(img_logo, GL_CLAMP, GL_LINEAR_MIPMAP_LINEAR);
+    GLfloat logoBorder[4] = { 0.5f, 0.0f, 0.0f, 1.0f };
+    glTexParameterfv(GL_TEXTURE_2D, GL_TEXTURE_BORDER_COLOR, logoBorder);
 
     /*
      * Procedural models
@@ -756,7 +759,7 @@ void GLRenderer::drawCubeFace(unsigned id, const uint16_t *framebuffer)
     glDisable(GL_TEXTURE_2D);
 }
 
-GLuint GLRenderer::loadTexture(const uint8_t *pngData, GLenum wrap, GLenum filter, float border)
+GLuint GLRenderer::loadTexture(const uint8_t *pngData, GLenum wrap, GLenum filter)
 {
     LodePNG::Decoder decoder;
     std::vector<unsigned char> pixels;
@@ -778,9 +781,6 @@ GLuint GLRenderer::loadTexture(const uint8_t *pngData, GLenum wrap, GLenum filte
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, filter);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, wrap);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, wrap);
-
-    GLfloat borderFV[4] = { border, border, border, border };
-    glTexParameterfv(GL_TEXTURE_2D, GL_TEXTURE_BORDER_COLOR, borderFV);
 
     glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA,
                  decoder.getWidth(),
