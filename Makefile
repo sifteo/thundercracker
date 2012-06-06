@@ -27,12 +27,12 @@ all: sdk-deps $(ALL_SUBDIRS)
 $(USERSPACE):
 	@PATH="$(SDK_DIR)/bin:/bin:/usr/bin:/usr/local/bin" SDK_DIR="$(SDK_DIR)" make -C $@
 
-# Plain subdir builds (Don't parallelize tests or docs)
-$(DOCS) $(TESTS):
+# Plain subdir builds (Don't parallelize tests, docs, firmware)
+$(DOCS) $(TESTS) firmware:
 	@$(MAKE) -C $@
 
 # Parallelize our large builds
-$(USERSPACE_DEPS) $(TEST_DEPS):
+vm stir emulator:
 	@$(MAKE) $(PARALLEL) -C $@
 
 clean: sdk-deps-clean docs-clean nonuser-clean userspace-clean
