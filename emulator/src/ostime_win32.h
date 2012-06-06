@@ -10,8 +10,8 @@
 #error This header must only be included by ostime.h
 #endif
 
-#define WIN32_LEAN_AND_MEAN
 #include <windows.h>
+#include <mmsystem.h>
 #include <stdint.h>
 #include "macros.h"
 
@@ -30,6 +30,9 @@ public:
             hasQPC = false;
             LOG(("WARNING: No high-resolution timer available!\n"));
         }
+        
+        // Ask for 1ms resolution in Sleep(), rather than the default 10ms!
+        timeBeginPeriod(1);
     }
 };
 
@@ -46,5 +49,7 @@ inline double OSTime::clock()
 
 inline void OSTime::sleep(double seconds)
 {
-    Sleep(seconds * 1000);
+    int ms = seconds * 1000 - 1;
+    if (ms >= 1)
+        Sleep(ms);
 }
