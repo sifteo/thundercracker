@@ -194,6 +194,8 @@ void main()
 {
     static StarDemo instances[gNumCubes];
 
+    AudioTracker::play(Music);
+
     for (unsigned i = 0; i < arraysize(instances); i++)
         instances[i].init(i);
     

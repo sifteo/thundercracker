@@ -69,6 +69,72 @@ void testLog()
     ASSERT(log(2.0f) == float(b(M_LN2)));
 }
 
+void testExceptions()
+{
+    /*
+     * None of these often-illegal operations should generate faults.
+     * Check that they return expected values.
+     */
+
+    // Integer divide by zero == 0
+    ASSERT(b(50) / b(0) == 0);
+    ASSERT(b(50U) / b(0U) == 0);
+    ASSERT(b(50LL) / b(0LL) == 0);
+    ASSERT(b(50LLU) / b(0LLU) == 0);
+    
+    // Integer modulo (a % 0) == a
+    ASSERT((b(50) % b(0)) == 50);
+    ASSERT((b(50U) % b(0U)) == 50);
+    ASSERT((b(50LL) % b(0LL)) == 50);
+    ASSERT((b(50LLU) % b(0LLU)) == 50);
+
+    // Float divide by zero == +/- infinity
+    ASSERT(b(50.f) / b(0.f) > MAXFLOAT);
+    ASSERT(b(-50.f) / b(0.f) < -MAXFLOAT);
+
+    // NaN
+    ASSERT(isunordered(b(0.f)) == false);
+    ASSERT(isunordered(b(NAN)) == true);
+    ASSERT(isunordered(b(1.f), b(0.f)) == false);
+    ASSERT(isunordered(b(1.f), b(NAN)) == true);
+    ASSERT(isunordered(b(0.0)) == false);
+    ASSERT(isunordered(b(double(NAN))) == true);
+    ASSERT(isunordered(b(1.0), b(0.0)) == false);
+    ASSERT(isunordered(b(1.0), b(double(NAN))) == true);
+
+    // sqrt(-1) == NAN
+    ASSERT(isunordered(sqrt(b(-1.f))) == true);
+    ASSERT(isunordered(sqrt(b(-1.0))) == true);
+
+    // log(0) == -infinity
+    ASSERT(log(b(0.f)) < -MAXFLOAT);
+    ASSERT(log(b(0.0)) < -MAXFLOAT);
+
+    // log(-1) == NAN
+    ASSERT(isunordered(log(b(-1.f))) == true);
+    ASSERT(isunordered(log(b(-1.0))) == true);
+
+    // fmod(0,1) == 0
+    ASSERT(fmod(b(0.f), b(1.f)) == 0.f);
+    ASSERT(fmod(b(0.0), b(1.0)) == 0.0);
+
+    // fmod(inf, 1) == NAN
+    ASSERT(isunordered(fmod(b(log(-1.f)), b(1.f))) == true);
+    ASSERT(isunordered(fmod(b(log(-1.0)), b(1.0))) == true);
+
+    // fmod(1, 0) == NAN
+    ASSERT(isunordered(fmod(b(1.f), b(0.f))) == true);
+    ASSERT(isunordered(fmod(b(1.0), b(0.0))) == true);
+
+    // pow(0, -1.5) == infinity
+    ASSERT(pow(b(0.f), b(-1.5f)) > MAXFLOAT);
+    ASSERT(pow(b(0.0), b(-1.5 )) > MAXFLOAT);
+
+    // pow(-1, 1.5) == NAN
+    ASSERT(isunordered(pow(b(-1.f), b(1.5f))) == true);
+    ASSERT(isunordered(pow(b(-1.0), b(1.5 ))) == true);
+}
+
 void main()
 {
     testClamp();
@@ -77,6 +143,7 @@ void main()
     testRound();
     testAlmostEqual();
     testLog();
+    testExceptions();
 
     LOG("Success.\n");
 }

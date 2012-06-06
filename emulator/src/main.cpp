@@ -23,6 +23,7 @@ static bool hasConsole = true;
 
 #include "frontend.h"
 #include "system.h"
+#include "ostime.h"
 #include "lua_script.h"
 
 
@@ -56,7 +57,7 @@ static void usage()
             "  -e SCRIPT.lua       Execute a Lua script instead of the default frontend\n"
             "  -l LAUNCHER.elf     Start the supplied binary as the system launcher\n"
             "\n"
-            "  --headless          Run without the graphical frontend\n"
+            "  --headless          Run without graphics or sound output\n"
             "  --lock-rotation     Lock rotation by default\n"
             "  --svm-trace         Trace SVM instruction execution\n"
             "  --svm-stack         Monitor SVM stack usage\n"
@@ -65,6 +66,7 @@ static void usage()
             "  --paint-trace       Trace the state of the repaint controller\n"
             "  --white-bg          Force the UI to use a plain white background\n"
             "  --stdout FILENAME   Redirect output to FILENAME\n"
+            "  --waveout FILE.wav  Log all audio output to LOG.wav\n"
             "\n"
             "Games:\n"
             "  Any games specified on the command line will be installed to\n"
@@ -72,7 +74,7 @@ static void usage()
             "  version of the system Launcher is used. This can be overridden\n"
             "  with the -l option.\n"
             "\n"
-            APP_COPYRIGHT "\n");
+            APP_COPYRIGHT_ASCII "\n");
 }
 
 static void getConsole()
@@ -137,7 +139,7 @@ static int run(System &sys)
 
     if (sys.opt_headless) {
         while (sys.isRunning())
-            glfwSleep(0.1);
+            OSTime::sleep(0.1);
     } else {
         while (fe->runFrame());
         fe->exit();
@@ -246,6 +248,12 @@ int main(int argc, char **argv)
             continue;
         }
 
+        if (!strcmp(arg, "--waveout") && argv[c+1]) {
+            sys.opt_waveoutFilename = argv[c+1];
+            c++;
+            continue;
+        }
+
         if (!strcmp(arg, "-f") && argv[c+1]) {
             sys.opt_cubeFirmware = argv[c+1];
             c++;
@@ -306,9 +314,6 @@ int main(int argc, char **argv)
         // Other arguments are game binaries
         SystemMC::installGame(arg);
     }
-
-    // Necessary even when running windowless, since we use GLFW for time
-    glfwInit();
 
     return scriptFile ? runScript(sys, scriptFile) : run(sys);
 }

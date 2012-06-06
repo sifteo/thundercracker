@@ -12,7 +12,8 @@ MEMORY
     CACHERAM (xrw) : ORIGIN = 0x20000000 + LENGTH(SYSRAM), LENGTH = 4K
     USERRAM (xrw) : ORIGIN = 0x20000000 + LENGTH(SYSRAM) + LENGTH(CACHERAM), LENGTH = 32K
 
-    FLASH (rx) : ORIGIN = 0x08000000, LENGTH = 128K
+    /* Only 120K to leave room for bootloader */
+    FLASH (rx) : ORIGIN = 0x08000000, LENGTH = 120K
 }
 
 /* Main stack starts at the top of SYSRAM */
@@ -120,6 +121,9 @@ SECTIONS
  * Memory mapped I/O addresses.
  * These are extern symbols defined by hardware.h
  */
+
+/* Flash Option Bytes base address */
+FLASH_OB = 0x1FFFF800;
 
 TIM2 = 0x40000000;
 TIM3 = 0x40000400;

@@ -40,9 +40,15 @@ public:
     static FlashMapSpan secondaryMap(FlashVolume vol);
     static void secondaryUnmap();
 
+    // Return the currently executing program's FlashVolume
+    static FlashVolume getRunningVolume() {
+        return runningVolume;
+    }
+
 private:
     static FlashBlockRef mapRefs[SvmMemory::NUM_FLASH_SEGMENTS];
     static uint8_t runLevel;
+    static FlashVolume runningVolume;
 
     static FlashVolume findLauncher();
     static void prepareToExec(const Elf::Program &program, SvmRuntime::StackInfo &stack);

@@ -187,59 +187,16 @@ public:
 
 
 /**
- * HashFilter is analogous to a Bloom filter with a single hash
- * function (k=1), or equivalently a hash table which ignores collisions
- * and stores only a single bit per element.
- *
- * Like the general Bloom filter, this is a probabilistic data structure
- * which can be used to test whether an item is maybe-in a set or
- * definitely-not-in a set.
- *
- * We use k=1 here because in our use case (flash record keys) the number
- * of bits available for the filter is large compared to the number of
- * distinct elements that the filter is likely to contain. This also
- * naturally makes the filter faster to test and build.
- *
- * Additionally, we invert the typical bit values used in Bloom filters such
- * that an empty filter is all "1"s, and adding an element to the filter
- * sets bits to zero. This means that elements can be added to a filter
- * stored in flash without erasing the underlying flash sector(s).
- *
- * We use the hardware Crc32 as our hash function.
- *
- * We recommend setting tSize to a power of two >= 32.
+ * 8-bit right rotate
  */
-
-template <unsigned tSize>
-class HashFilter
+inline uint8_t ROR8(uint8_t a, unsigned shift)
 {
-    BitVector<tSize> bits;
+    return (a << (8 - shift)) | (a >> shift);
+}
 
-    unsigned hash(uint32_t key) const
-    {
-        Crc32::reset();
-        Crc32::add(key);
 
-        // Efficient for power-of-two values of tSize
-        return Crc32::get() % tSize;
-    }
+static uint8_t computeCheckByte(uint8_t a, uint8_t b);
 
-public:
-
-    void add(uint32_t key)
-    {
-        bits.clear(hash(key));
-    }
-
-    /**
-     * Returns 'true' if the item is possibly in the filter, or 'false'
-     * if it is definitely not.
-     */
-    void test(uint32_t key) const
-    {
-        return !bits.test(hash(key));
-    }
-};
 
 
 #endif

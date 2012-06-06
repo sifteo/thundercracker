@@ -1,0 +1,8 @@
+The tracker module "sv_ttt.xm" is The Titan Turrican, by svenzzon.
+
+It is licensed under the Creative Commons Attribution-Noncommercial-Sharealike license:
+http://creativecommons.org/licenses/by-nc-sa/3.0/
+
+Obtained from:
+http://www.milkytracker.org/?download
+

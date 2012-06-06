@@ -458,6 +458,19 @@ struct FLASH_t {
 
 extern volatile FLASH_t FLASH;
 
+struct FLASH_OB_t {
+    uint16_t RDP;
+    uint16_t USER;
+    uint16_t Data0;
+    uint16_t Data1;
+    uint16_t WRP0;
+    uint16_t WRP1;
+    uint16_t WRP2;
+    uint16_t WRP3;
+};
+
+extern volatile FLASH_OB_t FLASH_OB;
+
 /*
  * USB on-the-go - connectivity line devices
  */

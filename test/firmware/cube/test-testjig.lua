@@ -7,7 +7,7 @@
 
 require('luaunit')
 require('vram')
-require('radio')
+require('testjig')
 
 TestTestjig = {}
 
@@ -35,57 +35,26 @@ TestTestjig = {}
     end
 
     function TestTestjig:test_hwid()
-        -- Read the HWID from NVM
-        local hwid = ""
-        for i = 0, 7 do
-            hwid = hwid .. string.char(gx.cube:nbPeek(i))
-        end
-
-        local ack = gx.cube:testGetACK()
-        assertEquals(string.sub(ack, -8), hwid)
+        assertEquals(jig:peekHWID(), jig:getHWID())
     end
 
     function TestTestjig:test_flash_reset()
-        -- Capture a baseline ACK packet
-        local fifoAck1 = string.byte(string.sub(gx.cube:testGetACK(), 9, 9))
-
-        -- Start a flash reset, and give that time to finish
-        gx.cube:testWrite(packHex('fe'))
-        gx.sys:vsleep(0.3)
-
-        -- Make sure the reset was acknowledged
-        local fifoAck2 = string.byte(string.sub(gx.cube:testGetACK(), 9, 9))
-        assertEquals(fifoAck2, bit.band(fifoAck1 + 1, 0xFF))
+        jig:flashReset()
     end
 
     function TestTestjig:test_flash_program()
-        -- Start a flash reset, and give that time to finish
-        gx.cube:testWrite(packHex('fe'))
-        gx.sys:vsleep(0.3)
-        local fifoAck1 = string.byte(string.sub(gx.cube:testGetACK(), 9, 9))
-
         -- Queue up a bunch of flash loadstream data. This must be smaller
         -- than the FIFO buffer (63 bytes) plus it must be small enough to
         -- send over I2C during a single sensor polling interval.
-        
-        gx.cube:testWrite(packHex(
+
+        jig:flashReset()
+        jig:programFlashAndWait(
             'fde1fd00fd00' ..       -- Address 0x0000
             'fd00fdabfdcd' ..       -- LUT1    [0] = 0xabcd
             'fd01fdfdfdff' ..       -- LUT1    [1] = 0xfdff
             'fd40' ..               -- TILE_P0 [0]
             'fd41'                  -- TILE_P0 [1]
-        ))
-
-        -- Wait for the expected number of byte ACKs
-
-        local deadline = gx.sys:vclock() + 15
-        local fifoAck2 = bit.band(fifoAck1 + 11, 0xFF)
-        repeat
-            gx.sys:vsleep(0.1)
-            if gx.sys:vclock() > deadline then
-                error("Timeout while waiting for flash programming")
-            end
-        until string.byte(string.sub(gx.cube:testGetACK(), 9, 9)) == fifoAck2
+        )
 
         -- Check contents of flash memory
 
@@ -100,13 +69,9 @@ TestTestjig = {}
     function TestTestjig:test_flash_verify()
         -- Rewrite the same tiles multiple times, ensure that the cube
         -- doesn't get stuck.
-        
-        -- Flash reset
-        gx.cube:testWrite(packHex('fe'))
-        gx.sys:vsleep(0.3)
-        local fifoAck1 = string.byte(string.sub(gx.cube:testGetACK(), 9, 9))
 
-        gx.cube:testWrite(packHex(
+        jig:flashReset()
+        jig:programFlashAndWait(
             -- Write 0xFFFF at 0x0000 to force an auto-erase
             -- without actually programming any zero bits.
 
@@ -119,18 +84,7 @@ TestTestjig = {}
 
             'fde1fd02fd00' ..       -- Address 0x0002
             'fd41'                  -- TILE_P0 [1]
-        ))
-
-        -- Wait for the expected number of byte ACKs
-
-        local deadline = gx.sys:vclock() + 15
-        local fifoAck2 = bit.band(fifoAck1 + 14, 0xFF)
-        repeat
-            gx.sys:vsleep(0.1)
-            if gx.sys:vclock() > deadline then
-                error("Timeout while waiting for flash programming")
-            end
-        until string.byte(string.sub(gx.cube:testGetACK(), 9, 9)) == fifoAck2
+        )
 
         -- Check memory contents
 
@@ -141,22 +95,12 @@ TestTestjig = {}
             assertEquals(gx.cube:fwPeek(i), 0xf0f1)
         end
 
-        gx.cube:testWrite(packHex(
-            -- Same thing, again.
+        -- Same thing, again.
+
+        jig:programFlashAndWait(
             'fde1fd02fd00' ..       -- Address 0x0002
             'fd41'                  -- TILE_P0 [1]
-        ))
-
-        -- Wait for the expected number of byte ACKs
-
-        deadline = gx.sys:vclock() + 15
-        local fifoAck3 = bit.band(fifoAck1 + 18, 0xFF)
-        repeat
-            gx.sys:vsleep(0.1)
-            if gx.sys:vclock() > deadline then
-                error("Timeout while waiting for flash programming")
-            end
-        until string.byte(string.sub(gx.cube:testGetACK(), 9, 9)) == fifoAck3
+        )
 
         -- Check memory contents
 
@@ -168,15 +112,19 @@ TestTestjig = {}
         end
     end
 
+    function TestTestjig:test_flash_verify_loop()
+        -- Run the test-flash-verify test many times, to check for transient failures
+    
+        for i = 1, 100 do
+            self:test_flash_verify()
+        end
+    end
+    
     function TestTestjig:test_flash_verify_fail()
         -- Simulate a verification failure, and make sure we can recover
 
-        -- Flash reset
-        gx.cube:testWrite(packHex('fe'))
-        gx.sys:vsleep(0.3)
-        local fifoAck1 = string.byte(string.sub(gx.cube:testGetACK(), 9, 9))
-
-        gx.cube:testWrite(packHex(
+        jig:flashReset()
+        jig:programFlashAndWait(
             -- Write 0xFFFF at 0x0000 to force an auto-erase
             -- without actually programming any zero bits.
 
@@ -189,18 +137,7 @@ TestTestjig = {}
 
             'fde1fd02fd00' ..       -- Address 0x0002
             'fd41'                  -- TILE_P0 [1]
-        ))
-
-        -- Wait for the expected number of byte ACKs
-
-        local deadline = gx.sys:vclock() + 15
-        local fifoAck2 = bit.band(fifoAck1 + 14, 0xFF)
-        repeat
-            gx.sys:vsleep(0.1)
-            if gx.sys:vclock() > deadline then
-                error("Timeout while waiting for flash programming")
-            end
-        until string.byte(string.sub(gx.cube:testGetACK(), 9, 9)) == fifoAck2
+        )
 
         -- Check memory contents
 
@@ -230,7 +167,7 @@ TestTestjig = {}
 
         local deadline = gx.sys:vclock() + 15
         repeat
-            gx.sys:vsleep(0.1)
+            gx.yield()
             if gx.sys:vclock() > deadline then
                 error("Timeout while waiting for cube to reboot")
             end
@@ -253,23 +190,13 @@ TestTestjig = {}
         -- Verify this by checking that previously-set LUT entries have
         -- been reset to zero.
 
-        gx.cube:testWrite(packHex(
+        jig:programFlashAndWait(
             'fd05fdabfdcd' ..       -- LUT1    [5] = 0xabcd
 
             'fde1fd04fd00' ..       -- Address 0x0004
             'fd41' ..               -- TILE_P0 [1]
             'fd45'                  -- TILE_P0 [5]
-        ))
-
-        -- Wait for the programming to happen
-
-        deadline = gx.sys:vclock() + 15
-        repeat
-            gx.sys:vsleep(0.1)
-            if gx.sys:vclock() > deadline then
-                error("Timeout while waiting for flash programming")
-            end
-        until string.byte(string.sub(gx.cube:testGetACK(), 9, 9)) == 8
+        )
 
         -- Check the results
 

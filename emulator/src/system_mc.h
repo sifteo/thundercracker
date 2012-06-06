@@ -12,6 +12,7 @@
 #include <setjmp.h>
 #include <vector>
 #include "tinythread.h"
+#include "wavefile.h"
 
 class System;
 class Radio;
@@ -50,7 +51,22 @@ class SystemMC {
      */
     static void elapseTicks(unsigned n);
 
- private: 
+    /**
+     * Log some audio data. Has no effect unless --waveout was
+     * specified on the command line, and the file opened successfully.
+     */
+    static void logAudioSamples(const int16_t *samples, unsigned count) {
+        instance->waveOut.write(samples, count);
+    }
+
+    /**
+     * How many audio samples should we mix?
+     * Used in headless mode, where we have no natural timebase to use.
+     * This fabricates an audio clock based on SysTime.
+     */
+    static unsigned suggestAudioSamplesToMix();
+
+ private:
     static void threadFn(void *);
     void doRadioPacket();
     void autoInstall();
@@ -68,6 +84,8 @@ class SystemMC {
     uint64_t radioPacketDeadline;
 
     System *sys;
+    WaveWriter waveOut;
+    
     tthread::thread *mThread;
     bool mThreadRunning;
     jmp_buf mThreadExitJmp;

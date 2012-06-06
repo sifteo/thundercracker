@@ -8,6 +8,7 @@
 
 #include <stdio.h>
 #include "system.h"
+#include "ostime.h"
 #include "system_cubes.h"
 
 
@@ -170,8 +171,8 @@ void SystemCubes::threadFn(void *param)
         Cube::Debug::attach(&sys->cubes[0]);
 
     // Seed PRNG per-thread
-    srand(glfwGetTime() * 1e6);
-        
+    srand(OSTime::clock() * 1e6);
+
     while (self->mThreadRunning) {
         /*
          * Pick one of several specific tick batch loops. This keeps the loop tight by

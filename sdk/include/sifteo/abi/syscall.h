@@ -113,9 +113,11 @@ uint64_t _SYS_urem_i64(uint32_t aL, uint32_t aH, uint32_t bL, uint32_t bH) _SC(1
 
 void _SYS_sincosf(uint32_t x, float *sinOut, float *cosOut) _SC(56);
 uint32_t _SYS_fmodf(uint32_t a, uint32_t b) _SC(53);
+uint32_t _SYS_powf(uint32_t a, uint32_t b) _SC(161);
 uint32_t _SYS_sqrtf(uint32_t a) _SC(101);
 uint32_t _SYS_logf(uint32_t a) _SC(155);
 uint64_t _SYS_fmod(uint32_t aL, uint32_t aH, uint32_t bL, uint32_t bH) _SC(102);
+uint64_t _SYS_pow(uint32_t aL, uint32_t aH, uint32_t bL, uint32_t bH) _SC(162);
 uint64_t _SYS_sqrt(uint32_t aL, uint32_t aH) _SC(103);
 uint64_t _SYS_logd(uint32_t aL, uint32_t aH) _SC(156);
 
@@ -126,6 +128,7 @@ void _SYS_memcpy8(uint8_t *dest, const uint8_t *src, uint32_t count) _SC(105);
 void _SYS_memcpy16(uint16_t *dest, const uint16_t *src, uint32_t count) _SC(48);
 void _SYS_memcpy32(uint32_t *dest, const uint32_t *src, uint32_t count) _SC(106);
 int32_t _SYS_memcmp8(const uint8_t *a, const uint8_t *b, uint32_t count) _SC(107);
+uint32_t _SYS_crc32(const uint8_t *data, uint32_t count) _SC(159);
 
 uint32_t _SYS_strnlen(const char *str, uint32_t maxLen) _SC(108);
 void _SYS_strlcpy(char *dest, const char *src, uint32_t destSize) _SC(57);
@@ -166,11 +169,14 @@ void _SYS_audio_pause(_SYSAudioChannelID ch) _SC(128);
 void _SYS_audio_resume(_SYSAudioChannelID ch) _SC(129);
 int32_t _SYS_audio_volume(_SYSAudioChannelID ch) _SC(130);
 void _SYS_audio_setVolume(_SYSAudioChannelID ch, int32_t volume) _SC(131);
+void _SYS_audio_setSpeed(_SYSAudioChannelID ch, uint32_t sampleRate) _SC(160);
 uint32_t _SYS_audio_pos(_SYSAudioChannelID ch) _SC(132);
-bool _SYS_tracker_play(const struct _SYSXMSong *song) _SC(115);
-bool _SYS_tracker_isPlaying() _SC(126);
+uint32_t _SYS_tracker_play(const struct _SYSXMSong *song) _SC(115);
+uint32_t _SYS_tracker_isStopped() _SC(126);
 void _SYS_tracker_stop() _SC(149);
 void _SYS_tracker_setVolume(int volume, _SYSAudioChannelID ch) _SC(93);
+void _SYS_tracker_pause() _SC(157);
+uint32_t _SYS_tracker_isPaused() _SC(158);
 
 // Asset group/slot management
 uint32_t _SYS_asset_slotTilesFree(_SYSAssetSlot slot) _SC(63);
@@ -214,6 +220,9 @@ uint32_t _SYS_fs_listVolumes(unsigned volType, _SYSVolumeHandle *results, uint32
 void _SYS_elf_exec(_SYSVolumeHandle vol) _SC(151);
 uint32_t _SYS_elf_map(_SYSVolumeHandle vol) _SC(152);
 void *_SYS_elf_metadata(_SYSVolumeHandle vol, unsigned key, unsigned minSize, unsigned *actualSize) _SC(153);
+int32_t _SYS_fs_objectRead(unsigned key, uint8_t *buffer, unsigned bufferSize, _SYSVolumeHandle parent) _SC(163);
+int32_t _SYS_fs_objectWrite(unsigned key, const uint8_t *data, unsigned dataSize) _SC(164);
+uint32_t _SYS_fs_runningVolume() _SC(165);
 
 
 #ifdef __cplusplus

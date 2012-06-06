@@ -16,6 +16,8 @@ public:
     static const uint16_t VendorID = 0x22FA;
 #if (BOARD == BOARD_TEST_JIG)
     static const uint16_t ProductID = 0x0110;
+#elif (defined(BOOTLOADER))
+    static const uint16_t ProductID = 0x0115;
 #else
     static const uint16_t ProductID = 0x0105;
 #endif

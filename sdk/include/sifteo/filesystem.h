@@ -24,9 +24,145 @@ namespace Sifteo {
 
 
 /**
- * A Volume is a coarse-grained region of external memory. Volumes are
- * used by the operating system for various purposes, including storing
- * games.
+ * @brief A lightweight ID for a persistently stored object.
+ * 
+ * Games may read and write such objects stored in a key-value
+ * dictionary associated with their volume. The key space is limited.
+ * Valid keys range from 0 to LIMIT. These keys may be allocated manually
+ * or automatically.
+ * 
+ * If you're computing keys dynamically, cast your key to a StoredObject
+ * in order to access the object data at that key. If you're allocating keys
+ * statically, you can create global StoredObject instances which act as
+ * a single place to associate IDs with names.
+ * 
+ * By default, objects are both read from and written to a store associated
+ * with the current game's Volume. It is possible to read another game's
+ * stored data (by specifying its Volume) but you may not write to another
+ * game's object store.
+ *
+ * Objects are stored in a journaled filesystem, and writes are synchronous.
+ * By design, if power fails or the system is otherwise interrupted during
+ * a write, future reads will continue to return the last successfully-written
+ * version of an object.
+ *
+ * Object sizes must be at least one byte, and no more than MAX_SIZE bytes.
+ */
+
+class StoredObject {
+public:
+    _SYSObjectKey sys;
+
+    /// Maximum allowed value for a key (255)
+    static const unsigned LIMIT = _SYS_FS_MAX_OBJECT_KEYS - 1;
+
+    /// Maximum size of an object, in bytes (4080)
+    static const unsigned MAX_SIZE = _SYS_FS_MAX_OBJECT_SIZE;
+
+    /// Initialize from a system object
+    StoredObject(_SYSObjectKey k) : sys(k) {}
+
+    /// Initialize from an integer
+    StoredObject(unsigned k) : sys(k) {
+        ASSERT(k <= LIMIT);
+    }
+
+    /// Implicit conversion to system object
+    operator const _SYSObjectKey () const { return sys; }
+
+    /**
+     * @brief Allocate a unique StoredObject value at compile-time
+     *
+     * Every time this function is invoked, it is resolved by the linker
+     * to a unique StoredObject. We start allocating at LIMIT, and each
+     * successive call to allocate() returns a value decremented by one.
+     *
+     * This allocation order supports a strategy in which manually-assigned
+     * or calculated IDs begin at 0 and count up, and automatically
+     * allocated IDs begin at LIMIT and count down.
+     */
+    static StoredObject allocate() {
+        return StoredObject(LIMIT - _SYS_lti_counter("Sifteo.StoredObject", 0));
+    }
+
+    /**
+     * @brief Read a stored object into memory
+     *
+     * Reads into the provided buffer. Returns the actual number of bytes
+     * read, which on success always equals either the size of the
+     * stored data for this object or the size of the provided buffer,
+     * whichever is smaller.
+     *
+     * If no data has been stored for this object yet, returns zero.
+     * Note that the object store does not distinguish between zero-length
+     * values and missing values.
+     *
+     * By default, this reads from the object store associated with the
+     * current game. The optional 'volume' parameter can be set to
+     * a specific Sifteo::Volume instance in order to read objects from
+     * a different game's data store.
+     *
+     * @warning TO DO: Define error codes (< 0) as necessary.
+     */
+    int read(void *buffer, unsigned bufferSize, _SYSVolumeHandle volume = 0) const {
+        return _SYS_fs_objectRead(sys, (uint8_t*)buffer, bufferSize, volume);
+    }
+
+    /**
+     * @brief Save a new version of an object
+     *
+     * Replace this object's contents with a new block of data.
+     * On success, always returns the number of bytes written,
+     * which is always equal to dataSize.
+     *
+     * The data block will be padded to the next multiple of 16 bytes.
+     *
+     * Writing an empty data block is equivalent to erasing the
+     * stored object.
+     *
+     * If power fails during a write, by design subsequent reads will
+     * return the last successfully-saved version of that object.
+     *
+     * @warning TO DO: Define error codes (< 0) as necessary.
+     */
+    int write(const void *data, unsigned dataSize) const {
+        return _SYS_fs_objectWrite(sys, (const uint8_t*)data, dataSize);
+    }
+
+    /// Erase this object. Equivalent to a zero-length write()
+    int erase() const {
+        return write(0, 0);
+    }
+
+    /// Template wrapper for read() of fixed-size objects.
+    template <typename T>
+    int read(T &buffer, _SYSVolumeHandle volume = 0) const {
+        int result = read((void*) &buffer, sizeof buffer, volume);
+    }
+
+    /// Template wrapper for write() of fixed-size objects
+    template <typename T>
+    int write(const T &buffer) const {
+        return write((const void*) &buffer, sizeof buffer);
+    }
+
+    /// Equality comparison operator
+    bool operator== (_SYSObjectKey other) const {
+        return sys == other;
+    }
+
+    /// Inequality comparison operator
+    bool operator!= (_SYSObjectKey other) const {
+        return sys != other;
+    }
+};
+
+
+/**
+ * @brief A coarse-grained region of external memory
+ *
+ * Volumes are used by the operating system for various purposes,
+ * including storing games.
  *
  * Typical games will not need Volume objects. They are only useful if
  * you need to launch or retrieve data from other programs or other bundles
@@ -53,8 +189,9 @@ public:
     operator const _SYSVolumeHandle () const { return sys; }
 
     /**
-     * List all volumes of the specified type. Populates an Array with
-     * the results.
+     * @brief List all volumes of the specified type
+     *
+     * Populates an Array with the results.
      */
     template <unsigned T>
     static void list(unsigned volType, Array<Volume, T> &volumes)
@@ -64,22 +201,42 @@ public:
     }
 
     /**
-     * Transfer control to a new program, fully replacing the current
-     * program in memory. Does not return.
+     * @brief Transfer control to a new program
      *
+     * Fully replaces the current program in memory. Does not return.
      * For Volumes containing a valid ELF binary only.
      */
-    void exec() const
-    {
+    void exec() const {
         _SYS_elf_exec(sys);
+    }
+
+    /**
+     * @brief Return the Volume corresponding to the currently running program.
+     *
+     * This can be used in various ways, such as skipping the current game
+     * in a listing of other games, reading your own metadata, or accessing
+     * saved objects that belong to you.
+     */
+    static Volume running() {
+        return (_SYSVolumeHandle) _SYS_fs_runningVolume();
+    }
+
+    /// Equality comparison operator
+    bool operator== (_SYSVolumeHandle other) const {
+        return sys == other;
+    }
+
+    /// Inequality comparison operator
+    bool operator!= (_SYSVolumeHandle other) const {
+        return sys != other;
     }
 };
 
 
 /**
- * A VolumeMapping represents a Volume that has been mapped into the
- * secondary flash memory region. This object can be used to access
- * the mapped data.
+ * @brief A Volume that has been mapped into the secondary flash memory region
+ *
+ * This object can be used to access the mapped data.
  *
  * For Volumes containing a valid ELF binary only.
  *

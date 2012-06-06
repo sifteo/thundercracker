@@ -116,7 +116,8 @@ void main()
             auto tilt = cube.tilt();
             str << "tilt:"
                 << Fixed(tilt.x, 3)
-                << Fixed(tilt.y, 3) << "\n";
+                << Fixed(tilt.y, 3)
+                << Fixed(tilt.z, 3) << "\n";
 
             str << "shake: " << counters.cubes[cube].shake;
 

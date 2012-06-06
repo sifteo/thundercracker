@@ -23,7 +23,7 @@ namespace Sifteo {
  */
 
 /**
- * This is a VRAM accessor for drawing graphics in the BG2 mode.
+ * @brief A VRAM accessor for drawing graphics in the BG2 mode.
  *
  * This is a special-purpose mode for doing scaling, rotation, and
  * other effects using an affine transform matrix.
@@ -43,63 +43,64 @@ struct BG2Drawable {
     _SYSAttachedVideoBuffer sys;
 
     /**
-     * Return the width, in tiles, of this mode
+     * @brief Return the width, in tiles, of this mode
      */
     static unsigned tileWidth() {
         return _SYS_VRAM_BG2_WIDTH;
     }
 
     /**
-     * Return the height, in tiles, of this mode
+     * @brief Return the height, in tiles, of this mode
      */
     static unsigned tileHeight() {
         return _SYS_VRAM_BG2_WIDTH;
     }
 
     /**
-     * Return the size of this mode as a vector, in tiles.
+     * @brief Return the size of this mode as a vector, in tiles.
      */
     static UInt2 tileSize() {
         return vec(tileWidth(), tileHeight());
     }
 
     /**
-     * Return the width, in pixels, of this mode
+     * @brief Return the width, in pixels, of this mode
      */
     static unsigned pixelWidth() {
         return tileWidth() * 8;
     }
 
     /**
-     * Return the height, in pixel, of this mode
+     * @brief Return the height, in pixel, of this mode
      */
     static unsigned pixelHeight() {
         return tileHeight() * 8;
     }
 
     /**
-     * Return the size of this mode as a vector, in pixels.
+     * @brief Return the size of this mode as a vector, in pixels.
      */
     static UInt2 pixelSize() {
         return vec(pixelWidth(), pixelHeight());
     }
 
     /**
-     * Returns the size of this drawable's tile data, in bytes
+     * @brief Returns the size of this drawable's tile data, in bytes
      */
     static unsigned sizeInBytes() {
         return tileWidth() * tileHeight() * 2;
     }
 
     /**
-     * Returns the size of this drawable's tile data, in 16-bit words
+     * @brief Returns the size of this drawable's tile data, in 16-bit words
      */
     static unsigned sizeInWords() {
         return tileWidth() * tileHeight();
     }
 
     /**
-     * Calculate the video buffer address of a particular tile.
+     * @brief Calculate the video buffer address of a particular tile.
+     *
      * All coordinates must be in range. This function performs no clipping.
      */
     uint16_t tileAddr(UInt2 pos) {
@@ -107,16 +108,17 @@ struct BG2Drawable {
     }
 
     /**
-     * Erase mode-specific VRAM, filling the BG2 buffer with the specified
-     * absolute tile index value. Does not modify the affine transform
-     * or the border color.
+     * @brief Erase mode-specific VRAM, filling the BG2 buffer with the specified
+     * absolute tile index value.
+     *
+     * Does not modify the affine transform or the border color.
      */
     void erase(uint16_t index = 0) {
         _SYS_vbuf_fill(&sys.vbuf, 0, _SYS_TILE77(index), sizeInWords());
     }
 
     /**
-     * Erase mode-specific VRAM, filling the BG2 buffer with the first tile
+     * @brief Erase mode-specific VRAM, filling the BG2 buffer with the first tile
      * from the specified PinnedAssetImage.
      */
     void erase(const PinnedAssetImage &image) {
@@ -124,7 +126,7 @@ struct BG2Drawable {
     }
     
     /**
-     * Set the border color, given an arbitrary 16-bit RGB565 color.
+     * @brief Set the border color, given an arbitrary 16-bit RGB565 color.
      *
      * This color is displayed 'outside' the 16x16-tile drawable region,
      * in the other three quadrants of the virtual 256x256-pixel plane.
@@ -135,7 +137,7 @@ struct BG2Drawable {
     }
 
     /**
-     * Get the last border color set by setBorder().
+     * @brief Get the last border color set by setBorder().
      */
     RGB565 getBorder() const {
         RGB565 result = { _SYS_vbuf_peek(&sys.vbuf, offsetof(_SYSVideoRAM, bg2_border)) };
@@ -143,7 +145,7 @@ struct BG2Drawable {
     }
 
     /**
-     * Set the current affine transform matrix.
+     * @brief Set the current affine transform matrix.
      */
     void setMatrix(const AffineMatrix &m) {
         _SYSAffine a = {
@@ -160,7 +162,7 @@ struct BG2Drawable {
     }
 
     /**
-     * Plot a single tile, by absolute tile index,
+     * @brief Plot a single tile, by absolute tile index,
      * at location 'pos' in tile units.
      *
      * All coordinates must be in range. This function performs no clipping.
@@ -171,7 +173,7 @@ struct BG2Drawable {
     }
 
     /**
-     * Plot a horizontal span of tiles, by absolue tile index,
+     * @brief Plot a horizontal span of tiles, by absolue tile index,
      * given the position of the leftmost tile and the number of tiles to plot.
      *
      * All coordinates must be in range. This function performs no clipping.
@@ -184,7 +186,7 @@ struct BG2Drawable {
     }
 
     /**
-     * Fill a rectangle of identical tiles, specified as a top-left corner
+     * @brief Fill a rectangle of identical tiles, specified as a top-left corner
      * location and a size.
      *
      * All coordinates must be in range. This function performs no clipping.
@@ -199,9 +201,10 @@ struct BG2Drawable {
     }
 
     /**
-     * Draw a full AssetImage frame, with its top-left corner at the
-     * specified location. Locations are specified in tile units, relative
-     * to the top-left of the 18x18 grid.
+     * @brief Draw a full AssetImage frame, with its top-left corner at the
+     * specified location.
+     *
+     * Locations are specified in tile units, relative to the top-left of the 18x18 grid.
      *
      * All coordinates must be in range. This function performs no clipping.
      */
@@ -211,9 +214,10 @@ struct BG2Drawable {
     }
 
     /**
-     * Draw part of an AssetImage frame, with its top-left corner at the
-     * specified location. Locations are specified in tile units, relative
-     * to the top-left of the 18x18 grid.
+     * @brief Draw part of an AssetImage frame, with its top-left corner at the
+     * specified location.
+     *
+     * Locations are specified in tile units, relative to the top-left of the 18x18 grid.
      *
      * All coordinates must be in range. This function performs no clipping.
      */
@@ -224,8 +228,9 @@ struct BG2Drawable {
     }
 
     /**
-     * Draw text, using an AssetImage as a fixed width font. Each character
-     * is represented by a consecutive 'frame' in the image. Characters not
+     * @brief Draw text, using an AssetImage as a fixed width font.
+     *
+     * Each character is represented by a consecutive 'frame' in the image. Characters not
      * present in the font will be skipped.
      */
     void text(Int2 topLeft, const AssetImage &font, const char *str, char firstChar = ' ')
@@ -246,14 +251,14 @@ struct BG2Drawable {
     }
 
     /**
-     * Return the VideoBuffer associated with this drawable.
+     * @brief Return the VideoBuffer associated with this drawable.
      */
     _SYSVideoBuffer &videoBuffer() {
         return sys.vbuf;
     }
 
     /**
-     * Return the CubeID associated with this drawable.
+     * @brief Return the CubeID associated with this drawable.
      */
     CubeID cube() const {
         return sys.cube;

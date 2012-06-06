@@ -62,7 +62,9 @@ CCFLAGS += -fno-exceptions -fno-threadsafe-statics -fno-rtti
 # for them - disable this since those dtors will never be called
 CCFLAGS += -fno-use-cxa-atexit
 
+ifeq ($(LDSCRIPT), )
 LDSCRIPT := $(MASTER_DIR)/stm32/target.ld
+endif
 
 # Build architecture
 ARCH := -mthumb -mcpu=cortex-m3 -mfix-cortex-m3-ldrd \

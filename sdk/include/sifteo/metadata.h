@@ -15,9 +15,10 @@ namespace Sifteo {
 
 
 /**
- * Metadata objects are special compile-time mechanisms for annotating your
- * game's ELF binary with additional data. Metadata can be added inside
- * a function, as follows:
+ * @brief Metadata objects are special compile-time mechanisms for annotating your
+ * game's ELF binary with additional data.
+ *
+ * Metadata can be added inside a function, as follows:
  *
  *     Metadata().title("My game");
  *
@@ -38,7 +39,7 @@ namespace Sifteo {
 class Metadata {
 public:
     /**
-     * Initialize all required system metadata. Other optional metadata can be
+     * @brief Initialize all required system metadata. Other optional metadata can be
      * added using individual methods on the Metadata class.     
      */
     Metadata()
@@ -58,7 +59,7 @@ public:
     }
 
     /**
-     * Add a human-readable title string to this game's metadata.
+     * @brief Add a human-readable title string to this game's metadata.
      */
     Metadata &title(const char *str)
     {
@@ -71,7 +72,7 @@ public:
     }
 
     /**
-     * Add an icon image to this game's metadata. The image needs to be
+     * @brief Add an icon image to this game's metadata. The image needs to be
      * 96x96 pixels, and it should reside in a separate AssetGroup.
      */
     Metadata &icon(const _SYSAssetImage &i)
@@ -85,7 +86,7 @@ public:
     }
 
     /**
-     * Add an arbitrary image, as a _SYSMetadataImage item, with a
+     * @brief Add an arbitrary image, as a _SYSMetadataImage item, with a
      * user-specified key.
      */
     Metadata &image(uint16_t key, const _SYSAssetImage &i)
@@ -102,7 +103,7 @@ public:
     }
 
     /**
-     * Set the minimum and maximum number of supported cubes for this game.
+     * @brief Set the minimum and maximum number of supported cubes for this game.
      */
     Metadata &cubeRange(unsigned minCubes, unsigned maxCubes)
     {
@@ -121,7 +122,7 @@ public:
     }
 
     /**
-     * The one-argument version of cubeRange sets up identical minimum and
+     * @brief The one-argument version of cubeRange sets up identical minimum and
      * maximum cube counts. The game requires exactly this many cubes.
      */
     Metadata &cubeRange(unsigned count)

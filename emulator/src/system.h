@@ -15,7 +15,6 @@
 #define _SYSTEM_H
 
 #include <string>
-#include <glfw.h>
 #include "vtime.h"
 #include "cube_hardware.h"
 #include "system_cubes.h"
@@ -42,6 +41,7 @@ class System {
     std::string opt_cubeFirmware;
     std::string opt_flashFilename;
     std::string opt_launcherFilename;
+    std::string opt_waveoutFilename;
 
     // UI options
     bool opt_whiteBackground;

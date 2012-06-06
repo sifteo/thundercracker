@@ -5,6 +5,7 @@ SUBDIRS = \
 	sensors \
 	stampy \
 	stars \
+	synth \
 	text
 
 .PHONY: clean subdirs $(SUBDIRS)

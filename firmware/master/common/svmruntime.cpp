@@ -20,11 +20,11 @@
 typedef uint64_t (*SvmSyscall)(reg_t p0, reg_t p1, reg_t p2, reg_t p3,
                                reg_t p4, reg_t p5, reg_t p6, reg_t p7);
 
-// Floating point library aliases, used by syscall-table on hardware only.
+// Library function aliases, used by syscall-table on hardware only.
 #ifdef SIFTEO_SIMULATOR
-#   define FP_ALIAS(_sysName, _fpLibName)   _sysName
+#   define SYS_ALIAS(_sysName, _libName)   _sysName
 #else
-#   define FP_ALIAS(_sysName, _fpLibName)   _fpLibName
+#   define SYS_ALIAS(_sysName, _libName)   _libName
 #endif
 
 #include "syscall-table.def"

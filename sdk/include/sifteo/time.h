@@ -25,9 +25,10 @@ class SystemTime;
  */
 
 /**
- * TimeDelta is a class which efficiently represents a difference between
- * two SystemTimes, with moderate resolution. Deltas are internally stored
- * as 32-bit millisecond counts, but they can be converted to many other units.
+ * @brief Represents a difference between two SystemTimes, with moderate resolution.
+ *
+ * Deltas are internally stored as 32-bit millisecond counts, but they can be
+ * converted to many other units.
  *
  * TimeDeltas can be directly compared to floating point values efficiently.
  * In cases where the comparison is made against a constant, we can convert the
@@ -38,7 +39,8 @@ class TimeDelta {
 public:
 
     /**
-     * Construct a new TimeDelta from a floating point time, in seconds.
+     * @brief Construct a new TimeDelta from a floating point time, in seconds.
+     *
      * These constructors also provide an implicit conversion that makes
      * tests like "delta < 1.5" work.
      */
@@ -46,47 +48,49 @@ public:
     TimeDelta(double sec) : mMilli(sec * 1e3) {}
 
     /**
-     * Construct a TimeDelta representing the period which corresponds
-     * with a given frequency. This can be used, for example, with
-     * frames() in order to specify the frame rate in HZ (FPS) rather
-     * than in seconds.
+     * @brief Construct a TimeDelta representing the period which corresponds
+     * with a given frequency.
+     *
+     * This can be used, for example, with frames() in order to specify
+     * the frame rate in HZ (FPS) rather than in seconds.
      */
     static TimeDelta hz(float h) {
         return TimeDelta(1.0f / h);
     }
 
     /**
-     * Construct a new TimeDelta from an integer time, in milliseconds.
+     * @brief Construct a new TimeDelta from an integer time, in milliseconds.
      */
     static TimeDelta fromMillisec(int32_t m) {
         return TimeDelta(m);
     }
 
     /**
-     * Return the delta in milliseconds.
+     * @brief Return the delta in milliseconds.
      */
     int32_t milliseconds() const {
         return mMilli;
     }
 
     /**
-     * Return the delta in nanoseconds.
+     * @brief Return the delta in nanoseconds.
      */
     int64_t nanoseconds() const {
         return mMilli * (int64_t)1000000;
     }
 
     /**
-     * Return the delta in seconds, as a floating point value.
+     * @brief Return the delta in seconds, as a floating point value.
      */
     float seconds() const {
         return mMilli * 1e-3;
     }
     
     /**
-     * Return the number of frames, of a particular duration, that
-     * are represented by this time delta, rounding down. This is
-     * integer division with truncation.
+     * @brief Return the number of frames, of a particular duration, that
+     * are represented by this time delta, rounding down.
+     *
+     * This is integer division with truncation.
      *
      * You can use this to implement animations which start at a
      * particular reference point. At each frame, look at the current
@@ -102,10 +106,11 @@ public:
     }
 
     /**
-     * Return a frame count, and subtract (pull) the time corresponding
-     * with those frames from this TimeDelta. This leaves the remainder,
-     * i.e. the time since the beginning of the current frame, in this
-     * Time Delta.
+     * @brief Return a frame count, and subtract (pull) the time corresponding
+     * with those frames from this TimeDelta.
+     *
+     * This leaves the remainder, i.e. the time since the beginning of
+     * the current frame, in this Time Delta.
      *
      * This can be used as an alternative to frames() in
      * cases where time is being accumulated frame-by-frame instead of
@@ -122,21 +127,27 @@ public:
     } 
     
     /**
+     * @brief Is this time value negative?
+     *
      * Time deltas are signed, but in many cases it makes sense to reject
      * negative deltas. This predicate can be used quickly in ASSERTs.
      */
-
     bool isNegative() const {
         return mMilli < 0;
     }
     
+    /// Is this time value positive?
     bool isPositive() const {
         return mMilli > 0;
     }
 
+    /// Explicit conversion to float
     operator float() const { return seconds(); }
+    /// Explicit converstion to double
     operator double() const { return seconds(); }
+    // Accumulate time from another TimeDelta
     TimeDelta operator+= (TimeDelta b) { mMilli += b.mMilli; return *this; }
+    // Accumulate negative time from another TimeDelta
     TimeDelta operator-= (TimeDelta b) { mMilli -= b.mMilli; return *this; }
 
 private:
@@ -199,10 +210,11 @@ inline float operator-= (float &a, TimeDelta b) { return a -= b.seconds(); }
 
 
 /**
- * SystemTime is an absolute time, measured by the system's monotonically
- * increasing nanosecond timer. This clock is high resolution, guaranteed
- * to never go backwards, and it will not roll over in any reasonable
- * amount of time.
+ * @brief Absolute time, measured by the system's monotonically
+ * increasing nanosecond timer.
+ *
+ * This clock is high resolution, guaranteed to never go backwards,
+ * and it will not roll over in any reasonable amount of time.
  *
  * SystemTimes are represented internally as a 64-bit count of nanoseconds
  * since system boot. Applications should never rely on any particular absolute
@@ -220,44 +232,46 @@ inline float operator-= (float &a, TimeDelta b) { return a -= b.seconds(); }
 class SystemTime {
 public:
     /**
-     * Creates an invalid SystemTime. Using it will result in an
-     * ASSERT failure, but this invalid value can be used as a sentinel.
-     * You can test for this value with isValid().
+     * @brief Creates an invalid SystemTime.
+     *
+     * Using it will result in an ASSERT failure, but this invalid
+     * value can be used as a sentinel. You can test for this value with isValid().
      */
     SystemTime() : mTicks(0) {}
 
     /**
-     * Returns a new SystemTime representing the current system clock value.
+     * @brief Returns a new SystemTime representing the current system clock value.
      */
     static SystemTime now() {
         return SystemTime(_SYS_ticks_ns());
     }
     
     /**
-     * Is this SystemTime valid? Returns true if it was returned
-     * by now(), false if it was an uninitialized value or a copy
-     * of an uninitialized value.
+     * @brief Is this SystemTime valid?
+     *
+     * Returns true if it was returned by now(), false if it was an
+     * uninitialized value or a copy of an uninitialized value.
      */
     bool isValid() const {
         return mTicks != 0;
     }
 
     /**
-     * Is this time in the future?
+     * @brief Is this time in the future?
      */
     bool inFuture() const {
         return mTicks > now().mTicks;
     }
 
     /**
-     * Is this time in the past?
+     * @brief Is this time in the past?
      */
     bool inPast() const {
         return mTicks < now().mTicks;
     }
 
     /**
-     * Return the SystemTime as a count of nanoseconds since boot.
+     * @brief Return the SystemTime as a count of nanoseconds since boot.
      */
     uint64_t uptimeNS() const {
         ASSERT(isValid());
@@ -265,7 +279,7 @@ public:
     }
 
     /**
-     * Return the SystemTime as a count of microseconds since boot.
+     * @brief Return the SystemTime as a count of microseconds since boot.
      */
     uint64_t uptimeUS() const {
         ASSERT(isValid());
@@ -273,7 +287,7 @@ public:
     }
 
     /**
-     * Return the SystemTime as a count of milliseconds since boot.
+     * @brief Return the SystemTime as a count of milliseconds since boot.
      */
     uint64_t uptimeMS() const {
         ASSERT(isValid());
@@ -281,7 +295,7 @@ public:
     }
 
     /**
-     * Return the SystemTime, in seconds since boot. Returns a
+     * @brief Return the SystemTime, in seconds since boot. Returns a
      * double-precision floating point value.
      */
     double uptime() const {
@@ -290,7 +304,7 @@ public:
     }
 
     /**
-     * Measure the amount of time since the beginning of a repeating
+     * @brief Measure the amount of time since the beginning of a repeating
      * cycle with arbitrary phase and the specified period.
      *
      * This can be used, for example, to implement ambient animations which
@@ -304,7 +318,7 @@ public:
     }
 
     /**
-     * Like cycleDelta(), but scales the result to the range [0,1], where
+     * @brief Like cycleDelta(), but scales the result to the range [0,1], where
      * 0 and 1 represent the beginning and end of the current cycle.
      */
 
@@ -313,7 +327,8 @@ public:
     }
 
     /**
-     * Like cycleDelta(), but scales the result to the range [0, frames-1].
+     * @brief Like cycleDelta(), but scales the result to the range [0, frames-1].
+     *
      * This can be used directly to compute the frame in an animation that repeats
      * with the specified period.
      */
@@ -323,9 +338,11 @@ public:
     }
 
     /**
-     * Subtract two SystemTimes, and return a 32-bit TimeDelta,
-     * with millisecond resolution. TimeDeltas are truncated to the nearest
-     * millisecond boundary. (Round toward zero)
+     * @brief Subtract two SystemTimes, and return a 32-bit TimeDelta,
+     * with millisecond resolution.
+     *
+     * TimeDeltas are truncated to the neares  millisecond boundary.
+     * (Round toward zero)
      */
 
     TimeDelta operator- (SystemTime b) const {
@@ -356,8 +373,10 @@ inline SystemTime operator- (TimeDelta a, SystemTime b) { return b - a; }
 
 
 /**
- * TimeStep is a higher-level utility for keeping track of time
- * the duration of game timesteps. At any time, delta() can be used to
+ * @brief TimeStep is a higher-level utility for keeping track of time
+ * the duration of game timesteps.
+ *
+ * At any time, delta() can be used to
  * retrieve the duration of the last timestep, as a TimeDelta object.
  * The next() call ends the current timestep and begins the next one
  * simultaneously, without losing any time in-between.
@@ -371,8 +390,9 @@ public:
     TimeStep() : mPrevTime(), mDelta(0.0) {}
 
     /**
-     * Retrieve the duration of the last time interval. If less than
-     * two calls to next() have elapsed, this returns a zero-length interval.
+     * @brief Retrieve the duration of the last time interval.
+     *
+     * If less than two calls to next() have elapsed, this returns a zero-length interval.
      */
 
     TimeDelta delta() const {
@@ -380,9 +400,10 @@ public:
     }
 
     /**
-     * Retrieve the SystemTime at the end of the interval described by delta().
-     * (This is the time at the last call to next(), which must have been called at
-     * least once.)
+     * @brief Retrieve the SystemTime at the end of the interval described by delta().
+     *
+     * This is the time at the last call to next(), which must have been called at
+     * least once.
      */
 
     SystemTime end() const {
@@ -391,9 +412,10 @@ public:
     }
 
     /**
-     * Retrieve the SystemTime at the beginning of the interval described by delta().
-     * (This is the time at the second to last call to next(), which must have been
-     * called at least twice.)
+     * @brief Retrieve the SystemTime at the beginning of the interval described by delta().
+     *
+     * This is the time at the second to last call to next(), which must have been
+     * called at least twice.
      */
 
     SystemTime begin() const {
@@ -403,8 +425,10 @@ public:
     }
 
     /**
-     * Advance to the next time interval. This samples the system clock,
-     * as the end of the previous interval and the beginning of the next.
+     * @brief Advance to the next time interval.
+     *
+     * This samples the system clock, as the end of the previous
+     * interval and the beginning of the next.
      */
     void next() {
         SystemTime now = SystemTime::now();
@@ -430,8 +454,10 @@ private:
 
 
 /**
- * TimeTicker is a utility for converting a stream of time deltas into a stream
- * of discrete ticks. It can be used, for example, to advance an animation to
+ * @brief TimeTicker is a utility for converting a stream of time deltas into a stream
+ * of discrete ticks.
+ *
+ * It can be used, for example, to advance an animation to
  * the next frame, or to run a fixed-timestep physics simulation.
  *
  * The Ticker is initialized with a particular tick rate, in Hz. You feed in

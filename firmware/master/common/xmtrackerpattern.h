@@ -25,7 +25,7 @@ public:
     void releaseRef() { ref.release(); }
 
     XmTrackerPattern *init(_SYSXMSong *pSong);
-    void loadPattern(uint16_t i);
+    bool loadPattern(uint16_t i);
     void getNote(uint16_t row, uint8_t channel, struct XmTrackerNote &note);
 
     static void resetNote(struct XmTrackerNote &note) {

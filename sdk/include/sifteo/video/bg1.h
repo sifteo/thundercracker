@@ -22,7 +22,7 @@ namespace Sifteo {
  */
 
 /**
- * A BG1 tile mask. In other words, this is a 16x16-bit two-dimensional
+ * @brief A BG1 tile mask. In other words, this is a 16x16-bit two-dimensional
  * vector.
  *
  * It is optimized for compile-time arithmetic, so that it's easy and
@@ -45,7 +45,7 @@ struct BG1Mask {
     uint32_t rowFE;
 
     /**
-     * Create an empty mask. All bits are zero.
+     * @brief Create an empty mask. All bits are zero.
      */
     static BG1Mask empty() {
         BG1Mask result = { 0, 0, 0, 0, 0, 0, 0, 0 };
@@ -53,7 +53,7 @@ struct BG1Mask {
     }
 
     /**
-     * Create a mask with a filled rectangle it.
+     * @brief Create a mask with a filled rectangle it.
      *
      * This should be used only with values that are constant
      * at compile-time. For dynamic masks, it is significantly
@@ -96,14 +96,14 @@ struct BG1Mask {
     }
 
     /**
-     * Erase a TileMask, setting all bits to zero.
+     * @brief Erase a TileMask, setting all bits to zero.
      */
     void clear() {
         _SYS_memset32(&row10, 0, 8);
     }
 
     /**
-     * Get a pointer to the rows in this mask, as 16-bit integers.
+     * @brief Get a pointer to the rows in this mask, as 16-bit integers.
      */
     uint16_t *rows() {
         return (uint16_t*) this;
@@ -113,7 +113,8 @@ struct BG1Mask {
     }
 
     /**
-     * Mark one tile in the bitmap, given as (x,y) coordinates.
+     * @brief Mark one tile in the bitmap, given as (x,y) coordinates.
+     *
      * All coordinates must be in range. This function performs no clipping.
      */
     void plot(unsigned x, unsigned y) {
@@ -122,7 +123,8 @@ struct BG1Mask {
     }
 
     /**
-     * Mark one tile in the bitmap, given as a vector.
+     * @brief Mark one tile in the bitmap, given as a vector.
+     *
      * All coordinates must be in range. This function performs no clipping.
      */
     void plot(UInt2 pos) {
@@ -130,7 +132,8 @@ struct BG1Mask {
     }
 
     /**
-     * Mark a rectangular region of the bitmap.
+     * @brief Mark a rectangular region of the bitmap.
+     *
      * All coordinates must be in range. This function performs no clipping.
      */
     void fill(UInt2 topLeft, UInt2 size) {
@@ -139,6 +142,7 @@ struct BG1Mask {
                 plot(topLeft.x + x, topLeft.y + y);
     }
 
+    /// Bitwise OR with another mask
     BG1Mask & operator|= (BG1Mask other) {
         row10 |= other.row10;
         row32 |= other.row32;
@@ -151,6 +155,7 @@ struct BG1Mask {
         return *this;
     }
 
+    /// Bitwise AND with another mask
     BG1Mask & operator&= (BG1Mask other) {
         row10 &= other.row10;
         row32 &= other.row32;
@@ -163,6 +168,7 @@ struct BG1Mask {
         return *this;
     }
 
+    /// Bitwise XOR with another mask
     BG1Mask & operator^= (BG1Mask other) {
         row10 ^= other.row10;
         row32 ^= other.row32;
@@ -175,6 +181,7 @@ struct BG1Mask {
         return *this;
     }
 
+    /// Bitwise OR with another mask
     BG1Mask operator| (BG1Mask other) const {
          BG1Mask result = {
              row10 | other.row10,
@@ -189,6 +196,7 @@ struct BG1Mask {
         return result;
     }
 
+    /// Bitwise AND with another mask
     BG1Mask operator& (BG1Mask other) const {
          BG1Mask result = {
              row10 & other.row10,
@@ -203,6 +211,7 @@ struct BG1Mask {
         return result;
     }
 
+    /// Bitwise XOR with another mask
     BG1Mask operator^ (BG1Mask other) const {
          BG1Mask result = {
              row10 ^ other.row10,
@@ -217,6 +226,7 @@ struct BG1Mask {
         return result;
     }
 
+    /// Bitwise complement
     BG1Mask operator~ () const {
          BG1Mask result = {
              ~row10,
@@ -234,7 +244,7 @@ struct BG1Mask {
 
 
 /**
- * This is a VRAM accessor for drawing graphics in the BG1 mode.
+ * @brief A VRAM accessor for drawing graphics in the BG1 mode.
  *
  * BG1 is an overlay layer, existing above BG0 and all Sprites.
  * It consists of a virtual 16x16-tile grid which does not wrap.
@@ -257,56 +267,56 @@ struct BG1Drawable {
     _SYSAttachedVideoBuffer sys;
 
     /**
-     * Return the width, in tiles, of this mode
+     * @brief Return the width, in tiles, of this mode
      */
     static unsigned tileWidth() {
         return _SYS_VRAM_BG1_WIDTH;
     }
 
     /**
-     * Return the height, in tiles, of this mode
+     * @brief Return the height, in tiles, of this mode
      */
     static unsigned tileHeight() {
         return _SYS_VRAM_BG1_WIDTH;
     }
 
     /**
-     * Return the size of this mode as a vector, in tiles.
+     * @brief Return the size of this mode as a vector, in tiles.
      */
     static UInt2 tileSize() {
         return vec(tileWidth(), tileHeight());
     }
 
     /**
-     * Return the width, in pixels, of this mode
+     * @brief Return the width, in pixels, of this mode
      */
     static unsigned pixelWidth() {
         return tileWidth() * 8;
     }
 
     /**
-     * Return the height, in pixel, of this mode
+     * @brief Return the height, in pixel, of this mode
      */
     static unsigned pixelHeight() {
         return tileHeight() * 8;
     }
 
     /**
-     * Return the size of this mode as a vector, in pixels.
+     * @brief Return the size of this mode as a vector, in pixels.
      */
     static UInt2 pixelSize() {
         return vec(pixelWidth(), pixelHeight());
     }
 
     /**
-     * Returns the maximum number of allcoated tiles.
+     * @brief Returns the maximum number of allcoated tiles.
      */
     static unsigned numTiles() {
         return _SYS_VRAM_BG1_TILES;
     }
 
     /**
-     * Erase mode-specific VRAM, filling the BG1 buffer with the specified
+     * @brief Erase mode-specific VRAM, filling the BG1 buffer with the specified
      * absolute tile index value, clearing the allocation mask,
      * and resetting the panning registers.
      */
@@ -318,7 +328,7 @@ struct BG1Drawable {
     }
 
     /**
-     * Erase mode-specific VRAM, filling the BG1 buffer with the first tile
+     * @brief Erase mode-specific VRAM, filling the BG1 buffer with the first tile
      * from the specified PinnedAssetImage, clearing the allocation mask,
      * and resetting the panning registers.
      */
@@ -327,7 +337,7 @@ struct BG1Drawable {
     }
 
     /**
-     * Erase just the allocation mask. All tiles will now be unallocated,
+     * @brief Erase just the allocation mask. All tiles will now be unallocated,
      * and BG1 will be fully transparent.
      *
      * Changes to the bitmap will affect the way the tile array is
@@ -345,7 +355,7 @@ struct BG1Drawable {
     }
 
     /**
-     * Change the tile allocation bitmap.
+     * @brief Change the tile allocation bitmap.
      *
      * Changes to the bitmap will affect the way the tile array is
      * interpreted, causing already-drawn tiles to appear to shift.
@@ -363,7 +373,7 @@ struct BG1Drawable {
     }
 
     /**
-     * This is a specialized alternative to setMask(), for cases where
+     * @brief This is a specialized alternative to setMask(), for cases where
      * each row of BG1 has a single contiguous span of tiles in it.
      *
      * This effectively draws a rectangle on the BG1 mask, leaving
@@ -391,8 +401,9 @@ struct BG1Drawable {
     }
 
     /**
-     * Change the hardware pixel-panning origin for this mode. The supplied
-     * vector is interpreted as the location on the tile buffer, in pixels,
+     * @brief Change the hardware pixel-panning origin for this mode.
+     *
+     * The supplied vector is interpreted as the location on the tile buffer, in pixels,
      * where the origin of the LCD will begin.
      *
      * BG1 is an 16x16 buffer that does not wrap. The panning value can
@@ -406,7 +417,7 @@ struct BG1Drawable {
     }
 
     /**
-      * Retrieve the last value set by setPanning().
+      * @brief Retrieve the last value set by setPanning().
      */
     Int2 getPanning() const {
         unsigned word = _SYS_vbuf_peek(&sys.vbuf, offsetof(_SYSVideoRAM, bg0_x) / 2);
@@ -414,7 +425,7 @@ struct BG1Drawable {
     }
 
     /**
-     * Plot a single tile, by absolute tile index,
+     * @brief Plot a single tile, by absolute tile index,
      * at a specific location in the 144-tile array.
      */
     void plot(unsigned locationIndex, uint16_t tileIndex) {
@@ -424,9 +435,10 @@ struct BG1Drawable {
     }
 
     /**
-     * Plot a horizontal span of tiles in consecutively allocated
-     * locations in the BG1 tile array. These tiles may not necessarily
-     * be consecutive on-screen.
+     * @brief Plot a horizontal span of tiles in consecutively allocated
+     * locations in the BG1 tile array.
+     *
+     * These tiles may not necessarily be consecutive on-screen.
      */
     void span(unsigned locationIndex, unsigned count, unsigned tileIndex)
     {
@@ -437,8 +449,10 @@ struct BG1Drawable {
     }
 
     /**
-     * Draw a full AssetImage frame, with its top-left corner at the
-     * specified location. Locations are specified in tile units, relative
+     * @brief Draw a full AssetImage frame, with its top-left corner at the
+     * specified location.
+     *
+     * Locations are specified in tile units, relative
      * to the top-left of the 18x18 grid.
      *
      * Tiles are located in the BG1 array based on the current mask.
@@ -451,8 +465,10 @@ struct BG1Drawable {
     }
 
     /**
-     * Draw part of an AssetImage frame, with its top-left corner at the
-     * specified location. Locations are specified in tile units, relative
+     * @brief Draw part of an AssetImage frame, with its top-left corner at the
+     * specified location.
+     *
+     * Locations are specified in tile units, relative
      * to the top-left of the 18x18 grid.
      *
      * Tiles are located in the BG1 array based on the current mask.
@@ -466,7 +482,8 @@ struct BG1Drawable {
     }
 
     /**
-     * Draw an AssetImage, automatically allocating tiles on the BG1 mask.
+     * @brief Draw an AssetImage, automatically allocating tiles on the BG1 mask.
+     *
      * This replaces the entirety of the BG1 mask; other drawing on BG1
      * will be automatically replaced.
      *
@@ -484,8 +501,10 @@ struct BG1Drawable {
     }
 
     /**
-     * Draw part of an AssetImage, automatically allocating tiles on the
-     * BG1 mask. This replaces the entirety of the BG1 mask; other drawing
+     * @brief Draw part of an AssetImage, automatically allocating tiles on the
+     * BG1 mask.
+     *
+     * This replaces the entirety of the BG1 mask; other drawing
      * on BG1 will be automatically replaced.
      *
      * The image is always drawn to the top-left corner of BG1. You can
@@ -504,8 +523,9 @@ struct BG1Drawable {
     }
 
     /**
-     * Draw text, using an AssetImage as a fixed width font. Each character
-     * is represented by a consecutive 'frame' in the image. Characters not
+     * @brief Draw text, using an AssetImage as a fixed width font.
+     *
+     * Each character is represented by a consecutive 'frame' in the image. Characters not
      * present in the font will be skipped.
      */
     void text(Int2 topLeft, const AssetImage &font, const char *str, char firstChar = ' ')
@@ -526,14 +546,14 @@ struct BG1Drawable {
     }
 
     /**
-     * Return the VideoBuffer associated with this drawable.
+     * @brief Return the VideoBuffer associated with this drawable.
      */
     _SYSVideoBuffer &videoBuffer() {
         return sys.vbuf;
     }
 
     /**
-     * Return the CubeID associated with this drawable.
+     * @brief Return the CubeID associated with this drawable.
      */
     CubeID cube() const {
         return sys.cube;

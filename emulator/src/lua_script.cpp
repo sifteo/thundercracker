@@ -12,6 +12,7 @@
 #include "color.h"
 #include "svmmemory.h"
 #include "cubeslots.h"
+#include "ostime.h"
 #include "flash_volume.h"
 #include "flash_volumeheader.h"
 
@@ -284,7 +285,7 @@ int LuaSystem::vclock(lua_State *L)
 
 int LuaSystem::sleep(lua_State *L)
 {
-    glfwSleep(luaL_checknumber(L, 1));
+    OSTime::sleep(luaL_checknumber(L, 1));
     return 0;
 }
     
@@ -298,7 +299,7 @@ int LuaSystem::vsleep(lua_State *L)
     double remaining;
     
     while ((remaining = deadline - sys->time.elapsedSeconds()) > 0)
-        glfwSleep(remaining * 0.1);
+        OSTime::sleep(remaining * 0.1);
 
     return 0;
 }
@@ -785,12 +786,13 @@ int LuaFilesystem::volumeEraseCounts(lua_State *L)
 
     FlashBlockRef hdrRef, eraseRef;
     FlashVolumeHeader *hdr = FlashVolumeHeader::get(hdrRef, vol.block);
+    unsigned numMapEntries = hdr->numMapEntries();
 
     lua_newtable(L);
 
-    for (unsigned I = 0, E = hdr->numMapEntries(); I != E; ++I) {
+    for (unsigned I = 0; I != numMapEntries; ++I) {
         lua_pushnumber(L, I + 1);
-        lua_pushnumber(L, hdr->getEraseCount(eraseRef, vol.block, I));
+        lua_pushnumber(L, hdr->getEraseCount(eraseRef, vol.block, I, numMapEntries));
         lua_settable(L, -3);
     }
 

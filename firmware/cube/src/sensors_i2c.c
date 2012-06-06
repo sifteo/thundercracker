@@ -32,9 +32,6 @@ uint8_t i2c_temp_2;
  *    start taking a new accel reading any time the previous reading,
  *    if any, had a chance to be retrieved.
  *
- *    The kick-off (writing the first byte) is handled by some inlined
- *    code in sensors.h, which we include in the radio ISR.
- *
  *    After every accelerometer read finishes, we do a quick poll for
  *    factory test commands.
  */
@@ -63,10 +60,12 @@ void spi_i2c_isr(void) __interrupt(VECTOR_SPI_I2C) __naked
 
         ;--------------------------------------------------------------------
 
-        ; NACK handler. Stop, go back to the default state, try again.
+        ; NACK handler. Stop, and go to a no-op state until we are
+        ; triggered again by TF2.
+
 as_nack:
         orl     _W2CON0, #W2CON0_STOP  
-        mov     _i2c_state, #0
+        mov     _i2c_state, #(as_nop_state - as_1)
 
         ; Fall through to as_ret.
 
@@ -91,6 +90,7 @@ as_ret:
 as_1:
         mov     _W2DAT, #ACCEL_START_READ_X
         mov     _i2c_state, #(as_2 - as_1)
+as_nop_state:
         sjmp    as_ret
 
         ; 2. Register address finished. Send repeated start, and RX address

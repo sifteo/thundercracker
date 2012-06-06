@@ -49,12 +49,12 @@ extern "C" {
  */
 
 #define _SYS_NUM_CUBE_SLOTS     32
-#define _SYS_CUBE_ID_INVALID    0xFF    /// Reserved _SYSCubeID value
+#define _SYS_CUBE_ID_INVALID    0xFF    // Reserved _SYSCubeID value
 
-typedef uint8_t _SYSCubeID;             /// Cube slot index
-typedef int8_t _SYSSideID;              /// Cube side index
-typedef uint32_t _SYSCubeIDVector;      /// One bit for each cube slot, MSB-first
-typedef uint8_t _SYSAssetSlot;          /// Ordinal for one of the game's asset slots
+typedef uint8_t _SYSCubeID;             // Cube slot index
+typedef int8_t _SYSSideID;              // Cube side index
+typedef uint32_t _SYSCubeIDVector;      // One bit for each cube slot, MSB-first
+typedef uint8_t _SYSAssetSlot;          // Ordinal for one of the game's asset slots
 
 /*
  * Small vector types
@@ -111,11 +111,17 @@ struct _SYSPseudoRandomState {
  * Filesystem
  */
 
-#define _SYS_FS_VOL_GAME        0x4d47
-#define _SYS_FS_VOL_LAUNCHER    0x4e4c
+#define _SYS_FS_VOL_GAME            0x4d47
+#define _SYS_FS_VOL_LAUNCHER        0x4e4c
 
-/// Opaque nonzero ID for a filesystem volume
+#define _SYS_FS_MAX_OBJECT_KEYS     256
+#define _SYS_FS_MAX_OBJECT_SIZE     4080
+
+// Opaque nonzero ID for a filesystem volume
 typedef uint32_t _SYSVolumeHandle;      
+
+// Application-defined ID for a key in our key/value object store
+typedef uint8_t _SYSObjectKey;
 
 /*
  * RFC4122 compatible UUIDs.

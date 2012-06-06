@@ -22,70 +22,71 @@ namespace Sifteo {
  */
 
 /**
- * This is a VRAM accessor for drawing graphics in the BG0 mode.
+ * @brief A VRAM accessor for drawing graphics in the BG0 mode.
+ *
  * We have an 18x18 tile grid, which wraps around in both axes.
  */
 struct BG0Drawable {
     _SYSAttachedVideoBuffer sys;
 
     /**
-     * Return the width, in tiles, of this mode
+     * @brief Return the width, in tiles, of this mode
      */
     static unsigned tileWidth() {
         return _SYS_VRAM_BG0_WIDTH;
     }
 
     /**
-     * Return the height, in tiles, of this mode
+     * @brief Return the height, in tiles, of this mode
      */
     static unsigned tileHeight() {
         return _SYS_VRAM_BG0_WIDTH;
     }
 
     /**
-     * Return the size of this mode as a vector, in tiles.
+     * @brief Return the size of this mode as a vector, in tiles.
      */
     static UInt2 tileSize() {
         return vec(tileWidth(), tileHeight());
     }
 
     /**
-     * Return the width, in pixels, of this mode
+     * @brief Return the width, in pixels, of this mode
      */
     static unsigned pixelWidth() {
         return tileWidth() * 8;
     }
 
     /**
-     * Return the height, in pixel, of this mode
+     * @brief Return the height, in pixel, of this mode
      */
     static unsigned pixelHeight() {
         return tileHeight() * 8;
     }
 
     /**
-     * Return the size of this mode as a vector, in pixels.
+     * @brief Return the size of this mode as a vector, in pixels.
      */
     static UInt2 pixelSize() {
         return vec(pixelWidth(), pixelHeight());
     }
 
     /**
-     * Returns the size of this drawable's tile data, in bytes
+     * @brief Returns the size of this drawable's tile data, in bytes
      */
     static unsigned sizeInBytes() {
         return tileWidth() * tileHeight() * 2;
     }
 
     /**
-     * Returns the size of this drawable's tile data, in 16-bit words
+     * @brief Returns the size of this drawable's tile data, in 16-bit words
      */
     static unsigned sizeInWords() {
         return tileWidth() * tileHeight();
     }
 
     /**
-     * Erase mode-specific VRAM, filling the BG0 buffer with the specified
+     * @brief Erase mode-specific VRAM, filling the BG0 buffer with the specified
      * absolute tile index value and resetting the panning registers.
      */
     void erase(uint16_t index = 0) {
@@ -94,7 +95,7 @@ struct BG0Drawable {
     }
 
     /**
-     * Erase mode-specific VRAM, filling the BG0 buffer with the first tile
+     * @brief Erase mode-specific VRAM, filling the BG0 buffer with the first tile
      * from the specified PinnedAssetImage and resetting the panning registers.
      */
     void erase(const PinnedAssetImage &image) {
@@ -102,8 +103,9 @@ struct BG0Drawable {
     }
 
     /**
-     * Change the hardware pixel-panning origin for this mode. The supplied
-     * vector is interpreted as the location on the tile buffer, in pixels,
+     * @brief Change the hardware pixel-panning origin for this mode.
+     *
+     * The supplied vector is interpreted as the location on the tile buffer, in pixels,
      * where the origin of the LCD will begin.
      *
      * BG0 is an 18x18 buffer that wraps around in both directions.
@@ -115,7 +117,7 @@ struct BG0Drawable {
     }
 
     /**
-     * Retrieve the last value set by setPanning(), modulo the layer size
+     * @brief Retrieve the last value set by setPanning(), modulo the layer size
      * in pixels.
      */
     Int2 getPanning() const {
@@ -124,7 +126,8 @@ struct BG0Drawable {
     }
 
     /**
-     * Calculate the video buffer address of a particular tile.
+     * @brief Calculate the video buffer address of a particular tile.
+     *
      * All coordinates must be in range. This function performs no clipping.
      */
     uint16_t tileAddr(UInt2 pos) {
@@ -132,7 +135,7 @@ struct BG0Drawable {
     }
 
 	/**
-	 * Retrieve the absolute tile index currently set at the 
+	 * @brief Retrieve the absolute tile index currently set at the 
 	 * given address.  The inverse of plot().
 	 */
 	uint16_t tile(UInt2 pos) {
@@ -141,7 +144,7 @@ struct BG0Drawable {
 	}
 	
     /**
-     * Plot a single tile, by absolute tile index,
+     * @brief Plot a single tile, by absolute tile index,
      * at location 'pos' in tile units.
      *
      * All coordinates must be in range. This function performs no clipping.
@@ -152,7 +155,7 @@ struct BG0Drawable {
     }
 
     /**
-     * Plot a horizontal span of tiles, by absolute tile index,
+     * @brief Plot a horizontal span of tiles, by absolute tile index,
      * given the position of the leftmost tile and the number of tiles to plot.
      *
      * All coordinates must be in range. This function performs no clipping.
@@ -165,7 +168,8 @@ struct BG0Drawable {
     }
 
     /**
-     * Plot a horizontal span of tiles, using the first tile of a pinned asset.
+     * @brief Plot a horizontal span of tiles, using the first tile of a pinned asset.
+     *
      * All coordinates must be in range. This function performs no clipping.
      */
     void span(UInt2 pos, unsigned width, const PinnedAssetImage &image)
@@ -174,7 +178,7 @@ struct BG0Drawable {
     }
 
     /**
-     * Fill a rectangle of identical tiles, specified as a top-left corner
+     * @brief Fill a rectangle of identical tiles, specified as a top-left corner
      * location and a size.
      *
      * All coordinates must be in range. This function performs no clipping.
@@ -189,7 +193,7 @@ struct BG0Drawable {
     }
 
     /**
-     * Fill a rectangle of identical tiles, using the first tile of a
+     * @brief Fill a rectangle of identical tiles, using the first tile of a
      * pinned asset.
      *
      * All coordinates must be in range. This function performs no clipping.
@@ -200,8 +204,10 @@ struct BG0Drawable {
     }
 
     /**
-     * Draw a full AssetImage frame, with its top-left corner at the
-     * specified location. Locations are specified in tile units, relative
+     * @brief Draw a full AssetImage frame, with its top-left corner at the
+     * specified location.
+     *
+     * Locations are specified in tile units, relative
      * to the top-left of the 18x18 grid.
      *
      * All coordinates must be in range. This function performs no clipping.
@@ -212,8 +218,10 @@ struct BG0Drawable {
     }
 
     /**
-     * Draw part of an AssetImage frame, with its top-left corner at the
-     * specified location. Locations are specified in tile units, relative
+     * @brief Draw part of an AssetImage frame, with its top-left corner at the
+     * specified location.
+     *
+     * Locations are specified in tile units, relative
      * to the top-left of the 18x18 grid.
      *
      * All coordinates must be in range. This function performs no clipping.
@@ -225,9 +233,10 @@ struct BG0Drawable {
     }
 
     /**
-     * Draw text, using an AssetImage as a fixed width font. Each character
-     * is represented by a consecutive 'frame' in the image. Characters not
-     * present in the font will be skipped.
+     * @brief Draw text, using an AssetImage as a fixed width font.
+     *
+     * Each character is represented by a consecutive 'frame' in the image.
+     * Characters not present in the font will be skipped.
      */
     void text(Int2 topLeft, const AssetImage &font, const char *str, char firstChar = ' ')
     {
@@ -247,14 +256,14 @@ struct BG0Drawable {
     }
 
     /**
-     * Return the VideoBuffer associated with this drawable.
+     * @brief Return the VideoBuffer associated with this drawable.
      */
     _SYSVideoBuffer &videoBuffer() {
         return sys.vbuf;
     }
 
     /**
-     * Return the CubeID associated with this drawable.
+     * @brief Return the CubeID associated with this drawable.
      */
     CubeID cube() const {
         return sys.cube;

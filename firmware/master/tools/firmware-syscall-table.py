@@ -14,17 +14,16 @@ import sys, re
 #######################################################################
 
 #
-# Floating point library aliases.
+# Library aliases.
 #
-# Our floating point syscalls intentionally have the same
-# signature as the corresponding EABI or libgcc soft floating
-# point functions. GCC is particularly terrible at realizing that
+# Our floating point and 64-bit integer syscalls intentionally
+# have the same signature as the corresponding EABI or libgcc
+# library functions. GCC is particularly terrible at realizing that
 # our syscall wrappers are actually the same thing, and it
 # generates a ton of redundant loads and stores.
 #
-# So, to guarantee the best floating point performance, we
-# directly alias these syscalls to the corresponding library
-# functions.
+# So, to guarantee the best math performance, we directly alias
+# these syscalls to the corresponding library functions.
 #
 # Note that we apparently can't do this in the linker script
 # for functions which otherwise would be garbage collected.
@@ -32,7 +31,8 @@ import sys, re
 # that the library functions are linked properly.
 #
 
-fpAliasTable = {
+aliasTable = {
+    # Floating point operators
     '_SYS_add_f32': '__addsf3',
     '_SYS_add_f64': '__adddf3',
     '_SYS_sub_f32': '__aeabi_fsub',
@@ -41,6 +41,8 @@ fpAliasTable = {
     '_SYS_mul_f64': '__aeabi_dmul',
     '_SYS_div_f32': '__aeabi_fdiv',
     '_SYS_div_f64': '__aeabi_ddiv',
+
+    # Floating point conversions
     '_SYS_fpext_f32_f64': '__aeabi_f2d',
     '_SYS_fpround_f64_f32': '__aeabi_d2f',
     '_SYS_fptosint_f32_i32': '__aeabi_f2iz',
@@ -59,6 +61,8 @@ fpAliasTable = {
     '_SYS_uinttofp_i32_f64': '__aeabi_ui2d',
     '_SYS_uinttofp_i64_f32': '__aeabi_ul2f',
     '_SYS_uinttofp_i64_f64': '__aeabi_ul2d',
+
+    # Floating point comparisons
     '_SYS_eq_f32': '__aeabi_fcmpeq',
     '_SYS_eq_f64': '__aeabi_dcmpeq',
     '_SYS_lt_f32': '__aeabi_fcmplt',
@@ -71,12 +75,23 @@ fpAliasTable = {
     '_SYS_gt_f64': '__aeabi_dcmpgt',
     '_SYS_un_f32': '__unordsf2',
     '_SYS_un_f64': '__unorddf2',
+
+    # Math library functions
     '_SYS_fmodf': 'fmodf',
     '_SYS_sqrtf': 'sqrtf',
     '_SYS_logf': 'logf',
     '_SYS_fmod': 'fmod',
     '_SYS_sqrt': 'sqrt',
     '_SYS_logd': 'log',
+    '_SYS_pow': 'pow',
+    '_SYS_powf': 'powf',
+    
+    # 64-bit integer operators
+    '_SYS_sdiv_i64' : '__aeabi_ldivmod',
+    '_SYS_udiv_i64' : '__aeabi_uldivmod',
+    '_SYS_shl_i64' : '__aeabi_llsl',
+    '_SYS_srl_i64' : '__aeabi_llsr',
+    '_SYS_sra_i64' : '__aeabi_lasr',
 }
 
 
@@ -109,7 +124,7 @@ for line in sys.stdin:
 #
 
 print 'extern "C" {'
-for v in sorted(fpAliasTable.values()):
+for v in sorted(aliasTable.values()):
     if v[0] == '_':
         print '    extern void %s();' % v
 print '};\n'
@@ -122,8 +137,8 @@ print "static const SvmSyscall SyscallTable[] = {"
 for i in range(highestNum+1):
     name = callMap.get(i) or "0"
 
-    if name in fpAliasTable:
-        name = "FP_ALIAS(%s, %s)" % (name, fpAliasTable[name])
+    if name in aliasTable:
+        name = "SYS_ALIAS(%s, %s)" % (name, aliasTable[name])
 
     print "    /* %4d */ %s %s," % (i, typedef, name)
 

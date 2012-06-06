@@ -118,6 +118,19 @@ public:
     static bool copyROData(FlashBlockRef &ref, PhysAddr dest, VirtAddr src, uint32_t length);
 
     /**
+     * Perform a 32-bit CRC over read-only data in virtual memory.
+     * The address does not need to be aligned at all, and the length
+     * can be any arbitrary number of bytes.
+     *
+     * The CRC is padded with 0xFF bytes until its total length
+     * is a multiple of 'alignment', which must be >= 4 and a power of two.
+     *
+     * Returns true on success.
+     */
+    static bool crcROData(FlashBlockRef &ref, VirtAddr src, uint32_t length,
+        uint32_t &crc, unsigned alignment = 4);
+
+    /**
      * Asynchronously preload the given VirtAddr. If it's a flash address, this
      * may try to page in that flash block ahead-of-time. Returns false
      * on bad address.

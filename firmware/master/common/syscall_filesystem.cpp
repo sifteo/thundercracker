@@ -15,6 +15,7 @@
 #include <sifteo/abi.h>
 #include "macros.h"
 #include "flash_volume.h"
+#include "flash_lfs.h"
 #include "svmmemory.h"
 #include "svmruntime.h"
 #include "svmloader.h"
@@ -128,6 +129,119 @@ uint32_t _SYS_elf_map(_SYSVolumeHandle volHandle)
     ASSERT(ro);
     
     return SvmMemory::SEGMENT_1_VA + ro->p_offset - ro->p_vaddr;
+}
+
+int32_t _SYS_fs_objectRead(unsigned key, uint8_t *buffer,
+    unsigned bufferSize, _SYSVolumeHandle parent)
+{
+    // Default to reading the running volume, but allow overriding this.
+    FlashVolume parentVol;
+    if (parent) {
+        parentVol = parent;
+        if (!parentVol.isValid()) {
+            SvmRuntime::fault(F_BAD_VOLUME_HANDLE);
+            return 0;
+        }
+    } else {
+        parentVol = SvmLoader::getRunningVolume();
+        ASSERT(parentVol.isValid());
+    }
+
+    if (!FlashLFSIndexRecord::isKeyAllowed(key)) {
+        SvmRuntime::fault(F_SYSCALL_PARAM);
+        return 0;
+    }
+
+    if (!SvmMemory::mapRAM(buffer, bufferSize)) {
+        SvmRuntime::fault(F_SYSCALL_ADDRESS);
+        return 0;
+    }
+
+    // XXX
+    return 0;
+}
+
+int32_t _SYS_fs_objectWrite(unsigned key, const uint8_t *data, unsigned dataSize)
+{
+    // Programs may only write objects in their own local volume
+    FlashVolume parentVol = SvmLoader::getRunningVolume();
+    ASSERT(parentVol.isValid());
+
+    if (!FlashLFSIndexRecord::isKeyAllowed(key) ||
+        !FlashLFSIndexRecord::isSizeAllowed(dataSize)) {
+        SvmRuntime::fault(F_SYSCALL_PARAM);
+        return 0;
+    }
+
+    /*
+     * Do the CRC early; we need to catch faults on 'data' before we create
+     * the new FS object. We'll ask for the CRC to be padded out to the
+     * nearest object allocation unit boundary.
+     */
+
+    SvmMemory::VirtAddr va = reinterpret_cast<SvmMemory::VirtAddr>(data);
+    FlashBlockRef ref;
+    uint32_t crc;
+    if (!SvmMemory::crcROData(ref, va, dataSize, crc, FlashLFSIndexRecord::SIZE_UNIT)) {
+        SvmRuntime::fault(F_SYSCALL_ADDRESS);
+        return 0;
+    }
+
+    /*
+     * Allocate the LFS object. It will only become valid once we've also
+     * written data to the filesystem which matches our above CRC.
+     */
+
+    FlashLFS lfs(parentVol);
+    uint32_t objectAddr;
+    if (!lfs.newObject(key, dataSize, crc, objectAddr)) {
+        return 0;
+    }
+
+    /*
+     * Write the actual object data. We effectively do a non-cache-polluting
+     * write here, by writing directly to the device and invalidating a portion
+     * of the cache. (There's no benefit to using the cache here, since it would
+     * involve an extra copy from userspace memory to cache memory).
+     */
+
+    FlashBlock::invalidate(objectAddr, objectAddr + dataSize);
+
+    uint32_t currentAddr = objectAddr;
+    uint32_t remainingBytes = dataSize;
+
+    while (remainingBytes) {
+        SvmMemory::PhysAddr pa;
+        uint32_t chunk = remainingBytes;
+
+        if (!SvmMemory::mapROData(ref, va, chunk, pa)) {
+            // Shouldn't fail here, we already touched this memory above.
+            ASSERT(0);
+            SvmRuntime::fault(F_SYSCALL_ADDRESS);
+            return 0;
+        }
+
+        ASSERT(chunk > 0);
+        ASSERT(currentAddr >= objectAddr);
+        ASSERT(currentAddr + chunk <= objectAddr + dataSize);
+
+        FlashDevice::write(currentAddr, pa, chunk);
+
+        va += chunk;
+        remainingBytes -= chunk;
+        currentAddr += chunk;
+    }
+
+    return dataSize;
+}
+
+uint32_t _SYS_fs_runningVolume()
+{
+    // Return a _SYSVolumeHandle for the currently executing volume
+
+    FlashVolume vol = SvmLoader::getRunningVolume();
+    ASSERT(vol.isValid());
+    return vol.getHandle();
 }
 
 
