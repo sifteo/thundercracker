@@ -199,6 +199,42 @@ void bitArraySizeEdgeCases()
     ASSERT(a65.findFirst(index) == false && index == 64);
 }
 
+void bitArrayIter()
+{
+    unsigned index = 100;
+    BitArray<4> a4;
+    BitArray<48> a48;
+
+    a4.clear();
+    a4.mark(2);
+    ASSERT(a4.clearFirst(index) == true && index == 2);
+    ASSERT(a4.clearFirst(index) == false && index == 2);
+
+    a4.mark();
+    a4.clear(2);
+    ASSERT(a4.clearFirst(index) == true && index == 0);
+    ASSERT(a4.clearFirst(index) == true && index == 1);
+    ASSERT(a4.clearFirst(index) == true && index == 3);
+    ASSERT(a4.clearFirst(index) == false && index == 3);
+
+    a48.clear();
+    a48.mark(20);
+    a48.mark(1);
+    a48.mark(0);
+    a48.mark(30);
+    a48.mark(3);
+    a48.mark(5);
+    a48.mark(40);
+    ASSERT(a48.clearFirst(index) == true && index == 0);
+    ASSERT(a48.clearFirst(index) == true && index == 1);
+    ASSERT(a48.clearFirst(index) == true && index == 3);
+    ASSERT(a48.clearFirst(index) == true && index == 5);
+    ASSERT(a48.clearFirst(index) == true && index == 20);
+    ASSERT(a48.clearFirst(index) == true && index == 30);
+    ASSERT(a48.clearFirst(index) == true && index == 40);
+    ASSERT(a48.clearFirst(index) == false && index == 40);
+}
+
 void main()
 {
     arrayOfObjects();
@@ -209,6 +245,7 @@ void main()
     eraseInt();
     findInArrayOfPointers();
     bitArraySizeEdgeCases();
+    bitArrayIter();
     
     LOG("Success.\n");
 }
