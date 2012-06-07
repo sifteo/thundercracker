@@ -857,7 +857,7 @@ void XmTrackerPlayer::processEffects(XmTrackerChannel &channel)
 
                     if (!nparam) {
                         // Remember new boundary
-                        loop.start = next.row - 1;
+                        loop.start = next.row;
                     } else {
                         // First iteration
                         if (!loop.i) {
@@ -870,7 +870,7 @@ void XmTrackerPlayer::processEffects(XmTrackerChannel &channel)
                             loop.i = 0;
                             loop.limit = 0;
                         } else {
-                            processPatternBreak(phrase, loop.end);
+                            processPatternBreak(phrase, loop.start);
                         }
                     }
                     break;
