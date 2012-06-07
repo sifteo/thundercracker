@@ -535,54 +535,16 @@ void CPPSourceWriter::writeTracker(const Tracker &tracker)
 CPPHeaderWriter::CPPHeaderWriter(Logger &log, const char *filename)
     : CPPWriter(log, filename)
 {
-    if (filename)
-        createGuardName(filename);
-
     if (mStream.is_open())
         head();
-}
-
-void CPPHeaderWriter::createGuardName(const char *filename)
-{
-    /*
-     * Make a name for the include guard, based on the filename
-     */
-
-    char c;
-    char prev = '_';
-    guardName = prev;
-
-    while ((c = *filename)) {
-        c = toupper(c);
-
-        if (isalpha(c)) {
-            prev = c;
-            guardName += prev;
-        } else if (prev != '_') {
-            prev = '_';
-            guardName += prev;
-        }
-
-        filename++;
-    }
 }
 
 void CPPHeaderWriter::head()
 {
     mStream <<
         "\n"
-        "#ifndef " << guardName << "\n"
-        "#define " << guardName << "\n"
+        "#pragma once\n"
         "\n";
-}
-
-void CPPHeaderWriter::foot()
-{
-    mStream <<
-        "\n"
-        "#endif  // " << guardName << "\n";
-
-    CPPWriter::foot();
 }
 
 void CPPHeaderWriter::writeGroup(const Group &group)
