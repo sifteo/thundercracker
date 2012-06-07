@@ -75,7 +75,7 @@ s1_bit:
 
         jb		_nb_rx_mask_state2, read_buf	; s1 bit?
 		#ifdef NBR_RX
-        mov		_MISC_DIR, #MISC_DIR_VALUE		; unmask already so we dont miss during s_mask
+        mov		_MISC_DIR, #MISC_DIR_VALUE		; unmask already so we start listening early
 		#endif
 
 s_mask:
@@ -87,7 +87,8 @@ s_mask:
         ; the received side bits.
         ;
         ; At this point, the side bits have been stored independently in nb_rx_mask_bit0 and cy.
-        ; We decode them rapidly using a jump tree.
+        ; All sides have also been unmasked before entering here.
+        ; We decode rapidly using a jump tree and mask sides we dont want to listen on
 
        	#ifdef NBR_RX
 top:
