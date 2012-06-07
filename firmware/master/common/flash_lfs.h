@@ -59,8 +59,11 @@
  * Common methods used by multiple LFS components.
  */
 namespace LFS {
+    const unsigned KEY_ANY = unsigned(-1);
+
     uint8_t computeCheckByte(uint8_t a, uint8_t b);
     bool isEmpty(const uint8_t *bytes, unsigned count);
+    uint32_t indexBlockAddr(FlashVolume vol, unsigned row);
 };
 
 
@@ -224,7 +227,7 @@ public:
         ASSERT(sizeInBytes <= MAX_SIZE);
         ASSERT((sizeInBytes & SIZE_MASK) == 0);
 
-        unsigned size = (sizeInBytes >> SIZE_SHIFT) - 1;
+        unsigned size = sizeInBytes >> SIZE_SHIFT;
 
         this->key = key;
         this->size = size;
@@ -333,7 +336,7 @@ namespace LFS {
         return (FlashLFSIndexRecord *) (anchor + 1);
     }
 
-    // Return the last possible location for an anchor in a block
+    // Return the last possible location for a record in a block
     inline FlashLFSIndexRecord *lastRecord(FlashBlock *block) {
         uint8_t *p = block->getData() + FlashBlock::BLOCK_SIZE;
         return ((FlashLFSIndexRecord *) p) - 1;
@@ -366,6 +369,10 @@ namespace LFS {
  * The anchor specifies a base address for the indexed objects, whereas
  * the records specify each object's type and size. The Index block alone
  * is enough information to compute the address of any object in the block.
+ *
+ * You must start the iterator with beginBlock(), which succeeds iff an
+ * anchor is found in the block. At that point, the iterator is not yet
+ * pointing to the first block. The first call to next() will do this.
  */
 class FlashLFSIndexBlockIter
 {
@@ -375,21 +382,34 @@ class FlashLFSIndexBlockIter
     unsigned currentOffset;
 
 public:
-    FlashLFSIndexBlockIter(uint32_t blockAddr) {
-        beginBlock(blockAddr);
-    }
-
     bool beginBlock(uint32_t blockAddr);
-    bool prev();
+
+    bool previous(unsigned key = LFS::KEY_ANY);
     bool next();
 
-    const FlashLFSIndexRecord* operator->() const {
+    FlashLFSIndexRecord *beginAppend(FlashBlockWriter &writer);
+
+    const FlashLFSIndexRecord& operator*() const
+    {
+        ASSERT(currentRecord);
+        return *currentRecord;
+    }
+
+    const FlashLFSIndexRecord* operator->() const
+    {
         ASSERT(currentRecord);
         return currentRecord;
     }
 
     unsigned getCurrentOffset() const {
         return currentOffset;
+    }
+
+    unsigned getNextOffset() const
+    {
+        FlashLFSIndexRecord *p = currentRecord;
+        ASSERT(p == 0 || p->isValid());
+        return currentOffset + (p ? p->getSizeInBytes() : 0);
     }
 };
 
@@ -480,17 +500,94 @@ class FlashLFS
 public:
     FlashLFS(FlashVolume parent);
 
-    bool findObject(unsigned key, uint32_t &addr, uint32_t &size);
-    bool newObject(unsigned key, uint32_t size, uint32_t crc, uint32_t &addr);
-    bool collectGarbage();
+    bool newVolume();
 
-private:
     uint32_t lastSequenceNumber;
     FlashVolume parent;
     FlashLFSVolumeVector volumes;
+};
 
-    bool newObjectInVolume(unsigned key, uint32_t size, uint32_t crc, uint32_t &addr, FlashVolume vol);
-    bool newVolume();
+
+/**
+ * Manages the process of allocating a new object in an LFS. This
+ * object keeps state which is accessed at several levels of the
+ * allocation algorithm.
+ */
+class FlashLFSObjectAllocator
+{
+public:
+    FlashLFSObjectAllocator(FlashLFS &lfs, unsigned key, unsigned size, unsigned crc);
+
+    // Perform the actual allocation. Writes to flash, etc.
+    bool allocate();
+
+    // Read the results of the allocation operation
+    unsigned address() const {
+        return addr;
+    }
+
+private:
+    FlashLFS &lfs;          // IN
+    const unsigned key;     // IN
+    const unsigned size;    // IN
+    const unsigned crc;     // IN
+    unsigned addr;          // OUT
+
+    bool allocInVolume(FlashVolume vol);
+    bool allocInVolumeRow(FlashVolume vol, FlashBlockRef &hdrRef,
+        FlashLFSVolumeHeader *hdr, unsigned row);
+
+    uint32_t findAnchorOffset(FlashVolume vol, unsigned row);
+    void writeAnchor(FlashBlockWriter &writer, uint32_t anchorOffset);
+};
+
+
+/**
+ * Iterate through stored objects, starting with the most recent ones.
+ * This is used for anything that needs to read from the LFS, including
+ * object retrieval and garbage collection.
+ *
+ * Only supports iteration in one direction: newest to oldest. At construction,
+ * it points just past the most recent object. The first successful call
+ * to previous() points it at the most recent object.
+ */
+class FlashLFSObjectIter
+{
+public:
+    FlashLFSObjectIter(FlashLFS &lfs);
+
+    bool previous(unsigned key = LFS::KEY_ANY);
+    bool readAndCheck(uint8_t *buffer, unsigned size);
+
+    // Address of the current object
+    unsigned address() const {
+        return volume().block.address()
+            + FlashBlock::BLOCK_SIZE + indexIter.getCurrentOffset();
+    }
+
+    // Index record for the current object
+    const FlashLFSIndexRecord *record() const {
+        return &*indexIter;
+    }
+
+private:
+    FlashLFS &lfs;
+    FlashLFSIndexBlockIter indexIter;
+
+    // Counts of remaining volumes/rows, including the 'current' one
+    unsigned volumeCount;
+    unsigned rowCount;
+
+    FlashBlockRef hdrRef;               // Mapped header from current volume
+    FlashLFSVolumeHeader *hdr;
+
+    // Current volume
+    FlashVolume volume() const {
+        ASSERT(volumeCount > 0 && volumeCount <= lfs.volumes.MAX_VOLUMES);
+        FlashVolume v = lfs.volumes.slots[volumeCount - 1];
+        ASSERT(v.isValid());
+        return v;
+    }
 };
 
 

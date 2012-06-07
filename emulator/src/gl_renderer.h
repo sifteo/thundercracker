@@ -57,6 +57,7 @@ class GLRenderer {
 
     void beginOverlay();
     void overlayRect(int x, int y, int w, int h, const float color[4], GLhandleARB program = 0);
+    void overlayRect(int x, int y, int w, int h);
     void overlayText(int x, int y, const float color[4], const char *str);
     int measureText(const char *str);
     void overlayCubeFlash(unsigned id, int x, int y, int w, int h,
@@ -142,8 +143,10 @@ class GLRenderer {
     GLhandleARB backgroundProgram;
     GLuint backgroundTexture;
     GLuint bgLightTexture;
+    GLuint logoTexture;
 
     GLhandleARB scopeProgram;
+    GLint scopeAlphaAttr;
     GLuint scopeSampleTexture;
     GLuint scopeBackgroundTexture;
     

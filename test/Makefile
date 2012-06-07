@@ -13,7 +13,6 @@ include $(TC_DIR)/Makefile.platform
 
 # Cross-platform tests
 TESTS = \
-	firmware/cube \
 	sdk/array \
 	sdk/compatibility \
 	sdk/crc \
@@ -23,7 +22,8 @@ TESTS = \
 	sdk/bg1 \
 	sdk/sprites \
 	sdk/tilebuffer \
-	sdk/scripting
+	sdk/scripting \
+	sdk/stir
 
 # Mac-only tests
 ifeq ($(BUILD_PLATFORM), Darwin)
@@ -33,6 +33,7 @@ endif
 # Tests that are broken on Windows currently
 ifneq ($(BUILD_PLATFORM), windows32)
     TESTS += \
+	firmware/cube \
 	firmware/master \
 	sdk/adpcm \
 	sdk/tracker
@@ -48,10 +49,10 @@ SDK_DIR := $(TC_DIR)/sdk
 tests: $(TESTS)
 
 $(TESTS):
-	@PATH="$(SDK_DIR)/bin:$(PATH)" TC_DIR="$(TC_DIR)" SDK_DIR="$(SDK_DIR)" $(MAKE) -C $@
+	@PATH="$(SDK_DIR)/bin:/bin:/usr/bin:/usr/local/bin" TC_DIR="$(TC_DIR)" SDK_DIR="$(SDK_DIR)" $(MAKE) -C $@
 
 clean:
-	@PATH="$(SDK_DIR)/bin:$(PATH)" TC_DIR="$(TC_DIR)" SDK_DIR="$(SDK_DIR)" $(MAKE) _clean
+	@PATH="$(SDK_DIR)/bin:/bin:/usr/bin:/usr/local/bin" TC_DIR="$(TC_DIR)" SDK_DIR="$(SDK_DIR)" $(MAKE) _clean
 
 # Internal target for 'clean', with environment vars set up. I couldn't
 # see a better way to set up environment vars and do the 'for' loop in one step.

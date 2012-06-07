@@ -135,6 +135,45 @@ void testExceptions()
     ASSERT(isunordered(pow(b(-1.0), b(1.5 ))) == true);
 }
 
+void testBits()
+{
+    // Test bit operations
+
+    ASSERT(clz(b(0x80000000)) == 0);
+    ASSERT(clz(b(0x4fffffff)) == 1);
+    ASSERT(clz(b(0x35555555)) == 2);
+    ASSERT(clz(b(0x1aaaaaaa)) == 3);
+    ASSERT(clz(b(0x0fffffff)) == 4);
+    ASSERT(clz(b(0x04000000)) == 5);
+    ASSERT(clz(b(0x02000001)) == 6);
+    ASSERT(clz(b(0x01000010)) == 7);
+    ASSERT(clz(b(0x00800100)) == 8);
+    ASSERT(clz(b(0x00401000)) == 9);
+    ASSERT(clz(b(0x00210000)) == 10);
+    ASSERT(clz(b(0x00100003)) == 11);
+    ASSERT(clz(b(0x00080030)) == 12);
+    ASSERT(clz(b(0x00040300)) == 13);
+    ASSERT(clz(b(0x00023000)) == 14);
+    ASSERT(clz(b(0x00010000)) == 15);
+    ASSERT(clz(b(0x00008007)) == 16);
+    ASSERT(clz(b(0x00004070)) == 17);
+    ASSERT(clz(b(0x00002700)) == 18);
+    ASSERT(clz(b(0x0000100c)) == 19);
+    ASSERT(clz(b(0x000008c0)) == 20);
+    ASSERT(clz(b(0x000004ff)) == 21);
+    ASSERT(clz(b(0x000003ff)) == 22);
+    ASSERT(clz(b(0x00000100)) == 23);
+    ASSERT(clz(b(0x00000080)) == 24);
+    ASSERT(clz(b(0x00000040)) == 25);
+    ASSERT(clz(b(0x00000020)) == 26);
+    ASSERT(clz(b(0x00000010)) == 27);
+    ASSERT(clz(b(0x00000008)) == 28);
+    ASSERT(clz(b(0x00000004)) == 29);
+    ASSERT(clz(b(0x00000003)) == 30);
+    ASSERT(clz(b(0x00000001)) == 31);
+    ASSERT(clz(b(0x00000000)) == 32);
+}
+
 void main()
 {
     testClamp();
@@ -144,6 +183,7 @@ void main()
     testAlmostEqual();
     testLog();
     testExceptions();
+    testBits();
 
     LOG("Success.\n");
 }

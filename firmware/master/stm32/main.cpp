@@ -126,15 +126,25 @@ int main()
      *
      * Kind of crappy, but just power cycle to start again and run the game.
      */
+    SysTime::Ticks button_delay = SysTime::ticks();
+    
     if (HomeButton::isPressed()) {
-
-        // indicate we're waiting
-        GPIOPin green = LED_GREEN_GPIO;
-        green.setControl(GPIOPin::OUT_10MHZ);
-        green.setLow();
-
-        for (;;)
-            Tasks::work();
+        
+        //Creates a delay. Cancels if home button is released.
+        while (SysTime::ticks() - button_delay < SysTime::msTicks(1000) && HomeButton::isPressed() )
+            ;
+        
+        //Checks to see if the home button is still pressed after 1 second
+        if( HomeButton::isPressed() ) {
+          
+          // indicate we're waiting
+          GPIOPin green = LED_GREEN_GPIO;
+          green.setControl(GPIOPin::OUT_10MHZ);
+          green.setLow();
+          
+          for (;;)
+              Tasks::work();
+        }
     }
 
     /*

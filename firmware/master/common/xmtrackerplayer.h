@@ -28,9 +28,8 @@ struct XmTrackerChannel {
     uint32_t period;
     uint32_t frequency;
     uint32_t offset;
-    bool start;
-    bool active;
-    bool valid;
+    uint8_t state;
+    uint8_t applyStateOnTick;
 
     struct XmTrackerEnvelopeMemory envelope;
 
@@ -46,6 +45,7 @@ struct XmTrackerChannel {
                 fineSlideUp:4;
         struct {
             uint32_t period;
+            bool active;
         } porta;
         struct {
             uint8_t phase;
@@ -77,7 +77,7 @@ struct XmTrackerChannel {
         if (pNote == 0)
             pNote = note.note;
 
-        if (pNote >= XmTrackerPattern::kNoNote)
+        if (pNote >= XmTrackerPattern::kNoteOff)
             return 0;
 
         pNote += instrument.relativeNoteNumber;

@@ -121,6 +121,21 @@ template <typename T> inline T bitRange(int begin, int end)
     return lslc((T)-1, begin) & ~lslc((T)-1, end);
 }
 
+/**
+ * @brief Count leading zeroes in a 32-bit word
+ *
+ * If the parameter is nonzero, returns a number between 0 and 31 indicating
+ * how many leading zeroes are present in the parameter, starting at the
+ * most significant bit. If the parameter is zero, returns 32.
+ *
+ * This function is very fast: it is implemented as a single CPU instruction.
+ */
+
+inline unsigned clz(uint32_t word)
+{
+    return __builtin_clz(word);
+}
+
 /// Compute the remainder (modulo) operation for two floating point numbers. Single-precision.
 float inline fmod(float a, float b)
 {

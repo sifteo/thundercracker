@@ -26,6 +26,7 @@ INPUTS = [
     ('rb', None,        "resources/img_wood.png"),
     ('rb', None,        "resources/img_bg_light.png"),
     ('rb', None,        "resources/img_scope_bg.png"),
+    ('rb', None,        "resources/img_logo.png"),
     ('r',  nulTerm,     "resources/cube_face_fp.glsl"),
     ('r',  nulTerm,     "resources/cube_face_vp.glsl"),
     ('r',  nulTerm,     "resources/cube_side_fp.glsl"),

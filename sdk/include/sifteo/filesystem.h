@@ -63,6 +63,11 @@ public:
     StoredObject(_SYSObjectKey k) : sys(k) {}
 
     /// Initialize from an integer
+    StoredObject(int k) : sys(k) {
+        ASSERT(k >= 0 && k <= LIMIT);
+    }
+
+    /// Initialize from an unsigned integer
     StoredObject(unsigned k) : sys(k) {
         ASSERT(k <= LIMIT);
     }
@@ -92,6 +97,10 @@ public:
      * read, which on success always equals either the size of the
      * stored data for this object or the size of the provided buffer,
      * whichever is smaller.
+     *
+     * The provided 'bufferSize' _must_ be large enough to hold the entire
+     * stored object, excepting only any trailing 0xFF bytes. It is not,
+     * in general, possible to perform partial reads of a stored object.
      *
      * If no data has been stored for this object yet, returns zero.
      * Note that the object store does not distinguish between zero-length
@@ -137,7 +146,7 @@ public:
     /// Template wrapper for read() of fixed-size objects.
     template <typename T>
     int read(T &buffer, _SYSVolumeHandle volume = 0) const {
-        int result = read((void*) &buffer, sizeof buffer, volume);
+        return read((void*) &buffer, sizeof buffer, volume);
     }
 
     /// Template wrapper for write() of fixed-size objects

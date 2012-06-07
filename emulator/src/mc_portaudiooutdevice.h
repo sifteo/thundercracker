@@ -44,8 +44,21 @@ private:
     int16_t upsampleFilter(int16_t sample);
     double xv[5], yv[5];
 
-    // An additional simulation-only buffer, necessary because of the jitter in our virtual clock
+    /*
+     * An additional simulation-only buffer, necessary because of the
+     * jitter in our virtual clock. On Windows especially, this is
+     * super jittery due to the low Sleep resolution available there.
+     * And to make things worse, PA on Windows tends to request
+     * much larger audio blocks, making it much easier to underrun.
+     *
+     * So, use a much larger buffer on Windows.
+     */
+    #ifdef _WIN32
+    typedef RingBuffer<2048, int16_t> SimBuffer_t;
+    #else
     typedef RingBuffer<512, int16_t> SimBuffer_t;
+    #endif
+
     SimBuffer_t simBuffer;
     uint32_t bufferFilling;     // Must be 32-bit (atomic access)
 

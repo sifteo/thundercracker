@@ -133,78 +133,22 @@ unsigned SvmMemory::reconstructCodeAddr(const FlashBlockRef &ref, uint32_t pc)
 bool SvmMemory::crcROData(FlashBlockRef &ref, VirtAddr src, uint32_t length,
      uint32_t &crc, unsigned alignment)
 {
-    unsigned offset = 0;    // Bytes CRC'ed so far
-    union {
-        uint32_t word;
-        uint8_t bytes[4];
-    } buffer;
+    CrcStream cs;
 
-    Crc32::reset();
+    cs.reset();
 
-    while (1) {
-        uint32_t chunk = length - offset;
-        if (!chunk)
-            break;
-
+    while (length) {
         SvmMemory::PhysAddr pa;
+        uint32_t chunk = length;
         if (!SvmMemory::mapROData(ref, src, chunk, pa))
             return false;
+
         src += chunk;
+        length -= chunk;
 
-        /*
-         * Handle fully-aligned words, if any
-         */
-
-        if ((offset & 3) == 0 && ((uintptr_t)pa & 3) == 0) {
-            unsigned words = chunk >> 2;
-            offset += words << 2;
-            chunk &= 3;
-
-            while (words) {
-                words--;
-                Crc32::add(*(const uint32_t*)pa);
-                pa += 4;
-            }
-        }
-
-        /*
-         * Handle individual bytes
-         */
-
-        while (chunk) {
-            buffer.bytes[offset & 3] = *pa;
-            pa++;
-            offset++;
-            chunk--;
-
-            if ((offset & 3) == 0) {
-                // Just completed a word
-                Crc32::add(buffer.word);
-            }
-        }
-    }
-    
-    /*
-     * Pad until alignment boundary
-     *
-     * (Padding looks just like erased flash memory. Of course that's intentional :)
-     */
-
-    unsigned alignMask = alignment - 1;
-    ASSERT(alignment >= 4);
-    ASSERT((alignment & alignMask) == 0);
-
-    while (offset & alignMask) {
-        buffer.bytes[offset & 3] = 0xFF;
-        offset++;
-        if ((offset & 3) == 0) {
-            // Just completed a word
-            Crc32::add(buffer.word);
-        }
+        cs.addBytes(pa, chunk);
     }
 
-    ASSERT((offset & 3) == 0);
-
-    crc = Crc32::get();
+    crc = cs.get(alignment);
     return true;
 }

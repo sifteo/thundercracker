@@ -335,6 +335,9 @@ function testFilesystem()
     -- Dump the volumes that existed on entry
     dumpFilesystem()
 
+    -- Frob the cache, why not.
+    fs:invalidateCache()
+
     -- Individual filesystem exercises
     testHierarchy()
     testAllocFail()

@@ -46,6 +46,9 @@ bool FlashVolume::isValid() const
         ASSERT(numMapEntries >= 1);
         ASSERT(map->blocks[0].code == block.code);
 
+        // LFS volumes always have numMapEntries==1
+        ASSERT(numMapEntries == 1 || hdr->type != T_LFS);
+
         /*
          * Header must have the lowest block index, otherwise FlashVolumeIter
          * might find a non-header block first. (That would be a security

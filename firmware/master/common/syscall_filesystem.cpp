@@ -157,7 +157,29 @@ int32_t _SYS_fs_objectRead(unsigned key, uint8_t *buffer,
         return 0;
     }
 
-    // XXX
+    /*
+     * Search for the requested object in the index.
+     *
+     * Traverse backwards from the newest to the oldest, returning
+     * the first instance of this key which has a valid CRC.
+     *
+     * Note that we use the userspace buffer to CRC the object,
+     * obviating the need for any separate buffer space. This means
+     * it's required that the entire object, excepting any trailing
+     * 0xFF padding, must fit in the buffer. If not, we'll notice
+     * a CRC failure.
+     */
+
+    FlashLFS lfs(parentVol);
+    FlashLFSObjectIter iter(lfs);
+
+    while (iter.previous(key)) {
+        unsigned size = iter.record()->getSizeInBytes();
+        size = MIN(size, bufferSize);
+        if (iter.readAndCheck(buffer, size))
+            return size;
+    }
+
     return 0;
 }
 
@@ -193,10 +215,10 @@ int32_t _SYS_fs_objectWrite(unsigned key, const uint8_t *data, unsigned dataSize
      */
 
     FlashLFS lfs(parentVol);
-    uint32_t objectAddr;
-    if (!lfs.newObject(key, dataSize, crc, objectAddr)) {
+    FlashLFSObjectAllocator allocator(lfs, key, dataSize, crc);
+
+    if (!allocator.allocate())
         return 0;
-    }
 
     /*
      * Write the actual object data. We effectively do a non-cache-polluting
@@ -205,9 +227,9 @@ int32_t _SYS_fs_objectWrite(unsigned key, const uint8_t *data, unsigned dataSize
      * involve an extra copy from userspace memory to cache memory).
      */
 
-    FlashBlock::invalidate(objectAddr, objectAddr + dataSize);
+    FlashBlock::invalidate(allocator.address(), allocator.address() + dataSize);
 
-    uint32_t currentAddr = objectAddr;
+    uint32_t currentAddr = allocator.address();
     uint32_t remainingBytes = dataSize;
 
     while (remainingBytes) {
@@ -222,10 +244,18 @@ int32_t _SYS_fs_objectWrite(unsigned key, const uint8_t *data, unsigned dataSize
         }
 
         ASSERT(chunk > 0);
-        ASSERT(currentAddr >= objectAddr);
-        ASSERT(currentAddr + chunk <= objectAddr + dataSize);
+        ASSERT(currentAddr >= allocator.address());
+        ASSERT(currentAddr + chunk <= allocator.address() + dataSize);
 
         FlashDevice::write(currentAddr, pa, chunk);
+
+        // Verify, on siftulator only
+        DEBUG_ONLY({
+            uint8_t buffer[FlashLFSIndexRecord::MAX_SIZE];
+            ASSERT(chunk <= sizeof buffer);
+            FlashDevice::read(currentAddr, buffer, chunk);
+            ASSERT(0 == memcmp(buffer, pa, chunk));
+        });
 
         va += chunk;
         remainingBytes -= chunk;

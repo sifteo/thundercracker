@@ -7,14 +7,27 @@
 
 void main()
 {
-    Sifteo::Metadata().title("Flash Cache Thrasher");
+    SCRIPT(LUA,
+        function Filesystem:onRawRead(addr, data)
+            local va = Runtime():flashToVirtAddr(addr)
+            if va ~= 0 then
+                print(string.format("Cache miss at %08x", va))
+            end
+        end
+
+        Filesystem():setCallbacksEnabled(true)
+    );
+    
+    Sifteo::Metadata().title("Flash Cache Thrasher").cubeRange(0);
 
     static const uint8_t flashData[64*1024] = { 1 };
     unsigned i = 0;
     volatile uint32_t dummy;
 
     while (1) {
-        dummy = *(volatile uint32_t*)(flashData + i);
+        volatile uint32_t* ptr = (volatile uint32_t*)(flashData + i);
+        LOG("Reading %p\n", ptr);
+        dummy = *ptr;
         i = (i + 256) % sizeof flashData;
     }
 }

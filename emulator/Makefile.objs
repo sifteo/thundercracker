@@ -5,6 +5,11 @@ LOCAL_OBJS = \
     src/frontend_mothership.o \
     src/frontend_overlay.o \
     src/lua_script.o \
+    src/lua_system.o \
+    src/lua_frontend.o \
+    src/lua_cube.o \
+    src/lua_runtime.o \
+    src/lua_filesystem.o \
     src/gl_renderer.o \
     src/main.o \
     src/system.o \

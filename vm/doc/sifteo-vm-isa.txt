@@ -145,6 +145,8 @@ Allowed 32-bit instruction encodings:
 
   11111011 10x10xxx, 11110xxx 11110xxx      [su]div     r0-r7, r0-r7, r0-r7
 
+  11111010 10110111, 11110xxx 10000111      clz         r0-r7, r7
+
 Allowed 16-bit instruction encodings:
 
   00xxxxxx xxxxxxxx     lsl, lsr, asr, add, sub, mov, cmp

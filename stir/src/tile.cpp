@@ -386,7 +386,7 @@ const char *TilePalette::colorModeName(ColorMode m)
 }
 
 TileStack::TileStack()
-    : index(NO_INDEX), mPinned(false)
+    : index(NO_INDEX), mPinned(false), mLossless(false)
     {}
 
 void TileStack::add(TileRef t)
@@ -397,11 +397,14 @@ void TileStack::add(TileRef t)
     if (maxMSE < epsilon) {
         // Lossless. Replace the entire stack, yielding a trivial median.
         tiles.clear();
+        mLossless = true;
     }
 
-    // Add to stack, invalidating cache
-    tiles.push_back(t);
-    cache = TileRef();
+    // Add to stack, invalidating cache. (Don't modify lossless stacks)
+    if (tiles.empty() || !mLossless) {
+        tiles.push_back(t);
+        cache = TileRef();
+    }
 
     // A stack with any pinned tiles in it is itself pinned.
     if (t->options().pinned)
@@ -719,6 +722,9 @@ void TilePool::optimizeTrueColorTiles(Logger &log)
      * asset group (and avoiding tile discontinuities), whereas this is
      * intended more for tiles that already use a bunch of colors.
      */
+
+    if (stackList.empty())
+        return;
 
     unsigned totalCount = 0;
     unsigned reducedCount = 0;

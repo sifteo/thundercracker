@@ -49,6 +49,7 @@ bool GLRenderer::init()
     glUseProgramObjectARB(backgroundProgram);
     glUniform1iARB(glGetUniformLocationARB(backgroundProgram, "texture"), 0);
     glUniform1iARB(glGetUniformLocationARB(backgroundProgram, "lightmap"), 1);
+    glUniform1iARB(glGetUniformLocationARB(backgroundProgram, "logo"), 2);
 
     extern const uint8_t scope_fp[];
     extern const uint8_t scope_vp[];
@@ -58,6 +59,7 @@ bool GLRenderer::init()
     glUseProgramObjectARB(scopeProgram);
     glUniform1iARB(glGetUniformLocationARB(scopeProgram, "sampleBuffer"), 0);
     glUniform1iARB(glGetUniformLocationARB(scopeProgram, "background"), 1);
+    scopeAlphaAttr = glGetUniformLocationARB(scopeProgram, "alphaAttr");
 
     /*
      * Load textures
@@ -69,6 +71,7 @@ bool GLRenderer::init()
     extern const uint8_t img_wood[];
     extern const uint8_t img_bg_light[];
     extern const uint8_t img_scope_bg[];
+    extern const uint8_t img_logo[];
     extern const uint8_t ui_font_data_0[];
 
     cubeFaceTexture = loadTexture(img_cube_face);
@@ -79,6 +82,10 @@ bool GLRenderer::init()
     fontTexture = loadTexture(ui_font_data_0, GL_CLAMP, GL_NEAREST);
     scopeSampleTexture = 0;
     scopeBackgroundTexture = loadTexture(img_scope_bg, GL_REPEAT, GL_LINEAR_MIPMAP_LINEAR);
+
+    logoTexture = loadTexture(img_logo, GL_CLAMP, GL_LINEAR_MIPMAP_LINEAR);
+    GLfloat logoBorder[4] = { 0.5f, 0.0f, 0.0f, 1.0f };
+    glTexParameterfv(GL_TEXTURE_2D, GL_TEXTURE_BORDER_COLOR, logoBorder);
 
     /*
      * Procedural models
@@ -354,6 +361,13 @@ void GLRenderer::overlayText(int x, int y, const float color[4], const char *str
 void GLRenderer::overlayRect(int x, int y, int w, int h,
     const float color[4], GLhandleARB program)
 {
+    glUseProgramObjectARB(program);
+    glColor4fv(color);
+    overlayRect(x, y, w, h);
+}
+
+void GLRenderer::overlayRect(int x, int y, int w, int h)
+{
     overlayVA.clear();
     VertexT a, b, c, d;
            
@@ -382,13 +396,11 @@ void GLRenderer::overlayRect(int x, int y, int w, int h,
     overlayVA.push_back(a);
     overlayVA.push_back(c);
     overlayVA.push_back(d);
-        
-    glUseProgramObjectARB(program);
-    glColor4fv(color);
+
     glInterleavedArrays(GL_T2F_V3F, 0, &overlayVA[0]);
     glDrawArrays(GL_TRIANGLES, 0, (GLsizei) overlayVA.size());
 }
-                    
+
 void GLRenderer::drawDefaultBackground(float extent, float scale)
 {
     float tc = scale * extent;
@@ -413,6 +425,10 @@ void GLRenderer::drawDefaultBackground(float extent, float scale)
     glEnable(GL_TEXTURE_2D);
     glBindTexture(GL_TEXTURE_2D, bgLightTexture);
 
+    glActiveTexture(GL_TEXTURE2);
+    glEnable(GL_TEXTURE_2D);
+    glBindTexture(GL_TEXTURE_2D, logoTexture);
+
     glInterleavedArrays(GL_T2F_N3F_V3F, 0, bg);
     glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
     
@@ -420,9 +436,11 @@ void GLRenderer::drawDefaultBackground(float extent, float scale)
      * Clean up GL state.
      */
 
-    glActiveTexture(GL_TEXTURE0);
+    glActiveTexture(GL_TEXTURE2);
     glDisable(GL_TEXTURE_2D);
     glActiveTexture(GL_TEXTURE1);
+    glDisable(GL_TEXTURE_2D);
+    glActiveTexture(GL_TEXTURE0);
     glDisable(GL_TEXTURE_2D);
     glEnable(GL_DEPTH_TEST);
 }
@@ -1031,12 +1049,13 @@ void GLRenderer::overlayAudioVisualizer(float alpha)
 
     // Make each channel's scope a square
     const unsigned height = viewportWidth / MCAudioVisData::NUM_CHANNELS;
-    const float color[4] = { 1, 1, 1, alpha };
-
+    
     if (alpha > 0.999)
         glDisable(GL_BLEND);
 
-    overlayRect(0, viewportHeight - height, viewportWidth, height, color, scopeProgram);
+    glUseProgramObjectARB(scopeProgram);
+    glUniform1fARB(scopeAlphaAttr, alpha);
+    overlayRect(0, viewportHeight - height, viewportWidth, height);
 
     glEnable(GL_BLEND);
     glActiveTexture(GL_TEXTURE1);

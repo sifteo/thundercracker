@@ -350,6 +350,9 @@ static const uint32_t MovWtTest = 0x1e4800 << 11;   // 0b11110x10 x100xxxx, 0xxx
 static const uint32_t DivMask   = 0xffd8f8f8;       // 0b11111111 11011000, 11111000 11111000
 static const uint32_t DivTest   = 0xfb90f0f0;       // 0b11111011 10x10xxx, 11110xxx 11110xxx
 
+static const uint32_t ClzMask   = 0xfffff8ff;       // 0b11111111 11111111, 11111000 11111111
+static const uint32_t ClzTest   = 0xfab7f087;       // 0b11111010 10110111, 11110xxx 10000111
+
 ////////////////////////////
 // indirect operation masks
 ////////////////////////////
