@@ -1,6 +1,6 @@
 OUTPUTS = \
 	empty.html empty.gen.cpp empty.gen.h \
-	empty-group.html
+	empty-group.html empty-group.gen.cpp empty-group.gen.h
 
 all: $(OUTPUTS)
 
