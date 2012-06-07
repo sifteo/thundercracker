@@ -723,6 +723,9 @@ void TilePool::optimizeTrueColorTiles(Logger &log)
      * intended more for tiles that already use a bunch of colors.
      */
 
+    if (stackList.empty())
+        return;
+
     unsigned totalCount = 0;
     unsigned reducedCount = 0;
     log.taskBegin("Optimizing true color tiles");
