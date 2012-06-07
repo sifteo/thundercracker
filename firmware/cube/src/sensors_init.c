@@ -233,7 +233,7 @@ void sensors_init()
      */
 
     nb_tx_packet[0] = 0xE0 | radio_get_cube_id();
-    nb_tx_packet[1] = ~nb_tx_packet[0];
+    nb_tx_packet[1] = (~nb_tx_packet[0])<<3;
 
     /*
      * Initialize touch detection
