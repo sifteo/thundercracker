@@ -22,7 +22,8 @@ TESTS = \
 	sdk/bg1 \
 	sdk/sprites \
 	sdk/tilebuffer \
-	sdk/scripting
+	sdk/scripting \
+	sdk/stir
 
 # Mac-only tests
 ifeq ($(BUILD_PLATFORM), Darwin)
