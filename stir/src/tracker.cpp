@@ -10,12 +10,14 @@
 #include "audioencoder.h"
 #include <stdlib.h>
 #include <string.h>
-#include <set>
+#include "script.h"
 
 namespace Stir {
 
 // For logger output
 const char * XmTrackerLoader::encodings[3] = {"", "Uncompressed PCM", "IMA 4-bit ADPCM"};
+
+std::vector<std::vector<uint8_t> > XmTrackerLoader::globalSampleDatas;
 
 /*
  * Load and process an entire XM file.
@@ -46,6 +48,13 @@ bool XmTrackerLoader::load(const char *pFilename, Logger &pLog)
     f = 0;
 
     return true;
+}
+
+/*
+ */
+void XmTrackerLoader::deduplicate(std::set<Tracker*> trackers, Logger &log)
+{
+    log.error("dedup goes here");
 }
 
 /*
@@ -351,9 +360,9 @@ bool XmTrackerLoader::readSample(_SYSXMInstrument &instrument)
             // if adpcm, read directly into memory and done
             std::vector<uint8_t> sampleData(sample.dataSize);
             getbuf(&sampleData[0], sample.dataSize);
-            sample.pData = sampleDatas.size();
+            sample.pData = globalSampleDatas.size();
             size += sample.dataSize;
-            sampleDatas.push_back(sampleData);
+            globalSampleDatas.push_back(sampleData);
             sample.type = _SYS_ADPCM;
             instrument.compression = 1;
             break;
@@ -418,9 +427,9 @@ bool XmTrackerLoader::readSample(_SYSXMInstrument &instrument)
             std::vector<uint8_t> sampleData(sample.dataSize);
             memcpy(&sampleData[0], buf, sample.dataSize);
             free(buf);
-            sample.pData = sampleDatas.size();
+            sample.pData = globalSampleDatas.size();
             size += sample.dataSize;
-            sampleDatas.push_back(sampleData);
+            globalSampleDatas.push_back(sampleData);
             sample.type = enc->getType();
             break;
         }
@@ -440,7 +449,6 @@ bool XmTrackerLoader::init()
 {
     size = 0;
     instruments.clear();
-    sampleDatas.clear();
 
     patterns.clear();
     patternDatas.clear();

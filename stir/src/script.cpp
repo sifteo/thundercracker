@@ -18,6 +18,7 @@
 #include "cppwriter.h"
 #include "audioencoder.h"
 #include "dubencoder.h"
+#include "tracker.h"
 
 namespace Stir {
 
@@ -124,17 +125,26 @@ bool Script::run(const char *filename)
 
     if (!trackers.empty()) {
         log.heading("Tracker");
-        log.infoBegin("Module compression");
         for (std::set<Tracker*>::iterator i = trackers.begin(); i != trackers.end(); i++) {
             Tracker *tracker = *i;
 
             if(!tracker->loader.load(tracker->getFile().c_str(), log)) {
                 return false;
             }
+        }
+
+        XmTrackerLoader::deduplicate(trackers, log);
+
+        log.infoBegin("Encoding modules");
+        source.writeTrackerShared(**trackers.begin());
+        for (std::set<Tracker*>::iterator i = trackers.begin(); i != trackers.end(); i++) {
+            Tracker *tracker = *i;
+
             header.writeTracker(*tracker);
             source.writeTracker(*tracker);
         }
         log.infoEnd();
+
     }
 
     proof.close();

@@ -380,9 +380,13 @@ public:
         return loader.patterns[i];
     }
     const std::vector<uint8_t> &getPatternData(uint8_t i) const {
-        assert(i < loader.song.nPatterns);
+        assert(i < loader.patternDatas.size());
         return loader.patternDatas[i];
     }
+    // const uint32_t numPatternDatas() const {
+    //     return loader.globalSampleDatas.size();
+    // }
+
     const std::vector<uint8_t> &getPatternTable() const {
         return loader.patternTable;
     }
@@ -394,9 +398,15 @@ public:
         assert(i < loader.envelopes.size());
         return loader.envelopes[i];
     }
+    // const uint32_t numEnvelopes() const {
+    //     return loader.globalEnvelopes.size();
+    // }
     const std::vector<uint8_t> &getSample(uint8_t i) const {
-        assert(i < loader.sampleDatas.size());
-        return loader.sampleDatas[i];
+        assert(i < loader.globalSampleDatas.size());
+        return loader.globalSampleDatas[i];
+    }
+    const uint32_t numSamples() const {
+        return loader.globalSampleDatas.size();
     }
 
     const uint32_t getFileSize() const {

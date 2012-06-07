@@ -13,15 +13,19 @@
 #include <stdio.h>
 #include <assert.h>
 #include <vector>
+#include <set>
 #include "logger.h"
 #include "sifteo/abi.h"
 
 namespace Stir {
 
+class Tracker;
+
 class XmTrackerLoader {
 public:
 	XmTrackerLoader() : log(0), size(0) {}
 	bool load(const char *filename, Logger &pLog);
+	static void deduplicate(std::set<Tracker*> trackers, Logger &log);
 
 private:
 	friend class Tracker;
@@ -75,7 +79,7 @@ private:
 
 	std::vector<_SYSXMInstrument> instruments;
 	std::vector<std::vector<uint8_t> > envelopes;
-	std::vector<std::vector<uint8_t> > sampleDatas;
+	static std::vector<std::vector<uint8_t> > globalSampleDatas;
 };
 
 }

@@ -57,6 +57,7 @@ class CPPSourceWriter : public CPPWriter {
     CPPSourceWriter(Logger &log, const char *filename);
     void writeGroup(const Group &group);
     void writeSound(const Sound &sound);
+    void writeTrackerShared(const Tracker &tracker);
     void writeTracker(const Tracker &tracker);
     void writeImageList(const ImageList& images);
 

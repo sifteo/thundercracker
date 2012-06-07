@@ -362,22 +362,23 @@ void CPPSourceWriter::writeImage(const Image &image, bool writeDecl, bool writeA
     }
 }
 
+void CPPSourceWriter::writeTrackerShared(const Tracker &tracker)
+{
+    // Samples:
+    for (unsigned i = 0; i < tracker.numSamples(); i++) {
+        const std::vector<uint8_t> &buf = tracker.getSample(i);
+        mStream << "static const char _Tracker_sample" << i << "_data[] = " <<
+                   "// " << buf.size() << " bytes\n";
+        writeString(buf);
+        mStream << ";\n\n";
+        
+    }
+
+}
+
 void CPPSourceWriter::writeTracker(const Tracker &tracker)
 {
     const _SYSXMSong &song = tracker.getSong();
-
-    // Samples:
-    for (unsigned i = 0; i < song.nInstruments; i++) {
-        const _SYSXMInstrument &instrument = tracker.getInstrument(i);
-
-        if (instrument.sample.pData < song.nInstruments) {
-            const std::vector<uint8_t> &buf = tracker.getSample(instrument.sample.pData);
-            mStream << "static const char " << tracker.getName() << "_instrument" << i << "_sampleData[] = " <<
-                       "// " << buf.size() << " bytes\n";
-            writeString(buf);
-            mStream << ";\n\n";
-        }
-    }
 
     // Envelopes:
     for (unsigned i = 0; i < song.nInstruments; i++) {
@@ -440,8 +441,8 @@ void CPPSourceWriter::writeTracker(const Tracker &tracker)
         indent << indent << "/* volume     */ " << instrument.sample.volume << ",\n" <<
         indent << indent << "/* dataSize   */ " << instrument.sample.dataSize << ",\n" <<
         indent << indent << "/* pData      */ ";
-        if (instrument.sample.pData < song.nInstruments) {
-            mStream << "reinterpret_cast<uint32_t>(" << tracker.getName() << "_instrument" << i << "_sampleData),\n";
+        if (instrument.sample.pData < tracker.numSamples()) {
+            mStream << "reinterpret_cast<uint32_t>(_Tracker_sample" << instrument.sample.pData << "_data),\n";
         } else {
             mStream << "0,\n";
         }
