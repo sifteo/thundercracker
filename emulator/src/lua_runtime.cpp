@@ -14,6 +14,8 @@ const char LuaRuntime::className[] = "Runtime";
 
 Lunar<LuaRuntime>::RegType LuaRuntime::methods[] = {
     LUNAR_DECLARE_METHOD(LuaRuntime, poke),
+    LUNAR_DECLARE_METHOD(LuaRuntime, flashToVirtAddr),
+    LUNAR_DECLARE_METHOD(LuaRuntime, virtToFlashAddr),
     {0,0}
 };
 
@@ -37,4 +39,18 @@ int LuaRuntime::poke(lua_State *L)
 
     *reinterpret_cast<uint32_t*>(pa) = value;
     return 0;
+}
+
+int LuaRuntime::virtToFlashAddr(lua_State *L)
+{
+    SvmMemory::VirtAddr va = luaL_checkinteger(L, 1);
+    lua_pushinteger(L, SvmMemory::virtToFlashAddr(va));
+    return 1;
+}
+
+int LuaRuntime::flashToVirtAddr(lua_State *L)
+{
+    uint32_t fa = luaL_checkinteger(L, 1);
+    lua_pushinteger(L, SvmMemory::flashToVirtAddr(fa));
+    return 1;
 }

@@ -37,8 +37,17 @@ public:
     static bool argMatch(lua_State *L, lua_Integer arg);
     static bool argEnd(lua_State *L);
 
- private:
+    // Get the default LuaScript instance for callbacks to run in
+    static LuaScript *callbackHost() {
+        return mCallbackHost;
+    }
+
+    static void handleError(lua_State *L, const char *context);
+
     lua_State *L;
+
+ private:
+    static LuaScript *mCallbackHost;
 };
 
 #endif

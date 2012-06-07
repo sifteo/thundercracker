@@ -19,7 +19,15 @@ public:
 
     LuaFilesystem(lua_State *L);
 
+    static void onRawRead(uint32_t address, const uint8_t *buf, unsigned len);
+    static void onRawWrite(uint32_t address, const uint8_t *buf, unsigned len);
+    static void onRawErase(uint32_t address);
+
 private:
+    static const char callbackHostField[];
+    static lua_State *callbackHost();
+    static bool callbacksEnabled;
+
     int newVolume(lua_State *L);
     int listVolumes(lua_State *L);
     int deleteVolume(lua_State *L);
@@ -29,6 +37,17 @@ private:
     int volumeEraseCounts(lua_State *L);
 
     int simulatedSectorEraseCounts(lua_State *L);
+
+    int rawRead(lua_State *L);
+    int rawWrite(lua_State *L);
+    int rawErase(lua_State *L);
+
+    int invalidateCache(lua_State *L);
+
+    int setCallbacksEnabled(lua_State *L);
+    int onRawRead(lua_State *L);
+    int onRawWrite(lua_State *L);
+    int onRawErase(lua_State *L);
 };
 
 
