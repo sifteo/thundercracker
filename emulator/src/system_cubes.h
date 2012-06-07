@@ -38,6 +38,7 @@ class SystemCubes {
     NEVER_INLINE void tickLoopDebug();
     NEVER_INLINE void tickLoopGeneral();
     NEVER_INLINE void tickLoopFastSBT();
+    NEVER_INLINE void tickLoopEmpty();
 
     System *sys;
     tthread::thread *mThread;

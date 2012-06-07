@@ -183,9 +183,11 @@ void SystemCubes::threadFn(void *param)
          */
 
         self->mBigCubeLock.lock();
-        if (debug) {
+        if (nCubes == 0) {
+            self->tickLoopEmpty();
+        } else if (debug) {
             self->tickLoopDebug();
-        } else if (nCubes < 1 || !sys->cubes[0].cpu.sbt || sys->cubes[0].cpu.mProfileData || Tracer::isEnabled()) {
+        } else if (!sys->cubes[0].cpu.sbt || sys->cubes[0].cpu.mProfileData || Tracer::isEnabled()) {
             self->tickLoopGeneral();
         } else {
             self->tickLoopFastSBT();
@@ -299,3 +301,22 @@ NEVER_INLINE void SystemCubes::tickLoopFastSBT()
     }
 }
 
+NEVER_INLINE void SystemCubes::tickLoopEmpty()
+{
+    /*
+     * Special-case tick loop for when the cube emulator is emulating no cubes.
+     * We still need to advance the clock, and operate deadlineSync.
+     */
+
+    System *sys = this->sys;
+    unsigned batch = sys->time.timestepTicks();
+    unsigned stepSize = 1;
+
+    while (batch && stepSize) {
+        unsigned nextStep;
+        batch -= stepSize;
+        nextStep = batch;
+        tick(stepSize);
+        stepSize = std::min(nextStep, (unsigned)deadlineSync.remaining());
+    }
+}
