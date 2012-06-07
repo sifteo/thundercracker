@@ -14,6 +14,8 @@
 #include "flash_volumeheader.h"
 
 const char LuaFilesystem::className[] = "Filesystem";
+const char LuaFilesystem::callbackHostField[] = "__filesystem_callbackHost";
+bool LuaFilesystem::callbacksEnabled;
 
 Lunar<LuaFilesystem>::RegType LuaFilesystem::methods[] = {
     LUNAR_DECLARE_METHOD(LuaFilesystem, newVolume),
@@ -27,13 +29,89 @@ Lunar<LuaFilesystem>::RegType LuaFilesystem::methods[] = {
     LUNAR_DECLARE_METHOD(LuaFilesystem, rawWrite),
     LUNAR_DECLARE_METHOD(LuaFilesystem, rawErase),
     LUNAR_DECLARE_METHOD(LuaFilesystem, invalidateCache),
+    LUNAR_DECLARE_METHOD(LuaFilesystem, setCallbacksEnabled),
+    LUNAR_DECLARE_METHOD(LuaFilesystem, onRawRead),
+    LUNAR_DECLARE_METHOD(LuaFilesystem, onRawWrite),
+    LUNAR_DECLARE_METHOD(LuaFilesystem, onRawErase),
     {0,0}
 };
 
 
 LuaFilesystem::LuaFilesystem(lua_State *L)
 {
-    /* Nothing to do; the filesystem is a singleton */
+    /*
+     * The system objects backing the Filesystem are singletons, so there's
+     * nothing to do here for the system yet. We do, however, want to mark
+     * this as the default Filesystem instance for callback dispatch, though.
+     */
+
+    Lunar<LuaFilesystem>::push(L, this, true);
+    lua_setfield(L, LUA_GLOBALSINDEX, callbackHostField);
+    callbacksEnabled = false;
+}
+
+lua_State *LuaFilesystem::callbackHost()
+{
+    // Get the current LuaFilesystem instance to use for callback dispatch, if any.
+    // On success, returns a lua_State with the Filesystem instance at top of stack.
+
+    LuaScript *script = LuaScript::callbackHost();
+    if (!script)
+        return 0;
+
+    lua_getfield(script->L, LUA_GLOBALSINDEX, callbackHostField);
+    if (lua_isnil(script->L, -1)) {
+        lua_pop(script->L, 1);
+        return 0;
+    }
+    return script->L;
+}
+
+void LuaFilesystem::onRawRead(uint32_t address, const uint8_t *buf, unsigned len)
+{
+    if (!callbacksEnabled)
+        return;
+
+    lua_State *L = callbackHost();
+    if (L) {
+        lua_pushinteger(L, address);
+        lua_pushlstring(L, (const char*)buf, len);
+        int ret = Lunar<LuaFilesystem>::call(L, "onRawRead", 2, 0);
+        ASSERT(ret == 0 || ret == -1);
+        if (ret < 0)
+            LuaScript::handleError(L, "callback");
+    }
+}
+
+void LuaFilesystem::onRawWrite(uint32_t address, const uint8_t *buf, unsigned len)
+{
+    if (!callbacksEnabled)
+        return;
+
+    lua_State *L = callbackHost();
+    if (L) {
+        lua_pushinteger(L, address);
+        lua_pushlstring(L, (const char*)buf, len);
+        int ret = Lunar<LuaFilesystem>::call(L, "onRawWrite", 2, 0);
+        ASSERT(ret == 0 || ret == -1);
+        if (ret < 0)
+            LuaScript::handleError(L, "callback");
+    }
+}
+
+void LuaFilesystem::onRawErase(uint32_t address)
+{
+    if (!callbacksEnabled)
+        return;
+
+    lua_State *L = callbackHost();
+    if (L) {
+        lua_pushinteger(L, address);
+        int ret = Lunar<LuaFilesystem>::call(L, "onRawErase", 1, 0);
+        ASSERT(ret == 0 || ret == -1);
+        if (ret < 0)
+            LuaScript::handleError(L, "callback");
+    }
 }
 
 int LuaFilesystem::newVolume(lua_State *L)
@@ -278,5 +356,29 @@ int LuaFilesystem::invalidateCache(lua_State *L)
      */
 
     FlashBlock::invalidate();
+    return 0;
+}
+
+int LuaFilesystem::setCallbacksEnabled(lua_State *L)
+{
+    callbacksEnabled = lua_toboolean(L, 1);
+    return 0;
+}
+
+int LuaFilesystem::onRawRead(lua_State *L)
+{
+    // Default implementation (no-op)
+    return 0;
+}
+
+int LuaFilesystem::onRawWrite(lua_State *L)
+{
+    // Default implementation (no-op)
+    return 0;
+}
+
+int LuaFilesystem::onRawErase(lua_State *L)
+{
+    // Default implementation (no-op)
     return 0;
 }

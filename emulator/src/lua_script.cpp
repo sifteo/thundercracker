@@ -13,6 +13,8 @@
 #include "lua_runtime.h"
 #include "lua_filesystem.h"
 
+LuaScript *LuaScript::mCallbackHost;
+
 
 LuaScript::LuaScript(System &sys)
 {    
@@ -20,6 +22,7 @@ LuaScript::LuaScript(System &sys)
     luaL_openlibs(L);
 
     LuaSystem::sys = &sys;
+    mCallbackHost = this;
 
     Lunar<LuaSystem>::Register(L);
     Lunar<LuaFrontend>::Register(L);
@@ -30,14 +33,22 @@ LuaScript::LuaScript(System &sys)
 
 LuaScript::~LuaScript()
 {
+    mCallbackHost = 0;
     lua_close(L);
+}
+
+void LuaScript::handleError(lua_State *L, const char *context)
+{
+    // Handle errors from callback invocations
+
+    fprintf(stderr, "-!- Error in %s: %s\n", context, lua_tostring(L, -1));
+    lua_pop(L, 1);
 }
 
 int LuaScript::runFile(const char *filename)
 {
     if (luaL_dofile(L, filename)) {
-        fprintf(stderr, "-!- Error: %s\n", lua_tostring(L, -1));
-        lua_pop(L, 1);
+        handleError(L, "script file");
         return 1;
     }
 
@@ -47,8 +58,7 @@ int LuaScript::runFile(const char *filename)
 int LuaScript::runString(const char *str)
 {
     if (luaL_dostring(L, str)) {
-        fprintf(stderr, "-!- Error: %s\n", lua_tostring(L, -1));
-        lua_pop(L, 1);
+        handleError(L, "inline script");
         return 1;
     }
 

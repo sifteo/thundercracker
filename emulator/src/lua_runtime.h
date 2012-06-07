@@ -21,6 +21,8 @@ public:
 
 private:
     int poke(lua_State *L);
+    int virtToFlashAddr(lua_State *L);
+    int flashToVirtAddr(lua_State *L);
 };
 
 #endif

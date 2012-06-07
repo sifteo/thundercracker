@@ -297,6 +297,14 @@ Write a 32-bit word into RAM, at the specified virtual address. When using _inli
 
 If the virtual address is invalid, raises a Lua error.
 
+## Runtime():virtToFlashAddr( _virtual address_ )
+
+Convert an SVM virtual address to a physical Flash memory address, using the currently active mappings. If this VA is not mapped, returns zero.
+
+## Runtime():flashToVirtAddr( _flash address_ )
+
+Convert a physical Flash memory address to an SVM virtual address. If the supplied flash address is not part of any virtual address space, returns zero.
+
 ## Filesystem object
 
 This is a singleton object which can be used to script the Base's filesystem.
@@ -354,3 +362,30 @@ Erase one 4 kB sector of the raw Flash device, starting at the specified sector-
 ### Filesystem():invalidateCache()
 
 Force the system to discard or reload all cached Flash data. Any memory blocks which are still in use will be overwritten with freshly-loaded data, while unused cached memory blocks are simply discarded.
+
+### Filesystem():setCallbacksEnabled( _true_ | _false_ )
+
+This enables a set of Lua callbacks which fire on any low-level access to flash memory. These can be used for low-level tracing and debugging, or for collecting metrics on how memory is being used during a particular operation.
+
+By default these callbacks are disabled for performance reasons. When enabled, the system will call onRawRead(), onRawWrite(), and onRawErase() during the corresponding low-level events. These functions all have default implementations which do nothing. They are meant to be overridden by user code.
+
+For example:
+
+    function Filesystem:onRawRead(addr, data)
+        print(string.format("Read %08x, %d bytes", addr, string.len(data)))
+    end
+
+    function Filesystem:onRawWrite(addr, data)
+        print(string.format("Write %08x, %d bytes", addr, string.len(data)))
+    end
+
+    function Filesystem:onRawErase(addr)
+        print(string.format("Erase %08x", addr))
+    end
+
+    fs = Filesystem()
+    fs:setCallbacksEnabled(true)
+
+This overrides the three callback methods on Filesystem, then enables those callbacks. Any Flash memory operations after this point will be accompanied by logging.
+
+The addresses supplied are physical flash addresses. Where applicable, you can translate them back to virtual addresses (a.k.a C++ pointers) using `Runtime():flashToVirtAddr()`.
