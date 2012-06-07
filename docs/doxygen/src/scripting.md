@@ -338,3 +338,19 @@ Return an array of simulated erase counts for every sector in the Base's flash m
 This can be used to measure how much flash wear and tear is being caused by a particular test.
 
 If Siftulator is running with persistent flash storage (`-F` command line option), the erase counts are also persisted in the same file.
+
+### Filesystem():rawRead( _address_, _count_ )
+
+Read _count_ bytes from the raw Flash device, starting at the specified device address. Returns the data as a string.
+
+### Filesystem():rawWrite( _address_, _data_ )
+
+Write the string _data_ to the raw Flash device, starting at _address_. Does not automatically erase the device. This effectively performs a bitwise AND of the supplied data with the existing contents of the device.
+
+### Filesystem():rawErase( _address_ )
+
+Erase one 4 kB sector of the raw Flash device, starting at the specified sector-aligned address.
+
+### Filesystem():invalidateCache()
+
+Force the system to discard or reload all cached Flash data. Any memory blocks which are still in use will be overwritten with freshly-loaded data, while unused cached memory blocks are simply discarded.

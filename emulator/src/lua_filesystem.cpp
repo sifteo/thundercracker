@@ -5,9 +5,11 @@
  *
  * Copyright <c> 2012 Sifteo, Inc. All rights reserved.
  */
- 
+
 #include "lua_script.h"
 #include "lua_filesystem.h"
+#include "flash_device.h"
+#include "flash_blockcache.h"
 #include "flash_volume.h"
 #include "flash_volumeheader.h"
 
@@ -21,6 +23,10 @@ Lunar<LuaFilesystem>::RegType LuaFilesystem::methods[] = {
     LUNAR_DECLARE_METHOD(LuaFilesystem, volumeMap),
     LUNAR_DECLARE_METHOD(LuaFilesystem, volumeEraseCounts),
     LUNAR_DECLARE_METHOD(LuaFilesystem, simulatedSectorEraseCounts),
+    LUNAR_DECLARE_METHOD(LuaFilesystem, rawRead),
+    LUNAR_DECLARE_METHOD(LuaFilesystem, rawWrite),
+    LUNAR_DECLARE_METHOD(LuaFilesystem, rawErase),
+    LUNAR_DECLARE_METHOD(LuaFilesystem, invalidateCache),
     {0,0}
 };
 
@@ -195,4 +201,82 @@ int LuaFilesystem::simulatedSectorEraseCounts(lua_State *L)
     }
 
     return 1;
+}
+
+int LuaFilesystem::rawRead(lua_State *L)
+{
+    /*
+     * Raw flash read. (address, size) -> (data)
+     */
+
+    unsigned addr = luaL_checkinteger(L, 1);
+    unsigned size = luaL_checkinteger(L, 2);
+
+    if (addr > FlashDevice::CAPACITY ||
+        size > FlashDevice::CAPACITY ||
+        addr + size > FlashDevice::CAPACITY) {
+        lua_pushfstring(L, "Flash memory address and/or size out of range");
+        lua_error(L);
+        return 0;
+    }
+
+    uint8_t *buffer = new uint8_t[size];
+    ASSERT(buffer);
+
+    FlashDevice::read(addr, buffer, size);
+
+    lua_pushlstring(L, (const char *) buffer, size);
+    delete buffer;
+    return 1;
+}
+
+int LuaFilesystem::rawWrite(lua_State *L)
+{
+    /*
+     * Raw flash write. (address, data)
+     */
+
+    size_t size = 0;
+    unsigned addr = luaL_checkinteger(L, 1);
+    const char *data = lua_tolstring(L, 2, &size);
+
+    if (addr > FlashDevice::CAPACITY ||
+        size > FlashDevice::CAPACITY ||
+        addr + size > FlashDevice::CAPACITY) {
+        lua_pushfstring(L, "Flash memory address and/or size out of range");
+        lua_error(L);
+        return 0;
+    }
+
+    FlashDevice::write(addr, (const uint8_t*) data, size);
+    return 0;
+}
+
+int LuaFilesystem::rawErase(lua_State *L)
+{
+    /*
+     * Raw flash sector-erase (address)
+     */
+
+    unsigned addr = luaL_checkinteger(L, 1);
+
+    if (addr >= FlashDevice::CAPACITY ||
+        (addr % FlashDevice::SECTOR_SIZE)) {
+        lua_pushfstring(L, "Not a valid sector-aligned flash address");
+        lua_error(L);
+        return 0;
+    }
+
+    FlashDevice::eraseSector(addr);
+    return 0;
+}
+
+int LuaFilesystem::invalidateCache(lua_State *L)
+{
+    /*
+     * Invalidate the block cache. No parameters.
+     */
+
+    FlashBlock::invalidate();
+    return 0;
 }

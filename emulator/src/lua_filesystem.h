@@ -29,6 +29,12 @@ private:
     int volumeEraseCounts(lua_State *L);
 
     int simulatedSectorEraseCounts(lua_State *L);
+
+    int rawRead(lua_State *L);
+    int rawWrite(lua_State *L);
+    int rawErase(lua_State *L);
+
+    int invalidateCache(lua_State *L);
 };
 
 
