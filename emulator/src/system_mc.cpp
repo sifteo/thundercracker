@@ -43,9 +43,19 @@ bool SystemMC::init(System *sys)
     this->sys = sys;
     instance = this;
 
+    if (!sys->opt_waveoutFilename.empty() &&
+        !waveOut.open(sys->opt_waveoutFilename.c_str(), 16000)) {
+        LOG(("AUDIO: Can't open waveout file '%s'\n",
+            sys->opt_waveoutFilename.c_str()));
+    }
+
     FlashDevice::init();
     FlashBlock::init();
     USBProtocolHandler::init();
+
+    AudioOutDevice::init(AudioOutDevice::kHz16000, &AudioMixer::instance);
+    if (!instance->sys->opt_headless)
+        AudioOutDevice::start();
 
     return true;
 }
@@ -69,7 +79,10 @@ void SystemMC::stop()
 
 void SystemMC::exit()
 {
-    // Nothing to do yet
+    if (!instance->sys->opt_headless)
+        AudioOutDevice::stop();
+
+    waveOut.close();
 }
 
 void SystemMC::autoInstall()
@@ -108,8 +121,6 @@ void SystemMC::threadFn(void *param)
     HomeButton::init();
     Crc32::init();
     Volume::init();
-    AudioOutDevice::init(AudioOutDevice::kHz16000, &AudioMixer::instance);
-    AudioOutDevice::start();
     Radio::init();
 
     instance->autoInstall();
@@ -362,4 +373,19 @@ void SystemMC::elapseTicks(unsigned n)
     // Asynchronous radio packets
     while (self->ticks >= self->radioPacketDeadline)
         self->doRadioPacket();
+}
+
+unsigned SystemMC::suggestAudioSamplesToMix()
+{
+    /*
+     * SysTime-based clock for audio logging in --headless mode.
+     */
+
+    if (instance->waveOut.isOpen()) {
+        unsigned currentSample = SysTime::ticks() / SysTime::hzTicks(16000);
+        unsigned prevSamples = instance->waveOut.getSampleCount();
+        if (currentSample > prevSamples)
+            return currentSample - prevSamples;
+    }
+    return 0;
 }

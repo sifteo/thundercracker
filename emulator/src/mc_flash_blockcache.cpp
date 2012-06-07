@@ -25,9 +25,7 @@ bool FlashBlock::isAddrValid(uintptr_t pa)
 
 void FlashBlock::verify()
 {
-    uint8_t buffer[BLOCK_SIZE];
-    FlashDevice::read(address, buffer, BLOCK_SIZE);
-    ASSERT(0 == memcmp(buffer, getData(), BLOCK_SIZE));
+    FlashDevice::verify(address, getData(), BLOCK_SIZE);
 }
 
 void FlashBlock::resetStats()

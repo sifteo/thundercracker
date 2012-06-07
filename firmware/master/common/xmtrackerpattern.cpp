@@ -13,31 +13,32 @@ XmTrackerPattern *XmTrackerPattern::init(_SYSXMSong *pSong)
 {
     if (!pSong->nPatterns) {
         ASSERT(pSong->nPatterns);
-        return 0;
+        song = 0;
+    } else {
+        song = pSong;
     }
-
-    song = pSong;
 
     memset(&pattern, 0, sizeof(pattern));
 
     return this;
 }
 
-void XmTrackerPattern::loadPattern(uint16_t i)
+bool XmTrackerPattern::loadPattern(uint16_t i)
 {
     if (!song) {
         LOG((LGPFX"Error: Can not load patterns without song "
-             "(did you call XmTrackerPattern::init()?)\n"));
+             "(did you call XmTrackerPattern::init() with a valid song?)\n"));
         ASSERT(song);
         memset(&pattern, 0, sizeof(pattern));
-        return;
+        return false;
     }
+
     if (i >= song->nPatterns) {
         ASSERT(i < song->nPatterns);
         LOG((LGPFX"Error: Pattern %u is larger than song (%u patterns)\n",
              i, song->nPatterns));
         memset(&pattern, 0, sizeof(pattern));
-        return;
+        return false;
     }
 
     SvmMemory::VirtAddr va = song->patterns + (i * sizeof(_SYSXMPattern));
@@ -47,11 +48,12 @@ void XmTrackerPattern::loadPattern(uint16_t i)
              (void *)va, (long unsigned)sizeof(_SYSXMPattern)));
         ASSERT(false);
         memset(&pattern, 0, sizeof(pattern));
-        return;
+        return false;
     }
 
     noteOffset = 0;
     offset = 0;
+    return true;
 }
 
 void XmTrackerPattern::getNote(uint16_t row, uint8_t channel, struct XmTrackerNote &note)
@@ -152,7 +154,7 @@ void XmTrackerPattern::nextNote(struct XmTrackerNote &note)
     }
 
     // Clean up note
-    if (note.note > kNoteOff)
+    if (note.note > kNoteOff && note.note != kNoNote)
         note.note = kNoNote;
 
     if (note.note == 0)

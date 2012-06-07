@@ -27,6 +27,14 @@ extern const __code uint8_t img_radio_3[];
 #define	DEBUG_SCREEN 1
 #endif
 
+#ifdef DEBUG_NBR
+//uint16_t nbr_tile_ids[8] = {7, 7+1, 18*7, 18*8, (18*15)+7, (18*15)+7+1, (18*7)+15, (18*8)+15};
+uint16_t nbr_tile_ids[4] = {7, 18*7, (18*15)+7, (18*7)+15};
+void paint_nbr_tile(uint8_t idx, uint16_t col) {
+	vram.bg0_tiles[nbr_tile_ids[idx]] = col;
+}
+#endif
+
 void demo(void)
 {
 #ifdef DEBUG_SCREEN
@@ -55,29 +63,54 @@ void demo(void)
     	draw_hex(dbg_cnt++);
 
 	#ifdef DEBUG_TOUCH
-    	draw_xy = XY(1,13);
+    	draw_xy = XY(1,12);
     	if( touch ) {
     		draw_string("Touch!");
     	} else {
     		draw_string("      ");
     	}
-    	draw_xy = XY(8,13);
+    	draw_xy = XY(8,12);
     	draw_hex(touch_count);
 	#endif
 
 	#ifdef DEBUG_NBR
-    	draw_xy = XY(2,14);
+    	{
+    		//uint8_t tile_idx;
+    		uint8_t side;
+
+    		for	(side=0; side<4; side++) {
+				//tile_idx = (side<<1);
+        		if (nbr_data[side]!=0) {
+					//paint_nbr_tile(tile_idx++, 0x26fe);
+					paint_nbr_tile(side, 0x26fe);
+            	} else {
+					//paint_nbr_tile(tile_idx++, 0x0);
+					paint_nbr_tile(side, 0x0);
+            	}
+    		}
+
+    	}
+
+    	/*
+    	draw_xy = XY(2,13);
     	draw_hex(nbr_data[0]);
-    	draw_xy = XY(5,14);
+    	draw_xy = XY(5,13);
     	draw_hex(nbr_data[1]);
-    	draw_xy = XY(8,14);
+    	draw_xy = XY(8,13);
     	draw_hex(nbr_data[2]);
-    	draw_xy = XY(11,14);
+    	draw_xy = XY(11,13);
     	draw_hex(nbr_data[3]);
-    	draw_xy = XY(5,15);
-    	draw_hex(nbr_data_valid);
-    	draw_xy = XY(8,15);
-    	draw_hex(nbr_data_invalid);
+    	*/
+
+    	draw_xy = XY(2,14);
+    	draw_hex(nbr_data_valid[0]);
+    	draw_xy = XY(5,14);
+    	draw_hex(nbr_data_valid[1]);
+    	draw_xy = XY(8,14);
+    	draw_hex(nbr_data_invalid[0]);
+    	draw_xy = XY(11,14);
+    	draw_hex(nbr_data_invalid[1]);
+
 	#endif
 
     	graphics_render();

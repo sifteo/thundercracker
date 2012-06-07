@@ -11,7 +11,7 @@
 #include "hardware.h"
 #include "hwtimer.h"
 
-#include "audiobuffer.h"
+#include "audiooutdevice.h"
 class AudioMixer;
 
 class DacAudioOut

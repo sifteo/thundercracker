@@ -13,6 +13,7 @@
 #include <sifteo/abi.h>
 #include "svmmemory.h"
 #include "svmruntime.h"
+#include "crc.h"
 
 extern "C" {
 
@@ -49,6 +50,20 @@ void _SYS_memcpy32(uint32_t *dest, const uint32_t *src, uint32_t count)
     // Currently implemented in terms of memcpy8. We may provide a
     // separate optimized implementation of this syscall in the future.   
     _SYS_memcpy8((uint8_t*) dest, (const uint8_t*) src, mulsat16x16(sizeof *dest, count));
+}
+
+uint32_t _SYS_crc32(const uint8_t *data, uint32_t count)
+{
+    SvmMemory::VirtAddr va = reinterpret_cast<SvmMemory::VirtAddr>(data);
+    FlashBlockRef ref;
+    uint32_t crc;
+
+    if (!SvmMemory::crcROData(ref, va, count, crc)) {
+        SvmRuntime::fault(F_SYSCALL_ADDRESS);
+        return 0;
+    }
+
+    return crc;
 }
 
 int32_t _SYS_memcmp8(const uint8_t *a, const uint8_t *b, uint32_t count)

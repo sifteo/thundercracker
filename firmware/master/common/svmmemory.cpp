@@ -129,3 +129,26 @@ unsigned SvmMemory::reconstructCodeAddr(const FlashBlockRef &ref, uint32_t pc)
     }
     return 0;
 }
+
+bool SvmMemory::crcROData(FlashBlockRef &ref, VirtAddr src, uint32_t length,
+     uint32_t &crc, unsigned alignment)
+{
+    CrcStream cs;
+
+    cs.reset();
+
+    while (length) {
+        SvmMemory::PhysAddr pa;
+        uint32_t chunk = length;
+        if (!SvmMemory::mapROData(ref, src, chunk, pa))
+            return false;
+
+        src += chunk;
+        length -= chunk;
+
+        cs.addBytes(pa, chunk);
+    }
+
+    crc = cs.get(alignment);
+    return true;
+}

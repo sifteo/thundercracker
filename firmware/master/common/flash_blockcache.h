@@ -93,7 +93,11 @@ public:
     inline uint32_t getAddress() {
         return address;
     }
-    
+
+    inline bool isAnonymous() {
+        return address == INVALID_ADDRESS;
+    }
+
     inline uint8_t *getData() {
         return &mem[id()][0];
     }
@@ -122,6 +126,7 @@ public:
     // Global operations
     static void init();
     static void invalidate();
+    static void invalidate(uint32_t addrBegin, uint32_t addrEnd);
 
     // Cached block accessors
     static void preload(uint32_t blockAddr);
@@ -245,6 +250,11 @@ private:
  * Before the write starts,  we perform some invalidation and checking.
  * Then we can complete the write by actually flushing a dirty cache block
  * to the device.
+ *
+ * The writer automatically commits on destruction *unless* the block in
+ * question is anonymous. If an anonymous write is cancelled, the data is
+ * discarded. Writes with a specific address (not anonymous) cannot be
+ * cancelled, since the cache block has already been modified.
  */
 
 class FlashBlockWriter
@@ -257,7 +267,8 @@ public:
     }
 
     ~FlashBlockWriter() {
-        commitBlock();
+        if (ref.isHeld() && !ref->isAnonymous())
+            commitBlock();
     }
 
     // Dirty iff ref.isHeld()

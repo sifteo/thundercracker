@@ -221,10 +221,8 @@ void FactoryTest::shutdownHandler(uint8_t argc, const uint8_t *args)
 {
     const uint8_t response[] = { args[0] };
     UsbDevice::write(response, sizeof response);
-
-    // give usb packet a moment to be transmitted
-    for (volatile unsigned i = 0; i < 10000; ++i)
-        ;
+    // write packet again so we know the first one was transmitted
+    UsbDevice::write(response, sizeof response);
 
     PowerManager::shutdown();
 }

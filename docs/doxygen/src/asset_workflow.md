@@ -137,6 +137,45 @@ The following effects are not implemented, and likely inconsistent between Milky
 
 All other effects and all volume column effects are implemented.
 
+### Performance
+
+Modules can be a very efficient format, but they can also be terrifically inefficient if abused. Here are some tips to keeping your module tight and fast.
+
+#### Samples
+
+Stir compresses samples down to adpcm (just as it does to normal audio samples), but often a composer can save more space and extract more performance by keeping a few things in mind:
+
+* Samples in XM are traditionally 8363 Hz at C-4. This provides a wide range of timbre options while providing a compact sample. The instrument's Relative Note changes the sampling rate by a constant amount, so that an instrument with a higher Relative Note will sample it's audio much faster than an instrument with a lower Relative Note. Higher sampling rates mean higher-quality samples, but also more storage space required in flash, and more flash bus usage during playback. Samples with a Relative Note greater than 0 should be carefully scrutinized. Usually they indicate a 44.1kHz sample that was imported directly into the tracker without resampling.
+* The adpcm encoding does not support random access, and it is also monotonic. To support ping pong loops on the Base, Stir converts the ping pong loop into a linear loop, doubling the loop's size. While ping pong loops can be incredibly useful, they can take up significantly more space in flash and should be used sparingly.
+* Samples containing empty space are samples that are wasting space. Many samples lead in with some silence or lead out with a long fade. Consider using effect ED (Note delay) instead of leading a sample with silence, and trimming the silence from the end of your sample to save space in flash.
+* If you're feeling particularly frugal: if an instrument is only played in the higher registers, it's beneficial to use a lower Relative Note. The Base mixes at 16kHz, so an instrument with a Relative Note of 0 playing a C-5 will be mixing very near the mixer's native rate. Higher notes will be oversampled, wasting flash bandwidth.
+
+#### Effects
+
+Practically all XM features are supported by the tracker. If you find one that's not and would like to make use of it, please report it.
+
+Unfortunately, this does not mean that all XM features will run well on the Base. Due to the unique constraints of our hardware, certain features should be avoided when possible. They are:
+
+9xx: Sample offset
+Samples on the Base do not support random access, so jumping to an offset in a sample requires fetching the rest of the sample before the offset as well. In cases where the offset is large and the effect is used on multiple channels at the same time, this can noticeably affect your game's performance.
+
+Dxx: Pattern break
+Patterns, like samples, do not support random access and must be read from the beginning of the pattern to the requested offset. As such, executing a pattern break and jumping more than a few rows into the next pattern can be expensive.
+
+E6x: Pattern loop
+It is possible to use pattern loops in an efficient manner, but due to the linear access nature of patterns they can also be very inefficient. Where possible, pattern loops should start as near to the beginning of the pattern as possible—looping to the very beginning of a pattern is as cheap as stepping to the next row in the same pattern.
+
+The least efficient pattern loop would begin the loop on the second to last row of the pattern, with a duration of one row. This would cause the entire pattern to be read from flash on every loop division.
+
+#### Channels
+
+The Base Cube supports 8 channels of audio, and all of them can be used for tracker playback, but before creating a song using all 8 channels, there are a few reasons why fewer is better:
+
+* Channels being used to play your song are channels that are not available to be used for sound effects. A song with 8 channels leaves you with no free channels for dynamic sound effects when a user interacts with your game.
+* Patterns are the second largest consumers of flash after samples (potentially the largest, if you're taking advantage of sample deduplication across modules), and their size increases linearly with the number of channels.
+
+Lastly, editing tools do not appear to have a way to add or remove channels after a song has been created. While stir should handle this in the future, it does not today and your songs will be larger and have the potential to conflict with standard sound effects. To mitigate this, the tracker allocates channels from the top down in the mixer, so a song that has eight channels but only uses channels one through four (trackers like to one-index their numbering) will leave channels zero through three (whereas we use zero-indexing) free on the Base.
+
 ### References
 
 The XM file specification can be found [here](ftp://ftp.heanet.ie/disk1/sourceforge/u/project/uf/ufmod/XM%20file%20format%20specification/FastTracker%20II%2C%20ADPCM%20XM%20and%20Stripped%20XM/XM_file_format.pdf.gz), but the [MiklyTracker documentation](http://www.milkytracker.org/docs/MilkyTracker.html) is significantly more useful for understanding effects. The MOD specification from which it inherits many of its features can be found [here](http://147.91.177.212/extra/fileformat/modules/mod/mod-form.txt).

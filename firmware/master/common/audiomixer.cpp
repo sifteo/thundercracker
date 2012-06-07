@@ -4,7 +4,7 @@
  */
 
 #include "audiomixer.h"
-#include "audiobuffer.h"
+#include "audiooutdevice.h"
 #include "flash_blockcache.h"
 #include <stdio.h>
 #include <string.h>
@@ -12,29 +12,23 @@
 #include "xmtrackerplayer.h"
 #include "volume.h"
 
+#ifdef SIFTEO_SIMULATOR
+#   include "system.h"
+#   include "system_mc.h"
+#   include "mc_audiovisdata.h"
+#endif
+
+
 AudioMixer AudioMixer::instance;
 
 AudioMixer::AudioMixer() :
     playingChannelMask(0),
     trackerCallbackInterval(0),
     trackerCallbackCountdown(0)
+{}
+
+void AudioMixer::init()
 {
-}
-
-/*
- * Mix audio from flash into the audio device's buffer via each of the channels.
- *
- * This currently assumes that it's being run on the main thread, such that it
- * can operate synchronously with data arriving from flash.
- */
-int AudioMixer::mixAudio(int16_t *buffer, uint32_t numsamples)
-{
-    if (!active())
-        return 0;
-
-    memset(buffer, 0, numsamples * sizeof(*buffer));
-
-    uint32_t samplesMixed = 0;
     uint32_t mask = playingChannelMask;
     while (mask) {
         unsigned idx = Intrinsic::CLZ(mask);
@@ -47,104 +41,175 @@ int AudioMixer::mixAudio(int16_t *buffer, uint32_t numsamples)
 
         AudioChannelSlot &ch = channelSlots[idx];
 
+        ch.stop();
+    }
+
+    XmTrackerPlayer::instance.init();
+}
+
+/*
+ * Mix audio from flash into the audio device's buffer via each of the channels.
+ *
+ * This currently assumes that it's being run on the main thread, such that it
+ * can operate synchronously with data arriving from flash.
+ *
+ * Returns true if any audio data was available. If so, we're guaranteed
+ * to produce exactly 'numFrames' of data.
+ */
+bool AudioMixer::mixAudio(int16_t *buffer, uint32_t numFrames)
+{
+    #ifdef SIFTEO_SIMULATOR
+        MCAudioVisData::instance.mixerActive = active();
+    #endif
+
+    // Early out when we can quickly determine that no channels are playing.
+    if (!active())
+        return false;
+
+    bool result = false;
+    memset(buffer, 0, numFrames * sizeof(*buffer));
+
+    uint32_t mask = playingChannelMask;
+    while (mask) {
+        unsigned idx = Intrinsic::CLZ(mask);
+        mask ^= Intrinsic::LZ(idx);
+        ASSERT(idx < _SYS_AUDIO_MAX_CHANNELS);
+
+        AudioChannelSlot &ch = channelSlots[idx];
+
         if (ch.isStopped()) {
             Atomic::ClearLZ(playingChannelMask, idx);
             continue;
         }
-
         if (ch.isPaused()) {
             continue;
         }
         
         // Each channel individually mixes itself with the existing buffer contents
-        uint32_t mixed = ch.mixAudio(buffer, numsamples);
+        result |= ch.mixAudio(buffer, numFrames);
+    }
 
-        // Update size of overall mixed audio buffer
-        if (mixed > samplesMixed) {
-            samplesMixed = mixed;
+    if (result) {
+        // Apply master volume control.
+        uint16_t mixerVolume = Volume::systemVolume();
+        for (unsigned i = 0; i < numFrames; i++) {
+            buffer[i] = buffer[i] * mixerVolume / _SYS_AUDIO_MAX_VOLUME;
         }
     }
 
-    // Apply master volume control.
-    uint16_t mixerVolume = Volume::systemVolume();
-    for (unsigned i = 0; i < samplesMixed; i++) {
-        buffer[i] = buffer[i] * mixerVolume / _SYS_AUDIO_MAX_VOLUME;
-    }
-
-    return samplesMixed;
+    return result;
 }
 
 /*
-    Called from within Tasks::work to mix audio on the main thread, to be
-    consumed by the audio out device.
-*/
-void AudioMixer::pullAudio(void *p) {
-    if (p == NULL) return;
+ * Called from within Tasks::work to mix audio on the main thread, to be
+ * consumed by the audio out device.
+ */
+void AudioMixer::pullAudio(void *p)
+{
+    /*
+     * Support audio in Siftulator, even in headless mode.
+     *
+     * In headless mode, we want to continue mixing even though
+     * there's no buffer attached or no space in that buffer. We'll
+     * either discard the mixed data, or if a waveout file is set we'll
+     * end up logging the mixed audio data.
+     */
+
+    #ifdef SIFTEO_SIMULATOR
+        const bool headless = SystemMC::getSystem()->opt_headless;
+    #else
+        const bool headless = false;
+    #endif
+
+    /*
+     * Destination buffer, provided by the audio device.
+     * If no audio device is available (yet) this will be NULL.
+     */
     AudioBuffer *buf = static_cast<AudioBuffer*>(p);
-    if (buf->writeAvailable() < sizeof(int16_t)) return;
+    if (!buf && !headless)
+        return;
 
-    unsigned bytesToMix;
-    int16_t *audiobuf = (int16_t*)buf->reserve(buf->writeAvailable(), &bytesToMix);
-    bytesToMix -= bytesToMix % sizeof(int16_t);
-    unsigned totalBytesMixed = 0;
+    /*
+     * In order to amortize the cost of iterating over channels, our
+     * audio mixer operates on small arrays of samples at a time. We
+     * give it a tiny buffer on the stack, which then flushes out
+     * to the device's provided AudioBuffer.
+     *
+     * We're responsible for invoking the Tracker's callback
+     * deterministically, exactly every 'trackerInterval' samples.
+     * To do this, we may need to subdivide the blocks we request
+     * from mixAudio(), or we may need to generate silent blocks.
+     */
 
-    unsigned mixed;
-    uint32_t numSamples;
+    #ifdef SIFTEO_SIMULATOR
+        unsigned samplesLeft = headless ? SystemMC::suggestAudioSamplesToMix() : buf->writeAvailable();
+    #else
+        unsigned samplesLeft = buf->writeAvailable();
+    #endif
+    if (!samplesLeft)
+        return;
 
-    uint32_t &trackerInterval = AudioMixer::instance.trackerCallbackInterval;
-    uint32_t &trackerCountdown = AudioMixer::instance.trackerCallbackCountdown;
+    const uint32_t trackerInterval = AudioMixer::instance.trackerCallbackInterval;
+    uint32_t trackerCountdown = AudioMixer::instance.trackerCallbackCountdown;
+
+    if (trackerInterval == 0) {
+        // Tracker callbacks disabled. Avoid special-casing below by
+        // assuming a countdown value that's effectively infinite.
+        trackerCountdown = 0xFFFFFFFF;
+    } else if (trackerCountdown == 0) {
+        // Countdown should never be stored as zero when the timer is enabled.
+        ASSERT(0);
+        trackerCountdown = trackerInterval;
+    }
 
     do {
-        numSamples = (bytesToMix - totalBytesMixed) / sizeof(int16_t);
-        numSamples = trackerInterval > 0 && trackerCountdown < numSamples
-                   ? trackerCountdown : numSamples;
-        if (!numSamples) {
-            ASSERT(numSamples);
-            return;
-        }
+        int16_t blockBuffer[32];
 
-        mixed = AudioMixer::instance.mixAudio(audiobuf, numSamples);
-        audiobuf += mixed;
-        totalBytesMixed += mixed * sizeof(int16_t);
+        uint32_t blockSize = MIN(arraysize(blockBuffer), samplesLeft);
+        blockSize = MIN(blockSize, trackerCountdown);
+        ASSERT(blockSize > 0);
 
-        if (trackerInterval) {
-            if (mixed == 0) {
-                mixed = numSamples;
-                memset(audiobuf, 0, mixed * sizeof(int16_t));
-                totalBytesMixed += mixed * sizeof(int16_t);
-            }
+        bool mixed = AudioMixer::instance.mixAudio(blockBuffer, blockSize);
 
-            /* Tracker countdown should never be 0 when an interval is set--
-             * when it reaches 0 the callback is fired and the counter
-             * immediately reset.
+        if (!mixed) {
+            /*
+             * The mixer had nothing for us. Normally this means
+             * we can early-out and let the device's buffer drain,
+             * but if we're running the tracker, we need to keep
+             * samples flowing in order to keep its clock advancing.
+             * Generate silence.
              */
-            if (!trackerCountdown) {
-                ASSERT(trackerCountdown);
-                trackerCountdown = mixed;
-            }
-
-            // The mixer should never mix beyond the limit of the countdown.
-            if (mixed > trackerCountdown) {
-                ASSERT(mixed <= trackerCountdown);
-                trackerCountdown = mixed;
-            }
-
-            // Update the callback countdown
-            trackerCountdown -= mixed;
-
-            // Fire the callback
-            if (trackerCountdown == 0) {
-                XmTrackerPlayer::mixerCallback();
-                trackerCountdown = trackerInterval;
-            }
+            if (trackerInterval == 0)
+                break;
+            else
+                memset(blockBuffer, 0, sizeof blockBuffer);
         }
-    } while (mixed == numSamples && bytesToMix > totalBytesMixed);
 
-    // Check for buffer overrun.
-    ASSERT(totalBytesMixed <= bytesToMix);
+        #ifdef SIFTEO_SIMULATOR
+            // Log audio for --waveout
+            SystemMC::logAudioSamples(blockBuffer, blockSize);
+        #endif
 
-    if (totalBytesMixed > 0) {
-        buf->commit(totalBytesMixed);
+        trackerCountdown -= blockSize;
+        samplesLeft -= blockSize;
+
+        if (!headless) {
+            int16_t *blockPtr = blockBuffer;
+            while (blockSize--)
+                buf->enqueue(*(blockPtr++));
+        }
+
+        if (!trackerCountdown) {
+            ASSERT(trackerInterval);
+            trackerCountdown = trackerInterval;
+            XmTrackerPlayer::mixerCallback();
+        }
+
+    } while (samplesLeft);
+
+    if (trackerInterval != 0) {
+        // Write back local copy of Countdown, only if it's real.
+        AudioMixer::instance.trackerCallbackCountdown = trackerCountdown;
     }
 }
 
@@ -189,9 +254,12 @@ void AudioMixer::stop(_SYSAudioChannelID ch)
         return;
     }
 
-
     channelSlots[ch].stop();
     Atomic::ClearLZ(playingChannelMask, ch);
+
+    #ifdef SIFTEO_SIMULATOR
+        MCAudioVisData::clearChannel(ch);
+    #endif
 }
 
 void AudioMixer::pause(_SYSAudioChannelID ch)
@@ -205,6 +273,10 @@ void AudioMixer::pause(_SYSAudioChannelID ch)
     if (isPlaying(ch)) {
         channelSlots[ch].pause();
     }
+
+    #ifdef SIFTEO_SIMULATOR
+        MCAudioVisData::clearChannel(ch);
+    #endif
 }
 
 void AudioMixer::resume(_SYSAudioChannelID ch)

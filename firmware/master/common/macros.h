@@ -11,8 +11,9 @@
 #include <stdint.h>
 #include <inttypes.h>
 
-#define APP_TITLE       "Sifteo Cubes"
-#define APP_COPYRIGHT   "Copyright <c> 2011-2012 Sifteo, Inc. All rights reserved."
+#define APP_TITLE               "Sifteo Cubes"
+#define APP_COPYRIGHT_ASCII     "Copyright <c> 2011-2012 Sifteo, Inc. All rights reserved."
+#define APP_COPYRIGHT_LATIN1    "Copyright \xa9 2011-2012 Sifteo, Inc. All rights reserved."
 
 #define STRINGIFY(_x)   #_x
 #define TOSTRING(_x)    STRINGIFY(_x)
@@ -125,6 +126,13 @@ template <unsigned a> inline unsigned roundup(unsigned value)
 }
 
 /**
+ * Ceiling division. Divide, rounding up instead of down.
+ */
+template <typename T> inline T ceildiv(T numerator, T denominator) {
+    return (numerator + (denominator - 1)) / denominator;
+}
+
+/**
  * Compute the unsigned remainder from dividing two signed integers.
  */
 unsigned inline umod(int a, int b)
@@ -133,6 +141,16 @@ unsigned inline umod(int a, int b)
     if (r < 0)
         r += b;
     return r;
+}
+
+/**
+ * Swap two values of any assignable type.
+ */
+template <typename T> inline void swap(T &a, T &b)
+{
+    T temp = a;
+    a = b;
+    b = temp;
 }
 
 /**

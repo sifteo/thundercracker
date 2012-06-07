@@ -386,7 +386,7 @@ const char *TilePalette::colorModeName(ColorMode m)
 }
 
 TileStack::TileStack()
-    : index(NO_INDEX), mPinned(false)
+    : index(NO_INDEX), mPinned(false), mLossless(false)
     {}
 
 void TileStack::add(TileRef t)
@@ -397,11 +397,14 @@ void TileStack::add(TileRef t)
     if (maxMSE < epsilon) {
         // Lossless. Replace the entire stack, yielding a trivial median.
         tiles.clear();
+        mLossless = true;
     }
 
-    // Add to stack, invalidating cache
-    tiles.push_back(t);
-    cache = TileRef();
+    // Add to stack, invalidating cache. (Don't modify lossless stacks)
+    if (tiles.empty() || !mLossless) {
+        tiles.push_back(t);
+        cache = TileRef();
+    }
 
     // A stack with any pinned tiles in it is itself pinned.
     if (t->options().pinned)
@@ -720,6 +723,9 @@ void TilePool::optimizeTrueColorTiles(Logger &log)
      * intended more for tiles that already use a bunch of colors.
      */
 
+    if (stackList.empty())
+        return;
+
     unsigned totalCount = 0;
     unsigned reducedCount = 0;
     log.taskBegin("Optimizing true color tiles");
@@ -728,9 +734,9 @@ void TilePool::optimizeTrueColorTiles(Logger &log)
     while (1) {
         TileStack &stack = *i;
         TileRef tile = stack.median();
+        bool isTrueColor = !tile->palette().hasLUT();
 
-        // Only operate on tiles that would require true-color encoding
-        if (!tile->palette().hasLUT()) {
+        if (isTrueColor) {
             totalCount++;
 
             // Don't modify tiles that are marked as lossless
@@ -769,11 +775,11 @@ void TilePool::optimizeTrueColorTiles(Logger &log)
         bool last = i == stackList.end();
 
         // Update status periodically as well as on completion.
-        if (last || (totalCount % 16) == 0) {
+        if (last || (isTrueColor && (totalCount % 16) == 0)) {
             log.taskProgress("%u of %u tile%s reduced (%.03f%%)",
                 reducedCount, totalCount,
                 totalCount == 1 ? "" : "s",
-                reducedCount * 100.0 / totalCount);
+                totalCount ? (reducedCount * 100.0 / totalCount) : 0);
         }
 
         if (last)

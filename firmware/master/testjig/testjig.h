@@ -12,12 +12,13 @@
 class TestJig
 {
 public:
-    static void init();
-    static void enable_neighbor_receive();
-    static uint8_t got_i2c;
-    static uint8_t got_result;
-    static uint16_t get_received_data();
 
+    enum TestJigEventId {
+        EventAckPacket      = 100,
+        EventNeighbor       = 101
+    };
+
+    static void init();
     static void onTestDataReceived(uint8_t *buf, unsigned len);
     static void neighborInIsr(uint8_t side);
     static void onNeighborMsgRx(uint8_t side, uint16_t msg);
@@ -35,33 +36,32 @@ private:
     static void getUsbCurrentHandler(uint8_t argc, uint8_t *args);
     static void beginNeighborRxHandler(uint8_t argc, uint8_t *args);
     static void stopNeighborRxHandler(uint8_t argc, uint8_t *args);
-    static void writeToCubeVramHandler(uint8_t argc, uint8_t *args);
+    static void writeToCubeI2CHandler(uint8_t argc, uint8_t *args);
     static void setCubeSensorsEnabledHandler(uint8_t argc, uint8_t *args);
 
     struct SensorsTransaction {
         bool enabled;
-        RF_MemACKType cubeAck;
+        RF_ACKType cubeAck;
         uint8_t byteIdx;
     };
 
-    enum VramWriteState {
-        VramIdle,           // no vram write request has been issued
-        VramAddressHigh,    // write the high addr byte on the next i2c event
-        VramAddressLow,     // write the low addr byte on the next i2c event
-        VramPayload         // write the payload on the next i2c event
+    enum I2CProtocolType {
+        I2CVramMax          = 0x44,
+        I2CFlashFifo        = 0xfd,
+        I2CFlashReset       = 0xfe,
+        I2CDone             = 0xff,
     };
 
-    struct VramTransaction {
+    // data that gets written to a cube
+    struct I2CWriteTransaction {
         // volatile to ensure it gets re-loaded while we're waiting for it to
         // get updated from within the i2c irq
-        volatile VramWriteState state;
-        uint16_t address;
-        uint8_t payload;
+        volatile uint8_t remaining;
+        uint8_t *data;
     };
 
     static SensorsTransaction sensorsTransaction;
-    static VramTransaction vramTransaction;
-
+    static I2CWriteTransaction cubeWrite;
 };
 
 #endif // _TEST_JIG_H

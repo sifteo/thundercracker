@@ -7,6 +7,7 @@
  */
 
 #include "frontend.h"
+#include "mc_audiovisdata.h"
 
 static const Color msgColor(1, 1, 0.2);
 static const Color helpTextColor(1, 1, 1);
@@ -19,7 +20,11 @@ static const Color inspectorTextColor(1, 1, 1);
 
 
 FrontendOverlay::FrontendOverlay()
-    : helpVisible(false), inspectorVisible(false) {}
+    : helpVisible(false), 
+      inspectorVisible(false),
+      visualizerVisible(false),
+      visualizerAlpha(0)
+{}
 
 void FrontendOverlay::init(GLRenderer *_renderer, System *_sys)
 {
@@ -82,6 +87,15 @@ void FrontendOverlay::draw()
     
     moveTo(renderer->getWidth() - margin, margin);
     text(helpHintColor, "Press 'H' for help", 1.0f);
+
+    // Visualizer states: Hidden, mixer idle, active
+    float visTargetAlpha =
+        !visualizerVisible ? 0.0f :
+        !MCAudioVisData::instance.mixerActive ? 0.5f :
+        1.0f;
+    
+    visualizerAlpha += (visTargetAlpha - visualizerAlpha) * 0.2f;
+    renderer->overlayAudioVisualizer(visualizerAlpha);
 
     if (helpVisible) {
         drawHelp();
@@ -169,6 +183,13 @@ void FrontendOverlay::toggleHelp()
 void FrontendOverlay::toggleInspector()
 {
     inspectorVisible ^= true;
+    postMessage((inspectorVisible ? "Showing" : "Hiding") + std::string(" inspector panel"));
+}
+
+void FrontendOverlay::toggleAudioVisualizer()
+{
+    visualizerVisible ^= true;
+    postMessage((visualizerVisible ? "Showing" : "Hiding") + std::string(" audio visualizer"));
 }
 
 void FrontendOverlay::drawHelp()
@@ -180,12 +201,12 @@ void FrontendOverlay::drawHelp()
         "While pulling, Right-click or Space to hover, again to rotate.",
         "Shift-drag or Right-drag to tilt a cube.",
         "Mouse wheel resizes the play surface.",
-        "'S' - Screenshot, 'F' - Fullscreen, 'T' - Turbo, 'I' - Inspector",
+        "'S' - Screenshot, 'F' - Fullscreen, 'T' - Turbo, 'I' - Inspector, 'V' - Visualze Audio",
         "'Z' - Zoom, '1' - 1:1 view, '2' - 2x view.",
         "Backspace toggles rotation lock.",
         "+/- Adds/removes cubes.",
         "",
-        APP_COPYRIGHT,
+        APP_COPYRIGHT_LATIN1,
     };
     
     const unsigned numLines = sizeof lines / sizeof lines[0];

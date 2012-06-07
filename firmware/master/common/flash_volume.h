@@ -50,11 +50,24 @@
 class FlashVolume
 {
 public:
+    /**
+     * Convention for volume types:
+     *
+     *    - System volume types are two capital letters
+     *
+     *    - If userspace volumes are ever allowed, they will
+     *      follow a still-TBD namespacing scheme.
+     *
+     * Note that some volume types imply special behaviour in the filesystem.
+     * Both DELETED and INCOMPLETE volumes are automatically garbage-collected.
+     * LFS volumes are guaranteed to always be exactly one map-block in length.
+     */
     enum Type {
-        T_DELETED       = 0x0000,       // Must be zero
-        T_LAUNCHER      = _SYS_FS_VOL_LAUNCHER,
-        T_GAME          = _SYS_FS_VOL_GAME,
-        T_INCOMPLETE    = 0xFFFF,       // Must be FFFF
+        T_LAUNCHER      = _SYS_FS_VOL_LAUNCHER,     // "LN"
+        T_GAME          = _SYS_FS_VOL_GAME,         // "GM"
+        T_LFS           = 0x5346,                   // "FS"
+        T_DELETED       = 0x0000,                   // Must be zero
+        T_INCOMPLETE    = 0xFFFF,                   // Must be FFFF
     };
 
     FlashMapBlock block;
@@ -68,6 +81,7 @@ public:
     unsigned getType() const;
     FlashVolume getParent() const;
     FlashMapSpan getPayload(FlashBlockRef &ref) const;
+    uint8_t *mapTypeSpecificData(FlashBlockRef &ref, unsigned &size) const;
 
     /**
      * Delete just this volume. Only for use as part of a larger delete
@@ -215,6 +229,14 @@ public:
     bool begin(unsigned type, unsigned payloadBytes,
         unsigned hdrDataBytes = 0,
         FlashVolume parent = FlashMapBlock::invalid());
+
+    /**
+     * Map a writeable copy of the portion of the type-specific data region
+     * which fits in the header block.
+     *
+     * May not be interleaved with appendPayload()!
+     */
+    uint8_t *mapTypeSpecificData(unsigned &size);
 
     /**
      * Write any amount of payload data, starting at the beginning of the volume

@@ -32,9 +32,38 @@ const uint8_t XmTrackerPlayer::kEnvelopeLoop;
 // To be replaced someday by a channel allocator and array
 #define CHANNEL_FOR(x) (_SYS_AUDIO_MAX_CHANNELS - ((x) + 1))
 
+enum PlayStates {
+    STATE_START = 0,    // Set by renderer ->
+    STATE_PLAYING,      // Set by commit()
+    STATE_COAST,        // Set by renderer -> STOP
+    STATE_FINISH,       // Set by renderer ->
+    STATE_STOP,         // Set by renderer ->
+    STATE_STOPPED       // Set by commit()
+};
+
+void XmTrackerPlayer::init()
+{
+    hasSong = 0;
+    paused = 0;
+    memset(&song, 0, sizeof(song));
+}
+
 bool XmTrackerPlayer::play(const struct _SYSXMSong *pSong)
 {
-    if (isPlaying()) {
+    // resume playback
+    if (!pSong) {
+        if (isPaused()) {
+            AudioMixer::instance.setTrackerCallbackInterval(2500000 / bpm);
+            tick();
+            paused = false;
+            return true;
+        } else {
+            LOG((LGPFX"Warning: resume() called while not paused.\n"));
+            return false;
+        }
+    }
+
+    if (!isStopped()) {
         LOG((LGPFX"Notice: play() called while already playing.\n"));
     }
 
@@ -61,6 +90,8 @@ bool XmTrackerPlayer::play(const struct _SYSXMSong *pSong)
 
     // Ok, things look (probably) good.
     song = *pSong;
+    hasSong = true;
+    paused = false;
     
     volume = kMaxVolume;
     userVolume = _SYS_AUDIO_DEFAULT_VOLUME;
@@ -70,10 +101,9 @@ bool XmTrackerPlayer::play(const struct _SYSXMSong *pSong)
     phrase = 0;
     memset(&next, 0, sizeof(next));
 
-    pattern.init(&song)->loadPattern(patternOrderTable(phrase));
-    if (!isPlaying()) {
+    if (!pattern.init(&song)->loadPattern(patternOrderTable(phrase))) {
         LOG((LGPFX"Warning: failed to load first pattern of song.\n"));
-        song.nPatterns = 0;
+        hasSong = false;
         return false;
     }
 
@@ -81,6 +111,7 @@ bool XmTrackerPlayer::play(const struct _SYSXMSong *pSong)
     for (unsigned i = 0; i < arraysize(channels); i++) {
         XmTrackerPattern::resetNote(channels[i].note);
         channels[i].userVolume = _SYS_AUDIO_MAX_VOLUME;
+        channels[i].state = STATE_STOPPED;
     }
 
     AudioMixer::instance.setTrackerCallbackInterval(2500000 / bpm);
@@ -91,21 +122,18 @@ bool XmTrackerPlayer::play(const struct _SYSXMSong *pSong)
 
 void XmTrackerPlayer::stop()
 {
-    if (isPlaying()) {
+    if (!isStopped()) {
         ASSERT(song.nChannels);
-        
         AudioMixer &mixer = AudioMixer::instance;
-
         for (unsigned i = 0; i < song.nChannels; i++)
             if (mixer.isPlaying(CHANNEL_FOR(i)))
                 mixer.stop(CHANNEL_FOR(i));
-
     } else {
-        LOG((LGPFX"Notice: stop() called when no module was playing.\n"));
+        LOG((LGPFX"Warning: stop() called when no module was playing.\n"));
     }
 
-    song.nPatterns = 0;
     AudioMixer::instance.setTrackerCallbackInterval(0);
+    hasSong = false;
 }
 
 void XmTrackerPlayer::setVolume(int pVolume, uint8_t ch)
@@ -116,6 +144,28 @@ void XmTrackerPlayer::setVolume(int pVolume, uint8_t ch)
     } else {
         channels[ch].userVolume = pVolume;
     }
+}
+
+void XmTrackerPlayer::pause()
+{
+    // pause should only be called when there is a song playing
+    if (isStopped()) {
+        ASSERT(!isStopped());
+        return;
+    }
+
+    if (isPaused()) {
+        LOG((LGPFX"Notice: pause() called while already paused.\n"));
+    }
+
+    paused = true;
+    AudioMixer::instance.setTrackerCallbackInterval(0);
+
+    ASSERT(song.nChannels);
+    AudioMixer &mixer = AudioMixer::instance;
+    for (unsigned i = 0; i < song.nChannels; i++)
+        if (mixer.isPlaying(CHANNEL_FOR(i)))
+            mixer.stop(CHANNEL_FOR(i));
 }
 
 inline void XmTrackerPlayer::loadNextNotes()
@@ -136,7 +186,10 @@ inline void XmTrackerPlayer::loadNextNotes()
         }
 
         if (phrase != next.phrase && next.phrase < song.patternOrderTableSize) {
-            pattern.loadPattern(patternOrderTable(next.phrase));
+            if(!pattern.loadPattern(patternOrderTable(next.phrase))) {
+                stop();
+                return;
+            }
             phrase = next.phrase;
             memset(&loop, 0, sizeof(loop));
         } else if (next.phrase >= song.patternOrderTableSize) {
@@ -156,7 +209,7 @@ inline void XmTrackerPlayer::loadNextNotes()
         next.force = false;
 
 #ifdef XMTRACKERDEBUG
-        LOG((LGPFX"Debug: Advancing to phrase %u, row %u.\n", phrase, next.row));
+        LOG((LGPFX"Debug: Relocating to phrase %u, row %u.\n", phrase, next.row));
 #endif
     }
 
@@ -180,7 +233,6 @@ inline void XmTrackerPlayer::loadNextNotes()
         if ((int)i == song.nChannels - 1) LOG(("\n"));
 #endif
 
-        channel.valid = false;
         bool recNote = false,
              recInst = false;
         if (note.instrument == XmTrackerPattern::kNoInstrument) {
@@ -207,63 +259,75 @@ inline void XmTrackerPlayer::loadNextNotes()
                 return;
             }
         } else if (note.instrument >= song.nInstruments) {
+            // Invalid instrument--play nothing.
             channel.instrument.sample.pData = 0;
         }
 
+        // Reset volume state when the instrument is explicitly used in the pattern.
         if (!recInst && channel.instrument.sample.pData) {
             channel.volume = channel.instrument.sample.volume;
         }
-        
-        channel.start = !recNote;
-        // Don't play with an invalid instrument
-        if (channel.start && note.instrument >= song.nInstruments) {
-            channel.start = false;
-        }
-        /* Don't play when:
-         * 1) computed note is out of range
-         * 2) note is not a valid playing note
-         * 3) no sample data
-         */
-        if (channel.realNote(note.note) > XmTrackerPattern::kMaxNote ||
-            !channel.realNote(note.note) ||
-            !channel.instrument.sample.pData)
-        {
-            channel.start = false;
-        }
 
-        if (!channel.active && !channel.start) {
-            channel.note = note;
-            continue;
-        }
-
-        // Remember old/current period for portamento slide.
-        channel.porta.period = channel.period;
         if (!recNote) {
-            channel.period = getPeriod(channel.realNote(note.note), channel.instrument.finetune);
-            if (note.instrument != channel.note.instrument || !channel.porta.period) {
-                channel.porta.period = channel.period;
+            if (channel.realNote(note.note)) {
+                if ((channel.instrument.volumeType & (kEnvelopeSustain | kEnvelopeLoop)) == 0 || channel.envelope.done) {
+                    memset(&channel.envelope, 0, sizeof(channel.envelope));
+                    channel.envelope.done = !channel.instrument.nVolumeEnvelopePoints;
+                }
+
+                channel.state = STATE_START;
+            } else if (note.note == XmTrackerPattern::kNoteOff && channel.state != STATE_STOPPED) {
+                channel.state = STATE_FINISH;
             }
         }
+
+        /* Error conditions: abort channel playback when:
+         * 1) computed note is out of range
+         * 2) invalid instrument
+         * 3) no sample data
+         */
+        if (channel.state == STATE_START) {
+            if (channel.realNote(note.note) > XmTrackerPattern::kMaxNote ||
+                note.instrument >= song.nInstruments ||
+                !channel.instrument.sample.pData)
+            {
+                channel.state = STATE_STOP;
+            }
+        }
+
+        // Apply any state changes immediately
+        channel.applyStateOnTick = ticks;
+
+        if (!recNote && channel.realNote(note.note)) {
+            /* A new explicit note is a potential new target for portamento.
+             * Cache the old period and reset the portamento effect state in
+             * case the note involves a tone portamento.
+             */
+            channel.porta.active = false;
+            channel.porta.period = channel.period;
+            channel.period = getPeriod(channel.realNote(note.note), channel.instrument.finetune);
+
+            // New notes get a fresh fadeout
+            channel.fadeout = UINT16_MAX;
+        }
+
+        /* If the instrument has changed or there is no previous note (as
+         * indicated by the lack of a porta period), reset the portamento
+         * period to the new period.
+         */
+        if (note.instrument != channel.note.instrument || !channel.porta.period) {
+            channel.porta.period = channel.period;
+        }
+
         if (channel.period) {
             channel.frequency = getFrequency(channel.period);
         }
+
         channel.note = note;
 
-        // Volume
-        channel.fadeout = UINT16_MAX;
-        if (note.volumeColumnByte >= 0x10 && note.volumeColumnByte <= 0x50)
-                channel.volume = note.volumeColumnByte - 0x10;
-
-        if (channel.start) {
-            // TODO: auto-vibrato.
-            channel.vibrato.phase = 0;
-            channel.tremolo.phase = 0;
-
-            memset(&channel.envelope, 0, sizeof(channel.envelope));
-            channel.envelope.done = !channel.instrument.nVolumeEnvelopePoints;
-        }
-
-        channel.active = true;
+        // TODO: auto-vibrato.
+        channel.vibrato.phase = 0;
+        channel.tremolo.phase = 0;
     }
     pattern.releaseRef();
 
@@ -346,13 +410,25 @@ void XmTrackerPlayer::processVibrato(XmTrackerChannel &channel)
 
 void XmTrackerPlayer::processPorta(XmTrackerChannel &channel)
 {
-    if (!ticks) {
-        uint32_t tmp;
-        tmp = channel.period;
+    if (!channel.porta.active) {
+        channel.porta.active = true;
+        /* Frequency shifting from channel.period to channel.porta.period, so
+         * apply the porta.period to the channel state and cache the target.
+         *
+         * This is all done because once the porta effect ends, if it did not
+         * make it to the target period, the channel should keep playing the
+         * incompletely-shifted period (as affected by effects) until a new
+         * note comes along in the pattern and resets the period.
+         */
+        uint32_t tmp = channel.period;
         channel.period = channel.porta.period;
         channel.porta.period = tmp;
+    }
+
+    if (!ticks) {
         // Not playing a new note anymore, sustain-shifting to another.
-        channel.start = false;
+        // XXX: ASSERT that we were already playing
+        channel.state = STATE_PLAYING;
         return;
     }
 
@@ -412,8 +488,10 @@ void XmTrackerPlayer::processVolume(XmTrackerChannel &channel)
             if (param) channel.tonePorta = param | (param << 4);
             processPorta(channel);
             break;
-        default:
-            break;
+        default: {
+            if (channel.note.volumeColumnByte >= 0x10 && channel.note.volumeColumnByte <= 0x50)
+                channel.volume = channel.note.volumeColumnByte - 0x10;
+        }
     }
 }
 
@@ -537,12 +615,15 @@ void XmTrackerPlayer::processPatternBreak(uint16_t nextPhrase, uint16_t nextRow)
 
 void XmTrackerPlayer::processRetrigger(XmTrackerChannel &channel, uint8_t interval, uint8_t slide)
 {
-    if (!channel.retrigger.interval) return;
+    if (!interval) return;
     if (!ticks) channel.retrigger.phase = 0;
 
-    if (channel.retrigger.phase >= channel.retrigger.interval) {
+    channel.retrigger.phase++;
+
+    if (channel.retrigger.phase >= interval) {
         channel.retrigger.phase = 0;
-        channel.start = true;
+        channel.state = STATE_START;
+        channel.applyStateOnTick = ticks;
 
         if (slide >= 1 && slide <= 5) {
             decrementVolume(channel.volume, 1 << (slide - 1));
@@ -558,8 +639,6 @@ void XmTrackerPlayer::processRetrigger(XmTrackerChannel &channel, uint8_t interv
             incrementVolume(channel.volume, channel.volume);
         }
     }
-
-    channel.retrigger.phase++;
 }
 
 bool XmTrackerPlayer::processTremor(XmTrackerChannel &channel)
@@ -706,7 +785,6 @@ void XmTrackerPlayer::processEffects(XmTrackerChannel &channel)
             break;
         }
         case fxSetEnvelopePos: {
-            LOG(("%s:%d: NOT_TESTED: fxSetEnvelopePos fx(0x%02x).\n", __FILE__, __LINE__, type));
             if (!ticks) {
                 if (param >= channel.instrument.nVolumeEnvelopePoints) {
                     LOG((LGPFX"Warning: Position %u is out of bounds "
@@ -716,6 +794,7 @@ void XmTrackerPlayer::processEffects(XmTrackerChannel &channel)
                     channel.envelope.point = 0;
                 } else {
                     channel.envelope.point = param;
+                    channel.envelope.tick = 0;
                 }
             }
             break;
@@ -774,20 +853,25 @@ void XmTrackerPlayer::processEffects(XmTrackerChannel &channel)
                 }
                 case fxLoopPattern: {
                     if (ticks) break;
-                    LOG(("%s:%d: NOT_TESTED: fxLoopPattern fx(0x%02x, 0x%02x).\n", __FILE__, __LINE__, type, param));
                     ASSERT_BREAK(!next.force);
 
                     if (!nparam) {
                         // Remember new boundary
-                        loop.start = next.row - 1;
-                    } else if (!loop.i) {
-                        // Begin looping
-                        loop.end = next.row - 1;
-                        loop.limit = nparam;
-                        loop.i = 1;
-                    } else if (++loop.i > loop.limit) {
-                        // Stop looping
-                        loop.i = 0;
+                        loop.start = next.row;
+                    } else {
+                        // First iteration
+                        if (!loop.i) {
+                            // Begin looping
+                            loop.limit = nparam;
+                        }
+
+                        if (loop.i++ >= loop.limit) {
+                            // Stop looping
+                            loop.i = 0;
+                            loop.limit = 0;
+                        } else {
+                            processPatternBreak(phrase, loop.start);
+                        }
                     }
                     break;
                 }
@@ -796,7 +880,6 @@ void XmTrackerPlayer::processEffects(XmTrackerChannel &channel)
                     break;
                 }
                 case fxRetrigNote: {
-                    LOG(("%s:%d: NOT_TESTED: fxRetrigNote fx(0x%02x, 0x%02x).\n", __FILE__, __LINE__, type, param));
                     processRetrigger(channel, nparam);
                     break;
                 }
@@ -825,7 +908,13 @@ void XmTrackerPlayer::processEffects(XmTrackerChannel &channel)
                     break;
                 }
                 case fxNoteDelay: {
-                    channel.start = ticks == nparam;
+                    channel.applyStateOnTick = nparam;
+
+                    // When kNoteOff is used with a delay, don't stop playing; coast instead.
+                    if (channel.state == STATE_FINISH && channel.applyStateOnTick) {
+                        channel.state = STATE_COAST;
+                    }
+
                     break;
                 }
                 case fxPatternDelay: {
@@ -853,6 +942,11 @@ void XmTrackerPlayer::processEffects(XmTrackerChannel &channel)
 
 void XmTrackerPlayer::processEnvelope(XmTrackerChannel &channel)
 {
+    /* Do not process the envelope when:
+     * 1) There is none
+     * 2) The envelope is finished
+     * 3) The channel is stopped
+     */
     if (!channel.instrument.volumeType || channel.envelope.done) {
         return;
     }
@@ -861,13 +955,14 @@ void XmTrackerPlayer::processEnvelope(XmTrackerChannel &channel)
     _SYSXMInstrument &instrument = channel.instrument;
     struct XmTrackerEnvelopeMemory &envelope = channel.envelope;
 
+    // Sanity test.
     if (!instrument.nVolumeEnvelopePoints) {
         ASSERT(instrument.nVolumeEnvelopePoints);
         channel.envelope.done = true;
         return;
     }
 
-    if ((instrument.volumeType & kEnvelopeSustain) && channel.note.note != XmTrackerPattern::kNoteOff) {
+    if (channel.state != STATE_FINISH && instrument.volumeType & kEnvelopeSustain) {
         // volumeSustainPoint is a maxima, don't exceed it.
         if (envelope.point >= instrument.volumeSustainPoint) {
             envelope.point = instrument.volumeSustainPoint;
@@ -883,8 +978,11 @@ void XmTrackerPlayer::processEnvelope(XmTrackerChannel &channel)
 
     int16_t pointLength = 0;
     uint16_t envPt0 , envPt1 = 0;
-    if (envelope.point == instrument.nVolumeEnvelopePoints - 1) {
+    if (envelope.point == instrument.nVolumeEnvelopePoints) {
         // End of envelope
+        channel.state = STATE_STOP;
+        return;
+    } else if (envelope.point == instrument.nVolumeEnvelopePoints - 1) {
         envelope.done = true;
 
         // Load the last envelope point from flash.
@@ -947,11 +1045,11 @@ void XmTrackerPlayer::process()
         struct XmTrackerChannel &channel = channels[i];
 
         processVolume(channel);
-        if (!isPlaying()) return;
+        if (isStopped()) return;
         processEffects(channel);
-        if (!isPlaying()) return;
+        if (isStopped()) return;
         processEnvelope(channel);
-        if (!isPlaying()) return;
+        if (isStopped()) return;
     }
 }
 
@@ -962,36 +1060,25 @@ void XmTrackerPlayer::commit()
     for (unsigned i = 0; i < song.nChannels; i++) {
         struct XmTrackerChannel &channel = channels[i];
 
-        if (!channel.active && mixer.isPlaying(CHANNEL_FOR(i))) {
-            mixer.stop(CHANNEL_FOR(i));
-            continue;
-        }
-
         /* This code relies on the single-threaded nature of the audio
          * stack--the sample is loaded first and volume and sampling rate
          * adjusted shortly after.
          */
-        if (channel.start) {
-            channel.start = false;
-            if (mixer.isPlaying(CHANNEL_FOR(i))) mixer.stop(CHANNEL_FOR(i));
-            if (!mixer.play(&channel.instrument.sample,
-                            CHANNEL_FOR(i),
-                            (_SYSAudioLoopType)channel.instrument.sample.loopType)) {
-                channel.active = false;
-                continue;
+
+        if (channel.applyStateOnTick == ticks) {
+            if (channel.state == STATE_START) {
+                if (mixer.isPlaying(CHANNEL_FOR(i))) mixer.stop(CHANNEL_FOR(i));
+                if (!mixer.play(&channel.instrument.sample,
+                                CHANNEL_FOR(i),
+                                (_SYSAudioLoopType)channel.instrument.sample.loopType)) {
+                    channel.state = STATE_STOPPED;
+                    continue;
+                }
+                channel.state = STATE_PLAYING;
             }
         }
 
-        channel.active = mixer.isPlaying(CHANNEL_FOR(i));
-
-        /* If note has been ended by kNoteOff, disable looping and let the
-         * sample run itself out.
-         */
-        if (channel.note.note == XmTrackerPattern::kNoteOff &&
-            mixer.isPlaying(CHANNEL_FOR(i)))
-        {
-            mixer.setLoop(CHANNEL_FOR(i), _SYS_LOOP_ONCE);
-        }
+        if (channel.state == STATE_STOPPED || !mixer.isPlaying(CHANNEL_FOR(i))) continue;
 
         /* Final volume is computed from the current channel volume, the
          * current state of the instrument's volume envelope, sample fadeout,
@@ -1006,12 +1093,12 @@ void XmTrackerPlayer::commit()
             if (channel.note.effectType != fxTremolo) channel.tremolo.volume = finalVolume;
 
             // Apply envelope
-            if (channel.active && channel.instrument.volumeType) {
-                finalVolume = (finalVolume * channel.envelope.value) >> 6;
+            if (channel.instrument.volumeType) {
+                finalVolume = (finalVolume * (channel.envelope.value + 1)) >> 6;
             }
 
             // Apply fadeout
-            if (channel.active && channel.note.note == XmTrackerPattern::kNoteOff) {
+            if (channel.state == STATE_COAST || channel.state == STATE_FINISH) {
                 if (channel.instrument.volumeFadeout > 0xFFF ||
                     channel.instrument.volumeFadeout > channel.fadeout ||
                     !channel.instrument.volumeFadeout)
@@ -1021,10 +1108,14 @@ void XmTrackerPlayer::commit()
                     channel.fadeout -= channel.instrument.volumeFadeout;
                 }
 
+                if (channel.instrument.nVolumeEnvelopePoints == 0) {
+                    channel.fadeout = 0;
+                }
+
                 // Completely faded -> stop playing sample.
                 if (!channel.fadeout) {
-                    channel.active = false;
-                    if (mixer.isPlaying(CHANNEL_FOR(i))) mixer.stop(CHANNEL_FOR(i));
+                    channel.state = STATE_STOP;
+                    channel.applyStateOnTick = ticks;
                 }
 
                 // Apply fadeout
@@ -1032,19 +1123,29 @@ void XmTrackerPlayer::commit()
             }
         }
 
-        // Global volume
+        if (channel.state == STATE_STOP && channel.applyStateOnTick == ticks) {
+            if (mixer.isPlaying(CHANNEL_FOR(i))) mixer.stop(CHANNEL_FOR(i));
+            channel.state = STATE_STOPPED;
+            continue;
+        }
+
+        // Tracker global volume
         finalVolume = finalVolume * volume / kMaxVolume;
+
+        // Further volume adjustments are done on a larger scale
+        finalVolume = clamp(finalVolume * 4, (int32_t)0, (int32_t)_SYS_AUDIO_MAX_VOLUME);
+
         // User-assigned channel volume
         finalVolume = finalVolume * channel.userVolume / _SYS_AUDIO_MAX_VOLUME;
         // User-assigned global volume
         finalVolume = finalVolume * userVolume / _SYS_AUDIO_MAX_VOLUME;
 
-        mixer.setVolume(CHANNEL_FOR(i), clamp(finalVolume * 4, (int32_t)0, (int32_t)_SYS_AUDIO_MAX_VOLUME));
+        mixer.setVolume(CHANNEL_FOR(i), finalVolume);
 
         // Sampling rate
         if (channel.frequency > 0) {
             mixer.setSpeed(CHANNEL_FOR(i), channel.frequency);
-        } else if (mixer.isPlaying(CHANNEL_FOR(i))) {
+        } else {
             mixer.stop(CHANNEL_FOR(i));
         }
 
@@ -1091,14 +1192,14 @@ void XmTrackerPlayer::tick()
         ticks = delay = 0;
         // load next notes into the process channels
         loadNextNotes();
-        if (!isPlaying()) return;
+        if (isStopped()) return;
     }
 
     // process effects and envelopes
     process();
-    if (!isPlaying()) return;
+    if (isStopped()) return;
 
     // update mixer
     commit();
-    //if (!isPlaying()) return;
+    //if (isStopped()) return;
 }

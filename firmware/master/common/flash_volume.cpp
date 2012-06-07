@@ -27,9 +27,10 @@ bool FlashVolume::isValid() const
      * as they are recycled.
      */
 
-    if (hdr->type != T_DELETED && hdr->crcMap != hdr->calculateMapCRC())
+    unsigned numMapEntries = hdr->numMapEntries();
+    if (hdr->type != T_DELETED && hdr->crcMap != hdr->calculateMapCRC(numMapEntries))
         return false;
-    if (hdr->crcErase != hdr->calculateEraseCountCRC(block))
+    if (hdr->crcErase != hdr->calculateEraseCountCRC(block, numMapEntries))
         return false;
 
     /*
@@ -40,11 +41,13 @@ bool FlashVolume::isValid() const
 
     DEBUG_ONLY({
         const FlashMap* map = hdr->getMap();
-        unsigned mapEntries = hdr->numMapEntries();
 
         // First map entry always describes the volume header
-        ASSERT(mapEntries >= 1);
+        ASSERT(numMapEntries >= 1);
         ASSERT(map->blocks[0].code == block.code);
+
+        // LFS volumes always have numMapEntries==1
+        ASSERT(numMapEntries == 1 || hdr->type != T_LFS);
 
         /*
          * Header must have the lowest block index, otherwise FlashVolumeIter
@@ -52,7 +55,7 @@ bool FlashVolume::isValid() const
          * and correctness bug, since data in the middle of a volume may be
          * misinterpreted as a volume header!)
          */
-        for (unsigned i = 1; i != mapEntries; ++i) {
+        for (unsigned i = 1; i != numMapEntries; ++i) {
             FlashMapBlock b = map->blocks[i];
             ASSERT(b.isValid() == false || map->blocks[i].code > block.code);
         }
@@ -85,11 +88,39 @@ FlashMapSpan FlashVolume::getPayload(FlashBlockRef &ref) const
     FlashVolumeHeader *hdr = FlashVolumeHeader::get(ref, block);
     ASSERT(hdr->isHeaderValid());
 
+    unsigned numMapEntries = hdr->numMapEntries();
     unsigned size = hdr->payloadBlocks;
-    unsigned offset = hdr->payloadOffsetBlocks();
+    unsigned offset = FlashVolumeHeader::payloadOffsetBlocks(numMapEntries, hdr->dataBytes);
     const FlashMap* map = hdr->getMap();
 
     return FlashMapSpan::create(map, offset, size);
+}
+
+uint8_t *FlashVolume::mapTypeSpecificData(FlashBlockRef &ref, unsigned &size) const
+{
+    /*
+     * Return a pointer and size to type-specific data in our cache.
+     * Restricted to only the portion of the type-specific data which
+     * fits in the same cache block as the header.
+     */
+
+    ASSERT(isValid());
+    FlashVolumeHeader *hdr = FlashVolumeHeader::get(ref, block);
+    ASSERT(hdr->isHeaderValid());
+
+    // Allow underflow in these calculations
+    unsigned numMapEntries = hdr->numMapEntries();
+    int32_t offset = hdr->dataOffsetBytes(numMapEntries);
+    int32_t actualSize = FlashBlock::BLOCK_SIZE - offset;
+    int32_t dataBytes = hdr->dataBytes;
+    actualSize = MIN(actualSize, dataBytes);
+    if (actualSize <= 0) {
+        size = 0;
+        return 0;
+    }
+
+    size = actualSize;
+    return offset + (uint8_t*)hdr;
 }
 
 void FlashVolume::deleteSingle() const
@@ -225,14 +256,15 @@ void FlashBlockRecycler::findOrphansAndDeletedVolumes()
         // If a block is reachable at all, even by a deleted volume, it isn't orphaned.
         // Also calculate the average erase count for all mapped blocks
 
+        unsigned numMapEntries = hdr->numMapEntries();
         const FlashMap *map = hdr->getMap();
         FlashBlockRef eraseRef;
 
-        for (unsigned I = 0, E = hdr->numMapEntries(); I != E; ++I) {
+        for (unsigned I = 0; I != numMapEntries; ++I) {
             FlashMapBlock block = map->blocks[I];
             if (block.isValid()) {
                 block.clear(orphanBlocks);
-                avgEraseNumerator += hdr->getEraseCount(eraseRef, vol.block, I);
+                avgEraseNumerator += hdr->getEraseCount(eraseRef, vol.block, I, numMapEntries);
                 avgEraseDenominator++;
             }
         }
@@ -260,6 +292,7 @@ void FlashBlockRecycler::findCandidateVolumes()
         FlashBlockRef ref;
         FlashMapBlock block = FlashMapBlock::fromIndex(index);
         FlashVolumeHeader *hdr = FlashVolumeHeader::get(ref, block);
+        unsigned numMapEntries = hdr->numMapEntries();
         const FlashMap *map = hdr->getMap();
         FlashBlockRef eraseRef;
 
@@ -267,9 +300,9 @@ void FlashBlockRecycler::findCandidateVolumes()
         ASSERT(hdr->type == FlashVolume::T_DELETED || hdr->type == FlashVolume::T_INCOMPLETE);
         ASSERT(hdr->isHeaderValid());
 
-        for (unsigned I = 0, E = hdr->numMapEntries(); I != E; ++I) {
+        for (unsigned I = 0; I != numMapEntries; ++I) {
             FlashMapBlock block = map->blocks[I];
-            if (block.isValid() && hdr->getEraseCount(eraseRef, block, I) <= averageEraseCount) {
+            if (block.isValid() && hdr->getEraseCount(eraseRef, block, I, numMapEntries) <= averageEraseCount) {
                 candidateVolumes.mark(index);
                 break;
             }
@@ -353,9 +386,10 @@ bool FlashBlockRecycler::next(FlashMapBlock &block, EraseCount &eraseCount)
 
     FlashBlockRef ref;
     FlashVolumeHeader *hdr = FlashVolumeHeader::get(ref, vol.block);
+    unsigned numMapEntries = hdr->numMapEntries();
     FlashMap *map = hdr->getMap();
 
-    for (unsigned I = 0, E = hdr->numMapEntries(); I != E; ++I) {
+    for (unsigned I = 0; I != numMapEntries; ++I) {
         FlashMapBlock candidate = map->blocks[I];
         if (candidate.isValid() && candidate.code != vol.block.code) {
             // Found a non-header block to yank! Mark it as dirty.
@@ -364,7 +398,7 @@ bool FlashBlockRecycler::next(FlashMapBlock &block, EraseCount &eraseCount)
             map->blocks[I].setInvalid();
 
             block = candidate;
-            eraseCount = hdr->getEraseCount(ref, vol.block, I);
+            eraseCount = hdr->getEraseCount(ref, vol.block, I, numMapEntries);
             return true;
         }
     }
@@ -375,7 +409,7 @@ bool FlashBlockRecycler::next(FlashMapBlock &block, EraseCount &eraseCount)
     dirtyVolume.commitBlock();
 
     block = vol.block;
-    eraseCount = hdr->getEraseCount(ref, vol.block, 0);
+    eraseCount = hdr->getEraseCount(ref, vol.block, 0, numMapEntries);
     return true;
 }
 
@@ -397,6 +431,7 @@ bool FlashVolumeWriter::begin(unsigned type, unsigned payloadBytes,
     // Initialize everything except the 'type' field.
     unsigned payloadBlocks = (payloadBytes + FlashBlock::BLOCK_MASK) / FlashBlock::BLOCK_SIZE;
     hdr->init(FlashVolume::T_INCOMPLETE, payloadBlocks, hdrDataBytes, parent.block);
+    unsigned numMapEntries = hdr->numMapEntries();
 
     /*
      * Get some temporary memory to store erase counts in.
@@ -429,11 +464,19 @@ bool FlashVolumeWriter::begin(unsigned type, unsigned payloadBytes,
     FlashMap *map = hdr->getMap();
     FlashBlockRecycler br;
 
-    for (unsigned I = 0, E = hdr->numMapEntries(); I < E; ++I) {
+    for (unsigned I = 0; I < numMapEntries; ++I) {
         FlashMapBlock block;
         FlashBlockRecycler::EraseCount ec;
 
         if (!br.next(block, ec)) {
+            /*
+             * If this is the first block, we can exit now without
+             * losing information. In fact, we must: there's nowhere to
+             * store a header.
+             */
+            if (I == 0)
+                return false;
+            
             success = false;
             break;
         }
@@ -487,22 +530,26 @@ bool FlashVolumeWriter::begin(unsigned type, unsigned payloadBytes,
     // Assign a real address to the header
     writer.relocate(volume.block.address());
 
-    hdr->crcMap = hdr->calculateMapCRC();
+    hdr->crcMap = hdr->calculateMapCRC(numMapEntries);
 
     // Calculate erase count CRC from our anonymous memory array
     Crc32::reset();
-    for (unsigned I = 0, E = hdr->numMapEntries(); I < E; ++I) {
+    for (unsigned I = 0; I < numMapEntries; ++I) {
         Crc32::add(*reinterpret_cast<uint32_t*>(ecBlocks[I / ecPerBlock]->getData()) + (I % ecPerBlock));
     }
     hdr->crcErase = Crc32::get();
 
     // Now start writing erase counts, which may be in different blocks.
     // Note that this implicitly releases the reference we hold to "hdr".
+    // Must save dataBytes and numMapEntries before this!
+    
+    unsigned dataBytes = hdr->dataBytes;
 
-    for (unsigned I = 0, E = hdr->numMapEntries(); I < E; ++I) {
+    for (unsigned I = 0; I < numMapEntries; ++I) {
         FlashBlockRecycler::EraseCount ec;
         ec = *reinterpret_cast<uint32_t*>(ecBlocks[I / ecPerBlock]->getData()) + (I % ecPerBlock);
-        *writer.getData<FlashBlockRecycler::EraseCount>(hdr->eraseCountAddress(volume.block, I)) = ec;
+        unsigned addr = FlashVolumeHeader::eraseCountAddress(volume.block, I, numMapEntries, dataBytes);
+        *writer.getData<FlashBlockRecycler::EraseCount>(addr) = ec;
     }
 
     // Finish writing
@@ -528,6 +575,14 @@ void FlashVolumeWriter::commit()
     writer.commitBlock();
 
     ASSERT(volume.isValid());
+}
+
+uint8_t *FlashVolumeWriter::mapTypeSpecificData(unsigned &size)
+{
+    FlashBlockRef ref;
+    uint8_t *data = volume.mapTypeSpecificData(ref, size);
+    payloadWriter.beginBlock(ref);
+    return data;
 }
 
 void FlashVolumeWriter::appendPayload(const uint8_t *bytes, uint32_t count)

@@ -96,22 +96,25 @@ static inline void setNZ(int32_t result) {
 }
 
 static inline reg_t opLSL(reg_t a, reg_t b) {
+    // Note: Intentionally truncates to 32-bit
     setCarry(b ? ((0x80000000 >> (b - 1)) & a) != 0 : 0);
-    reg_t result = b < 32 ? a << b : 0;
+    uint32_t result = b < 32 ? a << b : 0;
     setNZ(result);
     return result;
 }
 
 static inline reg_t opLSR(reg_t a, reg_t b) {
+    // Note: Intentionally truncates to 32-bit
     setCarry(b ? ((1 << (b - 1)) & a) != 0 : 0);
-    reg_t result = b < 32 ? a >> b : 0;
+    uint32_t result = b < 32 ? a >> b : 0;
     setNZ(result);
     return result;
 }
 
 static inline reg_t opASR(reg_t a, reg_t b) {
+    // Note: Intentionally truncates to 32-bit
     setCarry(b ? ((1 << (b - 1)) & a) != 0 : 0);
-    reg_t result = b < 32 ? (int32_t)a >> b : 0;
+    uint32_t result = b < 32 ? (int32_t)a >> b : 0;
     setNZ(result);
     return result;
 }
@@ -832,6 +835,24 @@ static void emulateDIV(uint32_t instr)
     svmCyclesElapsed += MCTiming::CPU_DIVIDE;
 }
 
+static void emulateCLZ(uint32_t instr)
+{
+    unsigned Rm1 = (instr >> 16) & 0xF;
+    unsigned Rd  = (instr >> 8) & 0xF;
+    unsigned Rm2 = instr & 0xF;
+
+    // ARM ARM states that the two Rm fields must be consistent
+    if (Rm1 != Rm2)
+        return emulateFault(F_CPU_SIM);
+    uint32_t m32 = (uint32_t) regs[Rm1];
+
+    // Note that GCC leaves __builtin_clz(0) undefined, whereas for ARM it's 32.
+    if (m32 == 0)
+        regs[Rd] = 32;
+    else
+        regs[Rd] = __builtin_clz(m32);
+}
+
 
 /***************************************************************************
  * Instruction Dispatch
@@ -1036,6 +1057,10 @@ static void execute32(uint32_t instr)
     }
     if ((instr & DivMask) == DivTest) {
         emulateDIV(instr);
+        return;
+    }
+    if ((instr & ClzMask) == ClzTest) {
+        emulateCLZ(instr);
         return;
     }
 

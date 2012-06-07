@@ -69,6 +69,111 @@ void testLog()
     ASSERT(log(2.0f) == float(b(M_LN2)));
 }
 
+void testExceptions()
+{
+    /*
+     * None of these often-illegal operations should generate faults.
+     * Check that they return expected values.
+     */
+
+    // Integer divide by zero == 0
+    ASSERT(b(50) / b(0) == 0);
+    ASSERT(b(50U) / b(0U) == 0);
+    ASSERT(b(50LL) / b(0LL) == 0);
+    ASSERT(b(50LLU) / b(0LLU) == 0);
+    
+    // Integer modulo (a % 0) == a
+    ASSERT((b(50) % b(0)) == 50);
+    ASSERT((b(50U) % b(0U)) == 50);
+    ASSERT((b(50LL) % b(0LL)) == 50);
+    ASSERT((b(50LLU) % b(0LLU)) == 50);
+
+    // Float divide by zero == +/- infinity
+    ASSERT(b(50.f) / b(0.f) > MAXFLOAT);
+    ASSERT(b(-50.f) / b(0.f) < -MAXFLOAT);
+
+    // NaN
+    ASSERT(isunordered(b(0.f)) == false);
+    ASSERT(isunordered(b(NAN)) == true);
+    ASSERT(isunordered(b(1.f), b(0.f)) == false);
+    ASSERT(isunordered(b(1.f), b(NAN)) == true);
+    ASSERT(isunordered(b(0.0)) == false);
+    ASSERT(isunordered(b(double(NAN))) == true);
+    ASSERT(isunordered(b(1.0), b(0.0)) == false);
+    ASSERT(isunordered(b(1.0), b(double(NAN))) == true);
+
+    // sqrt(-1) == NAN
+    ASSERT(isunordered(sqrt(b(-1.f))) == true);
+    ASSERT(isunordered(sqrt(b(-1.0))) == true);
+
+    // log(0) == -infinity
+    ASSERT(log(b(0.f)) < -MAXFLOAT);
+    ASSERT(log(b(0.0)) < -MAXFLOAT);
+
+    // log(-1) == NAN
+    ASSERT(isunordered(log(b(-1.f))) == true);
+    ASSERT(isunordered(log(b(-1.0))) == true);
+
+    // fmod(0,1) == 0
+    ASSERT(fmod(b(0.f), b(1.f)) == 0.f);
+    ASSERT(fmod(b(0.0), b(1.0)) == 0.0);
+
+    // fmod(inf, 1) == NAN
+    ASSERT(isunordered(fmod(b(log(-1.f)), b(1.f))) == true);
+    ASSERT(isunordered(fmod(b(log(-1.0)), b(1.0))) == true);
+
+    // fmod(1, 0) == NAN
+    ASSERT(isunordered(fmod(b(1.f), b(0.f))) == true);
+    ASSERT(isunordered(fmod(b(1.0), b(0.0))) == true);
+
+    // pow(0, -1.5) == infinity
+    ASSERT(pow(b(0.f), b(-1.5f)) > MAXFLOAT);
+    ASSERT(pow(b(0.0), b(-1.5 )) > MAXFLOAT);
+
+    // pow(-1, 1.5) == NAN
+    ASSERT(isunordered(pow(b(-1.f), b(1.5f))) == true);
+    ASSERT(isunordered(pow(b(-1.0), b(1.5 ))) == true);
+}
+
+void testBits()
+{
+    // Test bit operations
+
+    ASSERT(clz(b(0x80000000)) == 0);
+    ASSERT(clz(b(0x4fffffff)) == 1);
+    ASSERT(clz(b(0x35555555)) == 2);
+    ASSERT(clz(b(0x1aaaaaaa)) == 3);
+    ASSERT(clz(b(0x0fffffff)) == 4);
+    ASSERT(clz(b(0x04000000)) == 5);
+    ASSERT(clz(b(0x02000001)) == 6);
+    ASSERT(clz(b(0x01000010)) == 7);
+    ASSERT(clz(b(0x00800100)) == 8);
+    ASSERT(clz(b(0x00401000)) == 9);
+    ASSERT(clz(b(0x00210000)) == 10);
+    ASSERT(clz(b(0x00100003)) == 11);
+    ASSERT(clz(b(0x00080030)) == 12);
+    ASSERT(clz(b(0x00040300)) == 13);
+    ASSERT(clz(b(0x00023000)) == 14);
+    ASSERT(clz(b(0x00010000)) == 15);
+    ASSERT(clz(b(0x00008007)) == 16);
+    ASSERT(clz(b(0x00004070)) == 17);
+    ASSERT(clz(b(0x00002700)) == 18);
+    ASSERT(clz(b(0x0000100c)) == 19);
+    ASSERT(clz(b(0x000008c0)) == 20);
+    ASSERT(clz(b(0x000004ff)) == 21);
+    ASSERT(clz(b(0x000003ff)) == 22);
+    ASSERT(clz(b(0x00000100)) == 23);
+    ASSERT(clz(b(0x00000080)) == 24);
+    ASSERT(clz(b(0x00000040)) == 25);
+    ASSERT(clz(b(0x00000020)) == 26);
+    ASSERT(clz(b(0x00000010)) == 27);
+    ASSERT(clz(b(0x00000008)) == 28);
+    ASSERT(clz(b(0x00000004)) == 29);
+    ASSERT(clz(b(0x00000003)) == 30);
+    ASSERT(clz(b(0x00000001)) == 31);
+    ASSERT(clz(b(0x00000000)) == 32);
+}
+
 void main()
 {
     testClamp();
@@ -77,6 +182,8 @@ void main()
     testRound();
     testAlmostEqual();
     testLog();
+    testExceptions();
+    testBits();
 
     LOG("Success.\n");
 }

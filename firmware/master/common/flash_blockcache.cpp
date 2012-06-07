@@ -161,6 +161,7 @@ void FlashBlock::load(uint32_t blockAddr, unsigned flags)
      * from blockAddr.
      */
 
+    ASSERT(blockAddr != INVALID_ADDRESS);
     ASSERT((blockAddr & (BLOCK_SIZE - 1)) == 0);
     validCodeBytes = 0;
     address = blockAddr;
@@ -224,6 +225,7 @@ void FlashBlockWriter::beginBlock()
     FlashBlock::anonymous(ref, 0xFF);
 }
 
+
 void FlashBlock::invalidate()
 {
     /*
@@ -235,14 +237,37 @@ void FlashBlock::invalidate()
      * replacement. Blocks with a reference are reloaded in-place.
      */
 
+    invalidate(0, 0xFFFFFFFF);
+}
+
+void FlashBlock::invalidate(uint32_t addrBegin, uint32_t addrEnd)
+{
+    /*
+     * Invalidate any cache blocks which overlap the given range of
+     * flash addresses.
+     */
+
+    ASSERT(addrBegin < addrEnd);
+
     for (unsigned idx = 0; idx < NUM_CACHE_BLOCKS; idx++) {
         FlashBlock *block = &instances[idx];
+        uint32_t blockAddrBegin = block->address;
+        uint32_t blockAddrEnd = blockAddrBegin + FlashBlock::BLOCK_SIZE;
 
-        if (block->address != INVALID_ADDRESS) {
-            if (block->refCount)
-                block->load(block->address);
-            else
+        if (blockAddrBegin == INVALID_ADDRESS)
+            continue;
+
+        if (blockAddrEnd > addrBegin && blockAddrBegin < addrEnd) {
+            // Block is in range. Invalidate it.
+
+            if (block->refCount) {
+                // In use. If it's backed by flash at all, reload it.
+                if (block->address != INVALID_ADDRESS)
+                    block->load(block->address);
+            } else {
+                // Nobody's using this block, quietly mark it as invalid / anonymous
                 block->address = INVALID_ADDRESS;
+            }
         }
     }
 }
@@ -303,7 +328,14 @@ void FlashBlockWriter::relocate(uint32_t blockAddr)
         for (unsigned idx = 0; idx < FlashBlock::NUM_CACHE_BLOCKS; idx++) {
             FlashBlock *b = &FlashBlock::instances[idx];
             if (b->address == blockAddr) {
-                ASSERT(b->refCount == 0);
+
+                if (b->refCount != 0) {
+                    LOG(("FLASH: Serious Error! Detected an attempt to relocate "
+                        "anonymous block over referenced block. Did someone "
+                        "delete a volume which still had outstanding references?\n"));
+                    ASSERT(0);
+                }
+
                 b->address = FlashBlock::INVALID_ADDRESS;
             }
         }

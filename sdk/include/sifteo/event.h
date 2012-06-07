@@ -25,7 +25,7 @@ namespace Sifteo {
  */
 
 /**
- * Implementation for a single event vector.
+ * @brief Implementation for a single event vector.
  *
  * Instances of this template are found in the Events namespace.
  * Typically you should not create instances of this object elsewhere.
@@ -36,7 +36,9 @@ struct EventVector {
     EventVector() {}
 
     /**
-     * Disable this event vector. This acts like a no-op handler was
+     * @brief Disable this event vector.
+     *
+     * This acts like a no-op handler was
      * registered, but of course it's more efficient than setting an
      * actual no-op handler.
      */
@@ -45,7 +47,9 @@ struct EventVector {
     }
 
     /**
-     * Set this event vector, given a closure consisting of an arbitrary
+     * @brief Set this Vector to a function with context pointer
+     *
+     * Requires a closure consisting of an arbitrary
      * pointer-sized context value, and a function pointer of the form:
      *
      *   void handler(ContextType c, unsigned parameter);
@@ -60,6 +64,8 @@ struct EventVector {
     }
 
     /**
+     * @brief Set this Vector to a bare function
+     *
      * Set this event vector to a bare function which requires no context.
      * It must still take a dummy void* placeholder argument:
      *
@@ -74,7 +80,7 @@ struct EventVector {
     }
 
     /**
-     * Set this event vector to an instance method, given a class method
+     * @brief Set this event vector to an instance method, given a class method
      * pointer and an instance of that class.
      */
     template <typename tClass>
@@ -88,14 +94,14 @@ struct EventVector {
     }
 
     /**
-     * Return the currently set handler function, as a void pointer.
+     * @brief Return the currently set handler function, as a void pointer.
      */
     void *handler() const {
         return _SYS_getVectorHandler(tID);
     }
 
     /**
-     * Return the currently set context object, as a void pointer.
+     * @brief Return the currently set context object, as a void pointer.
      */
     void *context() const {
         return _SYS_getVectorContext(tID);
@@ -104,7 +110,7 @@ struct EventVector {
 
 
 /**
- * Implementation for a single neighbor event vector.
+ * @brief Implementation for a single neighbor event vector.
  *
  * Instances of this template are found in the Events namespace.
  * Typically you should not create instances of this object elsewhere.
@@ -115,7 +121,9 @@ struct NeighborEventVector {
     NeighborEventVector() {}
 
     /**
-     * Disable this event vector. This acts like a no-op handler was
+     * @brief Disable this event vector.
+     *
+     * This acts like a no-op handler was
      * registered, but of course it's more efficient than setting an
      * actual no-op handler.
      */
@@ -124,7 +132,9 @@ struct NeighborEventVector {
     }
 
     /**
-     * Set this event vector, given a closure consisting of an arbitrary
+     * @brief Set this Vector to a function with context pointer
+     *
+     * Requires a closure consisting of an arbitrary
      * pointer-sized context value, and a function pointer of the form:
      *
      *   void handler(ContextType c, unsigned firstCube, unsigned firstSide,
@@ -136,6 +146,8 @@ struct NeighborEventVector {
     }
 
     /**
+     * @brief Set this Vector to a bare function
+     *
      * Set this event vector to a bare function which requires no context.
      * It must still take a dummy void* placeholder argument:
      *
@@ -147,7 +159,7 @@ struct NeighborEventVector {
     }
 
     /**
-     * Set this event vector to an instance method, given a class method
+     * @brief Set this event vector to an instance method, given a class method
      * pointer and an instance of that class.
      */
     template <typename tClass>
@@ -161,14 +173,14 @@ struct NeighborEventVector {
     }
 
     /**
-     * Return the currently set handler function, as a void pointer.
+     * @brief Return the currently set handler function, as a void pointer.
      */
     void *handler() const {
         return _SYS_getVectorHandler(tID);
     }
 
     /**
-     * Return the currently set context object, as a void pointer.
+     * @brief Return the currently set context object, as a void pointer.
      */
     void *context() const {
         return _SYS_getVectorContext(tID);

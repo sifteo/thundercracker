@@ -24,7 +24,7 @@
 #include "flash_device.h"
 #include "flash_storage.h"
 #include "flash_volume.h"
-#include "glfw.h"
+#include "ostime.h"
 #include "lodepng.h"
 
 
@@ -123,7 +123,7 @@ void FlashStorage::initData()
     data->header.mc_sectorSize = FlashDevice::SECTOR_SIZE;
 
     // Create a unique ID for this storage file
-    data->header.uniqueID = rand() ^ rand() ^ uint32_t(glfwGetTime() * 1e6);
+    data->header.uniqueID = rand() ^ rand() ^ uint32_t(OSTime::clock() * 1e6);
 }
 
 bool FlashStorage::installLauncher(const char *filename)

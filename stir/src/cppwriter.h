@@ -84,12 +84,6 @@ class CPPHeaderWriter : public CPPWriter {
 
  protected:
     void head();
-    virtual void foot();
-
- private:
-    std::string guardName;
-
-    void createGuardName(const char *filename);
 };
 
 

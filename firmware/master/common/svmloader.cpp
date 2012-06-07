@@ -17,6 +17,7 @@
 #include "cubeslots.h"
 #include "cube.h"
 #include "panic.h"
+#include "audiomixer.h"
 
 #include <stdlib.h>
 #include <sifteo/abi.h>
@@ -25,6 +26,7 @@ using namespace Svm;
 
 FlashBlockRef SvmLoader::mapRefs[SvmMemory::NUM_FLASH_SEGMENTS];
 uint8_t SvmLoader::runLevel;
+FlashVolume SvmLoader::runningVolume;
 
 
 void SvmLoader::loadRWData(const Elf::Program &program)
@@ -51,6 +53,9 @@ void SvmLoader::prepareToExec(const Elf::Program &program, SvmRuntime::StackInfo
     for (unsigned i = 0; i < _SYS_NUM_CUBE_SLOTS; i++) {
         CubeSlots::instances[i].setVideoBuffer(0);
     }
+
+    // Reset any audio left playing by the previous tenant
+    AudioMixer::instance.init();
 
     // Reset the debugging and logging subsystem
     SvmDebugPipe::init();
@@ -97,10 +102,11 @@ void SvmLoader::runLauncher()
         return;
     }
 
+    runLevel = RUNLEVEL_LAUNCHER;
+    runningVolume = vol;
+
     SvmRuntime::StackInfo stack;
     prepareToExec(program, stack);
-
-    runLevel = RUNLEVEL_LAUNCHER;
     SvmRuntime::run(program.getEntry(), stack);
 }
 
@@ -112,10 +118,11 @@ void SvmLoader::exec(FlashVolume vol, RunLevel level)
         return;
     }
 
+    runLevel = level;
+    runningVolume = vol;
+
     SvmRuntime::StackInfo stack;
     prepareToExec(program, stack);
-
-    runLevel = level;
     SvmRuntime::exec(program.getEntry(), stack);
 }
 

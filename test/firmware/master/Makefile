@@ -1,16 +1,13 @@
-SUBDIRS = cubetest radiotest
 
-.PHONY: clean subdirs $(SUBDIRS)
+TESTS := \
+	aes128
+    
+all: $(TESTS)
 
-subdirs: $(SUBDIRS)
-
-tools: $(TOOLS)
-
-$(SUBDIRS):
+$(TESTS):
 	@$(MAKE) -C $@
 
-run:
-	@for dir in $(SUBDIRS); do $(MAKE) -C $$dir run; done
-
 clean:
-	@for dir in $(SUBDIRS); do $(MAKE) -C $$dir clean; done
+	@for dir in $(TESTS); do $(MAKE) -C $$dir clean; done
+	
+.PHONY: clean $(TESTS)

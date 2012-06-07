@@ -131,6 +131,9 @@ bool SvmValidator::isValid32(uint32_t instr)
     if ((instr & DivMask) == DivTest) {
         return true;
     }
+    if ((instr & ClzMask) == ClzTest) {
+        return true;
+    }
 
     TRACING_ONLY({
         LOG(("VALIDATOR: invalid 32-bit instruction: 0x%x\n", instr));

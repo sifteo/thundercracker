@@ -17,6 +17,8 @@ class AudioMixer
 public:
     AudioMixer();
 
+    void init();
+
     static AudioMixer instance;
 
     static void test();
@@ -48,8 +50,13 @@ public:
     void setSampleRate(uint32_t samplerate) {
         curSampleRate = samplerate;
     }
+
     uint32_t sampleRate() {
         return curSampleRate;
+    }
+
+    unsigned channelID(AudioChannelSlot *slot) {
+        return slot - &channelSlots[0];
     }
 
 protected:
@@ -65,7 +72,7 @@ private:
     uint32_t trackerCallbackInterval;
     uint32_t trackerCallbackCountdown;
 
-    int mixAudio(int16_t *buffer, uint32_t numsamples);
+    bool mixAudio(int16_t *buffer, uint32_t numFrames);
 };
 
 #endif /* AUDIOMIXER_H_ */

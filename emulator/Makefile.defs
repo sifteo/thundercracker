@@ -1,3 +1,5 @@
+MASTER_DIR := $(TC_DIR)/firmware/master
+
 INCLUDES += \
     -Isrc \
     -I$(MASTER_DIR)/common \
@@ -64,6 +66,10 @@ endif
 # Do NOT publish unoptimized builds. Besides running several times
 # slower, they will reveal too much about how our firmware works. The
 # optimized builds are significantly harder to reverse engineer.
+# Please only use the REALLY_DEBUG_SIFTULATOR environment var to
+# disable these options. Note that doing so will automatically
+# change the name of the binary to help distinguish this from an
+# optimized (and distributable) build.
 #
 # -fomit-frame-pointer is actually really important here. It helps
 # a lot with our SBT code, since there are many tiny function calls.
@@ -71,8 +77,13 @@ endif
 # -O4 is like -O3, but includes link-time optimization on Mac OS.
 # XXX: Currently, -O4 seems to break our GUI... not using it at the moment.
 
-FLAGS += -O3 -fomit-frame-pointer
-FLAGS += -g
+ifeq ($(REALLY_DEBUG_SIFTULATOR),1)
+    FLAGS += -g
+    BIN := siftulator-unoptimized
+    LOWERCASE_BIN := siftulator-unoptimized
+else
+    FLAGS += -O3 -fomit-frame-pointer
+endif
 
 # Automatic dependency generation (*.d files)
 FLAGS += -MMD

@@ -18,6 +18,10 @@
 #include "testjig.h"
 #endif
 
+#ifdef BOOTLOADER
+#include "bootloader.h"
+#endif
+
 static const Usb::DeviceDescriptor dev = {
     sizeof(Usb::DeviceDescriptor),  // bLength
     Usb::DescriptorDevice,          // bDescriptorType
@@ -97,7 +101,7 @@ static const char *descriptorStrings[] = {
 #if (BOARD == BOARD_TEST_JIG)
     "Sifteo TestJig",
 #else
-    "Thundercracker",
+    "Sifteo Base",
 #endif
 };
 
@@ -143,6 +147,8 @@ void UsbDevice::handleOUTData(void *p)
     if (numBytes > 0) {
 #if (BOARD == BOARD_TEST_JIG)
         TestJig::onTestDataReceived(buf, numBytes);
+#elif defined(BOOTLOADER)
+        Bootloader::onUsbData(buf, numBytes);
 #else
         USBProtocol::dispatch(buf, numBytes);
 #endif
@@ -208,7 +214,7 @@ void UsbDevice::inEndpointCallback(uint8_t ep)
  */
 void UsbDevice::outEndpointCallback(uint8_t ep)
 {
-    Tasks::setPending(Tasks::UsbOUT, 0);
+    Tasks::setPending(Tasks::UsbOUT);
 }
 
 /*
