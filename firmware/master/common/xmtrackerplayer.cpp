@@ -209,7 +209,7 @@ inline void XmTrackerPlayer::loadNextNotes()
         next.force = false;
 
 #ifdef XMTRACKERDEBUG
-        LOG((LGPFX"Debug: Advancing to phrase %u, row %u.\n", phrase, next.row));
+        LOG((LGPFX"Debug: Relocating to phrase %u, row %u.\n", phrase, next.row));
 #endif
     }
 
@@ -853,20 +853,25 @@ void XmTrackerPlayer::processEffects(XmTrackerChannel &channel)
                 }
                 case fxLoopPattern: {
                     if (ticks) break;
-                    LOG(("%s:%d: NOT_TESTED: fxLoopPattern fx(0x%02x, 0x%02x).\n", __FILE__, __LINE__, type, param));
                     ASSERT_BREAK(!next.force);
 
                     if (!nparam) {
                         // Remember new boundary
                         loop.start = next.row - 1;
-                    } else if (!loop.i) {
-                        // Begin looping
-                        loop.end = next.row - 1;
-                        loop.limit = nparam;
-                        loop.i = 1;
-                    } else if (++loop.i > loop.limit) {
-                        // Stop looping
-                        loop.i = 0;
+                    } else {
+                        // First iteration
+                        if (!loop.i) {
+                            // Begin looping
+                            loop.limit = nparam;
+                        }
+
+                        if (loop.i++ >= loop.limit) {
+                            // Stop looping
+                            loop.i = 0;
+                            loop.limit = 0;
+                        } else {
+                            processPatternBreak(phrase, loop.end);
+                        }
                     }
                     break;
                 }
