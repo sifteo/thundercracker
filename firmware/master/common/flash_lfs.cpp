@@ -706,5 +706,13 @@ bool FlashLFSObjectIter::previous(unsigned key)
 bool FlashLFS::collectGarbage()
 {
     ASSERT(0 && "Not implemented!");
+
+    // Scan backwards, keeping a bitmap of all keys we've found
+    // Any volume consisting of only superceded keys is deleted
+
+    // Also: If the oldest volume is less than X amount full, copy
+    //       all non-superceded keys, then delete it.
+    //       XXX - how to do this for more than one volume at a time?
+
     return false;
 }
