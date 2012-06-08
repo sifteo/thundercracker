@@ -45,7 +45,7 @@ extern "C" {
  * Basic data types which are valid across the user/system boundary.
  */
 
-#define _SYS_NUM_CUBE_SLOTS     32
+#define _SYS_NUM_CUBE_SLOTS     24
 #define _SYS_CUBE_ID_INVALID    0xFF    // Reserved _SYSCubeID value
 
 typedef uint8_t _SYSCubeID;             // Cube slot index
