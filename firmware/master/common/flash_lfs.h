@@ -542,7 +542,7 @@ public:
 
 private:
     static FlashLFS instances[SIZE];
-    static unsigned lastUsed;
+    static uint8_t lastUsed;
 };
 
 

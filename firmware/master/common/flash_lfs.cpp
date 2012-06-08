@@ -9,7 +9,7 @@
 #include "crc.h"
 
 FlashLFS FlashLFSCache::instances[SIZE];
-unsigned FlashLFSCache::lastUsed = 0;
+uint8_t FlashLFSCache::lastUsed = 0;
 
 
 uint8_t LFS::computeCheckByte(uint8_t a, uint8_t b)
