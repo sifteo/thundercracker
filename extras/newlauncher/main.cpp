@@ -12,6 +12,7 @@
 #include "assets.gen.h"
 using namespace Sifteo;
 
+#define BROKENORDINAL
 
 #define NUM_CUBES 3
 #define MAX_GAMES 24
@@ -169,6 +170,9 @@ void main()
 
         auto metacon = map.metadata<_SYSMetadataImage>(_SYS_METADATA_ICON_96x96);
         if (metacon) {
+#ifdef BROKENORDINAL
+            gItems[i].icon = &NoIcon;
+#else
             AssetImage icon;
             map.writeAssetImage(metacon, icon);
 
@@ -181,6 +185,7 @@ void main()
             icons[i].setCube(vid[0].cube());
             icons[i].image(vec(0,0), icon);
             gItems[i].icon = (AssetImage *)&icons[i];
+#endif
         } else {
             gItems[i].icon = &NoIcon;
         }
