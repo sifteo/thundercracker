@@ -32,6 +32,8 @@ private:
     static void demangle(std::string &name);
     std::string readString(const Elf::SectionHeader *SI, uint32_t offset) const;
     const Elf::SectionHeader *findSection(const std::string &name) const;
+
+    bool copyProgramBytes(FlashMapSpan::ByteOffset byteOffset, uint8_t *dest, uint32_t length) const;
 };
 
 #endif // ELF_DEBUG_INFO_H

@@ -6,7 +6,6 @@
 #include "flash_blockcache.h"
 #include "svmdebugpipe.h"
 #include "svmmemory.h"
-#include "mc_timing.h"
 #include "system.h"
 #include "system_mc.h"
 #include <vector>
@@ -40,8 +39,6 @@ void FlashBlock::countBlockMiss(uint32_t blockAddr)
     unsigned blockNumber = blockAddr / BLOCK_SIZE;
     ASSERT(blockNumber < arraysize(stats.periodic.blockMissCounts));
     stats.periodic.blockMissCounts[blockNumber]++;
-
-    SystemMC::elapseTicks(MCTiming::TICKS_PER_PAGE_MISS);
 }
 
 bool FlashBlock::hotBlockSort(unsigned i, unsigned j) {

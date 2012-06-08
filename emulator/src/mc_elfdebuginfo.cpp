@@ -15,6 +15,22 @@ void ELFDebugInfo::clear()
     sectionMap.clear();
 }
 
+bool ELFDebugInfo::copyProgramBytes(FlashMapSpan::ByteOffset byteOffset,
+    uint8_t *dest, uint32_t length) const
+{
+    /*
+     * Copy data out of the program's ELF, bypassing the cache as well as all
+     * logging and Lua hooks.
+     */
+
+    FlashDevice::setStealthIO(1);
+    bool result = program.getProgramSpan().copyBytesUncached(byteOffset, dest, length);
+    FlashDevice::setStealthIO(-1);
+
+    return result;
+}
+
+
 void ELFDebugInfo::init(const Elf::Program &program)
 {
     /*
@@ -32,7 +48,7 @@ void ELFDebugInfo::init(const Elf::Program &program)
         sections.push_back(Elf::SectionHeader());
         Elf::SectionHeader *pHdr = &sections.back();
         FlashMapSpan::ByteOffset off = header->e_shoff + i * header->e_shentsize;
-        if (!program.getProgramSpan().copyBytesUncached(off, (uint8_t*)pHdr, sizeof *pHdr))
+        if (!copyProgramBytes(off, (uint8_t*)pHdr, sizeof *pHdr))
             memset(pHdr, 0xFF, sizeof *pHdr);
     }
 
@@ -59,7 +75,7 @@ std::string ELFDebugInfo::readString(const Elf::SectionHeader *SI, uint32_t offs
 {
     static char buf[1024];
     uint32_t size = std::min<uint32_t>(sizeof buf - 1, SI->sh_size - offset);
-    if (!program.getProgramSpan().copyBytesUncached(SI->sh_offset + offset, (uint8_t*)buf, size))
+    if (!copyProgramBytes(SI->sh_offset + offset, (uint8_t*)buf, size))
         size = 0;
     buf[size] = '\0';
     return buf;
@@ -94,7 +110,7 @@ bool ELFDebugInfo::findNearestSymbol(uint32_t address,
             uint32_t tableOffset = index * sizeof currentSym;
 
             if (tableOffset + sizeof currentSym > SI->sh_size ||
-                !program.getProgramSpan().copyBytesUncached(
+                !copyProgramBytes(
                     SI->sh_offset + tableOffset,
                     (uint8_t*) &currentSym, sizeof currentSym))
                 break;
@@ -178,7 +194,7 @@ bool ELFDebugInfo::readROM(uint32_t address, uint8_t *buffer, uint32_t bytes) co
             continue;
 
         // Success, we can read from the ELF
-        return program.getProgramSpan().copyBytesUncached(offset, buffer, bytes);
+        return copyProgramBytes(offset, buffer, bytes);
     }
 
     return false;
