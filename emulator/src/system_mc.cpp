@@ -44,7 +44,7 @@ bool SystemMC::init(System *sys)
     instance = this;
 
     if (!sys->opt_waveoutFilename.empty() &&
-        !waveOut.open(sys->opt_waveoutFilename.c_str(), 16000)) {
+        !waveOut.open(sys->opt_waveoutFilename.c_str(), AudioMixer::SAMPLE_HZ)) {
         LOG(("AUDIO: Can't open waveout file '%s'\n",
             sys->opt_waveoutFilename.c_str()));
     }
@@ -54,12 +54,10 @@ bool SystemMC::init(System *sys)
     USBProtocolHandler::init();
 
     if (!instance->sys->opt_headless) {
-        AudioOutDevice::init(AudioOutDevice::kHz16000, &AudioMixer::instance);
+        AudioOutDevice::init(&AudioMixer::instance);
         AudioOutDevice::start();
     } else {
-        // Stub audio device
-	AudioMixer::instance.setSampleRate(16000);
-        Tasks::setPending(Tasks::AudioPull, NULL);
+        AudioOutDevice::initStub();
     }
 
     return true;
@@ -387,7 +385,7 @@ unsigned SystemMC::suggestAudioSamplesToMix()
      */
 
     if (instance->waveOut.isOpen()) {
-        unsigned currentSample = SysTime::ticks() / SysTime::hzTicks(16000);
+        unsigned currentSample = SysTime::ticks() / SysTime::hzTicks(AudioMixer::SAMPLE_HZ);
         unsigned prevSamples = instance->waveOut.getSampleCount();
         if (currentSample > prevSamples)
             return currentSample - prevSamples;

@@ -16,23 +16,21 @@
 static GPIOPin tim4TestPin(&GPIOC, 4);
 #endif
 
-void DacAudioOut::init(AudioOutDevice::SampleRate samplerate, AudioMixer *mixer, GPIOPin &output)
+void DacAudioOut::init(AudioMixer *mixer, GPIOPin &output)
 {
 #ifdef SAMPLE_RATE_GPIO
     tim4TestPin.setControl(GPIOPin::OUT_50MHZ);
 #endif
     this->mixer = mixer;
     buf.init();
+
     // from datasheet: "once the DAC channel is aneabled, the corresponding gpio
     // is automatically connected to the analog converter output. to avoid
     // parasitic consumption, the pin should be configured to analog in"
     output.setControl(GPIOPin::IN_ANALOG);
 
-    switch (samplerate) {
-    case AudioOutDevice::kHz8000:  sampleTimer.init(2200, 0); break;
-    case AudioOutDevice::kHz16000: sampleTimer.init(2200, 0); break;
-    case AudioOutDevice::kHz32000: sampleTimer.init(550, 0); break;
-    }
+    STATIC_ASSERT(AudioMixer::SAMPLE_HZ == 16000);
+    sampleTimer.init(2200, 0);
 
     Dac::init();
     Dac::configureChannel(dacChan); //, Waveform waveform = WaveNone, uint8_t mask_amp = 0, Trigger trig = TrigNone, BufferMode buffmode = BufferEnabled);

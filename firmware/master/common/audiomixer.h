@@ -15,6 +15,9 @@
 class AudioMixer
 {
 public:
+    // Global sample rate for mixing and audio output
+    static const unsigned SAMPLE_HZ = 16000;
+
     AudioMixer();
 
     void init();
@@ -47,14 +50,6 @@ public:
 
     static void pullAudio(void *p);
 
-    void setSampleRate(uint32_t samplerate) {
-        curSampleRate = samplerate;
-    }
-
-    uint32_t sampleRate() {
-        return curSampleRate;
-    }
-
     unsigned channelID(AudioChannelSlot *slot) {
         return slot - &channelSlots[0];
     }
@@ -66,7 +61,6 @@ protected:
 private:
     uint32_t playingChannelMask;    // channels that are actively playing
     AudioChannelSlot channelSlots[_SYS_AUDIO_MAX_CHANNELS];
-    uint32_t curSampleRate;
 
     // Tracker callback timer
     uint32_t trackerCallbackInterval;

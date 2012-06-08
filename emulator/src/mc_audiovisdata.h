@@ -12,13 +12,14 @@
 
 #include <sifteo/abi.h>
 #include "macros.h"
+#include "audiomixer.h"
 
 
 class MCAudioVisScope
 {
 public:
     // Size of scope buffer; also determines duration of each horizontal sweep.
-    static const unsigned NUM_SAMPLES = 16000 / 440 * 10;
+    static const unsigned NUM_SAMPLES = AudioMixer::SAMPLE_HZ / 440 * 10;
 
     // Size of array; holds two logical buffers
     static const unsigned ARRAY_SIZE = NUM_SAMPLES * 2;

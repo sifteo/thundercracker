@@ -15,7 +15,7 @@ class PortAudioOutDevice
 {
 public:
     PortAudioOutDevice();
-    void init(AudioOutDevice::SampleRate samplerate, AudioMixer *mixer);
+    void init(AudioMixer *mixer);
     void start();
     void stop();
 

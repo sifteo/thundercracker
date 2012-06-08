@@ -53,21 +53,17 @@ IRQ_HANDLER ISR_TIM4()
     audioOutBackend.tmrIsr();
 }
 
-AudioMixer *AudioOutDevice::mixer;
-
-void AudioOutDevice::init(SampleRate samplerate, AudioMixer *pMixer)
+void AudioOutDevice::init(AudioMixer *mixer)
 {
-    mixer = pMixer;
-    mixer->setSampleRate(sampleRate(samplerate));
 #if AUDIOOUT_BACKEND == PWM_BACKEND
 
     AFIO.MAPR |= (1 << 6);          // TIM1 partial remap for complementary channels
-    pwmAudioOut.init(samplerate, mixer);
+    pwmAudioOut.init(mixer);
 
 #elif AUDIOOUT_BACKEND == DAC_BACKEND
 
     GPIOPin dacOut = AUDIO_DAC_GPIO;
-    dacAudioOut.init(samplerate, mixer, dacOut);
+    dacAudioOut.init(mixer, dacOut);
 
     // XXX: Amplifier always on
     GPIOPin ampEnable(&GPIOA, 6);
@@ -85,18 +81,6 @@ void AudioOutDevice::start()
 void AudioOutDevice::stop()
 {
     audioOutBackend.stop();
-}
-
-bool AudioOutDevice::isBusy()
-{
-    return false; //audioOutBackend.isBusy();
-}
-
-void AudioOutDevice::setSampleRate(SampleRate samplerate)
-{
-    // TODO: implement?
-    (void)samplerate;
-    // mixer->setSampleRate(sampleRate(samplerate));
 }
 
 void AudioOutDevice::suspend()

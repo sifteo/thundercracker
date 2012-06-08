@@ -21,14 +21,10 @@ public:
         dacChan(dacChannel),
         sampleTimer(_sampleTimer)
     {}
-    void init(AudioOutDevice::SampleRate samplerate, AudioMixer *mixer, GPIOPin &output);
+    void init(AudioMixer *mixer, GPIOPin &output);
 
     void start();
     void stop();
-
-    bool isBusy() const;
-
-    void setSampleRate(AudioOutDevice::SampleRate samplerate);
 
     void suspend();
     void resume();

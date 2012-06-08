@@ -21,7 +21,7 @@ void AudioChannelSlot::init()
 
 void AudioChannelSlot::setSpeed(uint32_t sampleRate)
 {
-    increment = (sampleRate << SAMPLE_FRAC_SIZE) / AudioMixer::instance.sampleRate();
+    increment = (sampleRate << SAMPLE_FRAC_SIZE) / AudioMixer::SAMPLE_HZ;
 }
 
 void AudioChannelSlot::play(const struct _SYSAudioModule *module, _SYSAudioLoopType loopMode)

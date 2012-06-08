@@ -103,7 +103,7 @@ int main()
     HomeButton::init();
 
     Volume::init();
-    AudioOutDevice::init(AudioOutDevice::kHz16000, &AudioMixer::instance);
+    AudioOutDevice::init(&AudioMixer::instance);
     AudioOutDevice::start();
 
     UsbDevice::init();

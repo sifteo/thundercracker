@@ -16,25 +16,25 @@
 static GPIOPin tim4TestPin(&GPIOC, 4);
 #endif
 
-void PwmAudioOut::init(AudioOutDevice::SampleRate samplerate, AudioMixer *mixer)
+
+void PwmAudioOut::init(AudioMixer *mixer)
 {
 #ifdef SAMPLE_RATE_GPIO
     tim4TestPin.setControl(GPIOPin::OUT_50MHZ);
 #endif
+
     this->mixer = mixer;
     buf.init();
 
-    switch (samplerate) {
-    case AudioOutDevice::kHz8000: sampleTimer.init(2200, 0); break;
-    case AudioOutDevice::kHz16000: sampleTimer.init(2200, 0); break;
-    case AudioOutDevice::kHz32000: sampleTimer.init(550, 0); break;
-    }
+    STATIC_ASSERT(AudioMixer::SAMPLE_HZ == 16000);
+    sampleTimer.init(2200, 0);
 
     pwmTimer.init(PWM_FREQ, 0);
     pwmTimer.configureChannelAsOutput(pwmChan,
                                         HwTimer::ActiveHigh,
                                         HwTimer::Pwm1,
                                         HwTimer::ComplementaryOutput);
+
     // must default to non-differential state to avoid direct shorting
     suspend();
 }

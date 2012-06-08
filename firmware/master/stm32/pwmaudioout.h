@@ -23,14 +23,11 @@ public:
         outA(a),
         outB(b)
     {}
-    void init(AudioOutDevice::SampleRate samplerate, AudioMixer *mixer);
+
+    void init(AudioMixer *mixer);
 
     void start();
     void stop();
-
-    bool isBusy() const;
-
-    void setSampleRate(AudioOutDevice::SampleRate samplerate);
 
     void suspend();
     void resume();

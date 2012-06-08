@@ -10,54 +10,33 @@
 
 /*
  * Host side implementation of AudioOutDevice - just forward calls to the
- * appropriate hw specific device. This sucks at the moment, since
- * we're paying for function call overhead, according to the map file - even at O2.
- *
- * There's probably a better way to organize this, but this at least
- * allows us to keep the same audiooutdevice.h between the cube and the
- * simulator.
+ * appropriate hw specific device.
  */
 
-static PortAudioOutDevice portaudio;
+static PortAudioOutDevice gPortAudio;
 
-AudioMixer *AudioOutDevice::mixer;
 
-void AudioOutDevice::init(SampleRate samplerate, AudioMixer *pMixer)
+void AudioOutDevice::init(AudioMixer *mixer)
 {
-	mixer = pMixer;
-	mixer->setSampleRate(sampleRate(samplerate));
-
-    ASSERT(Pa_Initialize() == paNoError);
-    portaudio.init(samplerate, mixer);
+    gPortAudio.init(mixer);
 }
 
 void AudioOutDevice::start()
 {
-    portaudio.start();
+    gPortAudio.start();
 }
 
 void AudioOutDevice::stop()
 {
-    portaudio.stop();
-}
-
-bool AudioOutDevice::isBusy()
-{
-    return false;
-}
-
-void AudioOutDevice::setSampleRate(SampleRate samplerate)
-{
-    (void)samplerate;
-    // mixer->setSampleRate(sampleRate(samplerate));
+    gPortAudio.stop();
 }
 
 void AudioOutDevice::suspend()
 {
-
+    // Nothing to do yet
 }
 
 void AudioOutDevice::resume()
 {
-
+    // Nothing to do yet
 }

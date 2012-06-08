@@ -82,9 +82,11 @@ int PortAudioOutDevice::portAudioCallback(const void *inputBuffer, void *outputB
     return paContinue;
 }
 
-void PortAudioOutDevice::init(AudioOutDevice::SampleRate samplerate, AudioMixer *mixer)
+void PortAudioOutDevice::init(AudioMixer *mixer)
 {
     this->mixer = mixer;
+
+    ASSERT(Pa_Initialize() == paNoError);
 
     PaDeviceIndex outDeviceIndex = Pa_GetDefaultOutputDevice();
     if (outDeviceIndex == paNoDevice) {
@@ -108,17 +110,10 @@ void PortAudioOutDevice::init(AudioOutDevice::SampleRate samplerate, AudioMixer 
 
     buf.init();
 
-    int rate = 0;
-    switch (samplerate) {
-    case AudioOutDevice::kHz8000: rate = 8000; break;
-    case AudioOutDevice::kHz16000: rate = 16000; break;
-    case AudioOutDevice::kHz32000: rate = 32000; break;
-    }
-
     PaError err = Pa_OpenStream(&outStream,
                                 NULL,                           //inputParameters,
                                 &outParams,
-                                rate * kUpsampleFactor,
+                                AudioMixer::SAMPLE_HZ * kUpsampleFactor,
                                 paFramesPerBufferUnspecified,
                                 paClipOff | paDitherOff,        // turn off additional processing
                                 PortAudioOutDevice::portAudioCallback,
@@ -163,6 +158,8 @@ int16_t PortAudioOutDevice::upsampleFilter(int16_t sample)
      *
      * Designed with http://www-users.cs.york.ac.uk/~fisher/mkfilter
      */
+
+    STATIC_ASSERT(kUpsampleFactor == 3);
 
     const double kInvGain = 0.9 / 3.053118488;
 
