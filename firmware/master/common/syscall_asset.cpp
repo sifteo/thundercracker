@@ -14,6 +14,8 @@
 #include "cube.h"
 #include "cubeslots.h"
 #include "svmruntime.h"
+#include "flash_syslfs.h"
+
 
 extern "C" {
 
