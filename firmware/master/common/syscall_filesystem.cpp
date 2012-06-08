@@ -26,6 +26,10 @@ extern "C" {
 
 uint32_t _SYS_fs_listVolumes(unsigned volType, _SYSVolumeHandle *results, uint32_t maxResults)
 {
+    if (!isAligned(results)) {
+        SvmRuntime::fault(F_SYSCALL_ADDR_ALIGN);
+        return 0;
+    }
     if (!SvmMemory::mapRAM(results, mulsat16x16(sizeof *results, maxResults))) {
         SvmRuntime::fault(F_SYSCALL_ADDRESS);
         return 0;
@@ -71,6 +75,11 @@ void *_SYS_elf_metadata(_SYSVolumeHandle volHandle, unsigned key, unsigned minSi
      * a call to _SYS_elf_map() on this volume.
      */
 
+    if (!isAligned(actualSize)) {
+        SvmRuntime::fault(F_SYSCALL_ADDR_ALIGN);
+        return 0;
+    }
+
     FlashVolume vol(volHandle);
     if (!vol.isValid()) {
         SvmRuntime::fault(F_BAD_VOLUME_HANDLE);
@@ -89,7 +98,7 @@ void *_SYS_elf_metadata(_SYSVolumeHandle volHandle, unsigned key, unsigned minSi
     uint32_t o = program.getMetaSpanOffset(tempRef, key, minSize, localActualSize);
 
     if (SvmMemory::mapRAM(actualSize))
-            *actualSize = localActualSize;
+        *actualSize = localActualSize;
 
     return o ? reinterpret_cast<void*>(o + SvmMemory::SEGMENT_1_VA) : 0;
 }
@@ -151,7 +160,10 @@ int32_t _SYS_fs_objectRead(unsigned key, uint8_t *buffer,
         SvmRuntime::fault(F_SYSCALL_PARAM);
         return _SYS_EINVAL;
     }
-
+    if (!isAligned(buffer)) {
+        SvmRuntime::fault(F_SYSCALL_ADDR_ALIGN);
+        return _SYS_EFAULT;
+    }
     if (!SvmMemory::mapRAM(buffer, bufferSize)) {
         SvmRuntime::fault(F_SYSCALL_ADDRESS);
         return _SYS_EFAULT;
@@ -204,6 +216,11 @@ int32_t _SYS_fs_objectWrite(unsigned key, const uint8_t *data, unsigned dataSize
     SvmMemory::VirtAddr va = reinterpret_cast<SvmMemory::VirtAddr>(data);
     FlashBlockRef ref;
     uint32_t crc;
+
+    if (!isAligned(data)) {
+        SvmRuntime::fault(F_SYSCALL_ADDR_ALIGN);
+        return _SYS_EFAULT;
+    }
     if (!SvmMemory::crcROData(ref, va, dataSize, crc, FlashLFSIndexRecord::SIZE_UNIT)) {
         SvmRuntime::fault(F_SYSCALL_ADDRESS);
         return _SYS_EFAULT;

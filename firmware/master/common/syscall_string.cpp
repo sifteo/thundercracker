@@ -42,13 +42,21 @@ void _SYS_memcpy16(uint16_t *dest, const uint16_t *src, uint32_t count)
 {
     // Currently implemented in terms of memcpy8. We may provide a
     // separate optimized implementation of this syscall in the future.   
+
+    if (!isAligned(dest, 2) || !isAligned(src, 2))
+        return SvmRuntime::fault(F_SYSCALL_ADDR_ALIGN);
+
     _SYS_memcpy8((uint8_t*) dest, (const uint8_t*) src, mulsat16x16(sizeof *dest, count));
 }
 
 void _SYS_memcpy32(uint32_t *dest, const uint32_t *src, uint32_t count)
 {
     // Currently implemented in terms of memcpy8. We may provide a
-    // separate optimized implementation of this syscall in the future.   
+    // separate optimized implementation of this syscall in the future.
+
+    if (!isAligned(dest) || !isAligned(src))
+        return SvmRuntime::fault(F_SYSCALL_ADDR_ALIGN);
+
     _SYS_memcpy8((uint8_t*) dest, (const uint8_t*) src, mulsat16x16(sizeof *dest, count));
 }
 

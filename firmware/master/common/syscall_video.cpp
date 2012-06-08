@@ -16,6 +16,9 @@ extern "C" {
 
 void _SYS_vbuf_init(_SYSVideoBuffer *vbuf)
 {
+    if (!isAligned(vbuf))
+        return SvmRuntime::fault(F_SYSCALL_ADDR_ALIGN);
+
     if (!SvmMemory::mapRAM(vbuf)) {
         SvmRuntime::fault(F_SYSCALL_ADDRESS);
         return;
@@ -26,6 +29,9 @@ void _SYS_vbuf_init(_SYSVideoBuffer *vbuf)
 
 void _SYS_vbuf_lock(_SYSVideoBuffer *vbuf, uint16_t addr)
 {
+    if (!isAligned(vbuf))
+        return SvmRuntime::fault(F_SYSCALL_ADDR_ALIGN);
+
     if (!SvmMemory::mapRAM(vbuf)) {
         SvmRuntime::fault(F_SYSCALL_ADDRESS);
         return;
@@ -37,6 +43,9 @@ void _SYS_vbuf_lock(_SYSVideoBuffer *vbuf, uint16_t addr)
 
 void _SYS_vbuf_unlock(_SYSVideoBuffer *vbuf)
 {
+    if (!isAligned(vbuf))
+        return SvmRuntime::fault(F_SYSCALL_ADDR_ALIGN);
+
     if (!SvmMemory::mapRAM(vbuf)) {
         SvmRuntime::fault(F_SYSCALL_ADDRESS);
         return;
@@ -47,6 +56,9 @@ void _SYS_vbuf_unlock(_SYSVideoBuffer *vbuf)
 
 void _SYS_vbuf_poke(_SYSVideoBuffer *vbuf, uint16_t addr, uint16_t word)
 {
+    if (!isAligned(vbuf))
+        return SvmRuntime::fault(F_SYSCALL_ADDR_ALIGN);
+
     if (!SvmMemory::mapRAM(vbuf)) {
         SvmRuntime::fault(F_SYSCALL_ADDRESS);
         return;
@@ -58,6 +70,9 @@ void _SYS_vbuf_poke(_SYSVideoBuffer *vbuf, uint16_t addr, uint16_t word)
 
 void _SYS_vbuf_pokeb(_SYSVideoBuffer *vbuf, uint16_t addr, uint8_t byte)
 {
+    if (!isAligned(vbuf))
+        return SvmRuntime::fault(F_SYSCALL_ADDR_ALIGN);
+
     if (!SvmMemory::mapRAM(vbuf)) {
         SvmRuntime::fault(F_SYSCALL_ADDRESS);
         return;
@@ -69,6 +84,9 @@ void _SYS_vbuf_pokeb(_SYSVideoBuffer *vbuf, uint16_t addr, uint8_t byte)
 
 void _SYS_vbuf_xorb(_SYSVideoBuffer *vbuf, uint16_t addr, uint8_t byte)
 {
+    if (!isAligned(vbuf))
+        return SvmRuntime::fault(F_SYSCALL_ADDR_ALIGN);
+
     if (!SvmMemory::mapRAM(vbuf)) {
         SvmRuntime::fault(F_SYSCALL_ADDRESS);
         return;
@@ -80,6 +98,11 @@ void _SYS_vbuf_xorb(_SYSVideoBuffer *vbuf, uint16_t addr, uint8_t byte)
 
 uint32_t _SYS_vbuf_peek(const _SYSVideoBuffer *vbuf, uint16_t addr)
 {
+    if (!isAligned(vbuf)) {
+        SvmRuntime::fault(F_SYSCALL_ADDR_ALIGN);
+        return 0;
+    }
+
     if (!SvmMemory::mapRAM(vbuf)) {
         SvmRuntime::fault(F_SYSCALL_ADDRESS);
         return 0;
@@ -91,6 +114,11 @@ uint32_t _SYS_vbuf_peek(const _SYSVideoBuffer *vbuf, uint16_t addr)
 
 uint32_t _SYS_vbuf_peekb(const _SYSVideoBuffer *vbuf, uint16_t addr)
 {
+    if (!isAligned(vbuf)) {
+        SvmRuntime::fault(F_SYSCALL_ADDR_ALIGN);
+        return 0;
+    }
+
     if (!SvmMemory::mapRAM(vbuf)) {
         SvmRuntime::fault(F_SYSCALL_ADDRESS);
         return 0;
@@ -103,6 +131,9 @@ uint32_t _SYS_vbuf_peekb(const _SYSVideoBuffer *vbuf, uint16_t addr)
 void _SYS_vbuf_fill(struct _SYSVideoBuffer *vbuf, uint16_t addr,
                     uint16_t word, uint16_t count)
 {
+    if (!isAligned(vbuf))
+        return SvmRuntime::fault(F_SYSCALL_ADDR_ALIGN);
+
     if (!SvmMemory::mapRAM(vbuf)) {
         SvmRuntime::fault(F_SYSCALL_ADDRESS);
         return;
@@ -118,6 +149,9 @@ void _SYS_vbuf_fill(struct _SYSVideoBuffer *vbuf, uint16_t addr,
 
 void _SYS_vbuf_write(struct _SYSVideoBuffer *vbuf, uint16_t addr, const uint16_t *src, uint16_t count)
 {
+    if (!isAligned(vbuf) || !isAligned(src, 2))
+        return SvmRuntime::fault(F_SYSCALL_ADDR_ALIGN);
+
     if (!SvmMemory::mapRAM(vbuf)) {
         SvmRuntime::fault(F_SYSCALL_ADDRESS);
         return;
@@ -152,6 +186,9 @@ void _SYS_vbuf_write(struct _SYSVideoBuffer *vbuf, uint16_t addr, const uint16_t
 void _SYS_vbuf_writei(struct _SYSVideoBuffer *vbuf, uint16_t addr, const uint16_t *src,
                       uint16_t offset, uint16_t count)
 {
+    if (!isAligned(vbuf) || !isAligned(src, 2))
+        return SvmRuntime::fault(F_SYSCALL_ADDR_ALIGN);
+
     if (!SvmMemory::mapRAM(vbuf)) {
         SvmRuntime::fault(F_SYSCALL_ADDRESS);
         return;
@@ -189,6 +226,9 @@ void _SYS_vbuf_writei(struct _SYSVideoBuffer *vbuf, uint16_t addr, const uint16_
 
 void _SYS_vbuf_seqi(struct _SYSVideoBuffer *vbuf, uint16_t addr, uint16_t index, uint16_t count)
 {
+    if (!isAligned(vbuf))
+        return SvmRuntime::fault(F_SYSCALL_ADDR_ALIGN);
+
     if (!SvmMemory::mapRAM(vbuf)) {
         SvmRuntime::fault(F_SYSCALL_ADDRESS);
         return;

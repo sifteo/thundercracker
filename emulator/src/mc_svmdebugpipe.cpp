@@ -62,6 +62,7 @@ static const char* faultStr(FaultCode code)
     case F_BAD_ELF_HEADER:      return "Bad ELF binary header";
     case F_BAD_ASSET_IMAGE:     return "Bad AssetImage";
     case F_NO_LAUNCHER:         return "Launcher program not found";
+    case F_SYSCALL_ADDR_ALIGN:  return "Address in system call has insufficient alignment";
     default:                    return "unknown error";
     }
 }

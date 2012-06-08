@@ -18,12 +18,17 @@ extern "C" {
 uint32_t _SYS_audio_play(const struct _SYSAudioModule *mod, _SYSAudioChannelID ch, enum _SYSAudioLoopType loop)
 {
     _SYSAudioModule modCopy;
-    if (SvmMemory::copyROData(modCopy, mod)) {
-        return AudioMixer::instance.play(&modCopy, ch, loop);
+    
+    if (!isAligned(mod)) {
+        SvmRuntime::fault(F_SYSCALL_ADDR_ALIGN);
+        return false;
+    }
+    if (!SvmMemory::copyROData(modCopy, mod)) {
+        SvmRuntime::fault(F_SYSCALL_ADDRESS);
+        return false;
     }
 
-    SvmRuntime::fault(F_SYSCALL_ADDRESS);
-    return false;
+    return AudioMixer::instance.play(&modCopy, ch, loop);
 }
 
 uint32_t _SYS_audio_isPlaying(_SYSAudioChannelID ch)
@@ -68,17 +73,21 @@ uint32_t _SYS_audio_pos(_SYSAudioChannelID ch)
 
 uint32_t _SYS_tracker_play(const struct _SYSXMSong *song)
 {
-    if (song) {
-        _SYSXMSong modCopy;
-        if (SvmMemory::copyROData(modCopy, song)) {
-            return XmTrackerPlayer::instance.play(&modCopy);
-        } else {
-            SvmRuntime::fault(F_SYSCALL_ADDRESS);
-            return false;
-        }
-    } else {
+    if (!song)
         return XmTrackerPlayer::instance.play(0);
+
+    if (!isAligned(song)) {
+        SvmRuntime::fault(F_SYSCALL_ADDR_ALIGN);
+        return false;
     }
+
+    _SYSXMSong modCopy;
+    if (!SvmMemory::copyROData(modCopy, song)) {
+        SvmRuntime::fault(F_SYSCALL_ADDRESS);
+        return false;
+    }
+
+    return XmTrackerPlayer::instance.play(&modCopy);
 }
 
 uint32_t _SYS_tracker_isStopped()

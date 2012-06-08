@@ -16,6 +16,9 @@ extern "C" {
 
 void _SYS_prng_init(struct _SYSPseudoRandomState *state, uint32_t seed)
 {
+    if (!isAligned(state))
+        return SvmRuntime::fault(F_SYSCALL_ADDR_ALIGN);
+
     if (!SvmMemory::mapRAM(state, sizeof *state))
         return SvmRuntime::fault(F_SYSCALL_ADDRESS);
 
@@ -24,6 +27,10 @@ void _SYS_prng_init(struct _SYSPseudoRandomState *state, uint32_t seed)
 
 uint32_t _SYS_prng_value(struct _SYSPseudoRandomState *state)
 {
+    if (!isAligned(state)) {
+        SvmRuntime::fault(F_SYSCALL_ADDR_ALIGN);
+        return 0;
+    }
     if (!SvmMemory::mapRAM(state, sizeof *state)) {
         SvmRuntime::fault(F_SYSCALL_ADDRESS);
         return 0;
@@ -34,6 +41,10 @@ uint32_t _SYS_prng_value(struct _SYSPseudoRandomState *state)
 
 uint32_t _SYS_prng_valueBounded(struct _SYSPseudoRandomState *state, uint32_t limit)
 {
+    if (!isAligned(state)) {
+        SvmRuntime::fault(F_SYSCALL_ADDR_ALIGN);
+        return 0;
+    }
     if (!SvmMemory::mapRAM(state, sizeof *state)) {
         SvmRuntime::fault(F_SYSCALL_ADDRESS);
         return 0;

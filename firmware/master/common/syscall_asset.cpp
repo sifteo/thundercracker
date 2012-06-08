@@ -67,6 +67,14 @@ uint32_t _SYS_asset_loadStart(_SYSAssetLoader *loader, _SYSAssetGroup *group,
 {
     cv = CubeSlots::truncateVector(cv);
 
+    if (!isAligned(loader)) {
+        SvmRuntime::fault(F_SYSCALL_ADDR_ALIGN);
+        return false;
+    }
+    if (!isAligned(group)) {
+        SvmRuntime::fault(F_SYSCALL_ADDR_ALIGN);
+        return false;
+    }
     if (!SvmMemory::mapRAM(loader)) {
         SvmRuntime::fault(F_SYSCALL_ADDRESS);
         return false;
@@ -141,6 +149,15 @@ uint32_t _SYS_asset_loadStart(_SYSAssetLoader *loader, _SYSAssetGroup *group,
 
 void _SYS_asset_loadFinish(_SYSAssetLoader *loader)
 {
+    if (!isAligned(loader)) {
+        SvmRuntime::fault(F_SYSCALL_ADDR_ALIGN);
+        return;
+    }
+    if (!SvmMemory::mapRAM(loader)) {
+        SvmRuntime::fault(F_SYSCALL_ADDRESS);
+        return;
+    }
+
     CubeSlots::assetLoader = NULL;
 }
 
@@ -155,6 +172,10 @@ uint32_t _SYS_asset_findInCache(_SYSAssetGroup *group, _SYSCubeIDVector cv)
 
     cv = CubeSlots::truncateVector(cv);
 
+    if (!isAligned(group)) {
+        SvmRuntime::fault(F_SYSCALL_ADDR_ALIGN);
+        return 0;
+    }
     if (!SvmMemory::mapRAM(group, sizeof *group)) {
         SvmRuntime::fault(F_SYSCALL_ADDRESS);
         return 0;

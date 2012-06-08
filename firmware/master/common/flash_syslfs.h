@@ -24,6 +24,8 @@ namespace SysLFS {
 
     /*
      * Key space
+     *
+     * Keys in the range [0x00, 0x27] are currently unallocated.
      */
 
     const unsigned kCubeBase = 0x28;
@@ -40,6 +42,17 @@ namespace SysLFS {
         STATIC_ASSERT(kEnd <= _SYS_FS_MAX_OBJECT_KEYS);
         return FlashLFSCache::get(FlashMapBlock::invalid());
     }
+
+    /*
+     * Per-cube stored data
+     */
+
+    struct CubeRecord {
+        
+
+
+
+
 
 } // end namespace SysLFS
 
