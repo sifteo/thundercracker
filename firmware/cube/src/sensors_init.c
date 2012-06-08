@@ -230,10 +230,16 @@ void sensors_init()
 
     /*
      * XXX: Build a trivial outgoing neighbor packet based on our trivial cube ID.
+     * Second byte is a complement of the first byte used for error-checking
+     * Second byte is reordered so the last 3 bits are 0s and serve as damping bits
+     *
+     * The format of first byte is: "1 1 1 id[4] id[3] id[2] id[1] id[0]"
+     * The format of second byte is: "/id[4] /id[3] /id[2] /id[1] /id[0] 0 0 0"
+     *
      */
 
     nb_tx_packet[0] = 0xE0 | radio_get_cube_id();
-    nb_tx_packet[1] = ~nb_tx_packet[0];
+    nb_tx_packet[1] = (~nb_tx_packet[0])<<3;
 
     /*
      * Initialize touch detection

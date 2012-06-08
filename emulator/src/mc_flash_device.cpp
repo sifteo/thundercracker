@@ -27,6 +27,17 @@ void FlashDevice::read(uint32_t address, uint8_t *buf, unsigned len)
     LuaFilesystem::onRawRead(address, buf, len);
 }
 
+void FlashDevice::verify(uint32_t address, const uint8_t *buf, unsigned len)
+{
+    FlashStorage::MasterRecord &storage = SystemMC::getSystem()->flash.data->master;
+
+    ASSERT(address <= sizeof storage.bytes &&
+           len <= sizeof storage.bytes &&
+           address + len <= sizeof storage.bytes);
+
+    ASSERT(0 == memcmp(buf, storage.bytes + address, len));
+}
+
 void FlashDevice::write(uint32_t address, const uint8_t *buf, unsigned len)
 {
     FlashStorage::MasterRecord &storage = SystemMC::getSystem()->flash.data->master;

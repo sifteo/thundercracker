@@ -63,7 +63,7 @@
 #define NBR_SQUELCH_ENABLE          // Enable squelching during neighbor RX
 #endif
 
-#define NB_TX_BITS          18      // 1 header, 2 mask, 13 payload, 2 damping
+#define NB_TX_BITS          16      // 1 header, 2 mask, 13 payload
 #define NB_RX_BITS          16      // 1 header, 2 mask, 13 payload
 
 // 2us pulses, 9.75us bit periods, 156us packets

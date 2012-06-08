@@ -3,23 +3,15 @@
  * Copyright <c> 2012 Sifteo, Inc. All rights reserved.
  */
 
+#include "macros.h"
 #include "xmtrackerplayer.h"
 #include "audiomixer.h"
-#include <stdint.h>
-#include <stdlib.h>
 #include "event.h"
+#include <stdlib.h>
 
-// mingw appears to not get this quite right...
-#ifndef UINT16_MAX
-#define UINT16_MAX 0xffff
-#endif
-#ifndef UINT32_MAX
-#define UINT32_MAX 0xffffffff
-#endif
-
-//#define XMTRACKERDEBUG
 #define LGPFX "XmTrackerPlayer: "
 #define ASSERT_BREAK(_x) if (!(_x)) { ASSERT(_x); break; }
+
 XmTrackerPlayer XmTrackerPlayer::instance;
 const uint8_t XmTrackerPlayer::kLinearFrequencies;
 const uint8_t XmTrackerPlayer::kAmigaFrequencies;
