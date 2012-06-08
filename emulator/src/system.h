@@ -15,6 +15,8 @@
 #define _SYSTEM_H
 
 #include <string>
+#include <sifteo/abi.h>
+
 #include "vtime.h"
 #include "cube_hardware.h"
 #include "system_cubes.h"
@@ -29,7 +31,7 @@ class System {
     VirtualTime time;
 
     static const unsigned DEFAULT_CUBES = 3;
-    static const unsigned MAX_CUBES = 32;
+    static const unsigned MAX_CUBES = _SYS_NUM_CUBE_SLOTS;
 
     Cube::Hardware cubes[MAX_CUBES];
     Tracer tracer;
