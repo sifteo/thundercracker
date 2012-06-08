@@ -43,9 +43,6 @@ extern "C" {
 
 /*
  * Basic data types which are valid across the user/system boundary.
- *
- * Data directions are from the userspace's perspective. IN is
- * firmware -> game, OUT is game -> firmware.
  */
 
 #define _SYS_NUM_CUBE_SLOTS     32
