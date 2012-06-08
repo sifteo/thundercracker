@@ -1,7 +1,7 @@
 run: tests.stamp
 
 tests.stamp: $(SDK_DIR)/bin/* *.lua
-	siftulator -e tests.lua
+	siftulator --headless -e tests.lua
 	echo > $@
 
 clean:

@@ -123,10 +123,6 @@ void PortAudioOutDevice::init(AudioOutDevice::SampleRate samplerate, AudioMixer 
                                 paClipOff | paDitherOff,        // turn off additional processing
                                 PortAudioOutDevice::portAudioCallback,
                                 this);
-    // TODO - we may want to specify the frames per buffer above...right now,
-    // the host system is high enough latency that we need to provide larger
-    // audio buffers when running on the host as opposed to the master HW.
-    // Perhaps this would be a way to mitigate that.
 
     if (err != paNoError) {
         LOG(("AUDIO: Couldn't open stream :(\n"));

@@ -53,9 +53,12 @@ bool SystemMC::init(System *sys)
     FlashBlock::init();
     USBProtocolHandler::init();
 
-    AudioOutDevice::init(AudioOutDevice::kHz16000, &AudioMixer::instance);
-    if (!instance->sys->opt_headless)
+    if (!instance->sys->opt_headless) {
+        AudioOutDevice::init(AudioOutDevice::kHz16000, &AudioMixer::instance);
         AudioOutDevice::start();
+    } else {
+	AudioMixer::instance.setSampleRate(16000);
+    }
 
     return true;
 }
