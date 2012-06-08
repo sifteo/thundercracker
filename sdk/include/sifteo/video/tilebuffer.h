@@ -73,6 +73,7 @@ struct TileBuffer {
      * @brief Return the CubeID associated with this drawable.
      */
     CubeID cube() const {
+        ASSERT(sys.cube != _SYS_CUBE_ID_INVALID);
         return sys.cube;
     }
 
@@ -91,6 +92,29 @@ struct TileBuffer {
 
     /**
      * @brief Initialize the TileBuffer's AssetImage header.
+     */
+    void init() {
+        sys.cube = _SYS_CUBE_ID_INVALID;
+        bzero(sys.image);
+        sys.image.width = tTileWidth;
+        sys.image.height = tTileHeight;
+        sys.image.frames = tFrames;
+        sys.image.format = _SYS_AIF_FLAT;
+        sys.image.pData = reinterpret_cast<uint32_t>(&tiles[0]);
+    }
+
+    /**
+     * @brief Initialize a TileBuffer
+     *
+     * You must call setCube() on this instance before using it, due to the
+     * potentially different memory layout on each individual cube.
+     */
+    TileBuffer() {
+        init();
+    }
+
+    /**
+     * @brief Initialize a TileBuffer for use.
      *
      * You must pass in a CubeID which represents the cube that
      * this buffer will be drawn to. Each cube may have assets
@@ -101,14 +125,9 @@ struct TileBuffer {
      * If you want to initialize the buffer to a known value, call erase().
      */
     TileBuffer(CubeID cube) {
-        sys.cube = cube;
+        init();
 
-        bzero(sys.image);
-        sys.image.width = tTileWidth;
-        sys.image.height = tTileHeight;
-        sys.image.frames = tFrames;
-        sys.image.format = _SYS_AIF_FLAT;
-        sys.image.pData = reinterpret_cast<uint32_t>(&tiles[0]);
+        sys.cube = cube;
     }
 
     /**
@@ -193,6 +212,7 @@ struct TileBuffer {
      * absolute tile index value.
      */
     void erase(uint16_t index = 0) {
+        ASSERT(sys.cube != _SYS_CUBE_ID_INVALID);
         memset16(&tiles[0], index, sizeInWords());
     }
 
@@ -210,6 +230,7 @@ struct TileBuffer {
      * All coordinates must be in range. This function performs no clipping.
      */
     uint16_t tileAddr(UInt2 pos, unsigned frame = 0) {
+        ASSERT(sys.cube != _SYS_CUBE_ID_INVALID);
         return pos.x + (pos.y + frame * tileHeight()) * tileWidth();
     }
 
@@ -220,6 +241,7 @@ struct TileBuffer {
      * All coordinates must be in range. This function performs no clipping.
      */
     void plot(unsigned i, uint16_t tileIndex) {
+        ASSERT(sys.cube != _SYS_CUBE_ID_INVALID);
         ASSERT(i < numTiles());
         tiles[i] = tileIndex;
     }
@@ -231,6 +253,7 @@ struct TileBuffer {
      * All coordinates must be in range. This function performs no clipping.
      */
     void plot(UInt2 pos, uint16_t tileIndex, unsigned frame = 0) {
+        ASSERT(sys.cube != _SYS_CUBE_ID_INVALID);
         ASSERT(pos.x < tileWidth() && pos.y < tileHeight() && frame < numFrames());
         tiles[tileAddr(pos, frame)] = tileIndex;
     }
@@ -239,6 +262,7 @@ struct TileBuffer {
      * @brief Returns the index of the tile at linear position 'i' in the image.
      */
     uint16_t tile(unsigned i) const {
+        ASSERT(sys.cube != _SYS_CUBE_ID_INVALID);
         ASSERT(i < numTiles());
         return tiles[i];
     }
@@ -248,6 +272,7 @@ struct TileBuffer {
      * and optionally on the specified frame number.
      */
     uint16_t tile(Int2 pos, unsigned frame = 0) const {
+        ASSERT(sys.cube != _SYS_CUBE_ID_INVALID);
         ASSERT(pos.x < tileWidth() && pos.y < tileHeight() && frame < numFrames());
         return tiles[tileAddr(pos, frame)];
     }
@@ -260,6 +285,7 @@ struct TileBuffer {
      */
     void span(UInt2 pos, unsigned width, unsigned tileIndex, unsigned frame = 0)
     {
+        ASSERT(sys.cube != _SYS_CUBE_ID_INVALID);
         ASSERT(pos.x <= tileWidth() && width <= tileWidth() &&
             (pos.x + width) <= tileWidth() && pos.y < tileHeight());
         memset16(&tiles[tileAddr(pos, frame)], tileIndex, width);
@@ -312,6 +338,7 @@ struct TileBuffer {
      */
     void image(UInt2 pos, const AssetImage &image, unsigned srcFrame = 0, unsigned destFrame = 0)
     {
+        ASSERT(sys.cube != _SYS_CUBE_ID_INVALID);
         ASSERT(pos.x < tileWidth() && pos.x + image.tileWidth() <= tileWidth() &&
                pos.y < tileHeight() && pos.y + image.tileHeight() <= tileHeight() &&
                destFrame < numFrames());
@@ -330,6 +357,7 @@ struct TileBuffer {
     void image(UInt2 destXY, UInt2 size, const AssetImage &image, UInt2 srcXY,
         unsigned srcFrame = 0, unsigned destFrame = 0)
     {
+        ASSERT(sys.cube != _SYS_CUBE_ID_INVALID);
         ASSERT(destXY.x < tileWidth() && destXY.x + size.x <= tileWidth() &&
                destXY.y < tileHeight() && destXY.y + size.y <= tileHeight() &&
                destFrame < numFrames());
@@ -346,6 +374,7 @@ struct TileBuffer {
     void text(Int2 topLeft, const AssetImage &font, const char *str,
         unsigned destFrame = 0, char firstChar = ' ')
     {
+        ASSERT(sys.cube != _SYS_CUBE_ID_INVALID);
         uint16_t *addr = &tiles[tileAddr(topLeft, destFrame)];
         uint16_t *lineAddr = addr;
         char c;
