@@ -282,7 +282,9 @@ public:
     typedef _SYSMetadataCubeRange CubeRange;
 
     /**
-     * Map a view of the provided Volume, which must contain an ELF binary.
+     * @brief Map a view of the provided Volume
+     *
+     * The volume must contain an ELF binary.
      * No other MappedVolume instances may exist at this time.
      */
     explicit MappedVolume(Volume vol)
@@ -303,7 +305,9 @@ public:
     }
 
     /**
-     * Look up a metadata value from the mapped Volume. On success, returns
+     * @brief Look up a metadata value from the mapped Volume
+     *
+     * On success, returns
      * a pointer to the value, and (if actualSize is not NULL) writes the
      * actual size of the metadata value to *actualSize.
      *
@@ -319,7 +323,7 @@ public:
     }
 
     /**
-     * Look up a metadata value from the mapped Volume. The result is
+     * @brief Look up a metadata value from the mapped Volume. The result is
      * cast to a constant pointer of the indicated type, and we require that
      * the metadata value is at least as large as sizeof(T).
      *
@@ -339,7 +343,7 @@ public:
     }
 
     /**
-     * Translate a virtual address in this ELF volume's read-only data segment,
+     * @brief Translate a virtual address in this ELF volume's read-only data segment,
      * into a virtual address in the mapped view of the same program.
      *
      * This accounts for the difference between the primary and secondary
@@ -352,7 +356,7 @@ public:
     }
 
     /**
-     * A variant of translate() for pointers that have already been
+     * @brief A variant of translate() for pointers that have already been
      * cast to uint32_t, such as pointers that are found in system asset
      * objects.
      */
@@ -361,7 +365,8 @@ public:
     }
 
     /**
-     * Retrieve a mapped, NUL-terminated string with the volume's title.
+     * @brief Retrieve a mapped, NUL-terminated string with the volume's title.
+     *
      * Always returns a valid pointer. If the game has no title, returns
      * a placeholder string.
      */
@@ -371,8 +376,9 @@ public:
     }
 
     /**
-     * Retrieve the volume's UUID. Always returns a valid pointer. If there
-     * is no UUID, returns an all-zero dummy UUID.
+     * @brief Retrieve the volume's UUID.
+     *
+     * Always returns a valid pointer. If there is no UUID, returns an all-zero dummy UUID.
      */
     const UUID *uuid() const {
         const UUID *p = metadata<UUID>(_SYS_METADATA_UUID);
@@ -380,12 +386,34 @@ public:
         return p ? p : &zero;
     }
 
+    /**
+     * @brief Translate a bootstrap asset metadata record to an AssetGroup
+     *
+     * Using this object's memory mapping, convert a _SYSMetadataBootAsset
+     * record into an AssetGroup which can be used to load the corresponding
+     * assets.
+     *
+     * This is only useful for programs which must bootstrap another
+     * program's assets.
+     */
     void writeAssetGroup(const _SYSMetadataBootAsset &meta, AssetGroup &group)
     {
         bzero(group);
         group.sys.pHdr = translate(meta.pHdr);
     }
 
+    /**
+     * @brief Translate an image metadata record to an AssetImage
+     *
+     * Using this object's memory mapping, convert a _SYSMetadataImage
+     * record into an AssetImage which references the image data mapped
+     * in from another volume. The image's AssetGroup data is also
+     * available via this mapping.
+     *
+     * This function can be used to load graphics assets from another game
+     * or other Volume on the system, as long as those assets have been
+     * annotated in their game's metadata.
+     */
     void writeAssetImage(const _SYSMetadataImage *meta, AssetImage &image)
     {
         bzero(image);
