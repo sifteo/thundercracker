@@ -52,6 +52,14 @@
 #define NULL 0
 #endif
 
+#ifndef UINT16_MAX
+#define UINT16_MAX 0xffff
+#endif
+
+#ifndef UINT32_MAX
+#define UINT32_MAX 0xffffffff
+#endif
+
 #ifndef arraysize
 #define arraysize(a)   (sizeof(a) / sizeof((a)[0]))
 #endif

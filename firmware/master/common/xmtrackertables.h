@@ -170,8 +170,8 @@ uint32_t XmTrackerPlayer::getPeriod(uint16_t note, int8_t finetune) const {
         int8_t frac = (finetune % 16);
         // Ensure frac is positive by shifting the position.
         if (frac < 0) {
-        	pos--;
-        	frac += 16;
+            pos--;
+            frac += 16;
         }
 
         // Base table value
