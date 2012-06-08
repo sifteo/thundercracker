@@ -57,7 +57,9 @@ bool SystemMC::init(System *sys)
         AudioOutDevice::init(AudioOutDevice::kHz16000, &AudioMixer::instance);
         AudioOutDevice::start();
     } else {
+        // Stub audio device
 	AudioMixer::instance.setSampleRate(16000);
+        Tasks::setPending(Tasks::AudioPull, NULL);
     }
 
     return true;
