@@ -1,4 +1,4 @@
-APP = launcher
+APP = newlauncher
 
 include $(SDK_DIR)/Makefile.defs
 
