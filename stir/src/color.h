@@ -186,7 +186,7 @@ private:
  * ColorReducer --
  *
  *    Maintains a pool of color values, reduces those values using a
- *    particular maximum particular number of colors, and performs
+ *    particular maximum number of colors, and performs
  *    lookups in this color pool to find the nearest color to any
  *    given value.
  *
