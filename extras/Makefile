@@ -6,7 +6,8 @@ SUBDIRS = \
 	loopy \
 	thrasher \
 	trackycat \
-	lfsmunch
+	lfsmunch \
+	newlauncher
 
 .PHONY: clean subdirs $(SUBDIRS)
 
