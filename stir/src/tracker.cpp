@@ -54,7 +54,36 @@ bool XmTrackerLoader::load(const char *pFilename, Logger &pLog)
  */
 void XmTrackerLoader::deduplicate(std::set<Tracker*> trackers, Logger &log)
 {
-    log.error("dedup goes here");
+    log.taskBegin("Deduplicating samples");
+    unsigned dups = 0, savings = 0;
+    log.taskProgress("%u duplicates found", dups);
+    for (unsigned i = 0; i < globalSampleDatas.size() - 1; i++) {
+        const std::vector<uint8_t> &a = globalSampleDatas[i];
+
+        // We already deduped this sample. Good job.
+        if (!a.size()) continue;
+
+        for (unsigned j = i + 1; j < globalSampleDatas.size(); j++) {
+            std::vector<uint8_t> &b = globalSampleDatas[j];
+            if (a.size() == b.size() && !memcmp(&a[0], &b[0], a.size())) {
+                savings += a.size();
+                log.taskProgress("%u duplicates found (saved %5.02f kiB)", ++dups, savings / 1024.0f);
+
+                // Find the module->instrument using this sample and redirect it from j to i
+                for (std::set<Tracker*>::iterator t = trackers.begin(); t != trackers.end(); t++) {
+                    Tracker *tracker = *t;
+                    for (unsigned k = 0; k < tracker->loader.instruments.size(); k++) {
+                        _SYSXMInstrument &instrument = tracker->loader.instruments[k];
+                        if (instrument.sample.pData == j) instrument.sample.pData = i;
+                    }
+                }
+
+                // Wipe out the sample, but do not remove it from the sample data list.
+                b.clear();
+            }
+        }
+    }
+    log.taskEnd();
 }
 
 /*

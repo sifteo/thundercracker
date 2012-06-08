@@ -394,6 +394,9 @@ public:
         assert(i < loader.song.nInstruments);
         return loader.instruments[i];
     }
+    const size_t numInstruments() const {
+        return loader.song.nInstruments;
+    }
     const std::vector<uint8_t> &getEnvelope(uint8_t i) const {
         assert(i < loader.envelopes.size());
         return loader.envelopes[i];
@@ -418,6 +421,7 @@ public:
 
 private:
     friend class Script;
+    friend class XmTrackerLoader;
     std::string mName;
     std::string mFile;
     XmTrackerLoader loader;

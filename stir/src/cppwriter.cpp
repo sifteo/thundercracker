@@ -367,6 +367,8 @@ void CPPSourceWriter::writeTrackerShared(const Tracker &tracker)
     // Samples:
     for (unsigned i = 0; i < tracker.numSamples(); i++) {
         const std::vector<uint8_t> &buf = tracker.getSample(i);
+        if (!buf.size()) continue;
+        
         mStream << "static const char _Tracker_sample" << i << "_data[] = " <<
                    "// " << buf.size() << " bytes\n";
         writeString(buf);
