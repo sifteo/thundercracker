@@ -46,6 +46,8 @@ extern "C" {
  */
 
 #define _SYS_NUM_CUBE_SLOTS     24
+#define _SYS_NUM_ASSET_SLOTS    8
+
 #define _SYS_CUBE_ID_INVALID    0xFF    // Reserved _SYSCubeID value
 
 typedef uint8_t _SYSCubeID;             // Cube slot index
