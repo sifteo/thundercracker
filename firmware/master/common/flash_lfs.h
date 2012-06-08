@@ -497,14 +497,52 @@ public:
  */
 class FlashLFS
 {
-public:
-    FlashLFS(FlashVolume parent);
+    static const uint32_t INVALID_LSN = -1;
 
+public:
+    FlashLFS()
+        : lastSequenceNumber(INVALID_LSN),
+          parent(FlashMapBlock::invalid())
+    {}
+
+    void init(FlashVolume parent);
     bool newVolume();
+    bool collectGarbage();
+
+    void invalidate() {
+        lastSequenceNumber = INVALID_LSN;
+    }
+
+    bool isMatchFor(FlashVolume keyParent) {
+        return parent.block.code == keyParent.block.code &&
+            lastSequenceNumber != INVALID_LSN;
+    }
 
     uint32_t lastSequenceNumber;
     FlashVolume parent;
     FlashLFSVolumeVector volumes;
+};
+
+
+/**
+ * A global cache for FlashLFS instances, representing filesystems that
+ * we've already discovered. Reusing one of these instances saves us from
+ * having to scan the volume list any time we read or write an object.
+ *
+ * Note that the whole cache needs to be invalidated any time an LFS volume
+ * may have been deleted.
+ */
+class FlashLFSCache
+{
+public:
+    static const unsigned SIZE = 2;
+
+    static FlashLFS &get(FlashVolume parent);
+    static void invalidate();
+
+private:
+    static FlashLFS instances[SIZE];
+    static unsigned lastUsed;
 };
 
 

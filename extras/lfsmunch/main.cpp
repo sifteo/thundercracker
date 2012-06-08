@@ -12,11 +12,27 @@ static Metadata M = Metadata()
 
 void main()
 {
+    SCRIPT(LUA,
+        function Filesystem:onRawRead(addr, data)
+            print(string.format("Read at  %08x, %d bytes", addr, string.len(data)))
+        end
+
+        function Filesystem:onRawWrite(addr, data)
+            print(string.format("Write at %08x, %d bytes", addr, string.len(data)))
+        end
+
+        function Filesystem:onErase(addr)
+            print(string.format("Erase at %08x", addr))
+        end
+
+        Filesystem():setCallbacksEnabled(true)
+    );
+
     uint32_t counter = 0x1234;
     StoredObject store(10);
 
     while (1) {
-        if (!store.read(counter))
+        if (store.read(counter) <= 0)
             counter = 0;
 
         counter++;

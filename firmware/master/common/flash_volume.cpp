@@ -6,6 +6,7 @@
 #include "flash_map.h"
 #include "flash_volume.h"
 #include "flash_volumeheader.h"
+#include "flash_lfs.h"
 #include "crc.h"
 
 
@@ -132,6 +133,9 @@ void FlashVolume::deleteSingle() const
     FlashBlockWriter writer(ref);
     hdr->type = T_DELETED;
     hdr->typeCopy = T_DELETED;
+
+    // Must notify LFS that we deleted a volume
+    FlashLFSCache::invalidate();
 }
 
 void FlashVolume::deleteTree() const

@@ -144,6 +144,19 @@ struct _SYSUUID {
     };
 };
 
+/*
+ * System error codes, returned by some syscalls:
+ *   - _SYS_fs_objectRead
+ *   - _SYS_fs_objectWrite
+ *
+ * Where possible, these numbers line up with standard POSIX errno values.
+ */
+
+#define _SYS_ENOENT     -2      // No such object found
+#define _SYS_EFAULT     -14     // Bad address
+#define _SYS_EINVAL     -22     // Invalid argument
+#define _SYS_ENOSPC     -28     // No space left on device
+
 
 #ifdef __cplusplus
 }  // extern "C"

@@ -140,7 +140,7 @@ int32_t _SYS_fs_objectRead(unsigned key, uint8_t *buffer,
         parentVol = parent;
         if (!parentVol.isValid()) {
             SvmRuntime::fault(F_BAD_VOLUME_HANDLE);
-            return 0;
+            return _SYS_EINVAL;
         }
     } else {
         parentVol = SvmLoader::getRunningVolume();
@@ -149,12 +149,12 @@ int32_t _SYS_fs_objectRead(unsigned key, uint8_t *buffer,
 
     if (!FlashLFSIndexRecord::isKeyAllowed(key)) {
         SvmRuntime::fault(F_SYSCALL_PARAM);
-        return 0;
+        return _SYS_EINVAL;
     }
 
     if (!SvmMemory::mapRAM(buffer, bufferSize)) {
         SvmRuntime::fault(F_SYSCALL_ADDRESS);
-        return 0;
+        return _SYS_EFAULT;
     }
 
     /*
@@ -170,7 +170,7 @@ int32_t _SYS_fs_objectRead(unsigned key, uint8_t *buffer,
      * a CRC failure.
      */
 
-    FlashLFS lfs(parentVol);
+    FlashLFS &lfs = FlashLFSCache::get(parentVol);
     FlashLFSObjectIter iter(lfs);
 
     while (iter.previous(key)) {
@@ -180,7 +180,7 @@ int32_t _SYS_fs_objectRead(unsigned key, uint8_t *buffer,
             return size;
     }
 
-    return 0;
+    return _SYS_ENOENT;
 }
 
 int32_t _SYS_fs_objectWrite(unsigned key, const uint8_t *data, unsigned dataSize)
@@ -192,7 +192,7 @@ int32_t _SYS_fs_objectWrite(unsigned key, const uint8_t *data, unsigned dataSize
     if (!FlashLFSIndexRecord::isKeyAllowed(key) ||
         !FlashLFSIndexRecord::isSizeAllowed(dataSize)) {
         SvmRuntime::fault(F_SYSCALL_PARAM);
-        return 0;
+        return _SYS_EINVAL;
     }
 
     /*
@@ -206,7 +206,7 @@ int32_t _SYS_fs_objectWrite(unsigned key, const uint8_t *data, unsigned dataSize
     uint32_t crc;
     if (!SvmMemory::crcROData(ref, va, dataSize, crc, FlashLFSIndexRecord::SIZE_UNIT)) {
         SvmRuntime::fault(F_SYSCALL_ADDRESS);
-        return 0;
+        return _SYS_EFAULT;
     }
 
     /*
@@ -214,11 +214,15 @@ int32_t _SYS_fs_objectWrite(unsigned key, const uint8_t *data, unsigned dataSize
      * written data to the filesystem which matches our above CRC.
      */
 
-    FlashLFS lfs(parentVol);
+    FlashLFS &lfs = FlashLFSCache::get(parentVol);
     FlashLFSObjectAllocator allocator(lfs, key, dataSize, crc);
 
-    if (!allocator.allocate())
-        return 0;
+    if (!allocator.allocate()) {
+        if (!lfs.collectGarbage())
+            return _SYS_ENOSPC;
+        if (!allocator.allocate())
+            return _SYS_ENOSPC;
+    }
 
     /*
      * Write the actual object data. We effectively do a non-cache-polluting
@@ -240,7 +244,7 @@ int32_t _SYS_fs_objectWrite(unsigned key, const uint8_t *data, unsigned dataSize
             // Shouldn't fail here, we already touched this memory above.
             ASSERT(0);
             SvmRuntime::fault(F_SYSCALL_ADDRESS);
-            return 0;
+            return _SYS_EFAULT;
         }
 
         ASSERT(chunk > 0);

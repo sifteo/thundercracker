@@ -8,6 +8,9 @@
 #include "bits.h"
 #include "crc.h"
 
+FlashLFS FlashLFSCache::instances[SIZE];
+unsigned FlashLFSCache::lastUsed = 0;
+
 
 uint8_t LFS::computeCheckByte(uint8_t a, uint8_t b)
 {
@@ -292,8 +295,7 @@ void FlashLFSVolumeVector::compact()
     numSlotsInUse = writeIdx;
 }
 
-FlashLFS::FlashLFS(FlashVolume parent)
-    : parent(parent)
+void FlashLFS::init(FlashVolume parent)
 {
     /*
      * Locate all of the existing LFS volumes under this parent.
@@ -311,6 +313,8 @@ FlashLFS::FlashLFS(FlashVolume parent)
 
     FlashVolumeIter vi;
     FlashVolume vol;
+
+    this->parent = parent;
 
     // Store sequence numbers on the stack (Parallel to the volumes array)
     uint32_t sequences[FlashLFSVolumeVector::MAX_VOLUMES];
@@ -402,6 +406,33 @@ bool FlashLFS::newVolume()
     volumes.append(vw.volume);
 
     return true;
+}
+
+FlashLFS &FlashLFSCache::get(FlashVolume parent)
+{
+    ASSERT(lastUsed < SIZE);
+
+    for (unsigned i = 0; i < SIZE; ++i) {
+        FlashLFS &lfs = instances[i];
+        if (lfs.isMatchFor(parent)) {
+            lastUsed = i;
+            return lfs;
+        }
+    }
+
+    // Cache miss
+    lastUsed = (lastUsed + 1) % SIZE;
+    FlashLFS &lfs = instances[lastUsed];
+    lfs.init(parent);
+    ASSERT(lfs.isMatchFor(parent));
+    return lfs;
+}
+
+void FlashLFSCache::invalidate()
+{
+    ASSERT(lastUsed < SIZE);
+    for (unsigned i = 0; i < SIZE; ++i)
+        instances[i].invalidate();
 }
 
 FlashLFSObjectAllocator::FlashLFSObjectAllocator(FlashLFS &lfs, unsigned key,
@@ -573,8 +604,10 @@ bool FlashLFSObjectAllocator::allocInVolumeRow(FlashVolume vol,
     newRecord->init(key, size, crc);
 
     // Write to the meta-index's FlashLFSKeyFilter for this row.
-    writer.beginBlock(&*hdrRef);
-    hdr->add(row, key);
+    if (!hdr->test(row, key)) {
+        writer.beginBlock(&*hdrRef);
+        hdr->add(row, key);
+    }
 
     return true;
 }
@@ -667,5 +700,11 @@ bool FlashLFSObjectIter::previous(unsigned key)
     ASSERT(volumeCount == 0);
     rowCount = 0;
     hdr = 0;
+    return false;
+}
+
+bool FlashLFS::collectGarbage()
+{
+    ASSERT(0 && "Not implemented!");
     return false;
 }
