@@ -16,6 +16,9 @@
 #include "tile.h"
 #include "script.h"
 
+#define STRINGIFY(_x)   #_x
+#define TOSTRING(_x)    STRINGIFY(_x)
+
 
 static void usage()
 {
@@ -36,7 +39,8 @@ static void usage()
             "  -o FILE.html  Generate a proofing sheet for your assets, in HTML format\n"
             "  VAR=VALUE     Define a script variable, prior to parsing the script\n"
             "\n"
-            "Copyright <c> 2011 Sifteo, Inc. All rights reserved.\n"
+            "Sifteo SDK (" TOSTRING(SDK_VERSION) ")\n"
+            "Copyright <c> 2011-2012 Sifteo, Inc. All rights reserved.\n"
             "\n");
 }
 

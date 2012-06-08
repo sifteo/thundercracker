@@ -17,6 +17,9 @@ FLAGS += -DNOT_USERSPACE
 include Makefile.objs
 DEPFILES := $(OBJS:.o=.d)
 
+# Versioning
+FLAGS += -DSDK_VERSION=$(shell git describe --tags)
+
 # LLVM
 FLAGS += -D__STDC_LIMIT_MACROS -D__STDC_CONSTANT_MACROS -fno-rtti
 INCLUDES += -I$(LLVM_INC)

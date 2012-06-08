@@ -46,7 +46,7 @@ static void usage()
     message("\n"
             "usage: siftulator [OPTIONS] [GAME.elf ...]\n"
             "\n"
-            "Sifteo Thundercracker simulator\n"
+            "Sifteo Hardware Emulator (" TOSTRING(SDK_VERSION) ")\n"
             "\n"
             "Options:\n"
             "  -h                  Show this help message, and exit\n"

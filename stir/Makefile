@@ -49,6 +49,9 @@ CFLAGS += -DNOT_USERSPACE
 #      seems to be unable to link its own .o files when LTO is enabled...
 FLAGS += -O3 -g
 
+# Versioning
+FLAGS += -DSDK_VERSION=$(shell git describe --tags)
+
 CFLAGS += $(FLAGS) -ffast-math -Werror -Wall $(INCLUDES) -I$(FIRMWARE_INC) -I$(SYS_INC) -MMD
 LDFLAGS += $(FLAGS) -lm -lstdc++
 CCFLAGS := $(CFLAGS)

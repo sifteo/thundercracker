@@ -13,6 +13,9 @@ FIRMWARE_RST := ../firmware/cube/src/*.rst
 # Non-userspace simulator build
 FLAGS += -DNOT_USERSPACE -DSIFTEO_SIMULATOR -D__STDC_FORMAT_MACROS
 
+# Versioning
+FLAGS += -DSDK_VERSION=$(shell git describe --tags)
+
 # Disable unwanted warnings, but be generally pretty pedantic
 WARNFLAGS += -Wall -Werror -Wno-unused -Wno-strict-aliasing -Wno-uninitialized
 

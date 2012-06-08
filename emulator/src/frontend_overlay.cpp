@@ -201,11 +201,11 @@ void FrontendOverlay::drawHelp()
         "While pulling, Right-click or Space to hover, again to rotate.",
         "Shift-drag or Right-drag to tilt a cube.",
         "Mouse wheel resizes the play surface.",
-        "'S' - Screenshot, 'F' - Fullscreen, 'T' - Turbo, 'I' - Inspector, 'V' - Visualze Audio",
-        "'Z' - Zoom, '1' - 1:1 view, '2' - 2x view.",
-        "Backspace toggles rotation lock.",
-        "+/- Adds/removes cubes.",
         "",
+        "(S)creenshot, (F)ullscreen, (T)urbo, (I)nspector, (V)isualze Audio, (Z)oom",
+        "(1):1 view, (2)x view, (Backspace) toggle rotation lock, (+)/(-) Add/remove cube",
+        "",
+        "Sifteo Hardware Emulator (" TOSTRING(SDK_VERSION) ")\n",
         APP_COPYRIGHT_LATIN1,
     };
     
