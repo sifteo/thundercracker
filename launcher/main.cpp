@@ -99,7 +99,7 @@ void bootstrapAssets(MappedVolume &map, unsigned numCubes)
         return;
     }
 
-    SCRIPT(LUA, System():setAssetLoaderBypass(true));
+    SCRIPT(LUA, System():setAssetLoaderBypass(not os.getenv("BOOTSTRAP_SLOWLY")));
 
     for (unsigned i = 0; i < count; i++)
         bootstrapAssetGroup(map, numCubes, vec[i]);
