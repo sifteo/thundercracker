@@ -38,7 +38,7 @@ void graphics_render(void) __naked
         rr      a
         xrl     a, _next_ack            ; Compare _SYS_VF_TOGGLE with bit 0
         rrc     a
-        jnc     3$                      ; Return if no toggle
+        jnc     gd_ret                  ; Return if no toggle
 
         ; Increment frame counter field
 1$:
@@ -66,11 +66,21 @@ void graphics_render(void) __naked
         mov     dptr, #_SYS_VA_MODE
         movx    a, @dptr
         anl     a, #_SYS_VM_MASK
-        mov     dptr, #10$
+        mov     dptr, #gd_table
+    
+        ; Allow other modules to reuse this instruction
+jmp_indirect::
         jmp     @a+dptr
 
-        ; These redundant labels are required by the binary translator!
+        ; Nearby return instruction, used above
+gd_ret:
+        ret
 
+        ; Computed jump table.
+        ; These redundant labels are required by the binary translator!
+        ; It needs a label to identify any point where we might jump to.
+
+gd_table:
 10$:    ljmp    _lcd_sleep      ; 0x00
         nop
 11$:    ljmp    _vm_bg0_rom     ; 0x04
