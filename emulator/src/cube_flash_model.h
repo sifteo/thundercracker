@@ -46,7 +46,7 @@ struct FlashModel {
      * Flash geometry
      */
 
-    static const unsigned SIZE         = 2 * 1024 * 1024;
+    static const unsigned SIZE         = 4 * 1024 * 1024;
     static const unsigned BLOCK_SIZE   = 64 * 1024;
     static const unsigned SECTOR_SIZE  = 4 * 1024;
 

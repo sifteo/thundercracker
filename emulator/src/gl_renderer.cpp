@@ -10,6 +10,7 @@
 #include "gl_renderer.h"
 #include "frontend.h"
 #include "lodepng.h"
+#include "cube_flash_model.h"
 
 
 bool GLRenderer::init()
@@ -956,14 +957,18 @@ void GLRenderer::overlayCubeFlash(unsigned id, int x, int y, int w, int h,
          * Convert linear flash memory into a grid of tile images.
          */
 
-        const unsigned tilesWide = 64;
-        const unsigned tilesHigh = 128;
+        const unsigned tilesWide = 128;
+        const unsigned tilesHigh = 256;
         const unsigned tileSize = 8;
         const unsigned pixelsWide = tilesWide * tileSize;
         const unsigned pixelsHigh = tilesHigh * tileSize;
+        const unsigned pixelCount = pixelsWide * pixelsHigh;
+        const unsigned byteCount = pixelCount * sizeof(uint16_t);
+
+        STATIC_ASSERT(Cube::FlashModel::SIZE == byteCount);
 
         const uint16_t *src = reinterpret_cast<const uint16_t*>(data);
-        static uint16_t dest[pixelsWide * pixelsHigh];
+        static uint16_t dest[pixelCount];
 
         for (unsigned tileY = 0; tileY != tilesHigh; ++tileY)
             for (unsigned tileX = 0; tileX != tilesWide; ++tileX)
