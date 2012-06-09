@@ -92,13 +92,13 @@ namespace SysLFS {
      */
 
     struct AssetGroupSize {
-        // Encoded 8-bit size. Range of [16, 4096], 16-tile granularity.
+        // Encoded 8-bit size. Range of [1, 4096], rounding up to the nearest 16 tiles.
         uint8_t code;
 
         static AssetGroupSize fromTileCount(unsigned tileCount)
         {
             STATIC_ASSERT(TILES_PER_ASSET_SLOT == 4096);
-            ASSERT(tileCount >= 16 && tileCount <= 4096);
+            ASSERT(tileCount >= 1 && tileCount <= 4096);
             AssetGroupSize result = { (tileCount - 1) >> 4 };
             return result;
         }
