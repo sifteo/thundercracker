@@ -45,11 +45,11 @@ extern "C" {
 
 // Bits for 'flags'
 
-#define _SYS_VF_A21             0x01    // Flash A21 bank select
+#define _SYS_VF_RESERVED        0x01    // Reserved, must be zero
 #define _SYS_VF_TOGGLE          0x02    // Toggle bit, to trigger a new frame render
 #define _SYS_VF_SYNC            0x04    // Sync with LCD vertical refresh
 #define _SYS_VF_CONTINUOUS      0x08    // Render continuously, without waiting for toggle
-#define _SYS_VF_RESERVED        0x10
+#define _SYS_VF_A21             0x10    // Flash A21 bank select
 #define _SYS_VF_XY_SWAP         0x20    // Swap X and Y axes during render
 #define _SYS_VF_X_FLIP          0x40    // Flip X axis during render
 #define _SYS_VF_Y_FLIP          0x80    // Flip Y axis during render
