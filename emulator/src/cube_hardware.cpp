@@ -143,11 +143,14 @@ void Hardware::graphicsTick()
     // 7-bit address in high bits of p1
     uint8_t addr7 = addr_port >> 1;
 
+    // Bit A21 comes from the accelerometer's INT2 pin
+    bool a21 = i2c.accel.intPin(1);
+
     // Is the MCU driving any bit of the shared bus?
     uint8_t mcu_data_drv = cpu.mSFR[BUS_PORT_DIR] != 0xFF;
 
     Flash::Pins flashp = {
-        /* addr    */ addr7 | ((uint32_t)lat1 << 7) | ((uint32_t)lat2 << 14),
+        /* addr    */ addr7 | ((uint32_t)lat1 << 7) | ((uint32_t)lat2 << 14) | ((uint32_t)a21 << 21),
         /* power   */ ctrl_port & CTRL_DS_EN,
         /* oe      */ ctrl_port & CTRL_FLASH_OE,
         /* ce      */ 0,

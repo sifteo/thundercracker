@@ -87,6 +87,15 @@ class I2CAccelerometer {
         return result;
     }
 
+    bool intPin(unsigned index)
+    {
+        // No interrupt sources are currently implemented
+        bool source = false;
+        
+        // Both interrupts share the same active-high/active-low control pin
+        return source ^ ((regs.ctrl_reg[5] >> 1) & 1);
+    }
+
  private:
     static const uint8_t deviceAddress = 0x30;
     uint8_t regAddress;
