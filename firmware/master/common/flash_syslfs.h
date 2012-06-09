@@ -43,7 +43,8 @@ namespace SysLFS {
      * compatibility of SysLFS records.
      */
 
-    const unsigned NUM_ASSET_SLOTS = 8;
+    const unsigned ASSET_SLOTS_PER_CUBE = 8;
+    const unsigned ASSET_SLOTS_PER_BANK = 4;
     const unsigned TILES_PER_ASSET_SLOT = 4096;
     const unsigned ASSET_GROUPS_PER_SLOT = 24;
 
@@ -57,29 +58,23 @@ namespace SysLFS {
         kCubeBase       = 0x28,
         kCubeCount      = _SYS_NUM_CUBE_SLOTS,
         kAssetSlotBase  = kCubeBase + kCubeCount,
-        kAssetSlotCount = _SYS_NUM_CUBE_SLOTS * NUM_ASSET_SLOTS,
+        kAssetSlotCount = _SYS_NUM_CUBE_SLOTS * ASSET_SLOTS_PER_CUBE,
         kEnd            = kAssetSlotBase + kAssetSlotCount,
     };
-
-    /*
-     * Accessors
-     */
-
-    inline FlashLFS &get()
-    {
-        STATIC_ASSERT(kEnd <= _SYS_FS_MAX_OBJECT_KEYS);
-        return FlashLFSCache::get(FlashMapBlock::invalid());
-    }
 
     /*
      * Per-cube stored data
      */
 
+    struct AssetSlotIdentity {
+        uint8_t volume;
+        uint8_t ordinal;
+    };
+
     struct AssetSlotOverviewRecord {
         uint32_t eraseCount;
         uint16_t numAllocatedTiles;
-        uint8_t ownerVolume;
-        uint8_t reserved;
+        AssetSlotIdentity identity;
     };
 
     struct CubePairingRecord {
@@ -88,7 +83,7 @@ namespace SysLFS {
     };
 
     struct CubeRecord {
-        AssetSlotOverviewRecord assetSlots[NUM_ASSET_SLOTS];
+        AssetSlotOverviewRecord assetSlots[ASSET_SLOTS_PER_CUBE];
         CubePairingRecord pairing;
     };
 
@@ -126,6 +121,21 @@ namespace SysLFS {
     struct AssetSlotRecord {
         LoadedAssetGroupRecord groups[ASSET_GROUPS_PER_SLOT];
     };
+
+    /*
+     * Accessors
+     */
+
+    inline FlashLFS &get()
+    {
+        STATIC_ASSERT(kEnd <= _SYS_FS_MAX_OBJECT_KEYS);
+        STATIC_ASSERT(sizeof(FlashMapBlock) == 1);
+        STATIC_ASSERT(sizeof(LoadedAssetGroupRecord) == 3);
+        STATIC_ASSERT(sizeof(AssetSlotRecord) == 3 * ASSET_GROUPS_PER_SLOT);
+        STATIC_ASSERT(sizeof(AssetSlotOverviewRecord) == 8);
+
+        return FlashLFSCache::get(FlashMapBlock::invalid());
+    }
 
 } // end namespace SysLFS
 
