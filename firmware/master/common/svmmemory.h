@@ -258,9 +258,9 @@ public:
     static uint32_t virtToFlashAddr(VirtAddr va) {
         STATIC_ASSERT(arraysize(flashSeg) == 2);
         FlashMapSpan::FlashAddr addr;
-        if (flashSeg[0].offsetToFlashAddr(addr - SEGMENT_0_VA, addr))
+        if (flashSeg[0].offsetToFlashAddr(va - SEGMENT_0_VA, addr))
             return addr;
-        if (flashSeg[1].offsetToFlashAddr(addr - SEGMENT_1_VA, addr))
+        if (flashSeg[1].offsetToFlashAddr(va - SEGMENT_1_VA, addr))
             return addr;
         return 0;
     }     
