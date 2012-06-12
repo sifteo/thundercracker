@@ -81,8 +81,11 @@ bool Stm32Flash::erasePage(uint32_t address)
     if (waitForPreviousOperation() != WaitOk)
         return false;
 
+    FLASH.CR |= (1 << 1);   // PER: page erase
     FLASH.AR = address;
     FLASH.CR |= (1 << 6);   // STRT: start the erase operation
+    bool success = (waitForPreviousOperation() == WaitOk);
+    FLASH.CR &= ~(1 << 1);  // PER: disable page erase
 
-    return true;
+    return success;
 }
