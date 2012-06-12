@@ -35,7 +35,6 @@ public:
     void tmrIsr();
 
 private:
-    static const unsigned PWM_FREQ = 500;   // TODO: tune this!
     static const unsigned PWM_FREQ = 2056;   // TODO: tune this!  -- 2056 for 35KHz
 
     HwTimer pwmTimer;
