@@ -167,17 +167,21 @@ bool Bootloader::updaterIsEnabled()
  */
 void Bootloader::disableUpdater()
 {
-    // enable readout protect, retain USER byte, and clear DATA bytes
-    Stm32Flash::OptionByte optionBytes[Stm32Flash::NUM_OPTION_BYTES];
-    memset(optionBytes, 0, sizeof optionBytes);
+    Stm32Flash::eraseOptionBytes();
+    Stm32Flash::setOptionByte(Stm32Flash::OptionDATA0, 0);
+}
 
-    optionBytes[0].program = true;  // RDP is index 0, enable it.
-    optionBytes[0].value = 0;
+/*
+ * If we're loading as a result of a failed CRC check, we must ensure that
+ * the persistent updater bit is set.
+ */
+void Bootloader::ensureUpdaterIsEnabled()
+{
+    if (updaterIsEnabled())
+        return;
 
-    optionBytes[3].program = true;  // DATA0 is index 3, clear it
-    optionBytes[3].value = 0;
-
-    Stm32Flash::setOptionBytes(optionBytes);
+    Stm32Flash::eraseOptionBytes();
+    Stm32Flash::setOptionByte(Stm32Flash::OptionDATA0, 1);
 }
 
 /*

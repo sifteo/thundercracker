@@ -23,6 +23,7 @@ private:
     static void load();
     static bool updaterIsEnabled();
     static void disableUpdater();
+    static void ensureUpdaterIsEnabled();
     static bool eraseMcuFlash();
     static bool mcuFlashIsValid();
     static void jumpToApplication();
