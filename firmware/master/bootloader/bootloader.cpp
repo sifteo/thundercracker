@@ -52,6 +52,8 @@ void Bootloader::load()
         firstLoad = false;
     }
 
+    ensureUpdaterIsEnabled();
+
     if (!eraseMcuFlash())
         return;
 
@@ -137,10 +139,8 @@ bool Bootloader::eraseMcuFlash()
     Stm32Flash::beginErasing();
 
     unsigned a = APPLICATION_ADDRESS;
-    unsigned appFlashPages = Stm32Flash::NUM_PAGES - NUM_FLASH_PAGES;
-    unsigned end = a + (Stm32Flash::PAGE_SIZE * appFlashPages);
 
-    while (a < end) {
+    while (a < Stm32Flash::END_ADDR) {
         if (!Stm32Flash::erasePage(a))
             return false;
         a += Stm32Flash::PAGE_SIZE;
