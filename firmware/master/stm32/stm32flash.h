@@ -7,7 +7,7 @@
 class Stm32Flash
 {
 public:
-    static const uint16_t READOUT_PROTECT_KEY = 0x00A5;
+    static const uint16_t RDP_DISABLE_KEY = 0x00A5;
     static const uint32_t KEY1 = 0x45670123;
     static const uint32_t KEY2 = 0xCDEF89AB;
 
@@ -18,9 +18,14 @@ public:
     static const uint32_t START_ADDR = 0x8000000;
     static const uint32_t END_ADDR = START_ADDR + (NUM_PAGES * PAGE_SIZE);
 
-    static void unlock() {
+    static inline void unlock() {
         FLASH.KEYR = KEY1;
         FLASH.KEYR = KEY2;
+    }
+
+    static inline void unlockOptionBytes() {
+        FLASH.OPTKEYR = KEY1;
+        FLASH.OPTKEYR = KEY2;
     }
 
     /*
@@ -29,13 +34,13 @@ public:
      *  - one or more calls to programHalfWord()
      *  - endProgramming()
      */
-    static void beginProgramming() {
+    static inline void beginProgramming() {
         FLASH.CR |= 0x1;
     }
 
     static bool programHalfWord(uint16_t halfword, uint32_t address);
 
-    static void endProgramming() {
+    static inline void endProgramming() {
         waitForPreviousOperation();
         FLASH.CR &= ~0x1;
     }
@@ -46,13 +51,13 @@ public:
      *  - one or more calls to erasePage()
      *  - endErasing()
      */
-    static void beginErasing() {
+    static inline void beginErasing() {
         FLASH.CR |= (1 << 1);
     }
 
     static bool erasePage(uint32_t address);
 
-    static void endErasing() {
+    static inline void endErasing() {
         waitForPreviousOperation();
         FLASH.CR &= ~(1 << 1);
     }
@@ -61,13 +66,19 @@ public:
         return (FLASH.OBR & (1 << 1)) != 0;
     }
 
-    struct OptionByte {
-        bool program;
-        uint16_t value;
+    enum OptionByte {
+        OptionRDP,
+        OptionUSER,
+        OptionDATA0,
+        OptionDATA1,
+        OptionWRP0,
+        OptionWRP1,
+        OptionWRP2,
+        OptionWRP3,
     };
 
-    static const unsigned NUM_OPTION_BYTES = 8;
-    static bool setOptionBytes(OptionByte *optionBytes);
+    static bool eraseOptionBytes(bool enableRDP = false);
+    static bool setOptionByte(OptionByte ob, uint16_t value);
 
 private:
     enum WaitStatus {

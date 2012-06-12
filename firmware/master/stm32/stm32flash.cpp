@@ -1,17 +1,16 @@
 #include "stm32flash.h"
 
 /*
- * optionByteTable provides a table of { bool, value } entries
- * to program into the option bytes.
+ * Clear out all the option bytes.
+ * Specify RDP while we're at it, since its default state (erased) results
+ * in it being enabled.
  */
-bool Stm32Flash::setOptionBytes(OptionByte *optionBytes)
+bool Stm32Flash::eraseOptionBytes(bool enableRDP)
 {
     if (waitForPreviousOperation() != WaitOk)
         return false;
 
-    // enable information block programming
-    FLASH.OPTKEYR = KEY1;
-    FLASH.OPTKEYR = KEY2;
+    unlockOptionBytes();
 
     // erase option bytes
     FLASH.CR |= (1 << 5);   // OPTER: Option byte erase
@@ -21,21 +20,37 @@ bool Stm32Flash::setOptionBytes(OptionByte *optionBytes)
     if (!success)
         return false;
 
+    // keep readout protect disabled so we can program option bytes
+    FLASH.CR |= (1 << 4);
+    FLASH_OB.RDP = enableRDP ? 0 : RDP_DISABLE_KEY;
+    success = (waitForPreviousOperation() == WaitOk);
+    FLASH.CR &= ~(1 << 4);
+
+    return success;
+}
+
+/*
+ *
+ */
+bool Stm32Flash::setOptionByte(OptionByte ob, uint16_t value)
+{
+    if (waitForPreviousOperation() != WaitOk)
+        return false;
+
+    unlockOptionBytes();
+
     // program option bytes
     FLASH.CR |= (1 << 4);   // OPTPG: Option byte programming
+    uint32_t optionByteAddr = reinterpret_cast<uint32_t>(&FLASH_OB);
+    optionByteAddr += (ob * sizeof(uint16_t));
 
-    uint32_t OB = reinterpret_cast<uint32_t>(&FLASH_OB);
-    for (unsigned i = 0; i < NUM_OPTION_BYTES; ++i) {
-        if (optionBytes->program)
-            programHalfWord(optionBytes->value, OB);
-        optionBytes++;
-        OB += sizeof(uint16_t);
-    }
-
-    waitForPreviousOperation();
+    beginProgramming();
+    programHalfWord(value, optionByteAddr);
+    bool success = (waitForPreviousOperation() == WaitOk);
     FLASH.CR &= ~(1 << 4);  // OPTPG: Option byte programming
+    endProgramming();
 
-    return true;
+    return success;
 }
 
 /*
@@ -47,8 +62,7 @@ bool Stm32Flash::programHalfWord(uint16_t halfword, uint32_t address)
     if (waitForPreviousOperation() != WaitOk)
         return false;
 
-    volatile uint16_t *pData = reinterpret_cast<uint16_t*>(address);
-    *pData = halfword;
+    *reinterpret_cast<volatile uint16_t*>(address) = halfword;
 
     return true;
 }
