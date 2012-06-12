@@ -10,12 +10,14 @@
 #include "audioencoder.h"
 #include <stdlib.h>
 #include <string.h>
-#include <set>
+#include "script.h"
 
 namespace Stir {
 
 // For logger output
 const char * XmTrackerLoader::encodings[3] = {"", "Uncompressed PCM", "IMA 4-bit ADPCM"};
+
+std::vector<std::vector<uint8_t> > XmTrackerLoader::globalSampleDatas;
 
 /*
  * Load and process an entire XM file.
@@ -46,6 +48,42 @@ bool XmTrackerLoader::load(const char *pFilename, Logger &pLog)
     f = 0;
 
     return true;
+}
+
+/*
+ */
+void XmTrackerLoader::deduplicate(std::set<Tracker*> trackers, Logger &log)
+{
+    log.taskBegin("Deduplicating samples");
+    unsigned dups = 0, savings = 0;
+    log.taskProgress("%u duplicates found", dups);
+    for (unsigned i = 0; i < globalSampleDatas.size() - 1; i++) {
+        const std::vector<uint8_t> &a = globalSampleDatas[i];
+
+        // We already deduped this sample. Good job.
+        if (!a.size()) continue;
+
+        for (unsigned j = i + 1; j < globalSampleDatas.size(); j++) {
+            std::vector<uint8_t> &b = globalSampleDatas[j];
+            if (a.size() == b.size() && !memcmp(&a[0], &b[0], a.size())) {
+                savings += a.size();
+                log.taskProgress("%u duplicates found (saved %5.02f kiB)", ++dups, savings / 1024.0f);
+
+                // Find the module->instrument using this sample and redirect it from j to i
+                for (std::set<Tracker*>::iterator t = trackers.begin(); t != trackers.end(); t++) {
+                    Tracker *tracker = *t;
+                    for (unsigned k = 0; k < tracker->loader.instruments.size(); k++) {
+                        _SYSXMInstrument &instrument = tracker->loader.instruments[k];
+                        if (instrument.sample.pData == j) instrument.sample.pData = i;
+                    }
+                }
+
+                // Wipe out the sample, but do not remove it from the sample data list.
+                b.clear();
+            }
+        }
+    }
+    log.taskEnd();
 }
 
 /*
@@ -351,9 +389,9 @@ bool XmTrackerLoader::readSample(_SYSXMInstrument &instrument)
             // if adpcm, read directly into memory and done
             std::vector<uint8_t> sampleData(sample.dataSize);
             getbuf(&sampleData[0], sample.dataSize);
-            sample.pData = sampleDatas.size();
+            sample.pData = globalSampleDatas.size();
             size += sample.dataSize;
-            sampleDatas.push_back(sampleData);
+            globalSampleDatas.push_back(sampleData);
             sample.type = _SYS_ADPCM;
             instrument.compression = 1;
             break;
@@ -418,9 +456,9 @@ bool XmTrackerLoader::readSample(_SYSXMInstrument &instrument)
             std::vector<uint8_t> sampleData(sample.dataSize);
             memcpy(&sampleData[0], buf, sample.dataSize);
             free(buf);
-            sample.pData = sampleDatas.size();
+            sample.pData = globalSampleDatas.size();
             size += sample.dataSize;
-            sampleDatas.push_back(sampleData);
+            globalSampleDatas.push_back(sampleData);
             sample.type = enc->getType();
             break;
         }
@@ -440,7 +478,6 @@ bool XmTrackerLoader::init()
 {
     size = 0;
     instruments.clear();
-    sampleDatas.clear();
 
     patterns.clear();
     patternDatas.clear();

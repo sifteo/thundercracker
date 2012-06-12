@@ -18,6 +18,7 @@
 #include "cppwriter.h"
 #include "audioencoder.h"
 #include "dubencoder.h"
+#include "tracker.h"
 
 namespace Stir {
 
@@ -124,17 +125,39 @@ bool Script::run(const char *filename)
 
     if (!trackers.empty()) {
         log.heading("Tracker");
-        log.infoBegin("Module compression");
+
+        log.infoBegin("Parsing modules");
         for (std::set<Tracker*>::iterator i = trackers.begin(); i != trackers.end(); i++) {
             Tracker *tracker = *i;
 
             if(!tracker->loader.load(tracker->getFile().c_str(), log)) {
                 return false;
             }
+
+            const _SYSXMSong &song = tracker->getSong();
+            unsigned compressedSize = tracker->getSize();
+            unsigned uncompressedSize = tracker->getFileSize();
+            double ratio = uncompressedSize ? 100.0 - compressedSize * 100.0 / uncompressedSize : 0;
+
+            log.infoLineWithLabel(tracker->getName().c_str(), "% 3u patterns,% 3u instruments, %5.02f kiB, % 5.01f%% compression (%s)",
+                                   song.nPatterns,
+                                   song.nInstruments,
+                                   compressedSize / 1024.0f,
+                                   ratio,
+                                   tracker->getFile().c_str());
+        }
+        log.infoEnd();
+
+        XmTrackerLoader::deduplicate(trackers, log);
+
+        source.writeTrackerShared(**trackers.begin());
+        for (std::set<Tracker*>::iterator i = trackers.begin(); i != trackers.end(); i++) {
+            Tracker *tracker = *i;
+
             header.writeTracker(*tracker);
             source.writeTracker(*tracker);
         }
-        log.infoEnd();
+
     }
 
     proof.close();
