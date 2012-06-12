@@ -61,7 +61,11 @@ static const struct {
         1,                                  // bConfigurationValue
         0,                                  // iConfiguration
         0x80,                               // bmAttributes
-        0x32                                // bMaxPower
+#if (BOARD == BOARD_TEST_JIG)
+        0xfa                                // bMaxPower: 500 mA
+#else
+        0x96                                // bMaxPower: 300 mA
+#endif
     },
     // interfaceDescriptor
     {
