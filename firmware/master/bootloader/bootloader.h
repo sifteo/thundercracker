@@ -8,7 +8,7 @@
 class Bootloader
 {
 public:
-    static const uint8_t VERSION = 0;
+    static const uint8_t VERSION = 1;
 
     static const uint32_t SIZE = 0x2000;
     static const uint32_t APPLICATION_ADDRESS = Stm32Flash::START_ADDR + SIZE;

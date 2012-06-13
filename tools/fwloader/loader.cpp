@@ -1,5 +1,4 @@
 #include "loader.h"
-#include "usbdevice.h"
 
 #include <stdio.h>
 #include <errno.h>
@@ -11,18 +10,28 @@ Loader::Loader()
 
 bool Loader::load(const char *path, int vid, int pid)
 {
-    FILE *f = fopen(path, "rb");
-    if (!f) {
-        fprintf(stderr, "could not open %s: %s\n", path, strerror(errno));
-        return false;
-    }
-
-    UsbDevice dev;
     if (!dev.open(vid, pid)) {
         fprintf(stderr, "device is not attached\n");
         return false;
     }
 
+    if (!bootloaderVersionIsCompatible())
+        return false;
+
+    if (!sendFirmwareFile(path))
+        return false;
+
+    dev.close();
+    UsbDevice::processEvents();
+
+    return true;
+}
+
+/*
+ * Query the bootloader's version, and make sure we're compatible with it.
+ */
+bool Loader::bootloaderVersionIsCompatible()
+{
     const uint8_t versionRequest[] = { CmdGetVersion };
     dev.writePacket(versionRequest, sizeof versionRequest);
 
@@ -31,12 +40,25 @@ bool Loader::load(const char *path, int vid, int pid)
 
     uint8_t usbBuf[UsbDevice::MAX_EP_SIZE];
     unsigned numBytes = dev.readPacket(usbBuf, sizeof usbBuf);
-    if (usbBuf[0] == CmdGetVersion && numBytes >= 2)
-        fprintf(stderr, "bootloader version: %d\n", usbBuf[1]);
-    else
-        fprintf(stderr, "couldn't get bootloader version\n");
+    if (numBytes < 2 || usbBuf[0] != CmdGetVersion)
+        return false;
 
+    unsigned version = usbBuf[1];
+    return ((VERSION_COMPAT_MIN <= version) && (version <= VERSION_COMPAT_MAX));
+}
 
+/*
+ * Load the given file to the bootloader.
+ * The file should already be encrypted and in the final form that it will reside
+ * in the STM32's flash.
+ */
+bool Loader::sendFirmwareFile(const char *path)
+{
+    FILE *f = fopen(path, "rb");
+    if (!f) {
+        fprintf(stderr, "could not open %s: %s\n", path, strerror(errno));
+        return false;
+    }
 
     fseek(f, 0L, SEEK_END);
     unsigned filesz = ftell(f);
@@ -45,11 +67,13 @@ bool Loader::load(const char *path, int vid, int pid)
     unsigned percent = 0;
     unsigned progress = 0;
 
+    uint8_t usbBuf[UsbDevice::MAX_EP_SIZE];
     usbBuf[0] = CmdWriteMemory;
 
     while (!feof(f)) {
 
-        int numBytes = fread(usbBuf + 1, 1, sizeof(usbBuf) - 1, f);
+        const unsigned chunk = dev.outEpMaxPacketSize() - 1;
+        int numBytes = fread(usbBuf + 1, 1, chunk, f);
         if (numBytes <= 0)
             continue;
 
@@ -71,9 +95,4 @@ bool Loader::load(const char *path, int vid, int pid)
     while (dev.numPendingOUTPackets()) {
         UsbDevice::processEvents();
     }
-
-    dev.close();
-    UsbDevice::processEvents();
-
-    return true;
 }
