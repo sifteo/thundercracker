@@ -1,4 +1,5 @@
 #include "fwloader.h"
+#include "bootloader.h"
 
 #include <stdio.h>
 #include <errno.h>
@@ -41,7 +42,7 @@ bool FwLoader::load(const char *path, int vid, int pid)
  */
 bool FwLoader::bootloaderVersionIsCompatible()
 {
-    const uint8_t versionRequest[] = { CmdGetVersion };
+    const uint8_t versionRequest[] = { Bootloader::CmdGetVersion };
     dev.writePacket(versionRequest, sizeof versionRequest);
 
     while (!dev.numPendingINPackets())
@@ -49,7 +50,7 @@ bool FwLoader::bootloaderVersionIsCompatible()
 
     uint8_t usbBuf[IODevice::MAX_EP_SIZE];
     unsigned numBytes = dev.readPacket(usbBuf, sizeof usbBuf);
-    if (numBytes < 2 || usbBuf[0] != CmdGetVersion)
+    if (numBytes < 2 || usbBuf[0] != Bootloader::CmdGetVersion)
         return false;
 
     unsigned version = usbBuf[1];
@@ -77,7 +78,7 @@ bool FwLoader::sendFirmwareFile(const char *path)
     unsigned progress = 0;
 
     uint8_t usbBuf[IODevice::MAX_EP_SIZE];
-    usbBuf[0] = CmdWriteMemory;
+    usbBuf[0] = Bootloader::CmdWriteMemory;
 
     while (!feof(f)) {
 

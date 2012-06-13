@@ -17,15 +17,6 @@ private:
     static const unsigned VERSION_COMPAT_MIN = 1;
     static const unsigned VERSION_COMPAT_MAX = 1;
 
-    enum Command {
-        CmdGetVersion,
-        CmdWriteMemory,
-        CmdSetAddrPtr,
-        CmdGetAddrPtr,
-        CmdJump,
-        CmdAbort
-    };
-
     bool bootloaderVersionIsCompatible();
     bool sendFirmwareFile(const char *path);
 

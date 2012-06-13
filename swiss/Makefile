@@ -1,5 +1,6 @@
 
 TC_DIR := ..
+MASTER_DIR := $(TC_DIR)/firmware/master
 
 include $(TC_DIR)/Makefile.platform
 
@@ -12,7 +13,11 @@ OBJS := \
     profiler.o
 
 # include directories
-INCLUDES = -I. -I$(DEPS_DIR)/libusbx/include
+INCLUDES := \
+        -I. \
+        -I$(MASTER_DIR)/bootloader \
+        -I$(MASTER_DIR)/common \
+        -I$(DEPS_DIR)/libusbx/include
 
 VERSION := $(shell git describe --tags)
 ifeq ($(VERSION), )
