@@ -57,15 +57,21 @@ int main(int argc, char **argv)
         return 0;
     }
 
+    /*
+     * TODO: add support for specifying a TCP connection to siftulator.
+     */
     UsbDevice::init();
+    UsbDevice usbdev;
 
     const unsigned numCommands = sizeof(commands) / sizeof(commands[0]);
+    const char *commandName = argv[1];
+
     for (unsigned i = 0; i < numCommands; ++i) {
-        if (!strcmp(argv[1], commands[i].name))
-            return commands[i].run(argc - 1, argv + 1);
+        if (!strcmp(commandName, commands[i].name))
+            return commands[i].run(argc - 1, argv + 1, usbdev);
     }
 
-    fprintf(stderr, "no command named %s\n", argv[1]);
+    fprintf(stderr, "no command named %s\n", commandName);
     usage();
 
     return 1;

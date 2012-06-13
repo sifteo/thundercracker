@@ -6,7 +6,7 @@ Profiler::Profiler()
 {
 }
 
-int Profiler::run(int argc, char **argv)
+int Profiler::run(int argc, char **argv, IODevice &dev)
 {
     fprintf(stderr, "Profiler run!\n");
     return 0;

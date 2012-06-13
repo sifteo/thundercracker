@@ -1,7 +1,9 @@
 #ifndef COMMAND_H
 #define COMMAND_H
 
-typedef int (*CommandRun)(int argc, char **argv);
+#include "iodevice.h"
+
+typedef int (*CommandRun)(int argc, char **argv, IODevice &dev);
 
 struct Command {
     const char *name;

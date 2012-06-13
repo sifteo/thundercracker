@@ -1,14 +1,14 @@
 #ifndef FW_LOADER_H
 #define FW_LOADER_H
 
-#include "usbdevice.h"
+#include "iodevice.h"
 
 class FwLoader
 {
 public:
-    FwLoader();
+    FwLoader(IODevice &_dev);
 
-    static int run(int argc, char **argv);
+    static int run(int argc, char **argv, IODevice &dev);
     bool load(const char* path, int vid, int pid);
 
 private:
@@ -29,7 +29,7 @@ private:
     bool bootloaderVersionIsCompatible();
     bool sendFirmwareFile(const char *path);
 
-    UsbDevice dev;
+    IODevice &dev;
 };
 
 #endif // FW_LOADER_H
