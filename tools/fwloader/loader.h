@@ -6,7 +6,17 @@ class Loader
 public:
     Loader();
 
-    bool load(const char* path);
+    bool load(const char* path, int vid, int pid);
+
+private:
+    enum Command {
+        CmdGetVersion,
+        CmdWriteMemory,
+        CmdSetAddrPtr,
+        CmdGetAddrPtr,
+        CmdJump,
+        CmdAbort
+    };
 };
 
 #endif // LOADER_H
