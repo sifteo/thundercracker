@@ -34,6 +34,7 @@ extern uint8_t flash_addr_low;          // Low 7 bits of address, left-justified
 extern uint8_t flash_addr_lat1;         // Middle 7 bits of address, left-justified
 extern uint8_t flash_addr_lat2;         // High 7 bits of address, left-justified
 extern __bit flash_need_autoerase;      // Do we need to test for auto-erase at next write?
+extern __bit flash_a21;                 // Current flash bank for programming ops
 
 void flash_program_start(void);
 void flash_program_end(void);

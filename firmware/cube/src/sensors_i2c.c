@@ -374,3 +374,15 @@ fs_9:
 
     __endasm ;
 }
+
+
+void i2c_a21_wait(void)
+{
+    __asm
+1$:     mov     c, _i2c_a21_target
+        rlc     a                   ; acc.0 = target, other bits undefined
+        mov     c, _i2c_a21_current ; Sample current state
+        addc    a, #0               ; Compare, using addc as an XOR
+        jb      acc.0, #1$          ; Spin until done
+    __endasm ;
+}

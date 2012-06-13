@@ -8,6 +8,7 @@
 
 #include "graphics.h"
 #include "main.h"
+#include "sensors.h"
 
 static uint8_t next_ack;
 
@@ -30,18 +31,25 @@ void graphics_render(void) __naked
 
         mov     dptr, #_SYS_VA_FLAGS
         movx    a, @dptr
-        jb      acc.3, 1$               ; Check _SYS_VF_CONTINUOUS
 
-        ; Toggle mode
+        ; Store target A21 value, from _SYS_VF_A21
+
+        mov     c, acc.4
+        mov     _i2c_a21_target, c
+
+        ; Frame triggering
+
+        jb      acc.3, 1$               ; Check _SYS_VF_CONTINUOUS
 
         anl     _next_ack, #~FRAME_ACK_CONTINUOUS
         rr      a
         xrl     a, _next_ack            ; Compare _SYS_VF_TOGGLE with bit 0
         rrc     a
         jnc     gd_ret                  ; Return if no toggle
+1$:
 
         ; Increment frame counter field
-1$:
+
         mov     a, _next_ack
         inc     a
         xrl     a, _next_ack
@@ -54,6 +62,9 @@ void graphics_render(void) __naked
 
     // Set up colormap (Used by FB32, STAMP)
     DPH1 = _SYS_VA_COLORMAP >> 8;
+
+    // Wait for A21 to change, if necessary
+    i2c_a21_wait();
 
     /*
      * Video mode jump table.

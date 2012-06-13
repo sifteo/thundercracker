@@ -28,11 +28,13 @@
 
 #include "flash.h"
 #include "radio.h"
+#include "sensors.h"
 
 uint8_t flash_addr_low;
 uint8_t flash_addr_lat1;
 uint8_t flash_addr_lat2;
 __bit flash_need_autoerase;
+__bit flash_a21;
 
 /*
  * We can poll in a much tighter loop (and therefore exit the polling
@@ -197,6 +199,10 @@ void flash_program_start(void)
      * before a batch of program operations, and after any intervening
      * flash reads.
      */
+
+    // Set up A21
+    i2c_a21_target = flash_a21;
+    i2c_a21_wait();
 
     // We can keep LAT2 loaded, since the prefix sequences don't use it.
     ADDR_PORT = flash_addr_lat2;

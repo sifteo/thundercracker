@@ -504,10 +504,11 @@ bool CubeCodec::flashSend(PacketBuffer &buf, _SYSAssetLoaderCube *lc, _SYSCubeID
     if (flashAddrPending) {
         ASSERT(buf.bytesFree() >= 3);
 
-        // Opcode, lat1, lat2
+        // Opcode, lat1, lat2:a21
+        ASSERT(baseAddr < 0x8000);
         buf.append(0xe1);
         buf.append(baseAddr << 1);
-        buf.append((baseAddr >> 6) & 0xfe);
+        buf.append(((baseAddr >> 6) & 0xfe) | ((baseAddr >> 14) & 1));
 
         Atomic::And(CubeSlots::flashAddrPending, ~cubeBit);
         ASSERT(count >= 3);

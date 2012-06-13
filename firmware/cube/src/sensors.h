@@ -42,4 +42,9 @@ void tf0_isr(void) __interrupt(VECTOR_TF0) __naked;
 void tf1_isr(void) __interrupt(VECTOR_TF1) __naked;
 void tf2_isr(void) __interrupt(VECTOR_TF2) __naked;
 
+// To change A21, set the target and call i2c_a21_wait().
+extern __bit i2c_a21_target;
+void i2c_a21_wait(void);
+
+
 #endif

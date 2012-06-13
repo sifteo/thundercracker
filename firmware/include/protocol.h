@@ -357,7 +357,7 @@ typedef struct {
 #define FLS_OP_TILE_P16         0xc0    // Tile with 16-bit pixels and 8-bit repetition mask (arg = count-1)
 #define FLS_OP_SPECIAL          0xe0    // Special symbols (below)
 
-#define FLS_OP_ADDRESS          0xe1    // Followed by a 2-byte (lat1:lat2) tile address
+#define FLS_OP_ADDRESS          0xe1    // Followed by a 2-byte (lat1:lat2) tile address. A21 in LSB of lat2.
 
 #define FLS_OP_RESERVED_0       0xe2    // From here until 0xFF are all reserved codes currently
 
