@@ -8,6 +8,7 @@
 #include "tasks.h"
 #include "usb/usbdevice.h"
 #include "bootloader.h"
+#include "powermanager.h"
 
 /*
  * Test Jig application specific entry point.
@@ -15,6 +16,8 @@
  */
 int main()
 {
+    PowerManager::init();
+
     /*
      * Nested Vectored Interrupt Controller setup.
      *
