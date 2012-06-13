@@ -2,31 +2,41 @@
 #define _USB_DEVICE_H_
 
 #include "libusb.h"
-#include <queue>
+#include <list>
 #include <stdint.h>
 
 class UsbDevice {
 public:
     UsbDevice();
 
+    static const unsigned MAX_EP_SIZE = 64;
+    static const unsigned MAX_OUTSTANDING_OUT_TRANSFERS = 32;
+
     static int init() {
         return libusb_init(0);
     }
 
     static void processEvents() {
-        libusb_handle_events(0);
+        struct timeval tv = {
+            0,  // tv_sec
+            0   // tv_usec
+        };
+        libusb_handle_events_timeout_completed(0, &tv, 0);
     }
 
     bool open(uint16_t vendorId, uint16_t productId, uint8_t interface = 0);
     void close();
     bool isOpen() const;
 
-    int numPendingPackets() const {
+    int numPendingINPackets() const {
         return mBufferedINPackets.size();
     }
     int readPacket(uint8_t *buf, unsigned maxlen);
     int readPacketSync(uint8_t *buf, int maxlen, int *transferred, unsigned timeout = -1);
 
+    int numPendingOUTPackets() const {
+        return mOutEndpoint.pendingTransfers.size();
+    }
     int writePacket(const uint8_t *buf, unsigned len);
     int writePacketSync(const uint8_t *buf, int maxlen, int *transferred, unsigned timeout = -1);
 
@@ -54,13 +64,13 @@ private:
     struct Endpoint {
         uint8_t address;
         uint16_t maxPacketSize;
-        std::queue<libusb_transfer*> pendingTransfers;
+        std::list<libusb_transfer*> pendingTransfers;
     };
 
     Endpoint mInEndpoint;
     Endpoint mOutEndpoint;
 
-    void removeTransfer(Endpoint &ep, libusb_transfer *t);
+    void removeTransfer(std::list<libusb_transfer*> &list, libusb_transfer *t);
 
     libusb_device_handle *mHandle;
 
@@ -68,7 +78,7 @@ private:
         uint8_t *buf;
         uint8_t len;
     };
-    std::queue<Packet> mBufferedINPackets;
+    std::list<Packet> mBufferedINPackets;
 };
 
 #endif // _USB_DEVICE_H_

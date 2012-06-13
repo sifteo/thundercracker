@@ -115,7 +115,23 @@ void UsbDevice::openINTransfers()
             continue;
         }
 
-        mInEndpoint.pendingTransfers.push(txfer);
+        mInEndpoint.pendingTransfers.push_back(txfer);
+    }
+}
+
+void UsbDevice::close()
+{
+    if (!isOpen())
+        return;
+
+    for (std::list<libusb_transfer*>::iterator i = mInEndpoint.pendingTransfers.begin();
+         i != mInEndpoint.pendingTransfers.end(); ++i) {
+        libusb_cancel_transfer(*i);
+    }
+
+    for (std::list<libusb_transfer*>::iterator i = mOutEndpoint.pendingTransfers.begin();
+         i != mOutEndpoint.pendingTransfers.end(); ++i) {
+        libusb_cancel_transfer(*i);
     }
 }
 
@@ -126,14 +142,14 @@ bool UsbDevice::isOpen() const
 
 int UsbDevice::readPacket(uint8_t *buf, unsigned maxlen)
 {
-    assert(mBufferedINPackets.size() > 0);
+    assert(!mBufferedINPackets.empty());
 
     Packet pkt = mBufferedINPackets.front();
     uint8_t len = maxlen < pkt.len ? maxlen : pkt.len;
     memcpy(buf, pkt.buf, len);
 
     delete pkt.buf;
-    mBufferedINPackets.pop();
+    mBufferedINPackets.pop_front();
 
     return len;
 }
@@ -164,7 +180,7 @@ int UsbDevice::writePacket(const uint8_t *buf, unsigned len)
         return -1;
     }
 
-    mOutEndpoint.pendingTransfers.push(txfer);
+    mOutEndpoint.pendingTransfers.push_back(txfer);
     return size;
 }
 
@@ -184,16 +200,16 @@ void UsbDevice::handleRx(libusb_transfer *t)
         pkt.len = t->actual_length;
         pkt.buf = (uint8_t*)malloc(pkt.len);
         memcpy(pkt.buf, t->buffer, pkt.len);
-        mBufferedINPackets.push(pkt);
+        mBufferedINPackets.push_back(pkt);
 
         // re-submit
         // XXX: should we be re-submitting in other statuses as well?
         int r = libusb_submit_transfer(t);
         if (r < 0)
-            removeTransfer(mInEndpoint, t);
+            removeTransfer(mInEndpoint.pendingTransfers, t);
 
     } else {
-        removeTransfer(mInEndpoint, t);
+        removeTransfer(mInEndpoint.pendingTransfers, t);
     }
 }
 
@@ -202,7 +218,7 @@ void UsbDevice::handleRx(libusb_transfer *t)
  */
 void UsbDevice::handleTx(libusb_transfer *t)
 {
-    removeTransfer(mOutEndpoint, t);
+    removeTransfer(mOutEndpoint.pendingTransfers, t);
 
 #if 0
     libusb_transfer_status status = t->status;
@@ -217,22 +233,19 @@ void UsbDevice::handleTx(libusb_transfer *t)
  * A transfer has completed. Free its resources, and remove it from our queue.
  * If both endpoints queues are empty, it's time to close up shop.
  */
-void UsbDevice::removeTransfer(Endpoint &ep, libusb_transfer *t)
+void UsbDevice::removeTransfer(std::list<libusb_transfer*> &list, libusb_transfer *t)
 {
-    assert(ep.pendingTransfers.size() != 0);
-    assert(ep.pendingTransfers.front() == t);
-    ep.pendingTransfers.pop();
+    assert(!list.empty());
+    list.remove(t);
 
     free(t->buffer);
     libusb_free_transfer(t);
 
-    if (mInEndpoint.pendingTransfers.size() == 0 &&
-        mOutEndpoint.pendingTransfers.size() == 0)
+    if (mInEndpoint.pendingTransfers.empty() &&
+        mOutEndpoint.pendingTransfers.empty())
     {
-#if 0
-        // libusb deadlocks if you close() it directly in one of its callbacks
-        // so schedule a call to close it once we return to the event loop.
-#endif
+        libusb_close(mHandle);
+        mHandle = 0;
     }
 }
 
