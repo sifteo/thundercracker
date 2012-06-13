@@ -13,6 +13,10 @@ public:
         return libusb_init(0);
     }
 
+    static void processEvents() {
+        libusb_handle_events(0);
+    }
+
     bool open(uint16_t vendorId, uint16_t productId, uint8_t interface = 0);
     void close();
     bool isOpen() const;

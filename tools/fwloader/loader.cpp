@@ -18,7 +18,7 @@ bool Loader::load(const char *path)
     }
 
     const int vendorID = 0x22fa;
-    const int productID = 0x0110;
+    const int productID = 0x0115;
 
     UsbDevice dev;
     if (!dev.open(vendorID, productID)) {

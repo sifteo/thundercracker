@@ -35,5 +35,5 @@ $(BIN): $(OBJS)
 .PHONY: clean
 
 clean:
-	rm -Rf usbdevice
+	rm -Rf $(BIN)
 	rm -Rf $(OBJS) $(DEPFILES) $(BIN).dSYM
