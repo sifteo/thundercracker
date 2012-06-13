@@ -41,8 +41,11 @@ int main(int argc, char **argv)
 
     UsbDevice::init();
 
+    const int vendorID = 0x22fa;
+    const int productID = 0x0115;
+
     Loader loader;
-    bool success = loader.load(path);
+    bool success = loader.load(path, vendorID, productID);
     return success ? 0 : 1;
 }
 
