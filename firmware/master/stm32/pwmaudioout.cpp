@@ -68,6 +68,13 @@ void PwmAudioOut::suspend()
 
 void PwmAudioOut::resume()
 {
+    // Charge the bootstrap capacitors before starting PWM
+    outA.setControl(GPIOPin::OUT_2MHZ);
+    outB.setControl(GPIOPin::OUT_2MHZ);
+    outA.setHigh();
+    outB.setHigh();
+    
+    // Begin PWM
     outA.setControl(GPIOPin::OUT_ALT_50MHZ);
     outB.setControl(GPIOPin::OUT_ALT_50MHZ);
     pwmTimer.enableChannel(pwmChan);
