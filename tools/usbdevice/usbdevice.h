@@ -28,6 +28,14 @@ public:
     void close();
     bool isOpen() const;
 
+    int inEpMaxPacketSize() const {
+        return mInEndpoint.maxPacketSize;
+    }
+
+    int outEpMaxPacketSize() const {
+        return mOutEndpoint.maxPacketSize;
+    }
+
     int numPendingINPackets() const {
         return mBufferedINPackets.size();
     }
