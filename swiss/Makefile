@@ -1,17 +1,15 @@
 
-TC_DIR := ../..
+TC_DIR := ..
 
 include $(TC_DIR)/Makefile.platform
 
-BIN := fwloader
+BIN := swiss$(BIN_EXT)
 
 OBJS := \
-    main.o \
-    loader.o \
-    ../usbdevice/usbdevice.o
+    main.o
 
 # include directories
-INCLUDES = -I. -I ../usbdevice -I$(DEPS_DIR)/libusbx/include
+INCLUDES = -I. -I$(DEPS_DIR)/libusbx/include
 
 # C++ compiler flags (-g -O2 -Wall)
 CCFLAGS = -g -O2
