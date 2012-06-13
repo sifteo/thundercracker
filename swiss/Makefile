@@ -8,6 +8,7 @@ BIN := swiss$(BIN_EXT)
 OBJS := \
     main.o          \
     usbdevice.o     \
+    fwloader.o      \
     profiler.o
 
 # include directories

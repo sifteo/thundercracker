@@ -1,6 +1,8 @@
 
 #include "command.h"
 #include "profiler.h"
+#include "fwloader.h"
+#include "usbdevice.h"
 
 #include <stdio.h>
 #include <string.h>
@@ -11,15 +13,31 @@ static const Command commands[] = {
         "capture profiling data from an app",
         "profile <opts>",
         Profiler::run
+    },
+    {
+        "fwload",
+        "install new firmware to the Sifteo Base",
+        "fwload <firmware.bin>",
+        FwLoader::run
     }
 };
 
 static void usage()
 {
-    fprintf(stderr, "swiss - your Sifteo utility knife\n");
     const unsigned numCommands = sizeof(commands) / sizeof(commands[0]);
-    for (unsigned i = 0; i < numCommands; ++i)
-        fprintf(stderr, "    %s:    %s\n", commands[i].usage, commands[i].description);
+
+    unsigned maxUsageLen = 0;
+    for (unsigned i = 0; i < numCommands; ++i) {
+        if (strlen(commands[i].usage) > maxUsageLen)
+            maxUsageLen = strlen(commands[i].usage);
+    }
+    maxUsageLen += 4;
+
+    fprintf(stderr, "swiss - your Sifteo utility knife\n");
+    for (unsigned i = 0; i < numCommands; ++i) {
+        unsigned pad = maxUsageLen - strlen(commands[i].usage);
+        fprintf(stderr, "  %s:%*s%s\n", commands[i].usage, pad, " ", commands[i].description);
+    }
 }
 
 static void version()
@@ -38,6 +56,8 @@ int main(int argc, char **argv)
         version();
         return 0;
     }
+
+    UsbDevice::init();
 
     const unsigned numCommands = sizeof(commands) / sizeof(commands[0]);
     for (unsigned i = 0; i < numCommands; ++i) {

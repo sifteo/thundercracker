@@ -1,13 +1,14 @@
-#ifndef LOADER_H
-#define LOADER_H
+#ifndef FW_LOADER_H
+#define FW_LOADER_H
 
 #include "usbdevice.h"
 
-class Loader
+class FwLoader
 {
 public:
-    Loader();
+    FwLoader();
 
+    static int run(int argc, char **argv);
     bool load(const char* path, int vid, int pid);
 
 private:
@@ -31,4 +32,4 @@ private:
     UsbDevice dev;
 };
 
-#endif // LOADER_H
+#endif // FW_LOADER_H

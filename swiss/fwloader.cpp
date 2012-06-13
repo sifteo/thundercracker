@@ -1,14 +1,27 @@
-#include "loader.h"
+#include "fwloader.h"
 
 #include <stdio.h>
 #include <errno.h>
 #include <string.h>
 
-Loader::Loader()
+FwLoader::FwLoader()
 {
 }
 
-bool Loader::load(const char *path, int vid, int pid)
+int FwLoader::run(int argc, char **argv)
+{
+    if (argc < 2)
+        return 1;
+
+    const unsigned vid = 0x22fa;
+    const unsigned pid = 0x0115;
+
+    FwLoader loader;
+    bool success = loader.load(argv[1], vid, pid);
+    return success ? 0 : 1;
+}
+
+bool FwLoader::load(const char *path, int vid, int pid)
 {
     if (!dev.open(vid, pid)) {
         fprintf(stderr, "device is not attached\n");
@@ -30,7 +43,7 @@ bool Loader::load(const char *path, int vid, int pid)
 /*
  * Query the bootloader's version, and make sure we're compatible with it.
  */
-bool Loader::bootloaderVersionIsCompatible()
+bool FwLoader::bootloaderVersionIsCompatible()
 {
     const uint8_t versionRequest[] = { CmdGetVersion };
     dev.writePacket(versionRequest, sizeof versionRequest);
@@ -52,7 +65,7 @@ bool Loader::bootloaderVersionIsCompatible()
  * The file should already be encrypted and in the final form that it will reside
  * in the STM32's flash.
  */
-bool Loader::sendFirmwareFile(const char *path)
+bool FwLoader::sendFirmwareFile(const char *path)
 {
     FILE *f = fopen(path, "rb");
     if (!f) {
