@@ -5,6 +5,7 @@ typedef int (*CommandRun)(int argc, char **argv);
 
 struct Command {
     const char *name;
+    const char *description;
     const char *usage;
     CommandRun run;
 };

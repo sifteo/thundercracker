@@ -6,14 +6,21 @@ include $(TC_DIR)/Makefile.platform
 BIN := swiss$(BIN_EXT)
 
 OBJS := \
-    main.o
+    main.o          \
+    usbdevice.o     \
+    profiler.o
 
 # include directories
 INCLUDES = -I. -I$(DEPS_DIR)/libusbx/include
 
+VERSION := $(shell git describe --tags)
+ifeq ($(VERSION), )
+VERSION := "\"\""
+endif
+
 # C++ compiler flags (-g -O2 -Wall)
 CCFLAGS = -g -O2
-CCFLAGS += -DSDK_VERSION=$(shell git describe --tags)
+CCFLAGS += -DSDK_VERSION=$(VERSION)
 
 # library paths
 LDFLAGS := -L$(DEPS_DIR)/libusbx/lib -lusb-1.0
