@@ -56,8 +56,8 @@ static uint8_t status;
 void USBProtocolHandler::installerHandler(const uint8_t *buf, unsigned len)
 {
     // first word is the header
-    buf += sizeof(USBProtocolMsg::header);
-    len -= sizeof(USBProtocolMsg::header);
+    buf += USBProtocolMsg::HEADER_BYTES;
+    len -= USBProtocolMsg::HEADER_BYTES;
 
     if (installation.state == WaitingForLength) {
         // XXX: chokes if we don't get the 4 bytes of length at once :/

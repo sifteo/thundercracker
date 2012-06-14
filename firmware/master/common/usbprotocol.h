@@ -33,7 +33,8 @@ struct USBProtocol {
 struct USBProtocolMsg {
 
     static const unsigned MAX_LEN = 64;
-    static const unsigned MAX_PAYLOAD_BYTES = MAX_LEN - sizeof(uint32_t);
+    static const unsigned HEADER_BYTES = sizeof(uint32_t);
+    static const unsigned MAX_PAYLOAD_BYTES = MAX_LEN - HEADER_BYTES;
 
     unsigned len;
     union {
