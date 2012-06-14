@@ -15,6 +15,7 @@
 #include "cubeslots.h"
 #include "svmruntime.h"
 #include "flash_syslfs.h"
+#include "assetslot.h"
 
 
 extern "C" {
@@ -32,6 +33,18 @@ struct FakeAssetSlot {
     
 FakeAssetSlot FakeAssetSlots[_SYS_NUM_CUBE_SLOTS];
 
+
+void _SYS_asset_bindSlots(_SYSVolumeHandle volHandle, unsigned numSlots)
+{
+    FlashVolume vol(volHandle);
+    if (!vol.isValid())
+        return SvmRuntime::fault(F_BAD_VOLUME_HANDLE);
+
+    if (numSlots > VirtAssetSlots::NUM_SLOTS)
+        return SvmRuntime::fault(F_SYSCALL_PARAM);
+
+    VirtAssetSlots::bind(vol, numSlots);
+}
 
 uint32_t _SYS_asset_slotTilesFree(_SYSAssetSlot slot)
 {

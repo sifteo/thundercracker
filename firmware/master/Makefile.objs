@@ -14,6 +14,7 @@ OBJS_COMMON = \
     $(MASTER_DIR)/common/syscall_video.o \
     $(MASTER_DIR)/common/event.o \
     $(MASTER_DIR)/common/radio.o \
+    $(MASTER_DIR)/common/assetslot.o \
     $(MASTER_DIR)/common/cubeslots.o \
     $(MASTER_DIR)/common/cube.o \
     $(MASTER_DIR)/common/cubecodec.o \
@@ -32,6 +33,7 @@ OBJS_COMMON = \
     $(MASTER_DIR)/common/flash_map.o \
     $(MASTER_DIR)/common/flash_volume.o \
     $(MASTER_DIR)/common/flash_lfs.o \
+    $(MASTER_DIR)/common/flash_syslfs.o \
     $(MASTER_DIR)/common/svmloader.o \
     $(MASTER_DIR)/common/svmruntime.o \
     $(MASTER_DIR)/common/svmvalidator.o \

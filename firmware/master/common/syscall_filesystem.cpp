@@ -160,10 +160,6 @@ int32_t _SYS_fs_objectRead(unsigned key, uint8_t *buffer,
         SvmRuntime::fault(F_SYSCALL_PARAM);
         return _SYS_EINVAL;
     }
-    if (!isAligned(buffer)) {
-        SvmRuntime::fault(F_SYSCALL_ADDR_ALIGN);
-        return _SYS_EFAULT;
-    }
     if (!SvmMemory::mapRAM(buffer, bufferSize)) {
         SvmRuntime::fault(F_SYSCALL_ADDRESS);
         return _SYS_EFAULT;
@@ -217,10 +213,6 @@ int32_t _SYS_fs_objectWrite(unsigned key, const uint8_t *data, unsigned dataSize
     FlashBlockRef ref;
     uint32_t crc;
 
-    if (!isAligned(data)) {
-        SvmRuntime::fault(F_SYSCALL_ADDR_ALIGN);
-        return _SYS_EFAULT;
-    }
     if (!SvmMemory::crcROData(ref, va, dataSize, crc, FlashLFSIndexRecord::SIZE_UNIT)) {
         SvmRuntime::fault(F_SYSCALL_ADDRESS);
         return _SYS_EFAULT;
@@ -234,12 +226,8 @@ int32_t _SYS_fs_objectWrite(unsigned key, const uint8_t *data, unsigned dataSize
     FlashLFS &lfs = FlashLFSCache::get(parentVol);
     FlashLFSObjectAllocator allocator(lfs, key, dataSize, crc);
 
-    if (!allocator.allocate()) {
-        if (!lfs.collectGarbage())
-            return _SYS_ENOSPC;
-        if (!allocator.allocate())
-            return _SYS_ENOSPC;
-    }
+    if (!allocator.allocateAndCollectGarbage())
+        return _SYS_ENOSPC;
 
     /*
      * Write the actual object data. We effectively do a non-cache-polluting

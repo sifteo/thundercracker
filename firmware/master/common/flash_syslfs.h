@@ -72,8 +72,9 @@ namespace SysLFS {
     };
 
     struct AssetSlotOverviewRecord {
-        uint32_t eraseCount;
         uint16_t numAllocatedTiles;
+        uint8_t eraseCount;
+        uint8_t accessRank;
         AssetSlotIdentity identity;
     };
 
@@ -85,6 +86,9 @@ namespace SysLFS {
     struct CubeRecord {
         AssetSlotOverviewRecord assetSlots[ASSET_SLOTS_PER_CUBE];
         CubePairingRecord pairing;
+
+        void read(_SYSCubeID cube);
+        void write(_SYSCubeID cube);
     };
 
     /*
@@ -126,15 +130,44 @@ namespace SysLFS {
      * Accessors
      */
 
+    inline unsigned cubeKey(_SYSCubeID cube)
+    {
+        ASSERT(cube < _SYS_NUM_CUBE_SLOTS);
+        return kCubeBase + cube;
+    }
+
+    inline unsigned assetSlotKey(_SYSCubeID cube, unsigned slot)
+    {
+        ASSERT(cube < _SYS_NUM_CUBE_SLOTS);
+        ASSERT(slot < ASSET_SLOTS_PER_CUBE);
+        return kAssetSlotBase + cube * ASSET_SLOTS_PER_CUBE + slot;
+    }
+
     inline FlashLFS &get()
     {
         STATIC_ASSERT(kEnd <= _SYS_FS_MAX_OBJECT_KEYS);
         STATIC_ASSERT(sizeof(FlashMapBlock) == 1);
         STATIC_ASSERT(sizeof(LoadedAssetGroupRecord) == 3);
         STATIC_ASSERT(sizeof(AssetSlotRecord) == 3 * ASSET_GROUPS_PER_SLOT);
-        STATIC_ASSERT(sizeof(AssetSlotOverviewRecord) == 8);
+        STATIC_ASSERT(sizeof(AssetSlotOverviewRecord) == 6);
+        STATIC_ASSERT(sizeof(CubeRecord) == sizeof(CubePairingRecord) +
+            ASSET_SLOTS_PER_CUBE * sizeof(AssetSlotOverviewRecord));
 
         return FlashLFSCache::get(FlashMapBlock::invalid());
+    }
+
+    // System equivalents to _SYS_fs_objectRead/Write
+    int read(unsigned key, uint8_t *buffer, unsigned bufferSize);
+    int write(unsigned key, const uint8_t *data, unsigned dataSize);
+
+    template <typename T>
+    inline bool read(unsigned key, T &obj) {
+        return read(key, (uint8_t*) &obj, sizeof obj) == sizeof obj;
+    }
+
+    template <typename T>
+    inline bool write(unsigned key, const T &obj) {
+        return write(key, (const uint8_t*) &obj, sizeof obj) == sizeof obj;
     }
 
 } // end namespace SysLFS

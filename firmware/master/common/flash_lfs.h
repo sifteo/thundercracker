@@ -559,6 +559,9 @@ public:
     // Perform the actual allocation. Writes to flash, etc.
     bool allocate();
 
+    // Try to allocate, retrying after garbage collection if we fail
+    bool allocateAndCollectGarbage();
+
     // Read the results of the allocation operation
     unsigned address() const {
         return addr;

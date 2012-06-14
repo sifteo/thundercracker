@@ -85,6 +85,9 @@ void bootstrapAssets(MappedVolume &map, unsigned numCubes)
      * If no cube range was specified, we don't load assets at all.
      */
 
+     // XXX
+     _SYS_asset_bindSlots(map.volume(), 4);
+
     // Look up BootAsset array
     uint32_t actual;
     auto vec = map.metadata<_SYSMetadataBootAsset>(_SYS_METADATA_BOOT_ASSET, &actual);

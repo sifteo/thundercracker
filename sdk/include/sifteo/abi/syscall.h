@@ -152,11 +152,11 @@ void *_SYS_getVectorContext(_SYSVectorID vid) _SC(114);
 void _SYS_enableCubes(_SYSCubeIDVector cv) _SC(59);
 void _SYS_disableCubes(_SYSCubeIDVector cv) _SC(116);
 
+// Sensors
 uint32_t _SYS_getAccel(_SYSCubeID cid) _SC(117);
 uint32_t _SYS_getNeighbors(_SYSCubeID cid) _SC(33);
 uint32_t _SYS_getTilt(_SYSCubeID cid) _SC(61);
 uint32_t _SYS_getShake(_SYSCubeID cid) _SC(118);
-
 uint32_t _SYS_getBatteryV(_SYSCubeID cid) _SC(119);
 uint32_t _SYS_isTouching(_SYSCubeID cid) _SC(51);
 uint64_t _SYS_getCubeHWID(_SYSCubeID cid) _SC(120);
@@ -184,6 +184,7 @@ void _SYS_asset_slotErase(_SYSAssetSlot slot) _SC(133);
 uint32_t _SYS_asset_loadStart(struct _SYSAssetLoader *loader, struct _SYSAssetGroup *group, _SYSAssetSlot slot, _SYSCubeIDVector cv) _SC(134);
 void _SYS_asset_loadFinish(struct _SYSAssetLoader *loader) _SC(135);
 uint32_t _SYS_asset_findInCache(struct _SYSAssetGroup *group, _SYSCubeIDVector cv) _SC(136);
+void _SYS_asset_bindSlots(_SYSVolumeHandle volume, unsigned numSlots) _SC(166);
 
 // Video buffers
 void _SYS_setVideoBuffer(_SYSCubeID cid, struct _SYSVideoBuffer *vbuf) _SC(60);

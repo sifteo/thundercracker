@@ -461,6 +461,11 @@ bool FlashLFSObjectAllocator::allocate()
     return lfs.newVolume() && allocInVolume(lfs.volumes.last());
 }
 
+bool FlashLFSObjectAllocator::allocateAndCollectGarbage()
+{
+    return allocate() || (lfs.collectGarbage() && allocate());
+}
+
 bool FlashLFSObjectAllocator::allocInVolume(FlashVolume vol)
 {
     /*
