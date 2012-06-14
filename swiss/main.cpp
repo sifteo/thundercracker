@@ -11,7 +11,7 @@ static const Command commands[] = {
     {
         "profile",
         "capture profiling data from an app",
-        "profile <opts>",
+        "profile <app.elf> <output.txt>",
         Profiler::run
     },
     {

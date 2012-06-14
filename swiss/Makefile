@@ -10,7 +10,8 @@ OBJS := \
     main.o          \
     usbdevice.o     \
     fwloader.o      \
-    profiler.o
+    profiler.o      \
+    elfdebuginfo.o
 
 # include directories
 INCLUDES := \
@@ -26,7 +27,9 @@ endif
 
 # C++ compiler flags (-g -O2 -Wall)
 CCFLAGS = -g -O2
-CCFLAGS += -DSDK_VERSION=$(VERSION)
+# we currently define SIFTEO_SIMULATOR so we can use macros.h - revisit whether
+# this deserves any reorg
+CCFLAGS += -DSDK_VERSION=$(VERSION) -DSIFTEO_SIMULATOR
 
 # library paths
 LDFLAGS := -L$(DEPS_DIR)/libusbx/lib -lusb-1.0
