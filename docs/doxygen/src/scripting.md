@@ -297,11 +297,11 @@ Write a 32-bit word into RAM, at the specified virtual address. When using _inli
 
 If the virtual address is invalid, raises a Lua error.
 
-## Runtime():virtToFlashAddr( _virtual address_ )
+### Runtime():virtToFlashAddr( _virtual address_ )
 
 Convert an SVM virtual address to a physical Flash memory address, using the currently active mappings. If this VA is not mapped, returns zero.
 
-## Runtime():flashToVirtAddr( _flash address_ )
+### Runtime():flashToVirtAddr( _flash address_ )
 
 Convert a physical Flash memory address to an SVM virtual address. If the supplied flash address is not part of any virtual address space, returns zero.
 
