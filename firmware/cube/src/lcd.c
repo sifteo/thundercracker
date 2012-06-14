@@ -20,7 +20,7 @@ static __bit lcd_is_awake;
 void lcd_reset_delay()
 {
     // Arbitrary delay, currently about 50 us.
-    uint8_t delay_i = 0, delay_j;
+    uint8_t delay_i = 0;
     do {
     } while (--delay_i);
 }
