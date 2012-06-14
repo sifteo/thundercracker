@@ -71,14 +71,13 @@ void FactoryTest::onUartIsr()
  * UsbMessages have a headers of UsbProtocol::HEADER_LEN bytes,
  * followed by a byte of test command, followed by payload data.
  */
-void FactoryTest::usbHandler(const uint8_t *buf, unsigned len)
+void FactoryTest::usbHandler(const USBProtocolMsg &m)
 {
-    const unsigned headersz = USBProtocolMsg::HEADER_BYTES;
-    uint8_t cmd = buf[headersz];
+    uint8_t cmd = m.payload[0];
     if (cmd < arraysize(handlers)) {
         TestHandler handler = handlers[cmd];
-        // arg[0] is always the 'command 'type' byte
-        handler(len - headersz, buf + headersz);
+        // arg[0] is always the 'command type' byte
+        handler(m.payloadLen(), m.payload);
     }
 }
 

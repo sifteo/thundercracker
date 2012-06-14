@@ -31,7 +31,7 @@ void USBProtocol::dispatch(const USBProtocolMsg &m)
     unsigned subsys = static_cast<unsigned>(m.subsystem());
     if (subsys < arraysize(subsystemHandlers)) {
         SubSystemHandler handler = subsystemHandlers[subsys];
-        handler(m.bytes, m.len);
+        handler(m);
     }
 }
 
@@ -53,11 +53,10 @@ static uint8_t status;
     bytes we receive are the length.
     But, calculate the CRC as it goes in & verify it on the data written to flash.
 */
-void USBProtocolHandler::installerHandler(const uint8_t *buf, unsigned len)
+void USBProtocolHandler::installerHandler(const USBProtocolMsg &m)
 {
-    // first word is the header
-    buf += USBProtocolMsg::HEADER_BYTES;
-    len -= USBProtocolMsg::HEADER_BYTES;
+    const uint8_t *buf = m.payload;
+    unsigned len = m.payloadLen();
 
     if (installation.state == WaitingForLength) {
         // XXX: chokes if we don't get the 4 bytes of length at once :/

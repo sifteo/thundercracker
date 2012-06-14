@@ -2,6 +2,7 @@
 #define FACTORYTEST_H
 
 #include <stdint.h>
+#include "usbprotocol.h"
 
 class FactoryTest
 {
@@ -12,7 +13,7 @@ public:
 
     static void init();
     static void onUartIsr();
-    static void usbHandler(const uint8_t *buf, unsigned len);
+    static void usbHandler(const USBProtocolMsg &m);
 
 private:
     static uint8_t commandBuf[UART_MAX_COMMAND_LEN];
