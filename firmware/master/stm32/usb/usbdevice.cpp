@@ -146,15 +146,15 @@ void UsbDevice::handleOUTData(void *p)
 {
     Tasks::clearPending(Tasks::UsbOUT);
 
-    uint8_t buf[OutEpMaxPacket];
-    int numBytes = UsbHardware::epReadPacket(OutEpAddr, buf, sizeof(buf));
-    if (numBytes > 0) {
+    USBProtocolMsg m;
+    m.len = UsbHardware::epReadPacket(OutEpAddr, m.bytes, m.bytesFree());
+    if (m.len > 0) {
 #if (BOARD == BOARD_TEST_JIG)
-        TestJig::onTestDataReceived(buf, numBytes);
+        TestJig::onTestDataReceived(m.bytes, m.len);
 #elif defined(BOOTLOADER)
-        Bootloader::onUsbData(buf, numBytes);
+        Bootloader::onUsbData(m.bytes, m.len);
 #else
-        USBProtocol::dispatch(buf, numBytes);
+        USBProtocol::dispatch(m);
 #endif
     }
 }

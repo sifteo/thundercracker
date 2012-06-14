@@ -2,7 +2,6 @@
 #define _BOOTLOADER_H
 
 #include <stdint.h>
-#include "stm32flash.h"
 #include "aes128.h"
 
 class Bootloader
@@ -10,9 +9,17 @@ class Bootloader
 public:
     static const uint8_t VERSION = 1;
 
-    static const uint32_t SIZE = 0x2000;
-    static const uint32_t APPLICATION_ADDRESS = Stm32Flash::START_ADDR + SIZE;
-    static const uint32_t NUM_FLASH_PAGES = SIZE / Stm32Flash::PAGE_SIZE;
+    static const uint32_t SIZE;
+    static const uint32_t APPLICATION_ADDRESS;
+
+    enum Command {
+        CmdGetVersion,
+        CmdWriteMemory,
+        CmdSetAddrPtr,
+        CmdGetAddrPtr,
+        CmdJump,
+        CmdAbort
+    };
 
     static void init();
     static void exec();
@@ -37,15 +44,6 @@ private:
 
     static Update update;
     static bool firstLoad;
-
-    enum Command {
-        CmdGetVersion,
-        CmdWriteMemory,
-        CmdSetAddrPtr,
-        CmdGetAddrPtr,
-        CmdJump,
-        CmdAbort
-    };
 };
 
 #endif // _BOOTLOADER_H

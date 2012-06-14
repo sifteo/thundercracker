@@ -1,5 +1,6 @@
 
 TC_DIR := ..
+MASTER_DIR := $(TC_DIR)/firmware/master
 
 include $(TC_DIR)/Makefile.platform
 
@@ -9,10 +10,15 @@ OBJS := \
     main.o          \
     usbdevice.o     \
     fwloader.o      \
-    profiler.o
+    profiler.o      \
+    elfdebuginfo.o
 
 # include directories
-INCLUDES = -I. -I$(DEPS_DIR)/libusbx/include
+INCLUDES := \
+        -I. \
+        -I$(MASTER_DIR)/bootloader \
+        -I$(MASTER_DIR)/common \
+        -I$(DEPS_DIR)/libusbx/include
 
 VERSION := $(shell git describe --tags)
 ifeq ($(VERSION), )
@@ -21,7 +27,9 @@ endif
 
 # C++ compiler flags (-g -O2 -Wall)
 CCFLAGS = -g -O2
-CCFLAGS += -DSDK_VERSION=$(VERSION)
+# we currently define SIFTEO_SIMULATOR so we can use macros.h - revisit whether
+# this deserves any reorg
+CCFLAGS += -DSDK_VERSION=$(VERSION) -DSIFTEO_SIMULATOR
 
 # library paths
 LDFLAGS := -L$(DEPS_DIR)/libusbx/lib -lusb-1.0

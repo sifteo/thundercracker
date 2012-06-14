@@ -17,6 +17,14 @@
 
 static __bit lcd_is_awake;
 
+void lcd_reset_delay()
+{
+    // Arbitrary delay, currently about 50 us.
+    uint8_t delay_i = 0;
+    do {
+    } while (--delay_i);
+}
+
 
 static void lcd_cmd_table(const __code uint8_t *ptr) __naked
 {
@@ -178,6 +186,7 @@ void lcd_begin_frame()
         CTRL_PORT = CTRL_IDLE & ~CTRL_LCD_DCX;
         CTRL_PORT = (CTRL_IDLE & ~CTRL_LCD_DCX) | CTRL_FLASH_LAT2;  // Enter reset
 
+        lcd_reset_delay();
         CTRL_PORT = CTRL_IDLE;
         CTRL_PORT = CTRL_IDLE | CTRL_FLASH_LAT2;  // Exit reset
 #else

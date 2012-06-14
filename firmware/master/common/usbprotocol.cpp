@@ -26,12 +26,12 @@ const USBProtocol::SubSystemHandler USBProtocol::subsystemHandlers[] = {
     #endif
 };
 
-void USBProtocol::dispatch(const uint8_t *buf, unsigned len)
+void USBProtocol::dispatch(const USBProtocolMsg &m)
 {
-    unsigned subsys = static_cast<unsigned>(subsystem(buf, len));
+    unsigned subsys = static_cast<unsigned>(m.subsystem());
     if (subsys < arraysize(subsystemHandlers)) {
         SubSystemHandler handler = subsystemHandlers[subsys];
-        handler(buf, len);
+        handler(m.bytes, m.len);
     }
 }
 
@@ -56,8 +56,8 @@ static uint8_t status;
 void USBProtocolHandler::installerHandler(const uint8_t *buf, unsigned len)
 {
     // first word is the header
-    buf += USBProtocol::HEADER_LEN;
-    len -= USBProtocol::HEADER_LEN;
+    buf += USBProtocolMsg::HEADER_BYTES;
+    len -= USBProtocolMsg::HEADER_BYTES;
 
     if (installation.state == WaitingForLength) {
         // XXX: chokes if we don't get the 4 bytes of length at once :/

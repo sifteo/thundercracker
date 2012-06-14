@@ -2,21 +2,20 @@
 #define _USB_DEVICE_H_
 
 #include "libusb.h"
+#include "iodevice.h"
+
 #include <list>
 #include <stdint.h>
 
-class UsbDevice {
+class UsbDevice : public IODevice {
 public:
     UsbDevice();
-
-    static const unsigned MAX_EP_SIZE = 64;
-    static const unsigned MAX_OUTSTANDING_OUT_TRANSFERS = 32;
 
     static int init() {
         return libusb_init(0);
     }
 
-    static void processEvents() {
+    void processEvents() {
         struct timeval tv = {
             0,  // tv_sec
             0   // tv_usec
@@ -28,11 +27,11 @@ public:
     void close();
     bool isOpen() const;
 
-    int inEpMaxPacketSize() const {
+    int maxINPacketSize() const {
         return mInEndpoint.maxPacketSize;
     }
 
-    int outEpMaxPacketSize() const {
+    int maxOUTPacketSize() const {
         return mOutEndpoint.maxPacketSize;
     }
 

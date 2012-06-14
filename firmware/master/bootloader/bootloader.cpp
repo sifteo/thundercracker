@@ -6,11 +6,14 @@
 #include "usbprotocol.h"
 #include "usb/usbdevice.h"
 #include "aes128.h"
+#include "stm32flash.h"
 
 #include "string.h"
 
 Bootloader::Update Bootloader::update;
 bool Bootloader::firstLoad;
+const uint32_t Bootloader::SIZE = 0x2000;
+const uint32_t Bootloader::APPLICATION_ADDRESS = Stm32Flash::START_ADDR + SIZE;
 
 void Bootloader::init()
 {
