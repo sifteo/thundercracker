@@ -58,6 +58,9 @@ void power_init(void)
 
     // Sequence 3.3v boost, followed by 2.0v downstream
     #if HWREV >= 2
+        //Before powering on the 3v3 lets make sure the LCD_BLE is off!
+        CTRL_PORT = CTRL_FLASH_LAT1;
+        CTRL_PORT = ~CTRL_LCD_DCX |  CTRL_FLASH_LAT1;
         // Turn on 3.3V boost
         CTRL_PORT = CTRL_3V3_EN;
 
