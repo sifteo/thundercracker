@@ -63,7 +63,7 @@ struct USBProtocolMsg {
     }
 
     unsigned payloadLen() const {
-        return MIN(0, static_cast<int>(len - sizeof(header)));
+        return MAX(0, static_cast<int>(len - sizeof(header)));
     }
 };
 
