@@ -189,13 +189,13 @@ Set up the frontend. Creates a window, allocates GPU resources, etc. If any of t
 
 Terminate the graphical frontend. Closes the window, frees textures, and so on.
 
-### Frontend:runFrame()
+### Frontend():runFrame()
 
 Run the frontend's main loop, for a single frame. This automatically includes a frame-rate throttling feature, which dynamically decreases the frame rate during periods of no interaction.
 
 Returns _true_ if the frontend should still be running or _false_ if the user has asked Siftulator to exit.
 
-### Frontend:postMessage( _string_ )
+### Frontend():postMessage( _string_ )
 
 Post a message string to the frontend's heads-up display. A posted message will display for a few seconds before automatically clearing. Posting a new message will instantly replace the previously posted message.
 
