@@ -15,7 +15,7 @@ public:
 
     std::string readString(const std::string &section, uint32_t offset) const;
     bool findNearestSymbol(uint32_t address, Elf::Symbol &symbol, std::string &name) const;
-    std::string formatAddress(uint32_t address, bool &found) const;
+    std::string formatAddress(uint32_t address) const;
     bool readROM(uint32_t address, uint8_t *buffer, uint32_t bytes) const;
 
 private:

@@ -148,7 +148,7 @@ bool ELFDebugInfo::findNearestSymbol(uint32_t address,
     return false;
 }
 
-std::string ELFDebugInfo::formatAddress(uint32_t address, bool &found) const
+std::string ELFDebugInfo::formatAddress(uint32_t address) const
 {
     Elf::Symbol symbol;
     std::string name;
