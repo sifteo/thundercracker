@@ -9,11 +9,9 @@
 #include <stdint.h>
 #include "macros.h"
 
-/*
- * Simple getters to help decode USB data for dispatch.
- */
-class USBProtocol {
-public:
+struct USBProtocolMsg;
+
+struct USBProtocol {
 
     enum SubSystem {
         Installer       = 0,
@@ -25,33 +23,43 @@ public:
         RFPassThrough   = 6,
     };
 
+    static void dispatch(const USBProtocolMsg &m);
+
     typedef void (*SubSystemHandler)(const uint8_t *buf, unsigned len);
-
-    static const unsigned HEADER_LEN = 4;
-
-    /*
-     * Headers are the first 32 bits of a message, little endian.
-     */
-    static inline uint32_t header(const uint8_t *buf, unsigned len) {
-        ASSERT(len >= HEADER_LEN);
-        return *reinterpret_cast<const uint32_t*>(buf);
-    }
-
-    /*
-     * The highest 4 bits specify the subsystem.
-     * Byte order is little endian.
-     *
-     * XXX: if the list of SubSystems doesn't grow, can we get away with 3 bits?
-     */
-    static inline SubSystem subsystem(const uint8_t *buf, unsigned len) {
-        ASSERT(len >= HEADER_LEN);
-        return static_cast<SubSystem>(buf[3] >> 4);
-    }
-
-    static void dispatch(const uint8_t *buf, unsigned len);
-
-private:
     static const SubSystemHandler subsystemHandlers[];
+
+};
+
+struct USBProtocolMsg {
+
+    static const unsigned MAX_LEN = 64;
+    static const unsigned MAX_PAYLOAD_BYTES = MAX_LEN - sizeof(uint32_t);
+
+    unsigned len;
+    union {
+        uint8_t bytes[MAX_LEN];
+        struct {
+            uint32_t header;
+            uint8_t payload[MAX_PAYLOAD_BYTES];
+        };
+    };
+
+    USBProtocolMsg() :
+        len(0) {}
+
+    /*
+     * Highest 4 bits in the header specify the subsystem.
+     */
+    USBProtocolMsg(USBProtocol::SubSystem ss) :
+        len(sizeof(header)), header(ss << 28) {}
+
+    USBProtocol::SubSystem subsystem() const {
+        return static_cast<USBProtocol::SubSystem>(header >> 28);
+    }
+
+    unsigned bytesFree() const {
+        return sizeof(bytes) - len;
+    }
 };
 
 // TODO: this is going to get killed and resurrected in its proper form sometime soon

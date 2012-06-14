@@ -73,11 +73,12 @@ void FactoryTest::onUartIsr()
  */
 void FactoryTest::usbHandler(const uint8_t *buf, unsigned len)
 {
-    uint8_t cmd = buf[USBProtocol::HEADER_LEN];
+    const unsigned headersz = sizeof(USBProtocolMsg::header);
+    uint8_t cmd = buf[headersz];
     if (cmd < arraysize(handlers)) {
         TestHandler handler = handlers[cmd];
         // arg[0] is always the 'command 'type' byte
-        handler(len - USBProtocol::HEADER_LEN, buf + USBProtocol::HEADER_LEN);
+        handler(len - headersz, buf + headersz);
     }
 }
 
