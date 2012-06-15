@@ -43,14 +43,19 @@ void VirtAssetSlots::rebind(_SYSCubeIDVector cv)
      * Iterate first over cubes, then over slots. This avoids thrashing
      * our cache, since SysLFS stores allocation info per-cube not per-slot.
      */
+    while (cv) {
+        _SYSCubeID cube = Intrinsic::CLZ(cv);
+        cv ^= Intrinsic::LZ(cube);
+        rebindCube(cube);
+    }
+}
 
+void VirtAssetSlots::rebindCube(_SYSCubeID cube)
+{
+#if 0
     SysLFS::AssetSlotIdentity id;
     id.volume = boundVolume.block.code;
-
-    while (cv) {
-        unsigned cube = Intrinsic::CLZ(cv);
-        cv ^= Intrinsic::LZ(cube);
-        id.ordinal = 0;
+    id.ordinal = 0;
 
         /*
          * Bind() operations always read SysLFS and may write to it.
@@ -73,5 +78,5 @@ void VirtAssetSlots::rebind(_SYSCubeIDVector cv)
         // Unbind any remaining slots.
         for (; id.ordinal < NUM_SLOTS; ++id.ordinal)
             instances[id.ordinal].unbind(cube);
-    }
+#endif
 }

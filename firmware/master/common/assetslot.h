@@ -104,6 +104,7 @@ public:
     // Refresh the current binding, if any, on some specified set of cubes.
     // Called when new cubes are paired.
     static void rebind(_SYSCubeIDVector cv);
+    static void rebindCube(_SYSCubeID cube);
 
 private:
     VirtAssetSlots();  // Do not implement
