@@ -116,6 +116,12 @@ namespace Intrinsic {
         return 0x80000000 >> l;
     }
 
+    static inline uint32_t CTZ(uint32_t r) {
+        // Count trailing zeroes. Reference:
+        // http://en.wikipedia.org/wiki/Find_first_set#Properties_and_relations
+        return 31 - CLZ(r & -r);
+    }
+
     static inline uint32_t ROR(uint32_t a, uint32_t b) {
         // Rotate right. One instruction on ARM
         if (b < 32)
