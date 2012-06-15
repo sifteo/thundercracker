@@ -13,7 +13,7 @@ public:
     static const unsigned MAX_OUTSTANDING_OUT_TRANSFERS = 32;
 
     static const unsigned SIFTEO_VID = 0x22fa;
-    static const unsigned BASE_PID = 0x0110;
+    static const unsigned BASE_PID = 0x0105;
     static const unsigned BOOTLOADER_PID = 0x0115;
 
     virtual bool open(uint16_t vendorId, uint16_t productId, uint8_t interface = 0) = 0;

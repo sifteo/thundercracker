@@ -16,16 +16,16 @@ struct USBProtocol {
     enum SubSystem {
         Installer       = 0,
         FactoryTest     = 1,
-        Debugger        = 2,
-        Logger          = 3,
-        Profiler        = 4,
+        Profiler        = 2,
+        Debugger        = 3,
+        Logger          = 4,
         DesktopSync     = 5,
         RFPassThrough   = 6,
     };
 
     static void dispatch(const USBProtocolMsg &m);
 
-    typedef void (*SubSystemHandler)(const uint8_t *buf, unsigned len);
+    typedef void (*SubSystemHandler)(const USBProtocolMsg &m);
     static const SubSystemHandler subsystemHandlers[];
 
 };
@@ -61,6 +61,10 @@ struct USBProtocolMsg {
     unsigned bytesFree() const {
         return sizeof(bytes) - len;
     }
+
+    unsigned payloadLen() const {
+        return MAX(0, static_cast<int>(len - sizeof(header)));
+    }
 };
 
 // TODO: this is going to get killed and resurrected in its proper form sometime soon
@@ -69,7 +73,7 @@ public:
     USBProtocolHandler();
 
     static void init();
-    static void installerHandler(const uint8_t *buf, unsigned len);
+    static void installerHandler(const USBProtocolMsg &m);
 
 private:
     enum State {
