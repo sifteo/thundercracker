@@ -16,9 +16,9 @@ struct USBProtocol {
     enum SubSystem {
         Installer       = 0,
         FactoryTest     = 1,
-        Debugger        = 2,
-        Logger          = 3,
-        Profiler        = 4,
+        Profiler        = 2,
+        Debugger        = 3,
+        Logger          = 4,
         DesktopSync     = 5,
         RFPassThrough   = 6,
     };

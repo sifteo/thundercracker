@@ -65,4 +65,6 @@
 #define BTN_HOME_GPIO       GPIOPin(&GPIOD, 2)
 #define BTN_HOME_EXTI_VEC   EXTI2
 
+#define PROFILER_TIM        TIM2
+
 #endif // _BOARD_REV2_H

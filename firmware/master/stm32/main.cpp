@@ -19,6 +19,7 @@
 #include "svmloader.h"
 #include "powermanager.h"
 #include "crc.h"
+#include "sampleprofiler.h"
 
 /*
  * Application specific entry point.
@@ -53,6 +54,9 @@ int main()
 
     NVIC.irqEnable(IVT.VOLUME_TIM);             // volume timer
     NVIC.irqPrioritize(IVT.VOLUME_TIM, 0x70);
+
+    NVIC.irqEnable(IVT.PROFILER_TIM);           // sample profiler timer
+    NVIC.irqPrioritize(IVT.PROFILER_TIM, 0x0);  //  highest possible priority
 
     /*
      * High-level hardware initialization
@@ -107,6 +111,7 @@ int main()
     AudioOutDevice::start();
 
     UsbDevice::init();
+    SampleProfiler::init();
 
     /*
      * Ensure we've been powered up long enough before beginning radio

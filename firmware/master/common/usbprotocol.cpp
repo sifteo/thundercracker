@@ -11,6 +11,7 @@
 #include "usb/usbdevice.h"
 #include "hardware.h"
 #include "factorytest.h"
+#include "sampleprofiler.h"
 #endif
 
 /*
@@ -20,9 +21,11 @@
 const USBProtocol::SubSystemHandler USBProtocol::subsystemHandlers[] = {
     USBProtocolHandler::installerHandler,   // 0
     #if ((defined SIFTEO_SIMULATOR) || (BOARD == BOARD_TEST_JIG))
+    0,
     0
     #else
     FactoryTest::usbHandler,                // 1
+    SampleProfiler::onUSBData               // 2
     #endif
 };
 
