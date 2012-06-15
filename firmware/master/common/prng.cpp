@@ -15,6 +15,7 @@
  */
 
 #include "prng.h"
+#include "systime.h"
 
 #define rot(x,k) (((x)<<(k))|((x)>>(32-(k))))
 
@@ -85,4 +86,20 @@ uint32_t PRNG::valueBounded(_SYSPseudoRandomState *state, uint32_t limit)
 
     // Well, that took too long. Fallback approach (not perfectly uniform!)
     return value(state) % (limit + 1);
+}
+
+uint32_t PRNG::anonymousValue()
+{
+    /*
+     * For system use, generate an "anonymous" random number, by extracting
+     * entropy only from the current time. This isn't at all secure, but it's
+     * a simple and stateless way of generating random numbers for cases
+     * where that's okay.
+     */
+
+    _SYSPseudoRandomState state;
+    SysTime::Ticks now = SysTime::ticks();
+
+    init(&state, uint32_t(now ^ (now >> 32)));
+    return value(&state);
 }

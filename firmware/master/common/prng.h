@@ -9,9 +9,13 @@
 #include <sifteo/abi.h>
 
 struct PRNG {
+    // Stateful userspace-accessible PRNG
     static void init(_SYSPseudoRandomState *state, uint32_t seed);
     static uint32_t value(_SYSPseudoRandomState *state);
     static uint32_t valueBounded(_SYSPseudoRandomState *state, uint32_t limit);
+
+    // For internal use by the system
+    static uint32_t anonymousValue();
 };
 
 #endif
