@@ -54,7 +54,7 @@ namespace SysLFS {
      * Keys in the range [0x00, 0x27] are currently unallocated.
      */
 
-    enum Keys {
+    enum Key {
         kCubeBase       = 0x28,
         kCubeCount      = _SYS_NUM_CUBE_SLOTS,
         kAssetSlotBase  = kCubeBase + kCubeCount,
@@ -76,6 +76,25 @@ namespace SysLFS {
         uint8_t eraseCount;
         uint8_t accessRank;
         AssetSlotIdentity identity;
+
+        static const unsigned MAX_COST = 0xFE;
+        unsigned costToEvict() const;
+    };
+    
+    struct CubeAssetsRecord {
+        AssetSlotOverviewRecord slots[ASSET_SLOTS_PER_CUBE];
+
+        typedef BitVector<ASSET_SLOTS_PER_CUBE> SlotVector_t;
+
+        bool checkBinding(FlashVolume vol, unsigned numSlots) const;
+        void allocBinding(FlashVolume vol, unsigned numSlots);
+
+        void markErased(unsigned slot);
+        bool markAccessed(FlashVolume vol, unsigned numSlots);
+
+    private:
+        void recycleSlots(unsigned bank, unsigned numSlots,
+            SlotVector_t &vecOut, unsigned &costOut) const;
     };
 
     struct CubePairingRecord {
@@ -84,11 +103,10 @@ namespace SysLFS {
     };
 
     struct CubeRecord {
-        AssetSlotOverviewRecord assetSlots[ASSET_SLOTS_PER_CUBE];
+        CubeAssetsRecord assets;
         CubePairingRecord pairing;
 
-        void read(_SYSCubeID cube);
-        void write(_SYSCubeID cube);
+        Key getByCubeID(_SYSCubeID cube);
     };
 
     /*
@@ -124,24 +142,19 @@ namespace SysLFS {
 
     struct AssetSlotRecord {
         LoadedAssetGroupRecord groups[ASSET_GROUPS_PER_SLOT];
+
+        static Key makeKey(Key cube, unsigned slot)
+        {
+            unsigned i = cube - kCubeBase;
+            ASSERT(i < kCubeCount);
+            ASSERT(slot < ASSET_SLOTS_PER_CUBE);
+            return Key(kAssetSlotBase + i * ASSET_SLOTS_PER_CUBE + slot);
+        }
     };
 
     /*
      * Accessors
      */
-
-    inline unsigned cubeKey(_SYSCubeID cube)
-    {
-        ASSERT(cube < _SYS_NUM_CUBE_SLOTS);
-        return kCubeBase + cube;
-    }
-
-    inline unsigned assetSlotKey(_SYSCubeID cube, unsigned slot)
-    {
-        ASSERT(cube < _SYS_NUM_CUBE_SLOTS);
-        ASSERT(slot < ASSET_SLOTS_PER_CUBE);
-        return kAssetSlotBase + cube * ASSET_SLOTS_PER_CUBE + slot;
-    }
 
     inline FlashLFS &get()
     {
@@ -157,17 +170,17 @@ namespace SysLFS {
     }
 
     // System equivalents to _SYS_fs_objectRead/Write
-    int read(unsigned key, uint8_t *buffer, unsigned bufferSize);
-    int write(unsigned key, const uint8_t *data, unsigned dataSize);
+    int read(Key k, uint8_t *buffer, unsigned bufferSize);
+    int write(Key k, const uint8_t *data, unsigned dataSize);
 
     template <typename T>
-    inline bool read(unsigned key, T &obj) {
-        return read(key, (uint8_t*) &obj, sizeof obj) == sizeof obj;
+    inline bool read(Key k, T &obj) {
+        return read(k, (uint8_t*) &obj, sizeof obj) == sizeof obj;
     }
 
     template <typename T>
-    inline bool write(unsigned key, const T &obj) {
-        return write(key, (const uint8_t*) &obj, sizeof obj) == sizeof obj;
+    inline bool write(Key k, const T &obj) {
+        return write(k, (const uint8_t*) &obj, sizeof obj) == sizeof obj;
     }
 
 } // end namespace SysLFS
