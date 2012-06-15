@@ -69,6 +69,10 @@ namespace SysLFS {
     struct AssetSlotIdentity {
         uint8_t volume;
         uint8_t ordinal;
+
+        bool inActiveSet(FlashVolume vol, unsigned numSlots) const {
+            return volume == vol.block.code && ordinal < numSlots;
+        }
     };
 
     struct AssetSlotOverviewRecord {

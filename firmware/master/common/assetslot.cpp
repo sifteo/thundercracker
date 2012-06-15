@@ -12,19 +12,6 @@ FlashVolume VirtAssetSlots::boundVolume;
 uint8_t VirtAssetSlots::numBoundSlots;
 
 
-bool VirtAssetSlot::bind(_SYSCubeID cube, SysLFS::CubeRecord &cr, SysLFS::AssetSlotIdentity &id)
-{
-    //LOG(("VirtAssetSlot bind(cube=%d, id=%d:%d)\n", cube, id.volume, id.ordinal));
-
-    return false;
-}
-
-void VirtAssetSlot::unbind(_SYSCubeID cube)
-{
-    ASSERT(cube < arraysize(phys));
-    phys[cube].setInvalid();
-}
-
 void VirtAssetSlots::bind(FlashVolume volume, unsigned numSlots)
 {
     ASSERT(volume.isValid());
@@ -33,7 +20,7 @@ void VirtAssetSlots::bind(FlashVolume volume, unsigned numSlots)
     boundVolume = volume;
     numBoundSlots = numSlots;
 
-    // XXX: Should rebind only paired cubes (HWID valid, paired in SysLFS)
+    // XXX: Should rebind only connected cubes (HWID valid, paired in SysLFS)
     rebind(CubeSlots::vecEnabled);
 }
 
@@ -52,31 +39,36 @@ void VirtAssetSlots::rebind(_SYSCubeIDVector cv)
 
 void VirtAssetSlots::rebindCube(_SYSCubeID cube)
 {
-#if 0
-    SysLFS::AssetSlotIdentity id;
-    id.volume = boundVolume.block.code;
-    id.ordinal = 0;
+    ASSERT(cube < _SYS_NUM_CUBE_SLOTS);
 
-        /*
-         * Bind() operations always read SysLFS and may write to it.
-         * We only want to interact with SysLFS if we're operating on
-         * both a nonzero number of cubes and a nonzero number of bound slots.
-         */
-        if (numBoundSlots) {
-            SysLFS::CubeRecord cr;
-            bool modified = false;
+    FlashVolume volume = boundVolume;
+    unsigned numSlots = numBoundSlots;
 
-            cr.read(cube);
+    /*
+     * Bind() operations always read SysLFS and may write to it.
+     * We only want to interact with SysLFS if we're operating on
+     * both a nonzero number of cubes and a nonzero number of bound slots.
+     */
 
-            for (id.ordinal = 0; id.ordinal < numBoundSlots; ++id.ordinal)
-                modified |= instances[id.ordinal].bind(cube, cr, id);
+    if (numSlots) {
+        SysLFS::CubeRecord cr;
+        SysLFS::Key ck = cr.getByCubeID(cube);
 
-            if (modified)
-                cr.write(cube);
+        if (!cr.assets.checkBinding(volume, numSlots)) {
+            cr.assets.allocBinding(volume, numSlots);
+            SysLFS::write(ck, cr);
         }
 
-        // Unbind any remaining slots.
-        for (; id.ordinal < NUM_SLOTS; ++id.ordinal)
-            instances[id.ordinal].unbind(cube);
-#endif
+        for (unsigned i = 0; i < arraysize(cr.assets.slots); ++i) {
+            SysLFS::AssetSlotOverviewRecord &slot = cr.assets.slots[i];
+            if (slot.identity.inActiveSet(volume, numSlots)) {
+                ASSERT(slot.identity.ordinal < NUM_SLOTS);
+                instances[slot.identity.ordinal].bind(cube, i);
+            }
+        }
+    }
+
+    // Unbind any remaining slots.
+    for (unsigned i = numSlots; i < NUM_SLOTS; ++i)
+        instances[i].unbind(cube);
 }

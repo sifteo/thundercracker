@@ -70,11 +70,13 @@ class VirtAssetSlot
 public:
     static const unsigned SLOT_SIZE = SysLFS::TILES_PER_ASSET_SLOT;
 
-    // Bind this to a physical slot, on one cube. Returns 'true' if CubeRecord is modified.
-    bool bind(_SYSCubeID cube, SysLFS::CubeRecord &cr, SysLFS::AssetSlotIdentity &id);
-    
-    // Unbind this slot, on one cube.
-    void unbind(_SYSCubeID cube);
+    void bind(_SYSCubeID cube, unsigned index) {
+        phys[cube].setIndex(index);
+    }
+
+    void unbind(_SYSCubeID cube) {
+        phys[cube].setInvalid();
+    }
 
 private:
     // Which physical slot does this map to, on each cube?

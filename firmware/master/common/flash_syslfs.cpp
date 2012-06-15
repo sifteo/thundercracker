@@ -43,8 +43,12 @@ int SysLFS::write(Key k, const uint8_t *data, unsigned dataSize)
     FlashLFS &lfs = SysLFS::get();
     FlashLFSObjectAllocator allocator(lfs, k, dataSize, crc);
 
-    if (!allocator.allocateAndCollectGarbage())
+    if (!allocator.allocateAndCollectGarbage()) {
+        // We don't expect callers to have a good way to cope with this
+        // failure, so go ahead and log the error early.
+        LOG(("SYSLFS: Out of space, failed to write system data to flash!\n"));
         return _SYS_ENOSPC;
+    }
 
     FlashBlock::invalidate(allocator.address(), allocator.address() + dataSize);
     FlashDevice::write(allocator.address(), data, dataSize);
@@ -343,7 +347,7 @@ bool SysLFS::CubeAssetsRecord::markAccessed(FlashVolume vol, unsigned numSlots)
 
     for (unsigned i = 0; i < arraysize(slots); ++i) {
         AssetSlotOverviewRecord &slot = slots[i];
-        if (slot.identity.volume == vol.block.code && slot.identity.ordinal < numSlots) {
+        if (slot.identity.inActiveSet(vol, numSlots)) {
             if (slot.accessRank != 0) {
                 modified = true;
                 slot.accessRank = 0;
@@ -355,7 +359,7 @@ bool SysLFS::CubeAssetsRecord::markAccessed(FlashVolume vol, unsigned numSlots)
     if (modified) {
         for (unsigned i = 0; i < arraysize(slots); ++i) {
             AssetSlotOverviewRecord &slot = slots[i];
-            if ((slot.identity.volume != vol.block.code || slot.identity.ordinal >= numSlots)
+            if (!slot.identity.inActiveSet(vol, numSlots)
                 && slot.accessRank < 0xFF) {
                 slot.accessRank++;
             }
