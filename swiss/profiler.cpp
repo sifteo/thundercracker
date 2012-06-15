@@ -74,8 +74,9 @@ bool Profiler::profile(const char *elfPath, const char *outPath)
         for (unsigned i = 0; i < numSamples; ++i) {
             // XXX: this works but is actually too slow to keep up with USB data!
             // need to mmap file access in ELFDebugInfo.
-            std::string s = dbgInfo.formatAddress(*address++);
-            fprintf(fout, "addr! %s (0x%x)\n", s.c_str(), address);
+            std::string s = dbgInfo.formatAddress(*address);
+            fprintf(fout, "addr! %s (0x%x)\n", s.c_str(), *address);
+            address++;
         }
     }
 
