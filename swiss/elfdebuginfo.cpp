@@ -16,7 +16,7 @@
 
 void ELFDebugInfo::clear()
 {
-    program = 0;
+    program.unmap();
     sections.clear();
     sectionMap.clear();
 }
@@ -26,15 +26,15 @@ bool ELFDebugInfo::copyProgramBytes(uint32_t byteOffset, uint8_t *dest, uint32_t
     /*
      * Copy data out of the program's ELF
      */
-    if (!program)
+    if (!program.isMapped())
         return false;
 
-    // TODO: mmap?
-    if (fseek(program, byteOffset, SEEK_SET) != 0)
+    unsigned avail;
+    uint8_t *p = program.getData(byteOffset, avail);
+    if (!p || length > avail)
         return false;
 
-    if (fread(dest, 1, length, program) != length)
-        return false;
+    memcpy(dest, p, length);
 
     return true;
 }
@@ -46,8 +46,7 @@ bool ELFDebugInfo::init(const char *elfPath)
      */
 
     clear();
-    program = fopen(elfPath, "rb");
-    if (!program)
+    if (!program.map(elfPath))
         return false;
 
     Elf::FileHeader header;

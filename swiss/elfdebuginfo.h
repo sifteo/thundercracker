@@ -3,6 +3,7 @@
 #define ELF_DEBUG_INFO_H
 
 #include "elfdefs.h"
+#include "mappedfile.h"
 
 #include <vector>
 #include <map>
@@ -22,8 +23,7 @@ private:
     typedef std::vector<Elf::SectionHeader> sections_t;
     typedef std::map<std::string, Elf::SectionHeader*> sectionMap_t;
 
-//    Elf::Program program;
-    FILE *program;
+    MappedFile program;
     sections_t sections;
     sectionMap_t sectionMap;
 

@@ -11,7 +11,8 @@ OBJS := \
     usbdevice.o     \
     fwloader.o      \
     profiler.o      \
-    elfdebuginfo.o
+    elfdebuginfo.o  \
+    mappedfile.o
 
 # include directories
 INCLUDES := \
