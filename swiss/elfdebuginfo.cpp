@@ -70,6 +70,8 @@ bool ELFDebugInfo::init(const char *elfPath)
             sectionMap[readString(strTab, pHdr->sh_name)] = pHdr;
         }
     }
+
+    return true;
 }
 
 const Elf::SectionHeader *ELFDebugInfo::findSection(const std::string &name) const

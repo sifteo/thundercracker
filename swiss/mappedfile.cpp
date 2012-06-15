@@ -55,8 +55,7 @@ int MappedFile::map(const char *path)
 
 #else
 
-    // XXX: have not ported over the non-Windows portion yet, should be trivial though
-    int fh = open(filename, O_RDWR | O_CREAT, 0777);
+    int fh = open(path, O_RDWR | O_CREAT, 0777);
     struct stat st;
 
     if (fh < 0 || fstat(fh, &st)) {
@@ -65,23 +64,20 @@ int MappedFile::map(const char *path)
         fprintf(stderr, "FLASH: Can't open backing file '%s' (%s)\n", path, strerror(errno));
         return false;
     }
-    fileHandle = fh;
 
-    bool newFile = (unsigned)st.st_size == (unsigned)0;
-    if ((unsigned)st.st_size < (unsigned)sizeof *data && ftruncate(fileHandle, sizeof *data)) {
-        close(fileHandle);
-        fprintf(stderr, "FLASH: Can't resize backing file '%s' (%s)\n",
-            path, strerror(errno));
-        return false;
-    }
+    unsigned sz = (unsigned)st.st_size;
 
-    void *mapping = mmap(NULL, sizeof *data, PROT_READ | PROT_WRITE, MAP_SHARED, fileHandle, 0);
+    void *mapping = mmap(NULL, sz, PROT_READ | PROT_WRITE, MAP_SHARED, fh, 0);
     if (mapping == MAP_FAILED) {
-        close(fileHandle);
+        close(fh);
         fprintf(stderr, "FLASH: Can't memory-map backing file '%s' (%s)\n",
             path, strerror(errno));
         return false;
     }
+
+    pData = reinterpret_cast<uint8_t*>(mapping);
+    fileHandle = fh;
+    filesz = st.st_size;
 
 #endif
 

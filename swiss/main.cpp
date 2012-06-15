@@ -42,7 +42,7 @@ static void usage()
 
 static void version()
 {
-    fprintf(stderr, "swiss, version %s\n", SDK_VERSION);
+    fprintf(stderr, "swiss, version\n");
 }
 
 int main(int argc, char **argv)
