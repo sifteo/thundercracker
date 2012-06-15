@@ -136,6 +136,22 @@ inline unsigned clz(uint32_t word)
     return __builtin_clz(word);
 }
 
+/**
+ * @brief Find first bit set in a 32-bit word
+ *
+ * Finds the first bit set in a word, starting with the least significant bit.
+ * If no bits are set (the argument was zero), returns zero. Otherwise,
+ * returns a number between 1 (LSB) and 32 (MSB).
+ *
+ * This function is implemented using clz().
+ */
+
+inline unsigned ffs(uint32_t word)
+{
+    // Reference: http://en.wikipedia.org/wiki/Find_first_set#Properties_and_relations
+    return 32 - __builtin_clz(word & -word);
+}
+
 /// Compute the remainder (modulo) operation for two floating point numbers. Single-precision.
 float inline fmod(float a, float b)
 {

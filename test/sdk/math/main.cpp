@@ -172,6 +172,40 @@ void testBits()
     ASSERT(clz(b(0x00000003)) == 30);
     ASSERT(clz(b(0x00000001)) == 31);
     ASSERT(clz(b(0x00000000)) == 32);
+
+    ASSERT(ffs(b(0x00000000)) == 0);
+    ASSERT(ffs(b(0xffffffff)) == 1);
+    ASSERT(ffs(b(0x7ffffff2)) == 2);
+    ASSERT(ffs(b(0x5555555c)) == 3);
+    ASSERT(ffs(b(0xaaaaaaa8)) == 4);
+    ASSERT(ffs(b(0x80000010)) == 5);
+    ASSERT(ffs(b(0x40000020)) == 6);
+    ASSERT(ffs(b(0x20000040)) == 7);
+    ASSERT(ffs(b(0x10000080)) == 8);
+    ASSERT(ffs(b(0x08000100)) == 9);
+    ASSERT(ffs(b(0x04000200)) == 10);
+    ASSERT(ffs(b(0x02000400)) == 11);
+    ASSERT(ffs(b(0x01000800)) == 12);
+    ASSERT(ffs(b(0x00801000)) == 13);
+    ASSERT(ffs(b(0x00402000)) == 14);
+    ASSERT(ffs(b(0x00204000)) == 15);
+    ASSERT(ffs(b(0x00108000)) == 16);
+    ASSERT(ffs(b(0x00010000)) == 17);
+    ASSERT(ffs(b(0x00020000)) == 18);
+    ASSERT(ffs(b(0x00040000)) == 19);
+    ASSERT(ffs(b(0x00080000)) == 20);
+    ASSERT(ffs(b(0x00100000)) == 21);
+    ASSERT(ffs(b(0x00200000)) == 22);
+    ASSERT(ffs(b(0x00400000)) == 23);
+    ASSERT(ffs(b(0x00800000)) == 24);
+    ASSERT(ffs(b(0x01000000)) == 25);
+    ASSERT(ffs(b(0x02000000)) == 26);
+    ASSERT(ffs(b(0x04000000)) == 27);
+    ASSERT(ffs(b(0x08000000)) == 28);
+    ASSERT(ffs(b(0x10000000)) == 29);
+    ASSERT(ffs(b(0x20000000)) == 30);
+    ASSERT(ffs(b(0x40000000)) == 31);
+    ASSERT(ffs(b(0x80000000)) == 32);
 }
 
 void main()
