@@ -21,8 +21,14 @@ class SPIMaster {
         : hw(_hw), csn(_csn), sck(_sck), miso(_miso), mosi(_mosi) {}
 
     void init();
-    void begin();
-    void end();
+
+    inline void begin() {
+        csn.setLow();
+    }
+
+    inline void end() {
+        csn.setHigh();
+    }
 
     uint8_t transfer(uint8_t b);
     void transfer(const uint8_t *txbuf, uint8_t *rxbuf, unsigned len);

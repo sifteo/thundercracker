@@ -69,16 +69,6 @@ void SPIMaster::init()
     hw->CR1 |=  (1 << 6);   // SPE - enable the spi device
 }
 
-void SPIMaster::begin()
-{
-    csn.setLow();
-}
-
-void SPIMaster::end()
-{
-    csn.setHigh();
-}
-
 uint8_t SPIMaster::transfer(uint8_t b)
 {
     /*
