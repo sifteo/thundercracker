@@ -48,16 +48,8 @@ public:
     int writePacketSync(const uint8_t *buf, int maxlen, int *transferred, unsigned timeout = -1);
 
 private:
-    /*
-     * Work around what appears to be a libusb bug. Only the first 3
-     * active transfers successfully cancel on shutdown, so to keep
-     * things simple until this is fixed, only maintain 3 outstanding IN transfers.
-     */
-#ifdef WIN32
-    static const unsigned NUM_CONCURRENT_IN_TRANSFERS = 3;
-#else
+
     static const unsigned NUM_CONCURRENT_IN_TRANSFERS = 16;
-#endif
 
     bool populateDeviceInfo(libusb_device *dev);
     void openINTransfers();

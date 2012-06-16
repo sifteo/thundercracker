@@ -9,6 +9,6 @@ OBJS_STM32 += \
     $(MASTER_DIR)/rftest/main.stm32.o
 
 # rftest specific flags
-CCFLAGS += -I.
+CCFLAGS += -I. -DRFTEST
 
 include $(TC_DIR)/firmware/master/Makefile.rules

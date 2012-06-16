@@ -3,12 +3,14 @@
 #include "usbprotocol.h"
 #include "vectors.h"
 
+#include <string.h>
+
 uint32_t SampleProfiler::sampleBuf;
 HwTimer SampleProfiler::timer(&PROFILER_TIM);
 
 void SampleProfiler::init()
 {
-    timer.init(1000, 50);
+    timer.init(1000, 35);
 }
 
 void SampleProfiler::onUSBData(const USBProtocolMsg &m)
@@ -28,16 +30,18 @@ void SampleProfiler::processSample(uint32_t pc)
 
     sampleBuf = pc;
 
-    // XXX: do usb transaction in a task? maybe buffer more samples so we're
-    // less likely to overwrite our single buffered sample?
-
-#if 0
+    /*
+     * It's a bit rude to send this out over USB within this ISR, but
+     * it means that none of the profiler's work will be included in the
+     * reported data.
+     *
+     * If this turns out to be untenable, let's move this to a task.
+     */
     USBProtocolMsg m(USBProtocol::Profiler);
 
     memcpy(m.payload, &sampleBuf, sizeof sampleBuf);
     m.len += sizeof(sampleBuf);
     UsbDevice::write(m.bytes, m.len);
-#endif
 }
 
 /*
