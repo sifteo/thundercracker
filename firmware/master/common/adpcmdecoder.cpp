@@ -47,15 +47,15 @@ int16_t AdPcmDecoder::decode4to16bits(uint8_t code)
     uint16_t step = stepSizeTable[index];
 
     // inverse code into diff
-    int32_t diffq = step >> 3;
+    int32_t diffq = (step >> 3);
     if (code & 4)
         diffq += step;
 
     if (code & 2)
-        diffq += step >> 1;
+        diffq += (step >> 1);
 
     if (code & 1)
-        diffq += step >> 2;
+        diffq += (step >> 2);
 
     // add diff to predicted sample
     if (code & 8)
