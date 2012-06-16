@@ -24,6 +24,10 @@ int Profiler::run(int argc, char **argv, IODevice &_dev)
 
     Profiler profiler(_dev);
     bool success = profiler.profile(argv[1], argv[2]);
+
+    _dev.close();
+    _dev.processEvents();
+
     return success ? 0 : 1;
 }
 
@@ -98,9 +102,19 @@ bool Profiler::profile(const char *elfPath, const char *outPath)
         }
     }
 
-    prettyPrintSamples(addresses, totalSamples, fout);
+    {
+        USBProtocolMsg m(USBProtocol::Profiler);
+        m.payload[0] = 0;
+        m.payload[1] = 0;
+        m.len += 2;
+        dev.writePacket(m.bytes, m.len);
+        while (dev.numPendingOUTPackets())
+            dev.processEvents();
+    }
 
-    fprintf(stderr, "interrupt received, profiling complete\n");
+    fprintf(stderr, "interrupt received, writing sample data...");
+    prettyPrintSamples(addresses, totalSamples, fout);
+    fprintf(stderr, "done\n");
 
     return true;
 }
