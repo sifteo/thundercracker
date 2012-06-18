@@ -266,6 +266,19 @@ public:
     }     
 
     /**
+     * Convert the VA to a segment number, or an invalid segment number
+     * if the VA is not a valid flash address.
+     */
+    static unsigned virtToFlashSegment(VirtAddr va) {
+        STATIC_ASSERT(arraysize(flashSeg) == 2);
+        if (flashSeg[0].offsetIsValid(va - SEGMENT_0_VA))
+            return 0;
+        if (flashSeg[1].offsetIsValid(va - SEGMENT_1_VA))
+            return 1;
+        return unsigned(-1);
+    }
+
+    /**
      * Quick predicates to check a physical address. Used only in simulation.
      */
 #ifdef SIFTEO_SIMULATOR
