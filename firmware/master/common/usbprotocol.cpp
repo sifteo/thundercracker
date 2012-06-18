@@ -20,7 +20,7 @@
  */
 const USBProtocol::SubSystemHandler USBProtocol::subsystemHandlers[] = {
     USBProtocolHandler::installerHandler,   // 0
-    #if ((defined SIFTEO_SIMULATOR) || (BOARD == BOARD_TEST_JIG))
+    #if (defined(SIFTEO_SIMULATOR) || (BOARD == BOARD_TEST_JIG) || defined(RFTEST))
     0,
     0
     #else
