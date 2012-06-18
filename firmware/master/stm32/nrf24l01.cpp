@@ -343,6 +343,7 @@ void NRF24L01::pulseCE()
      * The pulse ends in the spi completion handler.
      */
 
+    txnState = TXPulseCE;
     ce.setHigh();
     spi.txDma(txData, 10);
 }
@@ -386,7 +387,6 @@ void NRF24L01::onSpiComplete()
         break;
 
     case TXPayload:
-        txnState = TXPulseCE;
         pulseCE();
         break;
 
