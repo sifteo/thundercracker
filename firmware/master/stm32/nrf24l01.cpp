@@ -19,8 +19,7 @@ NRF24L01 NRF24L01::instance(RF_CE_GPIO,
                                       RF_SPI_SCK_GPIO,      //   SCK
                                       RF_SPI_MISO_GPIO,     //   MISO
                                       RF_SPI_MOSI_GPIO,     //   MOSI
-                                      staticSpiCompletionHandler,
-                                      &NRF24L01::instance));
+                                      staticSpiCompletionHandler));
 
 void NRF24L01::init() {
 
@@ -352,7 +351,7 @@ void NRF24L01::pulseCE()
 
 void NRF24L01::staticSpiCompletionHandler(void *p)
 {
-    static_cast<NRF24L01*>(p)->onSpiComplete();
+    NRF24L01::instance.onSpiComplete();
 }
 
 /*
