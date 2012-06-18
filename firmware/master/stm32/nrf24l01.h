@@ -104,13 +104,14 @@ public:
     uint8_t txData[PacketBuffer::MAX_LEN + 1];
     uint8_t rxData[PacketBuffer::MAX_LEN + 1];
     /*
-     * XXX: this exists because currently the RadioAddress struct does not allow
-     * for a platform specific data format, and we need to precede TX details
-     * in memory with a byte of SPI command in order to DMA them.
+     * NOTE: This exists because the RadioAddress struct does not provide room
+     * for the extra byte we need to efficiently transmit these details via DMA.
      *
-     * Update RadioAddress layout after this first round of DMA-ification.
+     * It's cheaper RAM-wise to maintain this single buffer than to extend
+     * RadioAddress, which is stored in each Cube object, at the cost of a bit
+     * of CPU to copy the data.
      */
-    uint8_t txDetailsBuffer[6];
+    uint8_t txAddressBuffer[sizeof(RadioAddress::id) + 1];
 
     void handleTimeout();
     void receivePacket();

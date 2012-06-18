@@ -325,9 +325,9 @@ void NRF24L01::transmitPacket()
 
     txnState = TXChannel;
     spi.begin();
-    txDetailsBuffer[0] = CMD_W_REGISTER | REG_RF_CH;
-    txDetailsBuffer[1] = txBuffer.dest->channel;
-    spi.txDma(txDetailsBuffer, 2);
+    txAddressBuffer[0] = CMD_W_REGISTER | REG_RF_CH;
+    txAddressBuffer[1] = txBuffer.dest->channel;
+    spi.txDma(txAddressBuffer, 2);
 }
 
 void NRF24L01::pulseCE()
@@ -367,17 +367,17 @@ void NRF24L01::onSpiComplete()
     case TXChannel:
         txnState = TXAddressTx;
         spi.begin();
-        txDetailsBuffer[0] = CMD_W_REGISTER | REG_TX_ADDR;
-        memcpy(txDetailsBuffer + 1, txBuffer.dest->id, sizeof txBuffer.dest->id);
-        spi.txDma(txDetailsBuffer, sizeof(txBuffer.dest->id) + 1);
+        txAddressBuffer[0] = CMD_W_REGISTER | REG_TX_ADDR;
+        memcpy(txAddressBuffer + 1, txBuffer.dest->id, sizeof txBuffer.dest->id);
+        spi.txDma(txAddressBuffer, sizeof(txBuffer.dest->id) + 1);
         break;
 
     case TXAddressTx:
         txnState = TXAddressRx;
         spi.begin();
-        txDetailsBuffer[0] = CMD_W_REGISTER | REG_RX_ADDR_P0;
-        memcpy(txDetailsBuffer + 1, txBuffer.dest->id, sizeof txBuffer.dest->id);
-        spi.txDma(txDetailsBuffer, sizeof(txBuffer.dest->id) + 1);
+        txAddressBuffer[0] = CMD_W_REGISTER | REG_RX_ADDR_P0;
+        memcpy(txAddressBuffer + 1, txBuffer.dest->id, sizeof txBuffer.dest->id);
+        spi.txDma(txAddressBuffer, sizeof(txBuffer.dest->id) + 1);
         break;
 
     case TXAddressRx:
