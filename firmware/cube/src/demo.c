@@ -27,6 +27,7 @@ extern const __code uint8_t img_radio_3[];
 #define	DEBUG_SCREEN 1
 #endif
 
+/*
 #ifdef DEBUG_NBR
 //uint16_t nbr_tile_ids[8] = {7, 7+1, 18*7, 18*8, (18*15)+7, (18*15)+7+1, (18*7)+15, (18*8)+15};
 uint16_t nbr_tile_ids[4] = {7, 18*7, (18*15)+7, (18*7)+15};
@@ -34,6 +35,7 @@ void paint_nbr_tile(uint8_t idx, uint16_t col) {
 	vram.bg0_tiles[nbr_tile_ids[idx]] = col;
 }
 #endif
+*/
 
 void demo(void)
 {
@@ -74,6 +76,7 @@ void demo(void)
 	#endif
 
 	#ifdef DEBUG_NBR
+    	/*
     	{
     		//uint8_t tile_idx;
     		uint8_t side;
@@ -90,8 +93,8 @@ void demo(void)
     		}
 
     	}
+    	*/
 
-    	/*
     	draw_xy = XY(2,13);
     	draw_hex(nbr_data[0]);
     	draw_xy = XY(5,13);
@@ -100,7 +103,6 @@ void demo(void)
     	draw_hex(nbr_data[2]);
     	draw_xy = XY(11,13);
     	draw_hex(nbr_data[3]);
-    	*/
 
     	draw_xy = XY(2,14);
     	draw_hex(nbr_data_valid[0]);
