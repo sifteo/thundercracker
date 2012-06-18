@@ -6,11 +6,44 @@
 #include "assetslot.h"
 #include "cubeslots.h"
 #include "machine.h"
+#include "svmruntime.h"
+#include "svmloader.h"
 
 VirtAssetSlot VirtAssetSlots::instances[NUM_SLOTS];
 FlashVolume VirtAssetSlots::boundVolume;
 uint8_t VirtAssetSlots::numBoundSlots;
 
+
+bool MappedAssetGroup::init(_SYSAssetGroup *userPtr)
+{
+    if (!isAligned(userPtr)) {
+        SvmRuntime::fault(F_SYSCALL_ADDR_ALIGN);
+        return false;
+    }
+    if (!SvmMemory::mapRAM(userPtr, sizeof *group)) {
+        SvmRuntime::fault(F_SYSCALL_ADDRESS);
+        return false;
+    }
+    
+    SvmMemory::VirtAddr hdrVA = userPtr->pHdr;
+    group = userPtr;
+
+    if (!SvmMemory::copyROData(header, hdrVA)) {
+        SvmRuntime::fault(F_SYSCALL_ADDRESS);
+        return false;
+    }
+
+    // Determine the systemwide unique ID for this asset group
+    id.ordinal = header.ordinal;
+    id.volume = SvmLoader::volumeForVA(hdrVA).block.code;
+
+    if (!id.volume) {
+        SvmRuntime::fault(F_SYSCALL_PARAM);
+        return false;
+    }
+
+    return true;
+}
 
 void VirtAssetSlots::bind(FlashVolume volume, unsigned numSlots)
 {
@@ -52,7 +85,8 @@ void VirtAssetSlots::rebindCube(_SYSCubeID cube)
 
     if (numSlots) {
         SysLFS::CubeRecord cr;
-        SysLFS::Key ck = cr.getByCubeID(cube);
+        SysLFS::Key ck = cr.key(cube);
+        cr.read(ck);
 
         if (!cr.assets.checkBinding(volume, numSlots)) {
             cr.assets.allocBinding(volume, numSlots);
@@ -72,3 +106,22 @@ void VirtAssetSlots::rebindCube(_SYSCubeID cube)
     for (unsigned i = numSlots; i < NUM_SLOTS; ++i)
         instances[i].unbind(cube);
 }
+
+
+#if 0
+   while (cv) {
+        _SYSCubeID id = Intrinsic::CLZ(cv);
+        cv ^= Intrinsic::LZ(id);
+        FakeAssetSlot &slot = FakeAssetSlots[id];
+
+        for (unsigned I = 0, E = slot.numLoadedGroups; I != E; ++I)
+            if (slot.loadedGroups[I].ordinal == header.ordinal) {
+                _SYSAssetGroupCube *gc = CubeSlots::instances[id].assetGroupCube(group);
+                if (gc)
+                    gc->baseAddr = slot.loadedGroups[I].addr;
+
+                result |= Intrinsic::LZ(id);
+                break;
+            }
+    }
+#endif

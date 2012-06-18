@@ -55,7 +55,7 @@ int SysLFS::write(Key k, const uint8_t *data, unsigned dataSize)
     return dataSize;
 }
 
-SysLFS::Key SysLFS::CubeRecord::getByCubeID(_SYSCubeID cube)
+SysLFS::Key SysLFS::CubeRecord::key(_SYSCubeID cube)
 {
     /*
      * TO DO: The association from _SYSCubeID to SysLFS::Key should be
@@ -69,14 +69,33 @@ SysLFS::Key SysLFS::CubeRecord::getByCubeID(_SYSCubeID cube)
      */
 
     ASSERT(cube < _SYS_NUM_CUBE_SLOTS);
-    Key k = Key(kCubeBase + cube);
+    return Key(kCubeBase + cube);
+}
 
+void SysLFS::CubeRecord::read(Key k)
+{
+    ASSERT(k >= kCubeBase && k < kCubeBase + kCubeCount);
     if (!SysLFS::read(k, *this)) {
         // Initialize with default contents
         memset(this, 0, sizeof *this);
     }
+}
 
-    return k;
+SysLFS::Key SysLFS::AssetSlotRecord::key(Key cubeKey, unsigned slot)
+{
+    unsigned i = cubeKey - kCubeBase;
+    ASSERT(i < kCubeCount);
+    ASSERT(slot < ASSET_SLOTS_PER_CUBE);
+    return Key(kAssetSlotBase + i * ASSET_SLOTS_PER_CUBE + slot);
+}
+
+void SysLFS::AssetSlotRecord::read(Key k)
+{
+    ASSERT(k >= kAssetSlotBase && k < kAssetSlotBase + kAssetSlotCount);
+    if (!SysLFS::read(k, *this)) {
+        // Initialize with default contents
+        memset(this, 0, sizeof *this);
+    }
 }
 
 bool SysLFS::CubeAssetsRecord::checkBinding(FlashVolume vol, unsigned numSlots) const

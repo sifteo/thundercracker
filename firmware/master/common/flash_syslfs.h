@@ -110,7 +110,8 @@ namespace SysLFS {
         CubeAssetsRecord assets;
         CubePairingRecord pairing;
 
-        Key getByCubeID(_SYSCubeID cube);
+        static Key key(_SYSCubeID cube);
+        void read(Key k);
     };
 
     /*
@@ -142,18 +143,22 @@ namespace SysLFS {
     struct LoadedAssetGroupRecord {
         AssetGroupSize size;
         AssetGroupIdentity identity;
+
+        bool isEmpty() const {
+            return identity.volume == 0;
+        }
     };
 
     struct AssetSlotRecord {
+        enum Flags {
+            F_LOAD_IN_PROGRESS = (1 << 0),
+        };
+
+        uint8_t flags;
         LoadedAssetGroupRecord groups[ASSET_GROUPS_PER_SLOT];
 
-        static Key makeKey(Key cube, unsigned slot)
-        {
-            unsigned i = cube - kCubeBase;
-            ASSERT(i < kCubeCount);
-            ASSERT(slot < ASSET_SLOTS_PER_CUBE);
-            return Key(kAssetSlotBase + i * ASSET_SLOTS_PER_CUBE + slot);
-        }
+        static Key key(Key cubeKey, unsigned slot);
+        void read(Key k);
     };
 
     /*
@@ -165,7 +170,7 @@ namespace SysLFS {
         STATIC_ASSERT(kEnd <= _SYS_FS_MAX_OBJECT_KEYS);
         STATIC_ASSERT(sizeof(FlashMapBlock) == 1);
         STATIC_ASSERT(sizeof(LoadedAssetGroupRecord) == 3);
-        STATIC_ASSERT(sizeof(AssetSlotRecord) == 3 * ASSET_GROUPS_PER_SLOT);
+        STATIC_ASSERT(sizeof(AssetSlotRecord) == 3 * ASSET_GROUPS_PER_SLOT + 1);
         STATIC_ASSERT(sizeof(AssetSlotOverviewRecord) == 6);
         STATIC_ASSERT(sizeof(CubeRecord) == sizeof(CubePairingRecord) +
             ASSET_SLOTS_PER_CUBE * sizeof(AssetSlotOverviewRecord));
