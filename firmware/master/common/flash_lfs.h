@@ -52,6 +52,7 @@
 #include "macros.h"
 #include "flash_volume.h"
 #include "flash_volumeheader.h"
+#include "bits.h"
 #include <sifteo/abi.h>
 
 
@@ -210,6 +211,9 @@ class FlashLFSIndexRecord
 public:
     // Keys are 8-bit, there can be at most this many
     static const unsigned MAX_KEYS = 0x100;
+
+    // A BitVector type that can hold any valid key
+    typedef BitVector<MAX_KEYS> KeyVector_t;
 
     // Object sizes are 8-bit, measured in multiples of SIZE_UNIT
     static const unsigned SIZE_SHIFT = 4;
