@@ -36,7 +36,6 @@ class SPIMaster {
 
     void transferDma(const uint8_t *txbuf, uint8_t *rxbuf, unsigned len);
     void txDma(const uint8_t *txbuf, unsigned len);
-    void rxDma(uint8_t *rxbuf, unsigned len);
 
     bool dmaInProgress() const;
   

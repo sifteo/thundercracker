@@ -184,27 +184,6 @@ void SPIMaster::txDma(const uint8_t *txbuf, unsigned len)
                (1 << 1);            // TXDMAEN
 }
 
-/*
-    This isn't typically that useful since slaves will not generally spew out
-    data unsolicited, but it's here for completeness' sake.
-    Typically use transferDma() instead,
-    and just reuse the same buffer for both rx & tx.
-*/
-void SPIMaster::rxDma(uint8_t *rxbuf, unsigned len)
-{
-    dmaRxChan->CNDTR = len;
-    dmaRxChan->CMAR = (uint32_t)rxbuf;
-
-    dmaRxChan->CCR =    (2 << 12)|  // PL - priority level, 2 == HIGH
-                        (1 << 7) |  // MINC - memory pointer increment
-                        (0 << 4) |  // DIR - direction, 0 == read from peripheral
-                        (1 << 3) |  // TEIE - transfer error ISR enable
-                        (0 << 2) |  // HTIE - half complete ISR enable
-                        (1 << 1) |  // TCIE - transfer complete ISR enable
-                        (1 << 0);   // EN - enable DMA channel
-    hw->CR2 |= (1 << 0);            // RXDMAEN
-}
-
 bool SPIMaster::dmaInProgress() const
 {
     // better way to poll this?
