@@ -124,6 +124,7 @@ public:
         TXAddressTx,
         TXAddressRx,
         TXPayload,
+        TXPulseCE,
         RXStatus,
         RXPayload
     };

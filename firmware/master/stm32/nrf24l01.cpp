@@ -335,18 +335,16 @@ void NRF24L01::pulseCE()
     /*
      * Pulse CE for at least 10us to start transmitting.
      *
-     * XXX: Big hack. This should be asynchronous, and the timing
-     *      should be based on the system clock. Right now I'm just
-     *      using a dummy SPI transaction for timing purposes. Gross!
-     *      Okay, well, maybe using SPI transactions for timing isn't
-     *      the worst idea ever. But doing this all synchronously
-     *      in the ISR is pretty bad!
+     * This is a little bit sneaky, but use a dummy transaction on the SPI bus
+     * (note, no chip select) to time the pulse. The SPI peripheral consumes
+     * less power than it would take to fire up another timer peripheral,
+     * so it's a bit cheaper this way.
+     *
+     * The pulse ends in the spi completion handler.
      */
 
     ce.setHigh();
-    for (unsigned i = 0; i < 10; i++)
-        spi.transfer(0);
-    ce.setLow();
+    spi.txDma(txData, 10);
 }
 
 void NRF24L01::staticSpiCompletionHandler(void *p)
@@ -388,12 +386,13 @@ void NRF24L01::onSpiComplete()
         break;
 
     case TXPayload:
-        txnState = Idle;
-        /*
-         * pulseCE() is still synchronous for now. Eventually async-ify this
-         * as well, and add state here as appropriate.
-         */
+        txnState = TXPulseCE;
         pulseCE();
+        break;
+
+    case TXPulseCE:
+        txnState = Idle;
+        ce.setLow();
         break;
 
     case RXStatus:
