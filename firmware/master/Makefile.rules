@@ -36,7 +36,7 @@ program: $(BIN)
 		-c exit
 
 objdump: $(BIN)
-	arm-none-eabi-objdump -d $< | less
+	arm-none-eabi-objdump -d $< | arm-none-eabi-c++filt | less
 
 readelf: $(BIN)
 	arm-none-eabi-readelf -a $< | less
