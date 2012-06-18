@@ -21,7 +21,7 @@ public:
              GPIOPin _irq,
              SPIMaster _spi)
         : irq(_irq), ce(_ce), spi(_spi),
-          txBuffer(NULL, txData), rxBuffer(rxData)
+          txBuffer(NULL, txData + 1), rxBuffer(rxData + 1), txnState(Idle)
           {}
 
     static NRF24L01 instance;
@@ -97,14 +97,40 @@ public:
     PacketBuffer rxBuffer;
     unsigned softRetriesLeft;
 
-    /* XXX: Make these DMA-able */
-    uint8_t txData[PacketBuffer::MAX_LEN];
-    uint8_t rxData[PacketBuffer::MAX_LEN];
+    /*
+     * The extra byte here is required for the SPI command byte that must
+     * precede the payload data.
+     */
+    uint8_t txData[PacketBuffer::MAX_LEN + 1];
+    uint8_t rxData[PacketBuffer::MAX_LEN + 1];
+    /*
+     * XXX: this exists because currently the RadioAddress struct does not allow
+     * for a platform specific data format, and we need to precede TX details
+     * in memory with a byte of SPI command in order to DMA them.
+     *
+     * Update RadioAddress layout after this first round of DMA-ification.
+     */
+    uint8_t txDetailsBuffer[6];
 
     void handleTimeout();
     void receivePacket();
     void transmitPacket();
     void pulseCE();
+
+    enum TransactionState {
+        Idle,
+        TXChannel,
+        TXAddressTx,
+        TXAddressRx,
+        TXPayload,
+        RXStatus,
+        RXPayload
+    };
+
+    TransactionState txnState;
+
+    static void staticSpiCompletionHandler(void *p);
+    void onSpiComplete();
 };
 
 #endif

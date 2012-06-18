@@ -214,17 +214,7 @@ void SPIMaster::dmaCallback(void *p, uint8_t flags)
     spi->dmaRxChan->CCR = 0;
     spi->hw->CR2 &= ~((1 << 1) | (1 << 0)); // disable DMA RX & TX
 
-#if 0
-    // debugging
-    Usart::Dbg.write("dma cb!\r\n");
-    if (flags & Dma::Error) {
-        Usart::Dbg.write("  error\r\n");
+    if (spi->completionCB) {
+        spi->completionCB(spi->completionParam);
     }
-    if (flags & Dma::Complete) {
-        Usart::Dbg.write("  complete\r\n");
-    }
-    if (flags & Dma::HalfComplete) {
-        Usart::Dbg.write("  half complete\r\n");
-    }
-#endif
 }

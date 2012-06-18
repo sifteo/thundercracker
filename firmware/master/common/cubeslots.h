@@ -9,7 +9,6 @@
 #include <sifteo/abi.h>
 
 class CubeSlot;
-struct PacketBuffer;
 
 namespace CubeSlots {
     extern CubeSlot instances[_SYS_NUM_CUBE_SLOTS];
