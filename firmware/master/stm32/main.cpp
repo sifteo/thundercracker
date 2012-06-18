@@ -40,7 +40,7 @@ int main()
     NVIC.irqPrioritize(IVT.EXTI9_5, 0x80);      //  Reduced priority
 
     NVIC.irqEnable(IVT.UsbOtg_FS);
-    NVIC.irqPrioritize(IVT.UsbOtg_FS, 0x90);    //  Lower prio than radio
+    NVIC.irqPrioritize(IVT.UsbOtg_FS, 0x70);    //  Lower prio than radio
 
     NVIC.irqEnable(IVT.BTN_HOME_EXTI_VEC);      //  home button
 
@@ -53,7 +53,7 @@ int main()
     NVIC.sysHandlerPrioritize(IVT.SVCall, 0x96);
 
     NVIC.irqEnable(IVT.VOLUME_TIM);             // volume timer
-    NVIC.irqPrioritize(IVT.VOLUME_TIM, 0x70);
+    NVIC.irqPrioritize(IVT.VOLUME_TIM, 0x98);
 
     NVIC.irqEnable(IVT.PROFILER_TIM);           // sample profiler timer
     NVIC.irqPrioritize(IVT.PROFILER_TIM, 0x0);  //  highest possible priority
