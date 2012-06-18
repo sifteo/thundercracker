@@ -10,6 +10,7 @@
 #include "nrf24l01.h"
 #include "debug.h"
 #include "board.h"
+#include "sampleprofiler.h"
 
 NRF24L01 NRF24L01::instance(RF_CE_GPIO,
                             RF_IRQ_GPIO,
@@ -203,6 +204,9 @@ Radio::TxPower NRF24L01::txPower()
 
 void NRF24L01::isr()
 {
+    SampleProfiler::SubSystem s = SampleProfiler::subsystem();
+    SampleProfiler::setSubsystem(SampleProfiler::RFISR);
+
     // Acknowledge to the IRQ controller
     irq.irqAcknowledge();
 
@@ -246,6 +250,8 @@ void NRF24L01::isr()
         transmitPacket();
         break;
     }
+
+    SampleProfiler::setSubsystem(s);
 }
 
 void NRF24L01::handleTimeout()

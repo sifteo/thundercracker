@@ -3,13 +3,17 @@
 #include "usbprotocol.h"
 #include "vectors.h"
 
+#include "tasks.h"
+
 #include <string.h>
 
+SampleProfiler::SubSystem SampleProfiler::subsys;
 uint32_t SampleProfiler::sampleBuf;
 HwTimer SampleProfiler::timer(&PROFILER_TIM);
 
 void SampleProfiler::init()
 {
+    subsys = None;
     timer.init(1000, 35);
 }
 
@@ -28,15 +32,16 @@ void SampleProfiler::processSample(uint32_t pc)
 {
     timer.clearStatus();
 
-    sampleBuf = pc;
+    // high 4 bits are subsystem
+    sampleBuf = (subsys << 28) | pc;
 
-    /*
-     * It's a bit rude to send this out over USB within this ISR, but
-     * it means that none of the profiler's work will be included in the
-     * reported data.
-     *
-     * If this turns out to be untenable, let's move this to a task.
-     */
+    Tasks::setPending(Tasks::Profiler);
+}
+
+void SampleProfiler::task(void *p)
+{
+    Tasks::clearPending(Tasks::Profiler);
+
     USBProtocolMsg m(USBProtocol::Profiler);
 
     memcpy(m.payload, &sampleBuf, sizeof sampleBuf);

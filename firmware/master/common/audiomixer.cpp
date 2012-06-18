@@ -16,6 +16,8 @@
 #   include "system.h"
 #   include "system_mc.h"
 #   include "mc_audiovisdata.h"
+#else
+#   include "sampleprofiler.h"
 #endif
 
 
@@ -149,6 +151,11 @@ void AudioMixer::pullAudio(void *p)
     if (!samplesLeft)
         return;
 
+    #ifndef SIFTEO_SIMULATOR
+        SampleProfiler::SubSystem s = SampleProfiler::subsystem();
+        SampleProfiler::setSubsystem(SampleProfiler::AudioPull);
+    #endif
+
     const uint32_t trackerInterval = AudioMixer::instance.trackerCallbackInterval;
     uint32_t trackerCountdown = AudioMixer::instance.trackerCallbackCountdown;
 
@@ -211,6 +218,10 @@ void AudioMixer::pullAudio(void *p)
         // Write back local copy of Countdown, only if it's real.
         AudioMixer::instance.trackerCallbackCountdown = trackerCountdown;
     }
+
+    #ifndef SIFTEO_SIMULATOR
+        SampleProfiler::setSubsystem(s);
+    #endif
 }
 
 bool AudioMixer::play(const struct _SYSAudioModule *mod,

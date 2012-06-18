@@ -11,6 +11,7 @@
 
 #ifndef SIFTEO_SIMULATOR
 #include "usb/usbdevice.h"
+#include "sampleprofiler.h"
 #endif
 
 uint32_t Tasks::pendingMask;
@@ -29,6 +30,12 @@ Tasks::Task Tasks::TaskList[] = {
     { SvmDebugger::messageLoop, 0},
     { CubeSlots::assetLoaderTask, 0 },
     { HomeButton::task, 0 },
+    #endif
+
+    #ifdef SIFTEO_SIMULATOR
+    { 0 },
+    #else
+    { SampleProfiler::task, 0 },
     #endif
 };
 
