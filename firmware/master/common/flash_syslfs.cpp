@@ -28,7 +28,7 @@ int SysLFS::read(Key k, uint8_t *buffer, unsigned bufferSize)
     return _SYS_ENOENT;
 }
 
-int SysLFS::write(Key k, const uint8_t *data, unsigned dataSize)
+int SysLFS::write(Key k, const uint8_t *data, unsigned dataSize, bool gc)
 {
     // System internal version of _SYS_fs_objectWrite()
 
@@ -43,11 +43,28 @@ int SysLFS::write(Key k, const uint8_t *data, unsigned dataSize)
     FlashLFS &lfs = SysLFS::get();
     FlashLFSObjectAllocator allocator(lfs, k, dataSize, crc);
 
-    if (!allocator.allocateAndCollectGarbage()) {
-        // We don't expect callers to have a good way to cope with this
-        // failure, so go ahead and log the error early.
-        LOG(("SYSLFS: Out of space, failed to write system data to flash!\n"));
-        return _SYS_ENOSPC;
+    if (gc) {
+        // Normal allocation; allow garbage collection
+        
+        if (!allocator.allocateAndCollectGarbage()) {
+            // We don't expect callers to have a good way to cope with this
+            // failure, so go ahead and log the error early.
+            LOG(("SYSLFS: Out of space, failed to write system data to flash!\n"));
+            return _SYS_ENOSPC;
+        }
+    } else {
+        /*
+         * The caller has specifically requested to disable GC.
+         *
+         * This can be used if time is tight, or if the caller is relying
+         * on existing LFS volumes not to be deleted, for example if the
+         * caller is also iterating over existing records.
+         *
+         * We also assume here that the caller has a specific way to handle
+         * out-of-space errors, so don't log anything if we fail here.
+         */
+        if (!allocator.allocate())
+            return _SYS_ENOSPC;
     }
 
     FlashBlock::invalidate(allocator.address(), allocator.address() + dataSize);
@@ -55,7 +72,7 @@ int SysLFS::write(Key k, const uint8_t *data, unsigned dataSize)
     return dataSize;
 }
 
-SysLFS::Key SysLFS::CubeRecord::key(_SYSCubeID cube)
+SysLFS::Key SysLFS::CubeRecord::makeKey(_SYSCubeID cube)
 {
     /*
      * TO DO: The association from _SYSCubeID to SysLFS::Key should be
@@ -72,6 +89,22 @@ SysLFS::Key SysLFS::CubeRecord::key(_SYSCubeID cube)
     return Key(kCubeBase + cube);
 }
 
+bool SysLFS::CubeRecord::decodeKey(Key cubeKey, _SYSCubeID &cube)
+{
+    /*
+     * Reverse mapping from key back to Cube ID.
+     *
+     * XXX: This may require reimplementation when makeKey() is fleshed out.
+     */
+
+    unsigned i = cubeKey - kCubeBase;
+    if (i < _SYS_NUM_CUBE_SLOTS) {
+        cube = i;
+        return true;
+    }
+    return false;
+}
+
 void SysLFS::CubeRecord::read(Key k)
 {
     ASSERT(k >= kCubeBase && k < kCubeBase + kCubeCount);
@@ -81,12 +114,23 @@ void SysLFS::CubeRecord::read(Key k)
     }
 }
 
-SysLFS::Key SysLFS::AssetSlotRecord::key(Key cubeKey, unsigned slot)
+SysLFS::Key SysLFS::AssetSlotRecord::makeKey(Key cubeKey, unsigned slot)
 {
     unsigned i = cubeKey - kCubeBase;
     ASSERT(i < kCubeCount);
     ASSERT(slot < ASSET_SLOTS_PER_CUBE);
     return Key(kAssetSlotBase + i * ASSET_SLOTS_PER_CUBE + slot);
+}
+
+bool SysLFS::AssetSlotRecord::decodeKey(Key slotKey, Key &cubeKey, unsigned &slot)
+{
+    unsigned i = slotKey - kAssetSlotBase;
+    if (i < kAssetSlotCount) {
+        cubeKey = (i / ASSET_SLOTS_PER_CUBE) + kCubeBase;
+        slot = i % ASSET_SLOTS_PER_CUBE;
+        return true;
+    }
+    return false;
 }
 
 void SysLFS::AssetSlotRecord::read(Key k)

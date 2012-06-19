@@ -110,7 +110,9 @@ namespace SysLFS {
         CubeAssetsRecord assets;
         CubePairingRecord pairing;
 
-        static Key key(_SYSCubeID cube);
+        static Key makeKey(_SYSCubeID cube);
+        static bool decodeKey(Key cubeKey, _SYSCubeID &cube);
+
         void read(Key k);
     };
 
@@ -157,7 +159,9 @@ namespace SysLFS {
         uint8_t flags;
         LoadedAssetGroupRecord groups[ASSET_GROUPS_PER_SLOT];
 
-        static Key key(Key cubeKey, unsigned slot);
+        static Key makeKey(Key cubeKey, unsigned slot);
+        static bool decodeKey(Key slotKey, Key &cubeKey, unsigned &slot);
+
         void read(Key k);
     };
 
@@ -180,15 +184,15 @@ namespace SysLFS {
 
     // System equivalents to _SYS_fs_objectRead/Write
     int read(Key k, uint8_t *buffer, unsigned bufferSize);
-    int write(Key k, const uint8_t *data, unsigned dataSize);
+    int write(Key k, const uint8_t *data, unsigned dataSize, bool gc=true);
 
     template <typename T>
-    inline bool read(Key k, T &obj) {
+    inline bool read(Key k, T &obj, bool gc=true) {
         return read(k, (uint8_t*) &obj, sizeof obj) == sizeof obj;
     }
 
     template <typename T>
-    inline bool write(Key k, const T &obj) {
+    inline bool write(Key k, const T &obj, bool gc=true) {
         return write(k, (const uint8_t*) &obj, sizeof obj) == sizeof obj;
     }
 
