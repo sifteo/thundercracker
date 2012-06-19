@@ -102,7 +102,7 @@ void NRF24L01::beginTransmitting()
      * within the isr().
      */
 
-    transmitPacket();
+    beginTransmit();
 }
 
 /*
@@ -234,19 +234,19 @@ void NRF24L01::isr()
     case TX_DS:
         // Successful transmit, no ACK data
         RadioManager::ackEmpty();
-        transmitPacket();
+        beginTransmit();
         break;
 
     case TX_DS | RX_DR:
         // Successful transmit, with an ACK
-        receivePacket();
-        transmitPacket();
+        beginReceive();
+        beginTransmit();
         break;
 
     default:
         // Other cases are not allowed. Do something non-fatal...
         Debug::log("Unhandled nRF IRQ status");
-        transmitPacket();
+        beginTransmit();
         break;
     }
 
@@ -279,11 +279,11 @@ void NRF24L01::handleTimeout()
         spi.end();
 
         RadioManager::timeout();
-        transmitPacket();
+        beginTransmit();
     }
 }
 
-void NRF24L01::receivePacket()
+void NRF24L01::beginReceive()
 {
     /*
      * A packet has been received. Dequeue it from the hardware
@@ -299,7 +299,7 @@ void NRF24L01::receivePacket()
     spi.transferDma(rxData, rxData, 2);
 }
  
-void NRF24L01::transmitPacket()
+void NRF24L01::beginTransmit()
 {
     /*
      * This is an opportunity to transmit. Ask RadioManager to produce

@@ -114,8 +114,8 @@ public:
     uint8_t txAddressBuffer[sizeof(RadioAddress::id) + 1];
 
     void handleTimeout();
-    void receivePacket();
-    void transmitPacket();
+    void beginReceive();
+    void beginTransmit();
     void pulseCE();
 
     enum TransactionState {
