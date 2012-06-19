@@ -343,6 +343,10 @@ Given a volume's block code, return the associated 16-bit type identifier. If th
 
 Given a volume's block code, return its parent's block code, if any. If this volume is not parented to another, returns zero.
 
+### Filesystem():volumePayload( _block code_ )
+
+Given a volume's block code, return its payload data as a string.
+
 ### Filesystem():simulatedSectorEraseCounts()
 
 Return an array of simulated erase counts for every sector in the Base's flash memory. This data is tracked by Siftulator's simulation engine itself.

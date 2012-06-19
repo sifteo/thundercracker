@@ -36,6 +36,7 @@ private:
     int volumeParent(lua_State *L);
     int volumeMap(lua_State *L);
     int volumeEraseCounts(lua_State *L);
+    int volumePayload(lua_State *L);
 
     int simulatedSectorEraseCounts(lua_State *L);
 

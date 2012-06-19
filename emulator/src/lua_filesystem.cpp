@@ -27,6 +27,7 @@ Lunar<LuaFilesystem>::RegType LuaFilesystem::methods[] = {
     LUNAR_DECLARE_METHOD(LuaFilesystem, volumeParent),
     LUNAR_DECLARE_METHOD(LuaFilesystem, volumeMap),
     LUNAR_DECLARE_METHOD(LuaFilesystem, volumeEraseCounts),
+    LUNAR_DECLARE_METHOD(LuaFilesystem, volumePayload),
     LUNAR_DECLARE_METHOD(LuaFilesystem, simulatedSectorEraseCounts),
     LUNAR_DECLARE_METHOD(LuaFilesystem, rawRead),
     LUNAR_DECLARE_METHOD(LuaFilesystem, rawWrite),
@@ -307,6 +308,41 @@ int LuaFilesystem::volumeEraseCounts(lua_State *L)
     return 1;
 }
 
+int LuaFilesystem::volumePayload(lua_State *L)
+{
+    /*
+     * Given a volume block code, return the volume's payload data as a string.
+     */
+
+    FlashDevice::setStealthIO(1);
+
+    unsigned code = luaL_checkinteger(L, 1);
+    FlashVolume vol(FlashMapBlock::fromCode(code));
+    if (!vol.isValid()) {
+        FlashDevice::setStealthIO(-1);
+        lua_pushfstring(L, "invalid volume");
+        lua_error(L);
+        return 0;
+    }
+
+    FlashBlockRef ref;
+    FlashMapSpan span = vol.getPayload(ref);
+
+    uint8_t *buffer = new uint8_t[span.sizeInBytes()];
+    if (!span.copyBytes(0, buffer, span.sizeInBytes())) {
+        delete buffer;
+        FlashDevice::setStealthIO(-1);
+        lua_pushfstring(L, "I/O error");
+        lua_error(L);
+        return 0;
+    }
+
+    lua_pushlstring(L, (const char *)buffer, span.sizeInBytes());
+    FlashDevice::setStealthIO(-1);
+    delete buffer;
+    return 1;
+}
+
 int LuaFilesystem::simulatedSectorEraseCounts(lua_State *L)
 {
     /*
@@ -484,7 +520,7 @@ int LuaFilesystem::readObject(lua_State *L)
     unsigned key = luaL_checkinteger(L, 2);
 
     FlashVolume vol(FlashMapBlock::fromCode(code));
-    if (!vol.isValid()) {
+    if (code && !vol.isValid()) {
         FlashDevice::setStealthIO(-1);
         lua_pushfstring(L, "invalid volume");
         lua_error(L);
@@ -528,7 +564,7 @@ int LuaFilesystem::writeObject(lua_State *L)
     const uint8_t *dataStr = (const uint8_t*) lua_tolstring(L, 3, &dataStrLen);
 
     FlashVolume vol(FlashMapBlock::fromCode(code));
-    if (!vol.isValid()) {
+    if (code && !vol.isValid()) {
         lua_pushfstring(L, "invalid volume");
         lua_error(L);
         return 0;
