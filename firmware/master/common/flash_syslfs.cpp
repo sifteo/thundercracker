@@ -200,6 +200,11 @@ void SysLFS::CubeAssetsRecord::allocBinding(FlashVolume vol, unsigned numSlots)
     /*
      * Pick a bank, by analyzing the relative cost of using one bank or the other.
      * We try a mock allocation using both banks, saving whichever one is lower cost.
+     *
+     * Note the "<=" cost check below. This ensures that, in the event of a tie,
+     * we start with the last bank in the tie. This slight preference toward
+     * nonzero banks helps us ensure that the bank switching code paths
+     * get well-exercised.
      */
 
     // Assuming evenly sized banks
@@ -212,7 +217,7 @@ void SysLFS::CubeAssetsRecord::allocBinding(FlashVolume vol, unsigned numSlots)
         SlotVector_t vec;
         unsigned cost;
         recycleSlots(bank, numSlots, vec, cost);
-        if (cost < bestCost) {
+        if (cost <= bestCost) {
             bestCost = cost;
             bestVec = vec;
         }
