@@ -171,7 +171,6 @@ class CubeSlot {
     RadioAddress address;
     
     DEBUG_ONLY(SysTime::Ticks assetLoadTimestamp);
-    DEBUG_ONLY(unsigned consecutiveEmptyPackets);
 
     SysTime::Ticks flashDeadline;       // Used only by ISR
     uint32_t timeSyncState;             // XXX: For the current time-sync hack

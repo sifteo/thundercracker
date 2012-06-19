@@ -292,6 +292,8 @@ Cube::Hardware *SystemMC::getCubeForAddress(const RadioAddress *addr)
 void SystemMC::checkQuiescentVRAM(CubeSlot *slot)
 {
     /*
+     * For debugging only.
+     *
      * This function can be called at points where we know there are no
      * packets in-flight and no data that still needs to be encoded from
      * the cube's vbuf. At these quiescent points, we should be able to
