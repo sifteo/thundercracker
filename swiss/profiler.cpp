@@ -140,7 +140,7 @@ void Profiler::prettyPrintSamples(const std::map<Addr, Count> &addresses, uint64
          i != addresses.end(); ++i)
     {
         Addr a = i->first;
-        std::string s = dbgInfo.formatAddress(a);
+        std::string s = dbgInfo.formatAddress(a & 0xfffffff);
         std::string base = s.substr(0, s.find('+'));
 
         if (a < samples[base].address || samples[base].address == 0) {
@@ -149,18 +149,39 @@ void Profiler::prettyPrintSamples(const std::map<Addr, Count> &addresses, uint64
         samples[base].count += i->second;
     }
 
-    // sort them by count
-    std::set<Entry, Entry> sampleset;
+    /*
+     * Sort them by count.
+     *
+     * XXX: shortcoming: if a sample shows up in more than one subsystem,
+     *      I'm not currently taking this into account.
+     */
+    std::set<Entry, Entry> samplesets[NumSubsystems];
     for (std::map<std::string, FuncInfo>::const_iterator i = samples.begin();
          i != samples.end(); ++i)
     {
-        sampleset.insert(Entry(i->first, i->second.address, i->second.count));
+        unsigned subsystem = i->second.address >> 28;
+        samplesets[subsystem].insert(Entry(i->first, i->second.address, i->second.count));
     }
 
     // And print them.
-    for (std::set<Entry>::const_iterator i = sampleset.begin(); i != sampleset.end(); ++i) {
-        unsigned percent = (float(i->count) / float(total)) * 100;
-        fprintf(f, "0x%x, %d, %d%%, %s\n", i->address, i->count, percent, i->name.c_str());
+    for (unsigned s = 0; s < arraysize(samplesets); ++s) {
+        fprintf(f, "\n******** SubSystem %s ********\n\n", subSystemName((SubSystem)s));
+        for (std::set<Entry>::const_iterator i = samplesets[s].begin(); i != samplesets[s].end(); ++i) {
+            float percent = (float(i->count) / float(total)) * 100;
+            fprintf(f, "0x%x, %d, %.2f%%, %s\n", i->address, i->count, percent, i->name.c_str());
+        }
     }
+
     fflush(f);
+}
+
+const char *Profiler::subSystemName(SubSystem s)
+{
+    switch (s) {
+    case AudioISR:  return "AudioISR";
+    case AudioPull: return "AudioPull";
+    case SVCISR:    return "SVCISR";
+    case RFISR:     return "RFISR";
+    default:        return "Uncategorized";
+    }
 }

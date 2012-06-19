@@ -6,23 +6,13 @@
 #include "pwmaudioout.h"
 #include "audiomixer.h"
 #include "tasks.h"
+#include "sampleprofiler.h"
+
 #include <stdio.h>
 #include <string.h>
 
-// uncomment to show sample rate on gpio pin
-//#define SAMPLE_RATE_GPIO
-
-#ifdef SAMPLE_RATE_GPIO
-static GPIOPin tim4TestPin(&GPIOC, 4);
-#endif
-
-
 void PwmAudioOut::init(AudioMixer *mixer)
 {
-#ifdef SAMPLE_RATE_GPIO
-    tim4TestPin.setControl(GPIOPin::OUT_50MHZ);
-#endif
-
     this->mixer = mixer;
     buf.init();
 
@@ -87,14 +77,14 @@ void PwmAudioOut::resume()
  */
 void PwmAudioOut::tmrIsr()
 {
-#ifdef SAMPLE_RATE_GPIO
-    tim4TestPin.toggle();
-#endif
-    // DANGER DANGER DANGER!
-    if (buf.readAvailable() < 2)
-        return;
+    SampleProfiler::SubSystem s = SampleProfiler::subsystem();
+    SampleProfiler::setSubsystem(SampleProfiler::AudioISR);
 
-    uint16_t duty = buf.dequeue() + 0x8000;
-    duty = (duty * pwmTimer.period()) / 0xFFFF; // scale to timer period
-    pwmTimer.setDuty(pwmChan, duty);
+    if (buf.readAvailable()) {
+        uint16_t duty = buf.dequeue() + 0x8000;
+        duty = (duty * pwmTimer.period()) / 0xFFFF; // scale to timer period
+        pwmTimer.setDuty(pwmChan, duty);
+    }
+
+    SampleProfiler::setSubsystem(s);
 }

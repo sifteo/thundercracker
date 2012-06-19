@@ -79,7 +79,7 @@ uint32_t AudioSampleData::bytesForSamples(uint32_t samples) const {
 void AudioSampleData::writeNextSample(uint16_t sample) {
     samples[ringPos++] = sample;
     ringPos %= arraysize(samples);
-    if(newestSample == kNoSamples) newestSample = 0;
+    if (newestSample == kNoSamples) newestSample = 0;
     else newestSample++;
     // Take a snapshot if necessary.
     if (!hasSnapshot() && oldestSample() == loopStart && loopStart > 0) {
@@ -96,9 +96,9 @@ void AudioSampleData::decodeToSample(uint32_t sampleNum)
     }
 
     while (newestSample < sampleNum || newestSample == kNoSamples) {
+
         SvmMemory::PhysAddr pa;
         SvmMemory::VirtAddr va = mod->pData + bufPos;
-
 
         uint32_t bufLen = bytesForSamples(sampleNum - newestSample);
         if (!SvmMemory::mapROData(ref, va, bufLen, pa)) {
@@ -136,7 +136,7 @@ void AudioSampleData::decodeToSample(uint32_t sampleNum)
                 break;
 
             case _SYS_ADPCM:
-                while(bufPtr < pa + bufLen && (newestSample < sampleNum || newestSample == kNoSamples)) {
+                while (bufPtr < pa + bufLen && (newestSample < sampleNum || newestSample == kNoSamples)) {
                     writeNextSample(adpcmDec.decodeSample(&bufPtr));
                 }
                 break;

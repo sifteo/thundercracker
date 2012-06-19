@@ -75,6 +75,7 @@ class SystemMC {
 
     friend class Radio;
     friend struct SysTime;
+    friend class Tasks;
 
     static SystemMC *instance;
     static std::vector< std::vector<uint8_t> > pendingGameInstalls;

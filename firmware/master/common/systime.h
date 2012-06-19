@@ -11,6 +11,7 @@
  */
 
 #include <sifteo/abi.h>
+#include "macros.h"
 
 struct SysTime {
 
@@ -34,25 +35,29 @@ struct SysTime {
 
     /*
      * Convert common things to and from Ticks.
+     *
+     * These *must* be inlined - specifically in the case of hzTicks,
+     * GCC generates calls to library code for division otherwise,
+     * even with constant values.
      */
 
-    static Ticks sTicks(unsigned seconds) {
+    static ALWAYS_INLINE Ticks sTicks(unsigned seconds) {
         return seconds * 1000000000ULL;
     }
 
-    static Ticks msTicks(unsigned milliseconds) {
+    static ALWAYS_INLINE Ticks msTicks(unsigned milliseconds) {
         return milliseconds * 1000000ULL;
     }
 
-    static Ticks usTicks(unsigned microseconds) {
+    static ALWAYS_INLINE Ticks usTicks(unsigned microseconds) {
         return microseconds * 1000ULL;
     }
 
-    static Ticks nsTicks(unsigned nanoseconds) {
+    static ALWAYS_INLINE Ticks nsTicks(unsigned nanoseconds) {
         return nanoseconds;
     }
 
-    static Ticks hzTicks(unsigned hz) {
+    static ALWAYS_INLINE Ticks hzTicks(unsigned hz) {
         return 1000000000ULL / hz;
     }
 };

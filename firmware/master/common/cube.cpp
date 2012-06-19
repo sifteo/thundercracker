@@ -432,7 +432,7 @@ uint64_t CubeSlot::getHWID()
 
         do {
             Tasks::work();
-            Radio::halt();
+            Tasks::idle();
         } while (!(CubeSlots::hwidValid & bit()));
     }
     

@@ -22,6 +22,15 @@ private:
     typedef uint32_t Addr;
     typedef unsigned Count;
 
+    enum SubSystem {
+        None,
+        AudioISR,
+        AudioPull,
+        SVCISR,
+        RFISR,
+        NumSubsystems   // must be last
+    };
+
     struct FuncInfo {
         Addr address;
         Count count;
@@ -44,6 +53,7 @@ private:
 
     static void onSignal(int sig);
     static void prettyPrintSamples(const std::map<Addr, Count> &addresses, uint64_t total, FILE *f);
+    static const char *subSystemName(SubSystem s);
 
     static sig_atomic_t interruptRequested;
     static ELFDebugInfo dbgInfo;

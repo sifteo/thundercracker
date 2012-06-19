@@ -36,27 +36,37 @@ int main()
      * those need to be unmasked by the peripheral's driver code.
      */
 
-    NVIC.irqEnable(IVT.EXTI9_5);                // Radio interrupt
-    NVIC.irqPrioritize(IVT.EXTI9_5, 0x80);      //  Reduced priority
+    NVIC.irqEnable(IVT.EXTI9_5);                    // Radio interrupt
+    NVIC.irqPrioritize(IVT.EXTI9_5, 0x80);          //  Reduced priority
+
+    NVIC.irqEnable(IVT.DMA2_Channel1);              // Radio SPI DMA2 channels 1 & 2
+    NVIC.irqPrioritize(IVT.DMA1_Channel1, 0x75);    //  higher than radio
+    NVIC.irqEnable(IVT.DMA2_Channel2);
+    NVIC.irqPrioritize(IVT.DMA1_Channel2, 0x75);
+
+    NVIC.irqEnable(IVT.DMA1_Channel2);              // Flash SPI DMA1 channels 2 & 3
+    NVIC.irqPrioritize(IVT.DMA1_Channel1, 0x75);    //  higher than radio
+    NVIC.irqEnable(IVT.DMA1_Channel3);
+    NVIC.irqPrioritize(IVT.DMA1_Channel1, 0x75);
 
     NVIC.irqEnable(IVT.UsbOtg_FS);
-    NVIC.irqPrioritize(IVT.UsbOtg_FS, 0x90);    //  Lower prio than radio
+    NVIC.irqPrioritize(IVT.UsbOtg_FS, 0x70);        //  Lower prio than radio
 
-    NVIC.irqEnable(IVT.BTN_HOME_EXTI_VEC);      //  home button
+    NVIC.irqEnable(IVT.BTN_HOME_EXTI_VEC);          //  home button
 
-    NVIC.irqEnable(IVT.TIM4);                   // sample rate timer
-    NVIC.irqPrioritize(IVT.TIM4, 0x60);         //  Higher prio than radio
+    NVIC.irqEnable(IVT.TIM4);                       // sample rate timer
+    NVIC.irqPrioritize(IVT.TIM4, 0x60);             //  Higher prio than radio
 
-    NVIC.irqEnable(IVT.USART3);                 // factory test uart
-    NVIC.irqPrioritize(IVT.USART3, 0x99);       //  loooooowest prio
+    NVIC.irqEnable(IVT.USART3);                     // factory test uart
+    NVIC.irqPrioritize(IVT.USART3, 0x99);           //  loooooowest prio
 
     NVIC.sysHandlerPrioritize(IVT.SVCall, 0x96);
 
-    NVIC.irqEnable(IVT.VOLUME_TIM);             // volume timer
-    NVIC.irqPrioritize(IVT.VOLUME_TIM, 0x70);
+    NVIC.irqEnable(IVT.VOLUME_TIM);                 // volume timer
+    NVIC.irqPrioritize(IVT.VOLUME_TIM, 0x98);       // loooooow prio
 
-    NVIC.irqEnable(IVT.PROFILER_TIM);           // sample profiler timer
-    NVIC.irqPrioritize(IVT.PROFILER_TIM, 0x0);  //  highest possible priority
+    NVIC.irqEnable(IVT.PROFILER_TIM);               // sample profiler timer
+    NVIC.irqPrioritize(IVT.PROFILER_TIM, 0x0);      //  highest possible priority
 
     /*
      * High-level hardware initialization

@@ -148,7 +148,7 @@ void CubeSlots::finishCubes(_SYSCubeIDVector cv)
 
         // Wait...
         Tasks::work();
-        Radio::halt();
+        Tasks::idle();
     }
 }
 

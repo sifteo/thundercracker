@@ -17,10 +17,12 @@ public:
         Debugger,
         AssetLoader,
         HomeButton,
+        Profiler
     };
 
     static void init();
     static void work();
+    static void idle();
 
     /*
      * Tasks that have been set pending get called once each time

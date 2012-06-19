@@ -8,6 +8,14 @@ class SampleProfiler
 {
 public:
 
+    enum SubSystem {
+        None,
+        AudioISR,
+        AudioPull,
+        SVCISR,
+        RFISR,
+    };
+
     enum Command {
         SetProfilingEnabled
     };
@@ -25,8 +33,18 @@ public:
     }
 
     static void processSample(uint32_t pc);
+    static void task(void *p);
+
+    static inline SubSystem subsystem() {
+        return subsys;
+    }
+
+    static inline void setSubsystem(SubSystem s) {
+        subsys = s;
+    }
 
 private:
+    static SubSystem subsys;
     static uint32_t sampleBuf;  // currently just a single sample
     static HwTimer timer;
 };
