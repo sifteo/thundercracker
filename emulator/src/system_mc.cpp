@@ -52,6 +52,7 @@ bool SystemMC::init(System *sys)
     FlashDevice::init();
     FlashBlock::init();
     USBProtocolHandler::init();
+    Crc32::init();
 
     if (!instance->sys->opt_headless) {
         AudioOutDevice::init(&AudioMixer::instance);
@@ -122,7 +123,6 @@ void SystemMC::threadFn(void *param)
     instance->radioPacketDeadline = instance->ticks + MCTiming::TICKS_PER_PACKET;
 
     HomeButton::init();
-    Crc32::init();
     Volume::init();
     Radio::init();
 
