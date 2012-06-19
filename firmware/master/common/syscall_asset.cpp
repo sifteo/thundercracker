@@ -55,16 +55,6 @@ void _SYS_asset_slotErase(_SYSAssetSlot slot)
 uint32_t _SYS_asset_loadStart(_SYSAssetLoader *loader, _SYSAssetGroup *group,
     _SYSAssetSlot slot, _SYSCubeIDVector cv)
 {
-    // Finish first, if a load is in progress.
-    if (CubeSlots::assetLoader) {
-        _SYS_asset_loadFinish(CubeSlots::assetLoader);
-    }
-    ASSERT(CubeSlots::assetLoader == 0);
-
-    MappedAssetGroup map;
-    if (!map.init(group))
-        return false;
-
     if (!isAligned(loader)) {
         SvmRuntime::fault(F_SYSCALL_ADDR_ALIGN);
         return false;
@@ -73,6 +63,24 @@ uint32_t _SYS_asset_loadStart(_SYSAssetLoader *loader, _SYSAssetGroup *group,
         SvmRuntime::fault(F_SYSCALL_ADDRESS);
         return false;
     }
+
+    /*
+     * Finish first, if a different load is in progress.
+     *
+     * We must be able to support separate 'start' calls on the same loader
+     * for different cubes. (Not all callers will know to combine all cubes
+     * into a single CubeIDVector)
+     */
+    _SYSAssetLoader *prevLoader = CubeSlots::assetLoader;
+    if (prevLoader && prevLoader != loader) {
+        _SYS_asset_loadFinish(prevLoader);
+        ASSERT(CubeSlots::assetLoader == 0);
+        ASSERT(gSlotsInProgress.empty());
+    }
+
+    MappedAssetGroup map;
+    if (!map.init(group))
+        return false;
 
     if (!VirtAssetSlots::isSlotBound(slot)) {
         SvmRuntime::fault(F_BAD_ASSETSLOT);
@@ -98,10 +106,7 @@ uint32_t _SYS_asset_loadStart(_SYSAssetLoader *loader, _SYSAssetGroup *group,
      * Affected groups may be left in the indeterminate state.
      */
 
-    ASSERT(gSlotsInProgress.empty());
-    gSlotsInProgress.clear();
     _SYSCubeIDVector cachedCV;
-
     if (!VirtAssetSlots::locateGroup(map, cv, cachedCV, &vSlot, &gSlotsInProgress)) {
         gSlotsInProgress.clear();
         return false;
