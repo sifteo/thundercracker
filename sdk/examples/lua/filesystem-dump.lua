@@ -22,6 +22,17 @@ VOLUME_TYPE_INFO[0x4d47] = { name="Game", elf=true }
 VOLUME_TYPE_INFO[0x4e4c] = { name="Launcher", elf=true }
 VOLUME_TYPE_INFO[0x5346] = { name="Log-structured Filesystem", hidden=true, lfs=true }
 
+-- Information about metadata types
+METADATA_INFO = {}
+METADATA_INFO[0x0001] = { name="UUID" }
+METADATA_INFO[0x0002] = { name="Bootstrap Assets" }
+METADATA_INFO[0x0003] = { name="Title String" }
+METADATA_INFO[0x0004] = { name="Package String" }
+METADATA_INFO[0x0005] = { name="Version String" }
+METADATA_INFO[0x0006] = { name="96x96 Icon" }
+METADATA_INFO[0x0007] = { name="AssetSlot Count" }
+METADATA_INFO[0x0008] = { name="Cube Range" }
+
 
 function main()
     -- Run the FS dump in a trivial master-only simulation.
@@ -130,7 +141,9 @@ function dumpMetadata(vol, indent)
     for key = 0x0000, 0xFFFF do
         local value = fs:readMetadata(vol, key)
         if value then
-            print(string.format("%sMetadata<%04x>", indentStr(indent), key))
+            info = METADATA_INFO[key] or { name="" }
+            print(string.format("%sMetadata<%04x> %s",
+                indentStr(indent), key, info.name))
             hexDump(value, indent + 1)
         end
     end
