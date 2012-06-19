@@ -70,11 +70,11 @@ void Tasks::clearPending(TaskID id)
 void Tasks::work()
 {
     uint32_t mask = pendingMask;
+
     while (mask) {
+        // Must clear the bit before invoking the callback
         unsigned idx = Intrinsic::CLZ(mask);
-        // clear before calling back since callback might take a while and
-        // the flag might get set again in the meantime
-        Atomic::ClearLZ(mask, idx);
+        mask ^= Intrinsic::LZ(idx);
 
         Task &task = TaskList[idx];
         task.callback(task.param);
