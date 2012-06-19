@@ -367,7 +367,13 @@ void VirtAssetSlot::erase()
 
         // Restartable iteration, in case we need to collect garbage
         FlashLFSObjectIter iter(lfs);
-        while ((pendingOverview | pendingSlots) && iter.previous()) {
+        while (pendingOverview | pendingSlots) {
+            
+            if (!iter.previous()) {
+                // Out of records; done
+                return;
+            }
+            
             _SYSCubeID cube;
             SysLFS::Key key = (SysLFS::Key) iter.record()->getKey();
 
