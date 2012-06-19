@@ -120,13 +120,13 @@ public:
 
     enum TransactionState {
         Idle,
+        RXStatus,
+        RXPayload,
         TXChannel,
         TXAddressTx,
         TXAddressRx,
         TXPayload,
-        TXPulseCE,
-        RXStatus,
-        RXPayload
+        TXPulseCE
     };
 
     TransactionState txnState;

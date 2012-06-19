@@ -240,7 +240,7 @@ void NRF24L01::isr()
     case TX_DS | RX_DR:
         // Successful transmit, with an ACK
         beginReceive();
-        beginTransmit();
+        // The next transmission begins once this receive is completed
         break;
 
     default:
@@ -357,11 +357,47 @@ void NRF24L01::staticSpiCompletionHandler(void *p)
  * An SPI transmission has completed.
  * NRF transmit and receive operations consist of multiple SPI transmissions,
  * so step to the next state and execute accordingly.
+ *
+ * NOTE: the RX states are only executed in the event that data arrived on one
+ * of the ACK packets that we've received. Otherwise, we start in directly on
+ * the TX states.
  */
 void NRF24L01::onSpiComplete()
 {
     spi.end();
     switch (txnState) {
+
+    case RXStatus:
+        /*
+         * we've read the number of bytes that have arrived. Check for error,
+         * and proceed to reading the payload data.
+         */
+        rxBuffer.len = rxData[1];
+        if (rxBuffer.len > rxBuffer.MAX_LEN) {
+            /*
+             * Receive error. The data sheet requires that we flush the RX
+             * FIFO.  We'll count this as a timeout.
+             */
+
+            spi.begin();
+            spi.transfer(CMD_FLUSH_RX);
+            spi.end();
+
+            txnState = Idle;
+            RadioManager::timeout();
+            break;
+        }
+
+        txnState = RXPayload;
+        rxData[0] = CMD_R_RX_PAYLOAD;
+        spi.begin();
+        spi.transferDma(rxData, rxData, rxBuffer.len + 1);
+        break;
+
+    case RXPayload:
+        RadioManager::ackWithPacket(rxBuffer);
+        beginTransmit();
+        break;
 
     case TXChannel:
         txnState = TXAddressTx;
@@ -393,38 +429,6 @@ void NRF24L01::onSpiComplete()
     case TXPulseCE:
         txnState = Idle;
         ce.setLow();
-        break;
-
-    case RXStatus:
-        /*
-         * we've read the number of bytes that have arrived. Check for error,
-         * and proceed to reading the payload data.
-         */
-        rxBuffer.len = rxData[1];
-        if (rxBuffer.len > rxBuffer.MAX_LEN) {
-            /*
-             * Receive error. The data sheet requires that we flush the RX
-             * FIFO.  We'll count this as a timeout.
-             */
-
-            spi.begin();
-            spi.transfer(CMD_FLUSH_RX);
-            spi.end();
-
-            txnState = Idle;
-            RadioManager::timeout();
-            break;
-        }
-
-        txnState = RXPayload;
-        rxData[0] = CMD_R_RX_PAYLOAD;
-        spi.begin();
-        spi.transferDma(rxData, rxData, rxBuffer.len + 1);
-        break;
-
-    case RXPayload:
-        txnState = Idle;
-        RadioManager::ackWithPacket(rxBuffer);
         break;
 
     case Idle:
