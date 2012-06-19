@@ -77,6 +77,8 @@ void CubeSlot::startAssetLoad(SvmMemory::VirtAddr groupVA, uint16_t baseAddr)
         if (simCube) {
             FlashStorage::CubeRecord *storage = simCube->flash.getStorage();
             LoadstreamDecoder lsdec(storage->ext, sizeof storage->ext);
+
+            lsdec.setAddress(baseAddr << 7);
             lsdec.handleSVM(G->pHdr + sizeof header, header.dataSize);
 
             LOG(("FLASH[%d]: Installed asset group %s at base address "
