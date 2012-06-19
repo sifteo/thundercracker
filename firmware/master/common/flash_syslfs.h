@@ -113,7 +113,8 @@ namespace SysLFS {
         static Key makeKey(_SYSCubeID cube);
         static bool decodeKey(Key cubeKey, _SYSCubeID &cube);
 
-        void read(Key k);
+        void init();
+        bool load(const FlashLFSObjectIter &iter);
     };
 
     /*
@@ -140,6 +141,10 @@ namespace SysLFS {
     struct AssetGroupIdentity {
         uint8_t volume;
         uint8_t ordinal;
+
+        bool operator == (AssetGroupIdentity other) const {
+            return volume == other.volume && ordinal == other.ordinal;
+        }
     };
 
     struct LoadedAssetGroupRecord {
@@ -162,7 +167,13 @@ namespace SysLFS {
         static Key makeKey(Key cubeKey, unsigned slot);
         static bool decodeKey(Key slotKey, Key &cubeKey, unsigned &slot);
 
-        void read(Key k);
+        bool findGroup(AssetGroupIdentity identity, unsigned &offset) const;
+        bool allocGroup(AssetGroupIdentity identity, unsigned numTiles, unsigned &offset);
+        unsigned tilesFree() const;
+        bool isEmpty() const;
+
+        void init();
+        bool load(const FlashLFSObjectIter &iter);
     };
 
     /*
@@ -187,13 +198,13 @@ namespace SysLFS {
     int write(Key k, const uint8_t *data, unsigned dataSize, bool gc=true);
 
     template <typename T>
-    inline bool read(Key k, T &obj, bool gc=true) {
+    inline bool read(Key k, T &obj) {
         return read(k, (uint8_t*) &obj, sizeof obj) == sizeof obj;
     }
 
     template <typename T>
     inline bool write(Key k, const T &obj, bool gc=true) {
-        return write(k, (const uint8_t*) &obj, sizeof obj) == sizeof obj;
+        return write(k, (const uint8_t*) &obj, sizeof obj, gc) == sizeof obj;
     }
 
 } // end namespace SysLFS

@@ -595,6 +595,9 @@ private:
  * Only supports iteration in one direction: newest to oldest. At construction,
  * it points just past the most recent object. The first successful call
  * to previous() points it at the most recent object.
+ *
+ * After end of iteration (previous() returning false), future calls to
+ * previous() are also guaranteed to return false.
  */
 class FlashLFSObjectIter
 {
@@ -602,7 +605,7 @@ public:
     FlashLFSObjectIter(FlashLFS &lfs);
 
     bool previous(unsigned key = LFS::KEY_ANY);
-    bool readAndCheck(uint8_t *buffer, unsigned size);
+    bool readAndCheck(uint8_t *buffer, unsigned size) const;
 
     // Address of the current object
     unsigned address() const {

@@ -93,7 +93,13 @@ public:
     void unbind(_SYSCubeID cube) {
         phys[cube].setInvalid();
     }
+    
+    PhysAssetSlot getPhys(_SYSCubeID cube) const {
+        ASSERT(cube < _SYS_NUM_CUBE_SLOTS);
+        return phys[cube];
+    }
 
+    _SYSCubeIDVector validCubeVector();
     uint32_t tilesFree();
     void erase();
 
@@ -153,6 +159,8 @@ public:
      * we treat the entire slot's contents as unknown if a power failure or
      * other interruption happens during a write.
      *
+     * vSlot is only used if allocVec is non-NULL.
+     *
      * So, for any cube slots where we have to allocate space, we write a new
      * slot record which has (a) the space allocated, and (b) the
      * F_LOAD_IN_PROGRESS flag set. We clear this flag when the loading has
@@ -161,12 +169,17 @@ public:
      *
      * Any such loading-in-progress slots will be marked in allocVec,
      * and finalized by finalizeGroup.
+     *
+     * Returns 'true' on success. On allocation failure, returns 'false'.
+     * Changes may have been already made by the time we discover the failure.
      */
 
-    static void locateGroup(MappedAssetGroup &map, _SYSCubeIDVector searchCV,
-        _SYSCubeIDVector &foundCV, FlashLFSIndexRecord::KeyVector_t *allocVec);
+    static bool locateGroup(MappedAssetGroup &map, _SYSCubeIDVector searchCV,
+        _SYSCubeIDVector &foundCV, const VirtAssetSlot *vSlot = 0,
+        FlashLFSIndexRecord::KeyVector_t *allocVec = 0);
 
-    // Finalize any in-progress slots left over after locateGroup()
+    // Finalize any in-progress slots left over after locateGroup().
+    // As a side-effect, this clears all bits from 'vec'.
     static void finalizeGroup(FlashLFSIndexRecord::KeyVector_t &vec);
 
 private:

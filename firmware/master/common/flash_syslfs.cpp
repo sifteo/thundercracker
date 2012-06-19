@@ -105,41 +105,23 @@ bool SysLFS::CubeRecord::decodeKey(Key cubeKey, _SYSCubeID &cube)
     return false;
 }
 
-void SysLFS::CubeRecord::read(Key k)
+void SysLFS::CubeRecord::init()
 {
-    ASSERT(k >= kCubeBase && k < kCubeBase + kCubeCount);
-    if (!SysLFS::read(k, *this)) {
-        // Initialize with default contents
-        memset(this, 0, sizeof *this);
-    }
+    memset(this, 0, sizeof *this);
 }
 
-SysLFS::Key SysLFS::AssetSlotRecord::makeKey(Key cubeKey, unsigned slot)
+bool SysLFS::CubeRecord::load(const FlashLFSObjectIter &iter)
 {
-    unsigned i = cubeKey - kCubeBase;
-    ASSERT(i < kCubeCount);
-    ASSERT(slot < ASSET_SLOTS_PER_CUBE);
-    return Key(kAssetSlotBase + i * ASSET_SLOTS_PER_CUBE + slot);
-}
+    unsigned size = iter.record()->getSizeInBytes();
 
-bool SysLFS::AssetSlotRecord::decodeKey(Key slotKey, Key &cubeKey, unsigned &slot)
-{
-    unsigned i = slotKey - kAssetSlotBase;
-    if (i < kAssetSlotCount) {
-        cubeKey = (i / ASSET_SLOTS_PER_CUBE) + kCubeBase;
-        slot = i % ASSET_SLOTS_PER_CUBE;
+    if (size == 0) {
+        // Deleted record.
+        init();
         return true;
     }
-    return false;
-}
 
-void SysLFS::AssetSlotRecord::read(Key k)
-{
-    ASSERT(k >= kAssetSlotBase && k < kAssetSlotBase + kAssetSlotCount);
-    if (!SysLFS::read(k, *this)) {
-        // Initialize with default contents
-        memset(this, 0, sizeof *this);
-    }
+    // Valid if CRC is okay
+    return size >= sizeof *this && iter.readAndCheck((uint8_t*) this, sizeof *this);
 }
 
 bool SysLFS::CubeAssetsRecord::checkBinding(FlashVolume vol, unsigned numSlots) const
@@ -360,14 +342,18 @@ void SysLFS::CubeAssetsRecord::recycleSlots(unsigned bank, unsigned numSlots,
 void SysLFS::CubeAssetsRecord::markErased(unsigned slot)
 {
     /*
-     * Increase the erase count for a specific slot.
+     * Increase the erase count for a specific slot, and reset
+     * the number of allocated tiles to zero.
+     *
      * Always modifies the record.
      */
+     
+    AssetSlotOverviewRecord &s = slots[slot];
 
     // Assuming our erase counts are 8-bit.
-    STATIC_ASSERT(sizeof slots[slot].eraseCount == 1);
+    STATIC_ASSERT(sizeof s.eraseCount == 1);
 
-    if (slots[slot].eraseCount == 0xFF) {
+    if (s.eraseCount == 0xFF) {
         /*
          * If our erase counts are about to overflow, we get them back in
          * range by (1) subtracting the largest constant offset we can, or
@@ -386,8 +372,9 @@ void SysLFS::CubeAssetsRecord::markErased(unsigned slot)
         }
     }
 
-    slots[slot].eraseCount++;
-    ASSERT(slots[slot].eraseCount > 0);
+    s.numAllocatedTiles = 0;
+    s.eraseCount++;
+    ASSERT(s.eraseCount > 0);
 }
 
 bool SysLFS::CubeAssetsRecord::markAccessed(FlashVolume vol, unsigned numSlots)
@@ -430,4 +417,148 @@ bool SysLFS::CubeAssetsRecord::markAccessed(FlashVolume vol, unsigned numSlots)
     }
 
     return modified;
+}
+
+SysLFS::Key SysLFS::AssetSlotRecord::makeKey(Key cubeKey, unsigned slot)
+{
+    unsigned i = cubeKey - kCubeBase;
+    ASSERT(i < kCubeCount);
+    ASSERT(slot < ASSET_SLOTS_PER_CUBE);
+    return Key(kAssetSlotBase + i * ASSET_SLOTS_PER_CUBE + slot);
+}
+
+bool SysLFS::AssetSlotRecord::decodeKey(Key slotKey, Key &cubeKey, unsigned &slot)
+{
+    unsigned i = slotKey - kAssetSlotBase;
+    if (i < kAssetSlotCount) {
+        cubeKey = (Key) ((i / ASSET_SLOTS_PER_CUBE) + kCubeBase);
+        slot = i % ASSET_SLOTS_PER_CUBE;
+        return true;
+    }
+    return false;
+}
+
+void SysLFS::AssetSlotRecord::init()
+{
+    memset(this, 0, sizeof *this);
+}
+
+bool SysLFS::AssetSlotRecord::load(const FlashLFSObjectIter &iter)
+{
+    unsigned size = iter.record()->getSizeInBytes();
+
+    if (size == 0) {
+        // Deleted record.
+        init();
+        return true;
+    }
+
+    // Valid if CRC is okay
+    return size >= sizeof *this && iter.readAndCheck((uint8_t*) this, sizeof *this);
+}
+
+bool SysLFS::AssetSlotRecord::findGroup(AssetGroupIdentity identity, unsigned &offset) const
+{
+    /*
+     * Look for a matching group in this slot record. We keep searching
+     * until we reach an empty record. Also, if a load is or was
+     * in-progress, we refuse to trust the last group in the record.
+     */
+
+    ASSERT(identity.volume != 0);
+
+    unsigned inProgress = flags & F_LOAD_IN_PROGRESS;
+    unsigned currentOffset = 0;
+
+    for (unsigned i = 0; i < ASSET_GROUPS_PER_SLOT; ++i) {
+        const LoadedAssetGroupRecord &group = groups[i];
+    
+        if (group.isEmpty())
+            break;
+        if (inProgress && (i + 1) < ASSET_GROUPS_PER_SLOT && groups[i + 1].isEmpty())
+            break;
+
+        if (group.identity == identity) {
+            offset = currentOffset;
+            return true;
+        }
+
+        currentOffset += group.size.tileCount();
+    }
+
+    return false;
+}
+
+bool SysLFS::AssetSlotRecord::allocGroup(AssetGroupIdentity identity,
+    unsigned numTiles, unsigned &offset)
+{
+    /*
+     * Append a record for the given group identity. On success, writes
+     * the group's load address offset, in tiles, to "offset" and returns true.
+     *
+     * On allocation failure (No more group slots, not enough free tiles)
+     * return false without modifying the AssetSlotRecord.
+     */
+
+    // Refuse to allocate if a load was in progress. The erasure state is indeterminate.
+    if (flags & F_LOAD_IN_PROGRESS)
+        return false;
+
+    unsigned currentOffset = 0;
+
+    for (unsigned i = 0; i < ASSET_GROUPS_PER_SLOT; ++i) {
+        LoadedAssetGroupRecord &group = groups[i];
+    
+        if (group.isEmpty()) {
+            // Found a spot to allocate at!
+
+            if (currentOffset + numTiles > SysLFS::TILES_PER_ASSET_SLOT) {
+                // Slot is full!
+                return false;
+            }
+
+            group.size = AssetGroupSize::fromTileCount(numTiles);
+            group.identity = identity;
+            offset = currentOffset;
+            return true;
+        }
+
+        currentOffset += group.size.tileCount();
+    }
+
+    // Not enough free group records!
+    return false;
+}
+
+unsigned SysLFS::AssetSlotRecord::tilesFree() const
+{
+    /*
+     * How much space is free in this slot, measuring in tiles?
+     */
+
+    // Refuse to allocate if a load was in progress.
+    if (flags & F_LOAD_IN_PROGRESS)
+        return 0;
+
+    unsigned currentOffset = 0;
+
+    for (unsigned i = 0; i < ASSET_GROUPS_PER_SLOT; ++i) {
+        const LoadedAssetGroupRecord &group = groups[i];
+        if (group.isEmpty())
+            break;
+        currentOffset += group.size.tileCount();
+    }
+
+    if (currentOffset > TILES_PER_ASSET_SLOT) {
+        // Shouldn't happen... this means the slot is overfull.
+        ASSERT(0);
+        return 0;
+    }
+
+    return TILES_PER_ASSET_SLOT - currentOffset;
+}
+
+bool SysLFS::AssetSlotRecord::isEmpty() const
+{
+    return tilesFree() == TILES_PER_ASSET_SLOT;
 }
