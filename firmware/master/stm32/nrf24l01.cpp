@@ -364,6 +364,9 @@ void NRF24L01::staticSpiCompletionHandler(void *p)
  */
 void NRF24L01::onSpiComplete()
 {
+    SampleProfiler::SubSystem s = SampleProfiler::subsystem();
+    SampleProfiler::setSubsystem(SampleProfiler::RFISR);
+
     spi.end();
     switch (txnState) {
 
@@ -434,4 +437,6 @@ void NRF24L01::onSpiComplete()
     case Idle:
         break;
     }
+
+        SampleProfiler::setSubsystem(s);
 }
