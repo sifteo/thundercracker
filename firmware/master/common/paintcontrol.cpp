@@ -130,7 +130,6 @@ void PaintControl::waitForPaint(CubeSlot *cube)
         if (now > paintTimestamp + fpsHigh && pendingFrames <= fpMax)
             break;
 
-        Tasks::work();
         Tasks::idle();
     }
 

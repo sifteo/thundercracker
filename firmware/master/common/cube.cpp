@@ -431,7 +431,6 @@ uint64_t CubeSlot::getHWID()
             requestFlashReset();
 
         do {
-            Tasks::work();
             Tasks::idle();
         } while (!(CubeSlots::hwidValid & bit()));
     }

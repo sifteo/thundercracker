@@ -45,8 +45,8 @@ void Tasks::init()
 }
 
 /*
-    Pend a given task handler to be run the next time we have time.
-*/
+ * Pend a given task handler to be run the next time we have time.
+ */
 void Tasks::setPending(TaskID id, void* p)
 {
     ASSERT((unsigned)id < arraysize(TaskList));
@@ -63,10 +63,10 @@ void Tasks::clearPending(TaskID id)
 }
 
 /*
-    Service any tasks that are pending since our last round of work.
-    Should be called in main thread context, as callbacks might typically
-    take some time - it's the whole reason Tasks exists, after all.
-*/
+ * Service any tasks that are pending since our last round of work.
+ * Should be called in main thread context, as callbacks might typically
+ * take some time - it's the whole reason Tasks exists, after all.
+ */
 void Tasks::work()
 {
     uint32_t mask = pendingMask;
@@ -81,8 +81,34 @@ void Tasks::work()
     }
 }
 
-#ifndef SIFTEO_SIMULATOR
+/*
+ * Run pending tasks, OR if no tasks are pending, wait for interrupts.
+ * This is the correct way to block the main thread of execution while
+ * waiting for a condition.
+ */
 void Tasks::idle()
+{
+    /*
+     * XXX: This should really exit before waitForInterrupt(), in the
+     *      event that we're actually making forward progress in work().
+     *      Right now there isn't a good way of detecting this, though.
+     *
+     *      I'd like to call waitForInterrupt() if and only if there
+     *      were no pending tasks, but this currently doesn't work because
+     *      of tasks like AudioPull which are almost always runnable.
+     *
+     *      So, until we find a clean solution to that problem, idle() is
+     *      equivalent to work() followed by waitForInterrupt(). But we're
+     *      still consolidating our idling logic as much as possible so that
+     *      this strategy can be changed easily later.
+     */
+
+    work();
+    waitForInterrupt();
+}
+
+#ifndef SIFTEO_SIMULATOR
+void Tasks::waitForInterrupt()
 {
     __asm__ __volatile__ ("wfi");
 }

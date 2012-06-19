@@ -21,7 +21,11 @@ public:
     };
 
     static void init();
+    
+    /// Run pending tasks until no tasks are pending
     static void work();
+
+    /// Block an idle caller. Runs pending tasks OR waits for a hardware event
     static void idle();
 
     /*
@@ -44,6 +48,9 @@ private:
     };
 
     static Task TaskList[];
+
+    /// Block until the next hardware event
+    static void waitForInterrupt();
 };
 
 #endif // TASKS_H
