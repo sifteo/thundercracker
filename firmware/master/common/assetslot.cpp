@@ -13,6 +13,7 @@
 VirtAssetSlot VirtAssetSlots::instances[NUM_SLOTS];
 FlashVolume VirtAssetSlots::boundVolume;
 uint8_t VirtAssetSlots::numBoundSlots;
+_SYSCubeIDVector VirtAssetSlots::cubeBanks;
 
 
 bool MappedAssetGroup::init(_SYSAssetGroup *userPtr)
@@ -87,6 +88,7 @@ void VirtAssetSlots::rebindCube(_SYSCubeID cube)
     if (numSlots) {
         SysLFS::CubeRecord cr;
         SysLFS::Key ck = cr.makeKey(cube);
+        unsigned bank = 0;
 
         if (!SysLFS::read(ck, cr))
             cr.init();
@@ -106,8 +108,11 @@ void VirtAssetSlots::rebindCube(_SYSCubeID cube)
             if (slot.identity.inActiveSet(volume, numSlots)) {
                 ASSERT(slot.identity.ordinal < NUM_SLOTS);
                 instances[slot.identity.ordinal].bind(cube, i);
+                bank = i / SysLFS::ASSET_SLOTS_PER_BANK;
             }
         }
+
+        setCubeBank(cube, bank);
     }
 
     // Unbind any remaining slots.
@@ -452,4 +457,26 @@ void VirtAssetSlot::erase()
             }
         }
     }
+}
+
+void VirtAssetSlots::setCubeBank(_SYSCubeID cube, unsigned bank)
+{
+    // Assumes we have only two banks
+    STATIC_ASSERT(SysLFS::ASSET_SLOTS_PER_BANK * 2 == SysLFS::ASSET_SLOTS_PER_CUBE);
+    ASSERT(bank < 2);
+    ASSERT(cube < _SYS_NUM_CUBE_SLOTS);
+
+    if (bank)
+        cubeBanks |= Intrinsic::LZ(cube);
+    else
+        cubeBanks &= ~Intrinsic::LZ(cube);
+}
+
+unsigned VirtAssetSlots::getCubeBank(_SYSCubeID cube)
+{
+    // Assumes we have only two banks
+    STATIC_ASSERT(SysLFS::ASSET_SLOTS_PER_BANK * 2 == SysLFS::ASSET_SLOTS_PER_CUBE);
+    ASSERT(cube < _SYS_NUM_CUBE_SLOTS);
+
+    return (cubeBanks & Intrinsic::LZ(cube)) != 0;
 }

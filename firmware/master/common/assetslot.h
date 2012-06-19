@@ -143,6 +143,9 @@ public:
     static void rebind(_SYSCubeIDVector cv);
     static void rebindCube(_SYSCubeID cube);
 
+    // Which A21 bank is the indicated cube using?
+    static unsigned getCubeBank(_SYSCubeID cube);
+
     /**
      * This is the main workhorse for asset lookup and loading. In a single
      * pass, this scans through SysLFS, operating on any slots which are bound
@@ -185,9 +188,12 @@ public:
 private:
     VirtAssetSlots();  // Do not implement
 
+    static void setCubeBank(_SYSCubeID cube, unsigned bank);
+
     static VirtAssetSlot instances[NUM_SLOTS];
     static FlashVolume boundVolume;
     static uint8_t numBoundSlots;
+    static _SYSCubeIDVector cubeBanks;
 };
 
 
