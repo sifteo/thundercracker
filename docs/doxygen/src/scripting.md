@@ -339,6 +339,10 @@ Mark a volume as deleted. If the provided block code is not valid, raises a Lua 
 
 Given a volume's block code, return the associated 16-bit type identifier. If the provided block code is not valid, raises a Lua error.
 
+### Filesystem():volumeParent( _block code_ )
+
+Given a volume's block code, return its parent's block code, if any. If this volume is not parented to another, returns zero.
+
 ### Filesystem():simulatedSectorEraseCounts()
 
 Return an array of simulated erase counts for every sector in the Base's flash memory. This data is tracked by Siftulator's simulation engine itself.
@@ -389,3 +393,15 @@ For example:
 This overrides the three callback methods on Filesystem, then enables those callbacks. Any Flash memory operations after this point will be accompanied by logging.
 
 The addresses supplied are physical flash addresses. Where applicable, you can translate them back to virtual addresses (a.k.a C++ pointers) using `Runtime():flashToVirtAddr()`.
+
+### Filesystem():readMetadata( _volume_, _key_ )
+
+Read a metadata value from an ELF binary identified by a volume bock code. Returns the raw binary contents of the metadata key as a string, or nil if the key does not exist. Note that metadata values may be padded at the end.
+
+### Filesystem():readObject( _volume_, _key_ )
+
+Read a StoredObject from a particular ELF binary's object storage. Returns the raw binary contents of the object as a string, an empty string if the object has been deleted, or nil if the object doesn't exist in the filesystem at all.
+
+### Filesystem():writeObject( _volume_, _key_, _data_ )
+
+Write a StoredObject to a particular ELF binary's object storage. Automatically causes filesystem garbage collection if we're low on space. Raises a Lua error if we're actually out of storage space.
