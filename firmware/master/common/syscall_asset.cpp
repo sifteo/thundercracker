@@ -107,10 +107,8 @@ uint32_t _SYS_asset_loadStart(_SYSAssetLoader *loader, _SYSAssetGroup *group,
      */
 
     _SYSCubeIDVector cachedCV;
-    if (!VirtAssetSlots::locateGroup(map, cv, cachedCV, &vSlot, &gSlotsInProgress)) {
-        gSlotsInProgress.clear();
+    if (!VirtAssetSlots::locateGroup(map, cv, cachedCV, &vSlot, &gSlotsInProgress))
         return false;
-    }
 
     cv &= ~cachedCV;
     loader->complete |= cachedCV;
@@ -191,7 +189,7 @@ uint32_t _SYS_asset_findInCache(_SYSAssetGroup *group, _SYSCubeIDVector cv)
 
     _SYSCubeIDVector cachedCV;
     if (!VirtAssetSlots::locateGroup(map, cv, cachedCV))
-        return 0;
+        cachedCV = 0;
 
     return cachedCV;
 }

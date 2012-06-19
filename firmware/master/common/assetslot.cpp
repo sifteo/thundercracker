@@ -167,6 +167,13 @@ bool VirtAssetSlots::locateGroup(MappedAssetGroup &map,
                 if (0 == (searchCV & Intrinsic::LZ(cube)))
                     continue;
 
+                // Is this the slot we're interested in?
+                if (vSlot) {
+                    PhysAssetSlot pSlot = vSlot->getPhys(cube);
+                    if (!pSlot.isValid() || slot != pSlot.index())
+                        continue;
+                }
+
                 // Yes, still interested! Read in the AssetSlotRecord.
                 if (!asr.load(iter))
                     continue;
@@ -211,7 +218,7 @@ bool VirtAssetSlots::locateGroup(MappedAssetGroup &map,
                     return false;
                 }
                 agc->baseAddr = offset + slot * PhysAssetSlot::SLOT_SIZE;
- 
+
                 // Mark this slot as a work in progress, remember to finalize later
                 asr.flags |= asr.F_LOAD_IN_PROGRESS;
                 allocVec->mark(asrKey);
