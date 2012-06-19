@@ -128,7 +128,6 @@ class Radio {
  public:
     static void init();
     static void begin();
-    static void halt();
 
     /*
      * Values for the L01's tx power register.

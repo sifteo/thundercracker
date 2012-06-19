@@ -130,7 +130,7 @@ void PaintControl::waitForPaint(CubeSlot *cube)
             break;
 
         Tasks::work();
-        Radio::halt();
+        Tasks::idle();
     }
 
     /*

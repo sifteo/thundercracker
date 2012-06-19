@@ -154,7 +154,7 @@ void Radio::begin()
     // and the beginning of transmissions.
 }
 
-void Radio::halt()
+void Tasks::idle()
 {
     // Elapse time until the next radio packet.
     // Note that we must actually call elapseTicks() here, since it's

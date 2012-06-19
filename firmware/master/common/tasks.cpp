@@ -80,3 +80,10 @@ void Tasks::work()
         task.callback(task.param);
     }
 }
+
+#ifndef SIFTEO_SIMULATOR
+void Tasks::idle()
+{
+    __asm__ __volatile__ ("wfi");
+}
+#endif

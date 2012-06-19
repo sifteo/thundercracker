@@ -21,21 +21,6 @@ void Radio::begin()
     NRF24L01::instance.beginTransmitting();
 }
 
-void Radio::halt()
-{
-    /*
-     * Wait for any interrupt
-     *
-     * Disabled during debug builds. WFI loops make JTAG debugging
-     * very annoying, since the JTAG clock is also turned off while
-     * we're waiting.
-     */
-
-#ifndef DEBUG
-    __asm__ __volatile__ ("wfi");
-#endif
-}
-
 void Radio::setTxPower(TxPower pwr)
 {
     NRF24L01::instance.setTxPower(pwr);
