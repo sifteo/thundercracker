@@ -158,10 +158,8 @@ void _SYS_asset_loadFinish(_SYSAssetLoader *loader)
      * slots as no-longer in progress.
      */
 
-    while ((loader->complete & loader->cubeVec) != loader->cubeVec) {
-        Tasks::work();
-        Radio::halt();
-    }
+    while ((loader->complete & loader->cubeVec) != loader->cubeVec)
+        Tasks::idle();
 
     // No more current load operation
     CubeSlots::assetLoader = NULL;
