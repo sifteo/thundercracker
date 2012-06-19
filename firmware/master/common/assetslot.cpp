@@ -177,8 +177,8 @@ bool VirtAssetSlots::locateGroup(MappedAssetGroup &map,
                 asrKey = asr.makeKey(cubeKey, slot);
 
             } else {
-                // Out of records, and not allowed to allocate. Fail!
-                return false;
+                // Out of records, and not allowed to allocate. Done searching.
+                return true;
             }
 
             // Map the cube-specific data for this group and this cube.
@@ -188,13 +188,14 @@ bool VirtAssetSlots::locateGroup(MappedAssetGroup &map,
                 return false;
             }
 
+            // Done searching on this cube
+            searchCV ^= Intrinsic::LZ(cube);
+
             // Is this group present already?
             unsigned offset;
             if (asr.findGroup(map.id, offset)) {
-                _SYSCubeIDVector bit = Intrinsic::LZ(cube);
                 agc->baseAddr = offset + slot * PhysAssetSlot::SLOT_SIZE;
-                searchCV ^= bit;
-                foundCV |= bit;
+                foundCV |= Intrinsic::LZ(cube);
                 continue;
             }
 
@@ -205,8 +206,7 @@ bool VirtAssetSlots::locateGroup(MappedAssetGroup &map,
                     return false;
                 }
                 agc->baseAddr = offset + slot * PhysAssetSlot::SLOT_SIZE;
-                searchCV ^= Intrinsic::LZ(cube);
-
+ 
                 // Mark this slot as a work in progress, remember to finalize later
                 asr.flags |= asr.F_LOAD_IN_PROGRESS;
                 allocVec->mark(asrKey);
@@ -221,9 +221,6 @@ bool VirtAssetSlots::locateGroup(MappedAssetGroup &map,
                 SysLFS::write(asrKey, asr);
                 break;
             }
-
-            // Failed to find the group, not allowed to allocate. Fail!
-            return false;
         }
     }
 
