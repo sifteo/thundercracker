@@ -75,6 +75,27 @@ public:
         }
     }
 
+    /// Invert all bits in the vector
+    void invert()
+    {
+        const unsigned NUM_WORDS = (tSize + 31) / 32;
+        const unsigned NUM_FULL_WORDS = tSize / 32;
+        const unsigned REMAINDER_BITS = tSize & 31;
+
+        STATIC_ASSERT(NUM_FULL_WORDS + 1 == NUM_WORDS ||
+                      NUM_FULL_WORDS == NUM_WORDS);
+
+        // Set fully-utilized words only
+        for (unsigned i = 0; i < NUM_FULL_WORDS; ++i)
+            words[i] ^= -1;
+
+        if (NUM_FULL_WORDS != NUM_WORDS) {
+            // Set only bits < tSize in the last word.
+            uint32_t mask = ((uint32_t)-1) << ((32 - REMAINDER_BITS) & 31);
+            words[NUM_FULL_WORDS] ^= mask;
+        }
+    }
+
     /// Clear (set to 0) all bits in the vector
     void clear()
     {

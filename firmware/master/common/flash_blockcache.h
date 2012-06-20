@@ -17,6 +17,7 @@
 #include "systime.h"
 #include "machine.h"
 #include "macros.h"
+#include "bits.h"
 #include <stdint.h>
 #include <string.h>
 
@@ -37,8 +38,8 @@ class FlashBlockWriter;
 class FlashBlock
 {
 public:
-    static const unsigned NUM_CACHE_BLOCKS = 32;
-    static const unsigned BLOCK_SIZE = 256;     // Power of two
+    static const unsigned NUM_CACHE_BLOCKS = 64;    // 16 kB of cache
+    static const unsigned BLOCK_SIZE = 256;         // Power of two
     static const unsigned BLOCK_MASK = BLOCK_SIZE - 1;
     static const unsigned MAX_REFCOUNT = NUM_CACHE_BLOCKS;
     static const uint32_t INVALID_ADDRESS = (uint32_t)-1;
@@ -52,6 +53,8 @@ public:
 private:
     friend class FlashBlockRef;
     friend class FlashBlockWriter;
+
+    typedef BitVector<NUM_CACHE_BLOCKS> BlockMap_t;
 
     uint32_t stamp;
     uint32_t address;
@@ -78,16 +81,12 @@ private:
 
     static uint8_t mem[NUM_CACHE_BLOCKS][BLOCK_SIZE] SECTION(".blockcache");
     static FlashBlock instances[NUM_CACHE_BLOCKS];
-    static uint32_t referencedBlocksMap;
+    static BlockMap_t referencedBlocksMap;
     static uint32_t latestStamp;
 
 public:
     ALWAYS_INLINE unsigned id() {
         return (unsigned)(this - instances);
-    }
-    
-    ALWAYS_INLINE unsigned bit() {
-        return Intrinsic::LZ(id());
     }
 
     ALWAYS_INLINE uint32_t getAddress() {
@@ -140,11 +139,11 @@ public:
 private:
     inline void incRef() {
         ASSERT(refCount <= MAX_REFCOUNT);
-        ASSERT(refCount == 0 || (referencedBlocksMap & bit()));
-        ASSERT(refCount != 0 || !(referencedBlocksMap & bit()));
+        ASSERT(refCount == 0 || referencedBlocksMap.test(id()));
+        ASSERT(refCount != 0 || !referencedBlocksMap.test(id()));
 
         if (!refCount++)
-            referencedBlocksMap |= bit();
+            referencedBlocksMap.mark(id());
 
         FLASHLAYER_STATS_ONLY({
             stats.globalRefcount++;
@@ -155,10 +154,10 @@ private:
     inline void decRef() {
         ASSERT(refCount <= MAX_REFCOUNT);
         ASSERT(refCount != 0);
-        ASSERT(referencedBlocksMap & bit());
+        ASSERT(referencedBlocksMap.test(id()));
 
         if (!--refCount)
-            referencedBlocksMap &= ~bit();
+            referencedBlocksMap.clear(id());
 
         FLASHLAYER_STATS_ONLY({
             ASSERT(stats.globalRefcount > 0);

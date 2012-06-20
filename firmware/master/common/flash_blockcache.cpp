@@ -10,7 +10,7 @@
 
 uint8_t FlashBlock::mem[NUM_CACHE_BLOCKS][BLOCK_SIZE] BLOCK_ALIGN;
 FlashBlock FlashBlock::instances[NUM_CACHE_BLOCKS];
-uint32_t FlashBlock::referencedBlocksMap;
+FlashBlock::BlockMap_t FlashBlock::referencedBlocksMap;
 uint32_t FlashBlock::latestStamp;
 
 
@@ -119,17 +119,16 @@ FlashBlock *FlashBlock::recycleBlock()
     // 32-bit timestamp which is updated every time a cache hit occurs. We
     // can quickly scan through and find the block with the oldest stamp.
 
-    STATIC_ASSERT(NUM_CACHE_BLOCKS <= 32);
-    const uint32_t allBlocks = ((1ULL << NUM_CACHE_BLOCKS) - 1ULL) << (32 - NUM_CACHE_BLOCKS);
-    uint32_t availableBlocks = allBlocks & ~referencedBlocksMap;
-    ASSERT(availableBlocks &&
+    BlockMap_t available = referencedBlocksMap;
+    available.invert();
+    ASSERT(!available.empty() &&
         "Oh no, all cache blocks are in use. Is there a reference leak?");
 
     FlashBlock *bestBlock = 0;
     uint32_t bestAge = 0;
+    unsigned idx;
 
-    do {
-        unsigned idx = Intrinsic::CLZ(availableBlocks);
+    while (available.clearFirst(idx)) {
         FlashBlock *block = &instances[idx];
         uint32_t age = latestStamp - block->stamp;  // Wraparound-safe
 
@@ -147,9 +146,7 @@ FlashBlock *FlashBlock::recycleBlock()
             bestBlock = block;
             bestAge = age;
         }
-        
-        availableBlocks &= ~Intrinsic::LZ(idx);
-    } while (availableBlocks);
+    }
 
     return bestBlock;
 }
