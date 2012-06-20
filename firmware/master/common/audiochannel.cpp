@@ -44,6 +44,11 @@ void AudioChannelSlot::play(const struct _SYSAudioModule *module, _SYSAudioLoopT
     setSpeed(mod.sampleRate);
     setVolume(mod.volume);
 
+    // Pre-calculate the loop endpoint (relatively expensive)
+    offsetLimit = (state & STATE_LOOP) && mod.loopEnd
+        ? ((uint64_t)mod.loopEnd) << SAMPLE_FRAC_SIZE
+        : ((uint64_t)samples.numSamples() - 1) << SAMPLE_FRAC_SIZE;
+
     state &= ~STATE_STOPPED;
 }
 
@@ -58,23 +63,21 @@ bool AudioChannelSlot::mixAudio(int *buffer, uint32_t numFrames)
     }
 
     ASSERT(samples.numSamples() > 0);
-    uint64_t fpLimit = (state & STATE_LOOP) && mod.loopEnd
-                     ? ((uint64_t)mod.loopEnd) << SAMPLE_FRAC_SIZE
-                     : ((uint64_t)samples.numSamples() - 1) << SAMPLE_FRAC_SIZE;
 
-    // Read from slot only once, and sign extend to 32-bit.
+    // Read from slot only once
     const int latchedVolume = volume;
     const int latchedIncrement = increment;
+    const uint64_t latchedLimit = offsetLimit;
 
     // Local copy of offset, to avoid writing back to RAM every time
     uint64_t localOffset = offset;
 
     while (numFrames--) {
         // Looping logic
-        if (localOffset > fpLimit) {
+        if (UNLIKELY(localOffset > latchedLimit)) {
             if (state & STATE_LOOP) {
                 uint64_t fpLoopStart = ((uint64_t)mod.loopStart) << SAMPLE_FRAC_SIZE;
-                localOffset = fpLoopStart + (localOffset - fpLimit);
+                localOffset = fpLoopStart + (localOffset - latchedLimit);
             } else {
                 #ifdef SIFTEO_SIMULATOR
                     MCAudioVisData::clearChannel(AudioMixer::instance.channelID(this));
@@ -87,14 +90,17 @@ bool AudioChannelSlot::mixAudio(int *buffer, uint32_t numFrames)
 
         // Compute the next sample
         int32_t sample;
-        if ((localOffset & SAMPLE_FRAC_MASK) == 0) {
+        uint32_t index = localOffset >> SAMPLE_FRAC_SIZE;
+        uint32_t fractional = localOffset & SAMPLE_FRAC_MASK;
+
+        if (!fractional) {
             // Offset is aligned with an asset sample
-            sample = samples[localOffset >> SAMPLE_FRAC_SIZE];
+            sample = samples[index];
         } else {
-            int32_t sample_next = samples[(localOffset >> SAMPLE_FRAC_SIZE) + 1];
-            sample = samples[localOffset >> SAMPLE_FRAC_SIZE];
-            // Linearly interpolate between the two relevant samples
-            sample += ((sample_next - sample) * (localOffset & SAMPLE_FRAC_MASK)) >> SAMPLE_FRAC_SIZE;
+            // Linearly interpolate between the two relevant samples            
+            int32_t next = samples[index + 1];
+            sample = samples[index];
+            sample += ((next - sample) * int(fractional)) >> SAMPLE_FRAC_SIZE;
         }
 
         // Mix volume
