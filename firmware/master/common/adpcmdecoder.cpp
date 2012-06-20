@@ -50,7 +50,7 @@ int ALWAYS_INLINE AdPcmDecoder::decodeNybble(unsigned nybble)
         0x000008F1,
     };
 
-    ASSERT(index >= 0 && index < arraysize(stepSizeTable));
+    ASSERT(index >= 0 && index < int(arraysize(stepSizeTable)));
     ASSERT(nybble < arraysize(codeTable));
 
     int step = stepSizeTable[index];
