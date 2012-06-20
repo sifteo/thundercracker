@@ -17,7 +17,7 @@ public:
         hasExtraSample(false)
     {}
 
-    int16_t decodeSample(uint8_t **pa);
+    int decodeSample(uint8_t **pa);
 
     void reset() {
         index = 0;
@@ -27,16 +27,11 @@ public:
 
 private:
     int16_t index;
-    int32_t predictedSample;
-
-    // since we decode two samples per byte, save the extra
-    bool hasExtraSample;
+    int16_t predictedSample;
     int16_t extraSample;
+    bool hasExtraSample;    // since we decode two samples per byte, save the extra
 
-    static const uint16_t stepSizeTable[];
-    static const int8_t indexTable[];
-
-    int16_t decode4to16bits(uint8_t code);
+    int decodeNybble(unsigned nybble);
 };
 
 #endif // ADPCMDECODER_H

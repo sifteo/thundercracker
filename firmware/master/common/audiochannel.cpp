@@ -96,11 +96,9 @@ bool AudioChannelSlot::mixAudio(int16_t *buffer, uint32_t numFrames)
             MCAudioVisData::writeChannelSample(AudioMixer::instance.channelID(this), sample);
         #endif
 
-        // Mix into buffer
+        // Mix into buffer, and clamp
         sample += *buffer;
-
-        // TODO - more subtle compression instead of hard limiter
-        *buffer = clamp(sample, (int32_t)SHRT_MIN, (int32_t)SHRT_MAX);
+        *buffer = Intrinsic::SSAT(sample, 16);
 
         // Advance to the next output sample
         offset += increment;
