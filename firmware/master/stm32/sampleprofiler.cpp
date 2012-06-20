@@ -14,7 +14,9 @@ HwTimer SampleProfiler::timer(&PROFILER_TIM);
 void SampleProfiler::init()
 {
     subsys = None;
-    timer.init(1000, 35);
+
+    // Highest prime number under 1000
+    timer.init(997, 35);
 }
 
 void SampleProfiler::onUSBData(const USBProtocolMsg &m)
