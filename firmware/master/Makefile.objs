@@ -43,7 +43,8 @@ OBJS_COMMON = \
     $(MASTER_DIR)/common/elfprogram.o \
     $(MASTER_DIR)/common/panic.o \
     $(MASTER_DIR)/common/imagedecoder.o \
-    $(MASTER_DIR)/common/paintcontrol.o
+    $(MASTER_DIR)/common/paintcontrol.o \
+    $(MASTER_DIR)/common/usbvolumemanager.o
 
 # Sources common to all stm32 builds (currently master & testjig)
 OBJS_STM32 = \
