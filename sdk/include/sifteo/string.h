@@ -94,6 +94,15 @@ inline int strncmp(const char *a, const char *b, unsigned count)
     return _SYS_strncmp(a, b, count);
 }
 
+/**
+ * @brief Get the length of a C-style string.
+ *
+ * 'maxLen' is required to limit the search for the end of the string. This
+ * routine will fault if 'maxLen' extends beyond valid memory.
+ */
+inline unsigned strnlen(const char *str, uint32_t maxLen) {
+    return _SYS_strnlen(str, maxLen);
+}
 
 /**
  * @brief A statically sized character buffer, with output formatting support.
