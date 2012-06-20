@@ -29,6 +29,7 @@
 #   define ASSERT(_x)         assert(_x)
 #   define DEBUG_ONLY(x)      x
 #   define UART(_x)
+#   define UART_HEX(_x)
 #   define SECTION(_x)
 #else
 #   define DEBUG_LOG(_x)
@@ -37,6 +38,7 @@
 #   define DEBUG_ONLY(x)
 #   include                   "usart.h"
 #   define UART(_x)           Usart::Dbg.write(_x)
+#   define UART_HEX(_x)       Usart::Dbg.writeHex(_x)
 #   define SECTION(_x)        __attribute__((section(_x)))
 #endif
 

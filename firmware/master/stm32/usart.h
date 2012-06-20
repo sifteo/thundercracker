@@ -32,6 +32,7 @@ public:
 
     void write(const uint8_t* buf, int size);
     void write(const char* buf);
+    void writeHex(uint32_t value);
     void read(uint8_t *buf, int size);
 
     void put(char c);
