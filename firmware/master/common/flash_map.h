@@ -38,17 +38,17 @@ public:
     // A BitVector with one bit for every possible FlashMapBlock index
     typedef BitVector<NUM_BLOCKS> Set;
 
-    unsigned address() const {
+    unsigned ALWAYS_INLINE address() const {
         STATIC_ASSERT(NUM_BLOCKS <= (1ULL << (sizeof(code) * 8)));
         return index() * BLOCK_SIZE;
     }
 
-    unsigned index() const {
+    unsigned ALWAYS_INLINE index() const {
         ASSERT(isValid());
         return code - 1;
     }
 
-    bool isValid() const {
+    bool ALWAYS_INLINE isValid() const {
         /*
          * Zero is the canonical 'invalid' value, but 0xFF is also
          * treated as invalid since we may see that value in portions of
@@ -58,50 +58,50 @@ public:
         return (unsigned)(code - 1) < NUM_BLOCKS;
     }
 
-    void setInvalid() {
+    void ALWAYS_INLINE setInvalid() {
         code = 0;
     }
 
-    void setIndex(unsigned i) {
+    void ALWAYS_INLINE setIndex(unsigned i) {
         code = i + 1;
     }
 
-    void setAddress(unsigned a) {
+    void ALWAYS_INLINE setAddress(unsigned a) {
         setIndex(a / BLOCK_SIZE);
         ASSERT(address() == a);
     }
 
-    void mark(Set &v) const {
+    void ALWAYS_INLINE mark(Set &v) const {
         if (isValid())
             v.mark(index());
     }
 
-    void clear(Set &v) const {
+    void ALWAYS_INLINE clear(Set &v) const {
         if (isValid())
             v.clear(index());
     }
 
     void erase() const;
 
-    static FlashMapBlock fromIndex(unsigned i) {
+    static ALWAYS_INLINE FlashMapBlock fromIndex(unsigned i) {
         FlashMapBlock result;
         result.setIndex(i);
         return result;
     }
 
-    static FlashMapBlock fromAddress(unsigned a) {
+    static ALWAYS_INLINE FlashMapBlock fromAddress(unsigned a) {
         FlashMapBlock result;
         result.setAddress(a);
         return result;
     }
 
-    static FlashMapBlock fromCode(unsigned c) {
+    static ALWAYS_INLINE FlashMapBlock fromCode(unsigned c) {
         FlashMapBlock result;
         result.code = c;
         return result;
     }
 
-    static FlashMapBlock invalid() {
+    static ALWAYS_INLINE FlashMapBlock invalid() {
         FlashMapBlock result;
         result.setInvalid();
         return result;
@@ -163,7 +163,7 @@ public:
      * Initialize the FlashMapSpan to a particular range of the
      * FlashMap, specified in units of cache blocks.
      */
-    static FlashMapSpan create(const FlashMap *map,
+    static ALWAYS_INLINE FlashMapSpan create(const FlashMap *map,
         unsigned firstBlock, unsigned numBlocks)
     {
         STATIC_ASSERT(FlashMap::NUM_CACHE_BLOCKS <= (1ULL << (sizeof(firstBlock) * 8)));
@@ -177,26 +177,26 @@ public:
     }
 
     /// Return an empty FlashMapSpan. It contains no mapped blocks.
-    static FlashMapSpan empty()
+    static ALWAYS_INLINE FlashMapSpan empty()
     {
         FlashMapSpan result = { 0, 0, 0 };
         return result;
     }
 
     /// Is there any valid block in this span?
-    bool isEmpty() const {
+    bool ALWAYS_INLINE isEmpty() const {
         return numBlocks == 0;
     }
 
-    uint32_t sizeInBytes() const {
+    uint32_t ALWAYS_INLINE sizeInBytes() const {
         return (uint32_t)numBlocks * FlashBlock::BLOCK_SIZE;
     }
 
-    uint32_t firstByte() const {
+    uint32_t ALWAYS_INLINE firstByte() const {
         return (uint32_t)firstBlock * FlashBlock::BLOCK_SIZE;
     }
 
-    bool offsetIsValid(ByteOffset byteOffset) const {
+    bool ALWAYS_INLINE offsetIsValid(ByteOffset byteOffset) const {
         return byteOffset < sizeInBytes();
     }
 

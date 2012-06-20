@@ -82,23 +82,23 @@ private:
     static uint32_t latestStamp;
 
 public:
-    inline unsigned id() {
+    ALWAYS_INLINE unsigned id() {
         return (unsigned)(this - instances);
     }
     
-    inline unsigned bit() {
+    ALWAYS_INLINE unsigned bit() {
         return Intrinsic::LZ(id());
     }
 
-    inline uint32_t getAddress() {
+    ALWAYS_INLINE uint32_t getAddress() {
         return address;
     }
 
-    inline bool isAnonymous() {
+    ALWAYS_INLINE bool isAnonymous() {
         return address == INVALID_ADDRESS;
     }
 
-    inline uint8_t *getData() {
+    ALWAYS_INLINE uint8_t *getData() {
         return &mem[id()][0];
     }
 
@@ -197,7 +197,7 @@ public:
         release();
     }
 
-    bool isHeld() const {
+    bool ALWAYS_INLINE isHeld() const {
         if (block) {
             ASSERT(block->refCount != 0);
             ASSERT(block->refCount <= block->MAX_REFCOUNT);
@@ -206,7 +206,7 @@ public:
         return false;
     }
 
-    void set(FlashBlock *b) {
+    void ALWAYS_INLINE set(FlashBlock *b) {
         if (isHeld())
             block->decRef();
         block = b;
@@ -214,21 +214,21 @@ public:
             b->incRef();
     }
     
-    void release() {
+    void ALWAYS_INLINE release() {
         set(0);
         ASSERT(!isHeld());
     }
 
-    FlashBlock& operator*() const {
+    ALWAYS_INLINE FlashBlock& operator*() const {
         return *block;
     }
 
-    FlashBlock* operator->() const {
+    ALWAYS_INLINE FlashBlock* operator->() const {
         ASSERT(isHeld());
         return block;
     }
 
-    FlashBlockRef& operator=(const FlashBlockRef &r) {
+    ALWAYS_INLINE FlashBlockRef& operator=(const FlashBlockRef &r) {
         block = r.block;
         if (block)
             block->incRef();
