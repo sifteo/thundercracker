@@ -2,6 +2,7 @@
 #include "command.h"
 #include "profiler.h"
 #include "fwloader.h"
+#include "installer.h"
 #include "usbdevice.h"
 
 #include <stdio.h>
@@ -19,6 +20,12 @@ static const Command commands[] = {
         "install new firmware to the Sifteo Base",
         "fwload <firmware.bin>",
         FwLoader::run
+    },
+    {
+        "install",
+        "install a new application to the Sifteo Base",
+        "install <application.bin>",
+        Installer::run
     }
 };
 

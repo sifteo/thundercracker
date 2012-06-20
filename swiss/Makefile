@@ -12,7 +12,8 @@ OBJS := \
     fwloader.o      \
     profiler.o      \
     elfdebuginfo.o  \
-    mappedfile.o
+    mappedfile.o    \
+    installer.o
 
 # include directories
 INCLUDES := \
