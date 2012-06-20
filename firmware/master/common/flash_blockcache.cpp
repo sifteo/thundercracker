@@ -120,7 +120,7 @@ FlashBlock *FlashBlock::recycleBlock()
     // can quickly scan through and find the block with the oldest stamp.
 
     STATIC_ASSERT(NUM_CACHE_BLOCKS <= 32);
-    const uint32_t allBlocks = ((1 << NUM_CACHE_BLOCKS) - 1) << (32 - NUM_CACHE_BLOCKS);
+    const uint32_t allBlocks = ((1ULL << NUM_CACHE_BLOCKS) - 1ULL) << (32 - NUM_CACHE_BLOCKS);
     uint32_t availableBlocks = allBlocks & ~referencedBlocksMap;
     ASSERT(availableBlocks &&
         "Oh no, all cache blocks are in use. Is there a reference leak?");

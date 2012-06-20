@@ -37,7 +37,7 @@ class FlashBlockWriter;
 class FlashBlock
 {
 public:
-    static const unsigned NUM_CACHE_BLOCKS = 16;
+    static const unsigned NUM_CACHE_BLOCKS = 32;
     static const unsigned BLOCK_SIZE = 256;     // Power of two
     static const unsigned BLOCK_MASK = BLOCK_SIZE - 1;
     static const unsigned MAX_REFCOUNT = NUM_CACHE_BLOCKS;
