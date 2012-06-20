@@ -7,6 +7,7 @@
 #include "audiomixer.h"
 #include "tasks.h"
 #include "sampleprofiler.h"
+#include "led.h"
 
 #include <stdio.h>
 #include <string.h>
@@ -80,11 +81,13 @@ void PwmAudioOut::tmrIsr()
     SampleProfiler::SubSystem s = SampleProfiler::subsystem();
     SampleProfiler::setSubsystem(SampleProfiler::AudioISR);
 
-    if (buf.readAvailable()) {
-        uint16_t duty = buf.dequeue() + 0x8000;
-        duty = (duty * pwmTimer.period()) / 0xFFFF; // scale to timer period
-        pwmTimer.setDuty(pwmChan, duty);
-    }
+    uint16_t duty = 0x8000;
+    if (buf.readAvailable())
+        duty += buf.dequeue();
+
+    // scale to timer period
+    duty = (duty * pwmTimer.period()) >> 16;
+    pwmTimer.setDuty(pwmChan, duty);
 
     SampleProfiler::setSubsystem(s);
 }
