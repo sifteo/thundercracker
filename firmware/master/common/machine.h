@@ -142,8 +142,11 @@ namespace Intrinsic {
             return r;
         #else
             int32_t dest;
-            asm ("ssat %[dest], %[imm], %[src]"
-                : [dest] "=r"(dest) : [imm] "i"(bit), [src] "r"(r));
+            asm volatile (
+                "ssat %[dest], %[imm], %[src]"
+                : [dest] "=r"(dest)
+                : [imm] "i"(bit), [src] "r"(r)
+                : "cc");
             return dest;
         #endif
     }

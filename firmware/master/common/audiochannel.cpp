@@ -47,26 +47,34 @@ void AudioChannelSlot::play(const struct _SYSAudioModule *module, _SYSAudioLoopT
     state &= ~STATE_STOPPED;
 }
 
-bool AudioChannelSlot::mixAudio(int16_t *buffer, uint32_t numFrames)
+bool AudioChannelSlot::mixAudio(int *buffer, uint32_t numFrames)
 {
     // Early out if this channel is in the process of being stopped by the main thread.
-    if (state & STATE_STOPPED || samples.numSamples() == 0) {
+    if ((state & STATE_STOPPED) || mod.dataSize == 0) {
         #ifdef SIFTEO_SIMULATOR
             MCAudioVisData::clearChannel(AudioMixer::instance.channelID(this));
         #endif
         return false;
     }
 
+    ASSERT(samples.numSamples() > 0);
     uint64_t fpLimit = (state & STATE_LOOP) && mod.loopEnd
                      ? ((uint64_t)mod.loopEnd) << SAMPLE_FRAC_SIZE
                      : ((uint64_t)samples.numSamples() - 1) << SAMPLE_FRAC_SIZE;
 
+    // Read from slot only once, and sign extend to 32-bit.
+    const int latchedVolume = volume;
+    const int latchedIncrement = increment;
+
+    // Local copy of offset, to avoid writing back to RAM every time
+    uint64_t localOffset = offset;
+
     while (numFrames--) {
         // Looping logic
-        if (offset > fpLimit) {
+        if (localOffset > fpLimit) {
             if (state & STATE_LOOP) {
                 uint64_t fpLoopStart = ((uint64_t)mod.loopStart) << SAMPLE_FRAC_SIZE;
-                offset = fpLoopStart + (offset - fpLimit);
+                localOffset = fpLoopStart + (localOffset - fpLimit);
             } else {
                 #ifdef SIFTEO_SIMULATOR
                     MCAudioVisData::clearChannel(AudioMixer::instance.channelID(this));
@@ -79,32 +87,32 @@ bool AudioChannelSlot::mixAudio(int16_t *buffer, uint32_t numFrames)
 
         // Compute the next sample
         int32_t sample;
-        if ((offset & SAMPLE_FRAC_MASK) == 0) {
+        if ((localOffset & SAMPLE_FRAC_MASK) == 0) {
             // Offset is aligned with an asset sample
-            sample = samples[offset >> SAMPLE_FRAC_SIZE];
+            sample = samples[localOffset >> SAMPLE_FRAC_SIZE];
         } else {
-            int32_t sample_next = samples[(offset >> SAMPLE_FRAC_SIZE) + 1];
-            sample = samples[offset >> SAMPLE_FRAC_SIZE];
+            int32_t sample_next = samples[(localOffset >> SAMPLE_FRAC_SIZE) + 1];
+            sample = samples[localOffset >> SAMPLE_FRAC_SIZE];
             // Linearly interpolate between the two relevant samples
-            sample += ((sample_next - sample) * (offset & SAMPLE_FRAC_MASK)) >> SAMPLE_FRAC_SIZE;
+            sample += ((sample_next - sample) * (localOffset & SAMPLE_FRAC_MASK)) >> SAMPLE_FRAC_SIZE;
         }
 
         // Mix volume
-        sample = (sample * (int32_t)volume) / _SYS_AUDIO_MAX_VOLUME;
+        sample = (sample * latchedVolume) / _SYS_AUDIO_MAX_VOLUME;
 
         #ifdef SIFTEO_SIMULATOR
             MCAudioVisData::writeChannelSample(AudioMixer::instance.channelID(this), sample);
         #endif
 
-        // Mix into buffer, and clamp
-        sample += *buffer;
-        *buffer = Intrinsic::SSAT(sample, 16);
+        // Mix into buffer (No need to clamp yet)
+        *buffer += sample;
 
         // Advance to the next output sample
-        offset += increment;
+        localOffset += latchedIncrement;
         buffer++;
     }
 
+    offset = localOffset;
     samples.releaseRef();
 
     return true;

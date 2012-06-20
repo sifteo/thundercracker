@@ -88,11 +88,8 @@ int AdPcmDecoder::decodeSample(uint8_t **paPtr)
 
     const uint8_t code = *pa;
 
-    decodeNybble(code & 0xF);
-    int sample = predictedSample;
-
-    decodeNybble(code >> 4);
-    extraSample = predictedSample;
+    int sample = decodeNybble(code & 0xF);
+    extraSample = decodeNybble(code >> 4);
     hasExtraSample = true;
 
     return sample;

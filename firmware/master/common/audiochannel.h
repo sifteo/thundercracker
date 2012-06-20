@@ -61,7 +61,7 @@ public:
     void setPos(uint32_t ofs);
 
 protected:
-    bool mixAudio(int16_t *buffer, uint32_t numFrames);
+    bool mixAudio(int *buffer, uint32_t numFrames);
     friend class AudioMixer;    // mixer can tell us to mixAudio()
 
 private:
@@ -69,13 +69,13 @@ private:
     static const int STATE_LOOP     = (1 << 1);
     static const int STATE_STOPPED  = (1 << 2);
 
-    uint8_t state;
+    uint64_t offset;
+    int32_t increment;
     int16_t volume;
+    uint8_t state;
 
     struct _SYSAudioModule mod;
     AudioSampleData samples;
-    uint64_t offset;
-    int32_t increment;
 };
 
 #endif /* AUDIOCHANNEL_H_ */

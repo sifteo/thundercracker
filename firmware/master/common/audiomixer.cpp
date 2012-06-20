@@ -58,7 +58,7 @@ void AudioMixer::init()
  * Returns true if any audio data was available. If so, we're guaranteed
  * to produce exactly 'numFrames' of data.
  */
-bool AudioMixer::mixAudio(int16_t *buffer, uint32_t numFrames)
+bool AudioMixer::mixAudio(int *buffer, uint32_t numFrames)
 {
     #ifdef SIFTEO_SIMULATOR
         MCAudioVisData::instance.mixerActive = active();
@@ -90,15 +90,7 @@ bool AudioMixer::mixAudio(int16_t *buffer, uint32_t numFrames)
         // Each channel individually mixes itself with the existing buffer contents
         result |= ch.mixAudio(buffer, numFrames);
     }
-
-    if (result) {
-        // Apply master volume control.
-        uint16_t mixerVolume = Volume::systemVolume();
-        for (unsigned i = 0; i < numFrames; i++) {
-            buffer[i] = buffer[i] * mixerVolume / _SYS_AUDIO_MAX_VOLUME;
-        }
-    }
-
+    
     return result;
 }
 
@@ -130,6 +122,9 @@ void AudioMixer::pullAudio(void *p)
     AudioBuffer *buf = static_cast<AudioBuffer*>(p);
     if (!buf && !headless)
         return;
+
+    const int mixerVolume = Volume::systemVolume();
+    ASSERT(mixerVolume <= _SYS_AUDIO_MAX_VOLUME);
 
     /*
      * In order to amortize the cost of iterating over channels, our
@@ -170,7 +165,7 @@ void AudioMixer::pullAudio(void *p)
     }
 
     do {
-        int16_t blockBuffer[32];
+        int blockBuffer[32];
 
         uint32_t blockSize = MIN(arraysize(blockBuffer), samplesLeft);
         blockSize = MIN(blockSize, trackerCountdown);
@@ -192,18 +187,26 @@ void AudioMixer::pullAudio(void *p)
                 memset(blockBuffer, 0, sizeof blockBuffer);
         }
 
-        #ifdef SIFTEO_SIMULATOR
-            // Log audio for --waveout
-            SystemMC::logAudioSamples(blockBuffer, blockSize);
-        #endif
-
         trackerCountdown -= blockSize;
         samplesLeft -= blockSize;
 
-        if (!headless) {
-            int16_t *blockPtr = blockBuffer;
-            while (blockSize--)
-                buf->enqueue(*(blockPtr++));
+        /*
+         * Finish mixing our block of audio, by applying the system-wide
+         * volume control and clamping to 16 bits.
+         */
+
+        int *ptr = blockBuffer;
+        while (blockSize--) {
+            int sample = (*(ptr++) * mixerVolume) / _SYS_AUDIO_MAX_VOLUME;
+            int16_t sample16 = Intrinsic::SSAT(sample, 16);
+
+            #ifdef SIFTEO_SIMULATOR
+                // Log audio for --waveout
+                SystemMC::logAudioSamples(&sample16, 1);
+            #endif
+
+            if (!headless)
+                buf->enqueue(sample16);
         }
 
         if (!trackerCountdown) {
