@@ -133,14 +133,20 @@ void AudioMixer::pullAudio(void *p)
      * deterministically, exactly every 'trackerInterval' samples.
      * To do this, we may need to subdivide the blocks we request
      * from mixAudio(), or we may need to generate silent blocks.
+     *
+     * We refuse to pull (exiting early) if there are too few samples
+     * to mix, so that we don't destroy our amortization gains by
+     * mixing one sample at a time.
      */
+
+    int blockBuffer[32];
 
     #ifdef SIFTEO_SIMULATOR
         unsigned samplesLeft = headless ? SystemMC::suggestAudioSamplesToMix() : buf->writeAvailable();
     #else
         unsigned samplesLeft = buf->writeAvailable();
     #endif
-    if (!samplesLeft)
+    if (samplesLeft < arraysize(blockBuffer) / 2)
         return;
 
     #ifndef SIFTEO_SIMULATOR
@@ -166,8 +172,6 @@ void AudioMixer::pullAudio(void *p)
     ASSERT(mixerVolume <= _SYS_AUDIO_MAX_VOLUME);
 
     do {
-        int blockBuffer[32];
-
         uint32_t blockSize = MIN(arraysize(blockBuffer), samplesLeft);
         blockSize = MIN(blockSize, trackerCountdown);
         ASSERT(blockSize > 0);
