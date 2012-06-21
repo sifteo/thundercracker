@@ -56,10 +56,12 @@ private:
 
     typedef BitVector<NUM_CACHE_BLOCKS> BlockMap_t;
 
+    // Keep this packed to use RAM efficiently.
     uint32_t stamp;
     uint32_t address;
     uint16_t validCodeBytes;
     uint8_t refCount;
+    uint8_t idByte;
 
     struct FlashStats {
         unsigned globalRefcount;
@@ -85,19 +87,19 @@ private:
     static uint32_t latestStamp;
 
 public:
-    ALWAYS_INLINE unsigned id() {
-        return (unsigned)(this - instances);
+    ALWAYS_INLINE unsigned id() const {
+        return idByte;
     }
 
-    ALWAYS_INLINE uint32_t getAddress() {
+    ALWAYS_INLINE uint32_t getAddress() const {
         return address;
     }
 
-    ALWAYS_INLINE bool isAnonymous() {
+    ALWAYS_INLINE bool isAnonymous() const {
         return address == INVALID_ADDRESS;
     }
 
-    ALWAYS_INLINE uint8_t *getData() {
+    ALWAYS_INLINE uint8_t *getData() const {
         return &mem[id()][0];
     }
 

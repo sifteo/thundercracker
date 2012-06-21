@@ -19,6 +19,10 @@ void FlashBlock::init()
     // All blocks start out with no valid data
     for (unsigned i = 0; i < NUM_CACHE_BLOCKS; ++i) {
         instances[i].address = INVALID_ADDRESS;
+
+        // We explicitly store the ID of each block,
+        // so that id() and getData() can be as fast as possible.
+        instances[i].idByte = i;
     }
 
     FLASHLAYER_STATS_ONLY(resetStats());
