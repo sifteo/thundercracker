@@ -57,19 +57,13 @@ void AudioMixer::init()
  *
  * Returns true if any audio data was available. If so, we're guaranteed
  * to produce exactly 'numFrames' of data.
+ *
+ * Assumes the buffer was already zero'ed. Each channel is mixed together
+ * into the same buffer.
  */
-bool AudioMixer::mixAudio(int *buffer, uint32_t numFrames)
+ALWAYS_INLINE bool AudioMixer::mixAudio(int *buffer, uint32_t numFrames)
 {
-    #ifdef SIFTEO_SIMULATOR
-        MCAudioVisData::instance.mixerActive = active();
-    #endif
-
-    // Early out when we can quickly determine that no channels are playing.
-    if (!active())
-        return false;
-
     bool result = false;
-    memset(buffer, 0, numFrames * sizeof(*buffer));
 
     uint32_t mask = playingChannelMask;
     while (mask) {
@@ -100,6 +94,18 @@ bool AudioMixer::mixAudio(int *buffer, uint32_t numFrames)
  */
 void AudioMixer::pullAudio(void *p)
 {
+    /*
+     * Early out when we can quickly determine that no channels are playing
+     * and the tracker is idle.
+     */
+
+    #ifdef SIFTEO_SIMULATOR
+        MCAudioVisData::instance.mixerActive = AudioMixer::instance.active();
+    #endif
+
+    if (!AudioMixer::instance.active() && AudioMixer::instance.trackerCallbackInterval == 0)
+        return;
+
     /*
      * Support audio in Siftulator, even in headless mode.
      *
@@ -176,21 +182,22 @@ void AudioMixer::pullAudio(void *p)
         blockSize = MIN(blockSize, trackerCountdown);
         ASSERT(blockSize > 0);
 
+        // Zero out the buffer (Faster than memset)
+        for (int *i = blockBuffer, *e = blockBuffer + blockSize; i != e; ++i)
+            *i = 0;
+
+        // Mix data from all channels.
         bool mixed = AudioMixer::instance.mixAudio(blockBuffer, blockSize);
 
-        if (!mixed) {
-            /*
-             * The mixer had nothing for us. Normally this means
-             * we can early-out and let the device's buffer drain,
-             * but if we're running the tracker, we need to keep
-             * samples flowing in order to keep its clock advancing.
-             * Generate silence.
-             */
-            if (trackerInterval == 0)
-                break;
-            else
-                memset(blockBuffer, 0, sizeof blockBuffer);
-        }
+        /*
+         * The mixer had nothing for us? Normally this means
+         * we can early-out and let the device's buffer drain,
+         * but if we're running the tracker, we need to keep
+         * samples flowing in order to keep its clock advancing.
+         * Generate silence.
+         */
+        if (!mixed && trackerInterval == 0)
+            break;
 
         trackerCountdown -= blockSize;
         samplesLeft -= blockSize;
