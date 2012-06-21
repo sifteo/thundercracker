@@ -55,13 +55,10 @@ private:
         AdPcmDecoder adpcm;                 // ADPCM decoder state
     } state, snapshot;
 
-    // Called from the decoder, write the next sample
-    void writeNextSample(uint16_t sample);
-
     // Decode up to and including the sampleNum sample
     void decodeToSamplePCM(uint32_t sampleNum);
     void decodeToSampleADPCM(uint32_t sampleNum);
-    void decodeToSampleSilence(uint32_t sampleNum);
+    void decodeToSampleError(uint32_t sampleNum);
 
     /*
      * Snapshots:

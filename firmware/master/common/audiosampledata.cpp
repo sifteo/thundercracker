@@ -99,59 +99,66 @@ int16_t AudioSampleData::operator[](uint32_t sampleNum)
     }
 }
 
-// Save the next sample in the ringbuffer and update related instance data.
-void AudioSampleData::writeNextSample(uint16_t sample)
+void AudioSampleData::decodeToSampleError(uint32_t sampleNum)
 {
-    state.samples[(state.numSamples++) % kSampleBufSize] = sample;
+    /*
+     * If we fail to decode, warp to the present time and
+     * fill the buffer with silence.
+     */
 
-    // Take a snapshot if necessary.
-    if (!hasSnapshot() && state.numSamples == loopPoint)
-        takeSnapshot();
-}
-
-void AudioSampleData::decodeToSampleSilence(uint32_t sampleNum)
-{
-    unsigned count = sampleNum + 1 - state.numSamples;
-    ASSERT(count != 0);
-    while (count--)
-        writeNextSample(0);
+    memset(state.samples, 0, sizeof state.samples);
+    state.numSamples = sampleNum + 1;
 }
 
 void AudioSampleData::decodeToSamplePCM(uint32_t sampleNum)
 {
-    unsigned count = sampleNum + 1 - state.numSamples;
+    // Local copies of members, in registers.
+    uint16_t *samples = state.samples;
+    unsigned numSamples = state.numSamples;
+    const unsigned latchedLoopPoint = loopPoint;
+    unsigned count = sampleNum + 1 - numSamples;
     ASSERT(count != 0);
 
     do {
         SvmMemory::PhysAddr pa;
         SvmMemory::VirtAddr va = mod->pData + state.bufPos;
-
-        unsigned sampleCount = sampleNum + 1 - state.numSamples;
-        uint32_t byteCount = sampleCount * sizeof(int16_t);
+        uint32_t byteCount = count * sizeof(int16_t);
 
         if (!SvmMemory::mapROData(ref, va, byteCount, pa) ||
             !isAligned(pa, sizeof(int16_t))) {
             LOG((LGPFX "Memory mapping failure for PCM sample at VA 0x%08x\n", unsigned(va)));
-            return decodeToSampleSilence(sampleNum);
+            return decodeToSampleError(sampleNum);
         }
 
-        const int16_t *samples = reinterpret_cast<const int16_t *>(pa);
+        const int16_t *src = reinterpret_cast<const int16_t *>(pa);
         unsigned chunk = byteCount / sizeof(int16_t);
         chunk = MIN(chunk, count);
         ASSERT(chunk != 0);
         count -= chunk;
         state.bufPos += chunk * sizeof(int16_t);
 
-        while (chunk--)
-            writeNextSample(*(samples++));
+        while (chunk--) {
+            samples[(numSamples++) % kSampleBufSize] = *(src++);
+            if (!hasSnapshot() && numSamples == latchedLoopPoint) {
+                state.numSamples = numSamples;
+                takeSnapshot();
+            }
+        }
 
     } while (count);
+
+    ASSERT(numSamples == sampleNum + 1);
+    state.numSamples = numSamples;
 }
 
 void AudioSampleData::decodeToSampleADPCM(uint32_t sampleNum)
 {
-    unsigned target = sampleNum + 1;
-    ASSERT(target != state.numSamples);
+    // Local copies of members, in registers.
+    uint16_t *samples = state.samples;
+    unsigned numSamples = state.numSamples;
+    const unsigned latchedLoopPoint = loopPoint;
+    const unsigned target = sampleNum + 1;
+    ASSERT(target != numSamples);
 
     while (1) {
         SvmMemory::PhysAddr pa;
@@ -162,17 +169,24 @@ void AudioSampleData::decodeToSampleADPCM(uint32_t sampleNum)
 
         if (!SvmMemory::mapROData(ref, va, byteCount, pa)) {
             LOG((LGPFX "Memory mapping failure for ADPCM sample at VA 0x%08x\n", unsigned(va)));
-            return decodeToSampleSilence(sampleNum);
+            return decodeToSampleError(sampleNum);
         }
 
         uint8_t *ptr = pa;
         uint8_t *limit = pa + byteCount;
 
         do {
-            writeNextSample(state.adpcm.decodeSample(&ptr));
-            ASSERT(target >= state.numSamples);
-            if (target == state.numSamples) {
+            samples[(numSamples++) % kSampleBufSize] = state.adpcm.decodeSample(&ptr);
+            if (!hasSnapshot() && numSamples == latchedLoopPoint) {
+                state.numSamples = numSamples;
+                takeSnapshot();
+            }
+
+            ASSERT(target >= numSamples);
+            if (target == numSamples) {
                 state.bufPos += ptr - pa;
+                state.numSamples = numSamples;
+                ASSERT(numSamples == sampleNum + 1);
                 return;
             }
         } while (ptr < limit);
