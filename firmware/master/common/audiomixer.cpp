@@ -123,9 +123,6 @@ void AudioMixer::pullAudio(void *p)
     if (!buf && !headless)
         return;
 
-    const int mixerVolume = Volume::systemVolume();
-    ASSERT(mixerVolume <= _SYS_AUDIO_MAX_VOLUME);
-
     /*
      * In order to amortize the cost of iterating over channels, our
      * audio mixer operates on small arrays of samples at a time. We
@@ -163,6 +160,10 @@ void AudioMixer::pullAudio(void *p)
         ASSERT(0);
         trackerCountdown = trackerInterval;
     }
+
+    // Calculating volume is relatively expensive; do it only if we have audio to mix.
+    const int mixerVolume = Volume::systemVolume();
+    ASSERT(mixerVolume <= _SYS_AUDIO_MAX_VOLUME);
 
     do {
         int blockBuffer[32];
