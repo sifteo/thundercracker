@@ -63,6 +63,7 @@ bool AudioChannelSlot::mixAudio(int *buffer, uint32_t numFrames)
     }
 
     ASSERT(samples.numSamples(mod) > 0);
+    ASSERT(numFrames > 0);
 
     // Read from slot only once
     const int latchedVolume = volume;
@@ -72,7 +73,7 @@ bool AudioChannelSlot::mixAudio(int *buffer, uint32_t numFrames)
     // Local copy of offset, to avoid writing back to RAM every time
     uint64_t localOffset = offset;
 
-    while (numFrames--) {
+    do {
         // Looping logic
         if (UNLIKELY(localOffset > latchedLimit)) {
             if (state & STATE_LOOP) {
@@ -115,7 +116,7 @@ bool AudioChannelSlot::mixAudio(int *buffer, uint32_t numFrames)
         // Advance to the next output sample
         localOffset += latchedIncrement;
         buffer++;
-    }
+    } while (--numFrames);
 
     offset = localOffset;
     samples.releaseRef();

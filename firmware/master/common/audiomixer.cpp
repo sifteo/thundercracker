@@ -146,12 +146,14 @@ void AudioMixer::pullAudio(void *p)
      */
 
     int blockBuffer[32];
+    unsigned samplesLeft = buf->writeAvailable();
 
     #ifdef SIFTEO_SIMULATOR
-        unsigned samplesLeft = headless ? SystemMC::suggestAudioSamplesToMix() : buf->writeAvailable();
-    #else
-        unsigned samplesLeft = buf->writeAvailable();
+        if (headless) {
+            samplesLeft = SystemMC::suggestAudioSamplesToMix();
+        }
     #endif
+
     if (samplesLeft < arraysize(blockBuffer) / 2)
         return;
 
@@ -161,17 +163,16 @@ void AudioMixer::pullAudio(void *p)
     #endif
 
     const uint32_t trackerInterval = AudioMixer::instance.trackerCallbackInterval;
-    uint32_t trackerCountdown = AudioMixer::instance.trackerCallbackCountdown;
+    uint32_t trackerCountdown;
 
     if (trackerInterval == 0) {
         // Tracker callbacks disabled. Avoid special-casing below by
         // assuming a countdown value that's effectively infinite.
-        trackerCountdown = 0xFFFFFFFF;
-    } else if (trackerCountdown == 0) {
-        // Countdown should never be stored as zero when the timer is enabled.
-        ASSERT(0);
-        trackerCountdown = trackerInterval;
-    }
+        trackerCountdown = 0x10000;
+    } else {
+        trackerCountdown = AudioMixer::instance.trackerCallbackCountdown;
+        ASSERT(trackerCountdown != 0 && "Countdown should never be stored as zero when the timer is enabled");
+    } 
 
     // Calculating volume is relatively expensive; do it only if we have audio to mix.
     const int mixerVolume = Volume::systemVolume();
@@ -208,8 +209,14 @@ void AudioMixer::pullAudio(void *p)
          */
 
         int *ptr = blockBuffer;
-        while (blockSize--) {
+        do {
             int sample = (*(ptr++) * mixerVolume) / _SYS_AUDIO_MAX_VOLUME;
+
+            #if 0
+                UART("\r\ns "); UART_HEX(blockSize); UART(" "); UART_HEX(sample);
+                sample = 0;
+            #endif
+
             int16_t sample16 = Intrinsic::SSAT(sample, 16);
 
             #ifdef SIFTEO_SIMULATOR
@@ -217,9 +224,10 @@ void AudioMixer::pullAudio(void *p)
                 SystemMC::logAudioSamples(&sample16, 1);
             #endif
 
-            if (!headless)
+            if (!headless) {
                 buf->enqueue(sample16);
-        }
+            }
+        } while (--blockSize);
 
         if (!trackerCountdown) {
             ASSERT(trackerInterval);
