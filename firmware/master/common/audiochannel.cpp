@@ -27,7 +27,7 @@ void AudioChannelSlot::setSpeed(uint32_t sampleRate)
 void AudioChannelSlot::play(const struct _SYSAudioModule *module, _SYSAudioLoopType loopMode)
 {
     mod = *module;
-    samples.init(&mod, mod.loopStart);
+    samples.init(mod.loopStart);
     offset = 0;
 
     // Let the module decide
@@ -47,7 +47,7 @@ void AudioChannelSlot::play(const struct _SYSAudioModule *module, _SYSAudioLoopT
     // Pre-calculate the loop endpoint (relatively expensive)
     offsetLimit = (state & STATE_LOOP) && mod.loopEnd
         ? ((uint64_t)mod.loopEnd) << SAMPLE_FRAC_SIZE
-        : ((uint64_t)samples.numSamples() - 1) << SAMPLE_FRAC_SIZE;
+        : ((uint64_t)samples.numSamples(mod) - 1) << SAMPLE_FRAC_SIZE;
 
     state &= ~STATE_STOPPED;
 }
@@ -62,7 +62,7 @@ bool AudioChannelSlot::mixAudio(int *buffer, uint32_t numFrames)
         return false;
     }
 
-    ASSERT(samples.numSamples() > 0);
+    ASSERT(samples.numSamples(mod) > 0);
 
     // Read from slot only once
     const int latchedVolume = volume;
@@ -89,17 +89,16 @@ bool AudioChannelSlot::mixAudio(int *buffer, uint32_t numFrames)
         }
 
         // Compute the next sample
-        int32_t sample;
-        uint32_t index = localOffset >> SAMPLE_FRAC_SIZE;
-        uint32_t fractional = localOffset & SAMPLE_FRAC_MASK;
+        int sample;
+        unsigned index = localOffset >> SAMPLE_FRAC_SIZE;
+        unsigned fractional = localOffset & SAMPLE_FRAC_MASK;
 
         if (!fractional) {
             // Offset is aligned with an asset sample
-            sample = samples[index];
+            sample = samples.getSample(index, mod);
         } else {
             // Linearly interpolate between the two relevant samples            
-            int32_t next = samples[index + 1];
-            sample = samples[index];
+            int next = samples.getSamplePair(index, mod, sample);
             sample += ((next - sample) * int(fractional)) >> SAMPLE_FRAC_SIZE;
         }
 
@@ -126,7 +125,7 @@ bool AudioChannelSlot::mixAudio(int *buffer, uint32_t numFrames)
 
 void AudioChannelSlot::setPos(uint32_t ofs)
 {
-    uint32_t numSamples = samples.numSamples();
+    uint32_t numSamples = samples.numSamples(mod);
     uint32_t loopOffset = 0;
 
     if (mod.loopType == _SYS_LOOP_EMULATED_PING_PONG) {
