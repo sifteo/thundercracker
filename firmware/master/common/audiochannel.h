@@ -23,15 +23,15 @@ public:
 
     void play(const struct _SYSAudioModule *module, _SYSAudioLoopType loopMode);
 
-    void pause() {
+    ALWAYS_INLINE void pause() {
         state |= STATE_PAUSED;
     }
 
-    bool isPaused() const {
+    ALWAYS_INLINE bool isPaused() const {
         return (state & STATE_PAUSED) != 0;
     }
 
-    bool isStopped() const {
+    ALWAYS_INLINE bool isStopped() const {
         return (state & STATE_STOPPED) != 0;
     }
 
@@ -61,7 +61,7 @@ public:
     void setPos(uint32_t ofs);
 
 protected:
-    bool mixAudio(int16_t *buffer, uint32_t numFrames);
+    bool mixAudio(int *buffer, uint32_t numFrames);
     friend class AudioMixer;    // mixer can tell us to mixAudio()
 
 private:
@@ -69,13 +69,14 @@ private:
     static const int STATE_LOOP     = (1 << 1);
     static const int STATE_STOPPED  = (1 << 2);
 
-    uint8_t state;
+    uint64_t offset;
+    uint64_t offsetLimit;
+    int32_t increment;
     int16_t volume;
+    uint8_t state;
 
     struct _SYSAudioModule mod;
     AudioSampleData samples;
-    uint64_t offset;
-    int32_t increment;
 };
 
 #endif /* AUDIOCHANNEL_H_ */

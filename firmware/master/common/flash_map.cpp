@@ -18,22 +18,6 @@ void FlashMapBlock::erase() const
     }
 }
 
-FlashMapSpan FlashMapSpan::split(unsigned blockOffset, unsigned blockCount) const
-{
-    if (blockOffset >= numBlocks)
-        return empty();
-    else
-        return create(map, firstBlock + blockOffset,
-            std::min(blockCount, numBlocks - blockOffset));
-}
-
-FlashMapSpan FlashMapSpan::splitRoundingUp(unsigned byteOffset, unsigned byteCount) const
-{
-    ASSERT((byteOffset & FlashBlock::BLOCK_MASK) == 0);
-    return split(byteOffset / FlashBlock::BLOCK_SIZE,
-        (byteCount + FlashBlock::BLOCK_MASK) / FlashBlock::BLOCK_SIZE);
-}
-
 bool FlashMapSpan::flashAddrToOffset(FlashAddr flashAddr, ByteOffset &byteOffset) const
 {
     if (!map)
@@ -71,84 +55,6 @@ bool FlashMapSpan::flashAddrToOffset(FlashAddr flashAddr, ByteOffset &byteOffset
     return false;
 }
 
-bool FlashMapSpan::offsetToFlashAddr(ByteOffset byteOffset, FlashAddr &flashAddr) const
-{
-    if (!map)
-        return false;
-
-    if (!offsetIsValid(byteOffset))
-        return false;
-
-    // Split the byte address
-    ASSERT(byteOffset < FlashMap::NUM_BYTES);
-    ByteOffset absoluteByte = byteOffset + firstByte();
-    ByteOffset allocBlock = absoluteByte / FlashMapBlock::BLOCK_SIZE;
-    ByteOffset allocOffset = absoluteByte & FlashMapBlock::BLOCK_MASK;
-
-    ASSERT(allocBlock < arraysize(map->blocks));
-    flashAddr = map->blocks[allocBlock].address() + allocOffset;
-
-    // Test round-trip mapping
-    DEBUG_ONLY({
-        ByteOffset b;
-        ASSERT(flashAddrToOffset(flashAddr, b) && b == byteOffset);
-    });
-
-    return true;
-}
-
-bool FlashMapSpan::getBlock(FlashBlockRef &ref, ByteOffset byteOffset, unsigned flags) const
-{
-    ASSERT((byteOffset & FlashBlock::BLOCK_MASK) == 0);
-
-    FlashAddr fa;
-    if (!offsetToFlashAddr(byteOffset, fa))
-        return false;
-
-    FlashBlock::get(ref, fa, flags);
-    return true;
-}
-
-bool FlashMapSpan::getBytes(FlashBlockRef &ref, ByteOffset byteOffset,
-    PhysAddr &ptr, uint32_t &length, unsigned flags) const
-{
-    ByteOffset blockPart = byteOffset & ~(ByteOffset)FlashBlock::BLOCK_MASK;
-    ByteOffset bytePart = byteOffset & FlashBlock::BLOCK_MASK;
-    uint32_t maxLength = FlashBlock::BLOCK_SIZE - bytePart;
-
-    if (!getBlock(ref, blockPart, flags))
-        return false;
-
-    ptr = ref->getData() + bytePart;
-    length = std::min(length, maxLength);
-    return true;
-}
-
-bool FlashMapSpan::getByte(FlashBlockRef &ref, ByteOffset byteOffset,
-    PhysAddr &ptr, unsigned flags) const
-{
-    ByteOffset blockPart = byteOffset & ~(ByteOffset)FlashBlock::BLOCK_MASK;
-    ByteOffset bytePart = byteOffset & FlashBlock::BLOCK_MASK;
-
-    if (!getBlock(ref, blockPart, flags))
-        return false;
-
-    ptr = ref->getData() + bytePart;
-    return true;
-}
-
-bool FlashMapSpan::preloadBlock(ByteOffset byteOffset) const
-{
-    FlashAddr flashAddr;
-
-    if (offsetToFlashAddr(byteOffset, flashAddr)) {
-        FlashBlock::preload(flashAddr);
-        return true;
-    }
-
-    return false;
-}
-
 bool FlashMapSpan::copyBytes(FlashBlockRef &ref, ByteOffset byteOffset, uint8_t *dest, uint32_t length) const
 {
     while (length) {
@@ -165,12 +71,6 @@ bool FlashMapSpan::copyBytes(FlashBlockRef &ref, ByteOffset byteOffset, uint8_t 
     }
 
     return true;
-}
-
-bool FlashMapSpan::copyBytes(ByteOffset byteOffset, uint8_t *dest, uint32_t length) const
-{
-    FlashBlockRef ref;
-    return copyBytes(ref, byteOffset, dest, length);
 }
 
 bool FlashMapSpan::copyBytesUncached(ByteOffset byteOffset, uint8_t *dest, uint32_t length) const

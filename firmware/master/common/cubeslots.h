@@ -7,6 +7,7 @@
 #define _CUBESLOTS_H
 
 #include <sifteo/abi.h>
+#include "macros.h"
 
 class CubeSlot;
 
@@ -45,7 +46,7 @@ namespace CubeSlots {
     extern bool simAssetLoaderBypass;
 #endif
 
-    static bool validID(_SYSCubeID id) {
+    static ALWAYS_INLINE bool validID(_SYSCubeID id) {
         // For security/reliability, all cube IDs from game code must be checked
         return id < _SYS_NUM_CUBE_SLOTS;
     }
@@ -56,7 +57,7 @@ namespace CubeSlots {
     void connectCubes(_SYSCubeIDVector cv);
     void disconnectCubes(_SYSCubeIDVector cv);
     
-    static _SYSCubeIDVector truncateVector(_SYSCubeIDVector cv) {
+    static ALWAYS_INLINE _SYSCubeIDVector truncateVector(_SYSCubeIDVector cv) {
         // For security/reliability, all cube vectors from game code must be checked
         return cv & (0xFFFFFFFF << (32 - _SYS_NUM_CUBE_SLOTS));
     }

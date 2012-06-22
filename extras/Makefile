@@ -6,6 +6,7 @@ SUBDIRS = \
 	loopy \
 	thrasher \
 	trackycat \
+	tinytracker \
 	lfsmunch \
 	newlauncher
 

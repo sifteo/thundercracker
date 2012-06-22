@@ -1136,15 +1136,15 @@ void XmTrackerPlayer::commit()
         }
 
         // Tracker global volume
-        finalVolume = finalVolume * volume / kMaxVolume;
+        finalVolume = (finalVolume * volume) / kMaxVolume;
 
         // Further volume adjustments are done on a larger scale
         finalVolume = clamp(finalVolume * 4, (int32_t)0, (int32_t)_SYS_AUDIO_MAX_VOLUME);
 
         // User-assigned channel volume
-        finalVolume = finalVolume * channel.userVolume / _SYS_AUDIO_MAX_VOLUME;
+        finalVolume = (finalVolume * int(channel.userVolume)) >> _SYS_AUDIO_MAX_VOLUME_LOG2;
         // User-assigned global volume
-        finalVolume = finalVolume * userVolume / _SYS_AUDIO_MAX_VOLUME;
+        finalVolume = (finalVolume * int(userVolume)) >> _SYS_AUDIO_MAX_VOLUME_LOG2;
 
         mixer.setVolume(CHANNEL_FOR(i), finalVolume);
 

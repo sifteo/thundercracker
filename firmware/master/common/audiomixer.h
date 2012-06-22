@@ -44,13 +44,13 @@ public:
 
     void setLoop(_SYSAudioChannelID ch, _SYSAudioLoopType loopMode);
 
-    bool active() const {
+    ALWAYS_INLINE bool active() const {
         return playingChannelMask != 0;
     }
 
     static void pullAudio(void *p);
 
-    unsigned channelID(AudioChannelSlot *slot) {
+    ALWAYS_INLINE unsigned channelID(AudioChannelSlot *slot) {
         return slot - &channelSlots[0];
     }
 
@@ -66,7 +66,7 @@ private:
     uint32_t trackerCallbackInterval;
     uint32_t trackerCallbackCountdown;
 
-    bool mixAudio(int16_t *buffer, uint32_t numFrames);
+    bool mixAudio(int *buffer, uint32_t numFrames);
 };
 
 #endif /* AUDIOMIXER_H_ */

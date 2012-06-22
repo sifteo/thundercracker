@@ -15,88 +15,149 @@
 
 class AudioSampleData {
 public:
-    AudioSampleData() : mod(0) {}
+    void init(uint32_t loop_start = 0)
+    {
+        // No snapshot yet
+        snapshot.numSamples = 0;
+    
+        // numSamples at which we take an automatic snapshot
+        loopPoint = loop_start ? (loop_start + kSampleBufSize) : 0;
 
-    void init(const struct _SYSAudioModule *module, uint32_t loop_start = 0) {
-        mod = module;
-        ringPos = 0;
-        snapshotData.newestSample = 0;
-        loopStart = loop_start;
         reset();
     }
 
     // Seek to the beginning of the sample data.
-    void reset() {
-        ASSERT(mod);
-        newestSample = (uint32_t)-1;
-        bufPos = 0;
-        if (mod->type == _SYS_ADPCM) adpcmDec.reset();
+    void ALWAYS_INLINE reset()
+    {
+        state.numSamples = 0;
+        state.bufPos = 0;
+        state.adpcm.init();
     }
 
-    inline uint32_t numSamples() const {
-        if (mod == NULL) return 0;
-        if (mod->type == _SYS_PCM) return mod->dataSize / sizeof(uint16_t);
-        if (mod->type == _SYS_ADPCM) return mod->dataSize * kNibblesPerByte;
-        ASSERT(mod->type == _SYS_PCM || mod->type == _SYS_ADPCM);
-        return 0;
+    static uint32_t numSamples(const _SYSAudioModule &mod)
+    {
+        switch (mod.type) {    
+            case _SYS_PCM:      return mod.dataSize / sizeof(uint16_t);
+            case _SYS_ADPCM:    return mod.dataSize * kNybblesPerByte;
+            default:            return 0;
+        }
     }
 
-    // Get a sample.
-    int16_t operator[](uint32_t sampleNum);
-
-    /* This should be called after a unit of work has been finished, to
+    /*
+     * This should be called after a unit of work has been finished, to
      * recycle the FlashBlockRef.
      */
-    void releaseRef() {
+    void ALWAYS_INLINE releaseRef() {
         ref.release();
     }
 
+    // Retrieve a single sample, via the cache
+    int ALWAYS_INLINE getSample(unsigned sampleNum, const _SYSAudioModule &mod)
+    {
+        ASSERT(sampleNum < numSamples(mod));
+
+        while (1) {
+            // New sample
+            if (sampleNum >= state.numSamples) {
+                decodeToSample(sampleNum, mod);
+                ASSERT(sampleNum + 1 == state.numSamples);
+                break;
+            }
+
+            // Cached sample
+            if (sampleNum + kSampleBufSize >= state.numSamples) {
+                ASSERT(state.numSamples == sampleNum + 1 || state.numSamples == sampleNum + 2);
+                break;
+            }
+
+            // Oops, we need to rewind. Do we have an applicable snapshot?
+            // (NB: Rollover in the subtraction is okay, it will cause this to be false)
+            // We may still have to roll forward from the snapshot.
+
+            if (hasSnapshot() && sampleNum >= (snapshot.numSamples - kSampleBufSize)) {
+                revertToSnapshot();
+                continue;
+            }
+
+            // Back to the beginning (last resort)
+            reset();
+        }
+
+        return state.samples[sampleNum % kSampleBufSize];
+    }
+
+    // Optimized accessor for a pair of samples (sampleNum, sampleNum + 1)
+    int ALWAYS_INLINE getSamplePair(unsigned sampleNum, const _SYSAudioModule &mod, int &sample)
+    {
+        unsigned nextSampleNum = sampleNum + 1;
+        ASSERT(nextSampleNum < numSamples(mod));
+
+        while (1) {
+            // At least one new sample
+            if (nextSampleNum >= state.numSamples) {
+                decodeToSample(nextSampleNum, mod);
+                break;
+            }
+
+            // Both samples cached already
+            if (nextSampleNum + 1 == state.numSamples) {
+                break;
+            }
+
+            // Oops, we need to rewind. Do we have an applicable snapshot?
+            // We may still need to roll forward from here.
+            if (hasSnapshot() && sampleNum >= (snapshot.numSamples - kSampleBufSize)) {
+                revertToSnapshot();
+                continue;
+            }
+
+            // Last resort... Reset and retry.
+            reset();
+        }
+
+        // We have the pair of samples in our buffer
+        ASSERT(state.numSamples == sampleNum + 2);
+        sample = state.samples[sampleNum % kSampleBufSize];
+        return state.samples[nextSampleNum % kSampleBufSize];
+    }
+
 private:
-    // Magic number for when the samples ringbuffer contains no valid values.
-    static const uint32_t kNoSamples = (uint32_t)-1;
+    static const uint8_t kNybblesPerByte = 2;
 
-    // For code readability. You already know how many nibbles are in a byte.
-    static const uint8_t kNibblesPerByte = 2;
-
-    /* Buffer size should be at least 2, since callers are likely to request
+    /*
+     * Buffer size should be at least 2, since callers are likely to request
      * neighbouring samples for interpolation. Since it's impractical to index
      * through samples backwards, there's also no reason for it to be any
      * larger.
      */
     static const uint8_t kSampleBufSize = 2;
 
-    const struct _SYSAudioModule *mod; 
+    FlashBlockRef ref;      // Released by caller when a unit of work is complete.
+    uint32_t loopPoint;     // Auto-snapshot sample index
 
-    FlashBlockRef ref;  // Released by caller when a unit of work is complete.
-
-    uint16_t samples[kSampleBufSize];   // Mini-ringbuffer of samples
-    uint32_t newestSample;              // Index of newest sample in samples[]
-    uint8_t ringPos;                    // Points to the beginning of the ring
-    ptrdiff_t bufPos;                   // Byte offset into sample data
-    uint32_t loopStart;                 // Auto-snapshot sample index
-
-    // ADPCM decoder state
-    AdPcmDecoder adpcmDec;
-
-    // Sample index of the oldest available sample
-    inline uint32_t oldestSample() const {
-        // Technically this is a lie.
-        if (newestSample == kNoSamples) return 0;
-        // But these aren't.
-        if (newestSample < arraysize(samples)) return 0;
-        return newestSample - arraysize(samples) + 1;
-    }
-
-    // Called from the decoder, write the next sample
-    void writeNextSample(uint16_t sample);
-
-    // Bytes taken up by $samples samples
-    uint32_t bytesForSamples(uint32_t samples) const;
+    struct State {
+        int16_t samples[kSampleBufSize];    // Direct-mapped cache of samples
+        uint32_t numSamples;                // 1 + index of last sample
+        uint32_t bufPos;                    // Byte offset into sample data
+        ADPCMState adpcm;                   // ADPCM decoder state
+    } state, snapshot;
 
     // Decode up to and including the sampleNum sample
-    void decodeToSample(uint32_t sampleNum);
+    void decodeToSamplePCM(uint32_t sampleNum, const _SYSAudioModule &mod);
+    void decodeToSampleADPCM(uint32_t sampleNum, const _SYSAudioModule &mod);
 
-    /* Snapshots:
+    void ALWAYS_INLINE decodeToSample(uint32_t sampleNum, const _SYSAudioModule &mod)
+    {
+        if (LIKELY(mod.type == _SYS_ADPCM))
+            return decodeToSampleADPCM(sampleNum, mod);
+
+        ASSERT(mod.type == _SYS_PCM);
+        return decodeToSamplePCM(sampleNum, mod);
+    }
+
+    /*
+     * Snapshots:
+     *
      * Decoding to the beginning of an audio loop that's a significant number
      * of samples from the beginning of the file is memory and
      * processor-intensive. By opportunistically remembering the object's state
@@ -104,17 +165,19 @@ private:
      * that state later with no performance penalty (and a small memory
      * penalty for storing the snapshot data).
      */
-    struct {
-        uint16_t samples[kSampleBufSize];
-        uint32_t newestSample;
-        uint8_t ringPos;
-        ptrdiff_t bufPos;
-        AdPcmDecoder adpcmDec;
-    } snapshotData;
 
-    void snapshot();
-    bool hasSnapshot();
-    void revert();
+    void ALWAYS_INLINE takeSnapshot() {
+        snapshot = state;
+    }
+
+    void ALWAYS_INLINE revertToSnapshot() {
+        state = snapshot;
+    }
+
+    bool ALWAYS_INLINE hasSnapshot() const {
+        return snapshot.numSamples;
+    }
+
 };
 
 #endif // AUDIOSAMPLEDATA_H_

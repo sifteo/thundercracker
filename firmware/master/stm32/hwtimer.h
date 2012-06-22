@@ -7,6 +7,7 @@
 #define HWTIMER_H_
 
 #include "hardware.h"
+#include "macros.h"
 
 class HwTimer
 {
@@ -49,26 +50,26 @@ public:
     void init(uint16_t period, uint16_t prescaler);
     void deinit();
 
-    uint16_t status() const {
+    uint16_t ALWAYS_INLINE status() const {
         return tim->SR;
     }
-    void clearStatus() {
+    void ALWAYS_INLINE clearStatus() {
         tim->SR = 0;
     }
 
     void configureChannelAsOutput(int ch, Polarity p, TimerMode timmode, OutputMode outmode = SingleOutput, DmaMode dmamode = DmaDisabled);
     void configureChannelAsInput(int ch, InputCaptureEdge edge, uint8_t filterFreq = 0, uint8_t prescaler = 0);
 
-    void enableChannel(int ch) {
+    void ALWAYS_INLINE enableChannel(int ch) {
         tim->SR &= ~(1 << ch);  // CCxIF bits start at 1, so no need to subtract from 1-based channel num
         tim->CCER |= 1 << ((ch - 1) * 4);
     }
 
-    void disableChannel(int ch) {
+    void ALWAYS_INLINE disableChannel(int ch) {
         tim->CCER &= ~(0x1 << ((ch - 1) * 4));
     }
 
-    bool channelIsEnabled(int ch) {
+    bool ALWAYS_INLINE channelIsEnabled(int ch) {
         return (tim->CCER & (1 << ((ch - 1) * 4))) != 0;
     }
 
@@ -77,50 +78,50 @@ public:
      * channel 4, since its layout in CCER is irregular. Special case it
      * if we need it.
      */
-    void enableComplementaryOutput(int ch) {
+    void ALWAYS_INLINE enableComplementaryOutput(int ch) {
         tim->CCER |= (1 << ((ch-1 * 4) + 2));
     }
-    void disableComplementaryOutput(int ch) {
+    void ALWAYS_INLINE disableComplementaryOutput(int ch) {
         tim->CCER &= ~(1 << ((ch-1 * 4) + 2));
     }
 
-    void enableCompareCaptureIsr(int ch) {
+    void ALWAYS_INLINE enableCompareCaptureIsr(int ch) {
         tim->SR &= ~(1 << ch);  // clear pending ISR status
         tim->DIER |= (1 << ch);
     }
-    void disableCompareCaptureIsr(int ch) {
+    void ALWAYS_INLINE disableCompareCaptureIsr(int ch) {
         tim->DIER &= ~(1 << ch);
     }
-    void enableUpdateIsr() {
+    void ALWAYS_INLINE enableUpdateIsr() {
         tim->SR &= ~(1 << 0);   // clear pending ISR status
         tim->DIER |= (1 << 0);
     }
-    void disableUpdateIsr() {
+    void ALWAYS_INLINE disableUpdateIsr() {
         tim->DIER &= ~(1 << 0);
     }
 
-    uint16_t lastCapture(int ch) const {
+    uint16_t ALWAYS_INLINE lastCapture(int ch) const {
         return tim->compareCapRegs[ch - 1].CCR;
     }
 
-    uint16_t count() const {
+    uint16_t ALWAYS_INLINE count() const {
         return tim->CNT;
     }
 
-    void setCount(uint16_t c) {
+    void ALWAYS_INLINE setCount(uint16_t c) {
         tim->CNT = c;
     }
 
-    uint16_t period() const {
+    uint16_t ALWAYS_INLINE period() const {
         return tim->ARR;
     }
 
-    void setPeriod(uint16_t period, uint16_t prescaler) {
+    void ALWAYS_INLINE setPeriod(uint16_t period, uint16_t prescaler) {
         tim->ARR = period;
         tim->PSC = prescaler;
     }
 
-    void setDuty(int ch, uint16_t duty) {
+    void ALWAYS_INLINE setDuty(int ch, uint16_t duty) {
         tim->compareCapRegs[ch - 1].CCR = duty;
     }
 

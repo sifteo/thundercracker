@@ -4,6 +4,7 @@
  */
 
 #include "usart.h"
+#include "gpio.h"
 #include "board.h"
 
 // NOTE - these divisors must reflect the startup values configured in setup.cpp
@@ -106,17 +107,24 @@ uint16_t Usart::isr(uint8_t *buf)
  */
 void Usart::write(const uint8_t *buf, int size)
 {
-    while (size--) {
-        while (!(uart->SR & (1 << 7))); // wait for empty data register
-        uart->DR = *buf++;
-    }
+    while (size--)
+        put(*buf++);
 }
 
 void Usart::write(const char *buf)
 {
-    while (*buf) {
-        while (!(uart->SR & (1 << 7))); // wait for empty data register
-        uart->DR = *buf++;
+    while (*buf)
+        put(*buf++);
+}
+
+void Usart::writeHex(uint32_t value)
+{
+    static const char digits[] = "0123456789abcdef";
+    unsigned count = 8;
+
+    while (count--) {
+        put(digits[value >> 28]);
+        value <<= 4;
     }
 }
 

@@ -19,30 +19,6 @@
 #define TOSTRING(_x)    STRINGIFY(_x)
 #define SRCLINE         __FILE__ ":" TOSTRING(__LINE__)
 
-#ifdef SIFTEO_SIMULATOR
-#   ifdef DEBUG
-#      define DEBUG_LOG(_x)   printf _x
-#   else
-#      define DEBUG_LOG(_x)
-#   endif
-#   define LOG(_x)            printf _x
-#   define ASSERT(_x)         assert(_x)
-#   define DEBUG_ONLY(x)      x
-#   define UART(_x)
-#   define SECTION(_x)
-#else
-#   define DEBUG_LOG(_x)
-#   define LOG(_x)
-#   define ASSERT(_x)
-#   define DEBUG_ONLY(x)
-#   include                   "usart.h"
-#   define UART(_x)           Usart::Dbg.write(_x)
-#   define SECTION(_x)        __attribute__((section(_x)))
-#endif
-
-// Produces a 'size of array is negative' compile error when the assert fails
-#define STATIC_ASSERT(_x)  ((void)sizeof(char[1 - 2*!(_x)]))
-
 #ifndef MIN
 #define MIN(a,b)   ((a) < (b) ? (a) : (b))
 #define MAX(a,b)   ((a) > (b) ? (a) : (b))
@@ -97,7 +73,35 @@
 #   endif
 #endif
 
-template <typename T> inline T clamp(T value, T low, T high)
+
+#ifdef SIFTEO_SIMULATOR
+#   ifdef DEBUG
+#      define DEBUG_LOG(_x)   printf _x
+#   else
+#      define DEBUG_LOG(_x)
+#   endif
+#   define LOG(_x)            printf _x
+#   define ASSERT(_x)         assert(_x)
+#   define DEBUG_ONLY(x)      x
+#   define UART(_x)
+#   define UART_HEX(_x)
+#   define SECTION(_x)
+#else
+#   define DEBUG_LOG(_x)
+#   define LOG(_x)
+#   define ASSERT(_x)
+#   define DEBUG_ONLY(x)
+#   include                   "usart.h"
+#   define UART(_x)           Usart::Dbg.write(_x)
+#   define UART_HEX(_x)       Usart::Dbg.writeHex(_x)
+#   define SECTION(_x)        __attribute__((section(_x)))
+#endif
+
+// Produces a 'size of array is negative' compile error when the assert fails
+#define STATIC_ASSERT(_x)  ((void)sizeof(char[1 - 2*!(_x)]))
+
+
+template <typename T> ALWAYS_INLINE T clamp(T value, T low, T high)
 {
     if (value < low) {
         return low;
@@ -113,7 +117,7 @@ template <typename T> inline T clamp(T value, T low, T high)
  *
  * 'value' is expected to be in the range minIn - maxIn.
  */
-template <typename T> inline T scale(T value, T minIn, T maxIn, T minOut, T maxOut)
+template <typename T> ALWAYS_INLINE T scale(T value, T minIn, T maxIn, T minOut, T maxOut)
 {
     ASSERT(minIn < maxIn);
     ASSERT(minOut < maxOut);
@@ -127,7 +131,7 @@ template <typename T> inline T scale(T value, T minIn, T maxIn, T minOut, T maxO
  * Round up to the nearest 'a'-byte boundary, assuming 'a' is a
  * constant power of two.
  */
-template <unsigned a> inline unsigned roundup(unsigned value)
+template <unsigned a> ALWAYS_INLINE unsigned roundup(unsigned value)
 {
     STATIC_ASSERT((a & (a - 1)) == 0);
     return (value + (a - 1)) & ~(a - 1);
@@ -136,14 +140,14 @@ template <unsigned a> inline unsigned roundup(unsigned value)
 /**
  * Ceiling division. Divide, rounding up instead of down.
  */
-template <typename T> inline T ceildiv(T numerator, T denominator) {
+template <typename T> ALWAYS_INLINE T ceildiv(T numerator, T denominator) {
     return (numerator + (denominator - 1)) / denominator;
 }
 
 /**
  * Compute the unsigned remainder from dividing two signed integers.
  */
-unsigned inline umod(int a, int b)
+unsigned ALWAYS_INLINE umod(int a, int b)
 {
     int r = a % b;
     if (r < 0)
@@ -154,7 +158,7 @@ unsigned inline umod(int a, int b)
 /**
  * Swap two values of any assignable type.
  */
-template <typename T> inline void swap(T &a, T &b)
+template <typename T> ALWAYS_INLINE void swap(T &a, T &b)
 {
     T temp = a;
     a = b;
@@ -167,7 +171,7 @@ template <typename T> inline void swap(T &a, T &b)
  * If the operands are greater than 0xFFFF, the result will automatically
  * saturate to 0xFFFFFFFF. Guaranteed not to overflow a uint32_t.
  */
-uint32_t inline mulsat16x16(uint32_t a, uint32_t b)
+uint32_t ALWAYS_INLINE mulsat16x16(uint32_t a, uint32_t b)
 {
     if (a > 0xFFFF) return 0xFFFFFFFF;
     if (b > 0xFFFF) return 0xFFFFFFFF;
@@ -177,7 +181,7 @@ uint32_t inline mulsat16x16(uint32_t a, uint32_t b)
 /**
  * Check the alignment of a pointer
  */
-template <typename T> inline bool isAligned(const T *ptr, unsigned alignment=4)
+template <typename T> ALWAYS_INLINE bool isAligned(const T *ptr, unsigned alignment=4)
 {
     STATIC_ASSERT((alignment & (alignment - 1)) == 0);
     return (reinterpret_cast<uintptr_t>(ptr) & (alignment - 1)) == 0;

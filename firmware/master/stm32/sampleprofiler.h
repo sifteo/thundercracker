@@ -35,11 +35,11 @@ public:
     static void processSample(uint32_t pc);
     static void task(void *p);
 
-    static inline SubSystem subsystem() {
+    static ALWAYS_INLINE SubSystem subsystem() {
         return subsys;
     }
 
-    static inline void setSubsystem(SubSystem s) {
+    static ALWAYS_INLINE void setSubsystem(SubSystem s) {
         subsys = s;
     }
 
