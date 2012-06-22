@@ -188,19 +188,19 @@ private:
 class FlashBlockRef
 {
 public:
-    FlashBlockRef() : block(0) {}
+    ALWAYS_INLINE FlashBlockRef() : block(0) {}
 
-    FlashBlockRef(FlashBlock *block) : block(block) {
+    ALWAYS_INLINE FlashBlockRef(FlashBlock *block) : block(block) {
         ASSERT(block);
         block->incRef();
     }
 
-    FlashBlockRef(const FlashBlockRef &r) : block(r.block) {
+    ALWAYS_INLINE FlashBlockRef(const FlashBlockRef &r) : block(r.block) {
         if (block)
             block->incRef();
     }
 
-    ~FlashBlockRef() {
+    ALWAYS_INLINE ~FlashBlockRef() {
         release();
     }
 
@@ -267,13 +267,13 @@ private:
 class FlashBlockWriter
 {
 public:
-    FlashBlockWriter() {}
+    ALWAYS_INLINE FlashBlockWriter() {}
 
-    FlashBlockWriter(const FlashBlockRef &r) {
+    ALWAYS_INLINE FlashBlockWriter(const FlashBlockRef &r) {
         beginBlock(r);
     }
 
-    ~FlashBlockWriter() {
+    ALWAYS_INLINE ~FlashBlockWriter() {
         if (ref.isHeld() && !ref->isAnonymous())
             commitBlock();
     }
