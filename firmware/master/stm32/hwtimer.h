@@ -84,6 +84,9 @@ public:
     void ALWAYS_INLINE disableComplementaryOutput(int ch) {
         tim->CCER &= ~(1 << ((ch-1 * 4) + 2));
     }
+    void ALWAYS_INLINE invertComplementaryOutput(int ch) {
+        tim->CCER ^= (1 << ((ch-1 * 4) + 3));
+    }
 
     void ALWAYS_INLINE enableCompareCaptureIsr(int ch) {
         tim->SR &= ~(1 << ch);  // clear pending ISR status
