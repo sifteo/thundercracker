@@ -77,6 +77,28 @@ void AudioSampleData::decodeToSampleADPCM(uint32_t sampleNum, const _SYSAudioMod
     const unsigned target = sampleNum + 1;
     ASSERT(target != numSamples);
 
+    /*
+     * OPTIMIZATION NOTE:
+     *
+     *    We're still processing samples in very small blocks for the most part!
+     *    I think the next big untapped reservoir of performance here is in mapping/decoding
+     *    more samples at once. Currently we have two small buffers, the samples[] buffer
+     *    here and the 'extra' sample in the ADPCMDecoder. Right now this decoder is optimized
+     *    for quickly skipping samples, but that isn't what it's usually used for. Here's a
+     *    histogram of typical (target - numSamples) values on entry, while playing an
+     *    8-channel module:
+     *
+     *       1 byte:   54.78%
+     *       2 bytes:  25.39%
+     *       3 bytes:  17.21%
+     *       4 bytes:   2.62%
+     *       5+ bytes:  0.00%
+     *
+     *    So! We'd likely get *much* better performance if we decoded ADPCM data in
+     *    fixed-size and well-aligned blocks, then inlined our accessors to that
+     *    tiny buffer. (which could also be a direct-mapped cache like samples[])
+     */
+
     while (1) {
         SvmMemory::PhysAddr pa;
         uint32_t byteCount = ceildiv<unsigned>(target - numSamples, kNybblesPerByte);
