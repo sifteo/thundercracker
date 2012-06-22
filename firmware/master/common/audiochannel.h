@@ -17,9 +17,9 @@
 
 class AudioChannelSlot {
 public:
-    AudioChannelSlot() { init(); }
-
-    void init();
+    AudioChannelSlot() :
+        state(STATE_STOPPED)
+    {}
 
     void play(const struct _SYSAudioModule *module, _SYSAudioLoopType loopMode);
 

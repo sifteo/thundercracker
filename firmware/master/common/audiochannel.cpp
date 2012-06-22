@@ -13,12 +13,6 @@
 #   include "mc_audiovisdata.h"
 #endif
 
-
-void AudioChannelSlot::init()
-{
-    state = STATE_STOPPED;
-}
-
 void AudioChannelSlot::setSpeed(uint32_t sampleRate)
 {
     increment = (sampleRate << SAMPLE_FRAC_SIZE) / AudioMixer::SAMPLE_HZ;
@@ -140,7 +134,7 @@ void AudioChannelSlot::setPos(uint32_t ofs)
         if (ofs == numSamples) {
             offset = mod.loopStart;
         } else {
-            /* Seeking out of bonds in a ping-pong sample is not well-defined;
+            /* Seeking out of bounds in a ping-pong sample is not well-defined;
              * no tracker seems to implement loop directionality.
              * Compute the offset based on the original sample's length, not
              * the synthesized sample's length, and loop forward (same as
