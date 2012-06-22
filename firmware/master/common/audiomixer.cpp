@@ -154,7 +154,7 @@ void AudioMixer::pullAudio(void *p)
         }
     #endif
 
-    if (samplesLeft < arraysize(blockBuffer) / 2)
+    if (samplesLeft < arraysize(blockBuffer))
         return;
 
     #ifndef SIFTEO_SIMULATOR
