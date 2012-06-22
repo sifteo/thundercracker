@@ -16,7 +16,7 @@ void init()
     initialized = true;
 }
 
-uint16_t systemVolume()
+int systemVolume()
 {
     ASSERT(initialized);
 
