@@ -19,32 +19,6 @@
 #define TOSTRING(_x)    STRINGIFY(_x)
 #define SRCLINE         __FILE__ ":" TOSTRING(__LINE__)
 
-#ifdef SIFTEO_SIMULATOR
-#   ifdef DEBUG
-#      define DEBUG_LOG(_x)   printf _x
-#   else
-#      define DEBUG_LOG(_x)
-#   endif
-#   define LOG(_x)            printf _x
-#   define ASSERT(_x)         assert(_x)
-#   define DEBUG_ONLY(x)      x
-#   define UART(_x)
-#   define UART_HEX(_x)
-#   define SECTION(_x)
-#else
-#   define DEBUG_LOG(_x)
-#   define LOG(_x)
-#   define ASSERT(_x)
-#   define DEBUG_ONLY(x)
-#   include                   "usart.h"
-#   define UART(_x)           Usart::Dbg.write(_x)
-#   define UART_HEX(_x)       Usart::Dbg.writeHex(_x)
-#   define SECTION(_x)        __attribute__((section(_x)))
-#endif
-
-// Produces a 'size of array is negative' compile error when the assert fails
-#define STATIC_ASSERT(_x)  ((void)sizeof(char[1 - 2*!(_x)]))
-
 #ifndef MIN
 #define MIN(a,b)   ((a) < (b) ? (a) : (b))
 #define MAX(a,b)   ((a) > (b) ? (a) : (b))
@@ -98,6 +72,34 @@
              Is __STDC_FORMAT_MACROS defined?
 #   endif
 #endif
+
+
+#ifdef SIFTEO_SIMULATOR
+#   ifdef DEBUG
+#      define DEBUG_LOG(_x)   printf _x
+#   else
+#      define DEBUG_LOG(_x)
+#   endif
+#   define LOG(_x)            printf _x
+#   define ASSERT(_x)         assert(_x)
+#   define DEBUG_ONLY(x)      x
+#   define UART(_x)
+#   define UART_HEX(_x)
+#   define SECTION(_x)
+#else
+#   define DEBUG_LOG(_x)
+#   define LOG(_x)
+#   define ASSERT(_x)
+#   define DEBUG_ONLY(x)
+#   include                   "usart.h"
+#   define UART(_x)           Usart::Dbg.write(_x)
+#   define UART_HEX(_x)       Usart::Dbg.writeHex(_x)
+#   define SECTION(_x)        __attribute__((section(_x)))
+#endif
+
+// Produces a 'size of array is negative' compile error when the assert fails
+#define STATIC_ASSERT(_x)  ((void)sizeof(char[1 - 2*!(_x)]))
+
 
 template <typename T> ALWAYS_INLINE T clamp(T value, T low, T high)
 {

@@ -6,7 +6,7 @@
 #ifndef _STM32_GPIO_H
 #define _STM32_GPIO_H
 
-#include <stdint.h>
+#include "macros.h"
 #include "hardware.h"
 
 
@@ -34,11 +34,11 @@ class GPIOPin {
     GPIOPin(volatile GPIO_t *port, unsigned bit)
         : value(bit + (uintptr_t)port) {}
 
-    void setHigh() const {
+    ALWAYS_INLINE void setHigh() const {
         port()->ODR |= bit();
     }
 
-    void setLow() const {
+    ALWAYS_INLINE void setLow() const {
         port()->ODR &= ~bit();
     }
 
@@ -46,68 +46,68 @@ class GPIOPin {
         Pull up and pull down are controlled via ODR when the pin
         is configured as an input.
     */
-    void pullup() const {
+    ALWAYS_INLINE void pullup() const {
         port()->ODR |= bit();
     }
 
-    void pulldown() const {
+    ALWAYS_INLINE void pulldown() const {
         port()->ODR &= ~bit();
     }
 
-    void toggle() const {
+    ALWAYS_INLINE void toggle() const {
         port()->ODR ^= bit();
     }
 
-    bool isHigh() const {
+    ALWAYS_INLINE bool isHigh() const {
         return port()->IDR & bit();
     }
 
-    bool isLow() const {
+    ALWAYS_INLINE bool isLow() const {
         return (port()->IDR & bit()) == 0;
     }
 
     void setControl(Control c) const;
     void irqInit() const;
 
-    void irqSetRisingEdge() const {
+    ALWAYS_INLINE void irqSetRisingEdge() const {
         EXTI.RTSR |= bit();
     }
 
-    void irqSetFallingEdge() const {
+    ALWAYS_INLINE void irqSetFallingEdge() const {
         EXTI.FTSR |= bit();
     }
 
-    void irqEnable() const {
+    ALWAYS_INLINE void irqEnable() const {
         EXTI.IMR |= bit();
     }
 
-    void irqDisable() const {
+    ALWAYS_INLINE void irqDisable() const {
         EXTI.IMR &= ~bit();
     }   
 
-    void irqAcknowledge() const {
+    ALWAYS_INLINE void irqAcknowledge() const {
         // Write 1 to clear
         EXTI.PR = bit();
     }
 
-    bool irqPending() const {
+    ALWAYS_INLINE bool irqPending() const {
         return (EXTI.PR & bit()) != 0;
     }
 
-    volatile GPIO_t *port() const {
+    ALWAYS_INLINE volatile GPIO_t *port() const {
         return (volatile GPIO_t*)(0xFFFFFF00 & value);
     }
 
-    unsigned portIndex() const {
+    ALWAYS_INLINE unsigned portIndex() const {
         // PA=0, PB=1, ...
         return (value - (uintptr_t)&GPIOA) >> 10;
     }
 
-    unsigned pin() const {
+    ALWAYS_INLINE unsigned pin() const {
         return 15 & value;
     }
 
-    unsigned bit() const {
+    ALWAYS_INLINE unsigned bit() const {
         return 1 << pin();
     }
 

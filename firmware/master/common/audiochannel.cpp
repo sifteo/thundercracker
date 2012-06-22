@@ -104,7 +104,7 @@ bool AudioChannelSlot::mixAudio(int *buffer, uint32_t numFrames)
         }
 
         // Mix volume
-        sample = (sample * latchedVolume) / _SYS_AUDIO_MAX_VOLUME;
+        sample = (sample * latchedVolume) >> _SYS_AUDIO_MAX_VOLUME_LOG2;
 
         #ifdef SIFTEO_SIMULATOR
             MCAudioVisData::writeChannelSample(AudioMixer::instance.channelID(this), sample);

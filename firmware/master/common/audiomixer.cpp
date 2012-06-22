@@ -210,7 +210,7 @@ void AudioMixer::pullAudio(void *p)
 
         int *ptr = blockBuffer;
         do {
-            int sample = (*(ptr++) * mixerVolume) / _SYS_AUDIO_MAX_VOLUME;
+            int sample = (*(ptr++) * mixerVolume) >> _SYS_AUDIO_MAX_VOLUME_LOG2;
 
             #if 0
                 UART("\r\ns "); UART_HEX(blockSize); UART(" "); UART_HEX(sample);

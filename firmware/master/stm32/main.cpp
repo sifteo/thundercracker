@@ -55,7 +55,7 @@ int main()
     NVIC.irqEnable(IVT.BTN_HOME_EXTI_VEC);          //  home button
 
     NVIC.irqEnable(IVT.TIM4);                       // sample rate timer
-    NVIC.irqPrioritize(IVT.TIM4, 0x60);             //  Higher prio than radio
+    NVIC.irqPrioritize(IVT.TIM4, 0x50);             //  pretty high priority! (would cause audio jitter)
 
     NVIC.irqEnable(IVT.USART3);                     // factory test uart
     NVIC.irqPrioritize(IVT.USART3, 0x99);           //  loooooowest prio
@@ -63,7 +63,7 @@ int main()
     NVIC.sysHandlerPrioritize(IVT.SVCall, 0x96);
 
     NVIC.irqEnable(IVT.VOLUME_TIM);                 // volume timer
-    NVIC.irqPrioritize(IVT.VOLUME_TIM, 0x98);       // loooooow prio
+    NVIC.irqPrioritize(IVT.VOLUME_TIM, 0x60);       //  just below sample rate timer
 
     NVIC.irqEnable(IVT.PROFILER_TIM);               // sample profiler timer
     NVIC.irqPrioritize(IVT.PROFILER_TIM, 0x0);      //  highest possible priority
