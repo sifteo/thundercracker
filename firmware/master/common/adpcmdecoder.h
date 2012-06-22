@@ -8,6 +8,7 @@
 
 #include "macros.h"
 #include "machine.h"
+#include "svmmemory.h"
 
 
 /**
@@ -15,14 +16,7 @@
  */
 struct ADPCMState
 {
-    union {
-        uint32_t value;
-        struct {
-            int16_t sample;
-            uint8_t index;
-            uint8_t extra;
-        };
-    };
+    uint32_t value;
 
     void ALWAYS_INLINE init() {
         value = 0;
@@ -45,24 +39,29 @@ class ADPCMDecoder
 
     int sample;
     unsigned index;
-    unsigned extra;
 
 public:
     void ALWAYS_INLINE load(const ADPCMState &state)
     {
-        sample = state.sample;
-        index = state.index;
-        extra = state.extra;
+        unsigned v = state.value;
+        sample = int16_t(v);
+        index = v >> 16;
+        ASSERT(index < arraysize(stepSizeTable));
     }
 
     void ALWAYS_INLINE store(ADPCMState &state)
     {
-        state.sample = sample;
-        state.index = index;
-        state.extra = extra;
+        state.value = uint16_t(sample) | (index << 16);
     }
 
-    void ALWAYS_INLINE decodeNybble(unsigned nybble)
+    void ALWAYS_INLINE init()
+    {
+        sample = 0;
+        index = 0;
+    }
+
+    // Call once per nybble to update decoder state, least significant nybble first
+    int ALWAYS_INLINE decodeNybble(unsigned nybble)
     {
         ASSERT(index < arraysize(stepSizeTable));
         ASSERT(nybble < arraysize(codeTable));
@@ -81,27 +80,16 @@ public:
         nextIndex = MAX(nextIndex, 0);
         nextIndex = MIN(nextIndex, int(arraysize(stepSizeTable) - 1));
         index = nextIndex;
+
+        return sample;
     }
 
-    /// Decodes one sample. Maybe advances 'bytes'
-    int ALWAYS_INLINE decodeSample(const uint8_t *&bytes)
+    // Decode one byte of ADPCM data to two samples. Increments source and dest.
+    void ALWAYS_INLINE decodeByte(SvmMemory::PhysAddr &src, int16_t *&dest)
     {
-        int result;
-
-        if (extra ^= 1) {
-            // No extra sample; decode two and store one.
-            const uint8_t code = *bytes;
-            decodeNybble(code & 0xF);
-            result = sample;
-            decodeNybble(code >> 4);
-
-        } else {
-            // Return the stored 'extra' sample, move to next byte.
-            bytes++;
-            result = sample;
-        }
-
-        return result;
+        unsigned byte = *(src++);
+        *(dest++) = decodeNybble(byte & 0xF);
+        *(dest++) = decodeNybble(byte >> 4);
     }
 };
 

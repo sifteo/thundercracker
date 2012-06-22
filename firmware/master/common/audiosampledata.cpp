@@ -10,137 +10,124 @@
 #define LGPFX "AudioSampleData: "
 
 
-void AudioSampleData::decodeToSamplePCM(uint32_t sampleNum, const _SYSAudioModule &mod)
+void AudioSampleData::fetchBlockPCM(uint32_t sampleNum, const _SYSAudioModule &mod)
 {
     /*
-     * PCM provides random access, so all we need to do is update the
-     * buffer position and copy up to two samples from virtual memory.
+     * PCM provides random access, and the data is already in the format we
+     * need, so just do a copy from virtual memory to our buffer.
      */
 
-    // Must be decoding at least one sample
-    ASSERT(sampleNum >= state.numSamples);
+    // Must be aligned to one half of the buffer
+    ASSERT((sampleNum & HALF_BUFFER_MASK) == 0);
 
-    // How many additional samples, prior to the last one?
-    unsigned addlCount = sampleNum - state.numSamples;
-    state.numSamples = sampleNum + 1;
+    int16_t *dest = &samples[sampleNum & FULL_BUFFER_MASK];
+    ASSERT(dest + HALF_BUFFER <= &samples[FULL_BUFFER]);
 
-    if (LIKELY(addlCount == 0)) {
-        // Fast path for single samples
+    SvmMemory::VirtAddr va = mod.pData + (sampleNum * sizeof(int16_t));
+    SvmMemory::PhysAddr pa = (SvmMemory::PhysAddr) dest;
 
-        unsigned bufPos = state.bufPos;
-        state.bufPos = bufPos + sizeof(int16_t);
-        SvmMemory::VirtAddr va = mod.pData + bufPos;
-        SvmMemory::PhysAddr pa = (SvmMemory::PhysAddr) &state.samples[sampleNum % kSampleBufSize];
+    SvmMemory::copyROData(ref, pa, va, HALF_BUFFER * sizeof(int16_t));
 
-        SvmMemory::copyROData(ref, pa, va, sizeof state.samples[0]);
-        return;
-    }
-
-    /*
-     * Otherwise, we're copying two samples. Depending on the final
-     * value of numSamples, they may or may not be swapped in our buffer.
-     */
-
-    unsigned count = addlCount + 1;
-    unsigned byteCount = count * sizeof(int16_t);
-    SvmMemory::VirtAddr va = mod.pData + (state.bufPos += byteCount) - sizeof state.samples;
-
-    if (sampleNum % kSampleBufSize) {
-        // Last sample is at [1]. Samples are not swapped, we can copy right in.
-
-        SvmMemory::PhysAddr pa = (SvmMemory::PhysAddr) &state.samples[0];
-        SvmMemory::copyROData(ref, pa, va, sizeof state.samples);
-
-    } else {
-        // Last sample is at [0]. Copy two samples and exchange them.
-
-        int16_t buffer[kSampleBufSize];
-        SvmMemory::PhysAddr pa = (SvmMemory::PhysAddr) &buffer[0];
-        SvmMemory::copyROData(ref, pa, va, sizeof buffer);
-        state.samples[0] = buffer[1];
-        state.samples[1] = buffer[0];
-    }
+    // Update state (Ignore snapshots)
+    state.sampleNum = sampleNum + HALF_BUFFER;
 }
 
-void AudioSampleData::decodeToSampleADPCM(uint32_t sampleNum, const _SYSAudioModule &mod)
+void AudioSampleData::fetchBlockADPCM(uint32_t sampleNum, const _SYSAudioModule &mod)
 {
+    /*
+     * Starting from the current ADPCM codec state, decode one half-buffer
+     * worth of aligned ADPCM samples.
+     *
+     * We also manage taking and restoring snapshots here.
+     */
+
+    // Argument is expected to be Half-buffer-aligned.
+    ASSERT((sampleNum & HALF_BUFFER_MASK) == 0);
+
     // Fast local copy of ADPCM CODEC state
     ADPCMDecoder dec;
     dec.load(state.adpcm);
+    unsigned stateSampleNum = state.sampleNum;
+    ASSERT((stateSampleNum & HALF_BUFFER_MASK) == 0);
 
-    // Local copies of other members
-    SvmMemory::VirtAddr vaBase = mod.pData;
-    int16_t *samples = state.samples;
-    unsigned bufPos = state.bufPos;
-    unsigned numSamples = state.numSamples;
-    const unsigned latchedLoopPoint = loopPoint;
-    const unsigned target = sampleNum + 1;
-    ASSERT(target != numSamples);
-
-    /*
-     * OPTIMIZATION NOTE:
-     *
-     *    We're still processing samples in very small blocks for the most part!
-     *    I think the next big untapped reservoir of performance here is in mapping/decoding
-     *    more samples at once. Currently we have two small buffers, the samples[] buffer
-     *    here and the 'extra' sample in the ADPCMDecoder. Right now this decoder is optimized
-     *    for quickly skipping samples, but that isn't what it's usually used for. Here's a
-     *    histogram of typical (target - numSamples) values on entry, while playing an
-     *    8-channel module:
-     *
-     *       1 byte:   54.78%
-     *       2 bytes:  25.39%
-     *       3 bytes:  17.21%
-     *       4 bytes:   2.62%
-     *       5+ bytes:  0.00%
-     *
-     *    So! We'd likely get *much* better performance if we decoded ADPCM data in
-     *    fixed-size and well-aligned blocks, then inlined our accessors to that
-     *    tiny buffer. (which could also be a direct-mapped cache like samples[])
-     */
-
+    // Are we not decoding contiguously? May need to loop so we can skip forward.
     while (1) {
-        SvmMemory::PhysAddr pa;
-        uint32_t byteCount = ceildiv<unsigned>(target - numSamples, kNybblesPerByte);
-        bool mapStatus = SvmMemory::mapROData(ref, vaBase + bufPos, byteCount, pa);
 
-        if (UNLIKELY(!mapStatus)) {
-            LOG((LGPFX "Memory mapping failure for ADPCM sample at VA 0x%08x+%x\n",
-                unsigned(vaBase), bufPos));
-            state.numSamples = target;
-            return;
+        if (UNLIKELY(stateSampleNum > sampleNum)) {
+            // Need to skip backwards...
+
+            if (sampleNum >= snapshot.sampleNum) {
+                // Warp back to the snapshot
+                dec.load(snapshot.adpcm);
+                stateSampleNum = snapshot.sampleNum;
+
+            } else {
+                // Back to the beginning!
+                dec.init();
+                stateSampleNum = 0;
+            }
         }
 
-        const uint8_t *ptr = pa;
-        const uint8_t *limit = pa + byteCount;
+        STATIC_ASSERT((HALF_BUFFER % NYBBLES_PER_BYTE) == 0);
+        ASSERT((stateSampleNum & HALF_BUFFER_MASK) == 0);
+        unsigned bytesRemaining = HALF_BUFFER / NYBBLES_PER_BYTE;
+        SvmMemory::VirtAddr va = mod.pData + (stateSampleNum / NYBBLES_PER_BYTE);
 
-        /*
-         * Decode and store each sample. Technically we may not have to
-         * store all of these samples, since only up to the last
-         * kSampleBufSize samples are actually retained. But it's highly
-         * uncommon to skip more than a single sample at a time, so instead
-         * it makes more sense to optimize this loop for lightweight
-         * control flow.
-         */
+        int16_t *dest = &samples[stateSampleNum & FULL_BUFFER_MASK];
+        ASSERT(dest + HALF_BUFFER <= &samples[FULL_BUFFER]);
 
-        do {
-            samples[(numSamples++) % kSampleBufSize] = dec.decodeSample(ptr);
+        const uint32_t localAutoSnapshotPoint = autoSnapshotPoint;
 
-            if (UNLIKELY(numSamples == latchedLoopPoint) && !hasSnapshot()) {
-                state.bufPos = bufPos + (ptr - pa);
-                state.numSamples = numSamples;
-                dec.store(state.adpcm);
-                takeSnapshot();
-            }
+        while (1) {
+            uint32_t chunk = bytesRemaining;
+            SvmMemory::PhysAddr pa;
 
-            if (target == numSamples) {
-                state.bufPos = bufPos + (ptr - pa);
-                state.numSamples = numSamples;
-                dec.store(state.adpcm);
+            if (!SvmMemory::mapROData(ref, va, chunk, pa)) {
+                LOG((LGPFX "Memory mapping failure for ADPCM sample at VA 0x%08x\n",
+                    unsigned(va)));
                 return;
             }
 
-        } while (ptr != limit);
-        bufPos += (ptr - pa);
+            STATIC_ASSERT(HALF_BUFFER <= 16);
+            ASSERT(chunk <= 8);
+            ASSERT(chunk > 0);
+
+            switch (chunk) {
+                case 8: dec.decodeByte(pa, dest);
+                case 7: dec.decodeByte(pa, dest);
+                case 6: dec.decodeByte(pa, dest);
+                case 5: dec.decodeByte(pa, dest);
+                case 4: dec.decodeByte(pa, dest);
+                case 3: dec.decodeByte(pa, dest);
+                case 2: dec.decodeByte(pa, dest);
+                case 1: dec.decodeByte(pa, dest);
+                case 0: break;
+            };
+
+            if (LIKELY(0 == (bytesRemaining -= chunk)))
+                break;
+
+            va += chunk;
+        }
+    
+        // Next block...
+        unsigned beginningOfBlock = stateSampleNum;
+        stateSampleNum += HALF_BUFFER;
+
+        // Save an automatic snapshot if applicable
+        ASSERT((stateSampleNum & HALF_BUFFER_MASK) == 0);
+        ASSERT((snapshot.sampleNum & HALF_BUFFER_MASK) == 0);
+        if (UNLIKELY(stateSampleNum == localAutoSnapshotPoint)) {
+            snapshot.sampleNum = stateSampleNum;
+            dec.store(snapshot.adpcm);
+        }
+
+        // We just decoded the block we were looking for?
+        if (LIKELY(sampleNum == beginningOfBlock))
+            break;
     }
+
+    // Save new codec state
+    state.sampleNum = stateSampleNum;
+    dec.store(state.adpcm);
 }
