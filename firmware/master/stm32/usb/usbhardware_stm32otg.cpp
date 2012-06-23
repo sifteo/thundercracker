@@ -374,17 +374,19 @@ IRQ_HANDLER ISR_UsbOtg_FS()
      */
     const uint32_t IEPINT = 1 << 18;    // this bit is read-only
     if (status & IEPINT) {
+
         uint16_t inEpInts = OTG.device.DAINT & 0xffff;
-        // TODO: could micro optimize here with CLZ and friends
         for (unsigned i = 0; inEpInts != 0; ++i, inEpInts >>= 1) {
-            volatile USBOTG_IN_EP_t & ep = OTG.device.inEps[i];
+
+            uint32_t inEpInt = OTG.device.inEps[i].DIEPINT;
+            OTG.device.inEps[i].DIEPINT = 0xffffffff;
+
             // only really interested in XFRC to indicate TX complete
-            if (ep.DIEPINT & 0x1) {
+            if (inEpInt & 0x1) {
                 if (i == 0)
                     UsbControl::controlRequest(0, TransactionIn);
                 else
                     UsbDevice::inEndpointCallback(i);
-                ep.DIEPINT = 0x1;
             }
         }
     }
@@ -397,21 +399,20 @@ IRQ_HANDLER ISR_UsbOtg_FS()
         uint16_t outEpInts = (OTG.device.DAINT >> 16) & 0xffff;
         for (unsigned i = 0; outEpInts != 0; ++i, outEpInts >>= 1) {
 
-            volatile USBOTG_OUT_EP_t & ep = OTG.device.outEps[i];
+            uint32_t outEpInt = OTG.device.outEps[i].DOEPINT;
+            OTG.device.outEps[i].DOEPINT = 0xffffffff;
 
-            if (ep.DOEPINT & (1 << 3)) {    // setup complete
+            if (outEpInt & (1 << 3)) {      // setup complete
                 UsbControl::controlRequest(0, TransactionSetup);
-                ep.DOEPINT = (1 << 3);
             }
 
-            if (ep.DOEPINT & 0x1) {         // OUT transfer complete
+            if (outEpInt & 0x1) {           // OUT transfer complete
                 // TODO: update UsbControl handler to determine in/out stage
                 // based on previous state
                 if (i == 0)
                     UsbControl::controlRequest(0, TransactionIn);
                 else
                     UsbDevice::outEndpointCallback(i);
-                ep.DOEPINT = 0x1;
             }
         }
     }
