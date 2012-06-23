@@ -254,16 +254,21 @@ uint16_t epWritePacket(uint8_t addr, const void *buf, uint16_t len)
         ep.DIEPTSIZ = (1 << 19);
     }
     else {
-        uint8_t pktcnt = (len - 1 + MAX_PACKET) / MAX_PACKET;
+        uint8_t pktcnt = (len + MAX_PACKET - 1) / MAX_PACKET;
         ep.DIEPTSIZ = (pktcnt << 19) | len;
     }
     ep.DIEPCTL |= (1 << 31) | (1 << 26);     // EPENA & CNAK
+
+    // TXFE: ensure transmit fifo is empty
+    while (!(ep.DIEPINT & (1 << 7)))
+        ;
 
     // Copy buffer to endpoint FIFO
     const uint32_t* buf32 = static_cast<const uint32_t*>(buf);
     volatile uint32_t* fifo = OTG.epFifos[addr];
     for (int i = len; i > 0; i -= 4)
         *fifo = *buf32++;
+
     return len;
 }
 

@@ -56,6 +56,7 @@ private:
     static bool waitForPreviousWrite();
 
     static bool configured;
+    static volatile bool txInProgress;
 };
 
 #endif // USB_DEVICE_H
