@@ -104,7 +104,7 @@ bool Profiler::profile(const char *elfPath, const char *outPath)
     {
         USBProtocolMsg m(USBProtocol::Profiler);
         m.append(0);    // profiler enabled command
-        m.append(1);    // disable
+        m.append(0);    // disable
         dev.writePacket(m.bytes, m.len);
 
         while (dev.numPendingOUTPackets())
