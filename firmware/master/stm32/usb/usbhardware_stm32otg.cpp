@@ -121,51 +121,45 @@ void setAddress(uint8_t addr)
 }
 
 // Configure endpoint address and type & allocate FIFO memory for endpoint
-void epSetup(uint8_t addr, uint8_t type, uint16_t maxsize)
+void epINSetup(uint8_t addr, uint8_t type, uint16_t maxsize)
 {
-    // EP0 gets handled during reset
-    if ((addr & 0x7f) == 0)
-        return;
+    addr &= 0x7f;
 
-    if (isInEp(addr)) {
+    uint16_t fifoDepthInWords = maxsize / 4;
+    OTG.global.DIEPTXF[addr - 1] = (fifoDepthInWords << 16) | fifoMemTop;
+    fifoMemTop += fifoDepthInWords;
 
-        addr &= 0x7f;
+    volatile USBOTG_IN_EP_t & ep = OTG.device.inEps[addr];
+    ep.DIEPTSIZ = maxsize;
+    ep.DIEPCTL  = ((1 << 31) |     // EPENA
+                   (1 << 28) |     // SD0PID
+                   (1 << 27) |     // SNAK
+                   (addr << 22) |
+                   (type << 18) |
+                   (1 << 15) |     // USBEAP
+                   maxsize);
 
-        uint16_t fifoDepthInWords = maxsize / 4;
-        OTG.global.DIEPTXF[addr - 1] = (fifoDepthInWords << 16) | fifoMemTop;
-        fifoMemTop += fifoDepthInWords;
+    // clear pending interrupts & enable ISRs for this ep
+    ep.DIEPINT = 0xff;
+    OTG.device.DAINTMSK |= (1 << addr);
+}
 
-        volatile USBOTG_IN_EP_t & ep = OTG.device.inEps[addr];
-        ep.DIEPTSIZ = maxsize;
-        ep.DIEPCTL  = ((1 << 31) |     // EPENA
-                       (1 << 28) |     // SD0PID
-                       (1 << 27) |     // SNAK
-                       (addr << 22) |
-                       (type << 18) |
-                       (1 << 15) |     // USBEAP
-                       maxsize);
+void epOUTSetup(uint8_t addr, uint8_t type, uint16_t maxsize)
+{
+    doeptsiz[addr] = (1 << 19) | (maxsize & 0x7f);
 
-        // clear pending interrupts & enable ISRs for this ep
-        ep.DIEPINT = 0xff;
-        OTG.device.DAINTMSK |= (1 << addr);
-    }
-    else {
+    volatile USBOTG_OUT_EP_t & ep = OTG.device.outEps[addr];
+    ep.DOEPTSIZ = doeptsiz[addr];
+    ep.DOEPCTL |= ((1 << 31) |     // EPENA
+                   (1 << 28) |     // SD0PID
+                   (1 << 26) |     // CNAK
+                   (type << 18) |
+                   (1 << 15) |     // USBEAP
+                   maxsize);
 
-        doeptsiz[addr] = (1 << 19) | (maxsize & 0x7f);
-
-        volatile USBOTG_OUT_EP_t & ep = OTG.device.outEps[addr];
-        ep.DOEPTSIZ = doeptsiz[addr];
-        ep.DOEPCTL |= ((1 << 31) |     // EPENA
-                       (1 << 28) |     // SD0PID
-                       (1 << 26) |     // CNAK
-                       (type << 18) |
-                       (1 << 15) |     // USBEAP
-                       maxsize);
-
-        // clear pending interrupts & enable ISRs for this ep
-        ep.DOEPINT = 0xff;
-        OTG.device.DAINTMSK |= (1 << (addr + 16));
-    }
+    // clear pending interrupts & enable ISRs for this ep
+    ep.DOEPINT = 0xff;
+    OTG.device.DAINTMSK |= (1 << (addr + 16));
 }
 
 void epSetStalled(uint8_t addr, bool stall)

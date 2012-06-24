@@ -180,8 +180,8 @@ void UsbDevice::init() {
  */
 void UsbDevice::onConfigComplete(uint16_t wValue)
 {
-    UsbHardware::epSetup(InEpAddr, Usb::EpAttrBulk, 64);
-    UsbHardware::epSetup(OutEpAddr, Usb::EpAttrBulk, 64);
+    UsbHardware::epINSetup(InEpAddr, Usb::EpAttrBulk, 64);
+    UsbHardware::epOUTSetup(OutEpAddr, Usb::EpAttrBulk, 64);
     configured = true;
 }
 
