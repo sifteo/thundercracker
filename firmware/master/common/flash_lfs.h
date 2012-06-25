@@ -52,6 +52,7 @@
 #include "macros.h"
 #include "flash_volume.h"
 #include "flash_volumeheader.h"
+#include "bits.h"
 #include <sifteo/abi.h>
 
 
@@ -211,6 +212,9 @@ public:
     // Keys are 8-bit, there can be at most this many
     static const unsigned MAX_KEYS = 0x100;
 
+    // A BitVector type that can hold any valid key
+    typedef BitVector<MAX_KEYS> KeyVector_t;
+
     // Object sizes are 8-bit, measured in multiples of SIZE_UNIT
     static const unsigned SIZE_SHIFT = 4;
     static const unsigned SIZE_UNIT = 1 << SIZE_SHIFT;
@@ -236,31 +240,31 @@ public:
         this->check = LFS::computeCheckByte(key, size);
     }
 
-    bool isValid() const {
+    ALWAYS_INLINE bool isValid() const {
         return check == LFS::computeCheckByte(key, size);
     }
 
-    bool isEmpty() const {
+    ALWAYS_INLINE bool isEmpty() const {
         return LFS::isEmpty((const uint8_t*) this, sizeof *this);
     }
 
-    unsigned getKey() const {
+    ALWAYS_INLINE unsigned getKey() const {
         return key;
     }
 
-    unsigned getSizeInBytes() const {
+    ALWAYS_INLINE unsigned getSizeInBytes() const {
         return size << SIZE_SHIFT;
     }
 
-    bool checkCRC(unsigned reference) const {
+    ALWAYS_INLINE bool checkCRC(unsigned reference) const {
         return !(((crc[0] | (crc[1] << 8)) ^ reference) & 0xFFFF);
     }
 
-    static bool isKeyAllowed(unsigned key) {
+    ALWAYS_INLINE static bool isKeyAllowed(unsigned key) {
         return key < MAX_KEYS;
     }
 
-    static bool isSizeAllowed(unsigned bytes) {
+    ALWAYS_INLINE static bool isSizeAllowed(unsigned bytes) {
         return bytes <= MAX_SIZE;
     }
 };
@@ -313,15 +317,15 @@ public:
         this->check = LFS::computeCheckByte(offsetLow, offsetHigh);
     }
 
-    bool isValid() const {
+    ALWAYS_INLINE bool isValid() const {
         return check == LFS::computeCheckByte(offset[0], offset[1]);
     }
 
-    bool isEmpty() const {
+    ALWAYS_INLINE bool isEmpty() const {
         return LFS::isEmpty((const uint8_t*) this, sizeof *this);
     }
 
-    unsigned getOffsetInBytes() const {
+    ALWAYS_INLINE unsigned getOffsetInBytes() const {
         return (this->offset[0] | (this->offset[1] << 8)) << OFFSET_SHIFT;
     }
 };
@@ -331,24 +335,24 @@ public:
 namespace LFS {
     
     // Return the first possible location for a record in a block
-    inline FlashLFSIndexRecord *firstRecord(FlashLFSIndexAnchor *anchor) {
+    ALWAYS_INLINE FlashLFSIndexRecord *firstRecord(FlashLFSIndexAnchor *anchor) {
         ASSERT(anchor);
         return (FlashLFSIndexRecord *) (anchor + 1);
     }
 
     // Return the last possible location for a record in a block
-    inline FlashLFSIndexRecord *lastRecord(FlashBlock *block) {
+    ALWAYS_INLINE FlashLFSIndexRecord *lastRecord(FlashBlock *block) {
         uint8_t *p = block->getData() + FlashBlock::BLOCK_SIZE;
         return ((FlashLFSIndexRecord *) p) - 1;
     }
 
     // Return the first possible location for an anchor in a block
-    inline FlashLFSIndexAnchor *firstAnchor(FlashBlock *block) {
+    ALWAYS_INLINE FlashLFSIndexAnchor *firstAnchor(FlashBlock *block) {
         return (FlashLFSIndexAnchor *) block->getData();
     }
 
     // Return the last possible location for an anchor in a block
-    inline FlashLFSIndexAnchor *lastAnchor(FlashBlock *block) {
+    ALWAYS_INLINE FlashLFSIndexAnchor *lastAnchor(FlashBlock *block) {
         uint8_t *p = block->getData() + FlashBlock::BLOCK_SIZE;
         return ((FlashLFSIndexAnchor *) p) - 1;
     }
@@ -389,23 +393,23 @@ public:
 
     FlashLFSIndexRecord *beginAppend(FlashBlockWriter &writer);
 
-    const FlashLFSIndexRecord& operator*() const
+    ALWAYS_INLINE const FlashLFSIndexRecord& operator*() const
     {
         ASSERT(currentRecord);
         return *currentRecord;
     }
 
-    const FlashLFSIndexRecord* operator->() const
+    ALWAYS_INLINE const FlashLFSIndexRecord* operator->() const
     {
         ASSERT(currentRecord);
         return currentRecord;
     }
 
-    unsigned getCurrentOffset() const {
+    ALWAYS_INLINE unsigned getCurrentOffset() const {
         return currentOffset;
     }
 
-    unsigned getNextOffset() const
+    ALWAYS_INLINE unsigned getNextOffset() const
     {
         FlashLFSIndexRecord *p = currentRecord;
         ASSERT(p == 0 || p->isValid());
@@ -461,7 +465,7 @@ public:
 
     FlashLFSVolumeVector() : numSlotsInUse(0) {}
 
-    FlashVolume last() const
+    ALWAYS_INLINE FlashVolume last() const
     {
         // Returns the last volume in the vector. If the last volume
         // is marked as deleted or there are no volumes in the vector,
@@ -472,13 +476,13 @@ public:
             return FlashMapBlock::invalid();
     }
 
-    bool full() const
+    ALWAYS_INLINE bool full() const
     {
         ASSERT(numSlotsInUse <= MAX_VOLUMES);
         return numSlotsInUse == MAX_VOLUMES;
     }
 
-    void append(FlashVolume vol)
+    ALWAYS_INLINE void append(FlashVolume vol)
     {
         ASSERT(!full());
         slots[numSlotsInUse++] = vol;
@@ -509,11 +513,11 @@ public:
     bool newVolume();
     bool collectGarbage();
 
-    void invalidate() {
+    ALWAYS_INLINE void invalidate() {
         lastSequenceNumber = INVALID_LSN;
     }
 
-    bool isMatchFor(FlashVolume keyParent) {
+    ALWAYS_INLINE bool isMatchFor(FlashVolume keyParent) {
         return parent.block.code == keyParent.block.code &&
             lastSequenceNumber != INVALID_LSN;
     }
@@ -591,6 +595,9 @@ private:
  * Only supports iteration in one direction: newest to oldest. At construction,
  * it points just past the most recent object. The first successful call
  * to previous() points it at the most recent object.
+ *
+ * After end of iteration (previous() returning false), future calls to
+ * previous() are also guaranteed to return false.
  */
 class FlashLFSObjectIter
 {
@@ -598,16 +605,16 @@ public:
     FlashLFSObjectIter(FlashLFS &lfs);
 
     bool previous(unsigned key = LFS::KEY_ANY);
-    bool readAndCheck(uint8_t *buffer, unsigned size);
+    bool readAndCheck(uint8_t *buffer, unsigned size) const;
 
     // Address of the current object
-    unsigned address() const {
+    ALWAYS_INLINE unsigned address() const {
         return volume().block.address()
             + FlashBlock::BLOCK_SIZE + indexIter.getCurrentOffset();
     }
 
     // Index record for the current object
-    const FlashLFSIndexRecord *record() const {
+    ALWAYS_INLINE const FlashLFSIndexRecord *record() const {
         return &*indexIter;
     }
 
@@ -623,7 +630,7 @@ private:
     FlashLFSVolumeHeader *hdr;
 
     // Current volume
-    FlashVolume volume() const {
+    ALWAYS_INLINE FlashVolume volume() const {
         ASSERT(volumeCount > 0 && volumeCount <= lfs.volumes.MAX_VOLUMES);
         FlashVolume v = lfs.volumes.slots[volumeCount - 1];
         ASSERT(v.isValid());

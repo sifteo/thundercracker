@@ -12,6 +12,22 @@
 
 
 /**
+ * Mapped information about a userspace _SYSAssetGroup.
+ */
+
+struct MappedAssetGroup
+{
+    _SYSAssetGroup *group;              // Physical address
+    _SYSAssetGroupHeader header;
+    SysLFS::AssetGroupIdentity id;
+
+    // Given a userspace _SYSAssetGroup pointer, fill in the info struct.
+    // On error, returns 'false' and raises an SVM fault.
+    bool init(_SYSAssetGroup *userPtr);
+};
+
+
+/**
  * Physical AssetSlots correspond to a range of addresses within the cube's
  * flash memory, matching the size of a logical AssetSlot.
  *
@@ -70,11 +86,22 @@ class VirtAssetSlot
 public:
     static const unsigned SLOT_SIZE = SysLFS::TILES_PER_ASSET_SLOT;
 
-    // Bind this to a physical slot, on one cube. Returns 'true' if CubeRecord is modified.
-    bool bind(_SYSCubeID cube, SysLFS::CubeRecord &cr, SysLFS::AssetSlotIdentity &id);
+    void bind(_SYSCubeID cube, unsigned index) {
+        phys[cube].setIndex(index);
+    }
+
+    void unbind(_SYSCubeID cube) {
+        phys[cube].setInvalid();
+    }
     
-    // Unbind this slot, on one cube.
-    void unbind(_SYSCubeID cube);
+    PhysAssetSlot getPhys(_SYSCubeID cube) const {
+        ASSERT(cube < _SYS_NUM_CUBE_SLOTS);
+        return phys[cube];
+    }
+
+    _SYSCubeIDVector validCubeVector();
+    uint32_t tilesFree();
+    void erase();
 
 private:
     // Which physical slot does this map to, on each cube?
@@ -98,6 +125,16 @@ class VirtAssetSlots
 public:
     static const unsigned NUM_SLOTS = SysLFS::ASSET_SLOTS_PER_BANK;
 
+    static VirtAssetSlot &getInstance(_SYSAssetSlot slot) {
+        ASSERT(slot < NUM_SLOTS);
+        return instances[slot];
+    }
+
+    static bool isSlotBound(_SYSAssetSlot slot) {
+        ASSERT(numBoundSlots <= NUM_SLOTS);
+        return slot < numBoundSlots;
+    }
+
     // Rebind all slots to a different volume, and change the number of active slots
     static void bind(FlashVolume volume, unsigned numSlots);
 
@@ -106,12 +143,57 @@ public:
     static void rebind(_SYSCubeIDVector cv);
     static void rebindCube(_SYSCubeID cube);
 
+    // Which A21 bank is the indicated cube using?
+    static unsigned getCubeBank(_SYSCubeID cube);
+
+    /**
+     * This is the main workhorse for asset lookup and loading. In a single
+     * pass, this scans through SysLFS, operating on any slots which are bound
+     * and part of 'cv'.
+     *
+     * If the group can be found in SysLFS, we update its base address in RAM,
+     * and update the access ranks if necessary. We return a vector of cubes
+     * where the group was already installed.
+     *
+     * If it can't be found, but 'allocVec' is non-null we allocate space
+     * for the group and assign it an address. Since the state of a cubeSlot
+     * is indeterminate during a load operation (we don't know whether the
+     * physical flash sectors have been erased or not), we want to ensure that
+     * we treat the entire slot's contents as unknown if a power failure or
+     * other interruption happens during a write.
+     *
+     * vSlot is only used if allocVec is non-NULL.
+     *
+     * So, for any cube slots where we have to allocate space, we write a new
+     * slot record which has (a) the space allocated, and (b) the
+     * F_LOAD_IN_PROGRESS flag set. We clear this flag when the loading has
+     * successfully finished. If we see this flag while searching an asset
+     * group, we won't trust the contents of the slot at all.
+     *
+     * Any such loading-in-progress slots will be marked in allocVec,
+     * and finalized by finalizeGroup.
+     *
+     * Returns 'true' on success. On allocation failure, returns 'false'.
+     * Changes may have been already made by the time we discover the failure.
+     */
+
+    static bool locateGroup(MappedAssetGroup &map, _SYSCubeIDVector searchCV,
+        _SYSCubeIDVector &foundCV, const VirtAssetSlot *vSlot = 0,
+        FlashLFSIndexRecord::KeyVector_t *allocVec = 0);
+
+    // Finalize any in-progress slots left over after locateGroup().
+    // As a side-effect, this clears all bits from 'vec'.
+    static void finalizeGroup(FlashLFSIndexRecord::KeyVector_t &vec);
+
 private:
     VirtAssetSlots();  // Do not implement
+
+    static void setCubeBank(_SYSCubeID cube, unsigned bank);
 
     static VirtAssetSlot instances[NUM_SLOTS];
     static FlashVolume boundVolume;
     static uint8_t numBoundSlots;
+    static _SYSCubeIDVector cubeBanks;
 };
 
 

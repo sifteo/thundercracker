@@ -16,8 +16,9 @@ namespace Volume
     };
 
     void init();
-    uint16_t systemVolume();  // current system volume
-    uint16_t calibrate(CalibrationState state);
+
+    int systemVolume();  // current system volume
+    int calibrate(CalibrationState state);
 }
 
 #endif // _VOLUME_H

@@ -80,6 +80,7 @@ enum FaultCode {
     F_BAD_ASSET_IMAGE,      // (0x19) Bad AssetImage
     F_NO_LAUNCHER,          // (0x1A) Launcher program not found
     F_SYSCALL_ADDR_ALIGN,   // (0x1B) Address in system call has insufficient alignment
+    F_BAD_ASSETSLOT,        // (0x1C) Invalid or unbound AssetSlot
 };
 
 /**

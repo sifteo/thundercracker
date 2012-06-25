@@ -77,6 +77,8 @@ void CubeSlot::startAssetLoad(SvmMemory::VirtAddr groupVA, uint16_t baseAddr)
         if (simCube) {
             FlashStorage::CubeRecord *storage = simCube->flash.getStorage();
             LoadstreamDecoder lsdec(storage->ext, sizeof storage->ext);
+
+            lsdec.setAddress(baseAddr << 7);
             lsdec.handleSVM(G->pHdr + sizeof header, header.dataSize);
 
             LOG(("FLASH[%d]: Installed asset group %s at base address "
@@ -240,16 +242,6 @@ bool CubeSlot::radioProduce(PacketTransmission &tx)
 
     // Finalize this packet. Must be last.
     bool hasContent = codec.endPacket(tx.packet);
-
-    // Debugging: Scrub the VRAM if we have no video data in-flight
-    DEBUG_ONLY({
-        _SYSVideoBuffer *vb = vbuf;
-        if (hasContent)
-            consecutiveEmptyPackets = 0;
-        else if (++consecutiveEmptyPackets == 3 && vbuf
-            && vbuf->lock == 0 && vbuf->cm16 == 0)
-            SystemMC::checkQuiescentVRAM(this);
-    });
 
     /*
      * XXX: We don't have to always return true... we can return false if
@@ -439,8 +431,7 @@ uint64_t CubeSlot::getHWID()
             requestFlashReset();
 
         do {
-            Tasks::work();
-            Radio::halt();
+            Tasks::idle();
         } while (!(CubeSlots::hwidValid & bit()));
     }
     

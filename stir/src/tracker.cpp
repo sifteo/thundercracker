@@ -15,7 +15,7 @@
 namespace Stir {
 
 // For logger output
-const char * XmTrackerLoader::encodings[3] = {"", "Uncompressed PCM", "IMA 4-bit ADPCM"};
+const char * XmTrackerLoader::encodings[3] = {"", "Uncompressed PCM", "ADPCM"};
 
 std::vector<std::vector<uint8_t> > XmTrackerLoader::globalSampleDatas;
 

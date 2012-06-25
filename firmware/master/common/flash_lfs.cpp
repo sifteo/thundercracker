@@ -622,7 +622,7 @@ FlashLFSObjectIter::FlashLFSObjectIter(FlashLFS &lfs)
     : lfs(lfs), volumeCount(lfs.volumes.numSlotsInUse + 1), rowCount(0)
 {}
 
-bool FlashLFSObjectIter::readAndCheck(uint8_t *buffer, unsigned size)
+bool FlashLFSObjectIter::readAndCheck(uint8_t *buffer, unsigned size) const
 {
     /*
      * Read 'size' bytes from the current address in flash into 'buffer',

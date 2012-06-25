@@ -67,19 +67,15 @@ void PanicMessenger::paint(_SYSCubeID cube)
     slot.setVideoBuffer(&avb->vbuf);
 
     // Wait for the radio transmission to finish
-    while (avb->vbuf.cm16 != 0 && SysTime::ticks() < deadline) {
-        Atomic::Barrier();
-        Radio::halt();
-    }
+    while (avb->vbuf.cm16 != 0 && SysTime::ticks() < deadline)
+        Tasks::idle();
 
     // Wait for the cube to draw, twice. It may have been partway
     // through a frame when the radio transmission finished.
     for (unsigned i = 0; i < 2; i++) {
         uint8_t baseline = slot.getLastFrameACK();
-        while (slot.getLastFrameACK() == baseline && SysTime::ticks() < deadline) {
-            Atomic::Barrier();
-            Radio::halt();
-        }
+        while (slot.getLastFrameACK() == baseline && SysTime::ticks() < deadline)
+            Tasks::idle();
     }
 
     // Turn off rendering
@@ -87,10 +83,8 @@ void PanicMessenger::paint(_SYSCubeID cube)
     VRAM::unlock(avb->vbuf);
 
     // Wait for the radio transmission to finish
-    while (avb->vbuf.cm16 != 0&& SysTime::ticks() < deadline) {
-        Atomic::Barrier();
-        Radio::halt();
-    }
+    while (avb->vbuf.cm16 != 0&& SysTime::ticks() < deadline)
+        Tasks::idle();
 
     // Stop using this VideoBuffer
     slot.setVideoBuffer(NULL);
@@ -168,8 +162,6 @@ void PanicMessenger::haltForever()
     for (;;) {
         STATIC_ASSERT(arraysize(pattern) == 4);
         LED::set(LED::Color(pattern[(SysTime::ticks() >> 26) & 3]));
-
-        Tasks::work();
-        Radio::halt();
+        Tasks::idle();
     }
 }

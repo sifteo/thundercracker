@@ -69,6 +69,10 @@ namespace SysLFS {
     struct AssetSlotIdentity {
         uint8_t volume;
         uint8_t ordinal;
+
+        bool inActiveSet(FlashVolume vol, unsigned numSlots) const {
+            return volume == vol.block.code && ordinal < numSlots;
+        }
     };
 
     struct AssetSlotOverviewRecord {
@@ -106,7 +110,11 @@ namespace SysLFS {
         CubeAssetsRecord assets;
         CubePairingRecord pairing;
 
-        Key getByCubeID(_SYSCubeID cube);
+        static Key makeKey(_SYSCubeID cube);
+        static bool decodeKey(Key cubeKey, _SYSCubeID &cube);
+
+        void init();
+        bool load(const FlashLFSObjectIter &iter);
     };
 
     /*
@@ -133,23 +141,39 @@ namespace SysLFS {
     struct AssetGroupIdentity {
         uint8_t volume;
         uint8_t ordinal;
+
+        bool operator == (AssetGroupIdentity other) const {
+            return volume == other.volume && ordinal == other.ordinal;
+        }
     };
 
     struct LoadedAssetGroupRecord {
         AssetGroupSize size;
         AssetGroupIdentity identity;
+
+        bool isEmpty() const {
+            return identity.volume == 0;
+        }
     };
 
     struct AssetSlotRecord {
+        enum Flags {
+            F_LOAD_IN_PROGRESS = (1 << 0),
+        };
+
+        uint8_t flags;
         LoadedAssetGroupRecord groups[ASSET_GROUPS_PER_SLOT];
 
-        static Key makeKey(Key cube, unsigned slot)
-        {
-            unsigned i = cube - kCubeBase;
-            ASSERT(i < kCubeCount);
-            ASSERT(slot < ASSET_SLOTS_PER_CUBE);
-            return Key(kAssetSlotBase + i * ASSET_SLOTS_PER_CUBE + slot);
-        }
+        static Key makeKey(Key cubeKey, unsigned slot);
+        static bool decodeKey(Key slotKey, Key &cubeKey, unsigned &slot);
+
+        bool findGroup(AssetGroupIdentity identity, unsigned &offset) const;
+        bool allocGroup(AssetGroupIdentity identity, unsigned numTiles, unsigned &offset);
+        unsigned tilesFree() const;
+        bool isEmpty() const;
+
+        void init();
+        bool load(const FlashLFSObjectIter &iter);
     };
 
     /*
@@ -161,7 +185,7 @@ namespace SysLFS {
         STATIC_ASSERT(kEnd <= _SYS_FS_MAX_OBJECT_KEYS);
         STATIC_ASSERT(sizeof(FlashMapBlock) == 1);
         STATIC_ASSERT(sizeof(LoadedAssetGroupRecord) == 3);
-        STATIC_ASSERT(sizeof(AssetSlotRecord) == 3 * ASSET_GROUPS_PER_SLOT);
+        STATIC_ASSERT(sizeof(AssetSlotRecord) == 3 * ASSET_GROUPS_PER_SLOT + 1);
         STATIC_ASSERT(sizeof(AssetSlotOverviewRecord) == 6);
         STATIC_ASSERT(sizeof(CubeRecord) == sizeof(CubePairingRecord) +
             ASSET_SLOTS_PER_CUBE * sizeof(AssetSlotOverviewRecord));
@@ -171,7 +195,7 @@ namespace SysLFS {
 
     // System equivalents to _SYS_fs_objectRead/Write
     int read(Key k, uint8_t *buffer, unsigned bufferSize);
-    int write(Key k, const uint8_t *data, unsigned dataSize);
+    int write(Key k, const uint8_t *data, unsigned dataSize, bool gc=true);
 
     template <typename T>
     inline bool read(Key k, T &obj) {
@@ -179,8 +203,8 @@ namespace SysLFS {
     }
 
     template <typename T>
-    inline bool write(Key k, const T &obj) {
-        return write(k, (const uint8_t*) &obj, sizeof obj) == sizeof obj;
+    inline bool write(Key k, const T &obj, bool gc=true) {
+        return write(k, (const uint8_t*) &obj, sizeof obj, gc) == sizeof obj;
     }
 
 } // end namespace SysLFS

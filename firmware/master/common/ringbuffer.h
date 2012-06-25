@@ -27,17 +27,17 @@ public:
     RingBuffer()
     {}
 
-    void init() {
+    void ALWAYS_INLINE init() {
         // must be power of 2
         STATIC_ASSERT((tSize & (tSize - 1)) == 0);
         mHead = mTail = 0;
     }
 
-    inline unsigned capacity() const {
+    unsigned ALWAYS_INLINE capacity() const {
         return tSize - 1;
     }
 
-    void enqueue(tItemType c)
+    void ALWAYS_INLINE enqueue(tItemType c)
     {
         ASSERT(!full());
         unsigned tail = mTail;
@@ -45,7 +45,7 @@ public:
         mTail = capacity() & (tail + 1);
     }
 
-    tItemType dequeue()
+    tItemType ALWAYS_INLINE dequeue()
     {
         ASSERT(!empty());
         unsigned head = mHead;
@@ -56,7 +56,7 @@ public:
 
     /// Copy from 'src' to 'this' until the source is empty or destination full.
     template <typename T>
-    void pull(T &src)
+    void ALWAYS_INLINE pull(T &src)
     {
         unsigned rCount = src.readAvailable();
         unsigned wCount = writeAvailable();
@@ -66,22 +66,22 @@ public:
         }
     }
 
-    inline bool full() const {
+    bool ALWAYS_INLINE full() const {
         return (capacity() & (mTail + 1)) == mHead;
     }
 
-    inline bool empty() const {
+    bool ALWAYS_INLINE empty() const {
         return mHead == mTail;
     }
 
-    unsigned readAvailable() const
+    unsigned ALWAYS_INLINE readAvailable() const
     {
         unsigned head = mHead;
         unsigned tail = mTail;
         return (tail - head) & capacity();
     }
 
-    unsigned writeAvailable() const {
+    unsigned ALWAYS_INLINE writeAvailable() const {
         return capacity() - readAvailable();
     }
 };

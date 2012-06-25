@@ -262,8 +262,17 @@ void SvmRuntime::ret(unsigned actions)
     }
 }
 
+#ifndef SIFTEO_SIMULATOR
+    #include "sampleprofiler.h"
+#endif
+
 void SvmRuntime::svc(uint8_t imm8)
 {
+    #ifndef SIFTEO_SIMULATOR
+        SampleProfiler::SubSystem s = SampleProfiler::subsystem();
+        SampleProfiler::setSubsystem(SampleProfiler::SVCISR);
+    #endif
+
     if ((imm8 & (1 << 7)) == 0) {
         if (imm8 == 0)
             ret();
@@ -308,6 +317,10 @@ void SvmRuntime::svc(uint8_t imm8)
             break;
         }
     }
+
+    #ifndef SIFTEO_SIMULATOR
+        SampleProfiler::setSubsystem(s);
+    #endif
 }
 
 void SvmRuntime::svcIndirectOperation(uint8_t imm8)

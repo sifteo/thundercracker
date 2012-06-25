@@ -105,4 +105,6 @@ bool FwLoader::sendFirmwareFile(const char *path)
     while (dev.numPendingOUTPackets()) {
         dev.processEvents();
     }
+
+    return true;
 }

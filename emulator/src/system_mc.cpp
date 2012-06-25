@@ -52,6 +52,7 @@ bool SystemMC::init(System *sys)
     FlashDevice::init();
     FlashBlock::init();
     USBProtocolHandler::init();
+    Crc32::init();
 
     if (!instance->sys->opt_headless) {
         AudioOutDevice::init(&AudioMixer::instance);
@@ -122,7 +123,6 @@ void SystemMC::threadFn(void *param)
     instance->radioPacketDeadline = instance->ticks + MCTiming::TICKS_PER_PACKET;
 
     HomeButton::init();
-    Crc32::init();
     Volume::init();
     Radio::init();
 
@@ -154,7 +154,7 @@ void Radio::begin()
     // and the beginning of transmissions.
 }
 
-void Radio::halt()
+void Tasks::waitForInterrupt()
 {
     // Elapse time until the next radio packet.
     // Note that we must actually call elapseTicks() here, since it's
@@ -292,6 +292,8 @@ Cube::Hardware *SystemMC::getCubeForAddress(const RadioAddress *addr)
 void SystemMC::checkQuiescentVRAM(CubeSlot *slot)
 {
     /*
+     * For debugging only.
+     *
      * This function can be called at points where we know there are no
      * packets in-flight and no data that still needs to be encoded from
      * the cube's vbuf. At these quiescent points, we should be able to

@@ -64,17 +64,14 @@ public:
     }
 
     virtual const char *getName() {
-        return "IMA 4-bit ADPCM";
+        return "ADPCM";
     }
 
 private:
-    int16_t index;
-    int32_t predsample;
+    unsigned index;
+    int predsample;
 
-    static const uint16_t stepSizeTable[];
-    static const int8_t indexTable[];
-
-    uint8_t encodeSample(int16_t sample);
+    unsigned encodeSample(int sample);
 };
 
 #endif

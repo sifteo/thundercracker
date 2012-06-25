@@ -6,12 +6,13 @@
 #include "flash_blockcache.h"
 #include "flash_device.h"
 #include "svmdebugger.h"
+#include "panic.h"
 #include <string.h>
 
 uint8_t FlashBlock::mem[NUM_CACHE_BLOCKS][BLOCK_SIZE] BLOCK_ALIGN;
 FlashBlock FlashBlock::instances[NUM_CACHE_BLOCKS];
-uint32_t FlashBlock::referencedBlocksMap;
-uint32_t FlashBlock::latestStamp;
+uint16_t FlashBlock::validCodeBytes[NUM_CACHE_BLOCKS];
+unsigned FlashBlock::latestStamp;
 
 
 void FlashBlock::init()
@@ -19,6 +20,10 @@ void FlashBlock::init()
     // All blocks start out with no valid data
     for (unsigned i = 0; i < NUM_CACHE_BLOCKS; ++i) {
         instances[i].address = INVALID_ADDRESS;
+
+        // We explicitly store the ID of each block,
+        // so that id() and getData() can be as fast as possible.
+        instances[i].idByte = i;
     }
 
     FLASHLAYER_STATS_ONLY(resetStats());
@@ -41,7 +46,7 @@ void FlashBlock::get(FlashBlockRef &ref, uint32_t blockAddr, unsigned flags)
         // Cache miss. Find a free block and reload it. Reset the lazy
         // code validator.
 
-        FlashBlock *recycled = recycleBlock();
+        FlashBlock *recycled = recycleBlock(blockAddr);
         ASSERT(recycled->refCount == 0);
         ASSERT(recycled >= &instances[0] && recycled < &instances[NUM_CACHE_BLOCKS]);
 
@@ -73,13 +78,13 @@ void FlashBlock::anonymous(FlashBlockRef &ref)
      * the write address is not known ahead-of-time.
      */
 
-    FlashBlock *recycled = recycleBlock();
+    FlashBlock *recycled = recycleBlock(INVALID_ADDRESS);
     ASSERT(recycled->refCount == 0);
     ASSERT(recycled >= &instances[0] && recycled < &instances[NUM_CACHE_BLOCKS]);
 
     // This ensures nobody else will ref the same block.
     recycled->address = INVALID_ADDRESS;
-    recycled->validCodeBytes = 0;
+    recycled->validCodeBytes[recycled->id()] = 0;
 
     ref.set(recycled);
     ASSERT(recycled->refCount == 1);
@@ -95,63 +100,78 @@ void FlashBlock::anonymous(FlashBlockRef &ref, uint8_t fillByte)
     memset(ref->getData(), fillByte, BLOCK_SIZE);
 }
 
-FlashBlock *FlashBlock::lookupBlock(uint32_t blockAddr)
+ALWAYS_INLINE FlashBlock *FlashBlock::lookupBlock(uint32_t blockAddr)
 {
-    // Any slot in the cache may have a valid block, even if
-    // the refcount is zero. Right now there's no faster way to find
-    // a block than performing a linear search.
-    
-    for (unsigned i = 0; i < NUM_CACHE_BLOCKS; ++i) {
-        FlashBlock *b = &instances[i];
-        if (b->address == blockAddr)
-            return b;
-    }
-    return NULL;
-}
+    /*
+     * This is a compromise between a fully associative and a set-associative
+     * cache. We can't usefully be set-associative with a small N, because
+     * our N would need to be at least as large as the worst-case number of
+     * referenced blocks.
+     *
+     * So instead, we'll still be a fully associative cache, but we use
+     * the address as a hint for which cache bucket to start in. We strongly
+     * prefer to place blocks in this cached address, but we don't require
+     * it (in case the preferred location is referenced or very recently
+     * accessed).
+     */
 
-FlashBlock *FlashBlock::recycleBlock()
-{
-    // Look for a block we can recycle, in order to service a cache miss.
-    // This block *must* have a refcount of zero, so we only search the
-    // blocks that are zero in referencedBlocksMap.
-    //
-    // Of these blocks, we look for the one that's most stale. We have a simple
-    // 32-bit timestamp which is updated every time a cache hit occurs. We
-    // can quickly scan through and find the block with the oldest stamp.
-
-    STATIC_ASSERT(NUM_CACHE_BLOCKS <= 32);
-    const uint32_t allBlocks = ((1 << NUM_CACHE_BLOCKS) - 1) << (32 - NUM_CACHE_BLOCKS);
-    uint32_t availableBlocks = allBlocks & ~referencedBlocksMap;
-    ASSERT(availableBlocks &&
-        "Oh no, all cache blocks are in use. Is there a reference leak?");
-
-    FlashBlock *bestBlock = 0;
-    uint32_t bestAge = 0;
+    ASSERT((blockAddr & BLOCK_MASK) == 0);
+    FlashBlock *ptr = &instances[(blockAddr >> BLOCK_SIZE_LOG2) % NUM_CACHE_BLOCKS];
+    unsigned count = NUM_CACHE_BLOCKS;
 
     do {
-        unsigned idx = Intrinsic::CLZ(availableBlocks);
-        FlashBlock *block = &instances[idx];
-        uint32_t age = latestStamp - block->stamp;  // Wraparound-safe
+        if (ptr->address == blockAddr)
+            return ptr;
+        if (++ptr == &instances[NUM_CACHE_BLOCKS])
+            ptr = &instances[0];
+    } while (--count);
 
-        DEBUG_ONLY({
-            /*
-             * While we're here, make sure that any available blocks are actually
-             * clean. If we're writing a block, it must be referenced, and we must
-             * commit that write afterwards.
-             */
-            if (block->address != INVALID_ADDRESS)
-                block->verify();
-        })
+    return 0;
+}
 
-        if (age >= bestAge) {
-            bestBlock = block;
-            bestAge = age;
-        }
-        
-        availableBlocks &= ~Intrinsic::LZ(idx);
-    } while (availableBlocks);
+FlashBlock *FlashBlock::recycleBlock(uint32_t blockAddr)
+{
+    /*
+     * Look for a block we can recycle, in order to service a cache miss.
+     * To maintain the hash property of our cache, we strongly prefer to
+     * recycle the block which is directly mapped to the requested address.
+     *
+     * We opt to skip to the next block if the preferred block is referenced,
+     * or if it was used recently. (Its stamp is recent).
+     */
 
-    return bestBlock;
+    // First pass: Look for something both unreferenced and stale
+    {
+        FlashBlock *ptr = &instances[(blockAddr >> BLOCK_SIZE_LOG2) % NUM_CACHE_BLOCKS];
+        unsigned count = NUM_CACHE_BLOCKS;
+        const unsigned ageThreshold = NUM_CACHE_BLOCKS * 2;
+        unsigned localLatestStamp = latestStamp;
+
+        do {
+            if (ptr->refCount == 0 && (ptr->address == INVALID_ADDRESS
+                    || ptr->getAge(localLatestStamp) >= ageThreshold))
+                return ptr;
+            if (++ptr == &instances[NUM_CACHE_BLOCKS])
+                ptr = &instances[0];
+        } while (--count);
+    }
+
+    // Second pass: Give up on finding a stale block, just look for anything unreferenced
+    {
+        FlashBlock *ptr = &instances[(blockAddr >> BLOCK_SIZE_LOG2) % NUM_CACHE_BLOCKS];
+        unsigned count = NUM_CACHE_BLOCKS;
+
+        do {
+            if (ptr->refCount == 0)
+                return ptr;
+            if (++ptr == &instances[NUM_CACHE_BLOCKS])
+                ptr = &instances[0];
+        } while (--count);
+    }
+
+    ASSERT(0 && "Oh no, all cache blocks are in use. Is there a reference leak?");
+    PanicMessenger::haltForever();
+    return 0;
 }
 
 void FlashBlock::load(uint32_t blockAddr, unsigned flags)
@@ -163,7 +183,8 @@ void FlashBlock::load(uint32_t blockAddr, unsigned flags)
 
     ASSERT(blockAddr != INVALID_ADDRESS);
     ASSERT((blockAddr & (BLOCK_SIZE - 1)) == 0);
-    validCodeBytes = 0;
+
+    validCodeBytes[id()] = 0;
     address = blockAddr;
 
     uint8_t *data = getData();
@@ -211,7 +232,7 @@ void FlashBlockWriter::beginBlock(const FlashBlockRef &r)
     ASSERT(ref.isHeld());
 
     // Prepare to write
-    ref->validCodeBytes = 0;
+    ref->validCodeBytes[ref->id()] = 0;
 }
 
 void FlashBlockWriter::beginBlock()
@@ -282,7 +303,7 @@ void FlashBlockWriter::commitBlock()
         FlashBlock *block = &*ref;
 
         // Must not have tried to run code from this block during a write.
-        ASSERT(ref->validCodeBytes == 0);
+        ASSERT(ref->validCodeBytes[ref->id()] == 0);
 
         // Must not be anonymous
         ASSERT(block->address != FlashBlock::INVALID_ADDRESS);

@@ -146,9 +146,7 @@ void CubeSlots::finishCubes(_SYSCubeIDVector cv)
         if (finished)
             break;
 
-        // Wait...
-        Tasks::work();
-        Radio::halt();
+        Tasks::idle();
     }
 }
 

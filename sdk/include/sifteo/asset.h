@@ -264,12 +264,16 @@ struct AssetLoader {
     /**
      * @brief Ensure that the system is no longer using this AssetLoader object.
      *
-     * If all asset downloads complete successfully, there is no need to
-     * call finish(), but doing so is harmless.
+     * This must be called after an asset load is done, before the AssetLoader
+     * object itself is deallocated or recycled. If the asset loading process
+     * is interrupted between start() and finish(), the state of the remote
+     * flash memory associated with this Asset Slot may be indeterminate,
+     * requiring the entire slot to be erased and reloaded.
      *
-     * If any asset downloads are still in progress, this cancels them.
-     * A partially downloaded asset group will use up memory in its
-     * AssetSlot, but the asset group will not be marked as 'installed'.
+     * If an asynchronous loading operation is in progress when finish() is
+     * called, the system will block until that loading operation has completed.
+     *
+     * If finish() has already been called, has no effect.
      */
     void finish() {
         _SYS_asset_loadFinish(*this);
@@ -286,6 +290,9 @@ struct AssetLoader {
      * We return 'true' if the asset download started and/or we found a cached
      * asset for every one of the specified cubes. If one or more of the
      * specified cubes has no room in "slot", we return false.
+     *
+     * If another asynchronous asset installation is already in progress,
+     * this call will automatically block until that load has finished.
      */
     bool start(AssetGroup &group, AssetSlot slot, _SYSCubeIDVector cubes) {
         if (!_SYS_asset_loadStart(*this, group, slot, cubes))
@@ -311,10 +318,12 @@ struct AssetLoader {
      * be monitored with this object's other methods.
      *
      * If there is no remaining space in AssetSlot, this function returns
-     * 'false' immediately, without starting an asset download. The game must
-     * decide how to proceed at this point. Depending on the game's asset
-     * management strategy, this may indicate a logic error, or it may be
-     * a cue that the AssetSlot needs to be erased.
+     * 'false' immediately, without starting an asset download.
+     *
+     * This typically would indicate a logic error in the game's asset
+     * management. When start() fails, the Asset Slot data for this cube
+     * will be left in a "loading in progress" state, which can only be cleared
+     * by erasing the asset slot.
      */
     bool start(AssetGroup &group, AssetSlot slot, _SYSCubeID cube) {
         return start(group, slot, _SYSCubeIDVector(0x80000000 >> cube));

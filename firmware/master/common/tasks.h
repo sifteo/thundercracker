@@ -17,10 +17,16 @@ public:
         Debugger,
         AssetLoader,
         HomeButton,
+        Profiler
     };
 
     static void init();
+    
+    /// Run pending tasks until no tasks are pending
     static void work();
+
+    /// Block an idle caller. Runs pending tasks OR waits for a hardware event
+    static void idle();
 
     /*
      * Tasks that have been set pending get called once each time
@@ -42,6 +48,9 @@ private:
     };
 
     static Task TaskList[];
+
+    /// Block until the next hardware event
+    static void waitForInterrupt();
 };
 
 #endif // TASKS_H

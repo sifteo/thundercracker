@@ -63,6 +63,7 @@ static const char* faultStr(FaultCode code)
     case F_BAD_ASSET_IMAGE:     return "Bad AssetImage";
     case F_NO_LAUNCHER:         return "Launcher program not found";
     case F_SYSCALL_ADDR_ALIGN:  return "Address in system call has insufficient alignment";
+    case F_BAD_ASSETSLOT:       return "Invalid or unbound AssetSlot";
     default:                    return "unknown error";
     }
 }

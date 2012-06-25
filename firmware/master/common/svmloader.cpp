@@ -25,8 +25,8 @@
 using namespace Svm;
 
 FlashBlockRef SvmLoader::mapRefs[SvmMemory::NUM_FLASH_SEGMENTS];
+FlashVolume SvmLoader::mapVols[SvmMemory::NUM_FLASH_SEGMENTS];
 uint8_t SvmLoader::runLevel;
-FlashVolume SvmLoader::runningVolume;
 
 
 void SvmLoader::loadRWData(const Elf::Program &program)
@@ -103,7 +103,7 @@ void SvmLoader::runLauncher()
     }
 
     runLevel = RUNLEVEL_LAUNCHER;
-    runningVolume = vol;
+    mapVols[0] = vol;
 
     SvmRuntime::StackInfo stack;
     prepareToExec(program, stack);
@@ -119,7 +119,7 @@ void SvmLoader::exec(FlashVolume vol, RunLevel level)
     }
 
     runLevel = level;
-    runningVolume = vol;
+    mapVols[0] = vol;
 
     SvmRuntime::StackInfo stack;
     prepareToExec(program, stack);
@@ -128,6 +128,7 @@ void SvmLoader::exec(FlashVolume vol, RunLevel level)
 
 FlashMapSpan SvmLoader::secondaryMap(FlashVolume vol)
 {
+    mapVols[1] = vol;
     FlashMapSpan span = vol.getPayload(mapRefs[1]);
     SvmMemory::setFlashSegment(1, span);
     return span;
@@ -137,6 +138,16 @@ void SvmLoader::secondaryUnmap()
 {
     SvmMemory::setFlashSegment(1, FlashMapSpan::empty());
     mapRefs[1].release();
+    mapVols[1].block.setInvalid();
+}
+
+FlashVolume SvmLoader::volumeForVA(SvmMemory::VirtAddr va)
+{
+    unsigned seg = SvmMemory::virtToFlashSegment(va);
+    if (seg < arraysize(mapVols))
+        return mapVols[seg];
+    else
+        return FlashMapBlock::invalid();
 }
 
 void SvmLoader::exit(bool fault)

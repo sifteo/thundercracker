@@ -5,8 +5,6 @@
 
 /*
  * Syscalls for asset group and slot operations.
- *
- * XXX: Stub implementation! No persistent cache, only one slot allowed.
  */
 
 #include <sifteo/abi.h>
@@ -16,22 +14,12 @@
 #include "svmruntime.h"
 #include "flash_syslfs.h"
 #include "assetslot.h"
+#include "tasks.h"
+
+static FlashLFSIndexRecord::KeyVector_t gSlotsInProgress;
 
 
 extern "C" {
-
-
-struct FakeAssetSlot {
-    static const unsigned numTiles = 16384;
-    uint16_t nextAddr;
-    uint8_t numLoadedGroups;
-    struct {
-        uint16_t addr;
-        uint8_t ordinal;
-    } loadedGroups[8];
-};
-    
-FakeAssetSlot FakeAssetSlots[_SYS_NUM_CUBE_SLOTS];
 
 
 void _SYS_asset_bindSlots(_SYSVolumeHandle volHandle, unsigned numSlots)
@@ -48,45 +36,26 @@ void _SYS_asset_bindSlots(_SYSVolumeHandle volHandle, unsigned numSlots)
 
 uint32_t _SYS_asset_slotTilesFree(_SYSAssetSlot slot)
 {
-    /*
-     * Return the minimum number of tiles free in this AssetSlot on all cubes.
-     */
-
-    uint32_t result = (uint32_t)-1;
-
-    for (_SYSCubeID cube = 0; cube < _SYS_NUM_CUBE_SLOTS; ++cube) {
-        FakeAssetSlot &slot = FakeAssetSlots[cube];
-
-        result = MIN(result, slot.numTiles - slot.nextAddr);
+    if (!VirtAssetSlots::isSlotBound(slot)) {
+        SvmRuntime::fault(F_BAD_ASSETSLOT);
+        return 0;
     }
 
-    return result;
+    return VirtAssetSlots::getInstance(slot).tilesFree();
 }
 
 void _SYS_asset_slotErase(_SYSAssetSlot slot)
 {
-    /*
-     * Erase this AssetSlot on all cubes.
-     */
+    if (!VirtAssetSlots::isSlotBound(slot))
+        return SvmRuntime::fault(F_BAD_ASSETSLOT);
 
-    for (_SYSCubeID cube = 0; cube < _SYS_NUM_CUBE_SLOTS; ++cube) {
-        FakeAssetSlot &slot = FakeAssetSlots[cube];
-
-        slot.nextAddr = 0;
-        slot.numLoadedGroups = 0;
-    }
+    VirtAssetSlots::getInstance(slot).erase();
 }
 
 uint32_t _SYS_asset_loadStart(_SYSAssetLoader *loader, _SYSAssetGroup *group,
     _SYSAssetSlot slot, _SYSCubeIDVector cv)
 {
-    cv = CubeSlots::truncateVector(cv);
-
     if (!isAligned(loader)) {
-        SvmRuntime::fault(F_SYSCALL_ADDR_ALIGN);
-        return false;
-    }
-    if (!isAligned(group)) {
         SvmRuntime::fault(F_SYSCALL_ADDR_ALIGN);
         return false;
     }
@@ -94,69 +63,71 @@ uint32_t _SYS_asset_loadStart(_SYSAssetLoader *loader, _SYSAssetGroup *group,
         SvmRuntime::fault(F_SYSCALL_ADDRESS);
         return false;
     }
-    if (!SvmMemory::mapRAM(group)) {
-        SvmRuntime::fault(F_SYSCALL_ADDRESS);
-        return false;
-    }
-
-    _SYSAssetGroupHeader header;
-    if (!SvmMemory::copyROData(header, group->pHdr)) {
-        SvmRuntime::fault(F_SYSCALL_ADDRESS);
-        return false;
-    }
 
     /*
-     * Skip groups that are already loaded.
+     * Finish first, if a different load is in progress.
      *
-     * Note that these groups are marked as 'complete' in _SYSAssetLoader
-     * without their _SYSAssetLoaderCube ever being touched- so their cubeVec
-     * bit is still zero!
+     * We must be able to support separate 'start' calls on the same loader
+     * for different cubes. (Not all callers will know to combine all cubes
+     * into a single CubeIDVector)
+     */
+    _SYSAssetLoader *prevLoader = CubeSlots::assetLoader;
+    if (prevLoader && prevLoader != loader) {
+        _SYS_asset_loadFinish(prevLoader);
+        ASSERT(CubeSlots::assetLoader == 0);
+        ASSERT(gSlotsInProgress.empty());
+    }
+
+    MappedAssetGroup map;
+    if (!map.init(group))
+        return false;
+
+    if (!VirtAssetSlots::isSlotBound(slot)) {
+        SvmRuntime::fault(F_BAD_ASSETSLOT);
+        return false;
+    }
+    const VirtAssetSlot &vSlot = VirtAssetSlots::getInstance(slot);
+
+    cv = CubeSlots::truncateVector(cv);
+
+    /*
+     * In one step, scan the SysLFS to the indicated group.
+     *
+     * If the group is cached, it's written to 'cachedCV'. If not,
+     * space is allocated for it. In either case, this updates the
+     * address of this group on each of the indicated cubes.
+     *
+     * For any cubes where this group needs to be loaded, we'll mark
+     * the relevant AssetSlots as 'in progress'. A set of these
+     * in-progress keys are written to gSlotsInProgress, so tha
+     * we can finalize them after the loading has finished.
+     *
+     * If this fails to allocate space, we return unsuccessfully.
+     * Affected groups may be left in the indeterminate state.
      */
 
-    _SYSCubeIDVector cachedCV = _SYS_asset_findInCache(group, cv);
+    _SYSCubeIDVector cachedCV;
+    if (!VirtAssetSlots::locateGroup(map, cv, cachedCV, &vSlot, &gSlotsInProgress))
+        return false;
+
     cv &= ~cachedCV;
     loader->complete |= cachedCV;
 
     /*
-     * Try to allocate space in this slot on every requested cube.
-     * If this is going to fail, it needs to do so without making any changes.
-     */
-
-    uint16_t baseAddrs[_SYS_NUM_CUBE_SLOTS];
-
-    _SYSCubeIDVector allocCV = cv;
-    while (allocCV) {
-        _SYSCubeID id = Intrinsic::CLZ(allocCV);
-        allocCV ^= Intrinsic::LZ(id);
-        FakeAssetSlot &slot = FakeAssetSlots[id];
-
-        if (slot.numTiles - slot.nextAddr < header.numTiles)
-            return false;
-
-        baseAddrs[id] = slot.nextAddr;
-        slot.nextAddr += header.numTiles;
-    }
-
-    /*
-     * Begin the asset loading itself,
-     * and commit to using the memory we just reserved.
+     * Begin the asset loading itself
      */
 
     CubeSlots::assetLoader = loader;
-    _SYSCubeIDVector loadCV = cv;
-    while (loadCV) {
-        _SYSCubeID id = Intrinsic::CLZ(loadCV);
-        loadCV ^= Intrinsic::LZ(id);
+
+    while (cv) {
+        _SYSCubeID id = Intrinsic::CLZ(cv);
+        cv ^= Intrinsic::LZ(id);
+
         CubeSlot &cube = CubeSlots::instances[id];
-        FakeAssetSlot &slot = FakeAssetSlots[id];
-
-        unsigned n = slot.numLoadedGroups;
-        uint16_t addr = baseAddrs[id];
-        slot.loadedGroups[n].addr = addr;
-        slot.loadedGroups[n].ordinal = header.ordinal;
-        slot.numLoadedGroups++;
-
-        cube.startAssetLoad(reinterpret_cast<SvmMemory::VirtAddr>(group), addr);
+        _SYSAssetGroupCube *gc = cube.assetGroupCube(map.group);
+        if (gc) {
+            cube.startAssetLoad(reinterpret_cast<SvmMemory::VirtAddr>(map.group), gc->baseAddr);
+        }
     }
 
     return true;
@@ -172,8 +143,33 @@ void _SYS_asset_loadFinish(_SYSAssetLoader *loader)
         SvmRuntime::fault(F_SYSCALL_ADDRESS);
         return;
     }
+    
+    if (!CubeSlots::assetLoader) {
+        // No load in progress. No effect.
+        return;
+    }
 
+    // Must be the correct loader instance!
+    if (CubeSlots::assetLoader != loader) {
+        return SvmRuntime::fault(F_SYSCALL_PARAM);
+        return;
+    }
+
+    /*
+     * Block until the load operation is finished, if it isn't already.
+     * We can't rely on userspace to do this before we mark the in-progress
+     * slots as no-longer in progress.
+     */
+
+    while ((loader->complete & loader->cubeVec) != loader->cubeVec)
+        Tasks::idle();
+
+    // No more current load operation
     CubeSlots::assetLoader = NULL;
+
+    // Finalize the SysLFS state for any slots we're loading to
+    VirtAssetSlots::finalizeGroup(gSlotsInProgress);
+    ASSERT(gSlotsInProgress.empty());
 }
 
 uint32_t _SYS_asset_findInCache(_SYSAssetGroup *group, _SYSCubeIDVector cv)
@@ -185,42 +181,17 @@ uint32_t _SYS_asset_findInCache(_SYSAssetGroup *group, _SYSCubeIDVector cv)
      * baseAddr is updated.
      */
 
+    MappedAssetGroup map;
+    if (!map.init(group))
+        return 0;
+
     cv = CubeSlots::truncateVector(cv);
 
-    if (!isAligned(group)) {
-        SvmRuntime::fault(F_SYSCALL_ADDR_ALIGN);
-        return 0;
-    }
-    if (!SvmMemory::mapRAM(group, sizeof *group)) {
-        SvmRuntime::fault(F_SYSCALL_ADDRESS);
-        return 0;
-    }
+    _SYSCubeIDVector cachedCV;
+    if (!VirtAssetSlots::locateGroup(map, cv, cachedCV))
+        cachedCV = 0;
 
-    _SYSAssetGroupHeader header;
-    if (!SvmMemory::copyROData(header, group->pHdr)) {
-        SvmRuntime::fault(F_SYSCALL_ADDRESS);
-        return 0;
-    }
-
-    _SYSCubeIDVector result = 0;
-
-    while (cv) {
-        _SYSCubeID id = Intrinsic::CLZ(cv);
-        cv ^= Intrinsic::LZ(id);
-        FakeAssetSlot &slot = FakeAssetSlots[id];
-
-        for (unsigned I = 0, E = slot.numLoadedGroups; I != E; ++I)
-            if (slot.loadedGroups[I].ordinal == header.ordinal) {
-                _SYSAssetGroupCube *gc = CubeSlots::instances[id].assetGroupCube(group);
-                if (gc)
-                    gc->baseAddr = slot.loadedGroups[I].addr;
-
-                result |= Intrinsic::LZ(id);
-                break;
-            }
-    }
-
-    return result;
+    return cachedCV;
 }
 
 

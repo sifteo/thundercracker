@@ -13,12 +13,6 @@
 #   include "mc_audiovisdata.h"
 #endif
 
-
-void AudioChannelSlot::init()
-{
-    state = STATE_STOPPED;
-}
-
 void AudioChannelSlot::setSpeed(uint32_t sampleRate)
 {
     increment = (sampleRate << SAMPLE_FRAC_SIZE) / AudioMixer::SAMPLE_HZ;
@@ -27,7 +21,7 @@ void AudioChannelSlot::setSpeed(uint32_t sampleRate)
 void AudioChannelSlot::play(const struct _SYSAudioModule *module, _SYSAudioLoopType loopMode)
 {
     mod = *module;
-    samples.init(&mod, mod.loopStart);
+    samples.init(mod.loopStart);
     offset = 0;
 
     // Let the module decide
@@ -44,29 +38,41 @@ void AudioChannelSlot::play(const struct _SYSAudioModule *module, _SYSAudioLoopT
     setSpeed(mod.sampleRate);
     setVolume(mod.volume);
 
+    // Pre-calculate the loop endpoint (relatively expensive)
+    offsetLimit = (state & STATE_LOOP) && mod.loopEnd
+        ? ((uint64_t)mod.loopEnd) << SAMPLE_FRAC_SIZE
+        : ((uint64_t)samples.numSamples(mod) - 1) << SAMPLE_FRAC_SIZE;
+
     state &= ~STATE_STOPPED;
 }
 
-bool AudioChannelSlot::mixAudio(int16_t *buffer, uint32_t numFrames)
+bool AudioChannelSlot::mixAudio(int *buffer, uint32_t numFrames)
 {
     // Early out if this channel is in the process of being stopped by the main thread.
-    if (state & STATE_STOPPED || samples.numSamples() == 0) {
+    if ((state & STATE_STOPPED) || mod.dataSize == 0) {
         #ifdef SIFTEO_SIMULATOR
             MCAudioVisData::clearChannel(AudioMixer::instance.channelID(this));
         #endif
         return false;
     }
 
-    uint64_t fpLimit = (state & STATE_LOOP) && mod.loopEnd
-                     ? ((uint64_t)mod.loopEnd) << SAMPLE_FRAC_SIZE
-                     : ((uint64_t)samples.numSamples() - 1) << SAMPLE_FRAC_SIZE;
+    ASSERT(samples.numSamples(mod) > 0);
+    ASSERT(numFrames > 0);
 
-    while (numFrames--) {
+    // Read from slot only once
+    const int latchedVolume = volume;
+    const int latchedIncrement = increment;
+    const uint64_t latchedLimit = offsetLimit;
+
+    // Local copy of offset, to avoid writing back to RAM every time
+    uint64_t localOffset = offset;
+
+    do {
         // Looping logic
-        if (offset > fpLimit) {
+        if (UNLIKELY(localOffset > latchedLimit)) {
             if (state & STATE_LOOP) {
                 uint64_t fpLoopStart = ((uint64_t)mod.loopStart) << SAMPLE_FRAC_SIZE;
-                offset = fpLoopStart + (offset - fpLimit);
+                localOffset = fpLoopStart + (localOffset - latchedLimit);
             } else {
                 #ifdef SIFTEO_SIMULATOR
                     MCAudioVisData::clearChannel(AudioMixer::instance.channelID(this));
@@ -78,35 +84,35 @@ bool AudioChannelSlot::mixAudio(int16_t *buffer, uint32_t numFrames)
         }
 
         // Compute the next sample
-        int32_t sample;
-        if ((offset & SAMPLE_FRAC_MASK) == 0) {
+        int sample;
+        unsigned index = localOffset >> SAMPLE_FRAC_SIZE;
+        unsigned fractional = localOffset & SAMPLE_FRAC_MASK;
+
+        if (!fractional) {
             // Offset is aligned with an asset sample
-            sample = samples[offset >> SAMPLE_FRAC_SIZE];
+            sample = samples.getSample(index, mod);
         } else {
-            int32_t sample_next = samples[(offset >> SAMPLE_FRAC_SIZE) + 1];
-            sample = samples[offset >> SAMPLE_FRAC_SIZE];
-            // Linearly interpolate between the two relevant samples
-            sample += ((sample_next - sample) * (offset & SAMPLE_FRAC_MASK)) >> SAMPLE_FRAC_SIZE;
+            // Linearly interpolate between the two relevant samples            
+            int next = samples.getSamplePair(index, mod, sample);
+            sample += ((next - sample) * int(fractional)) >> SAMPLE_FRAC_SIZE;
         }
 
         // Mix volume
-        sample = (sample * (int32_t)volume) / _SYS_AUDIO_MAX_VOLUME;
+        sample = (sample * latchedVolume) >> _SYS_AUDIO_MAX_VOLUME_LOG2;
 
         #ifdef SIFTEO_SIMULATOR
             MCAudioVisData::writeChannelSample(AudioMixer::instance.channelID(this), sample);
         #endif
 
-        // Mix into buffer
-        sample += *buffer;
-
-        // TODO - more subtle compression instead of hard limiter
-        *buffer = clamp(sample, (int32_t)SHRT_MIN, (int32_t)SHRT_MAX);
+        // Mix into buffer (No need to clamp yet)
+        *buffer += sample;
 
         // Advance to the next output sample
-        offset += increment;
+        localOffset += latchedIncrement;
         buffer++;
-    }
+    } while (--numFrames);
 
+    offset = localOffset;
     samples.releaseRef();
 
     return true;
@@ -114,7 +120,7 @@ bool AudioChannelSlot::mixAudio(int16_t *buffer, uint32_t numFrames)
 
 void AudioChannelSlot::setPos(uint32_t ofs)
 {
-    uint32_t numSamples = samples.numSamples();
+    uint32_t numSamples = samples.numSamples(mod);
     uint32_t loopOffset = 0;
 
     if (mod.loopType == _SYS_LOOP_EMULATED_PING_PONG) {
@@ -128,7 +134,7 @@ void AudioChannelSlot::setPos(uint32_t ofs)
         if (ofs == numSamples) {
             offset = mod.loopStart;
         } else {
-            /* Seeking out of bonds in a ping-pong sample is not well-defined;
+            /* Seeking out of bounds in a ping-pong sample is not well-defined;
              * no tracker seems to implement loop directionality.
              * Compute the offset based on the original sample's length, not
              * the synthesized sample's length, and loop forward (same as

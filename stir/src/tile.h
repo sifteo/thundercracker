@@ -249,6 +249,9 @@ class TilePool {
     typedef uint32_t Serial;
     typedef uint16_t Index;
 
+    // Current value of SysLFS::TILES_PER_ASSET_SLOT from firmware
+    static const unsigned MAX_SIZE = 4096;
+
     void optimize(Logger &log);
     void encode(std::vector<uint8_t>& out, Logger *log = NULL);
 
