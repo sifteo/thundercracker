@@ -377,14 +377,14 @@ public:
     };
 
     /// Return an STL-style iterator for this array.
-    iterator begin() {
+    iterator begin() const {
         iterator i;
         i.remaining = *this;
         return ++i;
     }
 
     /// Return an STL-style iterator for this array
-    iterator end() {
+    iterator end() const {
         iterator i;
         i.index = unsigned(-1);
         return i;

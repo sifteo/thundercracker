@@ -190,6 +190,9 @@ struct CubeID {
 
 /**
  * @brief An unordered set of cubes
+ *
+ * A CubeSet can be used with API functions anywhere a _SYSCubeIDVector is
+ * expected, and you can iterate over a CubeSet using C++11 style iteration.
  */
 
 class CubeSet : public BitArray<_SYS_NUM_CUBE_SLOTS> {
