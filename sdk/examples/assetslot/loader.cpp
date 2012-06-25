@@ -16,12 +16,20 @@ MyLoader::MyLoader(CubeSet cubes, AssetSlot loaderSlot, VideoBuffer *vid)
 
 void MyLoader::load(AssetGroup &group, AssetSlot slot)
 {
+    LOG("Loader, (%P, %d): starting\n", &group, slot.sys);
+
     // The bootstrap group should already be installed on all cubes.
     ASSERT(BootstrapGroup.isInstalled(cubes));
 
     // Early out if the group in question is already loaded
-    if (group.isInstalled(cubes))
+    if (group.isInstalled(cubes)) {
+        LOG("Loader, (%P, %d): already installed at (%x, %x, %x)\n",
+            &group, slot.sys,
+            group.baseAddress(0),
+            group.baseAddress(1),
+            group.baseAddress(2));
         return;
+    }
 
     // Draw a background image from the bootstrap asset group.
     for (CubeID cube : cubes) {
@@ -113,5 +121,7 @@ void MyLoader::load(AssetGroup &group, AssetSlot slot)
      * system's persistent storage, and next time your game tries to access
      * assets from the same slot they will not be cached.
      */
-     assetLoader.finish();
+    assetLoader.finish();
+    
+    LOG("Loader, (%P, %d): done\n", &group, slot.sys);
 }

@@ -137,7 +137,10 @@ bool VirtAssetSlots::locateGroup(MappedAssetGroup &map,
 
     FlashLFS &lfs = SysLFS::get();
 
-    // Iterate until we find the group on all cubes
+    // Iterate until we find the group on all cubes or we run out of keys to search.
+    FlashLFSIndexRecord::KeyVector_t visited;
+    visited.clear();
+
     while (searchCV) {
 
         // Restartable iteration, in case we need to collect garbage
@@ -151,8 +154,13 @@ bool VirtAssetSlots::locateGroup(MappedAssetGroup &map,
             if (iter.previous()) {
                 // Found an existing record
 
-                // Is this an AssetSlotRecord?
+                // Already seen a newer version of this key?
                 asrKey = (SysLFS::Key) iter.record()->getKey();
+                if (visited.test(asrKey))
+                    continue;
+                visited.mark(asrKey);
+
+                // Is this an AssetSlotRecord?
                 SysLFS::Key cubeKey;
                 if (!SysLFS::AssetSlotRecord::decodeKey(asrKey, cubeKey, slot))
                     continue;
@@ -200,15 +208,20 @@ bool VirtAssetSlots::locateGroup(MappedAssetGroup &map,
                 return false;
             }
 
-            // Done searching on this cube
-            searchCV ^= Intrinsic::LZ(cube);
-
             // Is this group present already?
             unsigned offset;
             if (asr.findGroup(map.id, offset)) {
                 agc->baseAddr = offset + slot * PhysAssetSlot::SLOT_SIZE;
                 foundCV |= Intrinsic::LZ(cube);
+                searchCV ^= Intrinsic::LZ(cube);
                 continue;
+            }
+
+            // If we have a specific slot in mind, we can finish searching on one cube now.
+            // Otherwise, we may still need to search other slots on the same cube.
+            if (vSlot) {
+                ASSERT(searchCV & Intrinsic::LZ(cube));
+                searchCV ^= Intrinsic::LZ(cube);
             }
 
             if (allocVec) {

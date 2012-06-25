@@ -26,8 +26,10 @@ void spinnyAnimation()
 
     loader.load(SpinnyGroup, AnimationSlot);
 
-    for (CubeID cube : allCubes)
+    for (CubeID cube : allCubes) {
         vid[cube].initMode(BG0);
+        vid[cube].attach(cube);
+    }
 
     while (1) {
         unsigned frame = SystemTime::now().cycleFrame(2.0, Spinny.numFrames());
