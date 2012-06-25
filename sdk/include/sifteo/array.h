@@ -155,6 +155,9 @@ private:
  *
  * The default value of the bits in a BitArray is undefined. Initialize the
  * BitArray prior to use, for example by calling mark() or clear().
+ *
+ * BitArrays support iteration, through explicit method calls or via C++11
+ * range-based for loops.
  */
 
 template <unsigned tSize>
@@ -166,6 +169,13 @@ class BitArray
 
     static uint32_t lz(unsigned bit) {
         return 0x80000000 >> bit;
+    }
+
+    // Return a range of bits from 'bit' to 31.
+    static uint32_t range(int bit) {
+        if (bit <= 0) return 0xffffffff;
+        if (bit >= 32) return 0;
+        return 0xffffffff >> bit;
     }
 
 public:
@@ -340,6 +350,91 @@ public:
             }
         }
         return false;
+    }
+
+    /// An STL-style iterator for the BitArray.
+    struct iterator {
+        unsigned index;
+        BitArray<tSize> remaining;
+
+        bool operator == (const iterator& other) const {
+            return index == other.index;
+        }
+
+        bool operator != (const iterator& other) const {
+            return index != other.index;
+        }
+
+        unsigned operator* () const {
+            return index;
+        }
+
+        const iterator& operator++ () {
+            if (!remaining.clearFirst(index))
+                index = unsigned(-1);
+            return *this;
+        }
+    };
+
+    /// Return an STL-style iterator for this array.
+    iterator begin() {
+        iterator i;
+        i.remaining = *this;
+        return ++i;
+    }
+
+    /// Return an STL-style iterator for this array
+    iterator end() {
+        iterator i;
+        i.index = unsigned(-1);
+        return i;
+    }
+
+    /// Create a new empty BitArray
+    BitArray() {
+        clear();
+    }
+
+    /// Create a new BitArray with a single bit marked
+    BitArray(unsigned index) {
+        const unsigned NUM_WORDS = (tSize + 31) / 32;
+
+        ASSERT(index < tSize);
+        if (NUM_WORDS > 1) {
+            #pragma clang diagnostic push
+            #pragma clang diagnostic ignored "-Wtautological-compare"
+            for (unsigned w = 0; w < NUM_WORDS; w++) {
+                words[w] = (w == (index >> 5)) ? lz(index & 31) : 0;
+            }
+            #pragma clang diagnostic pop
+        } else {
+            words[0] = lz(index);
+        }
+    }
+
+    /**
+     * @brief Create a new BitArray with a range of bits marked.
+     *
+     * This is a half-open interval. All bits >= 'begin' and < 'end' are marked.
+     */
+    BitArray(unsigned begin, unsigned end) {
+        const unsigned NUM_WORDS = (tSize + 31) / 32;
+
+        ASSERT(begin < tSize);
+        ASSERT(end <= tSize);
+        ASSERT(begin <= end);
+
+        if (NUM_WORDS > 1) {
+            #pragma clang diagnostic push
+            #pragma clang diagnostic ignored "-Wtautological-compare"
+            for (unsigned w = 0; w < NUM_WORDS; w++) {
+                int offset = w << 5;
+                words[w] = range(begin - offset) & ~range(end - offset);
+            }
+            #pragma clang diagnostic pop
+        } else {
+            words[0] = range(begin) & ~range(end);
+        }
     }
 };
 

@@ -11,6 +11,7 @@
 
 #include <sifteo/macros.h>
 #include <sifteo/math.h>
+#include <sifteo/array.h>
 
 namespace Sifteo {
 
@@ -184,6 +185,32 @@ struct CubeID {
     CubeID operator ++(int) { return sys++; }
     CubeID operator --() { return --sys; }
     CubeID operator --(int) { return sys--; }
+};
+
+
+/**
+ * @brief An unordered set of cubes
+ */
+
+class CubeSet : public BitArray<_SYS_NUM_CUBE_SLOTS> {
+public:
+    /// Implicit conversion to _SYSCubeIDVector, for use in low-level system calls.
+    operator _SYSCubeIDVector() const {
+        return words[0];
+    }
+
+    /// Create an empty CubeSet
+    CubeSet() : BitArray<_SYS_NUM_CUBE_SLOTS>() {}
+
+    /// Create a CubeSet with a single CubeID in it.
+    CubeSet(CubeID cube) : BitArray<_SYS_NUM_CUBE_SLOTS>(cube) {}
+
+    /**
+     * @brief Create a new CubeSet with a range of cubes.
+     *
+     * This is a half-open interval. All IDs >= 'begin' and < 'end' are in the set.
+     */
+    CubeSet(CubeID begin, CubeID end) : BitArray<_SYS_NUM_CUBE_SLOTS>(begin, end) {}
 };
 
 
