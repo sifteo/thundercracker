@@ -10,9 +10,41 @@
 #include "cube_hardware.h"
 #include "lcd.h"
 #include "radio.h"
+//#include "wakeup.h"
 
 uint8_t power_sleep_timer;
 
+#ifdef TOUCH_CALIBRATE
+void delay_20us()
+{
+	uint8_t delay=96;
+	do {
+		//
+	} while (--delay);
+}
+
+void delay_5ms()
+{
+	uint8_t delay=0;
+	do {
+		delay_20us();
+	} while (--delay);
+}
+
+void calibrate() {
+	uint8_t i=3;
+	uint8_t j=0;
+	do {
+		do
+		{
+		    CTRL_PORT |= CTRL_DS_EN;
+		    delay_20us();
+		    CTRL_PORT &= ~CTRL_DS_EN;
+		    delay_5ms();
+		} while (--j);
+	} while (--i);
+}
+#endif
 
 void power_delay()
 {
@@ -67,6 +99,10 @@ void power_init(void)
         // Give 3.3V boost >1ms to turn-on
         power_delay();
 
+#ifdef TOUCH_CALIBRATE
+        calibrate();
+#endif
+
         // Turn on 2V ds load switch
         CTRL_PORT = CTRL_3V3_EN | CTRL_DS_EN;
 
@@ -88,6 +124,7 @@ void power_init(void)
      * here until when we enter the main loop.
      */
     CLKLFCTRL = CLKLFCTRL_SRC_SYNTH;
+    //CLKLFCTRL = CLKLFCTRL_SRC_RC;
     power_wdt_set();
 
     /*
@@ -180,9 +217,15 @@ void power_sleep(void)
     // We must latch these port states, to preserve them during sleep.
     // This latch stays locked until early wakeup, in power_init().
     OPMCON = OPMCON_LATCH_LOCKED;
+    // We must also disable WDT in the memory retention mode
+    //OPMCON = OPMCON_LATCH_LOCKED | OPMCON_WDT_RESET_ENABLE;
+
+    while(MISC_PORT & MISC_TOUCH);	//wait till touch goes to sleep
 
     while (1) {
         PWRDWN = 1;
+    	//rtc_start();
+        //PWRDWN = 3;
 
         /*
          * We loop purely out of paranoia. This point should never be reached.
