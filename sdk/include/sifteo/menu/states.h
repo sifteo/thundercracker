@@ -83,7 +83,7 @@ inline void Menu::stateStart()
 
     // Allocate tiles for the static upper label, and draw it.
     if (kHeaderHeight) {
-        const AssetImage& label = items[0].label ? *items[0].label : *assets->header;
+        const AssetImage& label = items[startingItem].label ? *items[startingItem].label : *assets->header;
         vid.bg1.fillMask(vec(0,0), label.tileSize());
         vid.bg1.image(vec(0,0), label);
     }
