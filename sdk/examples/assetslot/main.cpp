@@ -4,6 +4,7 @@
 
 #include <sifteo.h>
 #include "assets.gen.h"
+#include "loader.h"
 using namespace Sifteo;
 
 static AssetSlot MainSlot = AssetSlot::allocate()
@@ -19,23 +20,25 @@ static Metadata M = Metadata()
     .cubeRange(numCubes);
 
 
+void spinnyAnimation()
+{
+    MyLoader loader(allCubes, MainSlot, vid);
+
+    loader.load(SpinnyGroup, AnimationSlot);
+
+    for (CubeID cube : allCubes)
+        vid[cube].initMode(BG0);
+
+    while (1) {
+        unsigned frame = SystemTime::now().cycleFrame(2.0, Spinny.numFrames());
+        for (CubeID cube : allCubes)
+            vid[cube].bg0.image(vec(0,0), Spinny, frame);
+        System::paint();
+    }
+}
+
+
 void main()
 {
-    ScopedAssetLoader loader;
-
-    for (CubeID cube : allCubes) {
-        vid[cube].initMode(BG0);
-        vid[cube].bg0.image(vec(0,0), LoadingBg);
-        vid[cube].attach(cube);
-    }
-
-    loader.start(LoadingGroup, MainSlot, allCubes);
-    loader.finish();
-
-    for (CubeID cube = 0; cube != numCubes; ++cube) {
-        vid[cube].bg0.image(vec(0,5), LoadingText);
-    }
-
-    while (1)
-        System::paint();
+    spinnyAnimation();
 }

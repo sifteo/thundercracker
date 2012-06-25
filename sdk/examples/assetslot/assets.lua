@@ -21,5 +21,5 @@ function frames(fmt, count)
     return t
 end
 
-SpinnyGroup = group{ quality=9.0 }
+SpinnyGroup = group{ quality=9.5 }
 Spinny = image{ frames("images/spinny/spinny-%d.png", 24) }
