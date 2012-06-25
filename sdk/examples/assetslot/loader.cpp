@@ -6,6 +6,14 @@
 #include "assets.gen.h"
 using namespace Sifteo;
 
+
+MyLoader::MyLoader(CubeSet cubes, AssetSlot loaderSlot, VideoBuffer *vid)
+    : cubes(cubes), loaderSlot(loaderSlot), vid(vid)
+{
+    assetLoader.init();
+}
+
+
 void MyLoader::load(AssetGroup &group, AssetSlot slot)
 {
     // The bootstrap group should already be installed on all cubes.
@@ -98,4 +106,12 @@ void MyLoader::load(AssetGroup &group, AssetSlot slot)
 
         frame++;
     }
+
+    /*
+     * Finalize the asset loading process. You must call this, or the group
+     * will appear to work but it won't have been marked as finished in the
+     * system's persistent storage, and next time your game tries to access
+     * assets from the same slot they will not be cached.
+     */
+     assetLoader.finish();
 }

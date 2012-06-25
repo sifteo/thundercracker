@@ -17,8 +17,7 @@ public:
      * Initialize a new loader. Display graphics on all indicated cubes,
      * and use 'loaderSlot' for all of the loader's own assets.
      */
-    MyLoader(Sifteo::CubeSet cubes, Sifteo::AssetSlot loaderSlot, Sifteo::VideoBuffer *vid)
-        : cubes(cubes), loaderSlot(loaderSlot), vid(vid) {}
+    MyLoader(Sifteo::CubeSet cubes, Sifteo::AssetSlot loaderSlot, Sifteo::VideoBuffer *vid);
 
     /**
      * Synchronously load an AssetGroup on all cubes.
@@ -31,5 +30,5 @@ private:
     Sifteo::CubeSet cubes;
     Sifteo::AssetSlot loaderSlot;
     Sifteo::VideoBuffer *vid;
-    Sifteo::ScopedAssetLoader assetLoader;
+    Sifteo::AssetLoader assetLoader;
 };
