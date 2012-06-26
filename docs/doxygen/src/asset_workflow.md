@@ -88,7 +88,7 @@ PlayerSprite = image{ { "player-sitting.png", "player-standing.png"}, pinned=tru
 
 @note If you have the choice between using a single Asset Image with multiple frames, instead of an Asset Image List, the single Asset Image can be more efficient.
 
-# Asset Audio
+# Asset Audio     {#asset_audio}
 
 ## Samples
 
