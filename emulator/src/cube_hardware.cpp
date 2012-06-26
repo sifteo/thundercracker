@@ -167,7 +167,7 @@ void Hardware::graphicsTick()
         /* data_in */ bus,
     };
 
-    flash.cycle(&flashp);
+    flash.cycle(&flashp, &cpu);
     lcd.cycle(&lcdp);
 
     /* Address latch write cycles, triggered by rising edge */
