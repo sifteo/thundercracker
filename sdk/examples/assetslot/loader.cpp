@@ -46,40 +46,20 @@ void MyLoader::load(AssetGroup &group, AssetSlot slot)
     // Start drawing the background
     System::paint();
 
-    // Synchronously load the rest of the loading screen, if necessary
-    assetLoader.start(LoadingGroup, loaderSlot, cubes);
-    assetLoader.finish();
-
     // Immediately start asynchronously loading the group our caller requested
-    assetLoader.start(group, slot, cubes);
-
-    // Paint the rest of the loading screen
-    System::finish();
-    for (CubeID cube : cubes)
-        vid[cube].bg0.image(vec(0,5), LoadingText);
-
-    /*
-     * Animate the loading screen itself appearing, with a vertical iris effect
-     */
-
-    for (unsigned height = 1; height < LoadingText.pixelHeight(); ++height) {
-        System::finish();
-        for (CubeID cube : cubes) {
-            unsigned y = LCD_center.y - height / 2;
-            vid[cube].bg0.setPanning(vec(0U, y));
-            vid[cube].setWindow(y, height);
-        }
-        System::paint();
+    if (!assetLoader.start(group, slot, cubes)) {
+        // No room? Erase the asset slot.
+        slot.erase();
+        assetLoader.start(group, slot, cubes);
     }
 
     /*
-     * Animate the rest of the loading process, using STAMP mode to draw
-     * an animated progress bar.
+     * Animate the loading process, using STAMP mode to draw an animated progress bar.
      */
 
-    for (CubeID cube : cubes) {
-        System::finish();
+    System::finish();
 
+    for (CubeID cube : cubes) {
         vid[cube].initMode(STAMP);
         vid[cube].setWindow(100, 10);
         vid[cube].stamp.disableKey();
@@ -96,10 +76,10 @@ void MyLoader::load(AssetGroup &group, AssetSlot slot)
 
         for (CubeID cube : cubes) {
             // Animate the horizontal window, to show progress
-            vid[cube].stamp.setHWindow(0, assetLoader.progress(cube, LCD_width));
+            vid[cube].stamp.setHWindow(0, assetLoader.progress(cube, 1, LCD_width ));
 
             // Animate the colormap at a steady rate
-            const RGB565 bg = RGB565::fromRGB(0x444488);
+            const RGB565 bg = RGB565::fromRGB(0xff7000);
             const RGB565 fg = RGB565::fromRGB(0xffffff);
 
             auto &cmap = vid[cube].colormap;

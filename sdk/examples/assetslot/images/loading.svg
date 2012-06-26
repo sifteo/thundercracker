@@ -16,7 +16,7 @@
    version="1.1"
    inkscape:version="0.48.1 r9760"
    sodipodi:docname="loading.svg"
-   inkscape:export-filename="/Users/beth/sifteo/thundercracker/sdk/examples/assetslot/images/loading-bg.png"
+   inkscape:export-filename="/Users/beth/sifteo/thundercracker/sdk/examples/assetslot/images/loading.png"
    inkscape:export-xdpi="90"
    inkscape:export-ydpi="90">
   <defs
@@ -51,14 +51,14 @@
      inkscape:pageopacity="0.0"
      inkscape:pageshadow="2"
      inkscape:zoom="2.8"
-     inkscape:cx="-54.49343"
-     inkscape:cy="90.689032"
+     inkscape:cx="24.792284"
+     inkscape:cy="76.403318"
      inkscape:document-units="px"
      inkscape:current-layer="layer1"
      showgrid="false"
      inkscape:window-width="1309"
      inkscape:window-height="762"
-     inkscape:window-x="314"
+     inkscape:window-x="42"
      inkscape:window-y="16"
      inkscape:window-maximized="0">
     <inkscape:grid
@@ -77,6 +77,7 @@
         <dc:format>image/svg+xml</dc:format>
         <dc:type
            rdf:resource="http://purl.org/dc/dcmitype/StillImage" />
+        <dc:title></dc:title>
       </cc:Work>
     </rdf:RDF>
   </metadata>
@@ -95,24 +96,13 @@
     <text
        sodipodi:linespacing="125%"
        id="text3771"
-       y="1010.4222"
-       x="6.9653125"
-       style="font-size:40px;font-style:normal;font-variant:normal;font-weight:bold;font-stretch:normal;text-align:start;line-height:125%;letter-spacing:0px;word-spacing:0px;writing-mode:lr-tb;text-anchor:start;fill:none;stroke:#ffffff;stroke-width:2;stroke-miterlimit:4;stroke-opacity:1;stroke-dasharray:none;font-family:'Wolf\'s Bane Pro';-inkscape-font-specification:'Wolf\'s Bane Pro Bold'"
+       y="994.6377"
+       x="23.314939"
+       style="font-size:22.21650505px;font-style:normal;font-variant:normal;font-weight:500;font-stretch:normal;text-align:start;line-height:125%;letter-spacing:0px;word-spacing:0px;writing-mode:lr-tb;text-anchor:start;fill:#ffffff;fill-opacity:1;stroke:none;font-family:Futura;-inkscape-font-specification:Futura Medium"
        xml:space="preserve"><tspan
-         y="1010.4222"
-         x="6.9653125"
+         y="994.6377"
+         x="23.314939"
          id="tspan3773"
          sodipodi:role="line">Loading</tspan></text>
-    <text
-       xml:space="preserve"
-       style="font-size:40px;font-style:normal;font-variant:normal;font-weight:bold;font-stretch:normal;text-align:start;line-height:125%;letter-spacing:0px;word-spacing:0px;writing-mode:lr-tb;text-anchor:start;fill:#000000;fill-opacity:1;stroke:none;font-family:'Wolf\'s Bane Pro';-inkscape-font-specification:'Wolf\'s Bane Pro Bold'"
-       x="6.9653125"
-       y="1010.4222"
-       id="text3767"
-       sodipodi:linespacing="125%"><tspan
-         sodipodi:role="line"
-         id="tspan3769"
-         x="6.9653125"
-         y="1010.4222">Loading</tspan></text>
   </g>
 </svg>
