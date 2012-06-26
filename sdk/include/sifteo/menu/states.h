@@ -71,7 +71,7 @@ inline void Menu::changeState(MenuState newstate)
  */
 inline void Menu::transToStart()
 {
-    handlePrepaint();
+    // Do nothing
 }
 
 inline void Menu::stateStart()
