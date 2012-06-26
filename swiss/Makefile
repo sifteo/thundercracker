@@ -30,7 +30,7 @@ endif
 CCFLAGS = -g -O2
 # we currently define SIFTEO_SIMULATOR so we can use macros.h - revisit whether
 # this deserves any reorg
-CCFLAGS += -DSDK_VERSION=$(VERSION) -DSIFTEO_SIMULATOR
+CCFLAGS += -DSDK_VERSION=$(VERSION) -DSIFTEO_SIMULATOR -D__STDC_FORMAT_MACROS
 
 # library paths
 LDFLAGS := -L$(DEPS_DIR)/libusbx/lib -lusb-1.0
