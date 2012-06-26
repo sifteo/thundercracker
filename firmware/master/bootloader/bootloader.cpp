@@ -114,6 +114,10 @@ void Bootloader::onUsbData(const uint8_t *buf, unsigned numBytes)
     }
 
     case CmdSetAddrPtr: {
+
+        if (numBytes < 5)
+            break;
+
         uint32_t ptr = *reinterpret_cast<const uint32_t*>(buf + 1);
         if ((APPLICATION_ADDRESS <= ptr) && (ptr < Stm32Flash::END_ADDR))
             update.addressPointer = ptr;
@@ -127,10 +131,37 @@ void Bootloader::onUsbData(const uint8_t *buf, unsigned numBytes)
         break;
     }
 
+    case CmdWriteDetails: {
+
+        if (numBytes < 9)
+            break;
+
+        uint32_t crc = *reinterpret_cast<const uint32_t*>(&buf[1]);
+        uint32_t givenImgSize = *reinterpret_cast<const uint32_t*>(&buf[5]);
+        uint32_t calculatedImgsize = update.addressPointer - APPLICATION_ADDRESS;
+
+        if (givenImgSize != calculatedImgsize)
+            break;
+
+        Stm32Flash::beginProgramming();
+
+        // write the CRC to the current address pointer
+        Stm32Flash::programHalfWord(crc & 0xffff, update.addressPointer);
+        Stm32Flash::programHalfWord((crc >> 16) & 0xffff, update.addressPointer + 2);
+
+        // write the size to the end of MCU flash
+        Stm32Flash::programHalfWord(givenImgSize & 0xffff, Stm32Flash::END_ADDR - 4);
+        Stm32Flash::programHalfWord((givenImgSize >> 16) & 0xffff, Stm32Flash::END_ADDR - 2);
+
+        Stm32Flash::endProgramming();
+        break;
+    }
+
     case CmdJump:
     case CmdAbort:
         update.complete = true;
         break;
+
     }
 }
 
@@ -189,10 +220,15 @@ void Bootloader::ensureUpdaterIsEnabled()
 
 /*
  * Validates the CRC of the contents of MCU flash.
+ *
+ * The bootloader must write the length of an installed image at the end of
+ * MCU flash.
  */
 bool Bootloader::mcuFlashIsValid()
 {
-    uint32_t imgsize = 0;    // TODO: determine how we store this
+    const uint32_t imgsize = *reinterpret_cast<uint32_t*>(Stm32Flash::END_ADDR - 4);
+    if (imgsize > MAX_APP_SIZE)
+        return false;
 
     Crc32::reset();
     uint32_t *address = reinterpret_cast<uint32_t*>(APPLICATION_ADDRESS);
@@ -205,12 +241,13 @@ bool Bootloader::mcuFlashIsValid()
 
     // if flash is totally unprogrammed, this is a legitimate computed result,
     // but obviously does not represent a valid state we want to jump to
-    if (Crc32::get() == 0xffffffff)
+    const uint32_t calculatedCrc = Crc32::get();
+    if (calculatedCrc == 0xffffffff || calculatedCrc == 0)
         return false;
 
     // CRC is stored in flash directly after the FW image
-    uint32_t storedCrc = *address;
-    return (storedCrc == Crc32::get());
+    const uint32_t storedCrc = *address;
+    return (storedCrc == calculatedCrc);
 }
 
 /*

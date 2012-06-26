@@ -11,10 +11,12 @@ public:
 
     static const uint32_t SIZE;
     static const uint32_t APPLICATION_ADDRESS;
+    static const uint32_t MAX_APP_SIZE = 120 * 1024; // 120K
 
     enum Command {
         CmdGetVersion,
         CmdWriteMemory,
+        CmdWriteDetails,
         CmdSetAddrPtr,
         CmdGetAddrPtr,
         CmdJump,
