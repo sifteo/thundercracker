@@ -21,7 +21,9 @@ Star = image{"star-8.png", pinned=true, width=8, height=8}
 Font = image{"font-8x16.png", pinned=true, width=8, height=16}
 ~~~~~~~~~~~~~
 
-The @b group element specifies that a Sifteo::AssetGroup named `GameAssets` should be created. This group contains all the `image` entries that follow it, until another `group` is declared. You can also explicitly specify the group that an `image` belongs to by adding `group=MyGroupName` within the `image` element. An AssetGroup is the unit of get installed to Sifteo Cubes at the same time, so you should typically keep related images in the same group.
+The @b group element specifies that a Sifteo::AssetGroup named `GameAssets` should be created. This group contains all the `image` entries that follow it, until another `group` is declared. You can also explicitly specify the group that an `image` belongs to by adding `group=MyGroupName` within the `image` element.
+
+All images in a single _group_ are compressed together, and form a bundle of compressed asset data which is loaded to the Sifteo Cubes in one piece. For more information on AssetGroups, see @ref asset_memory.
 
 Each @b image element specifies that an AssetImage should be generated. Given no other details, a plain Sifteo::AssetImage will be generated, as in the case of @b Background above. By adding `pinned=true`, a Sifteo::PinnedAssetImage is created. Pinned assets are required for sprites, since the Sifteo platform requires all tiles in a sprite to be sequential.
 

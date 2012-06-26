@@ -105,6 +105,8 @@ This diagram illustrates how our tiling strategy helps games run more efficientl
 4. The original asset is recreated as an array of indices into the AssetGroup's tiles. This data becomes a single Sifteo::AssetImage object. The index data can be much smaller than the original image, and duplicated tiles can be encoded in very little space.
 5. At runtime, AssetGroups and AssetImages are loaded separately. The former are loaded (slowly) into Asset Flash, whereas the latter are used by application code to draw into Video RAM.
 
+For more information on how assets are stored in memory, see @ref asset_memory.
+
 # Graphics Mode Reference
 
 ## BG0
