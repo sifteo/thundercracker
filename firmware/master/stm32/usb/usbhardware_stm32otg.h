@@ -1,6 +1,8 @@
 #ifndef STM32F10XOTG_H
 #define STM32F10XOTG_H
 
+#include "usbhardware.h"
+
 #include <stdint.h>
 
 /*
@@ -9,7 +11,6 @@
 namespace UsbHardwareStm32Otg
 {
     static const unsigned RX_FIFO_WORDS = 128;
-    static const unsigned MAX_PACKET = 64;
 
     enum PacketStatus {
         PktStsGlobalNak     = 1,
@@ -31,7 +32,16 @@ namespace UsbHardwareStm32Otg
      * mechanism for it to tell us once it has consumed it such that we can
      * start receiving the next one.
      */
-    uint8_t packetBuf[MAX_PACKET];
+    uint8_t packetBuf[UsbHardware::MAX_PACKET];
+
+    struct InEndpointState {
+        const uint8_t *buf;
+        uint16_t len;
+    };
+
+    // keeping only 2 of these is cheating a little, but we know we're only
+    // using EP0 and EP1 so we can save a tiny bit of RAM
+    InEndpointState inEndpointStates[2];
 
     // keep track of our usb ram allocation
     uint16_t fifoMemTop;
