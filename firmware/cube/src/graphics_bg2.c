@@ -204,6 +204,7 @@ void vm_bg2(void)
     // Prepare graphics loop
     y = vram.num_lines;
     lcd_begin_frame();
+    i2c_a21_wait();
 
     /*
      * Initialize tile cache. This stays valid as long as we don't use the
