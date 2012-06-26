@@ -47,13 +47,16 @@ struct AssetGroup {
     /**
      * @brief Get a pointer to the read-only system data for this asset group.
      *
-     * The resulting value is constant at compile-time.
+     * The resulting value is constant at compile-time, if possible. If
+     * the optional 'requireConst' argument is true, this will result in a
+     * link failure if the header cannot be determined to be constant at
+     * compile time.
      */
-    const _SYSAssetGroupHeader *sysHeader() const {
+    ALWAYS_INLINE const _SYSAssetGroupHeader *sysHeader(bool requireConst=false) const {
         // AssetGroups are typically in RAM, but we want the static
         // initializer data so that our return value is known at compile time.
         _SYSAssetGroup *G = (_SYSAssetGroup*)
-            _SYS_lti_initializer(reinterpret_cast<const void*>(&sys), false);
+            _SYS_lti_initializer(reinterpret_cast<const void*>(&sys), requireConst);
         return reinterpret_cast<const _SYSAssetGroupHeader*>(G->pHdr);
     }
 
@@ -165,7 +168,7 @@ public:
      *
      * This function returns a unique ID which is constant at link-time.
      */
-    static AssetSlot allocate() {
+    ALWAYS_INLINE static AssetSlot allocate() {
         return AssetSlot(_SYS_lti_counter("Sifteo.AssetGroupSlot", 0));
     }
 
@@ -213,10 +216,10 @@ public:
      * Returns *this, so that bootstrap() can be chained, especially off
      * of allocate().
      */
-    AssetSlot bootstrap(AssetGroup &group) const {
+    ALWAYS_INLINE AssetSlot bootstrap(AssetGroup &group) const {
         // _SYSMetadataBootAsset
         _SYS_lti_metadata(_SYS_METADATA_BOOT_ASSET, "IBBBB",
-            group.sysHeader(), sys, 0, 0, 0);
+            group.sysHeader(true), sys, 0, 0, 0);
 
         // Update base address from the cache. Make sure it was successful.
         _SYSCubeIDVector vec = _SYS_asset_findInCache(group, -1);
