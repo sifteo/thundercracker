@@ -165,11 +165,12 @@ void sensors_init()
     // Put LIS3D in low power mode with all 3 axes enabled & block data update enabled
     {
         const __code uint8_t init1[] = { ACCEL_ADDR_TX, ACCEL_CTRL_REG1, ACCEL_REG1_INIT };
-        const __code uint8_t init2[] = { ACCEL_ADDR_TX, ACCEL_CTRL_REG4, ACCEL_REG4_INIT };
-        const __code uint8_t init3[] = { ACCEL_ADDR_TX, ACCEL_CTRL_REG6, ACCEL_IO_00 };
+        const __code uint8_t init4[] = { ACCEL_ADDR_TX, ACCEL_CTRL_REG4, ACCEL_REG4_INIT };
+        const __code uint8_t init6[] = { ACCEL_ADDR_TX, ACCEL_CTRL_REG6, ACCEL_IO_00 };
+
         i2c_tx(init1, sizeof init1);
-        i2c_tx(init2, sizeof init2);
-        i2c_tx(init3, sizeof init3);
+        i2c_tx(init4, sizeof init4);
+        i2c_tx(init6, sizeof init6);
     }
 
     IRCON = 0;                  // Clear any spurious IRQs from the above initialization

@@ -27,16 +27,6 @@ extern const __code uint8_t img_radio_3[];
 #define	DEBUG_SCREEN 1
 #endif
 
-/*
-#ifdef DEBUG_NBR
-//uint16_t nbr_tile_ids[8] = {7, 7+1, 18*7, 18*8, (18*15)+7, (18*15)+7+1, (18*7)+15, (18*8)+15};
-uint16_t nbr_tile_ids[4] = {7, 18*7, (18*15)+7, (18*7)+15};
-void paint_nbr_tile(uint8_t idx, uint16_t col) {
-	vram.bg0_tiles[nbr_tile_ids[idx]] = col;
-}
-#endif
-*/
-
 void demo(void)
 {
 #ifdef DEBUG_SCREEN
@@ -59,12 +49,12 @@ void demo(void)
     draw_attr = ATTR_NONE;
     while(1) {
 
-    	power_wdt_set();	//reset watch-dog in debug mode loop
+    	power_wdt_set();		//reset watch-dog in debug mode loop
 
     	draw_xy = XY(14,0);
-    	draw_hex(dbg_cnt++);
+    	draw_hex(dbg_cnt++);	//show we are refreshing
 
-	#ifdef DEBUG_TOUCH
+    #ifdef DEBUG_TOUCH
     	draw_xy = XY(1,12);
     	if( touch ) {
     		draw_string("Touch!");
@@ -76,32 +66,13 @@ void demo(void)
 	#endif
 
 	#ifdef DEBUG_NBR
-    	/*
-    	{
-    		//uint8_t tile_idx;
-    		uint8_t side;
-
-    		for	(side=0; side<4; side++) {
-				//tile_idx = (side<<1);
-        		if (nbr_data[side]!=0) {
-					//paint_nbr_tile(tile_idx++, 0x26fe);
-					paint_nbr_tile(side, 0x26fe);
-            	} else {
-					//paint_nbr_tile(tile_idx++, 0x0);
-					paint_nbr_tile(side, 0x0);
-            	}
-    		}
-
-    	}
-    	*/
-
-    	draw_xy = XY(2,13);
+    	draw_xy = XY(7,0);
     	draw_hex(nbr_data[0]);
-    	draw_xy = XY(5,13);
+    	draw_xy = XY(0,7);
     	draw_hex(nbr_data[1]);
-    	draw_xy = XY(8,13);
+    	draw_xy = XY(7,15);
     	draw_hex(nbr_data[2]);
-    	draw_xy = XY(11,13);
+    	draw_xy = XY(14,7);
     	draw_hex(nbr_data[3]);
 
     	draw_xy = XY(2,14);
@@ -112,10 +83,10 @@ void demo(void)
     	draw_hex(nbr_data_invalid[0]);
     	draw_xy = XY(11,14);
     	draw_hex(nbr_data_invalid[1]);
-
 	#endif
 
     	graphics_render();
+    	power_idle_poll();
     }
 
 #else

@@ -67,8 +67,10 @@
 #define MISC_NB_IN      (1 << 6)   // T1 input
 
 // Touch is on a wakeup-capable pin
-#define TOUCH_WUPOC     WUOPC1
 #define TOUCH_WUOPC_BIT (1 << 7)
+
+// Shake as a wakeup source
+#define SHAKE_WUOPC_BIT (1 << 1)
 
 // Numbered according to the standard side enum.
 // Both the number and name are represented here; due to the binary masking, both are critical.
@@ -437,7 +439,7 @@ __sbit __at 0xEA RF_CKEN;
 #define W2CON1_READY    0x01
 
 // OPMCON bits
-#define OPMCON_WDT_ENABLE       0x01
+#define OPMCON_WDT_RESET_ENABLE 0x01
 #define OPMCON_LATCH_LOCKED     0x02
 #define OPMCON_WUP_ACTIVE_LOW   0x04
 
