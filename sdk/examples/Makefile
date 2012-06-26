@@ -1,4 +1,5 @@
 SUBDIRS = \
+	assetslot \
 	mandelbrot \
 	membrane \
 	menudemo \

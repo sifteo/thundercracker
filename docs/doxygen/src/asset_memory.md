@@ -65,3 +65,11 @@ This instructs the system to take the following actions when preparing to run th
 3. __Transfer control__ to the game's binary.
 
 Bootstrapping is so named because it's intended to install a very minimal amount of asset data, just enough to display a title screen or main menu typically. For the best user experience, bootstrapped asset data should not take longer than a fraction of a second to install.
+
+## Debugging
+
+Since much of the asset memory management process occurs automatically, it can often be useful to have additional visibility into how your cube's asset slots have been assigned, or how a game is managing the groups loaded into its slots.
+
+Right now the best way to do this is via the Inspector panel ("I" key) in Siftulator. This gives you a pictorial representation of the tiles in each cube's Asset Flash. This image corresponds directly with the layout of data in physical asset slots:
+
+![](@ref asset-flash-inspector.png)
