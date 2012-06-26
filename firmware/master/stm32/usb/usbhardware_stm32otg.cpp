@@ -162,44 +162,31 @@ void epOUTSetup(uint8_t addr, uint8_t type, uint16_t maxsize)
     OTG.device.DAINTMSK |= (1 << (addr + 16));
 }
 
-void epSetStalled(uint8_t addr, bool stall)
+void epStall(uint8_t addr)
 {
     const uint32_t stallbit = (1 << 21);
+    if (isInEp(addr))
+        OTG.device.inEps[addr & 0x7f].DIEPCTL |= stallbit;
+    else
+        OTG.device.outEps[addr].DOEPCTL |= stallbit;
+}
 
-    if (addr == 0) {
-        if (stall)
-            OTG.device.inEps[addr].DIEPCTL |= stallbit;
-        else
-            OTG.device.inEps[addr].DIEPCTL &= ~stallbit;
-    }
-
+void epClearStall(uint8_t addr)
+{
+    const uint32_t stallbit = (1 << 21);
     if (isInEp(addr)) {
-
         addr &= 0x7F;
-
-        if (stall) {
-            OTG.device.inEps[addr].DIEPCTL |= stallbit;
-        }
-        else {
-            OTG.device.inEps[addr].DIEPCTL &= ~stallbit;
-            OTG.device.inEps[addr].DIEPCTL |= (1 << 28);   // SD0PID
-        }
-    }
-    else {
-        if (stall) {
-            OTG.device.outEps[addr].DOEPCTL |= stallbit;
-        }
-        else {
-            OTG.device.outEps[addr].DOEPCTL &= ~stallbit;
-            OTG.device.outEps[addr].DOEPCTL |= (1 << 28);   // SD0PID
-        }
+        OTG.device.inEps[addr].DIEPCTL &= ~stallbit;
+        OTG.device.inEps[addr].DIEPCTL |= (1 << 28);   // SD0PID
+    } else {
+        OTG.device.outEps[addr].DOEPCTL &= ~stallbit;
+        OTG.device.outEps[addr].DOEPCTL |= (1 << 28);   // SD0PID
     }
 }
 
 bool epIsStalled(uint8_t addr)
 {
     const uint32_t stallbit = (1 << 21);
-
     if (isInEp(addr))
         return (OTG.device.inEps[addr & 0x7f].DIEPCTL & stallbit) != 0;
     else
