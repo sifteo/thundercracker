@@ -268,6 +268,9 @@ void FlashBlock::invalidate(uint32_t addrBegin, uint32_t addrEnd)
      * flash addresses.
      */
 
+    if (addrBegin == addrEnd)
+        return;
+
     ASSERT(addrBegin < addrEnd);
 
     for (unsigned idx = 0; idx < NUM_CACHE_BLOCKS; idx++) {
