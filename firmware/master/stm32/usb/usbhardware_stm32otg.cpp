@@ -206,36 +206,13 @@ bool epIsStalled(uint8_t addr)
         return (OTG.device.outEps[addr].DOEPCTL & stallbit) != 0;
 }
 
-void epSetNak(uint8_t addr, bool nak)
-{
-    // n/a for IN endpoints
-    if (isInEp(addr))
-        return;
-
-    // set or clear nak accordingly
-    OTG.device.outEps[addr].DOEPCTL |= (nak ? (1 << 27) : (1 << 26));
-}
-
-uint16_t epTxWordsAvailable(uint8_t addr)
-{
-    // n/a for OUT endpoints
-    if (!isInEp(addr))
-        return 0;
-
-    return OTG.device.inEps[addr & 0x7f].DTXFSTS & 0xffff;
-}
-
-bool epTxInProgress(uint8_t addr)
-{
-    // check the packet count in the IN endpoint
-    uint16_t pktcnt = (OTG.device.inEps[addr & 0x7f].DIEPTSIZ >> 19) & 0x3ff;
-    return pktcnt > 0;
-}
-
 uint16_t epWritePacket(uint8_t addr, const void *buf, uint16_t len)
 {
     addr &= 0x7F;
     volatile USBOTG_IN_EP_t & ep = OTG.device.inEps[addr];
+
+    inEndpointStates[addr].buf = static_cast<const uint8_t*>(buf);
+    inEndpointStates[addr].len = len;
 
     /*
      * As long as the data is in a contiguous buffer and there's room in the fifo,
@@ -252,16 +229,7 @@ uint16_t epWritePacket(uint8_t addr, const void *buf, uint16_t len)
         ep.DIEPTSIZ = (pktcnt << 19) | len;
     }
     ep.DIEPCTL |= (1 << 31) | (1 << 26);     // EPENA & CNAK
-
-    // TXFE: ensure transmit fifo is empty
-    while (!(ep.DIEPINT & (1 << 7)))
-        ;
-
-    // Copy buffer to endpoint FIFO
-    const uint32_t* buf32 = static_cast<const uint32_t*>(buf);
-    volatile uint32_t* fifo = OTG.epFifos[addr];
-    for (int i = len; i > 0; i -= 4)
-        *fifo = *buf32++;
+    OTG.device.DIEPEMPMSK |= (1 << addr);
 
     return len;
 }
@@ -378,9 +346,26 @@ IRQ_HANDLER ISR_UsbOtg_FS()
         for (unsigned i = 0; inEpInts != 0; ++i, inEpInts >>= 1) {
 
             uint32_t inEpInt = OTG.device.inEps[i].DIEPINT;
-            OTG.device.inEps[i].DIEPINT = 0xffffffff;
+            OTG.device.inEps[i].DIEPINT = 0xff;
 
-            // only really interested in XFRC to indicate TX complete
+            /*
+             * TXFE: transmit FIFO has room to write a packet.
+             */
+            if (inEpInt & (1 << 7)) {
+
+                InEndpointState &eps = inEndpointStates[i];
+                const uint32_t* buf32 = reinterpret_cast<const uint32_t*>(eps.buf);
+                volatile uint32_t* fifo = OTG.epFifos[i];
+                for (int b = eps.len; b > 0; b -= 4)
+                    *fifo = *buf32++;
+
+                eps.len = 0;
+                OTG.device.DIEPEMPMSK &= ~(1 << i);
+            }
+
+            /*
+             * XFRC: transmission complete
+             */
             if (inEpInt & 0x1) {
                 if (i == 0)
                     UsbControl::controlRequest(0, TransactionIn);
@@ -399,7 +384,7 @@ IRQ_HANDLER ISR_UsbOtg_FS()
         for (unsigned i = 0; outEpInts != 0; ++i, outEpInts >>= 1) {
 
             uint32_t outEpInt = OTG.device.outEps[i].DOEPINT;
-            OTG.device.outEps[i].DOEPINT = 0xffffffff;
+            OTG.device.outEps[i].DOEPINT = 0xff;
 
             if (outEpInt & (1 << 3)) {      // setup complete
                 UsbControl::controlRequest(0, TransactionSetup);

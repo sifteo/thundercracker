@@ -8,16 +8,15 @@
  */
 namespace UsbHardware
 {
+    static const unsigned MAX_PACKET = 64;
+
     void init();
     void setAddress(uint8_t addr);
     void epINSetup(uint8_t addr, uint8_t type, uint16_t max_size);
     void epOUTSetup(uint8_t addr, uint8_t type, uint16_t max_size);
     void reset();
     void epSetStalled(uint8_t addr, bool stalled);
-    void epSetNak(uint8_t addr, bool nak);
     bool epIsStalled(uint8_t addr);
-    bool epTxInProgress(uint8_t addr);
-    uint16_t epTxWordsAvailable(uint8_t addr);
     uint16_t epWritePacket(uint8_t addr, const void *buf, uint16_t len);
     uint16_t epReadPacket(uint8_t addr, void *buf, uint16_t len);
     void setDisconnected(bool disconnected);

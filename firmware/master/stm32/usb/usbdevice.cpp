@@ -138,6 +138,7 @@ static const struct {
 
 bool UsbDevice::configured;
 volatile bool UsbDevice::txInProgress;
+uint8_t UsbDevice::epINBuf[UsbHardware::MAX_PACKET];
 
 /*
     Called from within Tasks::work() to process usb OUT data on the
@@ -263,8 +264,9 @@ int UsbDevice::write(const uint8_t *buf, unsigned len)
     if (!waitForPreviousWrite())
         return 0;
 
+    memcpy(epINBuf, buf, len);
     txInProgress = true;
-    return UsbHardware::epWritePacket(InEpAddr, buf, len);
+    return UsbHardware::epWritePacket(InEpAddr, epINBuf, len);
 }
 
 int UsbDevice::read(uint8_t *buf, unsigned len)
