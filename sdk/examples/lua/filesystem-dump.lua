@@ -1,13 +1,18 @@
+#!/usr/bin/env siftulator -e
 --[[
 
-    Sifteo SDK Example:
+    Sifteo SDK:
     A Lua script to dump the contents of Siftulator's filesystem.
 
     Save a filesystem image using:
+        rm -f filesystem.bin
         siftulator -F filesystem.bin [game.elf ...]
 
     Dump the filesystem contents using:
         siftulator -F filesystem.bin -e filesystem-dump.lua
+
+    Or equivalently, on UNIX-like OSes:
+        filesystem-dump.lua -F filesystem.bin
 
 --]]
 
