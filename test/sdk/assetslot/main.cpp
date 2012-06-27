@@ -216,10 +216,7 @@ void testBinding()
 
     LOG("================= Testing slot allocation and binding\n");
 
-    /*
-     * Locate our four stub volumes
-     */
-
+    // Locate our four stub volumes
     Array<Volume, 8> vols;
     Volume::list(Volume::T_GAME, vols);
     ASSERT(vols.count() == 4);
@@ -264,6 +261,68 @@ void testBinding()
 }
 
 
+void testEviction()
+{
+    /*
+     * Test eviction of existing bindings in order to create new ones
+     */
+
+    LOG("================= Testing slot binding eviction\n");
+
+    // Locate our four stub volumes
+    Array<Volume, 8> vols;
+    Volume::list(Volume::T_GAME, vols);
+    ASSERT(vols.count() == 4);
+
+    // Set the access rank for existing slots, according to the order in which we've bound them.
+    // This should give us access ranks 4, 3, 2, 1, and 0 respectively.
+
+    _SYS_asset_bindSlots(vols[0], 1);
+    ASSERT(Slot0.tilesFree() < 4096);
+    
+    _SYS_asset_bindSlots(vols[1], 1);
+    ASSERT(Slot0.tilesFree() < 4096);
+
+    _SYS_asset_bindSlots(vols[2], 1);
+    ASSERT(Slot0.tilesFree() < 4096);
+
+    _SYS_asset_bindSlots(vols[3], 1);
+    ASSERT(Slot0.tilesFree() < 4096);
+
+    _SYS_asset_bindSlots(Volume::running(), 4);
+    ASSERT(Slot0.tilesFree() < 4096);
+    ASSERT(Slot1.tilesFree() < 4096);
+    ASSERT(Slot2.tilesFree() < 4096);
+    ASSERT(Slot3.tilesFree() < 4096);
+
+    // Enlarge the binding for vols[2]. This should automatically evict the existing
+    // binding for that volume, plus it will need to evict vols[0].
+
+    _SYS_asset_bindSlots(vols[2], 2);
+    ASSERT(Slot0.tilesFree() == 4096);
+    ASSERT(Slot1.tilesFree() == 4096);
+
+    // Check over all non-evicted volumes
+
+    _SYS_asset_bindSlots(vols[1], 1);
+    ASSERT(Slot0.tilesFree() < 4096);
+
+    _SYS_asset_bindSlots(vols[3], 1);
+    ASSERT(Slot0.tilesFree() < 4096);
+
+    _SYS_asset_bindSlots(Volume::running(), 4);
+    ASSERT(Slot0.tilesFree() < 4096);
+    ASSERT(Slot1.tilesFree() < 4096);
+    ASSERT(Slot2.tilesFree() < 4096);
+    ASSERT(Slot3.tilesFree() < 4096);
+
+    // Verify that vols[0] was evicted
+
+    _SYS_asset_bindSlots(vols[0], 1);
+    ASSERT(Slot0.tilesFree() == 4096);
+}
+
+
 void main()
 {
     _SYS_enableCubes(cubes);
@@ -277,6 +336,7 @@ void main()
     testMultipleSlots();
     testFull();
     testBinding();
+    testEviction();
 
     LOG("Success.\n");
 }
