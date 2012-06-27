@@ -15,6 +15,7 @@
 #include "cube_cpu.h"
 #include "cube_flash_model.h"
 #include "flash_storage.h"
+#include "tracer.h"
 
 namespace Cube {
 
@@ -138,6 +139,8 @@ class Flash {
                  * Just finished our operation
                  */
 
+                Tracer::log(cpu, "FLASH: no longer busy");
+
                 busy = BF_IDLE;
                 busy_timer = 0;
                 
@@ -168,7 +171,7 @@ class Flash {
         }
     }
 
-    ALWAYS_INLINE void cycle(Pins *pins) {
+    ALWAYS_INLINE void cycle(Pins *pins, CPU::em8051 *cpu) {
         if (pins->ce || !pins->power) {
             // Chip disabled
             pins->data_drv = 0;
@@ -188,7 +191,7 @@ class Flash {
 
                 cmd_fifo[cmd_fifo_head].addr = addr;
                 cmd_fifo[cmd_fifo_head].data = pins->data_in;
-                matchCommands();
+                matchCommands(cpu);
                 cmd_fifo_head = CMD_FIFO_MASK & (cmd_fifo_head + 1);
             }
 
@@ -215,6 +218,9 @@ class Flash {
                 if (addr != latched_addr || prev_oe) {
                     cycle_count++;
                     latched_addr = addr;
+
+                    Tracer::log(cpu, "FLASH: read addr [%06x] -> %02x (busy=%d)",
+                        addr, dataOut(), busy);
                 }
             }
             
@@ -262,28 +268,40 @@ class Flash {
             storage->eraseCounts[s]++;
     }
 
-    void matchCommands() {
+    void matchCommands(CPU::em8051 *cpu) {
         struct cmd_state *st = &cmd_fifo[cmd_fifo_head];
 
         if (busy != BF_IDLE)
             return;
 
         if (matchCommand(FlashModel::cmd_byte_program)) {
+            Tracer::log(cpu, "FLASH: programming addr [%06x], %02x -> %02x",
+                st->addr, storage->ext[st->addr], st->data);
+
             storage->ext[st->addr] &= st->data;
             status_byte = FlashModel::STATUS_DATA_INV & ~st->data;
             busy = BF_PROGRAM;
             write_count++;
+
         } else if (matchCommand(FlashModel::cmd_sector_erase)) {
+            Tracer::log(cpu, "FLASH: sector erase [%06x]", st->addr);
+
             erase(st->addr, FlashModel::SECTOR_SIZE);
             status_byte = 0;
             busy = BF_ERASE_SECTOR;
             erase_count++;
+
         } else if (matchCommand(FlashModel::cmd_block_erase)) {
+            Tracer::log(cpu, "FLASH: block erase [%06x]", st->addr);
+
             erase(st->addr, FlashModel::BLOCK_SIZE);
             status_byte = 0;
             busy = BF_ERASE_BLOCK;
             erase_count++;
+
         } else if (matchCommand(FlashModel::cmd_chip_erase)) {
+            Tracer::log(cpu, "FLASH: chip erase [%06x]", st->addr);
+
             erase(st->addr, FlashModel::SIZE);
             status_byte = 0;
             busy = BF_ERASE_CHIP;

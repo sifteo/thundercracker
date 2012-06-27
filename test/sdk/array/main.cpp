@@ -1,4 +1,5 @@
 #include <sifteo/array.h>
+#include <sifteo/cube.h>
 using namespace Sifteo;
 
 // Optimization barrier
@@ -235,6 +236,82 @@ void bitArrayIter()
     ASSERT(a48.clearFirst(index) == false && index == 40);
 }
 
+void rangeArrayIter()
+{
+    // C++11 range-based iteration for Array
+
+    Array<int, 4> foo;
+    Array<int, 8> bar;
+
+    foo.append(10);
+    foo.append(9);
+    foo.append(8);
+
+    for (auto& i : foo) {
+        bar.append(i);
+    }
+
+    ASSERT(bar.count() == 3);
+    ASSERT(bar[0] == 10);
+    ASSERT(bar[1] == 9);
+    ASSERT(bar[2] == 8);
+}
+
+void rangeBitIter()
+{
+    // C++11 range-based iteration for BitArray
+
+    BitArray<8> foo;
+    Array<int, 8> bar;
+
+    foo.mark(6);
+    foo.mark(0);
+    foo.mark(4);
+
+    for (int i : foo) {
+        bar.append(i);
+    }
+
+    ASSERT(bar.count() == 3);
+    ASSERT(bar[0] == 0);
+    ASSERT(bar[1] == 4);
+    ASSERT(bar[2] == 6);
+
+    CubeSet cs1(5);
+    CubeSet cs2(0,24);
+
+    for (CubeID i : cs1) {
+        ASSERT(i == 5);
+    }
+
+    ASSERT(_SYSCubeIDVector(cs1) == 0x04000000);
+    ASSERT(_SYSCubeIDVector(cs2) == 0xffffff00);
+
+    BitArray<63> br1(35);
+    ASSERT(br1.words[0] == 0x00000000);
+    ASSERT(br1.words[1] == 0x10000000);
+
+    BitArray<63> br2(0, 32);
+    ASSERT(br2.words[0] == 0xffffffff);
+    ASSERT(br2.words[1] == 0x00000000);
+
+    BitArray<63> br3(32, 63);
+    ASSERT(br3.words[0] == 0x00000000);
+    ASSERT(br3.words[1] == 0xfffffffe);
+
+    BitArray<32> br4(0, 32);
+    ASSERT(br4.words[0] == 0xffffffff);
+    
+    BitArray<32> br5(5, 5);
+    ASSERT(br5.words[0] == 0x00000000);
+
+    BitArray<32> br6(5, ob(32));
+    ASSERT(br6.words[0] == 0x07ffffff);
+
+    BitArray<32> br7(0, 4);
+    ASSERT(br7.words[0] == 0xf0000000);
+}
+
 void main()
 {
     arrayOfObjects();
@@ -246,6 +323,8 @@ void main()
     findInArrayOfPointers();
     bitArraySizeEdgeCases();
     bitArrayIter();
+    rangeArrayIter();
+    rangeBitIter();
     
     LOG("Success.\n");
 }

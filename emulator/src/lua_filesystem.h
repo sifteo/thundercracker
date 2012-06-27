@@ -33,8 +33,10 @@ private:
     int deleteVolume(lua_State *L);
 
     int volumeType(lua_State *L);
+    int volumeParent(lua_State *L);
     int volumeMap(lua_State *L);
     int volumeEraseCounts(lua_State *L);
+    int volumePayload(lua_State *L);
 
     int simulatedSectorEraseCounts(lua_State *L);
 
@@ -48,6 +50,10 @@ private:
     int onRawRead(lua_State *L);
     int onRawWrite(lua_State *L);
     int onRawErase(lua_State *L);
+
+    int readMetadata(lua_State *L);
+    int readObject(lua_State *L);
+    int writeObject(lua_State *L);
 };
 
 

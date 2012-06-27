@@ -12,6 +12,6 @@ void main()
     // siftulator's virtual-time scheduling, but we avoid paint() so that
     // it doesn't also depend on the paint controller's timing.
 
-    while (SystemTime::now().uptimeMS() < 10000)
+    while (SystemTime::now().uptimeMS() < 20000)
         System::yield();
 }

@@ -12,6 +12,8 @@
 #include "flash_blockcache.h"
 #include "flash_volume.h"
 #include "flash_volumeheader.h"
+#include "flash_lfs.h"
+#include "elfprogram.h"
 
 const char LuaFilesystem::className[] = "Filesystem";
 const char LuaFilesystem::callbackHostField[] = "__filesystem_callbackHost";
@@ -22,8 +24,10 @@ Lunar<LuaFilesystem>::RegType LuaFilesystem::methods[] = {
     LUNAR_DECLARE_METHOD(LuaFilesystem, listVolumes),
     LUNAR_DECLARE_METHOD(LuaFilesystem, deleteVolume),
     LUNAR_DECLARE_METHOD(LuaFilesystem, volumeType),
+    LUNAR_DECLARE_METHOD(LuaFilesystem, volumeParent),
     LUNAR_DECLARE_METHOD(LuaFilesystem, volumeMap),
     LUNAR_DECLARE_METHOD(LuaFilesystem, volumeEraseCounts),
+    LUNAR_DECLARE_METHOD(LuaFilesystem, volumePayload),
     LUNAR_DECLARE_METHOD(LuaFilesystem, simulatedSectorEraseCounts),
     LUNAR_DECLARE_METHOD(LuaFilesystem, rawRead),
     LUNAR_DECLARE_METHOD(LuaFilesystem, rawWrite),
@@ -33,6 +37,9 @@ Lunar<LuaFilesystem>::RegType LuaFilesystem::methods[] = {
     LUNAR_DECLARE_METHOD(LuaFilesystem, onRawRead),
     LUNAR_DECLARE_METHOD(LuaFilesystem, onRawWrite),
     LUNAR_DECLARE_METHOD(LuaFilesystem, onRawErase),
+    LUNAR_DECLARE_METHOD(LuaFilesystem, readMetadata),
+    LUNAR_DECLARE_METHOD(LuaFilesystem, readObject),
+    LUNAR_DECLARE_METHOD(LuaFilesystem, writeObject),
     {0,0}
 };
 
@@ -132,6 +139,7 @@ int LuaFilesystem::newVolume(lua_State *L)
     const char *dataStr = lua_tolstring(L, 3, &dataStrLen);
     FlashMapBlock parent = FlashMapBlock::fromCode(lua_tointeger(L, 4));
 
+    FlashScopedStealthIO sio;
     FlashVolumeWriter writer;
     if (!writer.begin(type, payloadStrLen, dataStrLen, parent))
         return 0;
@@ -155,6 +163,7 @@ int LuaFilesystem::listVolumes(lua_State *L)
     FlashVolume vol;
     unsigned index = 0;
 
+    FlashScopedStealthIO sio;
     vi.begin();
     while (vi.next(vol)) {
         lua_pushnumber(L, ++index);
@@ -171,9 +180,12 @@ int LuaFilesystem::deleteVolume(lua_State *L)
      * Given a volume block code, mark the volume as deleted.
      */
 
+    FlashDevice::setStealthIO(1);
+
     unsigned code = luaL_checkinteger(L, 1);
     FlashVolume vol(FlashMapBlock::fromCode(code));
     if (!vol.isValid()) {
+        FlashDevice::setStealthIO(-1);
         lua_pushfstring(L, "invalid volume");
         lua_error(L);
         return 0;
@@ -181,6 +193,7 @@ int LuaFilesystem::deleteVolume(lua_State *L)
 
     vol.deleteTree();
 
+    FlashDevice::setStealthIO(-1);
     return 0;
 }
 
@@ -190,15 +203,41 @@ int LuaFilesystem::volumeType(lua_State *L)
      * Given a volume block code, return the volume's type.
      */
 
+    FlashDevice::setStealthIO(1);
+
     unsigned code = luaL_checkinteger(L, 1);
     FlashVolume vol(FlashMapBlock::fromCode(code));
     if (!vol.isValid()) {
+        FlashDevice::setStealthIO(-1);
         lua_pushfstring(L, "invalid volume");
         lua_error(L);
         return 0;
     }
 
     lua_pushnumber(L, vol.getType());
+    FlashDevice::setStealthIO(-1);
+    return 1;
+}
+
+int LuaFilesystem::volumeParent(lua_State *L)
+{
+    /*
+     * Given a volume block code, return the volume's parent.
+     */
+
+    FlashDevice::setStealthIO(1);
+
+    unsigned code = luaL_checkinteger(L, 1);
+    FlashVolume vol(FlashMapBlock::fromCode(code));
+    if (!vol.isValid()) {
+        FlashDevice::setStealthIO(-1);
+        lua_pushfstring(L, "invalid volume");
+        lua_error(L);
+        return 0;
+    }
+
+    lua_pushnumber(L, vol.getParent().block.code);
+    FlashDevice::setStealthIO(-1);
     return 1;
 }
 
@@ -209,9 +248,12 @@ int LuaFilesystem::volumeMap(lua_State *L)
      * as an array of block codes.
      */
 
+    FlashDevice::setStealthIO(1);
+
     unsigned code = luaL_checkinteger(L, 1);
     FlashVolume vol(FlashMapBlock::fromCode(code));
     if (!vol.isValid()) {
+        FlashDevice::setStealthIO(-1);
         lua_pushfstring(L, "invalid volume");
         lua_error(L);
         return 0;
@@ -229,6 +271,7 @@ int LuaFilesystem::volumeMap(lua_State *L)
         lua_settable(L, -3);
     }
 
+    FlashDevice::setStealthIO(-1);
     return 1;
 }
 
@@ -238,9 +281,12 @@ int LuaFilesystem::volumeEraseCounts(lua_State *L)
      * Given a volume block code, return the volume's array of erase counts.
      */
 
+    FlashDevice::setStealthIO(1);
+
     unsigned code = luaL_checkinteger(L, 1);
     FlashVolume vol(FlashMapBlock::fromCode(code));
     if (!vol.isValid()) {
+        FlashDevice::setStealthIO(-1);
         lua_pushfstring(L, "invalid volume");
         lua_error(L);
         return 0;
@@ -258,6 +304,42 @@ int LuaFilesystem::volumeEraseCounts(lua_State *L)
         lua_settable(L, -3);
     }
 
+    FlashDevice::setStealthIO(-1);
+    return 1;
+}
+
+int LuaFilesystem::volumePayload(lua_State *L)
+{
+    /*
+     * Given a volume block code, return the volume's payload data as a string.
+     */
+
+    FlashDevice::setStealthIO(1);
+
+    unsigned code = luaL_checkinteger(L, 1);
+    FlashVolume vol(FlashMapBlock::fromCode(code));
+    if (!vol.isValid()) {
+        FlashDevice::setStealthIO(-1);
+        lua_pushfstring(L, "invalid volume");
+        lua_error(L);
+        return 0;
+    }
+
+    FlashBlockRef ref;
+    FlashMapSpan span = vol.getPayload(ref);
+
+    uint8_t *buffer = new uint8_t[span.sizeInBytes()];
+    if (!span.copyBytes(0, buffer, span.sizeInBytes())) {
+        delete buffer;
+        FlashDevice::setStealthIO(-1);
+        lua_pushfstring(L, "I/O error");
+        lua_error(L);
+        return 0;
+    }
+
+    lua_pushlstring(L, (const char *)buffer, span.sizeInBytes());
+    FlashDevice::setStealthIO(-1);
+    delete buffer;
     return 1;
 }
 
@@ -301,6 +383,7 @@ int LuaFilesystem::rawRead(lua_State *L)
     uint8_t *buffer = new uint8_t[size];
     ASSERT(buffer);
 
+    FlashScopedStealthIO sio;
     FlashDevice::read(addr, buffer, size);
 
     lua_pushlstring(L, (const char *) buffer, size);
@@ -326,6 +409,7 @@ int LuaFilesystem::rawWrite(lua_State *L)
         return 0;
     }
 
+    FlashScopedStealthIO sio;
     FlashDevice::write(addr, (const uint8_t*) data, size);
     return 0;
 }
@@ -345,6 +429,7 @@ int LuaFilesystem::rawErase(lua_State *L)
         return 0;
     }
 
+    FlashScopedStealthIO sio;
     FlashDevice::eraseSector(addr);
     return 0;
 }
@@ -352,10 +437,12 @@ int LuaFilesystem::rawErase(lua_State *L)
 int LuaFilesystem::invalidateCache(lua_State *L)
 {
     /*
-     * Invalidate the block cache. No parameters.
+     * Invalidate all caches. No parameters.
      */
 
     FlashBlock::invalidate();
+    FlashLFSCache::invalidate();
+
     return 0;
 }
 
@@ -380,5 +467,143 @@ int LuaFilesystem::onRawWrite(lua_State *L)
 int LuaFilesystem::onRawErase(lua_State *L)
 {
     // Default implementation (no-op)
+    return 0;
+}
+
+int LuaFilesystem::readMetadata(lua_State *L)
+{
+    /*
+     * Read ELF metadata. (volume, key) -> (data)
+     */
+
+    FlashDevice::setStealthIO(1);
+
+    unsigned code = luaL_checkinteger(L, 1);
+    unsigned key = luaL_checkinteger(L, 2);
+
+    FlashVolume vol(FlashMapBlock::fromCode(code));
+    if (!vol.isValid()) {
+        FlashDevice::setStealthIO(-1);
+        lua_pushfstring(L, "invalid volume");
+        lua_error(L);
+        return 0;
+    }
+
+    FlashBlockRef mapRef;
+    Elf::Program program;
+    if (!program.init(vol.getPayload(mapRef))) {
+        FlashDevice::setStealthIO(-1);
+        lua_pushfstring(L, "volume is not an ELF binary");
+        lua_error(L);
+        return 0;
+    }
+
+    FlashBlockRef dataRef;
+    uint32_t actualSize = 0;
+    const void *data = program.getMeta(dataRef, key, 1, actualSize);
+
+    FlashDevice::setStealthIO(-1);
+    if (data) {
+        lua_pushlstring(L, (const char*)data, actualSize);
+        return 1;
+    }
+    return 0;
+}
+
+int LuaFilesystem::readObject(lua_State *L)
+{
+    /*
+     * Read an LFS object. (volume, key) -> (data)
+     */
+
+    FlashDevice::setStealthIO(1);
+
+    unsigned code = luaL_checkinteger(L, 1);
+    unsigned key = luaL_checkinteger(L, 2);
+
+    FlashVolume vol(FlashMapBlock::fromCode(code));
+    if (code && !vol.isValid()) {
+        FlashDevice::setStealthIO(-1);
+        lua_pushfstring(L, "invalid volume");
+        lua_error(L);
+        return 0;
+    }
+
+    if (!FlashLFSIndexRecord::isKeyAllowed(key)) {
+        FlashDevice::setStealthIO(-1);
+        lua_pushfstring(L, "invalid key");
+        lua_error(L);
+        return 0;
+    }
+
+    FlashLFS &lfs = FlashLFSCache::get(vol);
+    FlashLFSObjectIter iter(lfs);
+    uint8_t buffer[FlashLFSIndexRecord::MAX_SIZE];
+
+    while (iter.previous(key)) {
+        unsigned size = iter.record()->getSizeInBytes();
+        ASSERT(size <= sizeof buffer);
+        if (iter.readAndCheck(buffer, size)) {
+            FlashDevice::setStealthIO(-1);
+            lua_pushlstring(L, (const char*)buffer, size);
+            return 1;
+        }
+    }
+
+    FlashDevice::setStealthIO(-1);
+    return 0;
+}
+
+int LuaFilesystem::writeObject(lua_State *L)
+{
+    /*
+     * Write an LFS object. (volume, key, data) -> ()
+     */
+
+    size_t dataStrLen = 0;
+    unsigned code = luaL_checkinteger(L, 1);
+    unsigned key = luaL_checkinteger(L, 2);
+    const uint8_t *dataStr = (const uint8_t*) lua_tolstring(L, 3, &dataStrLen);
+
+    FlashVolume vol(FlashMapBlock::fromCode(code));
+    if (code && !vol.isValid()) {
+        lua_pushfstring(L, "invalid volume");
+        lua_error(L);
+        return 0;
+    }
+
+    if (!FlashLFSIndexRecord::isKeyAllowed(key)) {
+        lua_pushfstring(L, "invalid key");
+        lua_error(L);
+        return 0;
+    }
+    
+    if (!FlashLFSIndexRecord::isSizeAllowed(dataStrLen)) {
+        lua_pushfstring(L, "invalid data size");
+        lua_error(L);
+        return 0;
+    }
+
+    CrcStream cs;
+    cs.reset();
+    cs.addBytes(dataStr, dataStrLen);
+    uint32_t crc = cs.get(FlashLFSIndexRecord::SIZE_UNIT);
+
+    FlashDevice::setStealthIO(1);
+
+    FlashLFS &lfs = FlashLFSCache::get(vol);
+    FlashLFSObjectAllocator allocator(lfs, key, dataStrLen, crc);
+
+    if (!allocator.allocateAndCollectGarbage()) {
+        FlashDevice::setStealthIO(-1);
+        lua_pushfstring(L, "out of space");
+        lua_error(L);
+        return 0;
+    }
+
+    FlashBlock::invalidate(allocator.address(), allocator.address() + dataStrLen);
+    FlashDevice::write(allocator.address(), dataStr, dataStrLen);
+
+    FlashDevice::setStealthIO(-1);
     return 0;
 }

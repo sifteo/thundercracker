@@ -13,6 +13,7 @@ If you get stuck, our [Developer Forum](http://support.sifteo.com/categories/200
 
 ## Important Concepts
 * @ref asset_workflow - how to create and manage assets for your Sifteo applications
+* @ref asset_memory - how to manage the memory used by your assets
 * @ref gfx - details on the graphics engine, and rendering pipeline
 * @ref execution_env - details on how Sifteo applications are executed
 

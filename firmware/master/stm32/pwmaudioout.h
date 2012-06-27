@@ -43,8 +43,10 @@ private:
     GPIOPin outA;
     GPIOPin outB;
 
-    AudioBuffer buf;
     AudioMixer *mixer;
+ 
+    // Keep this last; it's large.
+    AudioBuffer buf;
 
     void dmaIsr(uint32_t flags);
     friend class AudioOutDevice;

@@ -18,8 +18,17 @@
  * LIS3DH accelerometer.
  */
 
-#define ACCEL_ADDR_TX           0x30    // 00110010 - SDO is tied LOW
-#define ACCEL_ADDR_RX           0x31    // 00110011 - SDO is tied LOW
+#if HWREV >= 4
+
+    #define ACCEL_ADDR_TX           0x32    // 00110010 - SDO is tied LOW
+    #define ACCEL_ADDR_RX           0x33    // 00110011 - SDO is tied LOW
+
+#else
+
+    #define ACCEL_ADDR_TX           0x30    // 00110000 - SDO is tied LOW
+    #define ACCEL_ADDR_RX           0x31    // 00110001 - SDO is tied LOW
+
+#endif
 
 #define ACCEL_CTRL_REG1         0x20
 #define ACCEL_REG1_INIT         0x4F    // 50 Hz, low power, x/y/z axes enabled

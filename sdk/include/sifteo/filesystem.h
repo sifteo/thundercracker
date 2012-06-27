@@ -184,8 +184,8 @@ public:
 
     /// Enumeration of common volume types
     enum Type {
-        T_GAME      = _SYS_FS_VOL_GAME,
-        T_LAUNCHER  = _SYS_FS_VOL_LAUNCHER,
+        T_GAME      = _SYS_FS_VOL_GAME,         ///< Volume type for normal games
+        T_LAUNCHER  = _SYS_FS_VOL_LAUNCHER,     ///< Volume type for the system launcher
     };
 
     /// Default constructor, leaves the Volume with an invalid value of zero.

@@ -43,5 +43,23 @@ public:
     static void readId(JedecID *id);
 };
 
+
+/**
+ * A utility class that enables "stealth" flash I/O in simulation
+ * as long as it's in scope. No effect on hardware.
+ */
+
+class FlashScopedStealthIO {
+public:
+    FlashScopedStealthIO() {
+        DEBUG_ONLY(FlashDevice::setStealthIO(1);)
+    }
+
+    ~FlashScopedStealthIO() {
+        DEBUG_ONLY(FlashDevice::setStealthIO(-1);)
+    }
+};
+
+
 #endif
 

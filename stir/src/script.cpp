@@ -97,6 +97,14 @@ bool Script::run(const char *filename)
         log.heading(group->getName().c_str());
 
         pool.optimize(log);
+
+        if (pool.size() > pool.MAX_SIZE) {
+            log.error("Error: Group '%s' with %d tiles is too large (%.02f%% of %d-tile slot)",
+                group->getName().c_str(), pool.size(), pool.size() * (100.0 / pool.MAX_SIZE),
+                pool.MAX_SIZE);
+            return false;
+        }
+
         pool.encode(group->getLoadstream(), &log);
 
         proof.writeGroup(*group);

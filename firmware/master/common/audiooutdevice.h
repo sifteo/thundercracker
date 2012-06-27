@@ -11,7 +11,7 @@
 #include "tasks.h"
 
 class AudioMixer;
-typedef RingBuffer<256, int16_t> AudioBuffer;
+typedef RingBuffer<512, int16_t> AudioBuffer;
 
 
 class AudioOutDevice

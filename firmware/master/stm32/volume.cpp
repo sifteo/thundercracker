@@ -5,10 +5,11 @@
 #include "macros.h"
 #include <sifteo/abi/audio.h>
 
-static RCTimer timer(HwTimer(&VOLUME_TIM), VOLUME_CHAN, VOLUME_GPIO);
+static RCTimer gVolumeTimer(HwTimer(&VOLUME_TIM), VOLUME_CHAN, VOLUME_GPIO);
 
-static uint16_t calibratedMin;
-static uint16_t calibratedMax;
+static int calibratedMin;
+static int calibratedScale;
+
 
 namespace Volume {
 
@@ -17,12 +18,12 @@ void init()
     /*
      * Defaults in case stored calibration data is not available.
      *
-     * I have observed the min to be around 80, and max to be around 875.
+     * I have observed the min to be around 60, and max to be around 640.
      * Tightening the window a bit to make sure we can get all the way to the
      * extremes, even when accommodating some variation.
      */
-    const uint16_t DefaultMin = 100;
-    const uint16_t DefaultMax = 800;
+    const int DefaultMin = 100;
+    const int DefaultMax = 600;
 
     /*
      * TODO: read calibration readings taken at factory test time
@@ -31,7 +32,12 @@ void init()
      * Fall back to defaults for now.
      */
     calibratedMin = DefaultMin;
-    calibratedMax = DefaultMax;
+    int calibratedMax = DefaultMax;
+
+    /*
+     * Calculate a scale factor from raw units to volume units, in 16.16 fixed point.
+     */
+    calibratedScale = (_SYS_AUDIO_MAX_VOLUME << 16) / (calibratedMax - calibratedMin);
 
     /*
      * Specify the rate at which we'd like to sample the volume level.
@@ -42,26 +48,26 @@ void init()
      * capture readings - we don't need anything too detailed, so we can
      * dial it down a bit.
      */
-    timer.init(0xfff, 3);
+    gVolumeTimer.init(0xfff, 3);
 }
 
-uint16_t systemVolume()
+int systemVolume()
 {
-    uint16_t reading = clamp(timer.lastReading(), calibratedMin, calibratedMax);
-    uint16_t scaledVolume = scale(reading, calibratedMin, calibratedMax,
-                                  (uint16_t)0, (uint16_t)_SYS_AUDIO_MAX_VOLUME);
-    return scaledVolume;
+    int reading = gVolumeTimer.lastReading();
+    int scaled = ((reading - calibratedMin) * calibratedScale + 0x8000) >> 16;
+    return clamp<int>(scaled, 0, _SYS_AUDIO_MAX_VOLUME);
 }
 
-uint16_t calibrate(CalibrationState state)
+int calibrate(CalibrationState state)
 {
-    uint16_t currentRawValue = timer.lastReading();
+    int currentRawValue = gVolumeTimer.lastReading();
 
     /*
      * Save the currentRawValue as the calibrated value for the given state.
      *
      * TODO: determine how we're going to store calibration data and implement me!
      */
+
     switch (state) {
     case CalibrationLow:
         break;
@@ -77,6 +83,6 @@ uint16_t calibrate(CalibrationState state)
 #if (BOARD != BOARD_TEST_JIG)
 IRQ_HANDLER ISR_TIM5()
 {
-    timer.isr();    // must clear the TIM IRQ internally
+    gVolumeTimer.isr();    // must clear the TIM IRQ internally
 }
 #endif

@@ -46,11 +46,12 @@ void main()
 {
     // Bootstrapping that would normally be done by the Launcher
     _SYS_enableCubes(cube.bit());
+    _SYS_asset_bindSlots(_SYS_fs_runningVolume(), 1);
     ScopedAssetLoader loader;
     SCRIPT(LUA, System():setAssetLoaderBypass(true));
     MainSlot.erase();
     loader.start(BootAssets, MainSlot, cube);
-    ASSERT(loader.isComplete());
+    loader.finish();
     SCRIPT(LUA, System():setAssetLoaderBypass(false));
 
     SCRIPT(LUA,

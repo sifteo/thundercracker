@@ -137,6 +137,8 @@ static const struct {
 };
 
 bool UsbDevice::configured;
+volatile bool UsbDevice::txInProgress;
+uint8_t UsbDevice::epINBuf[UsbHardware::MAX_PACKET];
 
 /*
     Called from within Tasks::work() to process usb OUT data on the
@@ -169,6 +171,7 @@ void UsbDevice::handleINData(void *p) {
 
 void UsbDevice::init() {
     configured = false;
+    txInProgress = false;
     UsbCore::init(&dev, (Usb::ConfigDescriptor*)&configurationBlock, descriptorStrings);
 }
 
@@ -178,8 +181,8 @@ void UsbDevice::init() {
  */
 void UsbDevice::onConfigComplete(uint16_t wValue)
 {
-    UsbHardware::epSetup(InEpAddr, Usb::EpAttrBulk, 64);
-    UsbHardware::epSetup(OutEpAddr, Usb::EpAttrBulk, 64);
+    UsbHardware::epINSetup(InEpAddr, Usb::EpAttrBulk, 64);
+    UsbHardware::epOUTSetup(OutEpAddr, Usb::EpAttrBulk, 64);
     configured = true;
 }
 
@@ -208,7 +211,7 @@ void UsbDevice::handleStartOfFrame()
  */
 void UsbDevice::inEndpointCallback(uint8_t ep)
 {
-
+    txInProgress = false;
 }
 
 /*
@@ -246,7 +249,7 @@ int UsbDevice::controlRequest(Usb::SetupData *req, uint8_t **buf, uint16_t *len)
  */
 bool UsbDevice::waitForPreviousWrite()
 {
-    while (configured && UsbHardware::epTxInProgress(InEpAddr))
+    while (configured && txInProgress)
         ;
     return configured;
 }
@@ -258,12 +261,12 @@ bool UsbDevice::waitForPreviousWrite()
  */
 int UsbDevice::write(const uint8_t *buf, unsigned len)
 {
-    // XXX: this is a little heavy handed for now, but we really don't want to
-    // be trying to write to an unconfigured device. Determine if there's a better way...
     if (!waitForPreviousWrite())
         return 0;
 
-    return UsbHardware::epWritePacket(InEpAddr, buf, len);
+    memcpy(epINBuf, buf, len);
+    txInProgress = true;
+    return UsbHardware::epWritePacket(InEpAddr, epINBuf, len);
 }
 
 int UsbDevice::read(uint8_t *buf, unsigned len)

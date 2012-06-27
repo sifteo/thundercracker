@@ -10,6 +10,7 @@
 #include "nrf24l01.h"
 #include "debug.h"
 #include "board.h"
+#include "sampleprofiler.h"
 
 NRF24L01 NRF24L01::instance(RF_CE_GPIO,
                             RF_IRQ_GPIO,
@@ -17,9 +18,11 @@ NRF24L01 NRF24L01::instance(RF_CE_GPIO,
                                       RF_SPI_CSN_GPIO,      //   CSN
                                       RF_SPI_SCK_GPIO,      //   SCK
                                       RF_SPI_MISO_GPIO,     //   MISO
-                                      RF_SPI_MOSI_GPIO));   //   MOSI
+                                      RF_SPI_MOSI_GPIO,     //   MOSI
+                                      staticSpiCompletionHandler));
 
 void NRF24L01::init() {
+
     /*
      * Common hardware initialization, regardless of radio usage mode.
      */
@@ -99,7 +102,7 @@ void NRF24L01::beginTransmitting()
      * within the isr().
      */
 
-    transmitPacket();
+    beginTransmit();
 }
 
 /*
@@ -120,25 +123,22 @@ void NRF24L01::setPRXMode(bool enabled)
         ce.setHigh();
 
     } else {
+
         /* Radio back to PTX mode */
+        const uint8_t ptx_setup[]  = {
+            /* Discard any packets queued in hardware */
+            1, CMD_FLUSH_RX,
+            1, CMD_FLUSH_TX,
 
-        spi.begin();
-        spi.transfer(CMD_FLUSH_RX);
-        spi.end();
+            /* Clear write-once-to-clear bits */
+            2, CMD_W_REGISTER | REG_STATUS,         0x70,
 
-        spi.begin();
-        spi.transfer(CMD_FLUSH_TX);
-        spi.end();
+            /* 16-bit CRC, radio enabled, IRQs enabled */
+            2, CMD_W_REGISTER | REG_CONFIG,         0x0e,
 
-        spi.begin();
-        spi.transfer(CMD_W_REGISTER | REG_STATUS);
-        spi.transfer(0x70);
-        spi.end();
-
-        spi.begin();
-        spi.transfer(CMD_W_REGISTER | REG_CONFIG);
-        spi.transfer(0x0e);
-        spi.end();
+            0
+        };
+        spi.transferTable(ptx_setup);
 
         ce.setLow();
     }
@@ -203,6 +203,9 @@ Radio::TxPower NRF24L01::txPower()
 
 void NRF24L01::isr()
 {
+    SampleProfiler::SubSystem s = SampleProfiler::subsystem();
+    SampleProfiler::setSubsystem(SampleProfiler::RFISR);
+
     // Acknowledge to the IRQ controller
     irq.irqAcknowledge();
 
@@ -231,21 +234,23 @@ void NRF24L01::isr()
     case TX_DS:
         // Successful transmit, no ACK data
         RadioManager::ackEmpty();
-        transmitPacket();
+        beginTransmit();
         break;
 
     case TX_DS | RX_DR:
         // Successful transmit, with an ACK
-        receivePacket();
-        transmitPacket();
+        beginReceive();
+        // The next transmission begins once this receive is completed
         break;
 
     default:
         // Other cases are not allowed. Do something non-fatal...
         Debug::log("Unhandled nRF IRQ status");
-        transmitPacket();
+        beginTransmit();
         break;
     }
+
+    SampleProfiler::setSubsystem(s);
 }
 
 void NRF24L01::handleTimeout()
@@ -272,13 +277,13 @@ void NRF24L01::handleTimeout()
         spi.begin();
         spi.transfer(CMD_FLUSH_TX);
         spi.end();
-        
+
         RadioManager::timeout();
-        transmitPacket();
+        beginTransmit();
     }
 }
 
-void NRF24L01::receivePacket()
+void NRF24L01::beginReceive()
 {
     /*
      * A packet has been received. Dequeue it from the hardware
@@ -287,36 +292,14 @@ void NRF24L01::receivePacket()
      * Called from interrupt context.
      */
 
+    txnState = RXStatus;
     spi.begin();
-    spi.transfer(CMD_R_RX_PL_WID);
-    rxBuffer.len = spi.transfer(0);
-    spi.end();
-
-    if (rxBuffer.len > rxBuffer.MAX_LEN) {
-        /*
-         * Receive error. The data sheet requires that we flush the RX
-         * FIFO.  We'll count this as a timeout.
-         */
-
-        spi.begin();
-        spi.transfer(CMD_FLUSH_RX);
-        spi.end();
-
-        RadioManager::timeout();
-        return;
-    }
-
-    spi.begin();
-    spi.transfer(CMD_R_RX_PAYLOAD);
-    spi.transferDma(rxBuffer.bytes, rxBuffer.bytes, rxBuffer.len);
-    while (spi.dmaInProgress())
-        ;
-    spi.end();
-
-    RadioManager::ackWithPacket(rxBuffer);
+    // NOTE: reusing rxData for these status bytes
+    rxData[0] = CMD_R_RX_PL_WID;
+    spi.transferDma(rxData, rxData, 2);
 }
  
-void NRF24L01::transmitPacket()
+void NRF24L01::beginTransmit()
 {
     /*
      * This is an opportunity to transmit. Ask RadioManager to produce
@@ -336,41 +319,15 @@ void NRF24L01::transmitPacket()
 #endif
 
     /*
-     * Set the tx/rx address and channel
+     * Fire off our transmit process. Subsequent steps are performed in the
+     * SPI completion event.
      */
 
+    txnState = TXChannel;
     spi.begin();
-    spi.transfer(CMD_W_REGISTER | REG_RF_CH);
-    spi.transfer(txBuffer.dest->channel);
-    spi.end();
-
-    spi.begin();
-    spi.transfer(CMD_W_REGISTER | REG_TX_ADDR);
-    spi.txDma(txBuffer.dest->id, sizeof txBuffer.dest->id);
-    while (spi.dmaInProgress())
-        ;
-    spi.end();
-
-    spi.begin();
-    spi.transfer(CMD_W_REGISTER | REG_RX_ADDR_P0);
-    spi.txDma(txBuffer.dest->id, sizeof txBuffer.dest->id);
-    while (spi.dmaInProgress())
-        ;
-    spi.end();
-
-    /*
-     * Enqueue the packet
-     */
-
-    spi.begin();
-    spi.transfer(txBuffer.noAck ? CMD_W_TX_PAYLOAD_NO_ACK : CMD_W_TX_PAYLOAD);
-    spi.txDma(txBuffer.packet.bytes, txBuffer.packet.len);
-    while (spi.dmaInProgress())
-        ;
-    spi.end();
-
-    // Start the transmitter!
-    pulseCE();
+    txAddressBuffer[0] = CMD_W_REGISTER | REG_RF_CH;
+    txAddressBuffer[1] = txBuffer.dest->channel;
+    spi.txDma(txAddressBuffer, 2);
 }
 
 void NRF24L01::pulseCE()
@@ -378,16 +335,108 @@ void NRF24L01::pulseCE()
     /*
      * Pulse CE for at least 10us to start transmitting.
      *
-     * XXX: Big hack. This should be asynchronous, and the timing
-     *      should be based on the system clock. Right now I'm just
-     *      using a dummy SPI transaction for timing purposes. Gross!
-     *      Okay, well, maybe using SPI transactions for timing isn't
-     *      the worst idea ever. But doing this all synchronously
-     *      in the ISR is pretty bad!
+     * This is a little bit sneaky, but use a dummy transaction on the SPI bus
+     * (note, no chip select) to time the pulse. The SPI peripheral consumes
+     * less power than it would take to fire up another timer peripheral,
+     * so it's a bit cheaper this way.
+     *
+     * The pulse ends in the spi completion handler.
      */
 
+    txnState = TXPulseCE;
     ce.setHigh();
-    for (unsigned i = 0; i < 10; i++)
-        spi.transfer(0);
-    ce.setLow();
+    spi.txDma(txData, 10);
+}
+
+void NRF24L01::staticSpiCompletionHandler(void *p)
+{
+    NRF24L01::instance.onSpiComplete();
+}
+
+/*
+ * An SPI transmission has completed.
+ * NRF transmit and receive operations consist of multiple SPI transmissions,
+ * so step to the next state and execute accordingly.
+ *
+ * NOTE: the RX states are only executed in the event that data arrived on one
+ * of the ACK packets that we've received. Otherwise, we start in directly on
+ * the TX states.
+ */
+void NRF24L01::onSpiComplete()
+{
+    SampleProfiler::SubSystem s = SampleProfiler::subsystem();
+    SampleProfiler::setSubsystem(SampleProfiler::RFISR);
+
+    spi.end();
+    switch (txnState) {
+
+    case RXStatus:
+        /*
+         * we've read the number of bytes that have arrived. Check for error,
+         * and proceed to reading the payload data.
+         */
+        rxBuffer.len = rxData[1];
+        if (rxBuffer.len > rxBuffer.MAX_LEN) {
+            /*
+             * Receive error. The data sheet requires that we flush the RX
+             * FIFO.  We'll count this as a timeout.
+             */
+
+            spi.begin();
+            spi.transfer(CMD_FLUSH_RX);
+            spi.end();
+
+            txnState = Idle;
+            RadioManager::timeout();
+            break;
+        }
+
+        txnState = RXPayload;
+        rxData[0] = CMD_R_RX_PAYLOAD;
+        spi.begin();
+        spi.transferDma(rxData, rxData, rxBuffer.len + 1);
+        break;
+
+    case RXPayload:
+        RadioManager::ackWithPacket(rxBuffer);
+        beginTransmit();
+        break;
+
+    case TXChannel:
+        txnState = TXAddressTx;
+        spi.begin();
+        txAddressBuffer[0] = CMD_W_REGISTER | REG_TX_ADDR;
+        memcpy(txAddressBuffer + 1, txBuffer.dest->id, sizeof txBuffer.dest->id);
+        spi.txDma(txAddressBuffer, sizeof(txBuffer.dest->id) + 1);
+        break;
+
+    case TXAddressTx:
+        txnState = TXAddressRx;
+        spi.begin();
+        txAddressBuffer[0] = CMD_W_REGISTER | REG_RX_ADDR_P0;
+        memcpy(txAddressBuffer + 1, txBuffer.dest->id, sizeof txBuffer.dest->id);
+        spi.txDma(txAddressBuffer, sizeof(txBuffer.dest->id) + 1);
+        break;
+
+    case TXAddressRx:
+        txnState = TXPayload;
+        spi.begin();
+        txData[0] = txBuffer.noAck ? CMD_W_TX_PAYLOAD_NO_ACK : CMD_W_TX_PAYLOAD;
+        spi.txDma(txData, txBuffer.packet.len + 1);
+        break;
+
+    case TXPayload:
+        pulseCE();
+        break;
+
+    case TXPulseCE:
+        txnState = Idle;
+        ce.setLow();
+        break;
+
+    case Idle:
+        break;
+    }
+
+    SampleProfiler::setSubsystem(s);
 }

@@ -3,14 +3,20 @@
 #include "usbprotocol.h"
 #include "vectors.h"
 
+#include "tasks.h"
+
 #include <string.h>
 
+SampleProfiler::SubSystem SampleProfiler::subsys;
 uint32_t SampleProfiler::sampleBuf;
 HwTimer SampleProfiler::timer(&PROFILER_TIM);
 
 void SampleProfiler::init()
 {
-    timer.init(1000, 35);
+    subsys = None;
+
+    // Highest prime number under 1000
+    timer.init(997, 35);
 }
 
 void SampleProfiler::onUSBData(const USBProtocolMsg &m)
@@ -18,29 +24,27 @@ void SampleProfiler::onUSBData(const USBProtocolMsg &m)
     if (m.payloadLen() < 2 || m.payload[0] != SetProfilingEnabled)
         return;
 
-    if (m.payload[1])
-        startSampling();
-    else
-        stopSampling();
+    if (m.payload[1]) {
+        timer.enableUpdateIsr();
+        Tasks::setPending(Tasks::Profiler);
+    } else {
+        Tasks::clearPending(Tasks::Profiler);
+        timer.disableUpdateIsr();
+    }
 }
 
 void SampleProfiler::processSample(uint32_t pc)
 {
     timer.clearStatus();
 
-    sampleBuf = pc;
+    // high 4 bits are subsystem
+    sampleBuf = (subsys << 28) | pc;
+}
 
-    /*
-     * It's a bit rude to send this out over USB within this ISR, but
-     * it means that none of the profiler's work will be included in the
-     * reported data.
-     *
-     * If this turns out to be untenable, let's move this to a task.
-     */
+void SampleProfiler::task(void *p)
+{
     USBProtocolMsg m(USBProtocol::Profiler);
-
-    memcpy(m.payload, &sampleBuf, sizeof sampleBuf);
-    m.len += sizeof(sampleBuf);
+    m.append((uint8_t*)&sampleBuf, sizeof sampleBuf);
     UsbDevice::write(m.bytes, m.len);
 }
 

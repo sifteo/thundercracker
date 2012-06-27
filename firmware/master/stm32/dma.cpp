@@ -19,11 +19,11 @@ Dma::DmaHandler_t Dma::Ch2Handlers[5];
 void Dma::registerHandler(volatile DMA_t *dma, int channel, DmaIsr_t func, void *param)
 {
     if (dma == &DMA1) {
+
         if (Ch1Mask == 0) {
             RCC.AHBENR |= (1 << 0);
             dma->IFCR = 0x0FFFFFFF; // clear all ISRs
-        }
-        else if (Ch1Mask & (1 << channel)) {
+        } else if (Ch1Mask & (1 << channel)) {
             return;     // already registered :(
         }
 
@@ -31,23 +31,18 @@ void Dma::registerHandler(volatile DMA_t *dma, int channel, DmaIsr_t func, void 
         Ch1Handlers[channel].isrfunc = func;
         Ch1Handlers[channel].param = param;
 
-        const ISR_t *isr = &IVT.DMA1_Channel1 + channel;
-        NVIC.irqEnable(*isr);
-    }
-    else if (dma == &DMA2) {
+    } else if (dma == &DMA2) {
+
         if (Ch2Mask == 0) {
             RCC.AHBENR |= (1 << 1);
             dma->IFCR = 0x0FFFFFFF; // clear all ISRs
-        }
-        else if (Ch2Mask & (1 << channel)) {
+        } else if (Ch2Mask & (1 << channel)) {
             return;     // already registered :(
         }
+
         Ch2Mask |= (1 << channel); // mark it as enabled
         Ch2Handlers[channel].isrfunc = func;
         Ch2Handlers[channel].param = param;
-
-        const ISR_t *isr = &IVT.DMA2_Channel1 + channel;
-        NVIC.irqEnable(*isr);
     }
 }
 
@@ -58,26 +53,24 @@ void Dma::registerHandler(volatile DMA_t *dma, int channel, DmaIsr_t func, void 
 void Dma::unregisterHandler(volatile DMA_t *dma, int channel)
 {
     if (dma == &DMA1) {
+
         Ch1Mask &= ~(1 << channel); // mark it as disabled
         if (Ch1Mask == 0) { // last one? shut it down
             RCC.AHBENR &= ~(1 << 0);
         }
+
         Ch1Handlers[channel].isrfunc = 0;
         Ch1Handlers[channel].param = 0;
 
-        const ISR_t *isr = &IVT.DMA2_Channel1 + channel;
-        NVIC.irqDisable(*isr);
-    }
-    else if (dma == &DMA2) {
+    } else if (dma == &DMA2) {
+
         Ch2Mask &= ~(1 << channel); // mark it as disabled
         if (Ch2Mask == 0) { // last one? shut it down
             RCC.AHBENR &= ~(1 << 1);
         }
+
         Ch2Handlers[channel].isrfunc = 0;
         Ch2Handlers[channel].param = 0;
-
-        const ISR_t *isr = &IVT.DMA2_Channel1 + channel;
-        NVIC.irqDisable(*isr);
     }
 }
 

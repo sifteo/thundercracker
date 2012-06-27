@@ -39,15 +39,7 @@ struct VRAMFlags {
             clear(flags);
     }
 
-    void apply(_SYSVideoBuffer *vbuf) {
-        uint8_t x = vf ^ vfPrev;
-        if (x) {
-            // Lock flags = 0, don't mark the "needs paint" flag.
-            VRAM::xorb(*vbuf, offsetof(_SYSVideoRAM, flags), x, 0);
-            VRAM::unlock(*vbuf);
-            vfPrev = vf;
-        }
-    }
+    void apply(_SYSVideoBuffer *vbuf, _SYSCubeID cube);
 };
 
 

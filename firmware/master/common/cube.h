@@ -8,6 +8,7 @@
 
 #include <sifteo/abi.h>
 #include "machine.h"
+#include "macros.h"
 #include "radio.h"
 #include "svmmemory.h"
 #include "cubeslots.h"
@@ -41,41 +42,41 @@ class CubeSlot {
         return i;
     }
 
-    static CubeSlot &getInstance(_SYSCubeID id) {
+    static ALWAYS_INLINE CubeSlot& getInstance(_SYSCubeID id) {
         ASSERT(id < _SYS_NUM_CUBE_SLOTS);
         return CubeSlots::instances[id];
     }
 
-    _SYSCubeIDVector bit() const {
+    _SYSCubeIDVector ALWAYS_INLINE bit() const {
         STATIC_ASSERT(_SYS_NUM_CUBE_SLOTS <= 32);
         return Intrinsic::LZ(id());
     }
 
-    bool enabled() const {
+    bool ALWAYS_INLINE enabled() const {
         return !!(bit() & CubeSlots::vecEnabled);
     }
     
-    bool connected() const {
+    bool ALWAYS_INLINE connected() const {
         return !!(bit() & CubeSlots::vecConnected);
     }
     
-    void setConnected() {
+    void ALWAYS_INLINE setConnected() {
         CubeSlots::connectCubes(Intrinsic::LZ(id()));
     }
     
-    void setDisconnected() {
+    void ALWAYS_INLINE setDisconnected() {
         CubeSlots::disconnectCubes(Intrinsic::LZ(id()));
     }
 
-    void setVideoBuffer(_SYSVideoBuffer *v) {
+    void ALWAYS_INLINE setVideoBuffer(_SYSVideoBuffer *v) {
         vbuf = v;
     }
 
-    const _SYSByte4 &getAccelState() {
+    ALWAYS_INLINE const _SYSByte4& getAccelState() {
         return accelState;
     }
 
-    inline const uint8_t *getRawNeighbors() const {
+    ALWAYS_INLINE const uint8_t* getRawNeighbors() const {
         return neighbors;
     }
 
@@ -135,19 +136,19 @@ class CubeSlot {
 
     uint64_t getHWID();
 
-    uint16_t getRawBatteryV() const {
+    uint16_t ALWAYS_INLINE getRawBatteryV() const {
         return rawBatteryV;
     }
 
-    uint8_t getLastFrameACK() const {
+    uint8_t ALWAYS_INLINE getLastFrameACK() const {
         return framePrevACK;
     }
 
-    bool hasValidFrameACK() const {
+    bool ALWAYS_INLINE hasValidFrameACK() const {
         return CubeSlots::frameACKValid & bit();
     }
 
-    _SYSVideoBuffer *getVBuf() const {
+    ALWAYS_INLINE _SYSVideoBuffer* getVBuf() const {
         return vbuf;
     }
 
@@ -171,7 +172,6 @@ class CubeSlot {
     RadioAddress address;
     
     DEBUG_ONLY(SysTime::Ticks assetLoadTimestamp);
-    DEBUG_ONLY(unsigned consecutiveEmptyPackets);
 
     SysTime::Ticks flashDeadline;       // Used only by ISR
     uint32_t timeSyncState;             // XXX: For the current time-sync hack

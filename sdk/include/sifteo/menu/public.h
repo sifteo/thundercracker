@@ -102,6 +102,8 @@ inline Menu::Menu(VideoBuffer &vid, struct MenuAssets *aAssets,
     prev_ut = 0;
     startingItem = 0;
 
+    position = 0.0f;
+
     setIconYOffset(kDefaultIconYOffset);
     setPeekTiles(kDefaultPeekTiles);
 }

@@ -40,7 +40,7 @@ void _SYS_exit(void)
 
 void _SYS_yield(void)
 {
-    Radio::halt();
+    Tasks::idle();
     SvmRuntime::dispatchEventsOnReturn();
 }
 

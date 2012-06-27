@@ -42,6 +42,8 @@ void checkSelf()
 
 void createObjects()
 {
+    LOG("Testing object store record / replay\n");
+
     static StoredObject foo = StoredObject::allocate();
     static StoredObject bar = StoredObject::allocate();
     static StoredObject wub = StoredObject::allocate();
@@ -49,6 +51,90 @@ void createObjects()
     ASSERT(foo != bar);
     ASSERT(foo != wub);
     ASSERT(bar != wub);
+
+    // Write a larger object, to use up space faster
+    // XXX: Want to use something even larger (1024), but that requires the GC.
+    struct {
+        int value;
+        uint8_t pad[128];
+    } obj;
+    memset(obj.pad, 0xff, sizeof obj.pad);
+
+    SCRIPT(LUA, logger = FlashLogger:start(fs, "flash.log"));
+
+    /*
+     * Write some interleaved values, in random order,
+     * being sure to use enough space that we'll hit various
+     * garbage collection and index overflow edge cases.
+     */
+
+    Random r(123);
+    const int lastValue = 5000;
+
+    for (int value = 0; value <= lastValue; value++) {
+        obj.value = value;
+        switch (r.randrange(3)) {
+            case 0: foo.write(obj); break;
+            case 1: bar.write(obj); break;
+            case 2: wub.write(obj); break;
+        }
+    }
+
+    /*
+     * All writes that happen during logging are reverted
+     * in logger:stop(). Make sure the objects are no longer found.
+     */
+
+    ASSERT(sizeof obj == foo.read(obj));
+    ASSERT(sizeof obj == bar.read(obj));
+    ASSERT(sizeof obj == wub.read(obj));
+
+    SCRIPT(LUA, logger:stop());
+
+    ASSERT(0 == foo.read(obj));
+    ASSERT(0 == bar.read(obj));
+    ASSERT(0 == wub.read(obj));
+    
+    // XXX: Currently disabled in master until the test passes
+    return;
+
+    /*
+     * Now check that as we replay the log, we see the events occur
+     * in monotonically increasing order.
+     */
+
+    SCRIPT(LUA, player = FlashReplay:start(fs, "flash.log"));
+
+    int lastFoo = -1;
+    int lastBar = -1;
+    int lastWub = -1;
+
+    for (unsigned i = 0;; ++i) {
+        SCRIPT(LUA, player:play(1));
+
+        obj.value = -1;
+        foo.read(obj);
+        ASSERT(obj.value >= lastFoo);
+        lastFoo = obj.value;
+        if (obj.value == lastValue)
+            break;
+
+        obj.value = -1;
+        bar.read(obj);
+        ASSERT(obj.value >= lastBar);
+        lastBar = obj.value;
+        if (obj.value == lastValue)
+            break;
+
+        obj.value = -1;
+        wub.read(obj);
+        ASSERT(obj.value >= lastWub);
+        lastWub = obj.value;
+        if (obj.value == lastValue)
+            break;
+    }
+
+    SCRIPT(LUA, player:stop());
 }
 
 void main()

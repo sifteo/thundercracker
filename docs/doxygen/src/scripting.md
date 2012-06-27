@@ -236,13 +236,23 @@ This is also an unsigned 32-bit integer. Note that integer wraparound could occu
 
 Save a screenshot of this cube, to a 128x128 pixel PNG file with the given name.
 
-### Cube(N):testScreenshot( _filename_ )
+### Cube(N):testScreenshot( _filename_, _tolerance_ = 0 )
 
 Capture a screenshot of this cube, and compare it to an existing 128x128 pixel PNG file with the given name.
 
 If the images match, returns nothing. If there was an error opening the reference image file, raises a Lua error.
 
-If the reference image was loaded successfully but there is even a slight difference in any pixel as compared to the current screen contents, this function returns four parameters describing the first pixel mismatch:
+If the reference image was loaded successfully, this function compares the reference to the actual screenshot, pixel by pixel. By default, an exact match is required. Even a slight difference in the 16-bit value of a pixel would cause a pixel mismatch.
+
+The optional _tolerance_ parameter can be used to allow inexact matches. The images are still compared pixel-by-pixel. For each difference, an error value is computed:
+
+1. The two pixels, reference and actual, are both converted to 24-bit (8 bit per channel) color.
+2. For each of the three color channels: The two pixel values are subtracted, and that result is squared.
+3. The squared differences for each of the three channels are summed.
+
+This is equivalent to the Mean Squared Error for that single pixel, multiplied by three. The computed error value is always an integer. If this error is less than or equal to _tolerance_, the comparison continues successfully. If it is greater, a pixel mismatch occurs.
+
+In the event of a pixel mismatch, this function returns five parameters:
 
 Position    | Name      | Meaning
 --------    | ----      | ----------------------------------------------------
@@ -250,6 +260,7 @@ Position    | Name      | Meaning
 2           | y         | Zero-based Y coordinate
 3           | lcdPixel  | Actual pixel on the LCD, as a 16-bit RGB565 value
 4           | refPixel  | Reference pixel from the provided PNG, after conversion to 16-bit RGB565 format
+5           | errValue  | The actual error value for this pixel (greater than _tolerance_)
 
 ### Cube(N):xbPoke( _address_, _byte_ )
 
@@ -339,6 +350,14 @@ Mark a volume as deleted. If the provided block code is not valid, raises a Lua 
 
 Given a volume's block code, return the associated 16-bit type identifier. If the provided block code is not valid, raises a Lua error.
 
+### Filesystem():volumeParent( _block code_ )
+
+Given a volume's block code, return its parent's block code, if any. If this volume is not parented to another, returns zero.
+
+### Filesystem():volumePayload( _block code_ )
+
+Given a volume's block code, return its payload data as a string.
+
 ### Filesystem():simulatedSectorEraseCounts()
 
 Return an array of simulated erase counts for every sector in the Base's flash memory. This data is tracked by Siftulator's simulation engine itself.
@@ -355,6 +374,8 @@ Read _count_ bytes from the raw Flash device, starting at the specified device a
 
 Write the string _data_ to the raw Flash device, starting at _address_. Does not automatically erase the device. This effectively performs a bitwise AND of the supplied data with the existing contents of the device.
 
+Use this function with care. Remember you're bypassing the filesystem and writing to low-level flash memory. If you use rawWrite(), you likely must also use rawErase() and invalidateCache() correctly as well.
+
 ### Filesystem():rawErase( _address_ )
 
 Erase one 4 kB sector of the raw Flash device, starting at the specified sector-aligned address.
@@ -362,6 +383,8 @@ Erase one 4 kB sector of the raw Flash device, starting at the specified sector-
 ### Filesystem():invalidateCache()
 
 Force the system to discard or reload all cached Flash data. Any memory blocks which are still in use will be overwritten with freshly-loaded data, while unused cached memory blocks are simply discarded.
+
+In addition to the systemwide block cache, this flushes other special-purpose caches used by the filesystem.
 
 ### Filesystem():setCallbacksEnabled( _true_ | _false_ )
 
@@ -389,3 +412,15 @@ For example:
 This overrides the three callback methods on Filesystem, then enables those callbacks. Any Flash memory operations after this point will be accompanied by logging.
 
 The addresses supplied are physical flash addresses. Where applicable, you can translate them back to virtual addresses (a.k.a C++ pointers) using `Runtime():flashToVirtAddr()`.
+
+### Filesystem():readMetadata( _volume_, _key_ )
+
+Read a metadata value from an ELF binary identified by a volume bock code. Returns the raw binary contents of the metadata key as a string, or nil if the key does not exist. Note that metadata values may be padded at the end.
+
+### Filesystem():readObject( _volume_, _key_ )
+
+Read a StoredObject from a particular ELF binary's object storage. Returns the raw binary contents of the object as a string, an empty string if the object has been deleted, or nil if the object doesn't exist in the filesystem at all.
+
+### Filesystem():writeObject( _volume_, _key_, _data_ )
+
+Write a StoredObject to a particular ELF binary's object storage. Automatically causes filesystem garbage collection if we're low on space. Raises a Lua error if we're actually out of storage space.

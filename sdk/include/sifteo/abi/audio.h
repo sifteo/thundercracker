@@ -13,15 +13,16 @@
 extern "C" {
 #endif
 
-/*
- * Audio handles
- */
 
 typedef uint8_t _SYSAudioChannelID;     /// Audio channel slot index
+
 #define _SYS_AUDIO_INVALID_CHANNEL_ID   ((_SYSAudioChannelID)-1)
 #define _SYS_AUDIO_MAX_CHANNELS         8
-#define _SYS_AUDIO_MAX_VOLUME           256   // Guaranteed to be a power of two
-#define _SYS_AUDIO_DEFAULT_VOLUME       128
+
+#define _SYS_AUDIO_MAX_VOLUME_LOG2      8
+#define _SYS_AUDIO_MAX_VOLUME           (1 << _SYS_AUDIO_MAX_VOLUME_LOG2)
+#define _SYS_AUDIO_DEFAULT_VOLUME       (_SYS_AUDIO_MAX_VOLUME / 2)
+
 
 /*
  * Types of audio supported by the system

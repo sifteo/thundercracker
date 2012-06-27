@@ -48,7 +48,15 @@ bool UsbDevice::open(uint16_t vendorId, uint16_t productId, uint8_t interface)
     if (r < 0)
         return false;
 
-    openINTransfers();
+    /*
+     * Open a number of IN transfers.
+     *
+     * Keeping multiple transfers open allows libusb to continue processing
+     * incoming packets while we're handling recent arrivals in user space.
+     */
+    for (unsigned i = 0; i < NUM_CONCURRENT_IN_TRANSFERS; ++i)
+        submitINTransfer();
+
     return true;
 }
 
@@ -90,33 +98,27 @@ bool UsbDevice::populateDeviceInfo(libusb_device *dev)
     return true;
 }
 
-/*
- * Open a number of IN transfers.
- *
- * Keeping multiple transfers open allows libusb to continue processing
- * incoming packets while we're handling recent arrivals in user space.
- */
-void UsbDevice::openINTransfers()
+
+bool UsbDevice::submitINTransfer()
 {
-    for (unsigned i = 0; i < NUM_CONCURRENT_IN_TRANSFERS; ++i) {
+    libusb_transfer *txfer = libusb_alloc_transfer(0);
+    if (!txfer)
+        return false;
 
-        libusb_transfer *txfer = libusb_alloc_transfer(0);
-        if (!txfer)
-            continue;
+    unsigned char *buf = (unsigned char*)malloc(mInEndpoint.maxPacketSize);
+    if (!buf)
+        return false;
 
-        unsigned char *buf = (unsigned char*)malloc(mInEndpoint.maxPacketSize);
-        if (!buf)
-            continue;
-        libusb_fill_bulk_transfer(txfer, mHandle, mInEndpoint.address, buf, mInEndpoint.maxPacketSize, onRxComplete, this, 0);
+    libusb_fill_bulk_transfer(txfer, mHandle, mInEndpoint.address, buf, mInEndpoint.maxPacketSize, onRxComplete, this, 0);
 
-        int r = libusb_submit_transfer(txfer);
-        if (r < 0) {
-            free(buf);
-            continue;
-        }
-
-        mInEndpoint.pendingTransfers.push_back(txfer);
+    int r = libusb_submit_transfer(txfer);
+    if (r < 0) {
+        free(buf);
+        return false;
     }
+
+    mInEndpoint.pendingTransfers.push_back(txfer);
+    return true;
 }
 
 void UsbDevice::close()
@@ -209,6 +211,13 @@ void UsbDevice::handleRx(libusb_transfer *t)
             removeTransfer(mInEndpoint.pendingTransfers, t);
 
     } else {
+
+        /*
+         * Unless we cancelled it ourselves, open another request to replace it.
+         */
+        if (t->status != LIBUSB_TRANSFER_CANCELLED)
+            submitINTransfer();
+
         removeTransfer(mInEndpoint.pendingTransfers, t);
     }
 }

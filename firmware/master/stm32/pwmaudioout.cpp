@@ -6,60 +6,56 @@
 #include "pwmaudioout.h"
 #include "audiomixer.h"
 #include "tasks.h"
+#include "sampleprofiler.h"
+#include "led.h"
+
 #include <stdio.h>
 #include <string.h>
 
-// uncomment to show sample rate on gpio pin
-//#define SAMPLE_RATE_GPIO
-
-#ifdef SAMPLE_RATE_GPIO
-static GPIOPin tim4TestPin(&GPIOC, 4);
-#endif
-
-
 void PwmAudioOut::init(AudioMixer *mixer)
 {
-#ifdef SAMPLE_RATE_GPIO
-    tim4TestPin.setControl(GPIOPin::OUT_50MHZ);
-#endif
-
     this->mixer = mixer;
     buf.init();
 
     STATIC_ASSERT(AudioMixer::SAMPLE_HZ == 16000);
     sampleTimer.init(2200, 0);
 
+    // Init the timer, both PWM outputs inverted
     pwmTimer.init(PWM_FREQ, 0);
     pwmTimer.configureChannelAsOutput(pwmChan,
-                                        HwTimer::ActiveHigh,
-                                        HwTimer::Pwm1,
-                                        HwTimer::ComplementaryOutput);
+        HwTimer::ActiveLow, HwTimer::Pwm1, HwTimer::ComplementaryOutput);
+    pwmTimer.invertComplementaryOutput(pwmChan);
 
-    // must default to non-differential state to avoid direct shorting
+    // Must set up default I/O state
     suspend();
 }
 
 void PwmAudioOut::start()
 {
     resume();
-    sampleTimer.enableUpdateIsr();
-    pwmTimer.enableChannel(pwmChan);
-    pwmTimer.setDuty(pwmChan, PWM_FREQ / 2);    // 50% duty cycle == "off"
-    Tasks::setPending(Tasks::AudioPull, &buf);
 }
 
 void PwmAudioOut::stop()
 {
-    sampleTimer.disableUpdateIsr();
-    suspend(); // TODO - full shut down?
+    suspend();
 }
 
 void PwmAudioOut::suspend()
 {
+    // No more sample data
     sampleTimer.disableUpdateIsr();
+
+    // Stop PWM, put speaker back in idle state
     pwmTimer.disableChannel(pwmChan);
-    // ensure outputs are tied in the same direction to avoid leaking current
-    // across the speaker
+
+    /*
+     * High is the best default "off" state for both BTL outputs,
+     * since that's what they'll float to during powerup. (Both have
+     * pull-up resistors).
+     *
+     * We modulate sound by, depending on the sample's sign, "pulling"
+     * one or the other leg of the speaker down from this default High state.
+     */
     outA.setControl(GPIOPin::OUT_2MHZ);
     outB.setControl(GPIOPin::OUT_2MHZ);
     outA.setHigh();
@@ -68,17 +64,13 @@ void PwmAudioOut::suspend()
 
 void PwmAudioOut::resume()
 {
-    // Charge the bootstrap capacitors before starting PWM
-    outA.setControl(GPIOPin::OUT_2MHZ);
-    outB.setControl(GPIOPin::OUT_2MHZ);
-    outA.setHigh();
-    outB.setHigh();
-    
-    // Begin PWM
-    outA.setControl(GPIOPin::OUT_ALT_50MHZ);
-    outB.setControl(GPIOPin::OUT_ALT_50MHZ);
+    // Start PWM
     pwmTimer.enableChannel(pwmChan);
+    pwmTimer.setDuty(pwmChan, 0);
+    
+    // Start clocking out samples
     sampleTimer.enableUpdateIsr();
+    Tasks::setPending(Tasks::AudioPull, &buf);
 }
 
 /*
@@ -87,14 +79,34 @@ void PwmAudioOut::resume()
  */
 void PwmAudioOut::tmrIsr()
 {
-#ifdef SAMPLE_RATE_GPIO
-    tim4TestPin.toggle();
-#endif
-    // DANGER DANGER DANGER!
-    if (buf.readAvailable() < 2)
-        return;
+    SampleProfiler::SubSystem s = SampleProfiler::subsystem();
+    SampleProfiler::setSubsystem(SampleProfiler::AudioISR);
 
-    uint16_t duty = buf.dequeue() + 0x8000;
-    duty = (duty * pwmTimer.period()) / 0xFFFF; // scale to timer period
-    pwmTimer.setDuty(pwmChan, duty);
+    int period = pwmTimer.period();
+    int sample = 0;
+    if (buf.readAvailable())
+        sample = buf.dequeue();
+
+    if (sample > 0) {
+        // + output held HIGH, - output modulated
+
+        pwmTimer.setDuty(pwmChan, (sample * period) >> 15);
+        outA.setControl(GPIOPin::OUT_ALT_50MHZ);
+        outB.setControl(GPIOPin::OUT_2MHZ);
+
+    } else if (sample < 0) {
+        // + output modulated, - output held HIGH
+
+        pwmTimer.setDuty(pwmChan, (-sample * period) >> 15);
+        outA.setControl(GPIOPin::OUT_2MHZ);
+        outB.setControl(GPIOPin::OUT_ALT_50MHZ);
+
+    } else {
+        // Idle / zero volts across speaker.
+
+        outA.setControl(GPIOPin::OUT_2MHZ);
+        outB.setControl(GPIOPin::OUT_2MHZ);
+    }
+
+    SampleProfiler::setSubsystem(s);
 }

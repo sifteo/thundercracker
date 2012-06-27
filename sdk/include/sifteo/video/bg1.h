@@ -497,7 +497,7 @@ struct BG1Drawable {
         unsigned frame = 0)
     {
         _SYS_finish();
-        _SYS_image_BG1MaskedDraw(&sys, image, key.tile(0), frame);
+        _SYS_image_BG1MaskedDraw(&sys, image, key.tile(sys.cube, 0), frame);
     }
 
     /**
@@ -518,7 +518,7 @@ struct BG1Drawable {
         unsigned frame = 0)
     {
         _SYS_finish();
-        _SYS_image_BG1MaskedDrawRect(&sys, image, key.tile(0), frame,
+        _SYS_image_BG1MaskedDrawRect(&sys, image, key.tile(sys.cube, 0), frame,
             (_SYSInt2*) &srcXY, (_SYSInt2*) &size);
     }
 

@@ -37,6 +37,23 @@
  */
 #define NOINLINE        __attribute__ ((noinline))
 
+/** 
+ * @brief Always enable inlining for one function
+ *
+ * For example:
+ *
+ *     void ALWAYS_INLINE myFunction() {
+ *         // Must be inlined
+ *     }
+ *
+ * This attribute may be useful in cases where a function would normally
+ * not be inlined, but for either performance or correctness reasons you
+ * need it to be. Inlined functions are just as fast as macros.
+ *
+ * @hideinitializer
+ */
+#define ALWAYS_INLINE   __attribute__ ((always_inline))
+
 /// A macro wrapper for the C preprocessor stringification operator.
 /// @hideinitializer
 #define STRINGIFY(_x)   #_x

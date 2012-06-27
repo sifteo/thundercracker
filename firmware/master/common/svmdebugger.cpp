@@ -51,7 +51,7 @@ void SvmDebugger::messageLoopWork()
             // until we get a command. If not, return immediately.
             if (!stopped)
                 return;
-            Radio::halt();
+            Tasks::idle();
         }
 
         handleMessage(msg);

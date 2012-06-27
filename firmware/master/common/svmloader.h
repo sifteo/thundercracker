@@ -42,13 +42,17 @@ public:
 
     // Return the currently executing program's FlashVolume
     static FlashVolume getRunningVolume() {
-        return runningVolume;
+        return mapVols[0];
     }
+
+    // Return the volume corresponding with a particular VA.
+    // If the VA isn't a valid flash address, returns an invalid volume.
+    static FlashVolume volumeForVA(SvmMemory::VirtAddr va);
 
 private:
     static FlashBlockRef mapRefs[SvmMemory::NUM_FLASH_SEGMENTS];
+    static FlashVolume mapVols[SvmMemory::NUM_FLASH_SEGMENTS];
     static uint8_t runLevel;
-    static FlashVolume runningVolume;
 
     static FlashVolume findLauncher();
     static void prepareToExec(const Elf::Program &program, SvmRuntime::StackInfo &stack);

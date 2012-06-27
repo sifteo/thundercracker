@@ -69,16 +69,6 @@ void SPIMaster::init()
     hw->CR1 |=  (1 << 6);   // SPE - enable the spi device
 }
 
-void SPIMaster::begin()
-{
-    csn.setLow();
-}
-
-void SPIMaster::end()
-{
-    csn.setHigh();
-}
-
 uint8_t SPIMaster::transfer(uint8_t b)
 {
     /*
@@ -194,27 +184,6 @@ void SPIMaster::txDma(const uint8_t *txbuf, unsigned len)
                (1 << 1);            // TXDMAEN
 }
 
-/*
-    This isn't typically that useful since slaves will not generally spew out
-    data unsolicited, but it's here for completeness' sake.
-    Typically use transferDma() instead,
-    and just reuse the same buffer for both rx & tx.
-*/
-void SPIMaster::rxDma(uint8_t *rxbuf, unsigned len)
-{
-    dmaRxChan->CNDTR = len;
-    dmaRxChan->CMAR = (uint32_t)rxbuf;
-
-    dmaRxChan->CCR =    (2 << 12)|  // PL - priority level, 2 == HIGH
-                        (1 << 7) |  // MINC - memory pointer increment
-                        (0 << 4) |  // DIR - direction, 0 == read from peripheral
-                        (1 << 3) |  // TEIE - transfer error ISR enable
-                        (0 << 2) |  // HTIE - half complete ISR enable
-                        (1 << 1) |  // TCIE - transfer complete ISR enable
-                        (1 << 0);   // EN - enable DMA channel
-    hw->CR2 |= (1 << 0);            // RXDMAEN
-}
-
 bool SPIMaster::dmaInProgress() const
 {
     // better way to poll this?
@@ -245,17 +214,7 @@ void SPIMaster::dmaCallback(void *p, uint8_t flags)
     spi->dmaRxChan->CCR = 0;
     spi->hw->CR2 &= ~((1 << 1) | (1 << 0)); // disable DMA RX & TX
 
-#if 0
-    // debugging
-    Usart::Dbg.write("dma cb!\r\n");
-    if (flags & Dma::Error) {
-        Usart::Dbg.write("  error\r\n");
+    if (spi->completionCB) {
+        spi->completionCB(spi->completionParam);
     }
-    if (flags & Dma::Complete) {
-        Usart::Dbg.write("  complete\r\n");
-    }
-    if (flags & Dma::HalfComplete) {
-        Usart::Dbg.write("  half complete\r\n");
-    }
-#endif
 }

@@ -21,7 +21,9 @@ Star = image{"star-8.png", pinned=true, width=8, height=8}
 Font = image{"font-8x16.png", pinned=true, width=8, height=16}
 ~~~~~~~~~~~~~
 
-The @b group element specifies that a Sifteo::AssetGroup named `GameAssets` should be created. This group contains all the `image` entries that follow it, until another `group` is declared. You can also explicitly specify the group that an `image` belongs to by adding `group=MyGroupName` within the `image` element. An AssetGroup is the unit of get installed to Sifteo Cubes at the same time, so you should typically keep related images in the same group.
+The @b group element specifies that a Sifteo::AssetGroup named `GameAssets` should be created. This group contains all the `image` entries that follow it, until another `group` is declared. You can also explicitly specify the group that an `image` belongs to by adding `group=MyGroupName` within the `image` element.
+
+All images in a single _group_ are compressed together, and form a bundle of compressed asset data which is loaded to the Sifteo Cubes in one piece. For more information on AssetGroups, see @ref asset_memory.
 
 Each @b image element specifies that an AssetImage should be generated. Given no other details, a plain Sifteo::AssetImage will be generated, as in the case of @b Background above. By adding `pinned=true`, a Sifteo::PinnedAssetImage is created. Pinned assets are required for sprites, since the Sifteo platform requires all tiles in a sprite to be sequential.
 
@@ -86,7 +88,7 @@ PlayerSprite = image{ { "player-sitting.png", "player-standing.png"}, pinned=tru
 
 @note If you have the choice between using a single Asset Image with multiple frames, instead of an Asset Image List, the single Asset Image can be more efficient.
 
-# Asset Audio
+# Asset Audio     {#asset_audio}
 
 ## Samples
 
@@ -178,7 +180,7 @@ Lastly, editing tools do not appear to have a way to add or remove channels afte
 
 ### References
 
-The XM file specification can be found [here](ftp://ftp.heanet.ie/disk1/sourceforge/u/project/uf/ufmod/XM%20file%20format%20specification/FastTracker%20II%2C%20ADPCM%20XM%20and%20Stripped%20XM/XM_file_format.pdf.gz), but the [MiklyTracker documentation](http://www.milkytracker.org/docs/MilkyTracker.html) is significantly more useful for understanding effects. The MOD specification from which it inherits many of its features can be found [here](http://147.91.177.212/extra/fileformat/modules/mod/mod-form.txt).
+The XM file specification can be found [here](ftp://ftp.heanet.ie/disk1/sourceforge/u/project/uf/ufmod/XM%20file%20format%20specification/FastTracker%20II%2C%20ADPCM%20XM%20and%20Stripped%20XM/XM_file_format.pdf.gz), but the [MilkyTracker documentation](http://www.milkytracker.org/docs/MilkyTracker.html) is significantly more useful for understanding effects. The MOD specification from which it inherits many of its features can be found [here](http://147.91.177.212/extra/fileformat/modules/mod/mod-form.txt).
 
 # stir Options
 @b stir provides several options to configure its execution. These options are integrated into the default Makefiles that ship with the SDK, but you may wish to integrate @b stir into your workflow in additional ways.

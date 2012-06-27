@@ -141,7 +141,7 @@ public:
      * Convenient type-safe wrapper around copyROData.
      */
     template <typename T>
-    static inline bool copyROData(T &dest, const T *src)
+    static ALWAYS_INLINE bool copyROData(T &dest, const T *src)
     {
         FlashBlockRef ref;
         return copyROData(ref, reinterpret_cast<PhysAddr>(&dest),
@@ -153,7 +153,7 @@ public:
      * with a caller-supplied FlashBlockRef.
      */
     template <typename T>
-    static inline bool copyROData(FlashBlockRef &ref, T &dest, const T *src)
+    static ALWAYS_INLINE bool copyROData(FlashBlockRef &ref, T &dest, const T *src)
     {
         return copyROData(ref, reinterpret_cast<PhysAddr>(&dest),
                           reinterpret_cast<VirtAddr>(src), sizeof(T));
@@ -164,7 +164,7 @@ public:
      * is an untyped VirtAddr.
      */
     template <typename T>
-    static inline bool copyROData(T &dest, VirtAddr src)
+    static ALWAYS_INLINE bool copyROData(T &dest, VirtAddr src)
     {
         FlashBlockRef ref;
         return copyROData(ref, reinterpret_cast<PhysAddr>(&dest),
@@ -176,7 +176,7 @@ public:
      * is an untyped VirtAddr and with a caller-supplied FlashBlockRef.
      */
     template <typename T>
-    static inline bool copyROData(FlashBlockRef &ref, T &dest, VirtAddr src)
+    static ALWAYS_INLINE bool copyROData(FlashBlockRef &ref, T &dest, VirtAddr src)
     {
         return copyROData(ref, reinterpret_cast<PhysAddr>(&dest),
                           src, sizeof(T));
@@ -203,7 +203,7 @@ public:
      * This is initialized to the current binary's RODATA segment by our ELF
      * loader.
      */
-    static void setFlashSegment(unsigned index, const FlashMapSpan &span) {
+    static ALWAYS_INLINE void setFlashSegment(unsigned index, const FlashMapSpan &span) {
         ASSERT(index < NUM_FLASH_SEGMENTS);
         flashSeg[index] = span;
     }
@@ -229,11 +229,11 @@ public:
      * Reconstruct a RAM address, doing a Physical to Virtual translation.
      * Used for debugging only.
      */
-    static VirtAddr physToVirtRAM(PhysAddr pa) {
+    static ALWAYS_INLINE VirtAddr physToVirtRAM(PhysAddr pa) {
         uintptr_t offset = pa - userRAM; 
         return (VirtAddr)offset + VIRTUAL_RAM_BASE;
     }
-    static VirtAddr physToVirtRAM(Svm::reg_t pa) {
+    static ALWAYS_INLINE VirtAddr physToVirtRAM(Svm::reg_t pa) {
         return physToVirtRAM(reinterpret_cast<PhysAddr>(pa));
     }
     
@@ -264,6 +264,19 @@ public:
             return addr;
         return 0;
     }     
+
+    /**
+     * Convert the VA to a segment number, or an invalid segment number
+     * if the VA is not a valid flash address.
+     */
+    static unsigned virtToFlashSegment(VirtAddr va) {
+        STATIC_ASSERT(arraysize(flashSeg) == 2);
+        if (flashSeg[0].offsetIsValid(va - SEGMENT_0_VA))
+            return 0;
+        if (flashSeg[1].offsetIsValid(va - SEGMENT_1_VA))
+            return 1;
+        return unsigned(-1);
+    }
 
     /**
      * Quick predicates to check a physical address. Used only in simulation.

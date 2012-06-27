@@ -7,15 +7,9 @@
 #include "assets.gen.h"
 using namespace Sifteo;
 
-// Constants
-#define NUM_CUBES           3
-#define LOAD_ASSETS         1
-
-#define NUM_ITEMS           arraysize(gItems);
-#define NUM_TIPS            3
-
 // Static Globals
-static VideoBuffer gVideo[NUM_CUBES];
+static const unsigned gNumCubes = 3;
+static VideoBuffer gVideo[gNumCubes];
 static struct MenuItem gItems[] = { {&IconChroma, &LabelChroma}, {&IconSandwich, &LabelSandwich}, {&IconPeano, &LabelPeano}, {&IconBuddy, &LabelBuddy}, {&IconChroma, NULL}, {NULL, NULL} };
 static struct MenuAssets gAssets = {&BgTile, &Footer, &LabelEmpty, {&Tip0, &Tip1, &Tip2, NULL}};
 
@@ -24,16 +18,16 @@ static AssetSlot MainSlot = AssetSlot::allocate()
 
 static Metadata M = Metadata()
     .title("Menu SDK Demo")
-    .cubeRange(NUM_CUBES);
+    .cubeRange(gNumCubes);
 
 
 static void begin() {
     // Blank screens, attach VideoBuffers
-    for(CubeID cube = 0; cube != NUM_CUBES; ++cube) {
+    for(CubeID cube = 0; cube != gNumCubes; ++cube) {
         auto &vid = gVideo[cube];
         vid.initMode(BG0);
-        vid.bg0.erase(StripeTile);
         vid.attach(cube);
+        vid.bg0.erase(StripeTile);
     }
 }
 

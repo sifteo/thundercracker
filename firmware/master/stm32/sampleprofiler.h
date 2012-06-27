@@ -8,6 +8,14 @@ class SampleProfiler
 {
 public:
 
+    enum SubSystem {
+        None,
+        AudioISR,
+        AudioPull,
+        SVCISR,
+        RFISR,
+    };
+
     enum Command {
         SetProfilingEnabled
     };
@@ -16,17 +24,19 @@ public:
 
     static void onUSBData(const USBProtocolMsg &m);
 
-    static void startSampling() {
-        timer.enableUpdateIsr();
-    }
-
-    static void stopSampling() {
-        timer.disableUpdateIsr();
-    }
-
     static void processSample(uint32_t pc);
+    static void task(void *p);
+
+    static ALWAYS_INLINE SubSystem subsystem() {
+        return subsys;
+    }
+
+    static ALWAYS_INLINE void setSubsystem(SubSystem s) {
+        subsys = s;
+    }
 
 private:
+    static SubSystem subsys;
     static uint32_t sampleBuf;  // currently just a single sample
     static HwTimer timer;
 };
