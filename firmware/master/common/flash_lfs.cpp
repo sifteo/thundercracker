@@ -562,15 +562,33 @@ bool FlashLFSObjectAllocator::allocInVolumeRow(FlashVolume vol,
      * compute the proper anchor offset.
      */
 
+    ASSERT((size % FlashLFSIndexRecord::SIZE_UNIT) == 0);
+
     FlashBlockWriter writer;
     FlashLFSIndexBlockIter iter;
     uint32_t indexBlockAddr = LFS::indexBlockAddr(vol, row);
+    unsigned volBaseAddr = vol.block.address() + FlashBlock::BLOCK_SIZE;
 
     if (!iter.beginBlock(indexBlockAddr)) {
         // Write an anchor to this block
 
+        /*
+         * Before we start writing to the index block, we need to make sure
+         * that there's even room for the block at all. In the worst case, this
+         * block may already be full of payload data and we'd be overwriting it
+         * if we tried to allocate this as an index block!
+         *
+         * So, this is similar to the space calculation below, but it's more
+         * conservative: we just need to know if there's any way that it isn't
+         * a bad idea to allocate this index block.
+         */
+
+        uint32_t anchorOffset = findAnchorOffset(vol, row);
+        if (volBaseAddr + anchorOffset + size > indexBlockAddr)
+            return false;
+
         writer.beginBlock(indexBlockAddr);
-        writeAnchor(writer, findAnchorOffset(vol, row));
+        writeAnchor(writer, anchorOffset);
 
         if (!iter.beginBlock(indexBlockAddr)) {
             /*
@@ -600,8 +618,7 @@ bool FlashLFSObjectAllocator::allocInVolumeRow(FlashVolume vol,
      * index blocks (growing down).
      */
 
-    ASSERT((size % FlashLFSIndexRecord::SIZE_UNIT) == 0);
-    addr = vol.block.address() + FlashBlock::BLOCK_SIZE + iter.getCurrentOffset();
+    addr = volBaseAddr + iter.getCurrentOffset();
     if (addr + size > writer.ref->getAddress())
         return false;
 
