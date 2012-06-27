@@ -15,6 +15,11 @@ Deployer::Deployer()
  * - calculate the CRC of the decrypted firmware image
  * - encrypt the firmware image
  * - ideally, ensure that the firmware image has been built in BOOTLOADABLE mode.
+ *
+ * File format looks like:
+ * - uint64_t magic number
+ * - ... encrypted data ...
+ * - uint32_t crc of the plaintext
  */
 bool Deployer::deploy(const char *inPath, const char *outPath)
 {
@@ -34,6 +39,11 @@ bool Deployer::deploy(const char *inPath, const char *outPath)
 
     uint32_t calculatedCrc;
     if (!crcForFile(fin, calculatedCrc))
+        return false;
+
+    // prepend magic number
+    const uint64_t magic = MAGIC;
+    if (fwrite(&magic, 1, sizeof(uint64_t), fout) != sizeof(magic))
         return false;
 
     if (!encryptFWBinary(fin, fout))
