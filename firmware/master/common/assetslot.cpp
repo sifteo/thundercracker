@@ -90,19 +90,29 @@ void VirtAssetSlots::rebindCube(_SYSCubeID cube)
         SysLFS::Key ck = cr.makeKey(cube);
         unsigned bank = 0;
 
+        bool needWrite = false;
+        bool needErase = false;
+
         if (!SysLFS::read(ck, cr))
             cr.init();
 
         if (!cr.assets.checkBinding(volume, numSlots)) {
-            // Creating a new binding
+            // Creating a new binding, and erase it.
+
             cr.assets.allocBinding(volume, numSlots);
             cr.assets.markAccessed(volume, numSlots);
-            SysLFS::write(ck, cr);
+            needErase = true;
+            needWrite = true;
+
         } else if (cr.assets.markAccessed(volume, numSlots)) {
             // Bump up the access rank of an existing binding
+
+            needWrite = true;
+            
             SysLFS::write(ck, cr);
         }
 
+        // Bind all slots
         for (unsigned i = 0; i < arraysize(cr.assets.slots); ++i) {
             SysLFS::AssetSlotOverviewRecord &slot = cr.assets.slots[i];
             if (slot.identity.inActiveSet(volume, numSlots)) {
@@ -112,12 +122,47 @@ void VirtAssetSlots::rebindCube(_SYSCubeID cube)
             }
         }
 
+        if (needErase) {
+            // Mark physical slots as erased in CubeRecord, and keep track of them
+            PhysSlotVector erasedSlots;
+            erasedSlots.clear();
+            for (unsigned vslot = 0; vslot < numSlots; vslot++) {
+                PhysAssetSlot phys = getInstance(vslot).getPhys(cube);
+                ASSERT(phys.isValid());
+                erasedSlots.mark(phys.index());
+                cr.assets.markErased(phys.index());
+            }
+            ASSERT(!erasedSlots.empty());
+
+            // Delete AssetSlotRecords for the erased cubes, if necessary
+            eraseAssetSlotRecords(cube, erasedSlots);
+        }
+
+        if (needWrite) {
+            // Write back updated CubeRecord
+            SysLFS::write(ck, cr);
+        }
+
+        // Update the graphics engine's current cube bank
         setCubeBank(cube, bank);
     }
 
     // Unbind any remaining slots.
     for (unsigned i = numSlots; i < NUM_SLOTS; ++i)
         instances[i].unbind(cube);
+}
+
+bool VirtAssetSlots::physSlotIsBound(_SYSCubeID cube, unsigned physSlot)
+{
+    unsigned numSlots = numBoundSlots;
+
+    for (unsigned i = 0; i != numSlots; ++i) {
+        PhysAssetSlot pSlot = getInstance(i).getPhys(cube);
+        if (pSlot.isValid() && pSlot.index() == physSlot)
+            return true;
+    }
+
+    return false;
 }
 
 bool VirtAssetSlots::locateGroup(MappedAssetGroup &map,
@@ -175,10 +220,15 @@ bool VirtAssetSlots::locateGroup(MappedAssetGroup &map,
                 if (0 == (searchCV & Intrinsic::LZ(cube)))
                     continue;
 
-                // Is this the slot we're interested in?
                 if (vSlot) {
+                    // Is this the slot we're interested in?
                     PhysAssetSlot pSlot = vSlot->getPhys(cube);
                     if (!pSlot.isValid() || slot != pSlot.index())
+                        continue;
+
+                } else {
+                    // Alternately.. is this any bound slot?
+                    if (!physSlotIsBound(cube, slot))
                         continue;
                 }
 
@@ -468,7 +518,72 @@ void VirtAssetSlot::erase()
                     continue;
 
                 // Delete this record
-                if (SysLFS::write(key, 0, 0, false))
+                if (SysLFS::write(key, 0, 0, false) == 0)
+                    continue;
+
+                // Try again with garbage collection and iterator restart
+                SysLFS::write(key, 0, 0, true);
+                break;
+            }
+        }
+    }
+}
+
+void VirtAssetSlots::eraseAssetSlotRecords(_SYSCubeID cube, PhysSlotVector slots)
+{
+    /*
+     * In one pass through SysLFS, delete all AssetSlotRecords which match the
+     * specified cube and any of the specified physical slots.
+     */
+
+    FlashLFS &lfs = SysLFS::get();
+    FlashLFSObjectIter iter(lfs);
+
+    while (!slots.empty()) {
+
+        // Restartable iteration, in case we need to collect garbage
+        FlashLFSObjectIter iter(lfs);
+        while (!slots.empty()) {
+
+            if (!iter.previous()) {
+                // Out of records; done
+                return;
+            }
+
+            SysLFS::Key key = (SysLFS::Key) iter.record()->getKey();
+            SysLFS::Key cubeKey;
+            unsigned slot;
+
+            // Is this an AssetSlotRecord?
+            if (SysLFS::AssetSlotRecord::decodeKey(key, cubeKey, slot)) {
+                _SYSCubeID recordCube;
+
+                // Find the associated Cube ID
+                if (!SysLFS::CubeRecord::decodeKey(cubeKey, recordCube))
+                    continue;
+
+                // Is this a cube we're interested in?
+                if (recordCube != cube)
+                    continue;
+
+                // Is this a slot we're still interested in?
+                if (!slots.test(slot))
+                    continue;
+
+                // No longer pending
+                slots.clear(slot);
+
+                // Yes, still interested! Read in the AssetSlotRecord.
+                SysLFS::AssetSlotRecord asr;
+                if (!asr.load(iter))
+                    continue;
+
+                // If this slot is already empty, we're done. (Don't write to flash)
+                if (asr.isEmpty())
+                    continue;
+
+                // Delete this record
+                if (SysLFS::write(key, 0, 0, false) == 0)
                     continue;
 
                 // Try again with garbage collection and iterator restart

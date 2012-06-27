@@ -194,8 +194,11 @@ void SysLFS::CubeAssetsRecord::allocBinding(FlashVolume vol, unsigned numSlots)
     ASSERT(!checkBinding(vol, numSlots));
 
     // Zap all existing bindings for this volume
-    for (unsigned slot = 0; slot < arraysize(slots); ++slot)
-        slots[slot].identity.volume = 0;
+    for (unsigned slot = 0; slot < arraysize(slots); ++slot) {
+        AssetSlotOverviewRecord &ovr = slots[slot];
+        if (ovr.identity.volume == vol.block.code)
+            ovr.identity.volume = 0;
+    }
 
     /*
      * Pick a bank, by analyzing the relative cost of using one bank or the other.
@@ -251,7 +254,6 @@ void SysLFS::CubeAssetsRecord::allocBinding(FlashVolume vol, unsigned numSlots)
         AssetSlotOverviewRecord &slot = slots[index];
 
         // Start out empty, but preserve erase count and access rank.
-        slot.numAllocatedTiles = 0;
         slot.identity.volume = vol.block.code;
         slot.identity.ordinal = ordinal;
     }
@@ -377,7 +379,6 @@ void SysLFS::CubeAssetsRecord::markErased(unsigned slot)
         }
     }
 
-    s.numAllocatedTiles = 0;
     s.eraseCount++;
     ASSERT(s.eraseCount > 0);
 }
