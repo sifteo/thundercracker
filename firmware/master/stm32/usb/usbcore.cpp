@@ -184,14 +184,14 @@ int UsbCore::standardEndpointRequest(SetupData *req, uint8_t **buf, uint16_t *le
     switch (req->bRequest) {
     case RequestClearFeature:
         if (req->wValue == FeatureEndpointHalt) {
-            UsbHardware::epStall(ep);
+            UsbHardware::epClearStall(ep);
             return 1;
         }
         break;
 
     case RequestSetFeature:
         if (req->wValue == FeatureEndpointHalt) {
-            UsbHardware::epClearStall(ep);
+            UsbHardware::epStall(ep);
             return 1;
         }
         break;
