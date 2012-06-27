@@ -8,6 +8,7 @@
 
 #include "graphics.h"
 #include "radio.h"
+#include "sensors.h"
 
 
 /*

@@ -7,6 +7,7 @@
  */
 
 #include "graphics_sprite.h"
+#include "sensors.h"
 
 
 void vm_bg0_spr_bg1(void)

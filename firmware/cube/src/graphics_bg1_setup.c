@@ -9,6 +9,7 @@
 #include "graphics_bg1.h"
 #include "cube_hardware.h"
 #include "radio.h"
+#include "sensors.h"
 
 
 void vm_bg0_bg1(void)
