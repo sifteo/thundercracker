@@ -446,21 +446,36 @@ bool SysLFS::AssetSlotRecord::decodeKey(Key slotKey, Key &cubeKey, unsigned &slo
 
 void SysLFS::AssetSlotRecord::init()
 {
-    memset(this, 0, sizeof *this);
+    flags = 0;
+    memset(groups, 0xff, sizeof groups);
 }
 
 bool SysLFS::AssetSlotRecord::load(const FlashLFSObjectIter &iter)
 {
     unsigned size = iter.record()->getSizeInBytes();
 
-    if (size == 0) {
-        // Deleted record.
-        init();
-        return true;
+    // Default contents
+    init();
+
+    // Variable-sized data portion, valid if the CRC is okay.
+    return iter.readAndCheck((uint8_t*) this, size);
+}
+
+unsigned SysLFS::AssetSlotRecord::writeableSize() const
+{
+    // How many bytes do we need to write for this record?
+
+    STATIC_ASSERT(sizeof flags + sizeof groups == sizeof *this);
+
+    unsigned i;
+    for (i = 0; i < ASSET_GROUPS_PER_SLOT; ++i) {
+        const LoadedAssetGroupRecord &group = groups[i];
+    
+        if (group.isEmpty())
+            break;
     }
 
-    // Valid if CRC is okay
-    return size >= sizeof *this && iter.readAndCheck((uint8_t*) this, sizeof *this);
+    return i * sizeof groups[0] + sizeof flags;
 }
 
 bool SysLFS::AssetSlotRecord::findGroup(AssetGroupIdentity identity, unsigned &offset) const

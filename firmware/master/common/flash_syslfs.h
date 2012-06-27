@@ -151,7 +151,7 @@ namespace SysLFS {
         AssetGroupIdentity identity;
 
         bool isEmpty() const {
-            return identity.volume == 0;
+            return identity.ordinal == 0xFF;
         }
     };
 
@@ -161,6 +161,8 @@ namespace SysLFS {
         };
 
         uint8_t flags;
+
+        // Variable size. Empty groups can be truncated when writing.
         LoadedAssetGroupRecord groups[ASSET_GROUPS_PER_SLOT];
 
         static Key makeKey(Key cubeKey, unsigned slot);
@@ -173,6 +175,7 @@ namespace SysLFS {
 
         void init();
         bool load(const FlashLFSObjectIter &iter);
+        unsigned writeableSize() const;
     };
 
     /*

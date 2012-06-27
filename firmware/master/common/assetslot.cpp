@@ -287,13 +287,14 @@ bool VirtAssetSlots::locateGroup(MappedAssetGroup &map,
                 allocVec->mark(asrKey);
 
                 // Now we need to write back the modified record. (Without GC)
-                if (SysLFS::write(asrKey, asr, false))
+                unsigned size = asr.writeableSize();
+                if (SysLFS::write(asrKey, (uint8_t*)&asr, size, false) == size)
                     continue;
 
                 // We failed to write without garbage collection. We may be
                 // able to write with GC enabled, but at this point we'd need
                 // to restart iteration, in case volumes were deleted.
-                SysLFS::write(asrKey, asr);
+                SysLFS::write(asrKey, (uint8_t*)&asr, size, true);
                 break;
             }
         }
@@ -344,13 +345,14 @@ void VirtAssetSlots::finalizeGroup(FlashLFSIndexRecord::KeyVector_t &vec)
             asr.flags ^= asr.F_LOAD_IN_PROGRESS;
 
             // Now we need to write back the modified record. (Without GC)
-            if (SysLFS::write(k, asr, false))
+            unsigned size = asr.writeableSize();
+            if (SysLFS::write(k, (uint8_t*)&asr, size, false) == size)
                 continue;
 
             // We failed to write without garbage collection. We may be
             // able to write with GC enabled, but at this point we'd need
             // to restart iteration, in case volumes were deleted.
-            SysLFS::write(k, asr);
+            SysLFS::write(k, (uint8_t*)&asr, size, true);
             break;
         }
     }
