@@ -1,5 +1,7 @@
 #include "fwloader.h"
 #include "bootloader.h"
+#include "aes128.h"
+#include "macros.h"
 
 #include <stdio.h>
 #include <errno.h>
@@ -72,8 +74,19 @@ bool FwLoader::sendFirmwareFile(const char *path)
 
     fseek(f, 0L, SEEK_END);
     unsigned filesz = ftell(f);
-    fseek(f, 0L, SEEK_SET);
 
+    /*
+     * Last 4 bytes are unencrypted CRC
+     */
+    fseek(f, -4L, SEEK_CUR);
+    uint32_t crc;
+    if (fread(&crc, 1, sizeof(uint32_t), f) != sizeof(uint32_t))
+        return false;
+
+    fprintf(stderr, "loading crc %lu\n", crc);
+    fprintf(stderr, "sending filesz %lu\n", filesz);
+
+    fseek(f, 0L, SEEK_SET);
     unsigned percent = 0;
     unsigned progress = 0;
 
@@ -82,8 +95,13 @@ bool FwLoader::sendFirmwareFile(const char *path)
 
     while (!feof(f)) {
 
-        const unsigned chunk = dev.maxOUTPacketSize() - 1;
-        int numBytes = fread(usbBuf + 1, 1, chunk, f);
+        /*
+         * payload (everything after command byte) should be back to back
+         * chunks of AES128::BLOCK_SIZE bytes
+         */
+        const unsigned payload = dev.maxOUTPacketSize() - 1;
+        const unsigned chunk = (payload / AES128::BLOCK_SIZE) * AES128::BLOCK_SIZE;
+        const int numBytes = fread(usbBuf + 1, 1, chunk, f);
         if (numBytes <= 0)
             continue;
 
@@ -99,6 +117,14 @@ bool FwLoader::sendFirmwareFile(const char *path)
             fflush(stderr);
         }
     }
+
+    /*
+     * Finalize the transfer - specify our version of the crc and the file size.
+     */
+    usbBuf[0] = Bootloader::CmdWriteDetails;
+    *reinterpret_cast<uint32_t*>(&usbBuf[1]) = crc;
+    *reinterpret_cast<uint32_t*>(&usbBuf[5]) = filesz;
+    dev.writePacket(usbBuf, 9);
 
     fclose(f);
 
