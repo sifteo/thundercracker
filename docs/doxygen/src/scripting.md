@@ -236,13 +236,23 @@ This is also an unsigned 32-bit integer. Note that integer wraparound could occu
 
 Save a screenshot of this cube, to a 128x128 pixel PNG file with the given name.
 
-### Cube(N):testScreenshot( _filename_ )
+### Cube(N):testScreenshot( _filename_, _tolerance_ = 0 )
 
 Capture a screenshot of this cube, and compare it to an existing 128x128 pixel PNG file with the given name.
 
 If the images match, returns nothing. If there was an error opening the reference image file, raises a Lua error.
 
-If the reference image was loaded successfully but there is even a slight difference in any pixel as compared to the current screen contents, this function returns four parameters describing the first pixel mismatch:
+If the reference image was loaded successfully, this function compares the reference to the actual screenshot, pixel by pixel. By default, an exact match is required. Even a slight difference in the 16-bit value of a pixel would cause a pixel mismatch.
+
+The optional _tolerance_ parameter can be used to allow inexact matches. The images are still compared pixel-by-pixel. For each difference, an error value is computed:
+
+1. The two pixels, reference and actual, are both converted to 24-bit (8 bit per channel) color.
+2. For each of the three color channels: The two pixel values are subtracted, and that result is squared.
+3. The squared differences for each of the three channels are summed.
+
+This is equivalent to the Mean Squared Error for that single pixel, multiplied by three. The computed error value is always an integer. If this error is less than or equal to _tolerance_, the comparison continues successfully. If it is greater, a pixel mismatch occurs.
+
+In the event of a pixel mismatch, this function returns five parameters:
 
 Position    | Name      | Meaning
 --------    | ----      | ----------------------------------------------------
@@ -250,6 +260,7 @@ Position    | Name      | Meaning
 2           | y         | Zero-based Y coordinate
 3           | lcdPixel  | Actual pixel on the LCD, as a 16-bit RGB565 value
 4           | refPixel  | Reference pixel from the provided PNG, after conversion to 16-bit RGB565 format
+5           | errValue  | The actual error value for this pixel (greater than _tolerance_)
 
 ### Cube(N):xbPoke( _address_, _byte_ )
 

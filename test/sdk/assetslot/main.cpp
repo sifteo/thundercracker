@@ -163,7 +163,7 @@ void testMultipleSlots()
         System::finish();
 
         for (CubeID cube : cubes)
-            SCRIPT_FMT(LUA, "util:assertScreenshot(Cube(%d), 'img-%P-frame-%d')",
+            SCRIPT_FMT(LUA, "util:assertScreenshot(Cube(%d), 'img-%P-frame-%d', 100)",
                 int(cube), image, frame);
     }
 }
