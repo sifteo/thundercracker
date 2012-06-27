@@ -35,7 +35,7 @@ private:
     static void ensureUpdaterIsEnabled();
     static bool eraseMcuFlash();
     static bool mcuFlashIsValid();
-    static void jumpToApplication();
+    static void jumpToApplication(uint32_t msp, uint32_t resetVector);
 
     struct Update {
         uint32_t addressPointer;

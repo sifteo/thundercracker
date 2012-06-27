@@ -37,7 +37,10 @@ void Bootloader::exec()
     if (updaterIsEnabled())
         disableUpdater();
 
-    jumpToApplication();
+    uint32_t msp = *reinterpret_cast<uint32_t*>(APPLICATION_ADDRESS);
+    uint32_t resetVector = *reinterpret_cast<uint32_t*>(APPLICATION_ADDRESS + 4);
+    jumpToApplication(msp, resetVector);
+    // never comes back
 }
 
 /*
@@ -255,16 +258,11 @@ bool Bootloader::mcuFlashIsValid()
  * Branch to application code.
  * Assumes that the validity of the application has been verified.
  */
-void Bootloader::jumpToApplication()
+void Bootloader::jumpToApplication(uint32_t msp, uint32_t resetVector)
 {
-    // Initialize user application's stack pointer & jump to app's reset vector
+    // set the MSP and jump!
     asm volatile(
-        "mov    r3,  %[appMSP]          \n\t"
-        "msr    msp, r3                 \n\t"
-        "mov    r3, %[appResetVector]   \n\t"
-        "bx     r3"
-        :
-        : [appMSP] "r"(*reinterpret_cast<uint32_t*>(APPLICATION_ADDRESS)),
-            [appResetVector] "r"(APPLICATION_ADDRESS + 4)
+        "msr    msp, r0     \n\t"
+        "bx     r1"
     );
 }
