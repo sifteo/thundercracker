@@ -1,13 +1,18 @@
+#!/usr/bin/env siftulator -e
 --[[
 
-    Sifteo SDK Example:
+    Sifteo SDK:
     A Lua script to dump the contents of Siftulator's filesystem.
 
     Save a filesystem image using:
+        rm -f filesystem.bin
         siftulator -F filesystem.bin [game.elf ...]
 
     Dump the filesystem contents using:
         siftulator -F filesystem.bin -e filesystem-dump.lua
+
+    Or equivalently, on UNIX-like OSes:
+        filesystem-dump.lua -F filesystem.bin
 
 --]]
 
@@ -42,6 +47,9 @@ function main()
 
     sys:setOptions{numCubes=0, turbo=true}
     sys:init()
+
+    heading("Block Allocation")
+    dumpAllocation()
 
     heading("Endurance Histogram")
     dumpEndurance()
@@ -78,6 +86,85 @@ function getMaxEraseCount()
         maxEC = math.max(maxEC, ec)
     end
     return maxEC
+end
+
+
+function dumpAllocation()
+    local blocks = {}
+    local vols = fs:listVolumes()
+
+    -- Create a reverse mapping from blocks to volumes
+    for i, vol in ipairs(vols) do
+        local map = fs:volumeMap(vol)
+        for j, block in ipairs(map) do
+            blocks[block] = vol
+        end
+    end
+
+    -- Display all FS blocks
+
+    local prevStr = nil
+    for block = 1, 128 do
+
+        local str = shortVolumeString(blocks[block])
+        io.write((str == prevStr and str ~= ' .. ') and '----' or str)
+        prevStr = str
+
+        if (block % 16) == 0 then
+            io.write("\n")
+            prevStr = nil
+        end
+    end
+
+    -- Display all volumes
+
+    io.write("\n")
+    for i, vol in ipairs(vols) do
+        print(longVolumeString(vol))
+    end
+end
+
+
+function longVolumeString(vol)
+    -- Return a string representation of a volume
+
+    local str = string.format("Volume<%02x> type=%04x parent=%02x {",
+        vol, fs:volumeType(vol), fs:volumeParent(vol))
+
+    local map = fs:volumeMap(vol)
+    local ec = fs:volumeEraseCounts(vol)
+
+    for i, block in ipairs(map) do
+        str = string.format("%s %02x:%d", str, block, ec[i])
+    end
+
+    return str .. " }"
+end
+
+
+function shortVolumeString(vol)
+    -- Return a tiny (4 char) representation of a volume, for the usage map
+
+    if not vol then
+        -- Block is totally unallocated
+        return ' .. '
+    end
+
+    local type = fs:volumeType(vol)
+    local parent = fs:volumeParent(vol)
+
+    if t == 0x0000 or t == 0xffff then
+        -- Deleted / Incomplete
+        return ' __ '
+    end
+
+    -- Under a parent? Display the parent's info.
+    if parent > 0 then
+        return string.format(" %02x ", parent)
+    end
+
+    -- Normal volume
+    return string.format("<%02x>", vol)
 end
 
 

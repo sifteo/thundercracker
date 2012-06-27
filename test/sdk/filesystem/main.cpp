@@ -95,9 +95,6 @@ void createObjects()
     ASSERT(0 == bar.read(obj));
     ASSERT(0 == wub.read(obj));
     
-    // XXX: Currently disabled in master until the test passes
-    return;
-
     /*
      * Now check that as we replay the log, we see the events occur
      * in monotonically increasing order.
