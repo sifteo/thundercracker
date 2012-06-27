@@ -438,5 +438,5 @@ void NRF24L01::onSpiComplete()
         break;
     }
 
-        SampleProfiler::setSubsystem(s);
+    SampleProfiler::setSubsystem(s);
 }
