@@ -20,8 +20,8 @@
 
 #if HWREV >= 4
 
-    #define ACCEL_ADDR_TX           0x32    // 00110010 - SDO is tied LOW
-    #define ACCEL_ADDR_RX           0x33    // 00110011 - SDO is tied LOW
+    #define ACCEL_ADDR_TX           0x32    // 00110010 - SDO is pulled HIGH (internally)
+    #define ACCEL_ADDR_RX           0x33    // 00110011 - SDO is pulled HIGH (internally)
 
 #else
 

@@ -169,7 +169,7 @@ void power_sleep(void)
     BUS_PORT = 0;               // Drive bus port low
     BUS_DIR = 0;
 
-#ifdef WAKEUP_INERTIAL
+#if HWREV >= 5
     /*
      * Wakeup on shake
      */
