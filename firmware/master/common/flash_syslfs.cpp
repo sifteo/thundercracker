@@ -460,7 +460,7 @@ bool SysLFS::AssetSlotRecord::load(const FlashLFSObjectIter &iter)
     init();
 
     // Variable-sized data portion, valid if the CRC is okay.
-    return iter.readAndCheck((uint8_t*) this, size);
+    return iter.readAndCheck((uint8_t*) this, MIN(size, sizeof *this));
 }
 
 unsigned SysLFS::AssetSlotRecord::writeableSize() const
