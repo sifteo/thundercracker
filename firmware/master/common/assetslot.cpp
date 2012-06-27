@@ -287,7 +287,7 @@ bool VirtAssetSlots::locateGroup(MappedAssetGroup &map,
                 allocVec->mark(asrKey);
 
                 // Now we need to write back the modified record. (Without GC)
-                unsigned size = asr.writeableSize();
+                int size = asr.writeableSize();
                 if (SysLFS::write(asrKey, (uint8_t*)&asr, size, false) == size)
                     continue;
 
@@ -345,7 +345,7 @@ void VirtAssetSlots::finalizeGroup(FlashLFSIndexRecord::KeyVector_t &vec)
             asr.flags ^= asr.F_LOAD_IN_PROGRESS;
 
             // Now we need to write back the modified record. (Without GC)
-            unsigned size = asr.writeableSize();
+            int size = asr.writeableSize();
             if (SysLFS::write(k, (uint8_t*)&asr, size, false) == size)
                 continue;
 
