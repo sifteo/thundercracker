@@ -20,6 +20,7 @@ Deployer::Deployer()
  * - uint64_t magic number
  * - ... encrypted data ...
  * - uint32_t crc of the plaintext
+ * - uint32_t size of the plaintext
  */
 bool Deployer::deploy(const char *inPath, const char *outPath)
 {
@@ -37,8 +38,8 @@ bool Deployer::deploy(const char *inPath, const char *outPath)
 
     Crc32::init();
 
-    uint32_t calculatedCrc;
-    if (!crcForFile(fin, calculatedCrc))
+    uint32_t plainsz, calculatedCrc;
+    if (!detailsForFile(fin, plainsz, calculatedCrc))
         return false;
 
     // prepend magic number
@@ -53,6 +54,10 @@ bool Deployer::deploy(const char *inPath, const char *outPath)
     if (fwrite(&calculatedCrc, 1, sizeof(uint32_t), fout) != sizeof(uint32_t))
         return false;
 
+    // append the plaintext size
+    if (fwrite(&plainsz, 1, sizeof(uint32_t), fout) != sizeof(uint32_t))
+        return false;
+
     fclose(fin);
     fclose(fout);
 
@@ -63,7 +68,7 @@ bool Deployer::deploy(const char *inPath, const char *outPath)
  * Calculate the CRC for the input file.
  * This is read-only
  */
-bool Deployer::crcForFile(FILE *f, uint32_t &crc)
+bool Deployer::detailsForFile(FILE *f, uint32_t &sz, uint32_t &crc)
 {
     Crc32::reset();
 
@@ -82,6 +87,7 @@ bool Deployer::crcForFile(FILE *f, uint32_t &crc)
             Crc32::add(*p++);
     }
 
+    sz = ftell(f);
     crc = Crc32::get();
     return true;
 }
