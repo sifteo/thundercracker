@@ -180,17 +180,15 @@ void power_sleep(void)
 
     // Enable inertial interrupt on INT2
     {
-        const __code uint8_t init2[] = { ACCEL_ADDR_TX, ACCEL_CTRL_REG2, ACCEL_REG2_INIT };
-        const __code uint8_t init6[] = { ACCEL_ADDR_TX, ACCEL_CTRL_REG6, ACCEL_REG6_INIT };
-        const __code uint8_t init7[] = { ACCEL_ADDR_TX, ACCEL_INT1_CFG,  ACCEL_CFG_INIT };
-        const __code uint8_t init8[] = { ACCEL_ADDR_TX, ACCEL_INT1_THS,  ACCEL_THS_INIT };
-        const __code uint8_t init9[] = { ACCEL_ADDR_TX, ACCEL_INT1_DUR,  ACCEL_DUR_INIT };
-
-        i2c_tx(init2, sizeof init2);
-        i2c_tx(init6, sizeof init6);
-        i2c_tx(init7, sizeof init7);
-        i2c_tx(init8, sizeof init8);
-        i2c_tx(init9, sizeof init9);
+        static const __code uint8_t init[] = {
+            3, ACCEL_ADDR_TX, ACCEL_CTRL_REG2, ACCEL_REG2_INIT,
+            3, ACCEL_ADDR_TX, ACCEL_CTRL_REG6, ACCEL_REG6_INIT,
+            3, ACCEL_ADDR_TX, ACCEL_INT1_CFG,  ACCEL_CFG_INIT,
+            3, ACCEL_ADDR_TX, ACCEL_INT1_THS,  ACCEL_THS_INIT,
+            3, ACCEL_ADDR_TX, ACCEL_INT1_DUR,  ACCEL_DUR_INIT,
+            0
+        };
+        i2c_tx(init);
     }
 
     WUOPC1 = SHAKE_WUOPC_BIT;

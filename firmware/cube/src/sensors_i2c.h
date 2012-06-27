@@ -55,7 +55,7 @@
 
 #define ACCEL_START_READ_X      0xA8    // (AUTO_INC_BIT | OUT_X_L)
 
-extern static void i2c_tx(const __code uint8_t *, uint8_t);
+extern static void i2c_tx(const __code uint8_t *);
 
 /*
  * Factory test hardware
