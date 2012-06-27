@@ -67,7 +67,7 @@ function hexDump(str, indent)
         io.write(string.format("%s[%04x] ", indentStr(indent), byte-1))
         chunk:gsub(".", function (c) io.write(string.format('%02x ',string.byte(c))) end)
         io.write(string.rep(" ", 3 * (16 - #chunk)))
-        io.write("  ", chunk:gsub("[^%w%p%s]", "."), "\n")
+        io.write("  ", chunk:gsub("[^%w%p ]", "."), "\n")
     end
 end
 
