@@ -18,6 +18,7 @@ private:
     static const unsigned VERSION_COMPAT_MAX = 1;
 
     bool bootloaderVersionIsCompatible();
+    void resetWritePointer();
     bool sendFirmwareFile(const char *path);
 
     IODevice &dev;

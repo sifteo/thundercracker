@@ -33,6 +33,8 @@ bool FwLoader::load(const char *path, int vid, int pid)
     if (!bootloaderVersionIsCompatible())
         return false;
 
+    resetWritePointer();
+
     if (!sendFirmwareFile(path))
         return false;
 
@@ -57,6 +59,15 @@ bool FwLoader::bootloaderVersionIsCompatible()
 
     unsigned version = usbBuf[1];
     return ((VERSION_COMPAT_MIN <= version) && (version <= VERSION_COMPAT_MAX));
+}
+
+void FwLoader::resetWritePointer()
+{
+    const uint8_t ptrRequest[] = { Bootloader::CmdResetAddrPtr };
+    dev.writePacket(ptrRequest, sizeof ptrRequest);
+
+    while (!dev.numPendingOUTPackets())
+        dev.processEvents();
 }
 
 /*
