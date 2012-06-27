@@ -5,6 +5,7 @@ CDEPS := $(MASTER_DIR)/common/syscall-table.def
 all: $(BIN)
 
 $(BIN): $(OBJS_STM32)
+	$(LDSCRIPT_GEN)
 	$(CC) -o $@ $^ $(LDFLAGS)
 
 %.stm32.o: %.cpp $(CDEPS)
