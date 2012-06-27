@@ -95,10 +95,14 @@ void Bootloader::onUsbData(const uint8_t *buf, unsigned numBytes)
         numBytes--; // step past the byte of command
 
         while (numBytes >= AES128::BLOCK_SIZE) {
+#if 0
             AES128::encryptBlock(plaintext, update.cipherBuf, update.expandedKey);
             AES128::xorBlock(plaintext, cipherIn);
-
             const uint16_t *p = reinterpret_cast<const uint16_t*>(plaintext);
+#else
+            // XXX: temp, handling unencrypted data only
+            const uint16_t *p = reinterpret_cast<const uint16_t*>(cipherIn);
+#endif
             const unsigned numHalfWords = AES128::BLOCK_SIZE / sizeof(uint16_t);
 
             for (unsigned i = 0; i < numHalfWords; ++i) {
