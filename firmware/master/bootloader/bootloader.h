@@ -17,7 +17,7 @@ public:
         CmdGetVersion,
         CmdWriteMemory,
         CmdWriteDetails,
-        CmdSetAddrPtr,
+        CmdResetAddrPtr,
         CmdGetAddrPtr,
         CmdJump,
         CmdAbort

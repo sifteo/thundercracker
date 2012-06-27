@@ -121,16 +121,9 @@ void Bootloader::onUsbData(const uint8_t *buf, unsigned numBytes)
         break;
     }
 
-    case CmdSetAddrPtr: {
-
-        if (numBytes < 5)
-            break;
-
-        uint32_t ptr = *reinterpret_cast<const uint32_t*>(buf + 1);
-        if ((APPLICATION_ADDRESS <= ptr) && (ptr < Stm32Flash::END_ADDR))
-            update.addressPointer = ptr;
+    case CmdResetAddrPtr:
+        update.addressPointer = APPLICATION_ADDRESS;
         break;
-    }
 
     case CmdGetAddrPtr: {
         uint8_t response[5] = { buf[0] };
