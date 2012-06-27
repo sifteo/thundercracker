@@ -38,7 +38,7 @@ void power_init(void)
 
     PWRDWN;
     OPMCON = 0;
-    TOUCH_WUPOC = 0;
+    WUOPC1 = 0;
     PWRDWN = 0;
 
     /*

@@ -19,7 +19,7 @@
  * overflow its low byte)
  */
 
-#define IDLE_TIMEOUT   6   // 1 minute
+#define IDLE_TIMEOUT   38   // 1 minute
 
 /*
  * Power managament interface
