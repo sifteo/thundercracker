@@ -93,7 +93,7 @@ namespace SysLFS {
         void allocBinding(FlashVolume vol, unsigned numSlots);
 
         void markErased(unsigned slot);
-        bool markAccessed(FlashVolume vol, unsigned numSlots);
+        bool markAccessed(FlashVolume vol, unsigned numSlots, bool force);
 
     private:
         void recycleSlots(unsigned bank, unsigned numSlots,

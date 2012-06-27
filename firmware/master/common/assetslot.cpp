@@ -100,11 +100,11 @@ void VirtAssetSlots::rebindCube(_SYSCubeID cube)
             // Creating a new binding, and erase it.
 
             cr.assets.allocBinding(volume, numSlots);
-            cr.assets.markAccessed(volume, numSlots);
+            cr.assets.markAccessed(volume, numSlots, true);
             needErase = true;
             needWrite = true;
 
-        } else if (cr.assets.markAccessed(volume, numSlots)) {
+        } else if (cr.assets.markAccessed(volume, numSlots, false)) {
             // Bump up the access rank of an existing binding
 
             needWrite = true;

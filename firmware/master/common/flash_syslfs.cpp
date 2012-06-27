@@ -383,7 +383,7 @@ void SysLFS::CubeAssetsRecord::markErased(unsigned slot)
     ASSERT(s.eraseCount > 0);
 }
 
-bool SysLFS::CubeAssetsRecord::markAccessed(FlashVolume vol, unsigned numSlots)
+bool SysLFS::CubeAssetsRecord::markAccessed(FlashVolume vol, unsigned numSlots, bool force)
 {
     /*
      * Mark a volume's slots as having been recently accessed. This
@@ -397,6 +397,8 @@ bool SysLFS::CubeAssetsRecord::markAccessed(FlashVolume vol, unsigned numSlots)
      * bump a slot back to rank zero. That's fine. It's also important that
      * slots belonging to the same volume all get ranked equivalently, since
      * there's no reason to prefer one slot to another except for wear leveling.
+     *
+     * If 'force' is true, we disregard the slots' existing access ranks.
      */
 
     bool modified = false;
@@ -404,7 +406,7 @@ bool SysLFS::CubeAssetsRecord::markAccessed(FlashVolume vol, unsigned numSlots)
     for (unsigned i = 0; i < arraysize(slots); ++i) {
         AssetSlotOverviewRecord &slot = slots[i];
         if (slot.identity.inActiveSet(vol, numSlots)) {
-            if (slot.accessRank != 0) {
+            if (force || slot.accessRank != 0) {
                 modified = true;
                 slot.accessRank = 0;
             }
