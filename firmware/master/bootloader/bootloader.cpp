@@ -94,6 +94,8 @@ void Bootloader::onUsbData(const uint8_t *buf, unsigned numBytes)
         const uint8_t *cipherIn = buf + 1;
         numBytes--; // step past the byte of command
 
+        Stm32Flash::beginProgramming();
+
         while (numBytes >= AES128::BLOCK_SIZE) {
 #if 0
             AES128::encryptBlock(plaintext, update.cipherBuf, update.expandedKey);
@@ -103,9 +105,9 @@ void Bootloader::onUsbData(const uint8_t *buf, unsigned numBytes)
             // XXX: temp, handling unencrypted data only
             const uint16_t *p = reinterpret_cast<const uint16_t*>(cipherIn);
 #endif
-            const unsigned numHalfWords = AES128::BLOCK_SIZE / sizeof(uint16_t);
+            const uint16_t *end = reinterpret_cast<const uint16_t*>(cipherIn + AES128::BLOCK_SIZE);
 
-            for (unsigned i = 0; i < numHalfWords; ++i) {
+            while (p < end) {
                 Stm32Flash::programHalfWord(*p, update.addressPointer);
                 update.addressPointer += 2;
                 p++;
@@ -114,6 +116,8 @@ void Bootloader::onUsbData(const uint8_t *buf, unsigned numBytes)
             cipherIn += AES128::BLOCK_SIZE;
             numBytes -= AES128::BLOCK_SIZE;
         }
+
+        Stm32Flash::endProgramming();
         break;
     }
 
@@ -235,8 +239,8 @@ bool Bootloader::mcuFlashIsValid()
         return false;
 
     Crc32::reset();
-    uint32_t *address = reinterpret_cast<uint32_t*>(APPLICATION_ADDRESS);
-    const uint32_t *end = address + imgsize;
+    const uint32_t *address = reinterpret_cast<uint32_t*>(APPLICATION_ADDRESS);
+    const uint32_t *end = reinterpret_cast<uint32_t*>(APPLICATION_ADDRESS + imgsize);
 
     while (address < end) {
         Crc32::add(*address);
