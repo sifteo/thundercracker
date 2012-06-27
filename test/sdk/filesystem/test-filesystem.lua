@@ -7,6 +7,7 @@
 ]]--
 
 require('siftulator')
+require('flashreplay')
 require('luaunit')
 
 System():setOptions{ turbo=true, numCubes=0 }

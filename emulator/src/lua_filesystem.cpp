@@ -437,10 +437,12 @@ int LuaFilesystem::rawErase(lua_State *L)
 int LuaFilesystem::invalidateCache(lua_State *L)
 {
     /*
-     * Invalidate the block cache. No parameters.
+     * Invalidate all caches. No parameters.
      */
 
     FlashBlock::invalidate();
+    FlashLFSCache::invalidate();
+
     return 0;
 }
 

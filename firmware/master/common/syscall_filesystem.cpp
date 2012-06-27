@@ -188,7 +188,7 @@ int32_t _SYS_fs_objectRead(unsigned key, uint8_t *buffer,
             return size;
     }
 
-    return _SYS_ENOENT;
+    return 0;
 }
 
 int32_t _SYS_fs_objectWrite(unsigned key, const uint8_t *data, unsigned dataSize)

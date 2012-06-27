@@ -374,6 +374,8 @@ Read _count_ bytes from the raw Flash device, starting at the specified device a
 
 Write the string _data_ to the raw Flash device, starting at _address_. Does not automatically erase the device. This effectively performs a bitwise AND of the supplied data with the existing contents of the device.
 
+Use this function with care. Remember you're bypassing the filesystem and writing to low-level flash memory. If you use rawWrite(), you likely must also use rawErase() and invalidateCache() correctly as well.
+
 ### Filesystem():rawErase( _address_ )
 
 Erase one 4 kB sector of the raw Flash device, starting at the specified sector-aligned address.
@@ -381,6 +383,8 @@ Erase one 4 kB sector of the raw Flash device, starting at the specified sector-
 ### Filesystem():invalidateCache()
 
 Force the system to discard or reload all cached Flash data. Any memory blocks which are still in use will be overwritten with freshly-loaded data, while unused cached memory blocks are simply discarded.
+
+In addition to the systemwide block cache, this flushes other special-purpose caches used by the filesystem.
 
 ### Filesystem():setCallbacksEnabled( _true_ | _false_ )
 
