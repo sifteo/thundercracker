@@ -7,9 +7,10 @@ include $(TC_DIR)/Makefile.platform
 BIN := fwdeploy$(BIN_EXT)
 
 OBJS := \
-    src/main.o          \
-    src/deployer.o      \
-    src/crc.o
+    src/main.o                          \
+    src/deployer.o                      \
+    src/crc.o                           \
+    $(MASTER_DIR)/common/aes128.o
 
 # include directories
 INCLUDES := \

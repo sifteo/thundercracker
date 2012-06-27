@@ -13,7 +13,7 @@ public:
 
 private:
     bool crcForFile(FILE *f, uint32_t &crc);
-    bool encryptFWBinary(FILE *fin, FILE *fout, uint32_t crc);
+    bool encryptFWBinary(FILE *fin, FILE *fout);
 };
 
 #endif // DEPLOYER_H
