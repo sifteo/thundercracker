@@ -12,7 +12,6 @@
 
 Bootloader::Update Bootloader::update;
 bool Bootloader::firstLoad;
-const uint32_t Bootloader::SIZE = 0x2000;
 const uint32_t Bootloader::APPLICATION_ADDRESS = Stm32Flash::START_ADDR + SIZE;
 
 void Bootloader::init()
@@ -71,10 +70,10 @@ void Bootloader::load()
     memcpy(update.cipherBuf, iv, AES128::BLOCK_SIZE);
 
     // initialize update state, default to beginning of application flash
-    update.complete = false;
+    update.loadInProgress = true;
     update.addressPointer = APPLICATION_ADDRESS;
 
-    while (!update.complete)
+    while (update.loadInProgress)
         Tasks::work();
 
     // success is determined by the validation of MCU flash
@@ -158,13 +157,11 @@ void Bootloader::onUsbData(const uint8_t *buf, unsigned numBytes)
         Stm32Flash::programHalfWord((givenImgSize >> 16) & 0xffff, Stm32Flash::END_ADDR - 2);
 
         Stm32Flash::endProgramming();
+
+        update.loadInProgress = false;
+
         break;
     }
-
-    case CmdJump:
-    case CmdAbort:
-        update.complete = true;
-        break;
 
     }
 }
