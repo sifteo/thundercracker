@@ -648,6 +648,18 @@ struct NVIC_t {
     uint32_t CID2;
     uint32_t CID3;
 
+    enum VectorTable {
+        VectorTableRam      = 0x20000000,
+        VectorTableFlash    = 0x08000000
+    };
+
+    /*
+     * NB: offset must be a multiple of 0x100.
+     */
+    void setVectorTable(VectorTable vtab, uint32_t offset) volatile {
+        vectorTableOffset = vtab | (offset & 0x1FFFFF80U);
+    }
+
     void irqEnable(const ISR_t &vector) volatile {
         unsigned id = ((uintptr_t)&vector - (uintptr_t)&IVT.WWDG) >> 2;
         irqSetEnable[id >> 5] = 1 << (id & 31);
