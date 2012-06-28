@@ -43,6 +43,9 @@ class SystemMC {
         return instance->sys;
     }
 
+    // Exit from Siftulator entirely, from within the System simulation thread.
+    static void exit(int result);
+
     /**
      * Cause some time to pass in the MC simulation, and service any
      * asynchronous events that occurred during this elapsed time.

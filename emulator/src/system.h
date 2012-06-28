@@ -86,6 +86,10 @@ class System {
         return sc.deadlineSync;
     }
 
+    void stopCubesOnly() {
+        sc.stop();
+    }
+
  private:
     bool mIsInitialized;
     bool mIsStarted;

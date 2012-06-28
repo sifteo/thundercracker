@@ -19,6 +19,10 @@
 #include "panic.h"
 #include "audiomixer.h"
 
+#ifdef SIFTEO_SIMULATOR
+#   include "system_mc.h"
+#endif
+
 #include <stdlib.h>
 #include <sifteo/abi.h>
 
@@ -166,10 +170,12 @@ void SvmLoader::exit(bool fault)
          * version of the launcher this would be a fatal error. In
          * simulation, however, we use this to exit the simulator.
          */
+
         #ifdef SIFTEO_SIMULATOR
         // Must preserve the error code here, so that unit tests and other scripts work.
-        ::exit(fault);
+        SystemMC::exit(fault);
         #endif
+
         PanicMessenger::haltForever();
     }
 }
