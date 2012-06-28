@@ -19,9 +19,6 @@ INCLUDES := \
         -I$(MASTER_DIR)/common
 
 VERSION := $(shell git describe --tags)
-ifeq ($(VERSION), )
-VERSION := "\"\""
-endif
 
 # C++ compiler flags (-g -O2 -Wall)
 CCFLAGS = -g -O2
