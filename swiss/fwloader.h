@@ -21,8 +21,7 @@ private:
     bool bootloaderVersionIsCompatible();
     void resetWritePointer();
     bool checkFileDetails(FILE *f, uint32_t &plainsz, uint32_t &crc);
-    bool sendFirmwareFile(FILE *f);
-    bool sendDetails(uint32_t size, uint32_t crc);
+    bool sendFirmwareFile(FILE *f, uint32_t crc, uint32_t size);
 
     IODevice &dev;
 };

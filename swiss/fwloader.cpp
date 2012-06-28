@@ -47,12 +47,7 @@ bool FwLoader::load(const char *path, int vid, int pid)
 
     resetWritePointer();
 
-    if (!sendDetails(plainsz, crc)) {
-        fprintf(stderr, "error sending details\n");
-        return false;
-    }
-
-    if (!sendFirmwareFile(f)) {
+    if (!sendFirmwareFile(f, crc, plainsz)) {
         fprintf(stderr, "error sending file\n");
         return false;
     }
@@ -131,15 +126,20 @@ bool FwLoader::checkFileDetails(FILE *f, uint32_t &plainsz, uint32_t &crc)
  * The file should already be encrypted and in the final form that it will reside
  * in the STM32's flash.
  */
-bool FwLoader::sendFirmwareFile(FILE *f)
+bool FwLoader::sendFirmwareFile(FILE *f, uint32_t crc, uint32_t size)
 {
     fseek(f, 0L, SEEK_END);
     unsigned extraBytes = sizeof(uint64_t) + (2 * sizeof(uint32_t));
-    int numEncryptedBytes = ftell(f) - extraBytes;
-    const unsigned filesz = numEncryptedBytes;
+    const unsigned filesz = ftell(f) - extraBytes;
+
+    /*
+     * initialBytes is the entire encrypted file, minus the the final block,
+     * which is sent separately.
+     */
+    int initialBytesToSend = filesz - AES128::BLOCK_SIZE;
 
     // must be aes block aligned
-    if (numEncryptedBytes & 0xf) {
+    if (initialBytesToSend & 0xf) {
         fprintf(stderr, "incorrect input format\n");
         return false;
     }
@@ -149,25 +149,24 @@ bool FwLoader::sendFirmwareFile(FILE *f)
     unsigned percent = 0;
     unsigned progress = 0;
 
-    uint8_t usbBuf[IODevice::MAX_EP_SIZE] = { Bootloader::CmdWriteMemory };
-
     /*
      * Payload should be back to back AES128::BLOCK_SIZE chunks.
      */
-    while (numEncryptedBytes > 0) {
+    while (initialBytesToSend) {
 
-        const unsigned payload = dev.maxOUTPacketSize() - 1;
+        uint8_t usbBuf[IODevice::MAX_EP_SIZE] = { Bootloader::CmdWriteMemory };
+        const unsigned payload = MIN(dev.maxOUTPacketSize() - 1, initialBytesToSend);
         const unsigned chunk = (payload / AES128::BLOCK_SIZE) * AES128::BLOCK_SIZE;
         const int numBytes = fread(usbBuf + 1, 1, chunk, f);
         if (numBytes != chunk)
-            break;
+            return false;
 
         dev.writePacket(usbBuf, numBytes + 1);
         while (dev.numPendingOUTPackets() > IODevice::MAX_OUTSTANDING_OUT_TRANSFERS)
             dev.processEvents();
 
         progress += numBytes;
-        numEncryptedBytes -= numBytes;
+        initialBytesToSend -= numBytes;
 
         const unsigned progressPercent = ((float)progress / (float)filesz) * 100;
         if (progressPercent != percent) {
@@ -177,17 +176,30 @@ bool FwLoader::sendFirmwareFile(FILE *f)
         }
     }
 
-    return true;
-}
-
-bool FwLoader::sendDetails(uint32_t size, uint32_t crc)
-{
     /*
-     * Finalize the transfer - specify our version of the crc and the file size.
+     * Write the final block.
+     * Decrypter needs to treat this sepcially in order to deal with the padding
+     * at the end, and also gives us a chance to finalize the update by sending
+     * the expected CRC and size for the plaintext.
      */
-    uint8_t usbBuf[IODevice::MAX_EP_SIZE] = { Bootloader::CmdWriteDetails };
-    *reinterpret_cast<uint32_t*>(&usbBuf[1]) = crc;
-    *reinterpret_cast<uint32_t*>(&usbBuf[5]) = size;
-    dev.writePacket(usbBuf, 9);
+
+    ASSERT(initialBytesToSend == 0);
+
+    uint8_t finalBuf[IODevice::MAX_EP_SIZE] = { Bootloader::CmdWriteFinal };
+
+    uint8_t *p = finalBuf + 1;
+    int numBytes = fread(p, 1, AES128::BLOCK_SIZE, f);
+    p += AES128::BLOCK_SIZE;
+    if (numBytes != AES128::BLOCK_SIZE)
+        return false;
+
+    memcpy(p, &crc, sizeof crc);
+    p += sizeof(crc);
+
+    memcpy(p, &size, sizeof(size));
+    p += sizeof(size);
+
+    dev.writePacket(finalBuf, p - finalBuf);
+
     return true;
 }
