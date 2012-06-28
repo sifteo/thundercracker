@@ -88,6 +88,9 @@ void Bootloader::onUsbData(const uint8_t *buf, unsigned numBytes)
         break;
     }
 
+    /*
+     * Buf format: uint8_t command, [as many 16 byte aes blocks as fit]
+     */
     case CmdWriteMemory: {
         uint8_t plaintext[AES128::BLOCK_SIZE];
         const uint8_t *cipherIn = buf + 1;
@@ -97,52 +100,49 @@ void Bootloader::onUsbData(const uint8_t *buf, unsigned numBytes)
 
         while (numBytes >= AES128::BLOCK_SIZE) {
 
-            AES128::encryptBlock(plaintext, update.cipherBuf, update.expandedKey);
-            memcpy(update.cipherBuf, cipherIn, AES128::BLOCK_SIZE);
-            AES128::xorBlock(plaintext, update.cipherBuf);
-
-            /*
-             * The last block contains padding values - must not program
-             * these to flash, otherwise our CRC will be incorrect.
-             */
-
-            const unsigned progress = update.addressPointer - APPLICATION_ADDRESS;
-            bool lastBlock = ((update.size - progress) <= AES128::BLOCK_SIZE);
-
-            const uint16_t *p = reinterpret_cast<const uint16_t*>(plaintext);
-            const uint16_t *end;
-            if (lastBlock) {
-                // last byte of last block is always the pad value
-                uint8_t padvalue = plaintext[AES128::BLOCK_SIZE - 1];
-                end = p + ((AES128::BLOCK_SIZE - padvalue) / sizeof(uint16_t));
-            } else {
-                end = p + (AES128::BLOCK_SIZE / sizeof(uint16_t));
-            }
-
-            while (p < end) {
-                Stm32Flash::programHalfWord(*p, update.addressPointer);
-                update.addressPointer += 2;
-                p++;
-            }
-
-            if (lastBlock) {
-
-                // write the CRC to the current address pointer
-                Stm32Flash::programHalfWord(update.crc & 0xffff, update.addressPointer);
-                Stm32Flash::programHalfWord((update.crc >> 16) & 0xffff, update.addressPointer + 2);
-
-                // write the size to the end of MCU flash
-                Stm32Flash::programHalfWord(update.size & 0xffff, Stm32Flash::END_ADDR - 4);
-                Stm32Flash::programHalfWord((update.size >> 16) & 0xffff, Stm32Flash::END_ADDR - 2);
-
-                update.loadInProgress = false;
-            }
+            decryptBlock(plaintext, cipherIn);
+            program(plaintext, AES128::BLOCK_SIZE);
 
             cipherIn += AES128::BLOCK_SIZE;
             numBytes -= AES128::BLOCK_SIZE;
         }
 
         Stm32Flash::endProgramming();
+        break;
+    }
+
+    /*
+     * Buf format: uint8_t command, 16 bytes final aes block, uint32_t CRC, uint32_t size
+     */
+    case CmdWriteFinal: {
+
+        if (numBytes < 25)
+            break;
+
+        const uint8_t *cipherIn = buf + 1;
+        uint8_t plaintext[AES128::BLOCK_SIZE];
+        decryptBlock(plaintext, cipherIn);
+
+        Stm32Flash::beginProgramming();
+
+        // last byte of last block is always the pad value
+        uint8_t padvalue = plaintext[AES128::BLOCK_SIZE - 1];
+        program(plaintext, AES128::BLOCK_SIZE - padvalue);
+
+        /*
+         * Write details to allow us to verify contents of MCU flash.
+         */
+        uint32_t crc = *reinterpret_cast<const uint32_t*>(buf + 17);
+        uint32_t size = *reinterpret_cast<const uint32_t*>(buf + 21);
+
+        Stm32Flash::programHalfWord(crc & 0xffff, update.addressPointer);
+        Stm32Flash::programHalfWord((crc >> 16) & 0xffff, update.addressPointer + 2);
+
+        Stm32Flash::programHalfWord(size & 0xffff, Stm32Flash::END_ADDR - 4);
+        Stm32Flash::programHalfWord((size >> 16) & 0xffff, Stm32Flash::END_ADDR - 2);
+
+        Stm32Flash::endProgramming();
+        update.loadInProgress = false;
         break;
     }
 
@@ -157,17 +157,31 @@ void Bootloader::onUsbData(const uint8_t *buf, unsigned numBytes)
         break;
     }
 
-    case CmdWriteDetails: {
-
-        if (numBytes < 9)
-            break;
-
-        update.crc = *reinterpret_cast<const uint32_t*>(&buf[1]);
-        update.size = *reinterpret_cast<const uint32_t*>(&buf[5]);
-
-        break;
     }
+}
 
+/*
+ * Decrypt a single block of AES encrypted data.
+ * AES128::BLOCK_SIZE bytes must be available.
+ */
+void Bootloader::decryptBlock(uint8_t *plaintext, const uint8_t *cipher)
+{
+    AES128::encryptBlock(plaintext, update.cipherBuf, update.expandedKey);
+    memcpy(update.cipherBuf, cipher, AES128::BLOCK_SIZE);
+    AES128::xorBlock(plaintext, update.cipherBuf);
+}
+
+/*
+ * Program the requested data to the current address pointer.
+ */
+void Bootloader::program(const uint8_t *data, unsigned len)
+{
+    const uint16_t *p = reinterpret_cast<const uint16_t*>(data);
+    const uint16_t *end = reinterpret_cast<const uint16_t*>(data + len);
+    while (p < end) {
+        Stm32Flash::programHalfWord(*p, update.addressPointer);
+        update.addressPointer += 2;
+        p++;
     }
 }
 

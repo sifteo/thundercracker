@@ -17,7 +17,7 @@ public:
     enum Command {
         CmdGetVersion,
         CmdWriteMemory,
-        CmdWriteDetails,
+        CmdWriteFinal,
         CmdResetAddrPtr,
         CmdGetAddrPtr
     };
@@ -33,13 +33,13 @@ private:
     static void disableUpdater();
     static void ensureUpdaterIsEnabled();
     static bool eraseMcuFlash();
+    static void decryptBlock(uint8_t *plaintext, const uint8_t *cipher);
+    static void program(const uint8_t *data, unsigned len);
     static bool mcuFlashIsValid();
     static void jumpToApplication(uint32_t msp, uint32_t resetVector);
 
     struct Update {
         uint32_t addressPointer;
-        uint32_t size;
-        uint32_t crc;
         uint32_t expandedKey[44];
         uint8_t cipherBuf[AES128::BLOCK_SIZE];
         volatile bool loadInProgress;
