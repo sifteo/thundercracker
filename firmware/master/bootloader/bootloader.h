@@ -38,6 +38,8 @@ private:
 
     struct Update {
         uint32_t addressPointer;
+        uint32_t size;
+        uint32_t crc;
         uint32_t expandedKey[44];
         uint8_t cipherBuf[AES128::BLOCK_SIZE];
         volatile bool loadInProgress;

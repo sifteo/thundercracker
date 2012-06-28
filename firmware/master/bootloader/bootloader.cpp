@@ -27,20 +27,19 @@ void Bootloader::init()
  */
 void Bootloader::exec()
 {
-    if (updaterIsEnabled())
-        load();
-
     while (!mcuFlashIsValid())
         load();
-
-    if (updaterIsEnabled())
-        disableUpdater();
 
     uint32_t msp = *reinterpret_cast<uint32_t*>(APPLICATION_ADDRESS);
     uint32_t resetVector = *reinterpret_cast<uint32_t*>(APPLICATION_ADDRESS + 4);
     jumpToApplication(msp, resetVector);
     // never comes back
 }
+
+#define AES_IV  {  0x00, 0x01, 0x02, 0x03, \
+                    0x04, 0x05, 0x06, 0x07, \
+                    0x08, 0x09, 0x0a, 0x0b, \
+                    0x0c, 0x0d, 0x0e, 0x0f }
 
 /*
  * Load a new firmware image from our host over USB.
@@ -57,15 +56,13 @@ void Bootloader::load()
         firstLoad = false;
     }
 
-    ensureUpdaterIsEnabled();
-
     if (!eraseMcuFlash())
         return;
 
     // initialize decryption
     // XXX: select actual values
     const uint32_t key[4] = { 0x2b7e1516, 0x28aed2a6, 0xabf71588, 0x09cf4f3c };
-    const uint32_t iv[4] = { 0x2b7e1516, 0x28aed2a6, 0xabf71588, 0x09cf4f3c };
+    const uint8_t iv[] = AES_IV;
     AES128::expandKey(update.expandedKey, key);
     memcpy(update.cipherBuf, iv, AES128::BLOCK_SIZE);
 
@@ -99,20 +96,46 @@ void Bootloader::onUsbData(const uint8_t *buf, unsigned numBytes)
         Stm32Flash::beginProgramming();
 
         while (numBytes >= AES128::BLOCK_SIZE) {
-#if 0
+
             AES128::encryptBlock(plaintext, update.cipherBuf, update.expandedKey);
-            AES128::xorBlock(plaintext, cipherIn);
+            memcpy(update.cipherBuf, cipherIn, AES128::BLOCK_SIZE);
+            AES128::xorBlock(plaintext, update.cipherBuf);
+
+            /*
+             * The last block contains padding values - must not program
+             * these to flash, otherwise our CRC will be incorrect.
+             */
+
+            const unsigned progress = update.addressPointer - APPLICATION_ADDRESS;
+            bool lastBlock = ((update.size - progress) <= AES128::BLOCK_SIZE);
+
             const uint16_t *p = reinterpret_cast<const uint16_t*>(plaintext);
-#else
-            // XXX: temp, handling unencrypted data only
-            const uint16_t *p = reinterpret_cast<const uint16_t*>(cipherIn);
-#endif
-            const uint16_t *end = reinterpret_cast<const uint16_t*>(cipherIn + AES128::BLOCK_SIZE);
+            const uint16_t *end;
+            if (lastBlock) {
+                // last byte of last block is always the pad value
+                uint8_t padvalue = plaintext[AES128::BLOCK_SIZE - 1];
+                end = p + ((AES128::BLOCK_SIZE - padvalue) / sizeof(uint16_t));
+            } else {
+                end = p + (AES128::BLOCK_SIZE / sizeof(uint16_t));
+            }
 
             while (p < end) {
                 Stm32Flash::programHalfWord(*p, update.addressPointer);
                 update.addressPointer += 2;
                 p++;
+            }
+
+            if (lastBlock) {
+
+                // write the CRC to the current address pointer
+                Stm32Flash::programHalfWord(update.crc & 0xffff, update.addressPointer);
+                Stm32Flash::programHalfWord((update.crc >> 16) & 0xffff, update.addressPointer + 2);
+
+                // write the size to the end of MCU flash
+                Stm32Flash::programHalfWord(update.size & 0xffff, Stm32Flash::END_ADDR - 4);
+                Stm32Flash::programHalfWord((update.size >> 16) & 0xffff, Stm32Flash::END_ADDR - 2);
+
+                update.loadInProgress = false;
             }
 
             cipherIn += AES128::BLOCK_SIZE;
@@ -139,26 +162,8 @@ void Bootloader::onUsbData(const uint8_t *buf, unsigned numBytes)
         if (numBytes < 9)
             break;
 
-        uint32_t crc = *reinterpret_cast<const uint32_t*>(&buf[1]);
-        uint32_t givenImgSize = *reinterpret_cast<const uint32_t*>(&buf[5]);
-        uint32_t calculatedImgsize = update.addressPointer - APPLICATION_ADDRESS;
-
-        if (givenImgSize != calculatedImgsize)
-            break;
-
-        Stm32Flash::beginProgramming();
-
-        // write the CRC to the current address pointer
-        Stm32Flash::programHalfWord(crc & 0xffff, update.addressPointer);
-        Stm32Flash::programHalfWord((crc >> 16) & 0xffff, update.addressPointer + 2);
-
-        // write the size to the end of MCU flash
-        Stm32Flash::programHalfWord(givenImgSize & 0xffff, Stm32Flash::END_ADDR - 4);
-        Stm32Flash::programHalfWord((givenImgSize >> 16) & 0xffff, Stm32Flash::END_ADDR - 2);
-
-        Stm32Flash::endProgramming();
-
-        update.loadInProgress = false;
+        update.crc = *reinterpret_cast<const uint32_t*>(&buf[1]);
+        update.size = *reinterpret_cast<const uint32_t*>(&buf[5]);
 
         break;
     }
@@ -186,6 +191,7 @@ bool Bootloader::eraseMcuFlash()
     return true;
 }
 
+#if 0
 /*
  * Returns whether the updater functionality is enabled or not.
  * This is a persistent setting that can only be reset once we have
@@ -218,6 +224,7 @@ void Bootloader::ensureUpdaterIsEnabled()
     Stm32Flash::eraseOptionBytes();
     Stm32Flash::setOptionByte(Stm32Flash::OptionDATA0, 1);
 }
+#endif
 
 /*
  * Validates the CRC of the contents of MCU flash.
@@ -233,7 +240,7 @@ bool Bootloader::mcuFlashIsValid()
 
     Crc32::reset();
     const uint32_t *address = reinterpret_cast<uint32_t*>(APPLICATION_ADDRESS);
-    const uint32_t *end = reinterpret_cast<uint32_t*>(APPLICATION_ADDRESS + imgsize);
+    const uint32_t *end = address + (imgsize / sizeof(uint32_t));
 
     while (address < end) {
         Crc32::add(*address);
