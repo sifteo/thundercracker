@@ -17,15 +17,13 @@ OBJS := \
 # include directories
 INCLUDES := \
         -I. \
+        -I /usr/include/libusb-1.0 \
         -I$(MASTER_DIR)/bootloader \
         -I$(MASTER_DIR)/common \
         -I$(TC_DIR)/tools/fwdeploy/src \
         -I$(DEPS_DIR)/libusbx/include
 
 VERSION := $(shell git describe --tags)
-ifeq ($(VERSION), )
-VERSION := "\"\""
-endif
 
 # C++ compiler flags (-g -O2 -Wall)
 CCFLAGS = -g -O2

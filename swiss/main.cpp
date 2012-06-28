@@ -3,6 +3,7 @@
 #include "profiler.h"
 #include "fwloader.h"
 #include "usbdevice.h"
+#include "macros.h"
 
 #include <stdio.h>
 #include <string.h>
@@ -42,7 +43,7 @@ static void usage()
 
 static void version()
 {
-    fprintf(stderr, "swiss, version\n");
+    fprintf(stderr, "swiss, " TOSTRING(SDK_VERSION) "\n");
 }
 
 int main(int argc, char **argv)

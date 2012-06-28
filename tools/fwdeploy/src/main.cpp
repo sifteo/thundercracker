@@ -3,6 +3,7 @@
 #include <string.h>
 
 #include "deployer.h"
+#include "macros.h"
 
 static void usage()
 {
@@ -11,7 +12,7 @@ static void usage()
 
 static void version()
 {
-    fprintf(stderr, "fwdeploy %s\n", SDK_VERSION);
+    fprintf(stderr, "fwdeploy " TOSTRING(SDK_VERSION) "\n");
 }
 
 int main(int argc, char **argv)
