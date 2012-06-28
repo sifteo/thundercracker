@@ -2,7 +2,7 @@
 #include "usbdevice.h"
 #include "libusb.h"
 #include <string.h>
-#include <malloc.h>
+#include <stdlib.h>
 #include <assert.h>
 
 UsbDevice::UsbDevice() :
