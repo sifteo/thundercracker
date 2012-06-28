@@ -546,6 +546,7 @@ public:
     void append(FlashVolume vol, SequenceInfo &si);
     void compact();
     void sort(SequenceInfo &si);
+    void debugChecks();
 };
 
 
@@ -573,6 +574,9 @@ public:
 
     // Collect garbage on any volume, trying this one first
     bool collectGarbage();
+
+    // Collect any garbage on the system, without a specific reference volume
+    static bool collectGlobalGarbage(FlashLFS *exclude = 0);
 
     // Collect only local garbage on volumes owned by this LFS
     bool collectLocalGarbage();
@@ -694,9 +698,7 @@ public:
 
     // Current volume
     ALWAYS_INLINE FlashVolume volume() const {
-        FlashVolume v = lfs.volumes.slots[volumeIndex()];
-        ASSERT(v.isValid());
-        return v;
+        return lfs.volumes.slots[volumeIndex()];
     }
 
 private:

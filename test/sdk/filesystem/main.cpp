@@ -56,11 +56,10 @@ void createObjects()
     ASSERT(old != bar);
     ASSERT(old != wub);
 
-    // Write a larger object, to use up space faster
-    // XXX: Want to use something even larger (1024), but that requires the GC.
-    struct {
+    // Write a large object, to use up space faster
+    static struct {
         int value;
-        uint8_t pad[128];
+        uint8_t pad[4000];
     } obj;
     memset(obj.pad, 0xff, sizeof obj.pad);
 

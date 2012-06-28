@@ -343,6 +343,8 @@ void FlashLFSVolumeVector::compact()
      * in order to make more room in our vector.
      */
 
+    DEBUG_ONLY(debugChecks());
+
     unsigned readIdx = 0;
     unsigned writeIdx = 0;
 
@@ -353,6 +355,7 @@ void FlashLFSVolumeVector::compact()
     }
 
     numSlotsInUse = writeIdx;
+    DEBUG_ONLY(debugChecks());
 }
 
 void FlashLFSVolumeVector::sort(SequenceInfo &si)
@@ -367,6 +370,8 @@ void FlashLFSVolumeVector::sort(SequenceInfo &si)
      * doesn't have qsort_r() yet. Blah.)
      */
 
+    DEBUG_ONLY(debugChecks());
+
     for (unsigned limit = numSlotsInUse; limit;) {
         unsigned nextLimit = 0;
         for (unsigned i = 1; i < limit; i++)
@@ -377,7 +382,26 @@ void FlashLFSVolumeVector::sort(SequenceInfo &si)
             }
         limit = nextLimit;
     }
+
+    DEBUG_ONLY(debugChecks());
 }
+
+#ifdef SIFTEO_SIMULATOR
+void FlashLFSVolumeVector::debugChecks()
+{
+    /*
+     * Make sure all volumes in the vector are unique and valid.
+     */
+
+    ASSERT(numSlotsInUse <= MAX_VOLUMES);
+
+    for (unsigned i = 0; i < numSlotsInUse; ++i) {
+        ASSERT(!slots[i].block.isValid() || slots[i].isValid());
+        for (unsigned j = 0; j < i; ++j)
+            ASSERT(slots[i].block.code != slots[j].block.code);
+    }
+}
+#endif
 
 void FlashLFS::init(FlashVolume parent)
 {
@@ -686,7 +710,9 @@ bool FlashLFSObjectAllocator::allocInVolumeRow(FlashVolume vol,
 // Start just past the last volume
 FlashLFSObjectIter::FlashLFSObjectIter(FlashLFS &lfs)
     : lfs(lfs), volumeCount(lfs.volumes.numSlotsInUse + 1), rowCount(0)
-{}
+{
+    ASSERT(lfs.isValid());
+}
 
 bool FlashLFSObjectIter::readAndCheck(uint8_t *buffer, unsigned size) const
 {
@@ -715,6 +741,10 @@ bool FlashLFSObjectIter::readAndCheck(uint8_t *buffer, unsigned size) const
 
 bool FlashLFSObjectIter::previous(FlashLFSKeyQuery query)
 {
+    ASSERT(lfs.isValid());
+    ASSERT(volumeCount <= lfs.volumes.numSlotsInUse + 1);
+    DEBUG_ONLY(lfs.volumes.debugChecks());
+
     while (volumeCount) {
 
         if (rowCount) {
@@ -731,9 +761,15 @@ bool FlashLFSObjectIter::previous(FlashLFSKeyQuery query)
 
             if (!--volumeCount)
                 break;
+
+            FlashVolume vol = volume();
+            if (!vol.block.isValid()) {
+                // Empty slot in our volume array
+                continue;
+            }
             
             unsigned hdrSize = sizeof(FlashLFSVolumeHeader);
-            hdr = (FlashLFSVolumeHeader*) volume().mapTypeSpecificData(hdrRef, hdrSize);
+            hdr = (FlashLFSVolumeHeader*) vol.mapTypeSpecificData(hdrRef, hdrSize);
             ASSERT(hdrSize == sizeof(FlashLFSVolumeHeader));
 
             // Just past the last row
@@ -777,19 +813,25 @@ bool FlashLFSObjectIter::previous(FlashLFSKeyQuery query)
 
 bool FlashLFS::collectGarbage()
 {
-    /*
-     * Fast path: can we collect garbage from our own local volume?
-     */
+    ASSERT(isValid());
+
+    // Fast path: can we collect garbage from our own local volume?
     if (collectLocalGarbage())
         return true;
 
+    // Nope, try every other volume.
+    return collectGlobalGarbage(this);
+}
+
+bool FlashLFS::collectGlobalGarbage(FlashLFS *exclude)
+{
     /*
      * Next best: collect garbage from any of the FlashLFS instances
-     * in our cache. (Assuming they aren't identical to the local LFS)
+     * in our cache. (Assuming they aren't identical to the excluded LFS)
      */
     for (unsigned i = 0; i < FlashLFSCache::SIZE; ++i) {
         FlashLFS &lfs = FlashLFSCache::instances[i];
-        if (&lfs != this && lfs.collectLocalGarbage())
+        if (&lfs != exclude && lfs.isValid() && lfs.collectLocalGarbage())
             return true;
     }
 
@@ -805,7 +847,8 @@ bool FlashLFS::collectGarbage()
     FlashMapBlock::ISet blacklist;
     blacklist.clear();
 
-    parent.block.mark(blacklist);
+    if (exclude)
+        exclude->parent.block.mark(blacklist);
 
     for (unsigned i = 0; i < FlashLFSCache::SIZE; ++i) {
         FlashLFS &lfs = FlashLFSCache::instances[i];
@@ -863,6 +906,8 @@ bool FlashLFS::collectGarbage()
 
 bool FlashLFS::collectLocalGarbage()
 {
+    ASSERT(isValid());
+
     /*
      * Iterate through this LFS, from newest to oldest, keeping track of which
      * volume we're in and which keys have already been "obsoleted" by newer
@@ -874,7 +919,11 @@ bool FlashLFS::collectLocalGarbage()
      * Any volume which has a high proportion of obsolete data can be deleted
      * after any non-obsolete keys are copied.
      */
-#if 0
+
+    // Early out
+    if (volumes.numSlotsInUse == 0)
+        return false;
+
     // Marked bits indicate volumes not to delete
     BitVector<FlashLFSVolumeVector::MAX_VOLUMES> volumesToKeep;
     volumesToKeep.clear();
@@ -883,32 +932,28 @@ bool FlashLFS::collectLocalGarbage()
     FlashLFSIndexRecord::KeyVector_t obsoleteKeys;
     obsoleteKeys.clear();
 
+    // Iterate over non-obsolete keys only
     FlashLFSObjectIter iter(*this);
-    while (iter.previous()) {
+    while (iter.previous(FlashLFSKeyQuery(&obsoleteKeys))) {
         const FlashLFSIndexRecord *record = iter.record();
         unsigned key = record->getKey();
 
-        // Is this already obsolete?
+        // Any additional instances of this key are obsolete
+        ASSERT(obsoleteKeys.test(key) == false);
+        obsoleteKeys.mark(key);
 
-
-        if (
-
-
-        unsigned size = iter.record()->getSizeInBytes();
-        size = MIN(size, bufferSize);
-        if (iter.readAndCheck(buffer, size))
-            return size;
+        // Keep this volume
+        volumesToKeep.mark(iter.volumeIndex());
     }
-    
-    
-        // Search for the first volume on any parent
-        for (;;) {
-            if (!vi.next(vol))
-                return false;
 
+    // Delete obsolete volumes
+    for (unsigned i = 0; i < volumes.numSlotsInUse; ++i) {
+        if (!volumesToKeep.test(i)) {
+            FlashVolume &vol = volumes.slots[i];
+            vol.deleteSingle();
+            volumes.slots[i].block.setInvalid();
+        }
+    }
 
-
-#endif
-    LOG(("XXX: LFS garbage collection attempted, Volume<%02x>\n", parent.block.code));
     return false;
 }
