@@ -16,9 +16,8 @@
 #include "battery.h"
 #include "demo.h"
 
-extern uint8_t _start__stack;
-
 __bit global_busy_flag;
+
 
 void startup() __naked
 {
