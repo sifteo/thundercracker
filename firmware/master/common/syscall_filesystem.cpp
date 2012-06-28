@@ -181,7 +181,7 @@ int32_t _SYS_fs_objectRead(unsigned key, uint8_t *buffer,
     FlashLFS &lfs = FlashLFSCache::get(parentVol);
     FlashLFSObjectIter iter(lfs);
 
-    while (iter.previous(key)) {
+    while (iter.previous(FlashLFSKeyQuery(key))) {
         unsigned size = iter.record()->getSizeInBytes();
         size = MIN(size, bufferSize);
         if (iter.readAndCheck(buffer, size))

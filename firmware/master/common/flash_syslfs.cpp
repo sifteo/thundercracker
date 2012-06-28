@@ -18,7 +18,7 @@ int SysLFS::read(Key k, uint8_t *buffer, unsigned bufferSize)
     FlashLFS &lfs = SysLFS::get();
     FlashLFSObjectIter iter(lfs);
 
-    while (iter.previous(k)) {
+    while (iter.previous(FlashLFSKeyQuery(k))) {
         unsigned size = iter.record()->getSizeInBytes();
         size = MIN(size, bufferSize);
         if (iter.readAndCheck(buffer, size))

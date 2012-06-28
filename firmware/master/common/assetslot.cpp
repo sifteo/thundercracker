@@ -196,7 +196,7 @@ bool VirtAssetSlots::locateGroup(MappedAssetGroup &map,
             SysLFS::AssetSlotRecord asr;
             SysLFS::Key asrKey;
 
-            if (iter.previous()) {
+            if (iter.previous(FlashLFSKeyQuery())) {
                 // Found an existing record
 
                 // Already seen a newer version of this key?
@@ -318,7 +318,7 @@ void VirtAssetSlots::finalizeGroup(FlashLFSIndexRecord::KeyVector_t &vec)
         FlashLFSObjectIter iter(lfs);
         while (!vec.empty()) {
 
-            if (!iter.previous()) {
+            if (!iter.previous(FlashLFSKeyQuery())) {
                 LOG(("SYSLFS: Missing asset slot record, skipping finalization!\n"));
                 vec.clear();
                 break;
@@ -388,7 +388,7 @@ uint32_t VirtAssetSlot::tilesFree()
     FlashLFS &lfs = SysLFS::get();
     FlashLFSObjectIter iter(lfs);
 
-    while (cv && minTilesFree && iter.previous()) {
+    while (cv && minTilesFree && iter.previous(FlashLFSKeyQuery())) {
         _SYSCubeID cube;
         unsigned slot;
 
@@ -446,7 +446,7 @@ void VirtAssetSlot::erase()
         FlashLFSObjectIter iter(lfs);
         while (pendingOverview | pendingSlots) {
             
-            if (!iter.previous()) {
+            if (!iter.previous(FlashLFSKeyQuery())) {
                 // Out of records; done
                 return;
             }
@@ -547,7 +547,7 @@ void VirtAssetSlots::eraseAssetSlotRecords(_SYSCubeID cube, PhysSlotVector slots
         FlashLFSObjectIter iter(lfs);
         while (!slots.empty()) {
 
-            if (!iter.previous()) {
+            if (!iter.previous(FlashLFSKeyQuery())) {
                 // Out of records; done
                 return;
             }

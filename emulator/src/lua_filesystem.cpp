@@ -539,7 +539,7 @@ int LuaFilesystem::readObject(lua_State *L)
     FlashLFSObjectIter iter(lfs);
     uint8_t buffer[FlashLFSIndexRecord::MAX_SIZE];
 
-    while (iter.previous(key)) {
+    while (iter.previous(FlashLFSKeyQuery(key))) {
         unsigned size = iter.record()->getSizeInBytes();
         ASSERT(size <= sizeof buffer);
         if (iter.readAndCheck(buffer, size)) {

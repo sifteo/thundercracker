@@ -94,12 +94,51 @@ bool FlashLFSVolumeHeader::isRowEmpty(unsigned row) const
     return metaIndex[row].isEmpty();
 }
 
+bool FlashLFSVolumeHeader::test(unsigned row, unsigned key) {
+    return metaIndex[row].overlaps(FlashLFSKeyFilter::makeSingle(row, key));
+}
+
 void FlashLFSVolumeHeader::add(unsigned row, unsigned key) {
     metaIndex[row].add(row, key);
 }
 
-bool FlashLFSVolumeHeader::test(unsigned row, unsigned key) {
-    return metaIndex[row].test(row, key);
+bool FlashLFSKeyQuery::test(unsigned row, FlashLFSKeyFilter f)
+{
+    FlashLFSKeyFilter filter;
+
+    if (exactKey != LFS::KEY_ANY) {
+        // Filter contains a single matching key
+        filter = FlashLFSKeyFilter::makeSingle(row, exactKey);
+
+    } else if (excluded) {
+        // Filter contains all keys that *aren't* in 'excluded'
+
+        filter = FlashLFSKeyFilter::makeEmpty();
+
+        for (unsigned key = 0; key < FlashLFSIndexRecord::MAX_KEYS; key++) {
+            if (!excluded->test(key))
+                filter.add(row, key);
+            if (filter.isFull())
+                break;
+        }
+
+    } else {
+        // All keys are free game. We're fine as long as the filter isn't empty.
+        return !f.isEmpty();
+    }
+
+    return filter.overlaps(f);
+}
+
+bool FlashLFSKeyQuery::test(unsigned key)
+{
+    if (exactKey != LFS::KEY_ANY)
+        return key == exactKey;
+
+    if (excluded && excluded->test(key))
+        return false;
+
+    return true;
 }
 
 unsigned FlashLFSVolumeHeader::numNonEmptyRows()
@@ -167,7 +206,7 @@ bool FlashLFSIndexBlockIter::beginBlock(uint32_t blockAddr)
     return true;
 }
 
-bool FlashLFSIndexBlockIter::previous(unsigned key)
+bool FlashLFSIndexBlockIter::previous(FlashLFSKeyQuery query)
 {
     /*
      * Seek to the previous valid index record. Invalid records are skipped.
@@ -191,7 +230,7 @@ bool FlashLFSIndexBlockIter::previous(unsigned key)
             // Only valid records have a meaningful size
             offset -= ptr->getSizeInBytes();
 
-            if (key == LFS::KEY_ANY || key == ptr->getKey()) {
+            if (query.test(ptr->getKey())) {
                 // Matched!
                 currentRecord = ptr;
                 currentOffset = offset;
@@ -674,13 +713,13 @@ bool FlashLFSObjectIter::readAndCheck(uint8_t *buffer, unsigned size) const
     return record()->checkCRC(crc);
 }
 
-bool FlashLFSObjectIter::previous(unsigned key)
+bool FlashLFSObjectIter::previous(FlashLFSKeyQuery query)
 {
     while (volumeCount) {
 
         if (rowCount) {
             // We have a valid volume and row. Previous record within a block
-            if (indexIter.previous(key))
+            if (indexIter.previous(query))
                 return true;
 
         } else {
@@ -709,7 +748,7 @@ bool FlashLFSObjectIter::previous(unsigned key)
         
         while (--rowCount) {
             unsigned i = rowCount - 1;
-            if ((key == LFS::KEY_ANY || hdr->test(i, key)) &&
+            if (query.test(i, hdr->metaIndex[i]) &&
                 indexIter.beginBlock(LFS::indexBlockAddr(volume(), i))) {
 
                 /*
@@ -720,7 +759,8 @@ bool FlashLFSObjectIter::previous(unsigned key)
                  */
                 
                 while (indexIter.next());
-                if (key == LFS::KEY_ANY || indexIter->getKey() == key)
+
+                if (query.test(indexIter->getKey()))
                     return true;
                 else
                     break;
@@ -823,6 +863,52 @@ bool FlashLFS::collectGarbage()
 
 bool FlashLFS::collectLocalGarbage()
 {
+    /*
+     * Iterate through this LFS, from newest to oldest, keeping track of which
+     * volume we're in and which keys have already been "obsoleted" by newer
+     * versions.
+     *
+     * Any volume which has no non-obsolete keys can be safely deleted with
+     * no additional work.
+     *
+     * Any volume which has a high proportion of obsolete data can be deleted
+     * after any non-obsolete keys are copied.
+     */
+#if 0
+    // Marked bits indicate volumes not to delete
+    BitVector<FlashLFSVolumeVector::MAX_VOLUMES> volumesToKeep;
+    volumesToKeep.clear();
+
+    // Keys for records which have been obsoleted by newer ones
+    FlashLFSIndexRecord::KeyVector_t obsoleteKeys;
+    obsoleteKeys.clear();
+
+    FlashLFSObjectIter iter(*this);
+    while (iter.previous()) {
+        const FlashLFSIndexRecord *record = iter.record();
+        unsigned key = record->getKey();
+
+        // Is this already obsolete?
+
+
+        if (
+
+
+        unsigned size = iter.record()->getSizeInBytes();
+        size = MIN(size, bufferSize);
+        if (iter.readAndCheck(buffer, size))
+            return size;
+    }
+    
+    
+        // Search for the first volume on any parent
+        for (;;) {
+            if (!vi.next(vol))
+                return false;
+
+
+
+#endif
     LOG(("XXX: LFS garbage collection attempted, Volume<%02x>\n", parent.block.code));
     return false;
 }
