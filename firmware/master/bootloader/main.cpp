@@ -28,11 +28,7 @@ int main()
     NVIC.irqEnable(IVT.UsbOtg_FS);
     NVIC.irqPrioritize(IVT.UsbOtg_FS, 0x90);
 
-    /*
-     * Once the TestJig is initialized, test commands from the host will arrive
-     * over USB and get processed within Tasks::work().
-     */
-     Bootloader loader;
-     loader.init();
-     loader.exec(); // never returns
+    Bootloader loader;
+    loader.init();
+    loader.exec(); // never returns
 }

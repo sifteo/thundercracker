@@ -32,9 +32,7 @@ Tasks::Task Tasks::TaskList[] = {
     { HomeButton::task, 0 },
     #endif
 
-    #ifdef SIFTEO_SIMULATOR
-    { 0 },
-    #else
+    #if !defined(SIFTEO_SIMULATOR) && !defined(BOOTLOADER)
     { SampleProfiler::task, 0 },
     #endif
 };

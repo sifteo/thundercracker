@@ -12,7 +12,6 @@
 
 Bootloader::Update Bootloader::update;
 bool Bootloader::firstLoad;
-const uint32_t Bootloader::SIZE = 0x2000;
 const uint32_t Bootloader::APPLICATION_ADDRESS = Stm32Flash::START_ADDR + SIZE;
 
 void Bootloader::init()
@@ -28,17 +27,19 @@ void Bootloader::init()
  */
 void Bootloader::exec()
 {
-    if (updaterIsEnabled())
-        load();
-
     while (!mcuFlashIsValid())
         load();
 
-    if (updaterIsEnabled())
-        disableUpdater();
-
-    jumpToApplication();
+    uint32_t msp = *reinterpret_cast<uint32_t*>(APPLICATION_ADDRESS);
+    uint32_t resetVector = *reinterpret_cast<uint32_t*>(APPLICATION_ADDRESS + 4);
+    jumpToApplication(msp, resetVector);
+    // never comes back
 }
+
+#define AES_IV  {  0x00, 0x01, 0x02, 0x03, \
+                    0x04, 0x05, 0x06, 0x07, \
+                    0x08, 0x09, 0x0a, 0x0b, \
+                    0x0c, 0x0d, 0x0e, 0x0f }
 
 /*
  * Load a new firmware image from our host over USB.
@@ -55,23 +56,21 @@ void Bootloader::load()
         firstLoad = false;
     }
 
-    ensureUpdaterIsEnabled();
-
     if (!eraseMcuFlash())
         return;
 
     // initialize decryption
     // XXX: select actual values
     const uint32_t key[4] = { 0x2b7e1516, 0x28aed2a6, 0xabf71588, 0x09cf4f3c };
-    const uint32_t iv[4] = { 0x2b7e1516, 0x28aed2a6, 0xabf71588, 0x09cf4f3c };
+    const uint8_t iv[] = AES_IV;
     AES128::expandKey(update.expandedKey, key);
     memcpy(update.cipherBuf, iv, AES128::BLOCK_SIZE);
 
     // initialize update state, default to beginning of application flash
-    update.complete = false;
+    update.loadInProgress = true;
     update.addressPointer = APPLICATION_ADDRESS;
 
-    while (!update.complete)
+    while (update.loadInProgress)
         Tasks::work();
 
     // success is determined by the validation of MCU flash
@@ -89,36 +88,67 @@ void Bootloader::onUsbData(const uint8_t *buf, unsigned numBytes)
         break;
     }
 
+    /*
+     * Buf format: uint8_t command, [as many 16 byte aes blocks as fit]
+     */
     case CmdWriteMemory: {
         uint8_t plaintext[AES128::BLOCK_SIZE];
         const uint8_t *cipherIn = buf + 1;
         numBytes--; // step past the byte of command
 
+        Stm32Flash::beginProgramming();
+
         while (numBytes >= AES128::BLOCK_SIZE) {
-            AES128::encryptBlock(plaintext, update.cipherBuf, update.expandedKey);
-            AES128::xorBlock(plaintext, cipherIn);
 
-            const uint16_t *p = reinterpret_cast<const uint16_t*>(plaintext);
-            const unsigned numHalfWords = AES128::BLOCK_SIZE / sizeof(uint16_t);
-
-            for (unsigned i = 0; i < numHalfWords; ++i) {
-                Stm32Flash::programHalfWord(*p, update.addressPointer);
-                update.addressPointer += 2;
-                p++;
-            }
+            decryptBlock(plaintext, cipherIn);
+            program(plaintext, AES128::BLOCK_SIZE);
 
             cipherIn += AES128::BLOCK_SIZE;
             numBytes -= AES128::BLOCK_SIZE;
         }
+
+        Stm32Flash::endProgramming();
         break;
     }
 
-    case CmdSetAddrPtr: {
-        uint32_t ptr = *reinterpret_cast<const uint32_t*>(buf + 1);
-        if ((APPLICATION_ADDRESS <= ptr) && (ptr < Stm32Flash::END_ADDR))
-            update.addressPointer = ptr;
+    /*
+     * Buf format: uint8_t command, 16 bytes final aes block, uint32_t CRC, uint32_t size
+     */
+    case CmdWriteFinal: {
+
+        if (numBytes < 25)
+            break;
+
+        const uint8_t *cipherIn = buf + 1;
+        uint8_t plaintext[AES128::BLOCK_SIZE];
+        decryptBlock(plaintext, cipherIn);
+
+        Stm32Flash::beginProgramming();
+
+        // last byte of last block is always the pad value
+        uint8_t padvalue = plaintext[AES128::BLOCK_SIZE - 1];
+        program(plaintext, AES128::BLOCK_SIZE - padvalue);
+
+        /*
+         * Write details to allow us to verify contents of MCU flash.
+         */
+        uint32_t crc = *reinterpret_cast<const uint32_t*>(buf + 17);
+        uint32_t size = *reinterpret_cast<const uint32_t*>(buf + 21);
+
+        Stm32Flash::programHalfWord(crc & 0xffff, update.addressPointer);
+        Stm32Flash::programHalfWord((crc >> 16) & 0xffff, update.addressPointer + 2);
+
+        Stm32Flash::programHalfWord(size & 0xffff, Stm32Flash::END_ADDR - 4);
+        Stm32Flash::programHalfWord((size >> 16) & 0xffff, Stm32Flash::END_ADDR - 2);
+
+        Stm32Flash::endProgramming();
+        update.loadInProgress = false;
         break;
     }
+
+    case CmdResetAddrPtr:
+        update.addressPointer = APPLICATION_ADDRESS;
+        break;
 
     case CmdGetAddrPtr: {
         uint8_t response[5] = { buf[0] };
@@ -127,10 +157,31 @@ void Bootloader::onUsbData(const uint8_t *buf, unsigned numBytes)
         break;
     }
 
-    case CmdJump:
-    case CmdAbort:
-        update.complete = true;
-        break;
+    }
+}
+
+/*
+ * Decrypt a single block of AES encrypted data.
+ * AES128::BLOCK_SIZE bytes must be available.
+ */
+void Bootloader::decryptBlock(uint8_t *plaintext, const uint8_t *cipher)
+{
+    AES128::encryptBlock(plaintext, update.cipherBuf, update.expandedKey);
+    memcpy(update.cipherBuf, cipher, AES128::BLOCK_SIZE);
+    AES128::xorBlock(plaintext, update.cipherBuf);
+}
+
+/*
+ * Program the requested data to the current address pointer.
+ */
+void Bootloader::program(const uint8_t *data, unsigned len)
+{
+    const uint16_t *p = reinterpret_cast<const uint16_t*>(data);
+    const uint16_t *end = reinterpret_cast<const uint16_t*>(data + len);
+    while (p < end) {
+        Stm32Flash::programHalfWord(*p, update.addressPointer);
+        update.addressPointer += 2;
+        p++;
     }
 }
 
@@ -154,6 +205,7 @@ bool Bootloader::eraseMcuFlash()
     return true;
 }
 
+#if 0
 /*
  * Returns whether the updater functionality is enabled or not.
  * This is a persistent setting that can only be reset once we have
@@ -186,17 +238,23 @@ void Bootloader::ensureUpdaterIsEnabled()
     Stm32Flash::eraseOptionBytes();
     Stm32Flash::setOptionByte(Stm32Flash::OptionDATA0, 1);
 }
+#endif
 
 /*
  * Validates the CRC of the contents of MCU flash.
+ *
+ * The bootloader must write the length of an installed image at the end of
+ * MCU flash.
  */
 bool Bootloader::mcuFlashIsValid()
 {
-    uint32_t imgsize = 0;    // TODO: determine how we store this
+    const uint32_t imgsize = *reinterpret_cast<uint32_t*>(Stm32Flash::END_ADDR - 4);
+    if (imgsize > MAX_APP_SIZE)
+        return false;
 
     Crc32::reset();
-    uint32_t *address = reinterpret_cast<uint32_t*>(APPLICATION_ADDRESS);
-    const uint32_t *end = address + imgsize;
+    const uint32_t *address = reinterpret_cast<uint32_t*>(APPLICATION_ADDRESS);
+    const uint32_t *end = address + (imgsize / sizeof(uint32_t));
 
     while (address < end) {
         Crc32::add(*address);
@@ -205,28 +263,24 @@ bool Bootloader::mcuFlashIsValid()
 
     // if flash is totally unprogrammed, this is a legitimate computed result,
     // but obviously does not represent a valid state we want to jump to
-    if (Crc32::get() == 0xffffffff)
+    const uint32_t calculatedCrc = Crc32::get();
+    if (calculatedCrc == 0xffffffff || calculatedCrc == 0)
         return false;
 
     // CRC is stored in flash directly after the FW image
-    uint32_t storedCrc = *address;
-    return (storedCrc == Crc32::get());
+    const uint32_t storedCrc = *address;
+    return (storedCrc == calculatedCrc);
 }
 
 /*
  * Branch to application code.
  * Assumes that the validity of the application has been verified.
  */
-void Bootloader::jumpToApplication()
+void Bootloader::jumpToApplication(uint32_t msp, uint32_t resetVector)
 {
-    // Initialize user application's stack pointer & jump to app's reset vector
+    // set the MSP and jump!
     asm volatile(
-        "mov    r3,  %[appMSP]          \n\t"
-        "msr    msp, r3                 \n\t"
-        "mov    r3, %[appResetVector]   \n\t"
-        "bx     r3"
-        :
-        : [appMSP] "r"(*reinterpret_cast<uint32_t*>(APPLICATION_ADDRESS)),
-            [appResetVector] "r"(APPLICATION_ADDRESS + 4)
+        "msr    msp, r0     \n\t"
+        "bx     r1"
     );
 }

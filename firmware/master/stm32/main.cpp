@@ -30,6 +30,14 @@ int main()
     PowerManager::init();
 
     /*
+     * If we've gotten bootloaded, relocate the vector table to account
+     * for offset at which we're placed into MCU flash.
+     */
+#ifdef BOOTLOADABLE
+    NVIC.setVectorTable(NVIC.VectorTableFlash, 0x2000);
+#endif
+
+    /*
      * Nested Vectored Interrupt Controller setup.
      *
      * This won't actually enable any peripheral interrupts yet, since
@@ -142,19 +150,19 @@ int main()
     SysTime::Ticks button_delay = SysTime::ticks();
     
     if (HomeButton::isPressed()) {
-        
+
         //Creates a delay. Cancels if home button is released.
         while (SysTime::ticks() - button_delay < SysTime::msTicks(1000) && HomeButton::isPressed() )
             ;
-        
+
         //Checks to see if the home button is still pressed after 1 second
         if( HomeButton::isPressed() ) {
-          
+
           // indicate we're waiting
           GPIOPin green = LED_GREEN_GPIO;
           green.setControl(GPIOPin::OUT_10MHZ);
           green.setLow();
-          
+
           for (;;)
               Tasks::work();
         }

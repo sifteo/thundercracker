@@ -30,6 +30,11 @@ extern int main() __attribute__((noreturn));
 extern "C" void _start()
 {
     /*
+     * Don't need to run clock start up in application FW if the bootloader
+     * has already run it.
+     */
+#ifndef BOOTLOADABLE
+    /*
      * Set up clocks:
      *   - 8 MHz HSE (xtal) osc
      *   - PLL x9 => 72 MHz
@@ -110,6 +115,8 @@ extern "C" void _start()
      */
     PowerManager::earlyInit();
 
+#endif // BOOTLOADABLE
+
     /*
      * Initialize data segments (In parallel with oscillator startup)
      */
@@ -127,7 +134,7 @@ extern "C" void _start()
      * programmatically unpack data from flash to RAM, just like we
      * did above with the .data segment.
      */
-    
+
     for (initFunc_t *p = &__init_array_start; p != &__init_array_end; p++)
         p[0]();
 

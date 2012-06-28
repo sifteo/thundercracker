@@ -105,19 +105,30 @@ namespace LFS {
  */
 class FlashLFSKeyFilter
 {
+public:
     uint16_t bits;
 
-    unsigned bitHash(unsigned row, unsigned key) const {
-        // See explanation above.
-        unsigned h = (key * ((row << 1) | 1)) & 0xF;
-
-        // We have no need for CLZ here, so use a right-to-left order.
-        return 1 << h;
+    static FlashLFSKeyFilter makeEmpty() {
+        FlashLFSKeyFilter result = { 0xFFFF };
+        return result;
     }
 
-public:
+    static FlashLFSKeyFilter makeFull() {
+        FlashLFSKeyFilter result = { 0x0000 };
+        return result;
+    }
+
+    static FlashLFSKeyFilter makeSingle(unsigned row, unsigned key) {
+        FlashLFSKeyFilter result = { ~bitHash(row, key) };
+        return result;
+    }
+
     bool isEmpty() const {
         return bits == 0xFFFF;
+    }
+
+    bool isFull() const {
+        return bits == 0;
     }
 
     void add(unsigned row, unsigned key) {
@@ -125,11 +136,20 @@ public:
     }
 
     /**
-     * Returns 'true' if the item is possibly in the filter, or 'false'
-     * if it is definitely not.
+     * Returns 'true' iff any items may be in common between this filter and 'other'.
      */
-    bool test(unsigned row, unsigned key) const {
-        return !(bits & bitHash(row, key));
+    bool overlaps(FlashLFSKeyFilter other) {
+        return (bits | other.bits) != 0xFFFF;
+    }
+
+private:
+    static unsigned bitHash(unsigned row, unsigned key)
+    {
+        // See explanation above.
+        unsigned h = (key * ((row << 1) | 1)) & 0xF;
+
+        // We have no need for CLZ here, so use a right-to-left order.
+        return 1 << h;
     }
 };
 
@@ -166,8 +186,8 @@ public:
     static uint32_t getSequence(FlashVolume vol);
 
     bool isRowEmpty(unsigned row) const;
-    void add(unsigned row, unsigned key);
     bool test(unsigned row, unsigned key);
+    void add(unsigned row, unsigned key);
     unsigned numNonEmptyRows();
 };
 
@@ -269,6 +289,30 @@ public:
     ALWAYS_INLINE static bool isSizeAllowed(unsigned bytes) {
         return bytes <= MAX_SIZE;
     }
+};
+
+
+/**
+ * FlashLFSKeyQuery is a search query which locates some set of keys,
+ * either via exact match or exclusion. Doing this level of filtering
+ * concurrently with LFS iteration lets us skip entire index blocks
+ * in some cases.
+ */
+class FlashLFSKeyQuery
+{
+    FlashLFSIndexRecord::KeyVector_t *excluded;
+    unsigned exactKey;
+
+public:
+    explicit FlashLFSKeyQuery() : excluded(0), exactKey(LFS::KEY_ANY) {}
+
+    explicit FlashLFSKeyQuery(unsigned key) : excluded(0), exactKey(key) {}
+
+    explicit FlashLFSKeyQuery(FlashLFSIndexRecord::KeyVector_t *excluded)
+        : excluded(excluded), exactKey(LFS::KEY_ANY) {}
+
+    bool test(unsigned row, FlashLFSKeyFilter f);
+    bool test(unsigned key);
 };
 
 
@@ -390,7 +434,7 @@ class FlashLFSIndexBlockIter
 public:
     bool beginBlock(uint32_t blockAddr);
 
-    bool previous(unsigned key = LFS::KEY_ANY);
+    bool previous(FlashLFSKeyQuery query);
     bool next();
 
     FlashLFSIndexRecord *beginAppend(FlashBlockWriter &writer);
@@ -628,7 +672,7 @@ class FlashLFSObjectIter
 public:
     FlashLFSObjectIter(FlashLFS &lfs);
 
-    bool previous(unsigned key = LFS::KEY_ANY);
+    bool previous(FlashLFSKeyQuery query);
     bool readAndCheck(uint8_t *buffer, unsigned size) const;
 
     // Address of the current object
@@ -642,6 +686,19 @@ public:
         return &*indexIter;
     }
 
+    // Current index in volume table
+    ALWAYS_INLINE unsigned volumeIndex() const {
+        ASSERT(volumeCount > 0 && volumeCount <= lfs.volumes.MAX_VOLUMES);
+        return volumeCount - 1;
+    }
+
+    // Current volume
+    ALWAYS_INLINE FlashVolume volume() const {
+        FlashVolume v = lfs.volumes.slots[volumeIndex()];
+        ASSERT(v.isValid());
+        return v;
+    }
+
 private:
     FlashLFS &lfs;
     FlashLFSIndexBlockIter indexIter;
@@ -652,14 +709,6 @@ private:
 
     FlashBlockRef hdrRef;               // Mapped header from current volume
     FlashLFSVolumeHeader *hdr;
-
-    // Current volume
-    ALWAYS_INLINE FlashVolume volume() const {
-        ASSERT(volumeCount > 0 && volumeCount <= lfs.volumes.MAX_VOLUMES);
-        FlashVolume v = lfs.volumes.slots[volumeCount - 1];
-        ASSERT(v.isValid());
-        return v;
-    }
 };
 
 

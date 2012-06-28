@@ -1,26 +1,22 @@
 
-TC_DIR := ..
+TC_DIR := ../..
 MASTER_DIR := $(TC_DIR)/firmware/master
 
 include $(TC_DIR)/Makefile.platform
 
-BIN := swiss$(BIN_EXT)
+BIN := fwdeploy$(BIN_EXT)
 
 OBJS := \
-    main.o          \
-    usbdevice.o     \
-    fwloader.o      \
-    profiler.o      \
-    elfdebuginfo.o  \
-    mappedfile.o
+    src/main.o                          \
+    src/deployer.o                      \
+    src/crc.o                           \
+    $(MASTER_DIR)/common/aes128.o
 
 # include directories
 INCLUDES := \
-        -I. \
+        -Isrc \
         -I$(MASTER_DIR)/bootloader \
-        -I$(MASTER_DIR)/common \
-        -I$(TC_DIR)/tools/fwdeploy/src \
-        -I$(DEPS_DIR)/libusbx/include
+        -I$(MASTER_DIR)/common
 
 VERSION := $(shell git describe --tags)
 
@@ -31,8 +27,7 @@ CCFLAGS = -g -O2
 CCFLAGS += -DSDK_VERSION=$(VERSION) -DSIFTEO_SIMULATOR -D__STDC_FORMAT_MACROS
 
 # library paths
-LDFLAGS := -L$(DEPS_DIR)/libusbx/lib -lusb-1.0
-LDFLAGS += $(LIB_STDCPP)
+LDFLAGS := $(LIB_STDCPP)
 
 all: $(BIN)
 
