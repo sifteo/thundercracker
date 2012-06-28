@@ -47,10 +47,14 @@ void createObjects()
     static StoredObject foo = StoredObject::allocate();
     static StoredObject bar = StoredObject::allocate();
     static StoredObject wub = StoredObject::allocate();
+    static StoredObject old = StoredObject::allocate();
 
     ASSERT(foo != bar);
     ASSERT(foo != wub);
     ASSERT(bar != wub);
+    ASSERT(old != foo);
+    ASSERT(old != bar);
+    ASSERT(old != wub);
 
     // Write a larger object, to use up space faster
     // XXX: Want to use something even larger (1024), but that requires the GC.
@@ -59,6 +63,11 @@ void createObjects()
         uint8_t pad[128];
     } obj;
     memset(obj.pad, 0xff, sizeof obj.pad);
+
+    // Keep a single old value in the LFS, which we'll expect to remain there.
+    // (This tests relocation of non-obsolete keys during garbage collection)
+    obj.value = 0x12345678;
+    old.write(obj);
 
     SCRIPT(LUA, logger = FlashLogger:start(fs, "flash.log"));
 
@@ -114,6 +123,10 @@ void createObjects()
                 error("Finished replaying the log without finding our last object!")
             end
         );
+        
+        obj.value = -1;
+        old.read(obj);
+        ASSERT(obj.value == 0x12345678);
 
         obj.value = -1;
         foo.read(obj);
