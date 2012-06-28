@@ -134,7 +134,6 @@ void power_sleep(void)
     RF_CKEN = 0;                // Stop the radio clock
     RNGCTL = 0;                 // RNG peripheral off
     ADCCON1 = 0;                // ADC peripheral off
-    W2CON0 = 0;                 // I2C peripheral off
     S0CON = 0;                  // UART peripheral off
     SPIMCON0 = 0;               // External SPI disabled
     SPIRCON0 = 0;               // Radio SPI disabled
@@ -150,9 +149,6 @@ void power_sleep(void)
 
     // Turn off the 2V DS rail
     CTRL_PORT = CTRL_3V3_EN;
-
-    // Give the 2V DS rail some time to discharge (required?)
-    // power_delay();
 
     // Turn off the 3.3V rail
     CTRL_PORT = 0;
@@ -174,9 +170,15 @@ void power_sleep(void)
      * Wakeup on shake
      */
 
-    W2CON0 = 0;                 // Reset I2C master
-    W2CON0 = 1;                 // turn it on
-    W2CON0 = 7;                 // Turn on I2C controller, Master mode, 100 kHz.
+    //Sends brief 250 ns pulse on both I2C lines
+    __asm 
+        mov     _W2CON0, #0               		; Reset I2C master
+        anl     _MISC_DIR, #~MISC_I2C      		; Output drivers enabled
+        xrl     _MISC_PORT, #MISC_I2C      		; Now pulse I2C lines low
+        orl     _MISC_PORT, #MISC_I2C   		; Drive pins high - This delivers a 250 ns pulse
+        mov     _W2CON0, #1               		; Turn on I2C controller
+        mov     _W2CON0, #7               		; Master mode, 100 kHz.
+    __endasm;
 
     // Enable inertial interrupt on INT2
     {
@@ -190,8 +192,11 @@ void power_sleep(void)
         };
         i2c_tx(init);
     }
-
-    WUOPC1 = SHAKE_WUOPC_BIT;
+    
+    __asm
+        mov     _W2CON0, #0                     ; Turn off I2C peripheral
+        mov     _WUOPC1, #SHAKE_WUOPC_BIT       ; Enables shake to wake
+    __endasm;
 
 #else
     /*
