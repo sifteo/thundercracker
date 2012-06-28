@@ -38,6 +38,10 @@ public:
     // A BitVector with one bit for every possible FlashMapBlock index
     typedef BitVector<NUM_BLOCKS> Set;
 
+    // A BitVector with one bit for every possible FlashMapBlock index,
+    // plus an extra entry for 'invalid' blocks.
+    typedef BitVector<NUM_BLOCKS + 1> ISet;
+
     unsigned ALWAYS_INLINE address() const {
         STATIC_ASSERT(NUM_BLOCKS <= (1ULL << (sizeof(code) * 8)));
         return index() * BLOCK_SIZE;
@@ -79,6 +83,18 @@ public:
     void ALWAYS_INLINE clear(Set &v) const {
         if (isValid())
             v.clear(index());
+    }
+
+    void ALWAYS_INLINE mark(ISet &v) const {
+        v.mark(isValid() ? code : 0);
+    }
+
+    void ALWAYS_INLINE clear(ISet &v) const {
+        v.clear(isValid() ? code : 0);
+    }
+
+    bool ALWAYS_INLINE test(ISet &v) const {
+        return v.test(isValid() ? code : 0);
     }
 
     void erase() const;

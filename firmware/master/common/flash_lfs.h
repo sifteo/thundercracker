@@ -163,6 +163,8 @@ public:
     FlashLFSKeyFilter metaIndex[NUM_ROWS];
 
     static FlashLFSVolumeHeader *fromVolume(FlashBlockRef &ref, FlashVolume vol);
+    static uint32_t getSequence(FlashVolume vol);
+
     bool isRowEmpty(unsigned row) const;
     void add(unsigned row, unsigned key);
     bool test(unsigned row, unsigned key);
@@ -465,6 +467,15 @@ public:
 
     FlashLFSVolumeVector() : numSlotsInUse(0) {}
 
+    struct SequenceInfo {
+        uint32_t slots[MAX_VOLUMES];
+    };
+
+    ALWAYS_INLINE void clear()
+    {
+        numSlotsInUse = 0;
+    }
+
     ALWAYS_INLINE FlashVolume last() const
     {
         // Returns the last volume in the vector. If the last volume
@@ -488,7 +499,9 @@ public:
         slots[numSlotsInUse++] = vol;
     }
 
+    void append(FlashVolume vol, SequenceInfo &si);
     void compact();
+    void sort(SequenceInfo &si);
 };
 
 
@@ -510,16 +523,26 @@ public:
     {}
 
     void init(FlashVolume parent);
+    void initWithVolumeVector(FlashVolume parent, FlashLFSVolumeVector::SequenceInfo &si);
+
     bool newVolume();
+
+    // Collect garbage on any volume, trying this one first
     bool collectGarbage();
+
+    // Collect only local garbage on volumes owned by this LFS
+    bool collectLocalGarbage();
 
     ALWAYS_INLINE void invalidate() {
         lastSequenceNumber = INVALID_LSN;
     }
 
+    ALWAYS_INLINE bool isValid() {
+        return lastSequenceNumber != INVALID_LSN;
+    }
+
     ALWAYS_INLINE bool isMatchFor(FlashVolume keyParent) {
-        return parent.block.code == keyParent.block.code &&
-            lastSequenceNumber != INVALID_LSN;
+        return parent.block.code == keyParent.block.code && isValid();
     }
 
     uint32_t lastSequenceNumber;
@@ -544,8 +567,9 @@ public:
     static FlashLFS &get(FlashVolume parent);
     static void invalidate();
 
-private:
     static FlashLFS instances[SIZE];
+
+private:
     static uint8_t lastUsed;
 };
 

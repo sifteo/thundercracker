@@ -81,6 +81,13 @@ FlashLFSVolumeHeader *FlashLFSVolumeHeader::fromVolume(FlashBlockRef &ref, Flash
         return 0;
 }
 
+uint32_t FlashLFSVolumeHeader::getSequence(FlashVolume vol)
+{
+    FlashBlockRef ref;
+    FlashLFSVolumeHeader *hdr = fromVolume(ref, vol);
+    return hdr->sequence;
+}
+
 bool FlashLFSVolumeHeader::isRowEmpty(unsigned row) const
 {
     ASSERT(row < NUM_ROWS);
@@ -276,6 +283,20 @@ FlashLFSIndexRecord *FlashLFSIndexBlockIter::beginAppend(FlashBlockWriter &write
     return ptr;
 }
 
+void FlashLFSVolumeVector::append(FlashVolume vol, SequenceInfo &si)
+{
+    if (full()) {
+        // Too many volumes!
+        ASSERT(0);
+        return;
+    }
+
+    unsigned index = numSlotsInUse;
+    si.slots[index] = FlashLFSVolumeHeader::getSequence(vol);
+    slots[index] = vol;
+    numSlotsInUse = index + 1;
+}
+
 void FlashLFSVolumeVector::compact()
 {
     /*
@@ -293,6 +314,30 @@ void FlashLFSVolumeVector::compact()
     }
 
     numSlotsInUse = writeIdx;
+}
+
+void FlashLFSVolumeVector::sort(SequenceInfo &si)
+{
+    /*
+     * Bubble sort actually shouldn't be too bad here... it should be common
+     * for volumes to already be sorted, based on the FlashVolume allocator's
+     * algorithms. And besides, with so few elements, I care more about
+     * memory than CPU.
+     *
+     * (Also, qsort() is kind of ugly for this use case, and newlib
+     * doesn't have qsort_r() yet. Blah.)
+     */
+
+    for (unsigned limit = numSlotsInUse; limit;) {
+        unsigned nextLimit = 0;
+        for (unsigned i = 1; i < limit; i++)
+            if (si.slots[i-1] > si.slots[i]) {
+                swap(si.slots[i-1], si.slots[i]);
+                swap(slots[i-1], slots[i]);
+                nextLimit = i;
+            }
+        limit = nextLimit;
+    }
 }
 
 void FlashLFS::init(FlashVolume parent)
@@ -313,66 +358,31 @@ void FlashLFS::init(FlashVolume parent)
 
     FlashVolumeIter vi;
     FlashVolume vol;
+    FlashLFSVolumeVector::SequenceInfo si;
+
+    volumes.clear();
+    vi.begin();
+    while (vi.next(vol)) {
+        if (vol.getParent().block.code == parent.block.code && vol.getType() == FlashVolume::T_LFS)
+            volumes.append(vol, si);
+    }
+
+    initWithVolumeVector(parent, si);
+}
+
+void FlashLFS::initWithVolumeVector(FlashVolume parent, FlashLFSVolumeVector::SequenceInfo &si)
+{
+    /*
+     * After we have set up our 'parent', FlashLFSVolumeVector and SequenceInfo,
+     * this function takes over and finishes all remaining initialization.
+     */
 
     this->parent = parent;
 
-    // Store sequence numbers on the stack (Parallel to the volumes array)
-    uint32_t sequences[FlashLFSVolumeVector::MAX_VOLUMES];
-    unsigned index = 0;
+    volumes.sort(si);
 
-    vi.begin();
-    while (vi.next(vol)) {
-        if (vol.getParent().block.code == parent.block.code
-            && vol.getType() == FlashVolume::T_LFS) {
-
-            if (index == FlashLFSVolumeVector::MAX_VOLUMES) {
-                // Too many volumes!
-                ASSERT(0);
-                break;
-            }
-
-            // Found a matching volume. Look at its sequence number.
-            FlashBlockRef ref;
-            unsigned hdrSize = sizeof(FlashLFSVolumeHeader);
-            FlashLFSVolumeHeader *hdr = (FlashLFSVolumeHeader*)vol.mapTypeSpecificData(ref, hdrSize);
-            ASSERT(hdrSize == sizeof(FlashLFSVolumeHeader));
-            uint32_t volSequence = hdr->sequence;
-
-            // Store volume info
-            sequences[index] = hdr->sequence;
-            volumes.slots[index] = vol;
-            index++;
-        }
-    }
-
-    volumes.numSlotsInUse = index;
-    if (index == 0) {
-        lastSequenceNumber = 0;
-        return;
-    }
-
-    /*
-     * Bubble sort actually shouldn't be too bad here... it should be common
-     * for volumes to already be sorted, based on the FlashVolume allocator's
-     * algorithms. And besides, with so few elements, I care more about
-     * memory than CPU.
-     *
-     * (Also, qsort() is kind of ugly for this use case, and newlib
-     * doesn't have qsort_r() yet. Blah.)
-     */
-
-    for (unsigned limit = index; limit;) {
-        unsigned nextLimit = 0;
-        for (unsigned i = 1; i < limit; i++)
-            if (sequences[i-1] > sequences[i]) {
-                swap(sequences[i-1], sequences[i]);
-                swap(volumes.slots[i-1], volumes.slots[i]);
-                nextLimit = i;
-            }
-        limit = nextLimit;
-    }
-
-    lastSequenceNumber = sequences[index - 1];
+    unsigned index = volumes.numSlotsInUse;
+    lastSequenceNumber = index ? si.slots[index - 1] : 0;
 }
 
 bool FlashLFS::newVolume()
@@ -727,14 +737,92 @@ bool FlashLFSObjectIter::previous(unsigned key)
 
 bool FlashLFS::collectGarbage()
 {
-    ASSERT(0 && "Not implemented!");
+    /*
+     * Fast path: can we collect garbage from our own local volume?
+     */
+    if (collectLocalGarbage())
+        return true;
 
-    // Scan backwards, keeping a bitmap of all keys we've found
-    // Any volume consisting of only superceded keys is deleted
+    /*
+     * Next best: collect garbage from any of the FlashLFS instances
+     * in our cache. (Assuming they aren't identical to the local LFS)
+     */
+    for (unsigned i = 0; i < FlashLFSCache::SIZE; ++i) {
+        FlashLFS &lfs = FlashLFSCache::instances[i];
+        if (&lfs != this && lfs.collectLocalGarbage())
+            return true;
+    }
 
-    // Also: If the oldest volume is less than X amount full, copy
-    //       all non-superceded keys, then delete it.
-    //       XXX - how to do this for more than one volume at a time?
+    /*
+     * Okay, now we need to scrape through every other filesystem in flash.
+     *
+     * It's important that we avoid filesystems we've already checked.
+     * In addition to the obvious desire not to duplicate work, we cannot
+     * ever have two FlashLFS instances for the same filesystem, or they
+     * could become inconsistent with each other.
+     */
 
+    FlashMapBlock::ISet blacklist;
+    blacklist.clear();
+
+    parent.block.mark(blacklist);
+
+    for (unsigned i = 0; i < FlashLFSCache::SIZE; ++i) {
+        FlashLFS &lfs = FlashLFSCache::instances[i];
+        if (lfs.isValid())
+            lfs.parent.block.mark(blacklist);
+    }
+
+    /*
+     * Repeatedly build a FlashLFS instance for the first non-blacklisted
+     * LFS instance we find. This is a variant of FlashLFS::init() which
+     * builds the LFS and selects in in a single step.
+     *
+     * We're finished if we reach the end of the filesystem without finding
+     * another non-blacklisted LFS volume.
+     */
+
+    for (;;) {
+        FlashVolumeIter vi;
+        FlashVolume vol;
+        FlashLFSVolumeVector::SequenceInfo si;
+        FlashLFS iterLFS;
+        FlashVolume iterParent;
+
+        iterLFS.volumes.clear();
+        vi.begin();
+
+        // Search for the first volume on any parent
+        for (;;) {
+            if (!vi.next(vol))
+                return false;
+
+            if (vol.getType() != FlashVolume::T_LFS)
+                continue;
+
+            iterParent = vol.getParent();
+            if (!iterParent.block.test(blacklist))
+                break;
+        }
+        iterLFS.volumes.append(vol, si);
+
+        // Continue searching for volumes that are part of this same LFS
+        while (vi.next(vol)) {
+            if (vol.getParent().block.code == iterParent.block.code && vol.getType() == FlashVolume::T_LFS)
+                iterLFS.volumes.append(vol, si);
+        }
+
+        iterLFS.initWithVolumeVector(iterParent, si);
+        if (iterLFS.collectLocalGarbage())
+            return true;
+
+        // No luck, try a diferent LFS instance.
+        iterParent.block.mark(blacklist);
+    }
+}
+
+bool FlashLFS::collectLocalGarbage()
+{
+    LOG(("XXX: LFS garbage collection attempted, Volume<%02x>\n", parent.block.code));
     return false;
 }

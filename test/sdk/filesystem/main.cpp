@@ -73,6 +73,8 @@ void createObjects()
 
     for (int value = 0; value <= lastValue; value++) {
         obj.value = value;
+        SCRIPT_FMT(LUA, "writeTotal = writeTotal + %d", sizeof obj);
+
         switch (r.randrange(3)) {
             case 0: foo.write(obj); break;
             case 1: bar.write(obj); break;
@@ -107,27 +109,28 @@ void createObjects()
     int lastWub = -1;
 
     for (unsigned i = 0;; ++i) {
-        SCRIPT(LUA, player:play(1));
+        SCRIPT(LUA,
+            if player:play(1) < 1 then
+                error("Finished replaying the log without finding our last object!")
+            end
+        );
 
         obj.value = -1;
         foo.read(obj);
         ASSERT(obj.value >= lastFoo);
-        lastFoo = obj.value;
-        if (obj.value == lastValue)
+        if (lastValue == (lastFoo = obj.value))
             break;
 
         obj.value = -1;
         bar.read(obj);
         ASSERT(obj.value >= lastBar);
-        lastBar = obj.value;
-        if (obj.value == lastValue)
+        if (lastValue == (lastBar = obj.value))
             break;
 
         obj.value = -1;
         wub.read(obj);
         ASSERT(obj.value >= lastWub);
-        lastWub = obj.value;
-        if (obj.value == lastValue)
+        if (lastValue == (lastWub = obj.value))
             break;
     }
 
@@ -145,15 +148,15 @@ void main()
     // Do some tests on our own binary
     checkSelf();
 
+    // Now start flooding the FS with object writes
+    createObjects();
+
     // Run all of the pure Lua tests (no API exercise needed)
     SCRIPT(LUA, testFilesystem());
 
     // This leaves a bunch of test volumes (Type 0x8765) in the filesystem.
     // We're guaranteed to see at least one of these.
     checkTestVolumes();
-
-    // Now start flooding the FS with object writes
-    createObjects();
 
     // Back to Lua, let it check whether our wear levelling has been working
     SCRIPT(LUA, dumpAndCheckFilesystem());

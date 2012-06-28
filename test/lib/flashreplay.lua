@@ -70,12 +70,15 @@ FlashReplay = {}
     end
 
     function FlashReplay:play(numEvents)
-        for i = 1, numEvents do
+        local result = 0
+
+        while result < numEvents do
             local line = self.file:read()
             if not line then
-                return
+                break
             end
 
+            result = result + 1
             op = line:sub(1,1)
             addr = "0x" .. line:sub(3,9)
 
@@ -89,4 +92,5 @@ FlashReplay = {}
         end
 
         self.fs:invalidateCache()
+        return result
     end
