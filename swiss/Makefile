@@ -17,6 +17,7 @@ OBJS := \
 # include directories
 INCLUDES := \
         -I. \
+        -I /usr/include/libusb-1.0 \
         -I$(MASTER_DIR)/bootloader \
         -I$(MASTER_DIR)/common \
         -I$(TC_DIR)/tools/fwdeploy/src \

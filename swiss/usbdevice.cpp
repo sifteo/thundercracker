@@ -1,6 +1,8 @@
 
 #include "usbdevice.h"
 #include "libusb.h"
+#include <string.h>
+#include <malloc.h>
 #include <assert.h>
 
 UsbDevice::UsbDevice() :
