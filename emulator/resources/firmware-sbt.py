@@ -20,25 +20,12 @@ import FirmwareLib
 import sys
 import bin2c
 
-PATCHED_ADDRS = [
-    0x0000,             # Reset vector
-    ]
 
 def fixupImage(p):
     """This contains all the special-case code we apply to the compiled
        firmware during binary translation.
        """
 
-    # Special case for the reset vector. We don't translate
-    # the SDCC start-up routines. No need to, really. But
-    # this means we need to stick a jump to main() in there
-    # after setting up the stack.
-
-    p.instructions[0x0000] = [
-            (0x75, 0x81) + p.getSym8('__start__stack'),
-            (0x02,) + p.getSym16('_main'),
-            ]
-        
     # Our ROM palettes are actually generated machine code that
     # is jumped to when we set each palette. These never existed
     # as assembly code in the first place, so we get no mention
@@ -146,6 +133,7 @@ class CodeGenerator:
         # Walk our instruction table, and emit translation blocks as functions
 
         for addr in addrs:
+
             # Branch targets end a basic block before emitting the instruction
             if addr in self.p.branchTargets and inBlock:
                 self.endBlock(f)
@@ -184,7 +172,6 @@ class CodeGenerator:
 
 if __name__ == '__main__':
     p = FirmwareLib.RSTParser()
-    p.patchedAddrs = PATCHED_ADDRS
     for f in sys.argv[1:]:
         p.parseFile(f)
 
