@@ -23,9 +23,6 @@ INCLUDES := \
         -I$(DEPS_DIR)/libusbx/include
 
 VERSION := $(shell git describe --tags)
-ifeq ($(VERSION), )
-VERSION := "\"\""
-endif
 
 # C++ compiler flags (-g -O2 -Wall)
 CCFLAGS = -g -O2
