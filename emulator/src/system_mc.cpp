@@ -19,6 +19,7 @@
 #include "audiomixer.h"
 #include "flash_device.h"
 #include "flash_blockcache.h"
+#include "flash_stack.h"
 #include "flash_volume.h"
 #include "usbprotocol.h"
 #include "svmloader.h"
@@ -49,8 +50,7 @@ bool SystemMC::init(System *sys)
             sys->opt_waveoutFilename.c_str()));
     }
 
-    FlashDevice::init();
-    FlashBlock::init();
+    FlashStack::init();
     USBProtocolHandler::init();
     Crc32::init();
 

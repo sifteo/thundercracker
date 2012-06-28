@@ -4,7 +4,7 @@
  */
 
 #include "usart.h"
-#include "flash_device.h"
+#include "flash_stack.h"
 #include "hardware.h"
 #include "board.h"
 #include "gpio.h"
@@ -78,9 +78,7 @@ int main()
     // This is the earliest point at which it's safe to use Usart::Dbg.
     Usart::Dbg.init(UART_RX_GPIO, UART_TX_GPIO, 115200);
 
-#ifndef DEBUG
-    FlashDevice::init();
-#else
+#ifdef DEBUG
     DBGMCU_CR |= (1 << 30) |        // TIM14 stopped when core is halted
                  (1 << 29) |        // TIM13 ""
                  (1 << 28) |        // TIM12 ""
@@ -113,7 +111,7 @@ int main()
     Radio::init();
 
     Tasks::init();
-    FlashBlock::init();
+    FlashStack::init();
     HomeButton::init();
 
     Volume::init();

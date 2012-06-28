@@ -13,6 +13,7 @@
 #include "flash_volume.h"
 #include "flash_volumeheader.h"
 #include "flash_lfs.h"
+#include "flash_stack.h"
 #include "elfprogram.h"
 
 const char LuaFilesystem::className[] = "Filesystem";
@@ -440,9 +441,7 @@ int LuaFilesystem::invalidateCache(lua_State *L)
      * Invalidate all caches. No parameters.
      */
 
-    FlashBlock::invalidate();
-    FlashLFSCache::invalidate();
-
+    FlashStack::invalidateCache();
     return 0;
 }
 

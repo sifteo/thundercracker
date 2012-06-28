@@ -5,6 +5,7 @@
 
 #include "flash_blockcache.h"
 #include "flash_device.h"
+#include "flash_lfs.h"
 #include "svmdebugger.h"
 #include "panic.h"
 #include <string.h>
