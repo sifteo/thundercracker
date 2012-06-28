@@ -3,6 +3,8 @@
 #include "aes128.h"
 #include "macros.h"
 
+#include "deployer.h"
+
 #include <stdio.h>
 #include <errno.h>
 #include <string.h>
@@ -30,13 +32,36 @@ bool FwLoader::load(const char *path, int vid, int pid)
         return false;
     }
 
+    FILE *f = fopen(path, "rb");
+    if (!f) {
+        fprintf(stderr, "could not open %s: %s\n", path, strerror(errno));
+        return false;
+    }
+
+    uint32_t plainsz, crc;
+    if (!checkFileDetails(f, plainsz, crc))
+        return false;
+
     if (!bootloaderVersionIsCompatible())
         return false;
 
     resetWritePointer();
 
-    if (!sendFirmwareFile(path))
+    if (!sendDetails(plainsz, crc)) {
+        fprintf(stderr, "error sending details\n");
         return false;
+    }
+
+    if (!sendFirmwareFile(f)) {
+        fprintf(stderr, "error sending file\n");
+        return false;
+    }
+
+    fclose(f);
+
+    while (dev.numPendingOUTPackets()) {
+        dev.processEvents();
+    }
 
     return true;
 }
@@ -71,56 +96,79 @@ void FwLoader::resetWritePointer()
 }
 
 /*
+ * Verify that this file at least has our Deployer's magic number,
+ * and retrieve the CRC and size.
+ */
+bool FwLoader::checkFileDetails(FILE *f, uint32_t &plainsz, uint32_t &crc)
+{
+    // magic number is the file header
+    fseek(f, 0L, SEEK_SET);
+    uint64_t magic;
+    unsigned numBytes = fread(&magic, 1, sizeof(magic), f);
+    if (numBytes != sizeof(magic) || magic != Deployer::MAGIC) {
+        fprintf(stderr, "magic number mismatch\n");
+        return false;
+    }
+
+    // last 8 bytes are CRC and plaintext size
+    fseek(f, -8L, SEEK_END);
+
+    if (fread(&crc, 1, sizeof(crc), f) != sizeof(crc)) {
+        fprintf(stderr, "couldn't read CRC\n");
+        return false;
+    }
+
+    if (fread(&plainsz, 1, sizeof(plainsz), f) != sizeof(plainsz)) {
+        fprintf(stderr, "couldn't read plainsz\n");
+        return false;
+    }
+
+    return true;
+}
+
+/*
  * Load the given file to the bootloader.
  * The file should already be encrypted and in the final form that it will reside
  * in the STM32's flash.
  */
-bool FwLoader::sendFirmwareFile(const char *path)
+bool FwLoader::sendFirmwareFile(FILE *f)
 {
-    FILE *f = fopen(path, "rb");
-    if (!f) {
-        fprintf(stderr, "could not open %s: %s\n", path, strerror(errno));
+    fseek(f, 0L, SEEK_END);
+    unsigned extraBytes = sizeof(uint64_t) + (2 * sizeof(uint32_t));
+    int numEncryptedBytes = ftell(f) - extraBytes;
+    const unsigned filesz = numEncryptedBytes;
+
+    // must be aes block aligned
+    if (numEncryptedBytes & 0xf) {
+        fprintf(stderr, "incorrect input format\n");
         return false;
     }
 
-    fseek(f, 0L, SEEK_END);
-    unsigned filesz = ftell(f);
-
-    /*
-     * Last 4 bytes are unencrypted CRC
-     */
-    fseek(f, -4L, SEEK_CUR);
-    uint32_t crc;
-    if (fread(&crc, 1, sizeof(uint32_t), f) != sizeof(uint32_t))
-        return false;
-
-    fprintf(stderr, "loading crc %lu\n", crc);
-    fprintf(stderr, "sending filesz %lu\n", filesz);
-
-    fseek(f, 0L, SEEK_SET);
+    // encrpyted data starts after the magic number
+    fseek(f, sizeof(uint64_t), SEEK_SET);
     unsigned percent = 0;
     unsigned progress = 0;
 
-    uint8_t usbBuf[IODevice::MAX_EP_SIZE];
-    usbBuf[0] = Bootloader::CmdWriteMemory;
+    uint8_t usbBuf[IODevice::MAX_EP_SIZE] = { Bootloader::CmdWriteMemory };
 
-    while (!feof(f)) {
+    /*
+     * Payload should be back to back AES128::BLOCK_SIZE chunks.
+     */
+    while (numEncryptedBytes > 0) {
 
-        /*
-         * payload (everything after command byte) should be back to back
-         * chunks of AES128::BLOCK_SIZE bytes
-         */
         const unsigned payload = dev.maxOUTPacketSize() - 1;
         const unsigned chunk = (payload / AES128::BLOCK_SIZE) * AES128::BLOCK_SIZE;
         const int numBytes = fread(usbBuf + 1, 1, chunk, f);
-        if (numBytes <= 0)
-            continue;
+        if (numBytes != chunk)
+            break;
 
         dev.writePacket(usbBuf, numBytes + 1);
         while (dev.numPendingOUTPackets() > IODevice::MAX_OUTSTANDING_OUT_TRANSFERS)
             dev.processEvents();
 
         progress += numBytes;
+        numEncryptedBytes -= numBytes;
+
         const unsigned progressPercent = ((float)progress / (float)filesz) * 100;
         if (progressPercent != percent) {
             percent = progressPercent;
@@ -129,19 +177,17 @@ bool FwLoader::sendFirmwareFile(const char *path)
         }
     }
 
+    return true;
+}
+
+bool FwLoader::sendDetails(uint32_t size, uint32_t crc)
+{
     /*
      * Finalize the transfer - specify our version of the crc and the file size.
      */
-    usbBuf[0] = Bootloader::CmdWriteDetails;
+    uint8_t usbBuf[IODevice::MAX_EP_SIZE] = { Bootloader::CmdWriteDetails };
     *reinterpret_cast<uint32_t*>(&usbBuf[1]) = crc;
-    *reinterpret_cast<uint32_t*>(&usbBuf[5]) = filesz;
+    *reinterpret_cast<uint32_t*>(&usbBuf[5]) = size;
     dev.writePacket(usbBuf, 9);
-
-    fclose(f);
-
-    while (dev.numPendingOUTPackets()) {
-        dev.processEvents();
-    }
-
     return true;
 }

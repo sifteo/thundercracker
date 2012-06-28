@@ -19,6 +19,7 @@ INCLUDES := \
         -I. \
         -I$(MASTER_DIR)/bootloader \
         -I$(MASTER_DIR)/common \
+        -I$(TC_DIR)/tools/fwdeploy/src \
         -I$(DEPS_DIR)/libusbx/include
 
 VERSION := $(shell git describe --tags)

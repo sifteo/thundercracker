@@ -2,6 +2,7 @@
 #define FW_LOADER_H
 
 #include "iodevice.h"
+#include <stdio.h>
 
 class FwLoader
 {
@@ -19,7 +20,9 @@ private:
 
     bool bootloaderVersionIsCompatible();
     void resetWritePointer();
-    bool sendFirmwareFile(const char *path);
+    bool checkFileDetails(FILE *f, uint32_t &plainsz, uint32_t &crc);
+    bool sendFirmwareFile(FILE *f);
+    bool sendDetails(uint32_t size, uint32_t crc);
 
     IODevice &dev;
 };
