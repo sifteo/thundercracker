@@ -2,7 +2,7 @@
 #include "bootloader.h"
 #include "aes128.h"
 #include "macros.h"
-
+#include "usbprotocol.h"
 #include "deployer.h"
 
 #include <stdio.h>
@@ -15,8 +15,22 @@ int FwLoader::run(int argc, char **argv, IODevice &_dev)
     if (argc < 2)
         return 1;
 
+
+
     FwLoader loader(_dev);
-    bool success = loader.load(argv[1], IODevice::SIFTEO_VID, IODevice::BOOTLOADER_PID);
+    bool success;
+
+    if (!strcmp(argv[1], "--init")) {
+        success = loader.requestBootloaderUpdate();
+    } else {
+        success = loader.load(argv[1]);
+    }
+
+    while (_dev.numPendingOUTPackets()) {
+        _dev.processEvents();
+    }
+    _dev.close();
+
     return success ? 0 : 1;
 }
 
@@ -25,9 +39,22 @@ FwLoader::FwLoader(IODevice &_dev) :
 {
 }
 
-bool FwLoader::load(const char *path, int vid, int pid)
+bool FwLoader::requestBootloaderUpdate()
 {
-    if (!dev.open(vid, pid)) {
+    if (!dev.open(IODevice::SIFTEO_VID, IODevice::BASE_PID)) {
+        fprintf(stderr, "device is not attached\n");
+        return false;
+    }
+
+    USBProtocolMsg m(USBProtocol::FactoryTest);
+    m.append(10);   // bootload update request command
+    dev.writePacket(m.bytes, m.len);
+    return true;
+}
+
+bool FwLoader::load(const char *path)
+{
+    if (!dev.open(IODevice::SIFTEO_VID, IODevice::BOOTLOADER_PID)) {
         fprintf(stderr, "device is not attached\n");
         return false;
     }
@@ -53,10 +80,6 @@ bool FwLoader::load(const char *path, int vid, int pid)
     }
 
     fclose(f);
-
-    while (dev.numPendingOUTPackets()) {
-        dev.processEvents();
-    }
 
     return true;
 }

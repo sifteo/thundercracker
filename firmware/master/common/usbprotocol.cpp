@@ -31,7 +31,7 @@ const USBProtocol::SubSystemHandler USBProtocol::subsystemHandlers[] = {
 
 void USBProtocol::dispatch(const USBProtocolMsg &m)
 {
-    unsigned subsys = static_cast<unsigned>(m.subsystem());
+    const unsigned subsys = static_cast<unsigned>(m.subsystem());
     if (subsys < arraysize(subsystemHandlers)) {
         SubSystemHandler handler = subsystemHandlers[subsys];
         handler(m);
