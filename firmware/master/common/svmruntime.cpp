@@ -13,6 +13,7 @@
 #include "event.h"
 #include "tasks.h"
 #include "panic.h"
+#include "cubeslots.h"
 
 #include <math.h>
 #include <sifteo/abi.h>
@@ -102,24 +103,42 @@ void SvmRuntime::fault(FaultCode code)
 
     /* 
      * Unhandled fault; panic!
-     * Draw a message to cube #0 and exit.
+     *
+     * Draw a message to one enabled cube, and exit after a home-button press.
      */
 
-    PanicMessenger msg;
-    msg.init(0x10000);
+    _SYSCubeIDVector cubes = CubeSlots::vecEnabled;
+    if (cubes) {
 
-    msg.at(1,1) << "Oh noes!";
-    msg.at(1,3) << "Fault code " << uint8_t(code);
+        PanicMessenger msg;
+        msg.init(0x10000);
 
-    uint32_t pcVA = SvmRuntime::reconstructCodeAddr(SvmCpu::reg(REG_PC));
-    msg.at(1,5) << "PC: " << pcVA;
+        // User-facing description
+        msg.at(1,1) << "Oh no!";
+        msg.at(1,2) << "Press button";
+        msg.at(1,3) << "to continue.";
 
-    dumpRegister(msg.at(1,6) << "SP: ", REG_SP);
+        // Getting more developer-oriented now... fault description
+        msg.at(1,5) << "In Volume<" << uint8_t(SvmLoader::getRunningVolume().block.code) << ">";
+        msg.at(1,6) << "Fault 0x" << uint8_t(code) << ":";
+        msg.at(1,7) << faultString14(code);
 
-    for (unsigned r = 0; r < 8; r++)
-        dumpRegister(msg.at(1,7+r) << 'r' << char('0' + r) << ": ", r);
+        // Begin the "Wall of text" register dump, after one blank line
+        uint32_t pcVA = SvmRuntime::reconstructCodeAddr(SvmCpu::reg(REG_PC));
+        msg.at(1,9) << "PC: " << pcVA;
 
-    msg.paint(0);
+        dumpRegister(msg.at(1,10) << "SP: ", REG_SP);
+
+        // Only room for first 4 GPRs
+        for (unsigned r = 0; r < 4; r++)
+            dumpRegister(msg.at(1,11+r) << 'r' << char('0' + r) << ": ", r);
+
+        // Paint on first enabled cube
+        msg.paint(Intrinsic::LZ(cubes));
+        msg.haltUntilButton();
+    }
+
+    // Exit with an error (Back to the launcher)
     SvmLoader::exit(true);
 }
 

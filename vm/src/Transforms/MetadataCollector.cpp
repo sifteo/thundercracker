@@ -184,6 +184,12 @@ void MetadataCollectorPass::checkValues(Module &M)
 
     if (!Dict.count(_SYS_METADATA_CUBE_RANGE))
         report_warning("No cubeRange() metadata was defined! No cubes will be available.");
+
+    if (!Dict.count(_SYS_METADATA_ICON_96x96))
+        report_warning("No icon() metadata was defined! Your game will have a generic icon.");
+
+    if (!Dict.count(_SYS_METADATA_PACKAGE_STR) || !Dict.count(_SYS_METADATA_VERSION_STR))
+        report_warning("No package() metadata was defined! Your game will not be deployable.");
 }
 
 void MetadataCollectorPass::finalizeAll(Module &M, const TargetData *TD)

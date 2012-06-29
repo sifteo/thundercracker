@@ -18,6 +18,7 @@ static const CubeSet allCubes(0, numCubes);
 static VideoBuffer vid[numCubes];
 static Metadata M = Metadata()
     .title("Asset Slot Example")
+    .package("com.sifteo.sdk.assetslot", "0.5")
     .cubeRange(numCubes);
 
 static MyLoader loader(allCubes, MainSlot, vid);

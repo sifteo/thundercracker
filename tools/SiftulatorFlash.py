@@ -62,3 +62,14 @@ class StorageFile:
             data[size - self.mc_sectorSize:size] in emptySectors):
                 size -= self.mc_sectorSize
         return data[:size]
+
+
+def zapSysLFSVolumes(flashImage):
+    """Return a modified version of flashImage, with all SysLFS volumes deleted"""
+    for vol in range(128):
+        addr = vol * 0x20000
+        header = flashImage[addr:addr+32]
+        if header[:10] == "SiftVOL_FS" and header[-4:] == "\x00\xff\xff\xff":
+            flashImage = flashImage[:addr] + ("\xff" * 32) + flashImage[addr+32:]
+            print "zapping SysLFS Volume<%02x>" % (vol+1)
+    return flashImage

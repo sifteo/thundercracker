@@ -7,6 +7,7 @@ using namespace Sifteo;
 
 static Metadata M = Metadata()
     .title("Stampy SDK Example")
+    .package("com.sifteo.sdk.stampy", "1.0")
     .cubeRange(1);
 
 // 28x27 pixels, 16 color

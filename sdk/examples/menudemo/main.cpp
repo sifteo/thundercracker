@@ -18,6 +18,7 @@ static AssetSlot MainSlot = AssetSlot::allocate()
 
 static Metadata M = Metadata()
     .title("Menu SDK Demo")
+    .package("com.sifteo.sdk.menudemo", "1.0.0")
     .cubeRange(gNumCubes);
 
 
