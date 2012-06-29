@@ -9,6 +9,7 @@ using namespace Sifteo;
 
 static Metadata M = Metadata()
     .title("Text SDK Example")
+    .package("com.sifteo.sdk.text", "1.0")
     .cubeRange(1);
 
 

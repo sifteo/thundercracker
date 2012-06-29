@@ -8,6 +8,7 @@ using namespace Sifteo;
 static const unsigned gNumCubes = 3;
 static Metadata M = Metadata()
     .title("Sensors SDK Example")
+    .package("com.sifteo.sdk.sensors", "1.0")
     .cubeRange(gNumCubes);
 
 
