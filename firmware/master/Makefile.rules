@@ -28,6 +28,13 @@ unlock:
 		-c "stm32f1x unlock 0" \
 		-c reset \
 		-c exit
+		
+erase:
+	openocd -f $(MASTER_DIR)/stm32/$(PROG_CONFIG) \
+	-c init \
+	-c "stm32f1x mass_erase 0" \
+	-c reset \
+	-c exit
 
 program: $(BIN)
 	openocd -f $(MASTER_DIR)/stm32/$(PROG_CONFIG) \
