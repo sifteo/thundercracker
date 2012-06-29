@@ -47,42 +47,53 @@ __bit touch;
 #endif
 
 
-static void i2c_tx(const __code uint8_t *buf, uint8_t len)
+static void i2c_tx(const __code uint8_t *buf)
 {
     /*
      * Standalone I2C transmit, used during initialization.
+     *
+     * Transmits any number of transactions, which are sequences of bytes
+     * that begin with a length byte. The sequence of transmissions
+     * ends when a zero length is encountered.
      */
 
-    while (len) {
-        uint8_t b = *buf;
-        buf++;
-        len--;
+    uint8_t len;
+    for (;;) {
+        len = *(buf++);
+        if (!len)
+            return;
 
-        for (;;) {
-            uint8_t status;
+        do {
+            uint8_t b = *(buf++);
 
-            // Transmit one byte, and wait for it.
-            IR_SPI = 0;
-            W2DAT = b;
-            while (!IR_SPI);
+            for (;;) {
+                uint8_t status;
+
+                // Transmit one byte, and wait for it.
+                IR_SPI = 0;
+                W2DAT = b;
+                while (!IR_SPI);
             
-            status = W2CON1;
-            if (!(status & W2CON1_READY)) {
-                // Retry whole byte
-                continue;
+                status = W2CON1;
+                if (!(status & W2CON1_READY)) {
+                    // Retry whole byte
+                    continue;
+                }
+                if (status & W2CON1_NACK) {
+                    // Failed!
+                    W2CON0 |= W2CON0_STOP;
+                    return;
+                } else {
+                    break;
+                }
             }
-            if (status & W2CON1_NACK) {
-                // Failed!
-                goto cleanup;
-            } else {
-                break;
-            }
-        }
-    }
 
-cleanup:
-    W2CON0 |= W2CON0_STOP;
+        } while (--len);
+
+        W2CON0 |= W2CON0_STOP;
+    }
 }
+
 
 void sensors_init()
 {
@@ -164,12 +175,13 @@ void sensors_init()
     
     // Put LIS3D in low power mode with all 3 axes enabled & block data update enabled
     {
-        const __code uint8_t init1[] = { ACCEL_ADDR_TX, ACCEL_CTRL_REG1, ACCEL_REG1_INIT };
-        const __code uint8_t init2[] = { ACCEL_ADDR_TX, ACCEL_CTRL_REG4, ACCEL_REG4_INIT };
-        const __code uint8_t init3[] = { ACCEL_ADDR_TX, ACCEL_CTRL_REG6, ACCEL_IO_00 };
-        i2c_tx(init1, sizeof init1);
-        i2c_tx(init2, sizeof init2);
-        i2c_tx(init3, sizeof init3);
+        static const __code uint8_t init[] = {
+            3, ACCEL_ADDR_TX, ACCEL_CTRL_REG1, ACCEL_REG1_INIT,
+            3, ACCEL_ADDR_TX, ACCEL_CTRL_REG4, ACCEL_REG4_INIT,
+            3, ACCEL_ADDR_TX, ACCEL_CTRL_REG6, ACCEL_IO_00,
+            0
+        };
+        i2c_tx(init);
     }
 
     IRCON = 0;                  // Clear any spurious IRQs from the above initialization

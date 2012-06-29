@@ -24,10 +24,13 @@ void SampleProfiler::onUSBData(const USBProtocolMsg &m)
     if (m.payloadLen() < 2 || m.payload[0] != SetProfilingEnabled)
         return;
 
-    if (m.payload[1])
-        startSampling();
-    else
-        stopSampling();
+    if (m.payload[1]) {
+        timer.enableUpdateIsr();
+        Tasks::setPending(Tasks::Profiler);
+    } else {
+        Tasks::clearPending(Tasks::Profiler);
+        timer.disableUpdateIsr();
+    }
 }
 
 void SampleProfiler::processSample(uint32_t pc)
@@ -36,18 +39,12 @@ void SampleProfiler::processSample(uint32_t pc)
 
     // high 4 bits are subsystem
     sampleBuf = (subsys << 28) | pc;
-
-    Tasks::setPending(Tasks::Profiler);
 }
 
 void SampleProfiler::task(void *p)
 {
-    Tasks::clearPending(Tasks::Profiler);
-
     USBProtocolMsg m(USBProtocol::Profiler);
-
-    memcpy(m.payload, &sampleBuf, sizeof sampleBuf);
-    m.len += sizeof(sampleBuf);
+    m.append((uint8_t*)&sampleBuf, sizeof sampleBuf);
     UsbDevice::write(m.bytes, m.len);
 }
 

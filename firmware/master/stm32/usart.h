@@ -7,7 +7,8 @@
 #define USART_H_
 
 #include "hardware.h"
-#include "gpio.h"
+
+class GPIOPin;
 
 class Usart
 {

@@ -23,6 +23,12 @@ void graphics_render(void) __naked
      * This is also where we calculate the next ACK byte, which will
      * be sent back after this frame is fully rendered. The bits in this
      * byte are explained by protocol.h.
+     *
+     * We set i2c_a21_target from _SYS_VF_A21 here, since it's convenient
+     * to do so, but we do _not_ call i2c_a21_wait() automatically. Not
+     * all video modes use flash at all, so we only wait if necessary.
+     * (It is still possible for A21 to be set based on our change to
+     * i2c_a21_target, but we don't require it.)
      */
 
     __asm
@@ -62,9 +68,6 @@ void graphics_render(void) __naked
 
     // Set up colormap (Used by FB32, STAMP)
     DPH1 = _SYS_VA_COLORMAP >> 8;
-
-    // Wait for A21 to change, if necessary
-    i2c_a21_wait();
 
     /*
      * Video mode jump table.

@@ -23,7 +23,8 @@ TESTS = \
 	sdk/sprites \
 	sdk/tilebuffer \
 	sdk/scripting \
-	sdk/stir
+	sdk/stir \
+	sdk/assetslot
 
 # Mac-only tests
 ifeq ($(BUILD_PLATFORM), Darwin)
@@ -36,6 +37,7 @@ ifneq ($(BUILD_PLATFORM), windows32)
 	firmware/cube \
 	firmware/master \
 	sdk/adpcm \
+	sdk/pcm \
 	sdk/tracker
 endif
 

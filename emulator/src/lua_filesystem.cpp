@@ -13,6 +13,7 @@
 #include "flash_volume.h"
 #include "flash_volumeheader.h"
 #include "flash_lfs.h"
+#include "flash_stack.h"
 #include "elfprogram.h"
 
 const char LuaFilesystem::className[] = "Filesystem";
@@ -437,10 +438,10 @@ int LuaFilesystem::rawErase(lua_State *L)
 int LuaFilesystem::invalidateCache(lua_State *L)
 {
     /*
-     * Invalidate the block cache. No parameters.
+     * Invalidate all caches. No parameters.
      */
 
-    FlashBlock::invalidate();
+    FlashStack::invalidateCache();
     return 0;
 }
 
@@ -538,7 +539,7 @@ int LuaFilesystem::readObject(lua_State *L)
     FlashLFSObjectIter iter(lfs);
     uint8_t buffer[FlashLFSIndexRecord::MAX_SIZE];
 
-    while (iter.previous(key)) {
+    while (iter.previous(FlashLFSKeyQuery(key))) {
         unsigned size = iter.record()->getSizeInBytes();
         ASSERT(size <= sizeof buffer);
         if (iter.readAndCheck(buffer, size)) {

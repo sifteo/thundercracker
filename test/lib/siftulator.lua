@@ -9,7 +9,7 @@ SCREENSHOT_PATH_FMT = "screenshots/%s.png"
 
 util = {}
 
-    function util:assertScreenshot(cube, name)
+    function util:assertScreenshot(cube, name, tolerance)
         -- Assert that a screenshot matches the current LCD contents.
         -- If not, we save a copy of the actual LCD screen, and error() out.
         
@@ -17,7 +17,7 @@ util = {}
         local x, y, lcdColor, refColor;
         
         local status, err = pcall(function()
-            x, y, lcdColor, refColor = cube:testScreenshot(fullPath)
+            x, y, lcdColor, refColor, errVal = cube:testScreenshot(fullPath, tolerance)
         end)
 
         if not status then
@@ -47,8 +47,8 @@ util = {}
             cube:saveScreenshot(failedPath)
             error(string.format("Screenshot mismatch\n\n" ..
                                 "-- At location (%d,%d)\n" ..
-                                "-- Actual pixel 0x%04x, expected 0x%04x\n" ..
+                                "-- Actual pixel 0x%04x, expected 0x%04x (error of %d)\n" ..
                                 "-- Wrote failed image to \"%s\"\n", 
-                                x, y, lcdColor, refColor, failedPath))
+                                x, y, lcdColor, refColor, errVal, failedPath))
         end
     end

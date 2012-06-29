@@ -6,8 +6,10 @@
 #ifndef USBPROTOCOL_H
 #define USBPROTOCOL_H
 
-#include <stdint.h>
 #include "macros.h"
+
+#include <stdint.h>
+#include <string.h>
 
 struct USBProtocolMsg;
 
@@ -64,6 +66,21 @@ struct USBProtocolMsg {
 
     unsigned payloadLen() const {
         return MAX(0, static_cast<int>(len - sizeof(header)));
+    }
+
+    void append(uint8_t b) {
+        ASSERT(len < MAX_LEN);
+        bytes[len++] = b;
+    }
+
+    void append(uint8_t *src, unsigned count) {
+        // Overflow-safe assertions
+        ASSERT(len <= MAX_LEN);
+        ASSERT(count <= MAX_LEN);
+        ASSERT((len + count) <= MAX_LEN);
+
+        memcpy(bytes + len, src, count);
+        len += count;
     }
 };
 

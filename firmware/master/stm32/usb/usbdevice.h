@@ -8,6 +8,7 @@
 
 #include <stdint.h>
 #include "usb/usbdefs.h"
+#include "usb/usbhardware.h"
 #include "board.h"
 
 class UsbDevice
@@ -23,6 +24,7 @@ public:
 #endif
 
     static const unsigned WINUSB_COMPATIBLE_ID = 0x51;
+    static const unsigned WCID_VENDOR_REQUEST = 0xC0;
 
     static const uint8_t InEpAddr = 0x81;
     static const uint8_t OutEpAddr = 0x01;
@@ -56,6 +58,15 @@ private:
     static bool waitForPreviousWrite();
 
     static bool configured;
+    static volatile bool txInProgress;
+
+    /*
+     * For now, the STM32 hardware layer driver requires this to be static
+     * since data gets loaded to the hardware FIFO asynchronously, after we
+     * request a transmission, upon receiving an ISR indicating that the FIFO
+     * is ready for the data. Would be nice to avoid this if possible...
+     */
+    static uint8_t epINBuf[UsbHardware::MAX_PACKET];
 };
 
 #endif // USB_DEVICE_H

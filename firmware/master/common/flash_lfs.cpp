@@ -81,18 +81,64 @@ FlashLFSVolumeHeader *FlashLFSVolumeHeader::fromVolume(FlashBlockRef &ref, Flash
         return 0;
 }
 
+uint32_t FlashLFSVolumeHeader::getSequence(FlashVolume vol)
+{
+    FlashBlockRef ref;
+    FlashLFSVolumeHeader *hdr = fromVolume(ref, vol);
+    return hdr->sequence;
+}
+
 bool FlashLFSVolumeHeader::isRowEmpty(unsigned row) const
 {
     ASSERT(row < NUM_ROWS);
     return metaIndex[row].isEmpty();
 }
 
+bool FlashLFSVolumeHeader::test(unsigned row, unsigned key) {
+    return metaIndex[row].overlaps(FlashLFSKeyFilter::makeSingle(row, key));
+}
+
 void FlashLFSVolumeHeader::add(unsigned row, unsigned key) {
     metaIndex[row].add(row, key);
 }
 
-bool FlashLFSVolumeHeader::test(unsigned row, unsigned key) {
-    return metaIndex[row].test(row, key);
+bool FlashLFSKeyQuery::test(unsigned row, FlashLFSKeyFilter f)
+{
+    FlashLFSKeyFilter filter;
+
+    if (exactKey != LFS::KEY_ANY) {
+        // Filter contains a single matching key
+        filter = FlashLFSKeyFilter::makeSingle(row, exactKey);
+
+    } else if (excluded) {
+        // Filter contains all keys that *aren't* in 'excluded'
+
+        filter = FlashLFSKeyFilter::makeEmpty();
+
+        for (unsigned key = 0; key < FlashLFSIndexRecord::MAX_KEYS; key++) {
+            if (!excluded->test(key))
+                filter.add(row, key);
+            if (filter.isFull())
+                break;
+        }
+
+    } else {
+        // All keys are free game. We're fine as long as the filter isn't empty.
+        return !f.isEmpty();
+    }
+
+    return filter.overlaps(f);
+}
+
+bool FlashLFSKeyQuery::test(unsigned key)
+{
+    if (exactKey != LFS::KEY_ANY)
+        return key == exactKey;
+
+    if (excluded && excluded->test(key))
+        return false;
+
+    return true;
 }
 
 unsigned FlashLFSVolumeHeader::numNonEmptyRows()
@@ -160,7 +206,7 @@ bool FlashLFSIndexBlockIter::beginBlock(uint32_t blockAddr)
     return true;
 }
 
-bool FlashLFSIndexBlockIter::previous(unsigned key)
+bool FlashLFSIndexBlockIter::previous(FlashLFSKeyQuery query)
 {
     /*
      * Seek to the previous valid index record. Invalid records are skipped.
@@ -184,7 +230,7 @@ bool FlashLFSIndexBlockIter::previous(unsigned key)
             // Only valid records have a meaningful size
             offset -= ptr->getSizeInBytes();
 
-            if (key == LFS::KEY_ANY || key == ptr->getKey()) {
+            if (query.test(ptr->getKey())) {
                 // Matched!
                 currentRecord = ptr;
                 currentOffset = offset;
@@ -276,12 +322,28 @@ FlashLFSIndexRecord *FlashLFSIndexBlockIter::beginAppend(FlashBlockWriter &write
     return ptr;
 }
 
+void FlashLFSVolumeVector::append(FlashVolume vol, SequenceInfo &si)
+{
+    if (full()) {
+        // Too many volumes!
+        ASSERT(0);
+        return;
+    }
+
+    unsigned index = numSlotsInUse;
+    si.slots[index] = FlashLFSVolumeHeader::getSequence(vol);
+    slots[index] = vol;
+    numSlotsInUse = index + 1;
+}
+
 void FlashLFSVolumeVector::compact()
 {
     /*
      * Look for invalid (deleted) volumes to remove,
      * in order to make more room in our vector.
      */
+
+    DEBUG_ONLY(debugChecks());
 
     unsigned readIdx = 0;
     unsigned writeIdx = 0;
@@ -293,7 +355,54 @@ void FlashLFSVolumeVector::compact()
     }
 
     numSlotsInUse = writeIdx;
+    DEBUG_ONLY(debugChecks());
 }
+
+void FlashLFSVolumeVector::sort(SequenceInfo &si)
+{
+    /*
+     * Bubble sort actually shouldn't be too bad here... it should be common
+     * for volumes to already be sorted, based on the FlashVolume allocator's
+     * algorithms. And besides, with so few elements, I care more about
+     * memory than CPU.
+     *
+     * (Also, qsort() is kind of ugly for this use case, and newlib
+     * doesn't have qsort_r() yet. Blah.)
+     */
+
+    DEBUG_ONLY(debugChecks());
+
+    for (unsigned limit = numSlotsInUse; limit;) {
+        unsigned nextLimit = 0;
+        for (unsigned i = 1; i < limit; i++)
+            if (si.slots[i-1] > si.slots[i]) {
+                swap(si.slots[i-1], si.slots[i]);
+                swap(slots[i-1], slots[i]);
+                nextLimit = i;
+            }
+        limit = nextLimit;
+    }
+
+    DEBUG_ONLY(debugChecks());
+}
+
+#ifdef SIFTEO_SIMULATOR
+void FlashLFSVolumeVector::debugChecks()
+{
+    /*
+     * Make sure all volumes in the vector are unique and valid.
+     */
+
+    ASSERT(numSlotsInUse <= MAX_VOLUMES);
+
+    for (unsigned i = 0; i < numSlotsInUse; ++i) {
+        ASSERT(!slots[i].block.isValid() || slots[i].isValid());
+        for (unsigned j = 0; j < i; ++j)
+            ASSERT(slots[i].block.isValid() == false ||
+                slots[i].block.code != slots[j].block.code);
+    }
+}
+#endif
 
 void FlashLFS::init(FlashVolume parent)
 {
@@ -313,66 +422,38 @@ void FlashLFS::init(FlashVolume parent)
 
     FlashVolumeIter vi;
     FlashVolume vol;
+    FlashLFSVolumeVector::SequenceInfo si;
+
+    volumes.clear();
+    vi.begin();
+    while (vi.next(vol)) {
+        if (vol.getParent().block.code == parent.block.code && vol.getType() == FlashVolume::T_LFS)
+            volumes.append(vol, si);
+    }
+
+    initWithVolumeVector(parent, si);
+}
+
+void FlashLFS::initWithVolumeVector(FlashVolume parent, FlashLFSVolumeVector::SequenceInfo &si)
+{
+    /*
+     * After we have set up our 'parent', FlashLFSVolumeVector and SequenceInfo,
+     * this function takes over and finishes all remaining initialization.
+     */
 
     this->parent = parent;
 
-    // Store sequence numbers on the stack (Parallel to the volumes array)
-    uint32_t sequences[FlashLFSVolumeVector::MAX_VOLUMES];
-    unsigned index = 0;
+    volumes.sort(si);
 
-    vi.begin();
-    while (vi.next(vol)) {
-        if (vol.getParent().block.code == parent.block.code
-            && vol.getType() == FlashVolume::T_LFS) {
+    unsigned index = volumes.numSlotsInUse;
+    lastSequenceNumber = index ? si.slots[index - 1] : 0;
 
-            if (index == FlashLFSVolumeVector::MAX_VOLUMES) {
-                // Too many volumes!
-                ASSERT(0);
-                break;
-            }
-
-            // Found a matching volume. Look at its sequence number.
-            FlashBlockRef ref;
-            unsigned hdrSize = sizeof(FlashLFSVolumeHeader);
-            FlashLFSVolumeHeader *hdr = (FlashLFSVolumeHeader*)vol.mapTypeSpecificData(ref, hdrSize);
-            ASSERT(hdrSize == sizeof(FlashLFSVolumeHeader));
-            uint32_t volSequence = hdr->sequence;
-
-            // Store volume info
-            sequences[index] = hdr->sequence;
-            volumes.slots[index] = vol;
-            index++;
+    #if 0
+        LOG(("Init LFS %p, lsn=%d\n", this, lastSequenceNumber));
+        for (unsigned i = 0; i < volumes.numSlotsInUse; i++) {
+            LOG(("\tslot %02x, seq %d\n", volumes.slots[i].block.code, si.slots[i]));
         }
-    }
-
-    volumes.numSlotsInUse = index;
-    if (index == 0) {
-        lastSequenceNumber = 0;
-        return;
-    }
-
-    /*
-     * Bubble sort actually shouldn't be too bad here... it should be common
-     * for volumes to already be sorted, based on the FlashVolume allocator's
-     * algorithms. And besides, with so few elements, I care more about
-     * memory than CPU.
-     *
-     * (Also, qsort() is kind of ugly for this use case, and newlib
-     * doesn't have qsort_r() yet. Blah.)
-     */
-
-    for (unsigned limit = index; limit;) {
-        unsigned nextLimit = 0;
-        for (unsigned i = 1; i < limit; i++)
-            if (sequences[i-1] > sequences[i]) {
-                swap(sequences[i-1], sequences[i]);
-                swap(volumes.slots[i-1], volumes.slots[i]);
-                nextLimit = i;
-            }
-        limit = nextLimit;
-    }
-
-    lastSequenceNumber = sequences[index - 1];
+    #endif
 }
 
 bool FlashLFS::newVolume()
@@ -384,23 +465,20 @@ bool FlashLFS::newVolume()
      * isn't any more space to allocate volumes.
      */
 
-    if (volumes.full()) {
-        // Try to reclaim wasted space in our vector
-        volumes.compact();
-        if (volumes.full())
-            return false;
-    }
+    if (volumes.full())
+        return false;
 
     FlashVolumeWriter vw;
     unsigned hdrSize = sizeof(FlashLFSVolumeHeader);
     unsigned payloadSize = FlashLFSVolumeVector::VOL_PAYLOAD_SIZE;
-    
+
     if (!vw.begin(FlashVolume::T_LFS, payloadSize, hdrSize, parent))
         return false;
 
     FlashLFSVolumeHeader *hdr = (FlashLFSVolumeHeader*)vw.mapTypeSpecificData(hdrSize);
     ASSERT(hdrSize == sizeof(FlashLFSVolumeHeader));
 
+    ASSERT(lastSequenceNumber != INVALID_LSN);
     hdr->sequence = ++lastSequenceNumber;
     vw.commit();
     volumes.append(vw.volume);
@@ -562,15 +640,33 @@ bool FlashLFSObjectAllocator::allocInVolumeRow(FlashVolume vol,
      * compute the proper anchor offset.
      */
 
+    ASSERT((size % FlashLFSIndexRecord::SIZE_UNIT) == 0);
+
     FlashBlockWriter writer;
     FlashLFSIndexBlockIter iter;
     uint32_t indexBlockAddr = LFS::indexBlockAddr(vol, row);
+    unsigned volBaseAddr = vol.block.address() + FlashBlock::BLOCK_SIZE;
 
     if (!iter.beginBlock(indexBlockAddr)) {
         // Write an anchor to this block
 
+        /*
+         * Before we start writing to the index block, we need to make sure
+         * that there's even room for the block at all. In the worst case, this
+         * block may already be full of payload data and we'd be overwriting it
+         * if we tried to allocate this as an index block!
+         *
+         * So, this is similar to the space calculation below, but it's more
+         * conservative: we just need to know if there's any way that it isn't
+         * a bad idea to allocate this index block.
+         */
+
+        uint32_t anchorOffset = findAnchorOffset(vol, row);
+        if (volBaseAddr + anchorOffset + size > indexBlockAddr)
+            return false;
+
         writer.beginBlock(indexBlockAddr);
-        writeAnchor(writer, findAnchorOffset(vol, row));
+        writeAnchor(writer, anchorOffset);
 
         if (!iter.beginBlock(indexBlockAddr)) {
             /*
@@ -600,8 +696,7 @@ bool FlashLFSObjectAllocator::allocInVolumeRow(FlashVolume vol,
      * index blocks (growing down).
      */
 
-    ASSERT((size % FlashLFSIndexRecord::SIZE_UNIT) == 0);
-    addr = vol.block.address() + FlashBlock::BLOCK_SIZE + iter.getCurrentOffset();
+    addr = volBaseAddr + iter.getCurrentOffset();
     if (addr + size > writer.ref->getAddress())
         return false;
 
@@ -620,7 +715,9 @@ bool FlashLFSObjectAllocator::allocInVolumeRow(FlashVolume vol,
 // Start just past the last volume
 FlashLFSObjectIter::FlashLFSObjectIter(FlashLFS &lfs)
     : lfs(lfs), volumeCount(lfs.volumes.numSlotsInUse + 1), rowCount(0)
-{}
+{
+    ASSERT(lfs.isValid());
+}
 
 bool FlashLFSObjectIter::readAndCheck(uint8_t *buffer, unsigned size) const
 {
@@ -647,13 +744,77 @@ bool FlashLFSObjectIter::readAndCheck(uint8_t *buffer, unsigned size) const
     return record()->checkCRC(crc);
 }
 
-bool FlashLFSObjectIter::previous(unsigned key)
+bool FlashLFSObjectIter::readAndCheckCRCOnly(uint32_t &crc) const
 {
+    /*
+     * Like readAndCheck(), but don't save the entire object
+     * contents, just the CRC. Uses the flash cache.
+     */
+
+    unsigned addr = address();
+    unsigned remaining = record()->getSizeInBytes();
+    FlashBlockRef ref;
+    CrcStream cs;
+    cs.reset();
+
+    while (remaining) {
+        unsigned blockPart = addr & ~FlashBlock::BLOCK_MASK;
+        unsigned bytePart = addr & FlashBlock::BLOCK_MASK;
+        unsigned maxLength = FlashBlock::BLOCK_SIZE - bytePart;
+        unsigned chunk = MIN(remaining, maxLength);
+
+        ASSERT(chunk);
+        addr += chunk;
+        remaining -= chunk;
+
+        FlashBlock::get(ref, blockPart);
+        cs.addBytes(ref->getData() + bytePart, chunk);
+    }
+
+    crc = cs.get(FlashLFSIndexRecord::SIZE_UNIT);
+    return record()->checkCRC(crc);
+}
+
+void FlashLFSObjectIter::copyToFlash(unsigned dest) const
+{
+    /*
+     * Copy this object to another location in flash.
+     *
+     * Uses the flash cache. When using this immediately after
+     * readAndCheckCRCOnly(), it typically requires no additional device reads.
+     */
+
+    unsigned src = address();
+    unsigned remaining = record()->getSizeInBytes();
+    FlashBlockRef ref;
+
+    while (remaining) {
+        unsigned blockPart = src & ~FlashBlock::BLOCK_MASK;
+        unsigned bytePart = src & FlashBlock::BLOCK_MASK;
+        unsigned maxLength = FlashBlock::BLOCK_SIZE - bytePart;
+        unsigned chunk = MIN(remaining, maxLength);
+        ASSERT(chunk);
+
+        FlashBlock::get(ref, blockPart);
+        FlashDevice::write(dest, ref->getData() + bytePart, chunk);
+
+        src += chunk;
+        dest += chunk;
+        remaining -= chunk;
+    }
+}
+
+bool FlashLFSObjectIter::previous(FlashLFSKeyQuery query)
+{
+    ASSERT(lfs.isValid());
+    ASSERT(volumeCount <= lfs.volumes.numSlotsInUse + 1);
+    DEBUG_ONLY(lfs.volumes.debugChecks());
+
     while (volumeCount) {
 
         if (rowCount) {
             // We have a valid volume and row. Previous record within a block
-            if (indexIter.previous(key))
+            if (indexIter.previous(query))
                 return true;
 
         } else {
@@ -665,9 +826,15 @@ bool FlashLFSObjectIter::previous(unsigned key)
 
             if (!--volumeCount)
                 break;
+
+            FlashVolume vol = volume();
+            if (!vol.block.isValid()) {
+                // Empty slot in our volume array
+                continue;
+            }
             
             unsigned hdrSize = sizeof(FlashLFSVolumeHeader);
-            hdr = (FlashLFSVolumeHeader*) volume().mapTypeSpecificData(hdrRef, hdrSize);
+            hdr = (FlashLFSVolumeHeader*) vol.mapTypeSpecificData(hdrRef, hdrSize);
             ASSERT(hdrSize == sizeof(FlashLFSVolumeHeader));
 
             // Just past the last row
@@ -682,7 +849,7 @@ bool FlashLFSObjectIter::previous(unsigned key)
         
         while (--rowCount) {
             unsigned i = rowCount - 1;
-            if ((key == LFS::KEY_ANY || hdr->test(i, key)) &&
+            if (query.test(i, hdr->metaIndex[i]) &&
                 indexIter.beginBlock(LFS::indexBlockAddr(volume(), i))) {
 
                 /*
@@ -693,7 +860,8 @@ bool FlashLFSObjectIter::previous(unsigned key)
                  */
                 
                 while (indexIter.next());
-                if (key == LFS::KEY_ANY || indexIter->getKey() == key)
+
+                if (query.test(indexIter->getKey()))
                     return true;
                 else
                     break;
@@ -710,14 +878,166 @@ bool FlashLFSObjectIter::previous(unsigned key)
 
 bool FlashLFS::collectGarbage()
 {
-    ASSERT(0 && "Not implemented!");
+    ASSERT(isValid());
 
-    // Scan backwards, keeping a bitmap of all keys we've found
-    // Any volume consisting of only superceded keys is deleted
+    // Fast path: can we collect garbage from our own local volume?
+    if (collectLocalGarbage())
+        return true;
 
-    // Also: If the oldest volume is less than X amount full, copy
-    //       all non-superceded keys, then delete it.
-    //       XXX - how to do this for more than one volume at a time?
+    // Nope, try every other volume.
+    return collectGlobalGarbage(this);
+}
 
-    return false;
+bool FlashLFS::collectGlobalGarbage(FlashLFS *exclude)
+{
+    /*
+     * Next best: collect garbage from any of the FlashLFS instances
+     * in our cache. (Assuming they aren't identical to the excluded LFS)
+     */
+    for (unsigned i = 0; i < FlashLFSCache::SIZE; ++i) {
+        FlashLFS &lfs = FlashLFSCache::instances[i];
+        if (&lfs != exclude && lfs.isValid() && lfs.collectLocalGarbage())
+            return true;
+    }
+
+    /*
+     * Okay, now we need to scrape through every other filesystem in flash.
+     *
+     * It's important that we avoid filesystems we've already checked.
+     * In addition to the obvious desire not to duplicate work, we cannot
+     * ever have two FlashLFS instances for the same filesystem, or they
+     * could become inconsistent with each other.
+     */
+
+    FlashMapBlock::ISet blacklist;
+    blacklist.clear();
+
+    if (exclude)
+        exclude->parent.block.mark(blacklist);
+
+    for (unsigned i = 0; i < FlashLFSCache::SIZE; ++i) {
+        FlashLFS &lfs = FlashLFSCache::instances[i];
+        if (lfs.isValid())
+            lfs.parent.block.mark(blacklist);
+    }
+
+    /*
+     * Repeatedly build a FlashLFS instance for the first non-blacklisted
+     * LFS instance we find. This is a variant of FlashLFS::init() which
+     * builds the LFS and selects in in a single step.
+     *
+     * We're finished if we reach the end of the filesystem without finding
+     * another non-blacklisted LFS volume.
+     */
+
+    for (;;) {
+        FlashVolumeIter vi;
+        FlashVolume vol;
+        FlashLFSVolumeVector::SequenceInfo si;
+        FlashLFS iterLFS;
+        FlashVolume iterParent;
+
+        iterLFS.volumes.clear();
+        vi.begin();
+
+        // Search for the first volume on any parent
+        for (;;) {
+            if (!vi.next(vol))
+                return false;
+
+            if (vol.getType() != FlashVolume::T_LFS)
+                continue;
+
+            iterParent = vol.getParent();
+            if (!iterParent.block.test(blacklist))
+                break;
+        }
+        iterLFS.volumes.append(vol, si);
+
+        // Continue searching for volumes that are part of this same LFS
+        while (vi.next(vol)) {
+            if (vol.getParent().block.code == iterParent.block.code && vol.getType() == FlashVolume::T_LFS)
+                iterLFS.volumes.append(vol, si);
+        }
+
+        iterLFS.initWithVolumeVector(iterParent, si);
+        if (iterLFS.collectLocalGarbage())
+            return true;
+
+        // No luck, try a diferent LFS instance.
+        iterParent.block.mark(blacklist);
+    }
+}
+
+bool FlashLFS::collectLocalGarbage()
+{
+    ASSERT(isValid());
+
+    /*
+     * Iterate through this LFS, from newest to oldest, keeping track of which
+     * volume we're in and which keys have already been "obsoleted" by newer
+     * versions.
+     *
+     * Any volume which has no non-obsolete keys can be safely deleted with
+     * no additional work.
+     *
+     * Any volume which has a high proportion of obsolete data can be 'scrubbed',
+     * or deleted after any non-obsolete keys are copied. The scrubbing process
+     * requires that we have a snapshot of the set of obsolete keys from just
+     * past the end of that volume.
+     */
+
+    // Early out
+    if (volumes.numSlotsInUse == 0)
+        return false;
+
+    // Marked bits indicate volumes not to delete
+    BitVector<FlashLFSVolumeVector::MAX_VOLUMES> volumesToKeep;
+    volumesToKeep.clear();
+
+    // Keys for records which have been obsoleted by newer ones
+    FlashLFSIndexRecord::KeyVector_t obsoleteKeys;
+    obsoleteKeys.clear();
+
+    /*
+     * Iterate over non-obsolete keys only
+     */
+
+    FlashLFSObjectIter iter(*this);
+    while (iter.previous(FlashLFSKeyQuery(&obsoleteKeys))) {
+
+        // Check this key's CRC. It doesn't obsolete older keys if it's corrupt!
+        uint32_t crc;
+        if (!iter.readAndCheckCRCOnly(crc))
+            continue;
+
+        // Any additional instances of this key are obsolete
+        const FlashLFSIndexRecord *record = iter.record();
+        unsigned key = record->getKey();
+        ASSERT(obsoleteKeys.test(key) == false);
+        obsoleteKeys.mark(key);
+
+        // Keep this volume
+        volumesToKeep.mark(iter.volumeIndex());
+    }
+
+    /*
+     * Delete obsolete volumes
+     */
+
+    bool foundGarbage = false;
+
+    for (unsigned i = 0; i < volumes.numSlotsInUse; ++i) {
+        if (!volumesToKeep.test(i)) {
+            FlashVolume &vol = volumes.slots[i];
+            vol.deleteSingleWithoutInvalidate();
+            volumes.slots[i].block.setInvalid();
+            foundGarbage = true;
+        }
+    }
+
+    if (foundGarbage)
+        volumes.compact();
+
+    return foundGarbage;
 }

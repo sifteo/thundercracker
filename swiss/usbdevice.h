@@ -52,7 +52,7 @@ private:
     static const unsigned NUM_CONCURRENT_IN_TRANSFERS = 16;
 
     bool populateDeviceInfo(libusb_device *dev);
-    void openINTransfers();
+    bool submitINTransfer();
 
     static void LIBUSB_CALL onRxComplete(libusb_transfer *);
     static void LIBUSB_CALL onTxComplete(libusb_transfer *);

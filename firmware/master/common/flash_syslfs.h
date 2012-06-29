@@ -76,7 +76,6 @@ namespace SysLFS {
     };
 
     struct AssetSlotOverviewRecord {
-        uint16_t numAllocatedTiles;
         uint8_t eraseCount;
         uint8_t accessRank;
         AssetSlotIdentity identity;
@@ -94,7 +93,7 @@ namespace SysLFS {
         void allocBinding(FlashVolume vol, unsigned numSlots);
 
         void markErased(unsigned slot);
-        bool markAccessed(FlashVolume vol, unsigned numSlots);
+        bool markAccessed(FlashVolume vol, unsigned numSlots, bool force);
 
     private:
         void recycleSlots(unsigned bank, unsigned numSlots,
@@ -152,7 +151,7 @@ namespace SysLFS {
         AssetGroupIdentity identity;
 
         bool isEmpty() const {
-            return identity.volume == 0;
+            return identity.ordinal == 0xFF;
         }
     };
 
@@ -162,6 +161,8 @@ namespace SysLFS {
         };
 
         uint8_t flags;
+
+        // Variable size. Empty groups can be truncated when writing.
         LoadedAssetGroupRecord groups[ASSET_GROUPS_PER_SLOT];
 
         static Key makeKey(Key cubeKey, unsigned slot);
@@ -174,6 +175,7 @@ namespace SysLFS {
 
         void init();
         bool load(const FlashLFSObjectIter &iter);
+        unsigned writeableSize() const;
     };
 
     /*
@@ -186,7 +188,7 @@ namespace SysLFS {
         STATIC_ASSERT(sizeof(FlashMapBlock) == 1);
         STATIC_ASSERT(sizeof(LoadedAssetGroupRecord) == 3);
         STATIC_ASSERT(sizeof(AssetSlotRecord) == 3 * ASSET_GROUPS_PER_SLOT + 1);
-        STATIC_ASSERT(sizeof(AssetSlotOverviewRecord) == 6);
+        STATIC_ASSERT(sizeof(AssetSlotOverviewRecord) == 4);
         STATIC_ASSERT(sizeof(CubeRecord) == sizeof(CubePairingRecord) +
             ASSET_SLOTS_PER_CUBE * sizeof(AssetSlotOverviewRecord));
 

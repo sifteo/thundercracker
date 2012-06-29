@@ -137,7 +137,10 @@ void LoadstreamDecoder::handleByte(uint8_t byte)
     }
 
     case S_ADDR_HIGH: {
-        setAddress(((byte >> 1) << 7) | ((partial >> 1) << 14));
+        uint32_t lat1_part = (byte >> 1) << 7;
+        uint32_t lat2_part = (partial >> 1) << 14;
+        uint32_t a21_part = (partial & 1) << 21;
+        setAddress(lat1_part | lat2_part | a21_part);
         state = S_OPCODE;
         return;
     }

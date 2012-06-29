@@ -7,11 +7,13 @@
  */
 
 #include "graphics_sprite.h"
+#include "sensors.h"
 
 
 void vm_bg0_spr_bg1(void)
 {
     lcd_begin_frame();
+    i2c_a21_wait();
     vm_bg0_setup();
     vm_bg1_setup();
     vm_spr_setup();

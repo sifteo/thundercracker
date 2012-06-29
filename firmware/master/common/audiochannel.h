@@ -17,21 +17,21 @@
 
 class AudioChannelSlot {
 public:
-    AudioChannelSlot() { init(); }
-
-    void init();
+    AudioChannelSlot() :
+        state(STATE_STOPPED)
+    {}
 
     void play(const struct _SYSAudioModule *module, _SYSAudioLoopType loopMode);
 
-    void pause() {
+    ALWAYS_INLINE void pause() {
         state |= STATE_PAUSED;
     }
 
-    bool isPaused() const {
+    ALWAYS_INLINE bool isPaused() const {
         return (state & STATE_PAUSED) != 0;
     }
 
-    bool isStopped() const {
+    ALWAYS_INLINE bool isStopped() const {
         return (state & STATE_STOPPED) != 0;
     }
 

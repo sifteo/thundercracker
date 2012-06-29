@@ -4,7 +4,7 @@
  */
 
 #include "usart.h"
-#include "flash_device.h"
+#include "flash_stack.h"
 #include "hardware.h"
 #include "board.h"
 #include "gpio.h"
@@ -30,6 +30,14 @@ int main()
     PowerManager::init();
 
     /*
+     * If we've gotten bootloaded, relocate the vector table to account
+     * for offset at which we're placed into MCU flash.
+     */
+#ifdef BOOTLOADABLE
+    NVIC.setVectorTable(NVIC.VectorTableFlash, 0x2000);
+#endif
+
+    /*
      * Nested Vectored Interrupt Controller setup.
      *
      * This won't actually enable any peripheral interrupts yet, since
@@ -45,9 +53,9 @@ int main()
     NVIC.irqPrioritize(IVT.DMA1_Channel2, 0x75);
 
     NVIC.irqEnable(IVT.DMA1_Channel2);              // Flash SPI DMA1 channels 2 & 3
-    NVIC.irqPrioritize(IVT.DMA1_Channel1, 0x75);    //  higher than radio
+    NVIC.irqPrioritize(IVT.DMA1_Channel2, 0x75);    //  higher than radio
     NVIC.irqEnable(IVT.DMA1_Channel3);
-    NVIC.irqPrioritize(IVT.DMA1_Channel1, 0x75);
+    NVIC.irqPrioritize(IVT.DMA1_Channel3, 0x75);
 
     NVIC.irqEnable(IVT.UsbOtg_FS);
     NVIC.irqPrioritize(IVT.UsbOtg_FS, 0x70);        //  Lower prio than radio
@@ -55,7 +63,7 @@ int main()
     NVIC.irqEnable(IVT.BTN_HOME_EXTI_VEC);          //  home button
 
     NVIC.irqEnable(IVT.TIM4);                       // sample rate timer
-    NVIC.irqPrioritize(IVT.TIM4, 0x60);             //  Higher prio than radio
+    NVIC.irqPrioritize(IVT.TIM4, 0x50);             //  pretty high priority! (would cause audio jitter)
 
     NVIC.irqEnable(IVT.USART3);                     // factory test uart
     NVIC.irqPrioritize(IVT.USART3, 0x99);           //  loooooowest prio
@@ -63,7 +71,7 @@ int main()
     NVIC.sysHandlerPrioritize(IVT.SVCall, 0x96);
 
     NVIC.irqEnable(IVT.VOLUME_TIM);                 // volume timer
-    NVIC.irqPrioritize(IVT.VOLUME_TIM, 0x98);       // loooooow prio
+    NVIC.irqPrioritize(IVT.VOLUME_TIM, 0x60);       //  just below sample rate timer
 
     NVIC.irqEnable(IVT.PROFILER_TIM);               // sample profiler timer
     NVIC.irqPrioritize(IVT.PROFILER_TIM, 0x0);      //  highest possible priority
@@ -78,9 +86,7 @@ int main()
     // This is the earliest point at which it's safe to use Usart::Dbg.
     Usart::Dbg.init(UART_RX_GPIO, UART_TX_GPIO, 115200);
 
-#ifndef DEBUG
-    FlashDevice::init();
-#else
+#ifdef DEBUG
     DBGMCU_CR |= (1 << 30) |        // TIM14 stopped when core is halted
                  (1 << 29) |        // TIM13 ""
                  (1 << 28) |        // TIM12 ""
@@ -113,7 +119,7 @@ int main()
     Radio::init();
 
     Tasks::init();
-    FlashBlock::init();
+    FlashStack::init();
     HomeButton::init();
 
     Volume::init();
@@ -144,19 +150,19 @@ int main()
     SysTime::Ticks button_delay = SysTime::ticks();
     
     if (HomeButton::isPressed()) {
-        
+
         //Creates a delay. Cancels if home button is released.
         while (SysTime::ticks() - button_delay < SysTime::msTicks(1000) && HomeButton::isPressed() )
             ;
-        
+
         //Checks to see if the home button is still pressed after 1 second
         if( HomeButton::isPressed() ) {
-          
+
           // indicate we're waiting
           GPIOPin green = LED_GREEN_GPIO;
           green.setControl(GPIOPin::OUT_10MHZ);
           green.setLow();
-          
+
           for (;;)
               Tasks::work();
         }

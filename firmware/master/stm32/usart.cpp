@@ -4,6 +4,7 @@
  */
 
 #include "usart.h"
+#include "gpio.h"
 #include "board.h"
 
 // NOTE - these divisors must reflect the startup values configured in setup.cpp

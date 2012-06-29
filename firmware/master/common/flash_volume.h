@@ -91,6 +91,12 @@ public:
     void deleteSingle() const;
 
     /**
+     * A version of deleteSingle() which doesn't invalidate the LFS cache.
+     * This must be used by the implementation of the LFS garbage collector.
+     */
+    void deleteSingleWithoutInvalidate() const;
+
+    /**
      * Delete this volume and all children.
      *
      * Always use this function if there's any possibility that a volume

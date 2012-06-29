@@ -38,6 +38,10 @@ public:
     // A BitVector with one bit for every possible FlashMapBlock index
     typedef BitVector<NUM_BLOCKS> Set;
 
+    // A BitVector with one bit for every possible FlashMapBlock index,
+    // plus an extra entry for 'invalid' blocks.
+    typedef BitVector<NUM_BLOCKS + 1> ISet;
+
     unsigned ALWAYS_INLINE address() const {
         STATIC_ASSERT(NUM_BLOCKS <= (1ULL << (sizeof(code) * 8)));
         return index() * BLOCK_SIZE;
@@ -79,6 +83,18 @@ public:
     void ALWAYS_INLINE clear(Set &v) const {
         if (isValid())
             v.clear(index());
+    }
+
+    void ALWAYS_INLINE mark(ISet &v) const {
+        v.mark(isValid() ? code : 0);
+    }
+
+    void ALWAYS_INLINE clear(ISet &v) const {
+        v.clear(isValid() ? code : 0);
+    }
+
+    bool ALWAYS_INLINE test(ISet &v) const {
+        return v.test(isValid() ? code : 0);
     }
 
     void erase() const;
@@ -222,6 +238,107 @@ public:
     // Cache-bypassing data access
     bool copyBytesUncached(ByteOffset byteOffset, uint8_t *dest, uint32_t length) const;
 };
+
+
+ALWAYS_INLINE FlashMapSpan FlashMapSpan::split(unsigned blockOffset, unsigned blockCount) const
+{
+    if (blockOffset >= numBlocks)
+        return empty();
+    else
+        return create(map, firstBlock + blockOffset,
+            MIN(blockCount, numBlocks - blockOffset));
+}
+
+ALWAYS_INLINE FlashMapSpan FlashMapSpan::splitRoundingUp(unsigned byteOffset, unsigned byteCount) const
+{
+    ASSERT((byteOffset & FlashBlock::BLOCK_MASK) == 0);
+    return split(byteOffset / FlashBlock::BLOCK_SIZE,
+        (byteCount + FlashBlock::BLOCK_MASK) / FlashBlock::BLOCK_SIZE);
+}
+
+ALWAYS_INLINE bool FlashMapSpan::offsetToFlashAddr(ByteOffset byteOffset, FlashAddr &flashAddr) const
+{
+    if (!map)
+        return false;
+
+    if (!offsetIsValid(byteOffset))
+        return false;
+
+    // Split the byte address
+    ASSERT(byteOffset < FlashMap::NUM_BYTES);
+    ByteOffset absoluteByte = byteOffset + firstByte();
+    ByteOffset allocBlock = absoluteByte / FlashMapBlock::BLOCK_SIZE;
+    ByteOffset allocOffset = absoluteByte & FlashMapBlock::BLOCK_MASK;
+
+    ASSERT(allocBlock < arraysize(map->blocks));
+    flashAddr = map->blocks[allocBlock].address() + allocOffset;
+
+    // Test round-trip mapping
+    DEBUG_ONLY({
+        ByteOffset b;
+        ASSERT(flashAddrToOffset(flashAddr, b) && b == byteOffset);
+    });
+
+    return true;
+}
+
+ALWAYS_INLINE bool FlashMapSpan::getBlock(FlashBlockRef &ref, ByteOffset byteOffset, unsigned flags) const
+{
+    ASSERT((byteOffset & FlashBlock::BLOCK_MASK) == 0);
+
+    FlashAddr fa;
+    if (!offsetToFlashAddr(byteOffset, fa))
+        return false;
+
+    FlashBlock::get(ref, fa, flags);
+    return true;
+}
+
+ALWAYS_INLINE bool FlashMapSpan::getBytes(FlashBlockRef &ref, ByteOffset byteOffset,
+    PhysAddr &ptr, uint32_t &length, unsigned flags) const
+{
+    ByteOffset blockPart = byteOffset & ~(ByteOffset)FlashBlock::BLOCK_MASK;
+    ByteOffset bytePart = byteOffset & FlashBlock::BLOCK_MASK;
+    uint32_t maxLength = FlashBlock::BLOCK_SIZE - bytePart;
+
+    if (!getBlock(ref, blockPart, flags))
+        return false;
+
+    ptr = ref->getData() + bytePart;
+    length = MIN(length, maxLength);
+    return true;
+}
+
+ALWAYS_INLINE bool FlashMapSpan::getByte(FlashBlockRef &ref, ByteOffset byteOffset,
+    PhysAddr &ptr, unsigned flags) const
+{
+    ByteOffset blockPart = byteOffset & ~(ByteOffset)FlashBlock::BLOCK_MASK;
+    ByteOffset bytePart = byteOffset & FlashBlock::BLOCK_MASK;
+
+    if (!getBlock(ref, blockPart, flags))
+        return false;
+
+    ptr = ref->getData() + bytePart;
+    return true;
+}
+
+ALWAYS_INLINE bool FlashMapSpan::preloadBlock(ByteOffset byteOffset) const
+{
+    FlashAddr flashAddr;
+
+    if (offsetToFlashAddr(byteOffset, flashAddr)) {
+        FlashBlock::preload(flashAddr);
+        return true;
+    }
+
+    return false;
+}
+
+ALWAYS_INLINE bool FlashMapSpan::copyBytes(ByteOffset byteOffset, uint8_t *dest, uint32_t length) const
+{
+    FlashBlockRef ref;
+    return copyBytes(ref, byteOffset, dest, length);
+}
 
 
 #endif

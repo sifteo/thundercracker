@@ -11,10 +11,12 @@
  */
 
 #ifdef _WIN32
-#define _WIN32_WINNT 0x0501
-#define WIN32_LEAN_AND_MEAN
-#include <windows.h>
-static bool hasConsole = true;
+    #define _WIN32_WINNT 0x0501
+    #define WIN32_LEAN_AND_MEAN
+    #include <windows.h>
+    static bool hasConsole = true;
+#else
+    #include <unistd.h>
 #endif
  
 #include <stdio.h>
@@ -84,15 +86,15 @@ static void getConsole()
      * Try to reattach them if the parent process has a console.
      */
 
-#ifdef _WIN32
-    if (AttachConsole(ATTACH_PARENT_PROCESS)) {
-        hasConsole = true;
-        freopen("CONOUT$", "wb", stdout);
-        freopen("CONOUT$", "wb", stderr);
-    } else {
-        hasConsole = false;
-    }
-#endif
+    #ifdef _WIN32
+        if (AttachConsole(ATTACH_PARENT_PROCESS)) {
+            hasConsole = true;
+            freopen("CONOUT$", "wb", stdout);
+            freopen("CONOUT$", "wb", stderr);
+        } else {
+            hasConsole = false;
+        }
+    #endif
 }
 
 static void message(const char *fmt, ...)
@@ -104,15 +106,38 @@ static void message(const char *fmt, ...)
     vsnprintf(buf, sizeof buf, fmt, a);
     va_end(a);
     
-#ifdef _WIN32
-    if (!hasConsole) {
-        // No console.. resort to a messagebox
-        MessageBox(NULL, buf, APP_TITLE, MB_OK);
-        return;
-    }
-#endif
+    #ifdef _WIN32
+        if (!hasConsole) {
+            // No console.. resort to a messagebox
+            MessageBox(NULL, buf, APP_TITLE, MB_OK);
+            return;
+        }
+    #endif
 
     fprintf(stderr, "%s\n", buf);
+}
+
+static void setWorkingDir()
+{
+    /*
+     * Normally we respect the working directory that we were run with.
+     * Some GUI environments, like Mac OS X, will leave this set to a pretty
+     * useless value, however, like "/". Detect that, and set a platform-specific
+     * default instead. Note that this has no effect if the user is already
+     * running siftulator on the command line from a more meaningful directory.
+     *
+     * Right now, this is most important for saving files such as screenshots
+     * and trace logs, or any output files left by Lua scripts.
+     */
+
+    #ifdef __APPLE__
+        char path[1024];
+        char *home = getenv("HOME");
+        if (home && getcwd(path, sizeof path) && path[1] == '\0') {
+            chdir(home);
+            chdir("Desktop");
+        }
+    #endif
 }
 
 static int run(System &sys)
@@ -165,7 +190,10 @@ int main(int argc, char **argv)
     const char *scriptFile = NULL;
 
     // Attach an existing console, if it's already handy
-    getConsole();	
+    getConsole();
+
+    // Set the current directory to something more useful
+    setWorkingDir();
 
     /*
      * Parse command line options

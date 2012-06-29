@@ -115,6 +115,7 @@ static void vm_bg0(void)
     uint8_t y = vram.num_lines;
 
     lcd_begin_frame();
+    i2c_a21_wait();
     vm_bg0_setup();
 
     do {

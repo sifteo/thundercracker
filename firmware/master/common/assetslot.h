@@ -188,7 +188,11 @@ public:
 private:
     VirtAssetSlots();  // Do not implement
 
+    typedef BitVector<SysLFS::ASSET_SLOTS_PER_CUBE> PhysSlotVector;
+
     static void setCubeBank(_SYSCubeID cube, unsigned bank);
+    static void eraseAssetSlotRecords(_SYSCubeID cube, PhysSlotVector slots);
+    static bool physSlotIsBound(_SYSCubeID cube, unsigned physSlot);
 
     static VirtAssetSlot instances[NUM_SLOTS];
     static FlashVolume boundVolume;

@@ -24,14 +24,6 @@ public:
 
     static void onUSBData(const USBProtocolMsg &m);
 
-    static void startSampling() {
-        timer.enableUpdateIsr();
-    }
-
-    static void stopSampling() {
-        timer.disableUpdateIsr();
-    }
-
     static void processSample(uint32_t pc);
     static void task(void *p);
 

@@ -6,3 +6,4 @@ master-sim
 *.bc
 *.ll
 common/syscall-table.def
+stm32/target.ld

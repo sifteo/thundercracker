@@ -10,9 +10,9 @@
 #include "cube_hardware.h"
 #include "lcd.h"
 #include "radio.h"
+#include "sensors_i2c.h"
 
 uint8_t power_sleep_timer;
-
 
 void power_delay()
 {
@@ -38,7 +38,7 @@ void power_init(void)
 
     PWRDWN;
     OPMCON = 0;
-    TOUCH_WUPOC = 0;
+    WUOPC1 = 0;
     PWRDWN = 0;
 
     /*
@@ -58,9 +58,6 @@ void power_init(void)
 
     // Sequence 3.3v boost, followed by 2.0v downstream
     #if HWREV >= 2
-        //Before powering on the 3v3 lets make sure the LCD_BLE is off!
-        CTRL_PORT = CTRL_FLASH_LAT1;
-        CTRL_PORT = ~CTRL_LCD_DCX |  CTRL_FLASH_LAT1;
         // Turn on 3.3V boost
         CTRL_PORT = CTRL_3V3_EN;
 
@@ -137,7 +134,6 @@ void power_sleep(void)
     RF_CKEN = 0;                // Stop the radio clock
     RNGCTL = 0;                 // RNG peripheral off
     ADCCON1 = 0;                // ADC peripheral off
-    W2CON0 = 0;                 // I2C peripheral off
     S0CON = 0;                  // UART peripheral off
     SPIMCON0 = 0;               // External SPI disabled
     SPIRCON0 = 0;               // Radio SPI disabled
@@ -154,9 +150,6 @@ void power_sleep(void)
     // Turn off the 2V DS rail
     CTRL_PORT = CTRL_3V3_EN;
 
-    // Give the 2V DS rail some time to discharge
-    power_delay();
-
     // Turn off the 3.3V rail
     CTRL_PORT = 0;
 #else
@@ -166,23 +159,62 @@ void power_sleep(void)
 
     ADDR_DIR = 0;               // Drive address bus
     MISC_DIR = 0xFF;            // All MISC pins as inputs (I2C bus pulled up)
-    CTRL_DIR = CTRL_DIR_VALUE;  // All CTRL pins driven
+    //CTRL_DIR = CTRL_DIR_VALUE;  // All CTRL pins driven
+    CTRL_DIR = CTRL_DIR_VALUE | CTRL_FLASH_LAT1;	//input on INT2 from acc
     
     BUS_PORT = 0;               // Drive bus port low
     BUS_DIR = 0;
 
+#if HWREV >= 5
+    /*
+     * Wakeup on shake
+     */
+
+    //Sends brief 250 ns pulse on both I2C lines
+    __asm 
+        mov     _W2CON0, #0               		; Reset I2C master
+        anl     _MISC_DIR, #~MISC_I2C      		; Output drivers enabled
+        xrl     _MISC_PORT, #MISC_I2C      		; Now pulse I2C lines low
+        orl     _MISC_PORT, #MISC_I2C   		; Drive pins high - This delivers a 250 ns pulse
+        mov     _W2CON0, #1               		; Turn on I2C controller
+        mov     _W2CON0, #7               		; Master mode, 100 kHz.
+    __endasm;
+
+    // Enable inertial interrupt on INT2
+    {
+        static const __code uint8_t init[] = {
+            3, ACCEL_ADDR_TX, ACCEL_CTRL_REG2, ACCEL_REG2_INIT,
+            3, ACCEL_ADDR_TX, ACCEL_CTRL_REG6, ACCEL_REG6_INIT,
+            3, ACCEL_ADDR_TX, ACCEL_INT1_CFG,  ACCEL_CFG_INIT,
+            3, ACCEL_ADDR_TX, ACCEL_INT1_THS,  ACCEL_THS_INIT,
+            3, ACCEL_ADDR_TX, ACCEL_INT1_DUR,  ACCEL_DUR_INIT,
+            0
+        };
+        i2c_tx(init);
+    }
+    
+    __asm
+        mov     _W2CON0, #0                     ; Turn off I2C peripheral
+        mov     _WUOPC1, #SHAKE_WUOPC_BIT       ; Enables shake to wake
+    __endasm;
+
+#else
     /*
      * Wakeup on touch
      */
 
-    TOUCH_WUPOC = TOUCH_WUOPC_BIT;
+    WUOPC1 = TOUCH_WUOPC_BIT;
+#endif
 
     // We must latch these port states, to preserve them during sleep.
     // This latch stays locked until early wakeup, in power_init().
     OPMCON = OPMCON_LATCH_LOCKED;
+    // We must also disable WDT in the memory retention mode
+    //OPMCON = OPMCON_LATCH_LOCKED | OPMCON_WDT_RESET_ENABLE;
 
     while (1) {
         PWRDWN = 1;
+        //PWRDWN = 3;
 
         /*
          * We loop purely out of paranoia. This point should never be reached.

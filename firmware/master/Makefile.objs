@@ -34,6 +34,7 @@ OBJS_COMMON = \
     $(MASTER_DIR)/common/flash_volume.o \
     $(MASTER_DIR)/common/flash_lfs.o \
     $(MASTER_DIR)/common/flash_syslfs.o \
+    $(MASTER_DIR)/common/flash_stack.o \
     $(MASTER_DIR)/common/svmloader.o \
     $(MASTER_DIR)/common/svmruntime.o \
     $(MASTER_DIR)/common/svmvalidator.o \
@@ -69,7 +70,6 @@ OBJS_STM32 = \
     $(MASTER_DIR)/stm32/macronixmx25.stm32.o \
     $(MASTER_DIR)/stm32/dac.stm32.o \
     $(MASTER_DIR)/stm32/crc.stm32.o \
-    $(MASTER_DIR)/stm32/rctimer.stm32.o \
     $(MASTER_DIR)/stm32/usb/usbdevice.stm32.o \
     $(MASTER_DIR)/stm32/usb/usbcore.stm32.o \
     $(MASTER_DIR)/stm32/usb/usbcontrol.stm32.o \

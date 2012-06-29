@@ -7,13 +7,14 @@ TEST_DEPS := emulator
 DOCS := docs/doxygen
 USERSPACE := launcher sdk/examples extras
 TESTS := test
+TOOLS := tools/fwdeploy swiss
 
 # Default parallelization for make. Override on the command line
 PARALLEL := -j 4
 
 # Build order matters
-ALL_SUBDIRS := $(USERSPACE_DEPS) $(DOCS) $(USERSPACE) $(TEST_DEPS) $(TESTS)
-NONUSER_SUBDIRS := $(USERSPACE_DEPS) $(DOCS) $(TEST_DEPS) $(TESTS)
+ALL_SUBDIRS := $(USERSPACE_DEPS) $(DOCS) $(TOOLS) $(USERSPACE) $(TEST_DEPS) $(TESTS)
+NONUSER_SUBDIRS := $(USERSPACE_DEPS) $(DOCS) $(TOOLS) $(TEST_DEPS) $(TESTS)
 
 .PHONY: clean _userspace_clean $(ALL_SUBDIRS)
 
@@ -28,7 +29,7 @@ $(USERSPACE):
 	@PATH="$(SDK_DIR)/bin:/bin:/usr/bin:/usr/local/bin" SDK_DIR="$(SDK_DIR)" make -C $@
 
 # Plain subdir builds (Don't parallelize tests, docs, firmware)
-$(DOCS) $(TESTS) firmware:
+$(DOCS) $(TESTS) firmware $(TOOLS):
 	@$(MAKE) -C $@
 
 # Parallelize our large builds

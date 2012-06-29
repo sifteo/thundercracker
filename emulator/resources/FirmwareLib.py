@@ -9,6 +9,7 @@
 
 import binascii
 import os.path
+import re
 
 ROM_SIZE = 1024 * 16
 
@@ -74,14 +75,8 @@ class RSTParser:
                 self.contDataAddr = a + len(b)
                 
             elif bytes and address and self.area == 'GSINIT':
-                # This is generated code to do static initialization.
-                # To save some time (and to introduce yet another
-                # difference between this binary and one that will run
-                # on real hardware) we just translate these at address
-                # zero.
-
-                self.storeCode(0, binascii.a2b_hex(bytes),
-                               tokens[-1].split(',')[-1], module)
+                # Should not be any static initializers
+                assert 0
 
             elif bytes and address and self.areaType == "(CODE)":
                 # Assuming this isn't one of the special addresses
@@ -95,8 +90,18 @@ class RSTParser:
                 self.storeLabel(int(address, 16), tokens[0][:-1])
 
     def storeLabel(self, address, name):
+        # Strip off doubled colons
+        name = name.replace(':', '')
+
+        # Some special labels act like address assertions
+        if re.match("v_....", name):
+            assert address == int(name[2:], 16)
+
         self.symbols[name] = address
-        self.branchTargets[address] = True
+
+        # Labels in code indicate a possible branch target
+        if self.areaType == "(CODE)":
+            self.branchTargets[address] = True
 
     def storeData(self, address, data, module=None):
         for byte in data:

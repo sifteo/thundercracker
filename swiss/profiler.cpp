@@ -72,16 +72,15 @@ bool Profiler::profile(const char *elfPath, const char *outPath)
 
     {
         USBProtocolMsg m(USBProtocol::Profiler);
-        m.payload[0] = 0;
-        m.payload[1] = 1;
-        m.len += 2;
+        m.append(0);    // profiler enabled command
+        m.append(1);    // enable
         dev.writePacket(m.bytes, m.len);
     }
 
     std::map<Addr, Count> addresses;
-
     interruptRequested = false;
     uint64_t totalSamples = 0;
+
     while (!interruptRequested) {
 
         while (!dev.numPendingINPackets())
@@ -92,8 +91,8 @@ bool Profiler::profile(const char *elfPath, const char *outPath)
         if (!m.len)
             continue;
 
-        unsigned numSamples = 1; //m.payload[0];
-        const uint32_t *address = reinterpret_cast<uint32_t*>(m.payload); // + 1);
+        unsigned numSamples = m.payloadLen() / sizeof(uint32_t);
+        const uint32_t *address = reinterpret_cast<uint32_t*>(m.payload);
 
         for (unsigned i = 0; i < numSamples; ++i) {
             addresses[*address]++;
@@ -104,10 +103,10 @@ bool Profiler::profile(const char *elfPath, const char *outPath)
 
     {
         USBProtocolMsg m(USBProtocol::Profiler);
-        m.payload[0] = 0;
-        m.payload[1] = 0;
-        m.len += 2;
+        m.append(0);    // profiler enabled command
+        m.append(0);    // disable
         dev.writePacket(m.bytes, m.len);
+
         while (dev.numPendingOUTPackets())
             dev.processEvents();
     }

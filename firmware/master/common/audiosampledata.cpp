@@ -5,178 +5,129 @@
  
 #include "audiosampledata.h"
 #include "svmmemory.h"
+#include <algorithm>
 
 #define LGPFX "AudioSampleData: "
 
 
-void AudioSampleData::init(const struct _SYSAudioModule *module, uint32_t loop_start)
+void AudioSampleData::fetchBlockPCM(uint32_t sampleNum, const _SYSAudioModule &mod)
 {
-    ASSERT(module);
-    mod = module;
-    snapshot.numSamples = 0;
-    
-    // numSamples at which we take an automatic snapshot
-    loopPoint = loop_start ? (loop_start + kSampleBufSize) : 0;
+    /*
+     * PCM provides random access, and the data is already in the format we
+     * need, so just do a copy from virtual memory to our buffer.
+     */
 
-    reset();
+    // Must be aligned to one half of the buffer
+    ASSERT((sampleNum & HALF_BUFFER_MASK) == 0);
+
+    int16_t *dest = &samples[sampleNum & FULL_BUFFER_MASK];
+    ASSERT(dest + HALF_BUFFER <= &samples[FULL_BUFFER]);
+
+    SvmMemory::VirtAddr va = mod.pData + (sampleNum * sizeof(int16_t));
+    SvmMemory::PhysAddr pa = (SvmMemory::PhysAddr) dest;
+
+    SvmMemory::copyROData(ref, pa, va, HALF_BUFFER * sizeof(int16_t));
+
+    // Update state (Ignore snapshots)
+    state.sampleNum = sampleNum + HALF_BUFFER;
 }
 
-// Seek to the beginning of the sample data.
-void AudioSampleData::reset()
+void AudioSampleData::fetchBlockADPCM(uint32_t sampleNum, const _SYSAudioModule &mod)
 {
-    ASSERT(mod);
-    state.numSamples = 0;
-    state.bufPos = 0;
+    /*
+     * Starting from the current ADPCM codec state, decode one half-buffer
+     * worth of aligned ADPCM samples.
+     *
+     * We also manage taking and restoring snapshots here.
+     */
 
-    if (mod->type == _SYS_ADPCM)
-        state.adpcm.reset();
-}
+    // Argument is expected to be Half-buffer-aligned.
+    ASSERT((sampleNum & HALF_BUFFER_MASK) == 0);
 
-uint32_t AudioSampleData::numSamples() const
-{
-    ASSERT(mod);
-    switch (mod->type) {
-    
-    case _SYS_PCM:
-        return mod->dataSize / sizeof(uint16_t);
+    // Fast local copy of ADPCM CODEC state
+    ADPCMDecoder dec;
+    dec.load(state.adpcm);
+    unsigned stateSampleNum = state.sampleNum;
+    ASSERT((stateSampleNum & HALF_BUFFER_MASK) == 0);
 
-    case _SYS_ADPCM:
-        return mod->dataSize * kNybblesPerByte;
-
-    default:
-        ASSERT(0);
-        return 0;
-    }
-}
-
-/*
- * Providing an array interface to sample data is convenient for the audio
- * channel, but it's a bit misleading because truly random access patterns
- * can incur massive performance penalties. In general, requests should be
- * either monotonically increasing or not earlier than one sample from the
- * newest sample requested from the object. Seeking backwards is efficient
- * in two cases: 1) seeking to position 0 (see: reset()) and 2) seeking to
- * the position previously declared as loop_start in init().
- */
-int16_t AudioSampleData::operator[](uint32_t sampleNum)
-{
+    // Are we not decoding contiguously? May need to loop so we can skip forward.
     while (1) {
-        ASSERT(mod);
-        ASSERT(sampleNum < numSamples());
 
-        // New sample
-        if (sampleNum >= state.numSamples) {
-            switch (mod->type) {
+        if (UNLIKELY(stateSampleNum > sampleNum)) {
+            // Need to skip backwards...
 
-            case _SYS_PCM:
-                decodeToSamplePCM(sampleNum);
-                break;
+            if (sampleNum >= snapshot.sampleNum) {
+                // Warp back to the snapshot
+                dec.load(snapshot.adpcm);
+                stateSampleNum = snapshot.sampleNum;
 
-            case _SYS_ADPCM:
-                decodeToSampleADPCM(sampleNum);
-                break;
-
-            default:
-                ASSERT(0);
+            } else {
+                // Back to the beginning!
+                dec.init();
+                stateSampleNum = 0;
             }
-            return state.samples[sampleNum % kSampleBufSize];
         }
 
-        // Cached sample
-        if (sampleNum + kSampleBufSize >= state.numSamples) {
-            return state.samples[sampleNum % kSampleBufSize];
-        }
+        STATIC_ASSERT((HALF_BUFFER % NYBBLES_PER_BYTE) == 0);
+        ASSERT((stateSampleNum & HALF_BUFFER_MASK) == 0);
+        unsigned bytesRemaining = HALF_BUFFER / NYBBLES_PER_BYTE;
+        SvmMemory::VirtAddr va = mod.pData + (stateSampleNum / NYBBLES_PER_BYTE);
 
-        // Oops, we need to rewind. Do we have an applicable snapshot?
-        // (NB: Rollover in the subtraction is okay, it will cause this to be false)
-        if (hasSnapshot() && sampleNum >= (snapshot.numSamples - kSampleBufSize)) {
-            revertToSnapshot();
-            return state.samples[sampleNum % kSampleBufSize];
-        }
+        int16_t *dest = &samples[stateSampleNum & FULL_BUFFER_MASK];
+        ASSERT(dest + HALF_BUFFER <= &samples[FULL_BUFFER]);
 
-        // Last resort... Reset and retry.
-        reset();
-    }
-}
+        const uint32_t localAutoSnapshotPoint = autoSnapshotPoint;
 
-// Save the next sample in the ringbuffer and update related instance data.
-void AudioSampleData::writeNextSample(uint16_t sample)
-{
-    state.samples[(state.numSamples++) % kSampleBufSize] = sample;
+        while (1) {
+            uint32_t chunk = bytesRemaining;
+            SvmMemory::PhysAddr pa;
 
-    // Take a snapshot if necessary.
-    if (!hasSnapshot() && state.numSamples == loopPoint)
-        takeSnapshot();
-}
-
-void AudioSampleData::decodeToSampleSilence(uint32_t sampleNum)
-{
-    unsigned count = sampleNum + 1 - state.numSamples;
-    ASSERT(count != 0);
-    while (count--)
-        writeNextSample(0);
-}
-
-void AudioSampleData::decodeToSamplePCM(uint32_t sampleNum)
-{
-    unsigned count = sampleNum + 1 - state.numSamples;
-    ASSERT(count != 0);
-
-    do {
-        SvmMemory::PhysAddr pa;
-        SvmMemory::VirtAddr va = mod->pData + state.bufPos;
-
-        unsigned sampleCount = sampleNum + 1 - state.numSamples;
-        uint32_t byteCount = sampleCount * sizeof(int16_t);
-
-        if (!SvmMemory::mapROData(ref, va, byteCount, pa) ||
-            !isAligned(pa, sizeof(int16_t))) {
-            LOG((LGPFX "Memory mapping failure for PCM sample at VA 0x%08x\n", unsigned(va)));
-            return decodeToSampleSilence(sampleNum);
-        }
-
-        const int16_t *samples = reinterpret_cast<const int16_t *>(pa);
-        unsigned chunk = byteCount / sizeof(int16_t);
-        chunk = MIN(chunk, count);
-        ASSERT(chunk != 0);
-        count -= chunk;
-        state.bufPos += chunk * sizeof(int16_t);
-
-        while (chunk--)
-            writeNextSample(*(samples++));
-
-    } while (count);
-}
-
-void AudioSampleData::decodeToSampleADPCM(uint32_t sampleNum)
-{
-    unsigned target = sampleNum + 1;
-    ASSERT(target != state.numSamples);
-
-    while (1) {
-        SvmMemory::PhysAddr pa;
-        SvmMemory::VirtAddr va = mod->pData + state.bufPos;
-
-        unsigned sampleCount = sampleNum + 1 - state.numSamples;
-        uint32_t byteCount = ceildiv<unsigned>(sampleCount, kNybblesPerByte);
-
-        if (!SvmMemory::mapROData(ref, va, byteCount, pa)) {
-            LOG((LGPFX "Memory mapping failure for ADPCM sample at VA 0x%08x\n", unsigned(va)));
-            return decodeToSampleSilence(sampleNum);
-        }
-
-        uint8_t *ptr = pa;
-        uint8_t *limit = pa + byteCount;
-
-        do {
-            writeNextSample(state.adpcm.decodeSample(&ptr));
-            ASSERT(target >= state.numSamples);
-            if (target == state.numSamples) {
-                state.bufPos += ptr - pa;
+            if (!SvmMemory::mapROData(ref, va, chunk, pa)) {
+                LOG((LGPFX "Memory mapping failure for ADPCM sample at VA 0x%08x\n",
+                    unsigned(va)));
                 return;
             }
-        } while (ptr < limit);
-        ASSERT(ptr == limit);
-        state.bufPos += byteCount;
+
+            STATIC_ASSERT(HALF_BUFFER <= 16);
+            ASSERT(chunk <= 8);
+            ASSERT(chunk > 0);
+
+            switch (chunk) {
+                case 8: dec.decodeByte(pa, dest);
+                case 7: dec.decodeByte(pa, dest);
+                case 6: dec.decodeByte(pa, dest);
+                case 5: dec.decodeByte(pa, dest);
+                case 4: dec.decodeByte(pa, dest);
+                case 3: dec.decodeByte(pa, dest);
+                case 2: dec.decodeByte(pa, dest);
+                case 1: dec.decodeByte(pa, dest);
+                case 0: break;
+            };
+
+            if (LIKELY(0 == (bytesRemaining -= chunk)))
+                break;
+
+            va += chunk;
+        }
+    
+        // Next block...
+        unsigned beginningOfBlock = stateSampleNum;
+        stateSampleNum += HALF_BUFFER;
+
+        // Save an automatic snapshot if applicable
+        ASSERT((stateSampleNum & HALF_BUFFER_MASK) == 0);
+        ASSERT((snapshot.sampleNum & HALF_BUFFER_MASK) == 0);
+        if (UNLIKELY(stateSampleNum == localAutoSnapshotPoint)) {
+            snapshot.sampleNum = stateSampleNum;
+            dec.store(snapshot.adpcm);
+        }
+
+        // We just decoded the block we were looking for?
+        if (LIKELY(sampleNum == beginningOfBlock))
+            break;
     }
+
+    // Save new codec state
+    state.sampleNum = stateSampleNum;
+    dec.store(state.adpcm);
 }

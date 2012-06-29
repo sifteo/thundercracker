@@ -7,6 +7,7 @@
 ]]--
 
 require('siftulator')
+require('flashreplay')
 require('luaunit')
 
 System():setOptions{ turbo=true, numCubes=0 }
@@ -116,7 +117,7 @@ function checkEndurance()
     local idealEraseCount = writeTotal / DEVICE_SIZE
     local maxEC = getMaxEraseCount()
     local ratio = maxEC / idealEraseCount
-    local ratioLimit = 1.5
+    local ratioLimit = 2.0
 
     print(string.format("--        Ideal erase count: %.2f", idealEraseCount))
     print(string.format("--  Actual peak erase count: %d", maxEC))

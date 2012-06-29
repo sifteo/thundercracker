@@ -10,3 +10,5 @@ docs/doxygen/html
 
 /.cproject
 /.project
+/.settings/org.eclipse.cdt.core.prefs
+/.pydevproject

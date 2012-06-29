@@ -9,6 +9,7 @@
 #include "graphics_bg1.h"
 #include "cube_hardware.h"
 #include "radio.h"
+#include "sensors.h"
 
 
 void vm_bg0_bg1(void)
@@ -16,6 +17,7 @@ void vm_bg0_bg1(void)
     uint8_t y = vram.num_lines;
 
     lcd_begin_frame();
+    i2c_a21_wait();
     vm_bg0_setup();
     vm_bg1_setup();
 

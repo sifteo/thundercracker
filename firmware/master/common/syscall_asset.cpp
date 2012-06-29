@@ -99,7 +99,7 @@ uint32_t _SYS_asset_loadStart(_SYSAssetLoader *loader, _SYSAssetGroup *group,
      *
      * For any cubes where this group needs to be loaded, we'll mark
      * the relevant AssetSlots as 'in progress'. A set of these
-     * in-progress keys are written to gSlotsInProgress, so tha
+     * in-progress keys are written to gSlotsInProgress, so that
      * we can finalize them after the loading has finished.
      *
      * If this fails to allocate space, we return unsuccessfully.

@@ -19,8 +19,9 @@ uint8_t i2c_state;
 uint8_t i2c_temp_1;
 uint8_t i2c_temp_2;
 
-__bit i2c_a21_current;
-__bit i2c_a21_target;
+__bit i2c_a21_current;  // Set by main thread only. What do we want A21 to be?
+__bit i2c_a21_target;   // Set by ISR only. What was A21 last updated to?
+__bit i2c_a21_lock;     // Set by ISR only. Is an A21 update in progress?
 
 
 /*
@@ -221,6 +222,8 @@ as_9:
         ; if there is a mismatch. The main thread always sets _target_ to the
         ; desired state, and polls _current_ to wait for us.
 
+        setb    _i2c_a21_lock       ; Must set lock prior to sampling current/target
+
         mov     c, _i2c_a21_target
         rlc     a                   ; acc.0 = target, other bits undefined
         mov     _i2c_temp_1, a      ; Latch the sampled target state in temp1
@@ -252,8 +255,9 @@ ts_3:
         rrc     a
         mov     _i2c_a21_current, c
 
-        ; 4. Dummy state, fall through to factory test
+        ; 4. Release lock, fall through to factory test
 ts_4:
+        clr     _i2c_a21_lock
 
         ;--------------------------------------------------------------------
         ; Factory Test States
@@ -384,13 +388,37 @@ fs_9:
 }
 
 
-void i2c_a21_wait(void)
+void i2c_a21_wait(void) __naked
 {
+    /*
+     * Wait for A21 to match i2c_a21_target.
+     *
+     * We need to ensure 'current' and 'target' match, plus we need
+     * to make sure i2c_a21_lock is 0 so we know the value of 'target'
+     * has not already been latched by the ISR.
+     *
+     * We do this batch of tests with the IRQs disabled. The Nordic
+     * docs imply it's not always safe to update W2CON1's IRQ mask
+     * bit, so for now we'll just disabled all IRQs.
+     */
+
     __asm
-1$:     mov     c, _i2c_a21_target
+1$:
+        clr     _IEN_EN             ; Entering critical section
+
+        jb      _i2c_a21_lock, #2$  ; Spin if locked
+        
+        mov     c, _i2c_a21_target
         rlc     a                   ; acc.0 = target, other bits undefined
         mov     c, _i2c_a21_current ; Sample current state
         addc    a, #0               ; Compare, using addc as an XOR
-        jb      acc.0, #1$          ; Spin until done
+        jb      acc.0, #2$          ; Spin if they do not match
+
+        setb    _IEN_EN             ; Leave critical section
+        ret                         ; Successfully exit
+
+2$:     setb    _IEN_EN             ; Leave critical section
+        sjmp    #1$                 ; Keep waiting
+
     __endasm ;
 }

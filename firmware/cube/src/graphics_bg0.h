@@ -14,6 +14,7 @@
 #define _GRAPHICS_BG0_H
 
 #include "graphics.h"
+#include "sensors.h"
 
 /*
  * Shared state

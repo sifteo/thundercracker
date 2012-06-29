@@ -57,19 +57,13 @@ void AudioMixer::init()
  *
  * Returns true if any audio data was available. If so, we're guaranteed
  * to produce exactly 'numFrames' of data.
+ *
+ * Assumes the buffer was already zero'ed. Each channel is mixed together
+ * into the same buffer.
  */
-bool AudioMixer::mixAudio(int *buffer, uint32_t numFrames)
+ALWAYS_INLINE bool AudioMixer::mixAudio(int *buffer, uint32_t numFrames)
 {
-    #ifdef SIFTEO_SIMULATOR
-        MCAudioVisData::instance.mixerActive = active();
-    #endif
-
-    // Early out when we can quickly determine that no channels are playing.
-    if (!active())
-        return false;
-
     bool result = false;
-    memset(buffer, 0, numFrames * sizeof(*buffer));
 
     uint32_t mask = playingChannelMask;
     while (mask) {
@@ -101,6 +95,18 @@ bool AudioMixer::mixAudio(int *buffer, uint32_t numFrames)
 void AudioMixer::pullAudio(void *p)
 {
     /*
+     * Early out when we can quickly determine that no channels are playing
+     * and the tracker is idle.
+     */
+
+    #ifdef SIFTEO_SIMULATOR
+        MCAudioVisData::instance.mixerActive = AudioMixer::instance.active();
+    #endif
+
+    if (!AudioMixer::instance.active() && AudioMixer::instance.trackerCallbackInterval == 0)
+        return;
+
+    /*
      * Support audio in Siftulator, even in headless mode.
      *
      * In headless mode, we want to continue mixing even though
@@ -123,9 +129,6 @@ void AudioMixer::pullAudio(void *p)
     if (!buf && !headless)
         return;
 
-    const int mixerVolume = Volume::systemVolume();
-    ASSERT(mixerVolume <= _SYS_AUDIO_MAX_VOLUME);
-
     /*
      * In order to amortize the cost of iterating over channels, our
      * audio mixer operates on small arrays of samples at a time. We
@@ -136,14 +139,22 @@ void AudioMixer::pullAudio(void *p)
      * deterministically, exactly every 'trackerInterval' samples.
      * To do this, we may need to subdivide the blocks we request
      * from mixAudio(), or we may need to generate silent blocks.
+     *
+     * We refuse to pull (exiting early) if there are too few samples
+     * to mix, so that we don't destroy our amortization gains by
+     * mixing one sample at a time.
      */
 
+    int blockBuffer[32];
+    unsigned samplesLeft = buf->writeAvailable();
+
     #ifdef SIFTEO_SIMULATOR
-        unsigned samplesLeft = headless ? SystemMC::suggestAudioSamplesToMix() : buf->writeAvailable();
-    #else
-        unsigned samplesLeft = buf->writeAvailable();
+        if (headless) {
+            samplesLeft = SystemMC::suggestAudioSamplesToMix();
+        }
     #endif
-    if (!samplesLeft)
+
+    if (samplesLeft < arraysize(blockBuffer))
         return;
 
     #ifndef SIFTEO_SIMULATOR
@@ -152,40 +163,42 @@ void AudioMixer::pullAudio(void *p)
     #endif
 
     const uint32_t trackerInterval = AudioMixer::instance.trackerCallbackInterval;
-    uint32_t trackerCountdown = AudioMixer::instance.trackerCallbackCountdown;
+    uint32_t trackerCountdown;
 
     if (trackerInterval == 0) {
         // Tracker callbacks disabled. Avoid special-casing below by
         // assuming a countdown value that's effectively infinite.
-        trackerCountdown = 0xFFFFFFFF;
-    } else if (trackerCountdown == 0) {
-        // Countdown should never be stored as zero when the timer is enabled.
-        ASSERT(0);
-        trackerCountdown = trackerInterval;
-    }
+        trackerCountdown = 0x10000;
+    } else {
+        trackerCountdown = AudioMixer::instance.trackerCallbackCountdown;
+        ASSERT(trackerCountdown != 0 && "Countdown should never be stored as zero when the timer is enabled");
+    } 
+
+    // Calculating volume is relatively expensive; do it only if we have audio to mix.
+    const int mixerVolume = Volume::systemVolume();
+    ASSERT(mixerVolume <= _SYS_AUDIO_MAX_VOLUME);
 
     do {
-        int blockBuffer[32];
-
         uint32_t blockSize = MIN(arraysize(blockBuffer), samplesLeft);
         blockSize = MIN(blockSize, trackerCountdown);
         ASSERT(blockSize > 0);
 
+        // Zero out the buffer (Faster than memset)
+        for (int *i = blockBuffer, *e = blockBuffer + blockSize; i != e; ++i)
+            *i = 0;
+
+        // Mix data from all channels.
         bool mixed = AudioMixer::instance.mixAudio(blockBuffer, blockSize);
 
-        if (!mixed) {
-            /*
-             * The mixer had nothing for us. Normally this means
-             * we can early-out and let the device's buffer drain,
-             * but if we're running the tracker, we need to keep
-             * samples flowing in order to keep its clock advancing.
-             * Generate silence.
-             */
-            if (trackerInterval == 0)
-                break;
-            else
-                memset(blockBuffer, 0, sizeof blockBuffer);
-        }
+        /*
+         * The mixer had nothing for us? Normally this means
+         * we can early-out and let the device's buffer drain,
+         * but if we're running the tracker, we need to keep
+         * samples flowing in order to keep its clock advancing.
+         * Generate silence.
+         */
+        if (!mixed && trackerInterval == 0)
+            break;
 
         trackerCountdown -= blockSize;
         samplesLeft -= blockSize;
@@ -196,8 +209,14 @@ void AudioMixer::pullAudio(void *p)
          */
 
         int *ptr = blockBuffer;
-        while (blockSize--) {
-            int sample = (*(ptr++) * mixerVolume) / _SYS_AUDIO_MAX_VOLUME;
+        do {
+            int sample = (*(ptr++) * mixerVolume) >> _SYS_AUDIO_MAX_VOLUME_LOG2;
+
+            #if 0
+                UART("\r\ns "); UART_HEX(blockSize); UART(" "); UART_HEX(sample);
+                sample = 0;
+            #endif
+
             int16_t sample16 = Intrinsic::SSAT(sample, 16);
 
             #ifdef SIFTEO_SIMULATOR
@@ -205,9 +224,10 @@ void AudioMixer::pullAudio(void *p)
                 SystemMC::logAudioSamples(&sample16, 1);
             #endif
 
-            if (!headless)
+            if (!headless) {
                 buf->enqueue(sample16);
-        }
+            }
+        } while (--blockSize);
 
         if (!trackerCountdown) {
             ASSERT(trackerInterval);

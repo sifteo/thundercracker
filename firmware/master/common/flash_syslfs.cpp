@@ -18,7 +18,7 @@ int SysLFS::read(Key k, uint8_t *buffer, unsigned bufferSize)
     FlashLFS &lfs = SysLFS::get();
     FlashLFSObjectIter iter(lfs);
 
-    while (iter.previous(k)) {
+    while (iter.previous(FlashLFSKeyQuery(k))) {
         unsigned size = iter.record()->getSizeInBytes();
         size = MIN(size, bufferSize);
         if (iter.readAndCheck(buffer, size))
@@ -194,8 +194,11 @@ void SysLFS::CubeAssetsRecord::allocBinding(FlashVolume vol, unsigned numSlots)
     ASSERT(!checkBinding(vol, numSlots));
 
     // Zap all existing bindings for this volume
-    for (unsigned slot = 0; slot < arraysize(slots); ++slot)
-        slots[slot].identity.volume = 0;
+    for (unsigned slot = 0; slot < arraysize(slots); ++slot) {
+        AssetSlotOverviewRecord &ovr = slots[slot];
+        if (ovr.identity.volume == vol.block.code)
+            ovr.identity.volume = 0;
+    }
 
     /*
      * Pick a bank, by analyzing the relative cost of using one bank or the other.
@@ -251,7 +254,6 @@ void SysLFS::CubeAssetsRecord::allocBinding(FlashVolume vol, unsigned numSlots)
         AssetSlotOverviewRecord &slot = slots[index];
 
         // Start out empty, but preserve erase count and access rank.
-        slot.numAllocatedTiles = 0;
         slot.identity.volume = vol.block.code;
         slot.identity.ordinal = ordinal;
     }
@@ -377,12 +379,11 @@ void SysLFS::CubeAssetsRecord::markErased(unsigned slot)
         }
     }
 
-    s.numAllocatedTiles = 0;
     s.eraseCount++;
     ASSERT(s.eraseCount > 0);
 }
 
-bool SysLFS::CubeAssetsRecord::markAccessed(FlashVolume vol, unsigned numSlots)
+bool SysLFS::CubeAssetsRecord::markAccessed(FlashVolume vol, unsigned numSlots, bool force)
 {
     /*
      * Mark a volume's slots as having been recently accessed. This
@@ -396,6 +397,8 @@ bool SysLFS::CubeAssetsRecord::markAccessed(FlashVolume vol, unsigned numSlots)
      * bump a slot back to rank zero. That's fine. It's also important that
      * slots belonging to the same volume all get ranked equivalently, since
      * there's no reason to prefer one slot to another except for wear leveling.
+     *
+     * If 'force' is true, we disregard the slots' existing access ranks.
      */
 
     bool modified = false;
@@ -403,7 +406,7 @@ bool SysLFS::CubeAssetsRecord::markAccessed(FlashVolume vol, unsigned numSlots)
     for (unsigned i = 0; i < arraysize(slots); ++i) {
         AssetSlotOverviewRecord &slot = slots[i];
         if (slot.identity.inActiveSet(vol, numSlots)) {
-            if (slot.accessRank != 0) {
+            if (force || slot.accessRank != 0) {
                 modified = true;
                 slot.accessRank = 0;
             }
@@ -445,21 +448,36 @@ bool SysLFS::AssetSlotRecord::decodeKey(Key slotKey, Key &cubeKey, unsigned &slo
 
 void SysLFS::AssetSlotRecord::init()
 {
-    memset(this, 0, sizeof *this);
+    flags = 0;
+    memset(groups, 0xff, sizeof groups);
 }
 
 bool SysLFS::AssetSlotRecord::load(const FlashLFSObjectIter &iter)
 {
     unsigned size = iter.record()->getSizeInBytes();
 
-    if (size == 0) {
-        // Deleted record.
-        init();
-        return true;
+    // Default contents
+    init();
+
+    // Variable-sized data portion, valid if the CRC is okay.
+    return iter.readAndCheck((uint8_t*) this, MIN(size, sizeof *this));
+}
+
+unsigned SysLFS::AssetSlotRecord::writeableSize() const
+{
+    // How many bytes do we need to write for this record?
+
+    STATIC_ASSERT(sizeof flags + sizeof groups == sizeof *this);
+
+    unsigned i;
+    for (i = 0; i < ASSET_GROUPS_PER_SLOT; ++i) {
+        const LoadedAssetGroupRecord &group = groups[i];
+    
+        if (group.isEmpty())
+            break;
     }
 
-    // Valid if CRC is okay
-    return size >= sizeof *this && iter.readAndCheck((uint8_t*) this, sizeof *this);
+    return i * sizeof groups[0] + sizeof flags;
 }
 
 bool SysLFS::AssetSlotRecord::findGroup(AssetGroupIdentity identity, unsigned &offset) const

@@ -15,77 +15,96 @@
 
 class AudioSampleData {
 public:
-    AudioSampleData() : mod(0) {}
+    void init(uint32_t loop_start = 0)
+    {
+        // Block boundary at which we take an automatic snapshot
+        autoSnapshotPoint = loop_start & ~HALF_BUFFER_MASK;
+        snapshot.sampleNum = 0x7fffffff & ~HALF_BUFFER_MASK;
 
-    void init(const struct _SYSAudioModule *module, uint32_t loop_start = 0);
-    void reset();
-    uint32_t numSamples() const;
+        reset();
+    }
 
-    // Get a sample.
-    int16_t operator[](uint32_t sampleNum);
+    // Seek to the beginning of the sample data.
+    void ALWAYS_INLINE reset()
+    {
+        state.sampleNum = 0;
+        state.adpcm.init();
+    }
+
+    static uint32_t numSamples(const _SYSAudioModule &mod)
+    {
+        switch (mod.type) {    
+            case _SYS_PCM:      return mod.dataSize / sizeof(uint16_t);
+            case _SYS_ADPCM:    return mod.dataSize * NYBBLES_PER_BYTE;
+            default:            return 0;
+        }
+    }
 
     /*
      * This should be called after a unit of work has been finished, to
      * recycle the FlashBlockRef.
      */
-    void releaseRef() {
+    void ALWAYS_INLINE releaseRef() {
         ref.release();
     }
 
+    // Retrieve a single sample, via the cache
+    int ALWAYS_INLINE getSample(unsigned sampleNum, const _SYSAudioModule &mod)
+    {
+        ASSERT(sampleNum < numSamples(mod));
+        ASSERT((state.sampleNum & HALF_BUFFER_MASK) == 0);
+
+        unsigned diff = state.sampleNum - (sampleNum + 1);
+        if (UNLIKELY(diff >= FULL_BUFFER))
+            fetchBlock(sampleNum & ~HALF_BUFFER_MASK, mod);
+
+        return samples[sampleNum & FULL_BUFFER_MASK];
+    }
+
+    // Optimized accessor for a pair of samples (sampleNum, sampleNum + 1)
+    int ALWAYS_INLINE getSamplePair(unsigned sampleNum, const _SYSAudioModule &mod, int &sample)
+    {
+        unsigned nextSample = sampleNum + 1;
+        ASSERT(nextSample < numSamples(mod));
+        ASSERT((state.sampleNum & HALF_BUFFER_MASK) == 0);
+
+        unsigned diff = state.sampleNum - (nextSample + 1);
+        if (UNLIKELY(diff >= FULL_BUFFER))
+            fetchBlock(nextSample & ~HALF_BUFFER_MASK, mod);
+
+        sample = samples[sampleNum & FULL_BUFFER_MASK];
+        return samples[nextSample & FULL_BUFFER_MASK];
+    }
+
 private:
-    static const uint8_t kNybblesPerByte = 2;
+    static const unsigned NYBBLES_PER_BYTE = 2;
 
-    /*
-     * Buffer size should be at least 2, since callers are likely to request
-     * neighbouring samples for interpolation. Since it's impractical to index
-     * through samples backwards, there's also no reason for it to be any
-     * larger.
-     */
-    static const uint8_t kSampleBufSize = 2;
+    static const unsigned FULL_BUFFER = 32;                 // Must be a power of two
+    static const unsigned HALF_BUFFER = FULL_BUFFER / 2;
+    static const unsigned FULL_BUFFER_MASK = FULL_BUFFER - 1;
+    static const unsigned HALF_BUFFER_MASK = HALF_BUFFER - 1;
 
-    const struct _SYSAudioModule *mod; 
+    int16_t samples[FULL_BUFFER];
 
-    FlashBlockRef ref;      // Released by caller when a unit of work is complete.
-    uint32_t loopPoint;     // Auto-snapshot sample index
+    FlashBlockRef ref;          // Released by caller when a unit of work is complete.
+    uint32_t autoSnapshotPoint;
 
     struct State {
-        uint16_t samples[kSampleBufSize];   // Direct-mapped cache of samples
-        uint32_t numSamples;                // 1 + index of last sample
-        uint32_t bufPos;                    // Byte offset into sample data
-        AdPcmDecoder adpcm;                 // ADPCM decoder state
+        uint32_t sampleNum;     // Half-buffer-aligned state from immediately before this sample #
+        ADPCMState adpcm;       // ADPCM decoder state
     } state, snapshot;
 
-    // Called from the decoder, write the next sample
-    void writeNextSample(uint16_t sample);
+    void fetchBlockPCM(uint32_t sampleNum, const _SYSAudioModule &mod);
+    void fetchBlockADPCM(uint32_t sampleNum, const _SYSAudioModule &mod);
 
-    // Decode up to and including the sampleNum sample
-    void decodeToSamplePCM(uint32_t sampleNum);
-    void decodeToSampleADPCM(uint32_t sampleNum);
-    void decodeToSampleSilence(uint32_t sampleNum);
+    void ALWAYS_INLINE fetchBlock(uint32_t sampleNum, const _SYSAudioModule &mod)
+    {
+        if (LIKELY(mod.type == _SYS_ADPCM))
+            return fetchBlockADPCM(sampleNum, mod);
 
-    /*
-     * Snapshots:
-     *
-     * Decoding to the beginning of an audio loop that's a significant number
-     * of samples from the beginning of the file is memory and
-     * processor-intensive. By opportunistically remembering the object's state
-     * when the first sample of a loop is cached, it's possible to revert to
-     * that state later with no performance penalty (and a small memory
-     * penalty for storing the snapshot data).
-     */
-
-    void ALWAYS_INLINE takeSnapshot() {
-        snapshot = state;
+        ASSERT(mod.type == _SYS_PCM);
+        return fetchBlockPCM(sampleNum, mod);
     }
-
-    void ALWAYS_INLINE revertToSnapshot() {
-        state = snapshot;
-    }
-
-    bool ALWAYS_INLINE hasSnapshot() const {
-        return snapshot.numSamples;
-    }
-
 };
 
 #endif // AUDIOSAMPLEDATA_H_

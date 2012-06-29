@@ -19,6 +19,7 @@
 #include "audiomixer.h"
 #include "flash_device.h"
 #include "flash_blockcache.h"
+#include "flash_stack.h"
 #include "flash_volume.h"
 #include "usbprotocol.h"
 #include "svmloader.h"
@@ -49,8 +50,7 @@ bool SystemMC::init(System *sys)
             sys->opt_waveoutFilename.c_str()));
     }
 
-    FlashDevice::init();
-    FlashBlock::init();
+    FlashStack::init();
     USBProtocolHandler::init();
     Crc32::init();
 
@@ -393,4 +393,25 @@ unsigned SystemMC::suggestAudioSamplesToMix()
             return currentSample - prevSamples;
     }
     return 0;
+}
+
+void SystemMC::exit(int result)
+{
+    /*
+     * Stop the whole simulation, from inside the MC thread.
+     *
+     * We do need to stop the cube thread first, or it may deadlock
+     * in a deadline sync. The exact mechanisms for this can vary
+     * depending on platform and luck, but for example we could 
+     * deadlock due to exit() calling ~System(), which would
+     * destroy the underlying synchronization objects used by
+     * the deadline sync.
+     *
+     * We do *not* want to just ask System to stop everything,
+     * since trying to stop the MC simulation from inside the
+     * simulation itself would cause a deadlock.
+     */
+
+    getSystem()->stopCubesOnly();
+    ::exit(result);
 }

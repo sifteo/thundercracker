@@ -132,6 +132,9 @@ void SystemCubes::start()
 
 void SystemCubes::stop()
 {
+    if (mThreadRunning == false)
+        return;
+    
     mThreadRunning = false;
     __asm__ __volatile__ ("" : : : "memory");
     deadlineSync.wake();
@@ -145,6 +148,7 @@ void SystemCubes::stop()
 
 void SystemCubes::exit()
 {
+    stop();
     if (!sys->opt_cube0Profile.empty())
         Cube::Debug::writeProfile(&sys->cubes[0].cpu, sys->opt_cube0Profile.c_str());
 }

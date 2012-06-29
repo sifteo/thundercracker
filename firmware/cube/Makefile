@@ -57,6 +57,9 @@ override CFLAGS +=  --opt-code-size
 # Place the 2Kb ACALL segment for BG1
 LDFLAGS += -Wl-bBG1LINE=0x2000
 
+# Don't use any standard library code! (Size optimization)
+LDFLAGS += --nostdlib
+
 $(BIN): $(OBJS)
 	$(SDCC) -o $@ $(LDFLAGS) $(OBJS)
 

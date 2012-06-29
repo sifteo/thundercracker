@@ -62,6 +62,17 @@ CCFLAGS += -fno-exceptions -fno-threadsafe-statics -fno-rtti
 # for them - disable this since those dtors will never be called
 CCFLAGS += -fno-use-cxa-atexit
 
+# generate our linker script with the appropriate flash offset.
+# Required since we can't specify this as an option to the linker, and we don't
+# want 2 separate linker scripts
+ifeq ($(BOOTLOADABLE), )
+    LDSCRIPT_GEN := python $(MASTER_DIR)/tools/ldscript-gen.py
+else
+    CCFLAGS += -DBOOTLOADABLE
+    LDSCRIPT_GEN := python $(MASTER_DIR)/tools/ldscript-gen.py --bootloadable
+endif
+
+# default linker script handling
 ifeq ($(LDSCRIPT), )
 LDSCRIPT := $(MASTER_DIR)/stm32/target.ld
 endif

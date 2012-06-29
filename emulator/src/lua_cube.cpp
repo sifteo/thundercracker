@@ -201,6 +201,8 @@ int LuaCube::saveScreenshot(lua_State *L)
 int LuaCube::testScreenshot(lua_State *L)
 {
     const char *filename = luaL_checkstring(L, 1);
+    const lua_Integer tolerance = lua_tointeger(L, 2);
+
     Cube::LCD &lcd = LuaSystem::sys->cubes[id].lcd;
     std::vector<uint8_t> pngData;
     std::vector<uint8_t> pixels;
@@ -218,14 +220,20 @@ int LuaCube::testScreenshot(lua_State *L)
     for (unsigned i = 0; i < lcd.FB_SIZE; i++) {
         RGB565 fbColor = lcd.fb_mem[i];
         RGB565 refColor = &pixels[i*4];
-        
-        if (fbColor.value != refColor.value) {
-            // Image mismatch. Return (x, y, lcdPixel, refPixel)
+
+        int dR = int(fbColor.red()) - int(refColor.red());
+        int dG = int(fbColor.green()) - int(refColor.green());
+        int dB = int(fbColor.blue()) - int(refColor.blue());
+        int error = dR*dR + dG*dG + dB*dB;
+
+        if (error > tolerance) {
+            // Image mismatch. Return (x, y, lcdPixel, refPixel, error)
             lua_pushinteger(L, i % lcd.WIDTH);
             lua_pushinteger(L, i / lcd.WIDTH);
             lua_pushinteger(L, fbColor.value);
             lua_pushinteger(L, refColor.value);
-            return 4;
+            lua_pushinteger(L, error);
+            return 5;
         }
     }
     

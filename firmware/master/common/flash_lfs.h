@@ -105,19 +105,30 @@ namespace LFS {
  */
 class FlashLFSKeyFilter
 {
+public:
     uint16_t bits;
 
-    unsigned bitHash(unsigned row, unsigned key) const {
-        // See explanation above.
-        unsigned h = (key * ((row << 1) | 1)) & 0xF;
-
-        // We have no need for CLZ here, so use a right-to-left order.
-        return 1 << h;
+    static FlashLFSKeyFilter makeEmpty() {
+        FlashLFSKeyFilter result = { 0xFFFF };
+        return result;
     }
 
-public:
+    static FlashLFSKeyFilter makeFull() {
+        FlashLFSKeyFilter result = { 0x0000 };
+        return result;
+    }
+
+    static FlashLFSKeyFilter makeSingle(unsigned row, unsigned key) {
+        FlashLFSKeyFilter result = { ~bitHash(row, key) };
+        return result;
+    }
+
     bool isEmpty() const {
         return bits == 0xFFFF;
+    }
+
+    bool isFull() const {
+        return bits == 0;
     }
 
     void add(unsigned row, unsigned key) {
@@ -125,11 +136,20 @@ public:
     }
 
     /**
-     * Returns 'true' if the item is possibly in the filter, or 'false'
-     * if it is definitely not.
+     * Returns 'true' iff any items may be in common between this filter and 'other'.
      */
-    bool test(unsigned row, unsigned key) const {
-        return !(bits & bitHash(row, key));
+    bool overlaps(FlashLFSKeyFilter other) {
+        return (bits | other.bits) != 0xFFFF;
+    }
+
+private:
+    static unsigned bitHash(unsigned row, unsigned key)
+    {
+        // See explanation above.
+        unsigned h = (key * ((row << 1) | 1)) & 0xF;
+
+        // We have no need for CLZ here, so use a right-to-left order.
+        return 1 << h;
     }
 };
 
@@ -163,9 +183,11 @@ public:
     FlashLFSKeyFilter metaIndex[NUM_ROWS];
 
     static FlashLFSVolumeHeader *fromVolume(FlashBlockRef &ref, FlashVolume vol);
+    static uint32_t getSequence(FlashVolume vol);
+
     bool isRowEmpty(unsigned row) const;
-    void add(unsigned row, unsigned key);
     bool test(unsigned row, unsigned key);
+    void add(unsigned row, unsigned key);
     unsigned numNonEmptyRows();
 };
 
@@ -240,33 +262,57 @@ public:
         this->check = LFS::computeCheckByte(key, size);
     }
 
-    bool isValid() const {
+    ALWAYS_INLINE bool isValid() const {
         return check == LFS::computeCheckByte(key, size);
     }
 
-    bool isEmpty() const {
+    ALWAYS_INLINE bool isEmpty() const {
         return LFS::isEmpty((const uint8_t*) this, sizeof *this);
     }
 
-    unsigned getKey() const {
+    ALWAYS_INLINE unsigned getKey() const {
         return key;
     }
 
-    unsigned getSizeInBytes() const {
+    ALWAYS_INLINE unsigned getSizeInBytes() const {
         return size << SIZE_SHIFT;
     }
 
-    bool checkCRC(unsigned reference) const {
+    ALWAYS_INLINE bool checkCRC(unsigned reference) const {
         return !(((crc[0] | (crc[1] << 8)) ^ reference) & 0xFFFF);
     }
 
-    static bool isKeyAllowed(unsigned key) {
+    ALWAYS_INLINE static bool isKeyAllowed(unsigned key) {
         return key < MAX_KEYS;
     }
 
-    static bool isSizeAllowed(unsigned bytes) {
+    ALWAYS_INLINE static bool isSizeAllowed(unsigned bytes) {
         return bytes <= MAX_SIZE;
     }
+};
+
+
+/**
+ * FlashLFSKeyQuery is a search query which locates some set of keys,
+ * either via exact match or exclusion. Doing this level of filtering
+ * concurrently with LFS iteration lets us skip entire index blocks
+ * in some cases.
+ */
+class FlashLFSKeyQuery
+{
+    FlashLFSIndexRecord::KeyVector_t *excluded;
+    unsigned exactKey;
+
+public:
+    explicit FlashLFSKeyQuery() : excluded(0), exactKey(LFS::KEY_ANY) {}
+
+    explicit FlashLFSKeyQuery(unsigned key) : excluded(0), exactKey(key) {}
+
+    explicit FlashLFSKeyQuery(FlashLFSIndexRecord::KeyVector_t *excluded)
+        : excluded(excluded), exactKey(LFS::KEY_ANY) {}
+
+    bool test(unsigned row, FlashLFSKeyFilter f);
+    bool test(unsigned key);
 };
 
 
@@ -317,15 +363,15 @@ public:
         this->check = LFS::computeCheckByte(offsetLow, offsetHigh);
     }
 
-    bool isValid() const {
+    ALWAYS_INLINE bool isValid() const {
         return check == LFS::computeCheckByte(offset[0], offset[1]);
     }
 
-    bool isEmpty() const {
+    ALWAYS_INLINE bool isEmpty() const {
         return LFS::isEmpty((const uint8_t*) this, sizeof *this);
     }
 
-    unsigned getOffsetInBytes() const {
+    ALWAYS_INLINE unsigned getOffsetInBytes() const {
         return (this->offset[0] | (this->offset[1] << 8)) << OFFSET_SHIFT;
     }
 };
@@ -335,24 +381,24 @@ public:
 namespace LFS {
     
     // Return the first possible location for a record in a block
-    inline FlashLFSIndexRecord *firstRecord(FlashLFSIndexAnchor *anchor) {
+    ALWAYS_INLINE FlashLFSIndexRecord *firstRecord(FlashLFSIndexAnchor *anchor) {
         ASSERT(anchor);
         return (FlashLFSIndexRecord *) (anchor + 1);
     }
 
     // Return the last possible location for a record in a block
-    inline FlashLFSIndexRecord *lastRecord(FlashBlock *block) {
+    ALWAYS_INLINE FlashLFSIndexRecord *lastRecord(FlashBlock *block) {
         uint8_t *p = block->getData() + FlashBlock::BLOCK_SIZE;
         return ((FlashLFSIndexRecord *) p) - 1;
     }
 
     // Return the first possible location for an anchor in a block
-    inline FlashLFSIndexAnchor *firstAnchor(FlashBlock *block) {
+    ALWAYS_INLINE FlashLFSIndexAnchor *firstAnchor(FlashBlock *block) {
         return (FlashLFSIndexAnchor *) block->getData();
     }
 
     // Return the last possible location for an anchor in a block
-    inline FlashLFSIndexAnchor *lastAnchor(FlashBlock *block) {
+    ALWAYS_INLINE FlashLFSIndexAnchor *lastAnchor(FlashBlock *block) {
         uint8_t *p = block->getData() + FlashBlock::BLOCK_SIZE;
         return ((FlashLFSIndexAnchor *) p) - 1;
     }
@@ -388,28 +434,28 @@ class FlashLFSIndexBlockIter
 public:
     bool beginBlock(uint32_t blockAddr);
 
-    bool previous(unsigned key = LFS::KEY_ANY);
+    bool previous(FlashLFSKeyQuery query);
     bool next();
 
     FlashLFSIndexRecord *beginAppend(FlashBlockWriter &writer);
 
-    const FlashLFSIndexRecord& operator*() const
+    ALWAYS_INLINE const FlashLFSIndexRecord& operator*() const
     {
         ASSERT(currentRecord);
         return *currentRecord;
     }
 
-    const FlashLFSIndexRecord* operator->() const
+    ALWAYS_INLINE const FlashLFSIndexRecord* operator->() const
     {
         ASSERT(currentRecord);
         return currentRecord;
     }
 
-    unsigned getCurrentOffset() const {
+    ALWAYS_INLINE unsigned getCurrentOffset() const {
         return currentOffset;
     }
 
-    unsigned getNextOffset() const
+    ALWAYS_INLINE unsigned getNextOffset() const
     {
         FlashLFSIndexRecord *p = currentRecord;
         ASSERT(p == 0 || p->isValid());
@@ -465,7 +511,16 @@ public:
 
     FlashLFSVolumeVector() : numSlotsInUse(0) {}
 
-    FlashVolume last() const
+    struct SequenceInfo {
+        uint32_t slots[MAX_VOLUMES];
+    };
+
+    ALWAYS_INLINE void clear()
+    {
+        numSlotsInUse = 0;
+    }
+
+    ALWAYS_INLINE FlashVolume last() const
     {
         // Returns the last volume in the vector. If the last volume
         // is marked as deleted or there are no volumes in the vector,
@@ -476,19 +531,24 @@ public:
             return FlashMapBlock::invalid();
     }
 
-    bool full() const
+    ALWAYS_INLINE bool full() const
     {
         ASSERT(numSlotsInUse <= MAX_VOLUMES);
         return numSlotsInUse == MAX_VOLUMES;
     }
 
-    void append(FlashVolume vol)
+    ALWAYS_INLINE void append(FlashVolume vol)
     {
         ASSERT(!full());
         slots[numSlotsInUse++] = vol;
     }
 
+    void append(FlashVolume vol, SequenceInfo &si);
+    void debugChecks();
+
+    // Invasive operations: Can't be performed while iterating.
     void compact();
+    void sort(SequenceInfo &si);
 };
 
 
@@ -510,16 +570,29 @@ public:
     {}
 
     void init(FlashVolume parent);
+    void initWithVolumeVector(FlashVolume parent, FlashLFSVolumeVector::SequenceInfo &si);
+
     bool newVolume();
+
+    // Collect garbage on any volume, trying this one first
     bool collectGarbage();
 
-    void invalidate() {
+    // Collect any garbage on the system, without a specific reference volume
+    static bool collectGlobalGarbage(FlashLFS *exclude = 0);
+
+    // Collect only local garbage on volumes owned by this LFS
+    bool collectLocalGarbage();
+
+    ALWAYS_INLINE void invalidate() {
         lastSequenceNumber = INVALID_LSN;
     }
 
-    bool isMatchFor(FlashVolume keyParent) {
-        return parent.block.code == keyParent.block.code &&
-            lastSequenceNumber != INVALID_LSN;
+    ALWAYS_INLINE bool isValid() {
+        return lastSequenceNumber != INVALID_LSN;
+    }
+
+    ALWAYS_INLINE bool isMatchFor(FlashVolume keyParent) {
+        return parent.block.code == keyParent.block.code && isValid();
     }
 
     uint32_t lastSequenceNumber;
@@ -544,8 +617,9 @@ public:
     static FlashLFS &get(FlashVolume parent);
     static void invalidate();
 
-private:
     static FlashLFS instances[SIZE];
+
+private:
     static uint8_t lastUsed;
 };
 
@@ -604,18 +678,31 @@ class FlashLFSObjectIter
 public:
     FlashLFSObjectIter(FlashLFS &lfs);
 
-    bool previous(unsigned key = LFS::KEY_ANY);
+    bool previous(FlashLFSKeyQuery query);
     bool readAndCheck(uint8_t *buffer, unsigned size) const;
+    bool readAndCheckCRCOnly(uint32_t &crc) const;
+    void copyToFlash(unsigned dest) const;
 
     // Address of the current object
-    unsigned address() const {
+    ALWAYS_INLINE unsigned address() const {
         return volume().block.address()
             + FlashBlock::BLOCK_SIZE + indexIter.getCurrentOffset();
     }
 
     // Index record for the current object
-    const FlashLFSIndexRecord *record() const {
+    ALWAYS_INLINE const FlashLFSIndexRecord *record() const {
         return &*indexIter;
+    }
+
+    // Current index in volume table
+    ALWAYS_INLINE unsigned volumeIndex() const {
+        ASSERT(volumeCount > 0 && volumeCount <= lfs.volumes.MAX_VOLUMES);
+        return volumeCount - 1;
+    }
+
+    // Current volume
+    ALWAYS_INLINE FlashVolume volume() const {
+        return lfs.volumes.slots[volumeIndex()];
     }
 
 private:
@@ -628,14 +715,6 @@ private:
 
     FlashBlockRef hdrRef;               // Mapped header from current volume
     FlashLFSVolumeHeader *hdr;
-
-    // Current volume
-    FlashVolume volume() const {
-        ASSERT(volumeCount > 0 && volumeCount <= lfs.volumes.MAX_VOLUMES);
-        FlashVolume v = lfs.volumes.slots[volumeCount - 1];
-        ASSERT(v.isValid());
-        return v;
-    }
 };
 
 

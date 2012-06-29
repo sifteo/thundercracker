@@ -20,12 +20,6 @@ void draw_clear()
 
         movx    @dptr, a
         inc     dptr
-        movx    @dptr, a
-        inc     dptr
-        movx    @dptr, a
-        inc     dptr
-        movx    @dptr, a
-        inc     dptr
 
         mov     a, #(1024 >> 8)
         cjne    a, dph, 1$
