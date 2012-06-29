@@ -45,13 +45,20 @@ program: $(BIN)
 		-c "reset run" \
 		-c exit
 
+encrypted: $(BIN)
+	arm-none-eabi-objcopy -O binary $< master-stm32.bin
+	$(TC_DIR)/tools/fwdeploy/fwdeploy master-stm32.bin master-stm32.sft
+	
+fwload: encrypted
+	$(TC_DIR)/swiss/swiss fwload master-stm32.sft
+
 objdump: $(BIN)
 	arm-none-eabi-objdump -d $< | arm-none-eabi-c++filt | less
 
 readelf: $(BIN)
 	arm-none-eabi-readelf -a $< | less
 
-.PHONY: all clean syscall-table ocd unlock program objdump
+.PHONY: all clean syscall-table ocd unlock program encrypted fwload objdump
 
 # Several steps, to work around Win32 command line length limits
 clean:
