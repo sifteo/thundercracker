@@ -10,6 +10,7 @@
 #include "board.h"
 #include "gpio.h"
 #include "powermanager.h"
+#include "bootloader.h"
 
 #include <string.h>
 
@@ -25,7 +26,8 @@ extern unsigned     __data_src;
 extern initFunc_t   __init_array_start;
 extern initFunc_t   __init_array_end;
 
-extern int main() __attribute__((noreturn));
+extern void bootloadMain(bool)  __attribute__((noreturn));
+extern int  main()              __attribute__((noreturn));
 
 extern "C" void _start()
 {
@@ -118,6 +120,17 @@ extern "C" void _start()
 #endif // BOOTLOADABLE
 
     /*
+     * Application firmware can request that the bootloader try to update by
+     * writing BOOTLOAD_UPDATE_REQUEST_KEY to __data_start and
+     * doing a system reset.
+     *
+     * Must check for this value before we overwrite it during normal init below.
+     */
+#ifdef BOOTLOADER
+    bool updateRequested = (__data_start == Bootloader::UPDATE_REQUEST_KEY);
+#endif
+
+    /*
      * Initialize data segments (In parallel with oscillator startup)
      */
 
@@ -139,5 +152,9 @@ extern "C" void _start()
         p[0]();
 
     // application specific entry point
+#ifdef BOOTLOADER
+    bootloadMain(updateRequested);
+#else
     main();
+#endif
 }
