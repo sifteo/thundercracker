@@ -70,6 +70,16 @@ bool Deployer::deploy(const char *inPath, const char *outPath)
  */
 bool Deployer::detailsForFile(FILE *f, uint32_t &sz, uint32_t &crc)
 {
+    const char elf[] = { 0x7f, 'E', 'L', 'F' };
+    char header[sizeof elf];
+    if (fread(header, 1, sizeof elf, f) != sizeof(elf))
+        return false;
+    if (!memcmp(elf, header, sizeof elf)) {
+        fprintf(stderr, "error: looks like you're deploying a .elf, please convert it to .bin first\n");
+        return false;
+    }
+
+    rewind(f);
     Crc32::reset();
 
     while (!feof(f)) {
@@ -89,6 +99,12 @@ bool Deployer::detailsForFile(FILE *f, uint32_t &sz, uint32_t &crc)
 
     sz = ftell(f);
     crc = Crc32::get();
+
+    if (crc == 0 || crc == 0xffffffff) {
+        fprintf(stderr, "error: this file has a CRC of 0 or 0xffffffff, which the bootloader considers invalid\n");
+        return false;
+    }
+
     return true;
 }
 
