@@ -230,16 +230,12 @@ void UsbDevice::outEndpointCallback(uint8_t ep)
  */
 int UsbDevice::controlRequest(Usb::SetupData *req, uint8_t **buf, uint16_t *len)
 {
-    if ((req->bmRequestType & Usb::ReqTypeVendor) == Usb::ReqTypeVendor) {
-        if (req->bRequest == WINUSB_COMPATIBLE_ID) {
-
-            if (req->wIndex == 0x04) {
-                *len = MIN(*len, sizeof compatId);
-                *buf = (uint8_t*)&compatId;
-                return 1;
-            }
-        }
+    if (req->bmRequestType == WCID_VENDOR_REQUEST && req->wIndex == 0x04) {
+        *len = MIN(*len, sizeof compatId);
+        *buf = (uint8_t*)&compatId;
+        return 1;
     }
+
     return 0;
 }
 

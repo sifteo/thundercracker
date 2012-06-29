@@ -39,9 +39,7 @@ private:
         Usb::SetupData req;
         uint8_t *pdata;
         uint16_t len;
-        // this buffer is mostly used for setup data, but also buffers string
-        // descriptors, so its size currently serves as the upper limit on those
-        uint8_t buf[32];
+        uint8_t buf[UsbHardware::MAX_PACKET];
     };
     static ControlState controlState;
 };
