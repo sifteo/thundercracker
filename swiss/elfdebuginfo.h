@@ -19,6 +19,9 @@ public:
     std::string formatAddress(uint32_t address) const;
     bool readROM(uint32_t address, uint8_t *buffer, uint32_t bytes) const;
 
+    bool metadataString(uint16_t key, std::string &s);
+    uint8_t* metadata(uint16_t key, uint32_t &actualSize);
+
 private:
     typedef std::vector<Elf::SectionHeader> sections_t;
     typedef std::map<std::string, Elf::SectionHeader*> sectionMap_t;

@@ -2,6 +2,8 @@
 #include "elfdebuginfo.h"
 #include <cxxabi.h>
 
+#include "sifteo/abi/elf.h"
+
 #include <string.h>
 #include <stdlib.h>
 #include <stdio.h>
@@ -147,6 +149,63 @@ bool ELFDebugInfo::findNearestSymbol(uint32_t address,
     memset(&symbol, 0, sizeof symbol);
     name = "(unknown)";
     return false;
+}
+
+
+bool ELFDebugInfo::metadataString(uint16_t key, std::string &s)
+{
+    uint32_t actualSize;
+    uint8_t *m = metadata(key, actualSize);
+    if (!m)
+        return false;
+
+    s.assign((const char*)m, actualSize);
+    return true;
+}
+
+uint8_t* ELFDebugInfo::metadata(uint16_t key, uint32_t &actualSize)
+{
+    const Elf::SectionHeader *hdr = findSection(".metadata");
+    if (!hdr)
+        return false;
+
+    const uint32_t keySize = sizeof(_SYSMetadataKey);
+    unsigned I, E;
+    I = hdr->sh_offset;
+    E = I + hdr->sh_size - keySize;
+
+    bool foundKey = false;
+    uint32_t valueOffset = 0;
+    unsigned avail;
+
+    while (I <= E) {
+
+        uint8_t *p = program.getData(I, avail);
+        if (!p)
+            return 0;
+
+        const _SYSMetadataKey *record = reinterpret_cast<const _SYSMetadataKey *>(p);
+        I += keySize;
+
+        bool isLast = record->stride >> 15;
+        uint16_t stride = record->stride & 0x7FFF;
+
+        if (record->key == key) {
+            actualSize = stride;
+            foundKey = true;
+        } else if (!foundKey) {
+            valueOffset += stride;
+        }
+
+        if (isLast) {
+            // Key was missing?
+            if (!foundKey)
+                return 0;
+
+            // Now we can calculate the address of the value, yay.
+            return program.getData(valueOffset + I, avail);
+        }
+    }
 }
 
 std::string ELFDebugInfo::formatAddress(uint32_t address) const
