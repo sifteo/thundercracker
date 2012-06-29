@@ -13,7 +13,6 @@
 #include "event.h"
 #include "tasks.h"
 #include "panic.h"
-#include "homebutton.h"
 #include "cubeslots.h"
 
 #include <math.h>
@@ -136,12 +135,7 @@ void SvmRuntime::fault(FaultCode code)
 
         // Paint on first enabled cube
         msg.paint(Intrinsic::LZ(cubes));
-
-        // Wait for home button press and release
-        while (!HomeButton::isPressed())
-            Tasks::idle();
-        while (HomeButton::isPressed())
-            Tasks::idle();
+        msg.haltUntilButton();
     }
 
     // Exit with an error (Back to the launcher)
