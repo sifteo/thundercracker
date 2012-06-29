@@ -32,6 +32,7 @@ private:
     static void homeButtonHandler(uint8_t argc, const uint8_t *args);
     static void shutdownHandler(uint8_t argc, const uint8_t *args);
     static void audioTestHandler(uint8_t argc, const uint8_t *args);
+    static void bootloadRequestHandler(uint8_t argc, const uint8_t *args);
 };
 
 #endif // FACTORYTEST_H

@@ -11,6 +11,10 @@
 #include "homebutton.h"
 #include "powermanager.h"
 #include "audiomixer.h"
+#include "svmmemory.h"
+#include "bootloader.h"
+
+extern unsigned     __data_start;
 
 uint8_t FactoryTest::commandBuf[FactoryTest::UART_MAX_COMMAND_LEN];
 uint8_t FactoryTest::commandLen;
@@ -26,6 +30,7 @@ FactoryTest::TestHandler const FactoryTest::handlers[] = {
     homeButtonHandler,          // 7
     shutdownHandler,            // 8
     audioTestHandler,           // 9
+    bootloadRequestHandler,     // 10
 };
 
 void FactoryTest::init()
@@ -233,8 +238,6 @@ void FactoryTest::shutdownHandler(uint8_t argc, const uint8_t *args)
  * args[1] - non-zero == start, zero == stop
  */
 
-#include "svmmemory.h"
-
 void FactoryTest::audioTestHandler(uint8_t argc, const uint8_t *args)
 {
     AudioMixer::instance.stop(0); // make sure we're stopped in either case.
@@ -275,6 +278,19 @@ void FactoryTest::audioTestHandler(uint8_t argc, const uint8_t *args)
     // no real response - just indicate that we've taken the requested action
     const uint8_t response[] = { args[0], args[1] };
     UsbDevice::write(response, sizeof response);
+}
+
+/*
+ * XXX: find a better place for this handler? This has nothing to do with FactoryTest
+ *      but none of the other USB subsystems seem like much better options.
+ */
+void FactoryTest::bootloadRequestHandler(uint8_t argc, const uint8_t *args)
+{
+#ifdef BOOTLOADABLE
+    __data_start = Bootloader::UPDATE_REQUEST_KEY;
+    NVIC.deinit();
+    NVIC.systemReset();
+#endif
 }
 
 IRQ_HANDLER ISR_USART3()
