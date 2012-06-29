@@ -544,9 +544,11 @@ public:
     }
 
     void append(FlashVolume vol, SequenceInfo &si);
+    void debugChecks();
+
+    // Invasive operations: Can't be performed while iterating.
     void compact();
     void sort(SequenceInfo &si);
-    void debugChecks();
 };
 
 
@@ -678,6 +680,8 @@ public:
 
     bool previous(FlashLFSKeyQuery query);
     bool readAndCheck(uint8_t *buffer, unsigned size) const;
+    bool readAndCheckCRCOnly(uint32_t &crc) const;
+    void copyToFlash(unsigned dest) const;
 
     // Address of the current object
     ALWAYS_INLINE unsigned address() const {

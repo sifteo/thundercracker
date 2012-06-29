@@ -398,7 +398,8 @@ void FlashLFSVolumeVector::debugChecks()
     for (unsigned i = 0; i < numSlotsInUse; ++i) {
         ASSERT(!slots[i].block.isValid() || slots[i].isValid());
         for (unsigned j = 0; j < i; ++j)
-            ASSERT(slots[i].block.code != slots[j].block.code);
+            ASSERT(slots[i].block.isValid() == false ||
+                slots[i].block.code != slots[j].block.code);
     }
 }
 #endif
@@ -446,6 +447,13 @@ void FlashLFS::initWithVolumeVector(FlashVolume parent, FlashLFSVolumeVector::Se
 
     unsigned index = volumes.numSlotsInUse;
     lastSequenceNumber = index ? si.slots[index - 1] : 0;
+
+    #if 0
+        LOG(("Init LFS %p, lsn=%d\n", this, lastSequenceNumber));
+        for (unsigned i = 0; i < volumes.numSlotsInUse; i++) {
+            LOG(("\tslot %02x, seq %d\n", volumes.slots[i].block.code, si.slots[i]));
+        }
+    #endif
 }
 
 bool FlashLFS::newVolume()
@@ -457,23 +465,20 @@ bool FlashLFS::newVolume()
      * isn't any more space to allocate volumes.
      */
 
-    if (volumes.full()) {
-        // Try to reclaim wasted space in our vector
-        volumes.compact();
-        if (volumes.full())
-            return false;
-    }
+    if (volumes.full())
+        return false;
 
     FlashVolumeWriter vw;
     unsigned hdrSize = sizeof(FlashLFSVolumeHeader);
     unsigned payloadSize = FlashLFSVolumeVector::VOL_PAYLOAD_SIZE;
-    
+
     if (!vw.begin(FlashVolume::T_LFS, payloadSize, hdrSize, parent))
         return false;
 
     FlashLFSVolumeHeader *hdr = (FlashLFSVolumeHeader*)vw.mapTypeSpecificData(hdrSize);
     ASSERT(hdrSize == sizeof(FlashLFSVolumeHeader));
 
+    ASSERT(lastSequenceNumber != INVALID_LSN);
     hdr->sequence = ++lastSequenceNumber;
     vw.commit();
     volumes.append(vw.volume);
@@ -739,6 +744,66 @@ bool FlashLFSObjectIter::readAndCheck(uint8_t *buffer, unsigned size) const
     return record()->checkCRC(crc);
 }
 
+bool FlashLFSObjectIter::readAndCheckCRCOnly(uint32_t &crc) const
+{
+    /*
+     * Like readAndCheck(), but don't save the entire object
+     * contents, just the CRC. Uses the flash cache.
+     */
+
+    unsigned addr = address();
+    unsigned remaining = record()->getSizeInBytes();
+    FlashBlockRef ref;
+    CrcStream cs;
+    cs.reset();
+
+    while (remaining) {
+        unsigned blockPart = addr & ~FlashBlock::BLOCK_MASK;
+        unsigned bytePart = addr & FlashBlock::BLOCK_MASK;
+        unsigned maxLength = FlashBlock::BLOCK_SIZE - bytePart;
+        unsigned chunk = MIN(remaining, maxLength);
+
+        ASSERT(chunk);
+        addr += chunk;
+        remaining -= chunk;
+
+        FlashBlock::get(ref, blockPart);
+        cs.addBytes(ref->getData() + bytePart, chunk);
+    }
+
+    crc = cs.get(FlashLFSIndexRecord::SIZE_UNIT);
+    return record()->checkCRC(crc);
+}
+
+void FlashLFSObjectIter::copyToFlash(unsigned dest) const
+{
+    /*
+     * Copy this object to another location in flash.
+     *
+     * Uses the flash cache. When using this immediately after
+     * readAndCheckCRCOnly(), it typically requires no additional device reads.
+     */
+
+    unsigned src = address();
+    unsigned remaining = record()->getSizeInBytes();
+    FlashBlockRef ref;
+
+    while (remaining) {
+        unsigned blockPart = src & ~FlashBlock::BLOCK_MASK;
+        unsigned bytePart = src & FlashBlock::BLOCK_MASK;
+        unsigned maxLength = FlashBlock::BLOCK_SIZE - bytePart;
+        unsigned chunk = MIN(remaining, maxLength);
+        ASSERT(chunk);
+
+        FlashBlock::get(ref, blockPart);
+        FlashDevice::write(dest, ref->getData() + bytePart, chunk);
+
+        src += chunk;
+        dest += chunk;
+        remaining -= chunk;
+    }
+}
+
 bool FlashLFSObjectIter::previous(FlashLFSKeyQuery query)
 {
     ASSERT(lfs.isValid());
@@ -916,8 +981,10 @@ bool FlashLFS::collectLocalGarbage()
      * Any volume which has no non-obsolete keys can be safely deleted with
      * no additional work.
      *
-     * Any volume which has a high proportion of obsolete data can be deleted
-     * after any non-obsolete keys are copied.
+     * Any volume which has a high proportion of obsolete data can be 'scrubbed',
+     * or deleted after any non-obsolete keys are copied. The scrubbing process
+     * requires that we have a snapshot of the set of obsolete keys from just
+     * past the end of that volume.
      */
 
     // Early out
@@ -932,13 +999,21 @@ bool FlashLFS::collectLocalGarbage()
     FlashLFSIndexRecord::KeyVector_t obsoleteKeys;
     obsoleteKeys.clear();
 
-    // Iterate over non-obsolete keys only
+    /*
+     * Iterate over non-obsolete keys only
+     */
+
     FlashLFSObjectIter iter(*this);
     while (iter.previous(FlashLFSKeyQuery(&obsoleteKeys))) {
-        const FlashLFSIndexRecord *record = iter.record();
-        unsigned key = record->getKey();
+
+        // Check this key's CRC. It doesn't obsolete older keys if it's corrupt!
+        uint32_t crc;
+        if (!iter.readAndCheckCRCOnly(crc))
+            continue;
 
         // Any additional instances of this key are obsolete
+        const FlashLFSIndexRecord *record = iter.record();
+        unsigned key = record->getKey();
         ASSERT(obsoleteKeys.test(key) == false);
         obsoleteKeys.mark(key);
 
@@ -946,14 +1021,23 @@ bool FlashLFS::collectLocalGarbage()
         volumesToKeep.mark(iter.volumeIndex());
     }
 
-    // Delete obsolete volumes
+    /*
+     * Delete obsolete volumes
+     */
+
+    bool foundGarbage = false;
+
     for (unsigned i = 0; i < volumes.numSlotsInUse; ++i) {
         if (!volumesToKeep.test(i)) {
             FlashVolume &vol = volumes.slots[i];
-            vol.deleteSingle();
+            vol.deleteSingleWithoutInvalidate();
             volumes.slots[i].block.setInvalid();
+            foundGarbage = true;
         }
     }
 
-    return false;
+    if (foundGarbage)
+        volumes.compact();
+
+    return foundGarbage;
 }

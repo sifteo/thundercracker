@@ -8,6 +8,70 @@ using namespace Sifteo;
 static Metadata M = Metadata::Metadata()
     .title("Filesystem Test");
 
+static Random rand(1234);
+
+static struct {
+    int value;
+    uint8_t pad[1024];
+} objBuffer;
+
+
+struct ObjectFlavor
+{
+    ObjectFlavor(float probability)
+        : key(StoredObject::allocate()), probability(probability), writeValue(-1), readValue(-1) {}
+
+    void write()
+    {
+        if (writeValue < 0 || rand.chance(probability)) {
+            objBuffer.value = ++writeValue;
+            key.write(objBuffer);
+            SCRIPT_FMT(LUA, "writeTotal = writeTotal + %d", sizeof objBuffer);
+
+            key.read(objBuffer);
+            if (objBuffer.value != writeValue) {
+                LOG("--- Failed to read immediately after write to key 0x%02x. Expected %d, read %d\n",
+                    key.sys, writeValue, objBuffer.value);
+                ASSERT(0);
+            }
+        }
+    }
+
+    void read(int logLine)
+    {
+        objBuffer.value = -1;
+        key.read(objBuffer);
+        if (objBuffer.value != readValue && objBuffer.value != readValue + 1) {
+            LOG("--- Replay mismatch on key 0x%02x, log line %d. Expected %d, read %d\n",
+                key.sys, logLine, readValue, objBuffer.value);
+            ASSERT(0);
+        }
+        readValue = objBuffer.value;
+    }
+
+    bool done()
+    {
+        return readValue == writeValue;
+    }
+
+    bool found()
+    {
+        return key.read(objBuffer) == sizeof objBuffer;
+    }
+
+    StoredObject key;
+    float probability;
+    int writeValue;
+    int readValue;
+};
+
+
+// Write a large object, to use up space faster
+static struct {
+    int value;
+    uint8_t pad[1024];
+} obj;
+
 
 void checkTestVolumes()
 {
@@ -44,29 +108,11 @@ void createObjects()
 {
     LOG("Testing object store record / replay\n");
 
-    static StoredObject foo = StoredObject::allocate();
-    static StoredObject bar = StoredObject::allocate();
-    static StoredObject wub = StoredObject::allocate();
-    static StoredObject old = StoredObject::allocate();
-
-    ASSERT(foo != bar);
-    ASSERT(foo != wub);
-    ASSERT(bar != wub);
-    ASSERT(old != foo);
-    ASSERT(old != bar);
-    ASSERT(old != wub);
-
-    // Write a large object, to use up space faster
-    static struct {
-        int value;
-        uint8_t pad[4000];
-    } obj;
-    memset(obj.pad, 0xff, sizeof obj.pad);
-
-    // Keep a single old value in the LFS, which we'll expect to remain there.
-    // (This tests relocation of non-obsolete keys during garbage collection)
-    obj.value = 0x12345678;
-    old.write(obj);
+    // To effectively test LFS, we need objects with varying frequencies
+    ObjectFlavor foo(1.00);
+    ObjectFlavor bar(0.10);
+    ObjectFlavor wub(0.01);
+    ObjectFlavor qux(0.00);
 
     SCRIPT(LUA, logger = FlashLogger:start(fs, "flash.log"));
 
@@ -76,18 +122,13 @@ void createObjects()
      * garbage collection and index overflow edge cases.
      */
 
-    Random r(123);
-    const int lastValue = 5000;
+    LOG("Recording values...\n");
 
-    for (int value = 0; value <= lastValue; value++) {
-        obj.value = value;
-        SCRIPT_FMT(LUA, "writeTotal = writeTotal + %d", sizeof obj);
-
-        switch (r.randrange(3)) {
-            case 0: foo.write(obj); break;
-            case 1: bar.write(obj); break;
-            case 2: wub.write(obj); break;
-        }
+    for (unsigned i = 0; i < 5000; i++) {
+        foo.write();
+        bar.write();
+        wub.write();
+        qux.write();
     }
 
     /*
@@ -95,16 +136,18 @@ void createObjects()
      * in logger:stop(). Make sure the objects are no longer found.
      */
 
-    ASSERT(sizeof obj == foo.read(obj));
-    ASSERT(sizeof obj == bar.read(obj));
-    ASSERT(sizeof obj == wub.read(obj));
+    ASSERT(foo.found());
+    ASSERT(bar.found());
+    ASSERT(wub.found());
+    ASSERT(qux.found());
 
     SCRIPT(LUA, logger:stop());
 
-    ASSERT(0 == foo.read(obj));
-    ASSERT(0 == bar.read(obj));
-    ASSERT(0 == wub.read(obj));
-    
+    ASSERT(!foo.found());
+    ASSERT(!bar.found());
+    ASSERT(!wub.found());
+    ASSERT(!qux.found());
+
     /*
      * Now check that as we replay the log, we see the events occur
      * in monotonically increasing order.
@@ -112,38 +155,28 @@ void createObjects()
 
     SCRIPT(LUA, player = FlashReplay:start(fs, "flash.log"));
 
-    int lastFoo = -1;
-    int lastBar = -1;
-    int lastWub = -1;
+    LOG("Replaying log...\n");
 
-    for (unsigned i = 0;; ++i) {
+    for (unsigned i = 1; !(foo.done() && bar.done() && wub.done() && qux.done()); ++i) {
+
         SCRIPT(LUA,
             if player:play(1) < 1 then
                 error("Finished replaying the log without finding our last object!")
             end
         );
-        
-        obj.value = -1;
-        old.read(obj);
-        ASSERT(obj.value == 0x12345678);
 
-        obj.value = -1;
-        foo.read(obj);
-        ASSERT(obj.value >= lastFoo);
-        if (lastValue == (lastFoo = obj.value))
-            break;
+        foo.read(i);
+        bar.read(i);
+        wub.read(i);
+        qux.read(i);
 
-        obj.value = -1;
-        bar.read(obj);
-        ASSERT(obj.value >= lastBar);
-        if (lastValue == (lastBar = obj.value))
-            break;
-
-        obj.value = -1;
-        wub.read(obj);
-        ASSERT(obj.value >= lastWub);
-        if (lastValue == (lastWub = obj.value))
-            break;
+        if ((i % 500) == 0) {
+            LOG("%5d: %02x:%d/%d %02x:%d/%d %02x:%d/%d %02x:%d/%d\n", i,
+                foo.key.sys, foo.readValue, foo.writeValue,
+                bar.key.sys, bar.readValue, bar.writeValue,
+                wub.key.sys, wub.readValue, wub.writeValue,
+                qux.key.sys, qux.readValue, qux.writeValue);
+        }
     }
 
     SCRIPT(LUA, player:stop());

@@ -126,6 +126,14 @@ uint8_t *FlashVolume::mapTypeSpecificData(FlashBlockRef &ref, unsigned &size) co
 
 void FlashVolume::deleteSingle() const
 {
+    deleteSingleWithoutInvalidate();
+
+    // Must notify LFS that we deleted a volume
+    FlashLFSCache::invalidate();
+}
+
+void FlashVolume::deleteSingleWithoutInvalidate() const
+{
     FlashBlockRef ref;
     FlashVolumeHeader *hdr = FlashVolumeHeader::get(ref, block);
     ASSERT(hdr->isHeaderValid());
@@ -133,9 +141,6 @@ void FlashVolume::deleteSingle() const
     FlashBlockWriter writer(ref);
     hdr->type = T_DELETED;
     hdr->typeCopy = T_DELETED;
-
-    // Must notify LFS that we deleted a volume
-    FlashLFSCache::invalidate();
 }
 
 void FlashVolume::deleteTree() const
