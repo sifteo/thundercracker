@@ -28,7 +28,7 @@ bool SvmDebugPipe::fault(FaultCode code)
 uint32_t *SvmDebugPipe::logReserve(SvmLogTag tag)
 {
     // XXX: Stub
-    static uint32_t buffer[7];
+    static uint32_t buffer[LOG_BUFFER_WORDS];
     return buffer;
 }
 
