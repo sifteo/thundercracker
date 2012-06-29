@@ -3,6 +3,7 @@
  * Copyright <c> 2012 Sifteo, Inc. All rights reserved.
  */
 
+#include "macros.h"
 #include "usart.h"
 #include "flash_stack.h"
 #include "hardware.h"
@@ -81,10 +82,10 @@ int main()
      */
 
     SysTime::init();
-    SysTime::Ticks start = SysTime::ticks();
 
     // This is the earliest point at which it's safe to use Usart::Dbg.
     Usart::Dbg.init(UART_RX_GPIO, UART_TX_GPIO, 115200);
+    UART(("Firmware " TOSTRING(SDK_VERSION) "\r\n"));
 
 #ifdef DEBUG
     DBGMCU_CR |= (1 << 30) |        // TIM14 stopped when core is halted
@@ -114,8 +115,7 @@ int main()
      *
      * For now, allow other initializations to run while we wait for the 2nd delay.
      */
-    while (SysTime::ticks() - start < SysTime::msTicks(110))
-        ;
+    while (SysTime::ticks() < SysTime::msTicks(110));
     Radio::init();
 
     Tasks::init();
@@ -137,8 +137,7 @@ int main()
      * radio throttling / power management.
      */
 
-    while (SysTime::ticks() - start < SysTime::msTicks(210))
-        ;
+    while (SysTime::ticks() < SysTime::msTicks(210));
     Radio::begin();
 
     /*
