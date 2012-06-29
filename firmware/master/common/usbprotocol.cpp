@@ -110,9 +110,6 @@ void USBProtocolHandler::installerHandler(const USBProtocolMsg &m)
         installation.crcwordBytes = 0;
         installation.crcword = 0;
 
-        // wait for the last transaction to finish
-        while (FlashDevice::writeInProgress())
-            ;
         // debug: read back out and verify CRC
         uint8_t b[FlashDevice::PAGE_SIZE];
         unsigned addr = 0;
