@@ -11,10 +11,10 @@
 #include "powermanager.h"
 
 /*
- * Test Jig application specific entry point.
+ * Bootloader specific entry point.
  * Lower level init happens in setup.cpp.
  */
-int main()
+void bootloadMain(bool userRequestedUpdate)
 {
     PowerManager::init();
 
@@ -30,5 +30,5 @@ int main()
 
     Bootloader loader;
     loader.init();
-    loader.exec(); // never returns
+    loader.exec(userRequestedUpdate); // never returns
 }

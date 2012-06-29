@@ -7,6 +7,7 @@ using namespace Sifteo;
 
 static Metadata M = Metadata()
     .title("TinySynth")
+    .package("com.sifteo.sdk.synth", "1.0")
     .cubeRange(1);
 
 static const CubeID cube = 0;

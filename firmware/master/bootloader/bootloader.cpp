@@ -17,16 +17,17 @@ const uint32_t Bootloader::APPLICATION_ADDRESS = Stm32Flash::START_ADDR + SIZE;
 void Bootloader::init()
 {
     firstLoad = true;
-
     Crc32::init();
-    Tasks::init();
 }
 
 /*
  * High level program flow of the bootloader.
  */
-void Bootloader::exec()
+void Bootloader::exec(bool userRequestedUpdate)
 {
+    if (userRequestedUpdate)
+        load();
+
     while (!mcuFlashIsValid())
         load();
 
@@ -50,6 +51,7 @@ void Bootloader::exec()
 void Bootloader::load()
 {
     if (firstLoad) {
+        Tasks::init();
         UsbDevice::init();
         Stm32Flash::unlock();
 
@@ -204,41 +206,6 @@ bool Bootloader::eraseMcuFlash()
 
     return true;
 }
-
-#if 0
-/*
- * Returns whether the updater functionality is enabled or not.
- * This is a persistent setting that can only be reset once we have
- * successfully installed a new update.
- */
-bool Bootloader::updaterIsEnabled()
-{
-    return (FLASH_OB.Data0 & 0x1) == 0x1;
-}
-
-/*
- * Disable the persistent updater bit.
- * Indicates that an update was successfully applied, and user code is ready to run.
- */
-void Bootloader::disableUpdater()
-{
-    Stm32Flash::eraseOptionBytes();
-    Stm32Flash::setOptionByte(Stm32Flash::OptionDATA0, 0);
-}
-
-/*
- * If we're loading as a result of a failed CRC check, we must ensure that
- * the persistent updater bit is set.
- */
-void Bootloader::ensureUpdaterIsEnabled()
-{
-    if (updaterIsEnabled())
-        return;
-
-    Stm32Flash::eraseOptionBytes();
-    Stm32Flash::setOptionByte(Stm32Flash::OptionDATA0, 1);
-}
-#endif
 
 /*
  * Validates the CRC of the contents of MCU flash.

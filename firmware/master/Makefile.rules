@@ -5,14 +5,16 @@ CDEPS := $(MASTER_DIR)/common/syscall-table.def
 all: $(BIN)
 
 $(BIN): $(OBJS_STM32)
-	$(LDSCRIPT_GEN)
 	$(CC) -o $@ $^ $(LDFLAGS)
 
-%.stm32.o: %.cpp $(CDEPS)
+%.stm32.o: %.cpp $(CDEPS) $(LDSCRIPT)
 	$(CC) -c $(CCFLAGS) $(DEPFLAGS) $< -o $@
 
 $(MASTER_DIR)/common/syscall-table.def: $(TC_DIR)/sdk/include/sifteo/abi/syscall.h $(MASTER_DIR)/tools/firmware-syscall-table.py
 	python $(MASTER_DIR)/tools/firmware-syscall-table.py < $< > $@
+
+$(MASTER_DIR)/stm32/target.ld:
+	$(LDSCRIPT_GEN)
 
 ocd:
 	openocd -f $(MASTER_DIR)/stm32/$(PROG_CONFIG) \
@@ -48,6 +50,7 @@ readelf: $(BIN)
 clean:
 	rm -f $(BIN)
 	rm -f $(OBJS_STM32)
+	rm -f $(MASTER_DIR)/stm32/target.ld
 	rm -rf .dep
 
 # include the dep files, and make a folder for them if necessary

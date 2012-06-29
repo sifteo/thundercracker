@@ -9,6 +9,8 @@ class Bootloader
 public:
     static const uint8_t VERSION = 1;
 
+    static const unsigned UPDATE_REQUEST_KEY = 0x5A5A5A5A;
+
     static const uint32_t SIZE = 0x2000;
     static const uint32_t APPLICATION_ADDRESS;
     // 128K total flash, minus the bootloader, and 2 uint32s for CRC and size
@@ -23,15 +25,12 @@ public:
     };
 
     static void init();
-    static void exec();
+    static void exec(bool userRequestedUpdate);
 
     static void onUsbData(const uint8_t *buf, unsigned numBytes);
 
 private:
     static void load();
-    static bool updaterIsEnabled();
-    static void disableUpdater();
-    static void ensureUpdaterIsEnabled();
     static bool eraseMcuFlash();
     static void decryptBlock(uint8_t *plaintext, const uint8_t *cipher);
     static void program(const uint8_t *data, unsigned len);

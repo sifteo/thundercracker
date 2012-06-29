@@ -31,6 +31,8 @@ if __name__ == '__main__':
     
     try:
         blob = storage.mcReadTruncated()
+        blob = SiftulatorFlash.zapSysLFSVolumes(blob)
+
         size = len(blob)
         sz = INSTALLER_HEADER
         for c in [size & 0xFF, (size >> 8) & 0xFF, (size >> 16) & 0xFF, (size >> 24) & 0xFF]:

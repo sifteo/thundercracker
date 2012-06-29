@@ -72,6 +72,28 @@ public:
     }
 
     /**
+     * @brief Add a unique machine-readable identity string to this game's metadata.
+     *
+     * Packages must be reverse DNS style strings. For example, a game named
+     * "Master Widget Crafter" by Sifteo may have the package string
+     * "com.sifteo.masterwidget".
+     *
+     * Version strings may be in a game-specific format. The game installer will
+     * compare version strings by splitting them on any period, and comparing
+     * numeric segments numerically and non-numeric segments lexicographically.
+     */
+    Metadata &package(const char *pkg, const char *version)
+    {
+        _SYS_lti_abort(_SYS_lti_counter("Sifteo.Metadata.Package", 0) != 0,
+            "Duplicate Metadata::package() instance.");
+
+        _SYS_lti_metadata(_SYS_METADATA_PACKAGE_STR, "sB", pkg, 0);
+        _SYS_lti_metadata(_SYS_METADATA_VERSION_STR, "sB", version, 0);
+
+        return *this;
+    }
+
+    /**
      * @brief Add an icon image to this game's metadata. The image needs to be
      * 96x96 pixels, and it should reside in a separate AssetGroup.
      */
