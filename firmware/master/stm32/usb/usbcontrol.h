@@ -2,6 +2,7 @@
 #define USBCONTROL_H
 
 #include "usb/usbdefs.h"
+#include "usb/usbhardware.h"
 
 class UsbControl
 {
