@@ -63,6 +63,14 @@ void init()
     OTG.global.GAHBCFG |= 0x1;          // global interrupt enable
 }
 
+void deinit()
+{
+    // turn on the peripheral clock
+    RCC.AHBENR &= ~(1 << 12);
+
+    OTG.global.GCCFG = 0;
+}
+
 /*
  * Handle a USBRST signal from the usb hardware.
  * Flush TX/RX buffers, disable all OUT endpoints, and do preliminary setup on

@@ -11,6 +11,7 @@ namespace UsbHardware
     static const unsigned MAX_PACKET = 64;
 
     void init();
+    void deinit();
     void reset();
 
     void setAddress(uint8_t addr);

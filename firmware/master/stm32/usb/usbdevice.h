@@ -32,6 +32,7 @@ public:
     static const uint8_t OutEpMaxPacket = 64;
 
     static void init();
+    static void deinit();
 
     static void handleReset();
     static void handleSuspend();

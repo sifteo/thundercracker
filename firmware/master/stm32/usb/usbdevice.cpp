@@ -175,6 +175,12 @@ void UsbDevice::init() {
     UsbCore::init(&dev, (Usb::ConfigDescriptor*)&configurationBlock, descriptorStrings);
 }
 
+void UsbDevice::deinit()
+{
+    UsbHardware::setDisconnected(true);
+    UsbHardware::deinit();
+}
+
 /*
  * Our configuration has been set, we're now ready to enable the endpoints
  * for the selected configuration - we only ever have one for this device.
