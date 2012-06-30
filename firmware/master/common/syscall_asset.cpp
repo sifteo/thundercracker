@@ -135,14 +135,10 @@ uint32_t _SYS_asset_loadStart(_SYSAssetLoader *loader, _SYSAssetGroup *group,
 
 void _SYS_asset_loadFinish(_SYSAssetLoader *loader)
 {
-    if (!isAligned(loader)) {
-        SvmRuntime::fault(F_SYSCALL_ADDR_ALIGN);
-        return;
-    }
-    if (!SvmMemory::mapRAM(loader)) {
-        SvmRuntime::fault(F_SYSCALL_ADDRESS);
-        return;
-    }
+    if (!isAligned(loader))
+        return SvmRuntime::fault(F_SYSCALL_ADDR_ALIGN);
+    if (!SvmMemory::mapRAM(loader))
+        return SvmRuntime::fault(F_SYSCALL_ADDRESS);
     
     if (!CubeSlots::assetLoader) {
         // No load in progress. No effect.
@@ -150,10 +146,8 @@ void _SYS_asset_loadFinish(_SYSAssetLoader *loader)
     }
 
     // Must be the correct loader instance!
-    if (CubeSlots::assetLoader != loader) {
+    if (CubeSlots::assetLoader != loader)
         return SvmRuntime::fault(F_SYSCALL_PARAM);
-        return;
-    }
 
     /*
      * Block until the load operation is finished, if it isn't already.
