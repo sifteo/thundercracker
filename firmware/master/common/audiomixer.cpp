@@ -187,8 +187,13 @@ void AudioMixer::pullAudio(void *p)
         for (int *i = blockBuffer, *e = blockBuffer + blockSize; i != e; ++i)
             *i = 0;
 
-        // Mix data from all channels.
-        bool mixed = AudioMixer::instance.mixAudio(blockBuffer, blockSize);
+        /*
+         * Mix data from all channels.
+         *
+         * (Disable mixing if the output is muted, both to save a little power
+         * and to make audio performance bugs easier to diagnose.)
+         */
+        bool mixed = mixerVolume && AudioMixer::instance.mixAudio(blockBuffer, blockSize);
 
         /*
          * The mixer had nothing for us? Normally this means
@@ -211,12 +216,6 @@ void AudioMixer::pullAudio(void *p)
         int *ptr = blockBuffer;
         do {
             int sample = (*(ptr++) * mixerVolume) >> _SYS_AUDIO_MAX_VOLUME_LOG2;
-
-            #if 0
-                UART("\r\ns "); UART_HEX(blockSize); UART(" "); UART_HEX(sample);
-                sample = 0;
-            #endif
-
             int16_t sample16 = Intrinsic::SSAT(sample, 16);
 
             #ifdef SIFTEO_SIMULATOR
