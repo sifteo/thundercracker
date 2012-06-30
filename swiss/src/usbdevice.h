@@ -15,6 +15,10 @@ public:
         return libusb_init(0);
     }
 
+    static void deinit() {
+        libusb_exit(0);
+    }
+
     void processEvents() {
         struct timeval tv = {
             0,  // tv_sec

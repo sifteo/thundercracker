@@ -82,6 +82,8 @@ int main(int argc, char **argv)
     fprintf(stderr, "no command named %s\n", commandName);
     usage();
 
+    UsbDevice::deinit();
+
     return 1;
 }
 
