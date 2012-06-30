@@ -15,7 +15,7 @@ public:
     static void earlyInit();
     static void init();
 
-    static State state() {
+    static ALWAYS_INLINE State state() {
         return _state;
     }
 

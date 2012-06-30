@@ -7,6 +7,8 @@
 #include "usb/usbdevice.h"
 #include "aes128.h"
 #include "stm32flash.h"
+#include "powermanager.h"
+#include "systime.h"
 
 #include "string.h"
 
@@ -18,6 +20,7 @@ void Bootloader::init()
 {
     firstLoad = true;
     Crc32::init();
+    SysTime::init();
 }
 
 /*
@@ -25,11 +28,15 @@ void Bootloader::init()
  */
 void Bootloader::exec(bool userRequestedUpdate)
 {
-    if (userRequestedUpdate)
+    if (userRequestedUpdate || manualUpdateRequested())
         load();
 
     while (!mcuFlashIsValid())
         load();
+
+    // if we attempted to load, cleanup
+    if (!firstLoad)
+        cleanup();
 
     uint32_t msp = *reinterpret_cast<uint32_t*>(APPLICATION_ADDRESS);
     uint32_t resetVector = *reinterpret_cast<uint32_t*>(APPLICATION_ADDRESS + 4);
@@ -37,10 +44,29 @@ void Bootloader::exec(bool userRequestedUpdate)
     // never comes back
 }
 
-#define AES_IV  {  0x00, 0x01, 0x02, 0x03, \
-                    0x04, 0x05, 0x06, 0x07, \
-                    0x08, 0x09, 0x0a, 0x0b, \
-                    0x0c, 0x0d, 0x0e, 0x0f }
+
+/*
+ * Provide a manual override of the standard startup process to account for the
+ * scenario in which faulty firmware has been (successfully) loaded to a device.
+ *
+ * USB power must be applied, and home button must be pressed for 1 second.
+ */
+bool Bootloader::manualUpdateRequested()
+{
+    if (PowerManager::state() != PowerManager::UsbPwr)
+        return false;
+
+    GPIOPin homeButton = BTN_HOME_GPIO;
+    homeButton.setControl(GPIOPin::IN_FLOAT);
+
+    while (SysTime::ticks() < SysTime::sTicks(1)) {
+        // active high - bail if released
+        if (homeButton.isLow())
+            return false;
+    }
+
+    return true;
+}
 
 /*
  * Load a new firmware image from our host over USB.
@@ -55,6 +81,11 @@ void Bootloader::load()
         UsbDevice::init();
         Stm32Flash::unlock();
 
+        // Indicate we're loading
+        GPIOPin red = LED_RED_GPIO;
+        red.setControl(GPIOPin::OUT_2MHZ);
+        red.setLow();
+
         firstLoad = false;
     }
 
@@ -64,7 +95,10 @@ void Bootloader::load()
     // initialize decryption
     // XXX: select actual values
     const uint32_t key[4] = { 0x2b7e1516, 0x28aed2a6, 0xabf71588, 0x09cf4f3c };
-    const uint8_t iv[] = AES_IV;
+    const uint8_t iv[] =    { 0x00, 0x01, 0x02, 0x03,   \
+                              0x04, 0x05, 0x06, 0x07,   \
+                              0x08, 0x09, 0x0a, 0x0b,   \
+                              0x0c, 0x0d, 0x0e, 0x0f };
     AES128::expandKey(update.expandedKey, key);
     memcpy(update.cipherBuf, iv, AES128::BLOCK_SIZE);
 
@@ -237,6 +271,16 @@ bool Bootloader::mcuFlashIsValid()
     // CRC is stored in flash directly after the FW image
     const uint32_t storedCrc = *address;
     return (storedCrc == calculatedCrc);
+}
+
+/*
+ * Any deinit or cleanup required before we jump to application code.
+ */
+void Bootloader::cleanup()
+{
+    // ensure LED is off
+    GPIOPin red = LED_RED_GPIO;
+    red.setHigh();
 }
 
 /*

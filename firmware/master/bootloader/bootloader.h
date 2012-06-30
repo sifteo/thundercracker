@@ -30,11 +30,13 @@ public:
     static void onUsbData(const uint8_t *buf, unsigned numBytes);
 
 private:
+    static bool manualUpdateRequested();
     static void load();
     static bool eraseMcuFlash();
     static void decryptBlock(uint8_t *plaintext, const uint8_t *cipher);
     static void program(const uint8_t *data, unsigned len);
     static bool mcuFlashIsValid();
+    static void cleanup();
     static void jumpToApplication(uint32_t msp, uint32_t resetVector);
 
     struct Update {
