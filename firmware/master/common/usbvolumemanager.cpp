@@ -45,7 +45,6 @@ void UsbVolumeManager::onUsbData(const USBProtocolMsg &m)
         if (writer.begin(FlashVolume::T_GAME, numBytes)) {
             m.header |= WroteHeaderOK;
         } else {
-            UART("couldn't start new header\r\n");
             m.header |= WroteHeaderFail;
         }
 
