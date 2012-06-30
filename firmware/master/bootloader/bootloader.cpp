@@ -281,6 +281,8 @@ void Bootloader::cleanup()
     // ensure LED is off
     GPIOPin red = LED_RED_GPIO;
     red.setHigh();
+
+    UsbDevice::deinit();
 }
 
 /*
