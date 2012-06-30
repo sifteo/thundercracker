@@ -21,6 +21,7 @@
 #include "powermanager.h"
 #include "crc.h"
 #include "sampleprofiler.h"
+#include "bootloader.h"
 
 /*
  * Application specific entry point.
@@ -35,7 +36,7 @@ int main()
      * for offset at which we're placed into MCU flash.
      */
 #ifdef BOOTLOADABLE
-    NVIC.setVectorTable(NVIC.VectorTableFlash, 0x2000);
+    NVIC.setVectorTable(NVIC.VectorTableFlash, Bootloader::SIZE);
 #endif
 
     /*
