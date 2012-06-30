@@ -1,36 +1,66 @@
 #include "usbvolumemanager.h"
+#include "elfprogram.h"
+
+#ifndef SIFTEO_SIMULATOR
+#include "usb/usbdevice.h"
+#endif
 
 FlashVolumeWriter UsbVolumeManager::writer;
-uint32_t UsbVolumeManager::installationSize;
-uint32_t UsbVolumeManager::installationProgress;
 
 void UsbVolumeManager::onUsbData(const USBProtocolMsg &m)
 {
     switch (m.header & 0xff) {
 
     case WriteHeader: {
-        const uint32_t numBytes = *reinterpret_cast<const uint32_t*>(m.payload);
-        if (m.payloadLen() < sizeof(numBytes)) {
-            // send error?
+
+        if (m.payloadLen() < 5)
             break;
+
+        const uint32_t numBytes = *reinterpret_cast<const uint32_t*>(m.payload);
+        const char* packageStr = reinterpret_cast<const char*>(m.payload + sizeof(numBytes));
+        if (!memchr(packageStr, 0, m.payloadLen() - 4))
+            break;
+
+        /*
+         * Delete any previous versions of this game that are installed.
+         */
+        FlashVolumeIter vi;
+        FlashVolume vol;
+
+        vi.begin();
+        while (vi.next(vol)) {
+            if (vol.getType() != FlashVolume::T_GAME)
+                continue;
+
+            FlashBlockRef ref;
+            Elf::Program program;
+            if (program.init(vol.getPayload(ref))) {
+                const char *str = program.getMetaString(ref, _SYS_METADATA_PACKAGE_STR);
+                if (str && !strcmp(str, packageStr))
+                    vol.deleteTree();
+            }
         }
 
-        installationSize = numBytes;
-        installationProgress = 0;
-        if (!writer.begin(FlashVolume::T_GAME, numBytes)) {
-            // send error?
+        USBProtocolMsg m(USBProtocol::Installer);
+        if (writer.begin(FlashVolume::T_GAME, numBytes)) {
+            m.header |= WroteHeaderOK;
+        } else {
+            UART("couldn't start new header\r\n");
+            m.header |= WroteHeaderFail;
         }
+
+#ifndef SIFTEO_SIMULATOR
+        UsbDevice::write(m.bytes, m.len);
+#endif
         break;
     }
 
     case WritePayload:
         writer.appendPayload(m.payload, m.payloadLen());
-        installationProgress += m.payloadLen();
         break;
 
     case WriteCommit:
-        if (installationProgress == installationSize)
-            writer.commit();
+        writer.commit();
         break;
 
     default:
