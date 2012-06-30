@@ -49,20 +49,24 @@ void AudioMixer::init()
     XmTrackerPlayer::instance.init();
 }
 
-/*
- * Mix audio from flash into the audio device's buffer via each of the channels.
- *
- * This currently assumes that it's being run on the main thread, such that it
- * can operate synchronously with data arriving from flash.
- *
- * Returns true if any audio data was available. If so, we're guaranteed
- * to produce exactly 'numFrames' of data.
- *
- * Assumes the buffer was already zero'ed. Each channel is mixed together
- * into the same buffer.
- */
 ALWAYS_INLINE bool AudioMixer::mixAudio(int *buffer, uint32_t numFrames)
 {
+    /*
+     * Mix audio from flash into the audio device's buffer via each of the channels.
+     *
+     * This currently assumes that it's being run on the main thread, such that it
+     * can operate synchronously with data arriving from flash.
+     *
+     * Returns true if any audio data was available. If so, we're guaranteed
+     * to produce exactly 'numFrames' of data.
+     *
+     * Assumes the buffer was already zero'ed. Each channel is mixed together
+     * into the same buffer.
+     *
+     * If buffer is NULL, we update the state of all channels without
+     * actually generating any audio data.
+     */
+    
     bool result = false;
 
     uint32_t mask = playingChannelMask;
@@ -176,24 +180,37 @@ void AudioMixer::pullAudio(void *p)
 
     // Calculating volume is relatively expensive; do it only if we have audio to mix.
     const int mixerVolume = Volume::systemVolume();
-    ASSERT(mixerVolume <= _SYS_AUDIO_MAX_VOLUME);
+    ASSERT(mixerVolume >= 0 && mixerVolume <= _SYS_AUDIO_MAX_VOLUME);
 
     do {
+        bool mixed;
         uint32_t blockSize = MIN(arraysize(blockBuffer), samplesLeft);
         blockSize = MIN(blockSize, trackerCountdown);
         ASSERT(blockSize > 0);
 
-        // Zero out the buffer (Faster than memset)
-        for (int *i = blockBuffer, *e = blockBuffer + blockSize; i != e; ++i)
-            *i = 0;
+        if (mixerVolume) {
+            // Not muted. Generate audio data
 
-        /*
-         * Mix data from all channels.
-         *
-         * (Disable mixing if the output is muted, both to save a little power
-         * and to make audio performance bugs easier to diagnose.)
-         */
-        bool mixed = mixerVolume && AudioMixer::instance.mixAudio(blockBuffer, blockSize);
+            // Zero out the buffer (Faster than memset)
+            for (int *i = blockBuffer, *e = blockBuffer + blockSize; i != e; ++i)
+                *i = 0;
+
+            // Mix data from all channels.
+            mixed = AudioMixer::instance.mixAudio(blockBuffer, blockSize);
+    
+        } else {
+            /*  
+             * Disable mixing if the output is muted, both to save a little power
+             * and to make audio performance bugs easier to diagnose.
+             *
+             * We still need to go into each channel's mixer in order to update
+             * channel state, but this inhibits the expensive decompression and
+             * mixing operations from occurring.
+             */
+
+            AudioMixer::instance.mixAudio(0, blockSize);
+            mixed = false;
+        }
 
         /*
          * The mixer had nothing for us? Normally this means
@@ -211,6 +228,10 @@ void AudioMixer::pullAudio(void *p)
         /*
          * Finish mixing our block of audio, by applying the system-wide
          * volume control and clamping to 16 bits.
+         *
+         * We do this even if muted (as long as tracker audio is running)
+         * so there's a consistent time-base, based on the audio clock's
+         * rate of consuming silent samples.
          */
 
         int *ptr = blockBuffer;
