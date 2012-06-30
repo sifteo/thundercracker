@@ -141,33 +141,6 @@ int main()
     Radio::begin();
 
     /*
-     * Temporary until we have a proper context to install new games in.
-     * If button is held on startup, wait for asset installation.
-     *
-     * Kind of crappy, but just power cycle to start again and run the game.
-     */
-    SysTime::Ticks button_delay = SysTime::ticks();
-    
-    if (HomeButton::isPressed()) {
-
-        //Creates a delay. Cancels if home button is released.
-        while (SysTime::ticks() - button_delay < SysTime::msTicks(1000) && HomeButton::isPressed() )
-            ;
-
-        //Checks to see if the home button is still pressed after 1 second
-        if( HomeButton::isPressed() ) {
-
-          // indicate we're waiting
-          GPIOPin green = LED_GREEN_GPIO;
-          green.setControl(GPIOPin::OUT_10MHZ);
-          green.setLow();
-
-          for (;;)
-              Tasks::work();
-        }
-    }
-
-    /*
      * Start the game runtime, and execute the Launcher app.
      */
 
