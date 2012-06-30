@@ -39,8 +39,10 @@ namespace Sifteo {
 class Metadata {
 public:
     /**
-     * @brief Initialize all required system metadata. Other optional metadata can be
-     * added using individual methods on the Metadata class.     
+     * @brief Initialize all required system metadata.
+     *
+     * Other optional metadata can be added using individual methods
+     * on the Metadata class.
      */
     Metadata()
     {
@@ -94,8 +96,10 @@ public:
     }
 
     /**
-     * @brief Add an icon image to this game's metadata. The image needs to be
-     * 96x96 pixels, and it should reside in a separate AssetGroup.
+     * @brief Add an icon image to this game's metadata.
+     *
+     * The image needs to be 96x96 pixels, and it should reside
+     * in a separate AssetGroup.
      */
     Metadata &icon(const _SYSAssetImage &i)
     {
@@ -126,6 +130,9 @@ public:
 
     /**
      * @brief Set the minimum and maximum number of supported cubes for this game.
+     *
+     * The game will be prevented from running or paused until the number
+     * of connected cubes in the system satisfies the given range.
      */
     Metadata &cubeRange(unsigned minCubes, unsigned maxCubes)
     {
@@ -145,7 +152,10 @@ public:
 
     /**
      * @brief The one-argument version of cubeRange sets up identical minimum and
-     * maximum cube counts. The game requires exactly this many cubes.
+     * maximum cube counts.
+     *
+     * The game will be prevented from running or paused until at least the
+     * specific count of cubes are connected to the system.
      */
     Metadata &cubeRange(unsigned count)
     {
