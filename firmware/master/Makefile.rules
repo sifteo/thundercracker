@@ -32,6 +32,7 @@ unlock:
 erase:
 	openocd -f $(MASTER_DIR)/stm32/$(PROG_CONFIG) \
 	-c init \
+	-c "reset halt" \
 	-c "stm32f1x mass_erase 0" \
 	-c reset \
 	-c exit
