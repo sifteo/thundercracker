@@ -29,14 +29,21 @@
  */
 int main()
 {
-    PowerManager::init();
-
     /*
      * If we've gotten bootloaded, relocate the vector table to account
      * for offset at which we're placed into MCU flash.
+     *
+     * Avoid reinitializing periphs that the bootloader has already init'd:
+     * - PowerManager
+     * - SysTime
+     * - Crc
      */
 #ifdef BOOTLOADABLE
     NVIC.setVectorTable(NVIC.VectorTableFlash, Bootloader::SIZE);
+#else
+    PowerManager::init();
+    SysTime::init();
+    Crc32::init();
 #endif
 
     /*
@@ -82,8 +89,6 @@ int main()
      * High-level hardware initialization
      */
 
-    SysTime::init();
-
     // This is the earliest point at which it's safe to use Usart::Dbg.
     Usart::Dbg.init(UART_RX_GPIO, UART_TX_GPIO, 115200);
     UART(("Firmware " TOSTRING(SDK_VERSION) "\r\n"));
@@ -104,8 +109,6 @@ int main()
                  (1 << 11) |        // TIM2 ""
                  (1 << 10);         // TIM1 ""
 #endif
-
-    Crc32::init();
 
     /*
      * NOTE: the radio has 2 100ms delays on a power on reset: one before
