@@ -1,10 +1,11 @@
 
 TC_DIR := ..
+BIN_DIR := $(TC_DIR)/sdk/bin
 MASTER_DIR := $(TC_DIR)/firmware/master
 
 include $(TC_DIR)/Makefile.platform
 
-BIN := swiss$(BIN_EXT)
+BIN := swiss
 
 OBJS := \
     src/main.o          \
@@ -37,19 +38,4 @@ CCFLAGS += -DSDK_VERSION=$(VERSION) -DSIFTEO_SIMULATOR -D__STDC_FORMAT_MACROS -D
 LDFLAGS := -L$(DEPS_DIR)/libusbx/lib -lusb-1.0
 LDFLAGS += $(LIB_STDCPP)
 
-all: $(BIN)
-
-$(BIN): $(OBJS)
-	$(CC) -o $(BIN) $(OBJS) $(LDFLAGS)
-
-%.o: %.cpp
-	$(CC) -c $(INCLUDES) $(CCFLAGS) $(FLAGS) $*.cpp -o $*.o
-
-%.o: %.c
-	$(CC) -c $(CFLAGS) $*.c -o $*.o
-
-.PHONY: clean
-
-clean:
-	rm -Rf $(BIN)
-	rm -Rf $(OBJS) $(DEPFILES) $(BIN).dSYM
+include Makefile.rules
