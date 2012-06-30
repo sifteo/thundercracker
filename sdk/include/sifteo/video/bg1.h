@@ -238,7 +238,7 @@ struct BG1Mask {
              ~rowDC,
              ~rowFE,
         };
-        return result;       
+        return result;
     }
 };
 
@@ -321,7 +321,7 @@ struct BG1Drawable {
      * and resetting the panning registers.
      */
     void erase(uint16_t index = 0) {
-		eraseMask();
+        eraseMask();
         _SYS_vbuf_fill(&sys.vbuf, _SYS_VA_BG1_TILES / 2,
             _SYS_TILE77(index), numTiles());
         setPanning(vec(0,0));
