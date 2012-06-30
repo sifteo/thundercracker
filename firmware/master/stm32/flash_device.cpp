@@ -40,10 +40,6 @@ void FlashDevice::chipErase() {
     flash.chipErase();
 }
 
-bool FlashDevice::writeInProgress() {
-    return flash.writeInProgress();
-}
-
 void FlashDevice::readId(JedecID *id)
 {
     flash.readId(id);

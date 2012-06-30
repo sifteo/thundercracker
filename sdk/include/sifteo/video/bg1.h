@@ -321,7 +321,7 @@ struct BG1Drawable {
      * and resetting the panning registers.
      */
     void erase(uint16_t index = 0) {
-        _SYS_vbuf_fill(&sys.vbuf, _SYS_VA_BG1_BITMAP, 0, _SYS_VRAM_BG1_WIDTH);
+		eraseMask();
         _SYS_vbuf_fill(&sys.vbuf, _SYS_VA_BG1_TILES / 2,
             _SYS_TILE77(index), numTiles());
         setPanning(vec(0,0));

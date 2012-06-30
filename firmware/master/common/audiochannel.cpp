@@ -48,6 +48,12 @@ void AudioChannelSlot::play(const struct _SYSAudioModule *module, _SYSAudioLoopT
 
 bool AudioChannelSlot::mixAudio(int *buffer, uint32_t numFrames)
 {
+    /*
+     * Add this channel's contribution to 'buffer' for
+     * 'numFrames' audio frames. If the buffer is NULL,
+     * update state without outputting any audio.
+     */
+
     // Early out if this channel is in the process of being stopped by the main thread.
     if ((state & STATE_STOPPED) || mod.dataSize == 0) {
         #ifdef SIFTEO_SIMULATOR
@@ -84,32 +90,35 @@ bool AudioChannelSlot::mixAudio(int *buffer, uint32_t numFrames)
         }
 
         // Compute the next sample
-        int sample;
-        unsigned index = localOffset >> SAMPLE_FRAC_SIZE;
-        unsigned fractional = localOffset & SAMPLE_FRAC_MASK;
+        if (buffer) {
+            int sample;
+            unsigned index = localOffset >> SAMPLE_FRAC_SIZE;
+            unsigned fractional = localOffset & SAMPLE_FRAC_MASK;
 
-        if (!fractional) {
-            // Offset is aligned with an asset sample
-            sample = samples.getSample(index, mod);
-        } else {
-            // Linearly interpolate between the two relevant samples            
-            int next = samples.getSamplePair(index, mod, sample);
-            sample += ((next - sample) * int(fractional)) >> SAMPLE_FRAC_SIZE;
+            if (!fractional) {
+                // Offset is aligned with an asset sample
+                sample = samples.getSample(index, mod);
+            } else {
+                // Linearly interpolate between the two relevant samples            
+                int next = samples.getSamplePair(index, mod, sample);
+                sample += ((next - sample) * int(fractional)) >> SAMPLE_FRAC_SIZE;
+            }
+
+            // Mix volume
+            sample = (sample * latchedVolume) >> _SYS_AUDIO_MAX_VOLUME_LOG2;
+
+            #ifdef SIFTEO_SIMULATOR
+                MCAudioVisData::writeChannelSample(AudioMixer::instance.channelID(this), sample);
+            #endif
+
+            // Mix into buffer (No need to clamp yet)
+            *buffer += sample;
+            buffer++;
         }
-
-        // Mix volume
-        sample = (sample * latchedVolume) >> _SYS_AUDIO_MAX_VOLUME_LOG2;
-
-        #ifdef SIFTEO_SIMULATOR
-            MCAudioVisData::writeChannelSample(AudioMixer::instance.channelID(this), sample);
-        #endif
-
-        // Mix into buffer (No need to clamp yet)
-        *buffer += sample;
 
         // Advance to the next output sample
         localOffset += latchedIncrement;
-        buffer++;
+
     } while (--numFrames);
 
     offset = localOffset;

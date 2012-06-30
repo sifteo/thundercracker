@@ -30,6 +30,9 @@ public:
     /// This is a standard way to halt execution indefinitely, in case of fatal error.
     static void haltForever();
 
+    /// Like haltForever(), but allow resuming on home button press/release
+    static void haltUntilButton();
+
     PanicMessenger &at(int x, int y) {
         addr = x + _SYS_VRAM_BG0_WIDTH * y;
         return *this;
@@ -42,6 +45,7 @@ public:
 
 private:
     void dumpScreenToUART();
+    static void animateLED();
 };
 
 

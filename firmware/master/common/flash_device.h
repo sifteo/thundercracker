@@ -26,7 +26,6 @@ public:
 
     static void read(uint32_t address, uint8_t *buf, unsigned len);
     static void write(uint32_t address, const uint8_t *buf, unsigned len);
-    static bool writeInProgress();
 
     DEBUG_ONLY(static void setStealthIO(int counter);)
     DEBUG_ONLY(static void verify(uint32_t address, const uint8_t *buf, unsigned len);)

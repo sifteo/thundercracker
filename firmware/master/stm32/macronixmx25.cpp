@@ -27,15 +27,12 @@ void MacronixMX25::init()
     spi.transfer(0);    // ensure block protection is disabled
     spi.end();
 
+    mightBeBusy = false;
     while (readReg(ReadStatusReg) != Ok) {
         ; // sanity checking?
     }
 }
 
-/*
-    Simple synchronous reading.
-    TODO - DMA!
-*/
 void MacronixMX25::read(uint32_t address, uint8_t *buf, unsigned len)
 {
     const uint8_t cmd[] = { FastRead,
@@ -43,17 +40,15 @@ void MacronixMX25::read(uint32_t address, uint8_t *buf, unsigned len)
                             address >> 8,
                             address >> 0,
                             Nop };  // dummy
+
+    waitWhileBusy();
     spi.begin();
 
     spi.txDma(cmd, sizeof(cmd));
-    while (spi.dmaInProgress()) {
-        ;
-    }
+    waitForDma();
 
     spi.transferDma(buf, buf, len);
-    while (spi.dmaInProgress()) {
-        ;
-    }
+    waitForDma();
 
     spi.end();
 }
@@ -68,9 +63,7 @@ void MacronixMX25::write(uint32_t address, const uint8_t *buf, unsigned len)
         uint32_t pagelen = FlashDevice::PAGE_SIZE - (address & (FlashDevice::PAGE_SIZE - 1));
         if (pagelen > len) pagelen = len;
 
-        // wait for any previous write/erase to complete
-        while (writeInProgress())
-            ;
+        waitWhileBusy();
         ensureWriteEnabled();
 
         const uint8_t cmd[] = { PageProgram,
@@ -83,16 +76,13 @@ void MacronixMX25::write(uint32_t address, const uint8_t *buf, unsigned len)
         len -= pagelen;
         address += pagelen;
 
-        while (spi.dmaInProgress()) {
-            ;
-        }
-
+        waitForDma();
         spi.txDma(buf, pagelen);
         buf += pagelen;
-        while (spi.dmaInProgress()) {
-            ;
-        }
+        waitForDma();
+
         spi.end();
+        mightBeBusy = true;
     }
 }
 
@@ -101,9 +91,7 @@ void MacronixMX25::write(uint32_t address, const uint8_t *buf, unsigned len)
  */
 void MacronixMX25::eraseSector(uint32_t address)
 {
-    // wait for any previous write/erase to complete
-    while (writeInProgress())
-        ;
+    waitWhileBusy();
     ensureWriteEnabled();
 
     spi.begin();
@@ -112,6 +100,8 @@ void MacronixMX25::eraseSector(uint32_t address)
     spi.transfer(address >> 8);
     spi.transfer(address >> 0);
     spi.end();
+
+    mightBeBusy = true;
 }
 
 /*
@@ -119,9 +109,7 @@ void MacronixMX25::eraseSector(uint32_t address)
  */
 void MacronixMX25::eraseBlock(uint32_t address)
 {
-    // wait for any previous write/erase to complete
-    while (writeInProgress())
-        ;
+    waitWhileBusy();
     ensureWriteEnabled();
 
     spi.begin();
@@ -130,18 +118,20 @@ void MacronixMX25::eraseBlock(uint32_t address)
     spi.transfer(address >> 8);
     spi.transfer(address >> 0);
     spi.end();
+
+    mightBeBusy = true;
 }
 
 void MacronixMX25::chipErase()
 {
-    // wait for any previous write/erase to complete
-    while (writeInProgress())
-        ;
+    waitWhileBusy();
     ensureWriteEnabled();
 
     spi.begin();
     spi.transfer(ChipErase);
     spi.end();
+
+    mightBeBusy = true;
 }
 
 void MacronixMX25::ensureWriteEnabled()
@@ -155,6 +145,7 @@ void MacronixMX25::ensureWriteEnabled()
 
 void MacronixMX25::readId(FlashDevice::JedecID *id)
 {
+    waitWhileBusy();    
     spi.begin();
 
     spi.transfer(ReadID);
@@ -199,4 +190,21 @@ void MacronixMX25::wakeFromDeepSleep()
     spi.transfer(Nop);
     spi.end();
     // TODO - CSN must remain high for 30us on transition out of deep sleep
+}
+
+void MacronixMX25::waitWhileBusy()
+{
+    if (mightBeBusy) {
+        while (readReg(ReadStatusReg) & WriteInProgress) {
+            // Kill time.. not safe to execute tasks here.
+        }
+        mightBeBusy = false;
+    }
+}
+
+void MacronixMX25::waitForDma()
+{
+    while (spi.dmaInProgress()) {
+        // Kill time.. not safe to execute tasks here.
+    }
 }

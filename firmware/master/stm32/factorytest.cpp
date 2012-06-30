@@ -137,11 +137,6 @@ void FactoryTest::flashReadWriteHandler(uint8_t argc, const uint8_t *args)
     const uint8_t txbuf[] = { 0, 1, 2, 3, 4, 5, 6, 7, 8, 9 };
     FlashDevice::write(addr, txbuf, sizeof txbuf);
 
-    // write/erase only wait before starting the *next* operation, so make sure
-    // this write is complete before reading
-    while (FlashDevice::writeInProgress())
-        ;
-
     uint8_t rxbuf[sizeof txbuf];
     FlashDevice::read(addr, rxbuf, sizeof rxbuf);
 

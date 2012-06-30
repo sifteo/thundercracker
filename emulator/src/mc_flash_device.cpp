@@ -119,9 +119,3 @@ void FlashDevice::init()
 {
     // No-op in the simulator
 }
-
-bool FlashDevice::writeInProgress()
-{
-    // This is never async in the simulator
-    return false;
-}

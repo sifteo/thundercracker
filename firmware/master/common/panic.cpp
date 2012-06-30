@@ -11,6 +11,7 @@
 #include "systime.h"
 #include "led.h"
 #include "tasks.h"
+#include "homebutton.h"
 
 
 void PanicMessenger::init(SvmMemory::VirtAddr vbufVA)
@@ -154,14 +155,33 @@ void PanicMessenger::haltForever()
     LOG(("PANIC: System halted!\n"));
     UART(("PANIC: System halted!\r\n"));
 
+    while (1)
+        animateLED();
+}
+
+void PanicMessenger::haltUntilButton()
+{
+    LOG(("PANIC: Waiting for button press\n"));
+    UART(("PANIC: Waiting for button press\r\n"));
+
+    // Wait for press
+    while (!HomeButton::isPressed())
+        animateLED();
+
+    // Wait for release
+    while (HomeButton::isPressed())
+        animateLED();
+}
+
+void PanicMessenger::animateLED()
+{
     static const uint8_t pattern[] = {
         // OH NO!!!!
         LED::RED, LED::GREEN, LED::OFF, LED::OFF,
     };
 
-    for (;;) {
-        STATIC_ASSERT(arraysize(pattern) == 4);
-        LED::set(LED::Color(pattern[(SysTime::ticks() >> 26) & 3]));
-        Tasks::idle();
-    }
+    STATIC_ASSERT(arraysize(pattern) == 4);
+    LED::set(LED::Color(pattern[(SysTime::ticks() >> 26) & 3]));
+
+    Tasks::idle();
 }
