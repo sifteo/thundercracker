@@ -18,7 +18,7 @@ endif
 # Mac-only
 ifeq ($(BUILD_PLATFORM), Darwin)
 	ALL_SDK_DEPS += \
-		sdk/bin/make
+		sdk/bin/make \
 		sdk/bin/libusb-1.0.dylib
 endif
 
