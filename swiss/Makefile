@@ -7,13 +7,13 @@ include $(TC_DIR)/Makefile.platform
 BIN := swiss$(BIN_EXT)
 
 OBJS := \
-    main.o          \
-    usbdevice.o     \
-    fwloader.o      \
-    profiler.o      \
-    elfdebuginfo.o  \
-    mappedfile.o    \
-    installer.o
+    src/main.o          \
+    src/usbdevice.o     \
+    src/fwloader.o      \
+    src/profiler.o      \
+    src/elfdebuginfo.o  \
+    src/mappedfile.o    \
+    src/installer.o
 
 # include directories
 INCLUDES := \
