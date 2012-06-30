@@ -21,7 +21,6 @@
 #include "flash_blockcache.h"
 #include "flash_stack.h"
 #include "flash_volume.h"
-#include "usbprotocol.h"
 #include "svmloader.h"
 #include "svmcpu.h"
 #include "svmruntime.h"
@@ -51,7 +50,6 @@ bool SystemMC::init(System *sys)
     }
 
     FlashStack::init();
-    USBProtocolHandler::init();
     Crc32::init();
 
     if (!instance->sys->opt_headless) {
