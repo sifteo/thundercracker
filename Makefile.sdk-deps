@@ -10,14 +10,16 @@ ifeq ($(BUILD_PLATFORM), windows32)
 	ALL_SDK_DEPS += \
 		sdk/bin/libgcc_s_dw2-1.dll \
 		sdk/bin/libstdc++-6.dll \
-        sdk/bin/make.exe \
-        sdk/bin/rm.exe
+		sdk/bin/make.exe \
+		sdk/bin/rm.exe  \
+		sdk/bin/libusb-1.0.dll
 endif
 
 # Mac-only
 ifeq ($(BUILD_PLATFORM), Darwin)
 	ALL_SDK_DEPS += \
 		sdk/bin/make
+		sdk/bin/libusb-1.0.dylib
 endif
 
 .PHONY: sdk-deps sdk-deps-clean
@@ -34,6 +36,12 @@ sdk/bin/libgcc_s_dw2-1.dll: $(LLVM_BIN)/libgcc_s_dw2-1.dll
 	install $< $@
 
 sdk/bin/libstdc++-6.dll: $(LLVM_BIN)/libstdc++-6.dll
+	install $< $@
+
+sdk/bin/libusb-1.0.dll: $(DEPS_DIR)/libusbx/lib/libusb-1.0.dll
+	install $< $@
+
+sdk/bin/libusb-1.0.dylib: $(DEPS_DIR)/libusbx/lib/libusb-1.0.dylib
 	install $< $@
 
 sdk/bin/make: $(DEPS_DIR)/gnu/make
