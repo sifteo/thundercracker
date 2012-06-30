@@ -2,6 +2,9 @@
 #define INSTALLER_H
 
 #include "iodevice.h"
+#include "usbvolumemanager.h"
+
+#include <string>
 
 class Installer
 {
@@ -11,17 +14,12 @@ public:
     // entry point for the 'profile' command
     static int run(int argc, char **argv, IODevice &_dev);
 
-    // in sync with firmware/master/common/usbvolumemanager.h
-    enum Command {
-        WriteHeader,
-        WritePayload,
-        WriteCommit
-    };
-
     bool install(const char *path, int vid, int pid);
 
 private:
-    bool sendHeader(uint32_t filesz);
+    bool sendHeader(uint32_t filesz, const std::string &pkg);
+    bool getPackageMetadata(const char *path, std::string &pkg, std::string &version);
+    bool sendFileContents(FILE *f, uint32_t filesz);
     bool commit();
 
     IODevice &dev;
