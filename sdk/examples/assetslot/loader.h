@@ -30,5 +30,5 @@ private:
     Sifteo::CubeSet cubes;
     Sifteo::AssetSlot loaderSlot;
     Sifteo::VideoBuffer *vid;
-    Sifteo::AssetLoader assetLoader;
+    Sifteo::ScopedAssetLoader assetLoader;
 };

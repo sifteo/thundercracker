@@ -185,6 +185,7 @@ uint32_t _SYS_asset_loadStart(struct _SYSAssetLoader *loader, struct _SYSAssetGr
 void _SYS_asset_loadFinish(struct _SYSAssetLoader *loader) _SC(135);
 uint32_t _SYS_asset_findInCache(struct _SYSAssetGroup *group, _SYSCubeIDVector cv) _SC(136);
 void _SYS_asset_bindSlots(_SYSVolumeHandle volume, unsigned numSlots) _SC(166);
+void _SYS_asset_loadCancel(struct _SYSAssetLoader *loader) _SC(167);
 
 // Video buffers
 void _SYS_setVideoBuffer(_SYSCubeID cid, struct _SYSVideoBuffer *vbuf) _SC(60);

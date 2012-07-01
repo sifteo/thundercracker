@@ -208,6 +208,75 @@ void testFull()
 }
 
 
+void testCancel()
+{
+    /*
+     * Test the indeterminate state slots are in during loading.
+     */
+
+    AssetGroup &g1 = NumberList[0].assetGroup();
+    AssetGroup &g2 = NumberList[1].assetGroup();
+
+    LOG("================= Testing cancellation\n");
+
+    // Bind all four slots, using our own volume ID
+    _SYS_asset_bindSlots(_SYS_fs_runningVolume(), 4);
+
+    // The previous test should have left the first slot full. Erase it.
+    ASSERT(Slot0.tilesFree() != 4096);
+    ASSERT(Slot1.tilesFree() != 4096);
+    ASSERT(Slot2.tilesFree() != 4096);
+    ASSERT(Slot3.tilesFree() != 4096);
+    Slot0.erase();
+    Slot1.erase();
+    Slot2.erase();
+    Slot3.erase();
+    ASSERT(Slot0.tilesFree() == 4096);
+    ASSERT(Slot1.tilesFree() == 4096);
+    ASSERT(Slot2.tilesFree() == 4096);
+    ASSERT(Slot3.tilesFree() == 4096);
+    
+    // Load one small group
+    ASSERT(g1.isInstalled(cubes) == false);
+    ASSERT(load(g1, Slot0, false) == true);
+    ASSERT(g1.isInstalled(cubes) == true);
+    ASSERT(Slot0.tilesFree() < 4096);
+    ASSERT(Slot0.tilesFree() > 3000);
+
+    // Cancel the second one
+    {
+        ScopedAssetLoader loader;
+        ASSERT(loader.start(g2, Slot0, cubes) == true);
+        loader.cancel();
+    }
+
+    // For reading purposes, the first group should still be there, but
+    // the second shouldn't be. (In-progress slots discard their most recent
+    // group)
+    ASSERT(g1.isInstalled(cubes) == true);
+    ASSERT(g2.isInstalled(cubes) == false);
+
+    // Nothing can be loaded here now.
+    ASSERT(Slot0.tilesFree() == 0);
+    {
+        ScopedAssetLoader loader;
+        ASSERT(loader.start(g2, Slot0, cubes) == false);
+    }
+
+    // Clear it and try again
+    Slot0.erase();
+
+    ASSERT(g1.isInstalled(cubes) == false);
+    ASSERT(g2.isInstalled(cubes) == false);
+
+    ASSERT(load(g1, Slot0, false) == true);
+    ASSERT(load(g2, Slot0, false) == true);
+
+    ASSERT(g2.isInstalled(cubes) == true);
+    ASSERT(g1.isInstalled(cubes) == true);
+}
+
+
 void testBinding()
 {
     /*
@@ -337,6 +406,7 @@ void main()
     testFull();
     testBinding();
     testEviction();
+    testCancel();
 
     LOG("Success.\n");
 }

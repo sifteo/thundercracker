@@ -267,19 +267,32 @@ struct AssetLoader {
     /**
      * @brief Ensure that the system is no longer using this AssetLoader object.
      *
+     * If any loads are still in progress, this function blocks until they complete.
+     * After finish() returns, the loaded AssetGroup has been finalized, and it will
+     * be ready for use.
+     *
      * This must be called after an asset load is done, before the AssetLoader
      * object itself is deallocated or recycled. If the asset loading process
      * is interrupted between start() and finish(), the state of the remote
      * flash memory associated with this Asset Slot may be indeterminate,
      * requiring the entire slot to be erased and reloaded.
      *
-     * If an asynchronous loading operation is in progress when finish() is
-     * called, the system will block until that loading operation has completed.
-     *
      * If finish() has already been called, has no effect.
      */
     void finish() {
         _SYS_asset_loadFinish(*this);
+    }
+
+    /**
+     * @brief End any in-progress asset loading operations without finishing them.
+     *
+     * This function is similar to finish(), except that any in-progress asset loading
+     * operations do not finish. Instead, any asset slots written to since the last
+     * finish() will be in an indeterminate state, and the slot must be erased before
+     * any further loading may be attempted.
+     */
+    void cancel() {
+        _SYS_asset_loadCancel(*this);
     }
 
     /**

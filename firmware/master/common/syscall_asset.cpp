@@ -166,6 +166,31 @@ void _SYS_asset_loadFinish(_SYSAssetLoader *loader)
     ASSERT(gSlotsInProgress.empty());
 }
 
+void _SYS_asset_loadCancel(_SYSAssetLoader *loader)
+{
+    if (!isAligned(loader))
+        return SvmRuntime::fault(F_SYSCALL_ADDR_ALIGN);
+    if (!SvmMemory::mapRAM(loader))
+        return SvmRuntime::fault(F_SYSCALL_ADDRESS);
+    
+    if (!CubeSlots::assetLoader) {
+        // No load in progress. No effect.
+        return;
+    }
+
+    // Must be the correct loader instance!
+    if (CubeSlots::assetLoader != loader)
+        return SvmRuntime::fault(F_SYSCALL_PARAM);
+
+    /*
+     * Without waiting for the load to finish, cancel it. We must leave
+     * the asset slot un-finalized, and forget about it.
+     */
+
+    CubeSlots::assetLoader = NULL;
+    gSlotsInProgress.clear();
+}
+
 uint32_t _SYS_asset_findInCache(_SYSAssetGroup *group, _SYSCubeIDVector cv)
 {
     /*
