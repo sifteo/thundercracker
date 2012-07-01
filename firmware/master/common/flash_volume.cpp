@@ -8,6 +8,7 @@
 #include "flash_volumeheader.h"
 #include "flash_lfs.h"
 #include "crc.h"
+#include "elfprogram.h"
 
 
 bool FlashVolume::isValid() const
@@ -137,7 +138,7 @@ void FlashVolume::deleteSingleWithoutInvalidate() const
     FlashBlockRef ref;
     FlashVolumeHeader *hdr = FlashVolumeHeader::get(ref, block);
     ASSERT(hdr->isHeaderValid());
-
+    
     FlashBlockWriter writer(ref);
     hdr->type = T_DELETED;
     hdr->typeCopy = T_DELETED;
@@ -195,6 +196,21 @@ void FlashVolume::deleteTree() const
             }
         }
     } while (notDoneYet);
+}
+
+void FlashVolume::deleteEverything()
+{
+    /*
+     * Delete all volumes, but of course leave erase count data in place.
+     * This operation is fairly speedy, since we don't actually erase
+     * any memory right away.
+     */
+
+    FlashVolumeIter vi;
+    FlashVolume vol;
+    vi.begin();
+    while (vi.next(vol))
+        vol.deleteSingle();
 }
 
 bool FlashVolumeIter::next(FlashVolume &vol)
@@ -690,4 +706,49 @@ uint32_t FlashVolume::signHandle(uint32_t h)
     Crc32::addUniqueness();
 
     return b.code | (Crc32::get() & 0xFFFFFF00);
+}
+
+bool FlashVolumeWriter::beginGame(unsigned payloadBytes, const char *package)
+{
+    /**
+     * Start writing a game, after deleting any existing game volumes with
+     * the same package name.
+     */
+
+    FlashVolumeIter vi;
+    FlashVolume vol;
+
+    vi.begin();
+    while (vi.next(vol)) {
+        if (vol.getType() != FlashVolume::T_GAME)
+            continue;
+
+        FlashBlockRef ref;
+        Elf::Program program;
+        if (program.init(vol.getPayload(ref))) {
+            const char *str = program.getMetaString(ref, _SYS_METADATA_PACKAGE_STR);
+            if (str && !strcmp(str, package))
+                vol.deleteTree();
+        }
+    }
+
+    return begin(FlashVolume::T_GAME, payloadBytes);
+}
+
+bool FlashVolumeWriter::beginLauncher(unsigned payloadBytes)
+{
+    /**
+     * Start writing the launcher, after deleting any existing launcher.
+     */
+
+    FlashVolumeIter vi;
+    FlashVolume vol;
+
+    vi.begin();
+    while (vi.next(vol)) {
+        if (vol.getType() == FlashVolume::T_LAUNCHER)
+            vol.deleteTree();
+    }
+
+    return begin(FlashVolume::T_LAUNCHER, payloadBytes);
 }

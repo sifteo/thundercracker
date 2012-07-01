@@ -11,18 +11,19 @@ class Installer
 public:
     Installer(IODevice &_dev);
 
-    // entry point for the 'profile' command
     static int run(int argc, char **argv, IODevice &_dev);
 
-    bool install(const char *path, int vid, int pid);
+    bool install(const char *path, int vid, int pid, bool launcher=false);
 
 private:
-    bool sendHeader(uint32_t filesz, const std::string &pkg);
-    bool getPackageMetadata(const char *path, std::string &pkg, std::string &version);
+    bool sendHeader(uint32_t filesz);
+    bool getPackageMetadata(const char *path);
     bool sendFileContents(FILE *f, uint32_t filesz);
     bool commit();
 
     IODevice &dev;
+    std::string package, version;
+    bool isLauncher;
 };
 
 #endif // INSTALLER_H

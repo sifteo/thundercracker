@@ -108,6 +108,12 @@ public:
      */
     void deleteTree() const;
 
+    /**
+     * Delete all volumes on the system! Can be performed as part of a
+     * factory reset / system wipe.
+     */
+    static void deleteEverything();
+
 private:
     static uint32_t signHandle(uint32_t h);
 };
@@ -235,6 +241,17 @@ public:
     bool begin(unsigned type, unsigned payloadBytes,
         unsigned hdrDataBytes = 0,
         FlashVolume parent = FlashMapBlock::invalid());
+
+    /**
+     * Start writing a game, after deleting any existing game volumes with
+     * the same package name.
+     */
+    bool beginGame(unsigned payloadBytes, const char *package);
+
+    /**
+     * Start writing the launcher, after deleting any existing launcher.
+     */
+    bool beginLauncher(unsigned payloadBytes);
 
     /**
      * Map a writeable copy of the portion of the type-specific data region

@@ -3,6 +3,8 @@
 #include "profiler.h"
 #include "fwloader.h"
 #include "installer.h"
+#include "manifest.h"
+#include "delete.h"
 #include "usbdevice.h"
 #include "macros.h"
 
@@ -24,9 +26,21 @@ static const Command commands[] = {
     },
     {
         "install",
-        "install a new application to the Sifteo Base",
-        "install <application.bin>",
+        "install a new game to the Sifteo Base",
+        "install [-l] <app.elf>",
         Installer::run
+    },
+    {
+        "manifest",
+        "summarize the installed content on a Sifteo Base",
+        "manifest",
+        Manifest::run
+    },
+    {
+        "delete",
+        "delete data from the Sifteo Base",
+        "delete [--everything]",
+        Delete::run
     }
 };
 

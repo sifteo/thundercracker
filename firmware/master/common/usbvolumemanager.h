@@ -8,11 +8,31 @@ class UsbVolumeManager
 {
 public:
     enum Command {
-        WriteHeader,
+        WriteGameHeader,
         WritePayload,
         WriteCommit,
         WroteHeaderOK,
         WroteHeaderFail,
+        WriteLauncherHeader,
+        VolumeOverview,
+        VolumeDetail,
+        VolumeMetadata,
+        DeleteEverything,
+    };
+
+    struct VolumeOverviewReply {
+        BitVector<256> bits;
+    };
+
+    struct VolumeDetailReply {
+        unsigned selfBytes;
+        unsigned childBytes;
+        uint16_t type;
+    };
+
+    struct VolumeMetadataRequest {
+        unsigned volume;
+        unsigned key;
     };
 
     static void onUsbData(const USBProtocolMsg &m);

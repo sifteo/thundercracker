@@ -53,8 +53,14 @@ struct USBProtocolMsg {
     /*
      * Highest 4 bits in the header specify the subsystem.
      */
-    USBProtocolMsg(USBProtocol::SubSystem ss) :
-        len(sizeof(header)), header(ss << 28) {}
+    USBProtocolMsg(USBProtocol::SubSystem ss) {
+        init(ss);
+    }
+
+    void init(USBProtocol::SubSystem ss) {
+        len = sizeof(header);
+        header = ss << 28;
+    }
 
     USBProtocol::SubSystem subsystem() const {
         return static_cast<USBProtocol::SubSystem>(header >> 28);
@@ -73,7 +79,7 @@ struct USBProtocolMsg {
         bytes[len++] = b;
     }
 
-    void append(uint8_t *src, unsigned count) {
+    void append(const uint8_t *src, unsigned count) {
         // Overflow-safe assertions
         ASSERT(len <= MAX_LEN);
         ASSERT(count <= MAX_LEN);
@@ -81,6 +87,25 @@ struct USBProtocolMsg {
 
         memcpy(bytes + len, src, count);
         len += count;
+    }
+
+    template <typename T> T* zeroCopyAppend() {
+        // Overflow-safe assertions
+        ASSERT(len <= MAX_LEN);
+        ASSERT(sizeof(T) <= MAX_LEN);
+        ASSERT((len + sizeof(T)) <= MAX_LEN);
+
+        T* result = reinterpret_cast<T*>(bytes + len);
+        len += sizeof(T);
+        return result;
+    }
+
+    template <typename T> T* castPayload() {
+        return reinterpret_cast<T*>(&payload[0]);
+    }
+
+    template <typename T> const T* castPayload() const {
+        return reinterpret_cast<const T*>(&payload[0]);
     }
 };
 

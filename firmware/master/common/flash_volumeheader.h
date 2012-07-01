@@ -177,6 +177,12 @@ struct FlashVolumeHeader
             return minResult + 1;
     }
 
+    /// Size of the entire volume (headers and payload) in bytes
+    unsigned volumeSizeInBytes() const
+    {
+        return FlashMapBlock::BLOCK_SIZE * numMapEntries();
+    }
+
     /// Offset to the beginning of the FlashMap, in bytes
     static unsigned mapOffsetBytes()
     {

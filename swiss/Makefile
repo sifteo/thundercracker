@@ -14,7 +14,9 @@ OBJS := \
     src/profiler.o      \
     src/elfdebuginfo.o  \
     src/mappedfile.o    \
-    src/installer.o
+    src/installer.o     \
+    src/manifest.o      \
+    src/delete.o
 
 # include directories
 INCLUDES := \

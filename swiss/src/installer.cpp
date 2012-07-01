@@ -10,14 +10,24 @@
 
 int Installer::run(int argc, char **argv, IODevice &_dev)
 {
-    if (argc < 2) {
-        fprintf(stderr, "not enough args\n");
-        return 1;
+    bool launcher = false;
+    const char *path = NULL;
+
+    for (unsigned i = 1; i < argc; i++) {
+        if (!strcmp(argv[i], "-l")) {
+            launcher = true;
+        } else if (!path) {
+            path = argv[i];
+        } else {
+            fprintf(stderr, "incorrect args\n");
+            return 1;
+        }
     }
 
     Installer installer(_dev);
 
-    bool success = installer.install(argv[1], IODevice::SIFTEO_VID, IODevice::BASE_PID);
+    bool success = installer.install(path,
+        IODevice::SIFTEO_VID, IODevice::BASE_PID, launcher);
 
     _dev.close();
     _dev.processEvents();
@@ -27,8 +37,7 @@ int Installer::run(int argc, char **argv, IODevice &_dev)
 
 Installer::Installer(IODevice &_dev) :
     dev(_dev)
-{
-}
+{}
 
 /*
  * High level program flow for installation.
@@ -39,11 +48,11 @@ Installer::Installer(IODevice &_dev) :
  * - Send the content of the application.
  * - Commit the transaction.
  */
-bool Installer::install(const char *path, int vid, int pid)
+bool Installer::install(const char *path, int vid, int pid, bool launcher)
 {
-    std::string package, version;
-    if (!getPackageMetadata(path, package, version))
-        return false;;
+    isLauncher = launcher;
+    if (!launcher && !getPackageMetadata(path))
+        return false;
 
     FILE *f = fopen(path, "rb");
     if (!f) {
@@ -56,11 +65,14 @@ bool Installer::install(const char *path, int vid, int pid)
         return false;
     }
 
-    fprintf(stderr, "installing %s, version %s\n", package.c_str(), version.c_str());
+    if (launcher)
+        fprintf(stderr, "updating launcher\n");
+    else
+        fprintf(stderr, "installing %s, version %s\n", package.c_str(), version.c_str());
 
     fseek(f, 0L, SEEK_END);
     uint32_t filesz = ftell(f);
-    if (!sendHeader(filesz, package))
+    if (!sendHeader(filesz))
         return false;
 
     if (!sendFileContents(f, filesz)) {
@@ -75,13 +87,14 @@ bool Installer::install(const char *path, int vid, int pid)
     while (dev.numPendingOUTPackets()) {
         dev.processEvents();
     }
+    return true;
 }
 
 /*
  * Read package metadata from the elf for this application.
  * For now, must include package and version strings.
  */
-bool Installer::getPackageMetadata(const char *path, std::string &pkg, std::string &version)
+bool Installer::getPackageMetadata(const char *path)
 {
     ELFDebugInfo dbgInfo;
     if (!dbgInfo.init(path)) {
@@ -89,7 +102,7 @@ bool Installer::getPackageMetadata(const char *path, std::string &pkg, std::stri
         return false;
     }
 
-    if (!dbgInfo.metadataString(_SYS_METADATA_PACKAGE_STR, pkg)) {
+    if (!dbgInfo.metadataString(_SYS_METADATA_PACKAGE_STR, package)) {
         fprintf(stderr, "couldn't find package string - ensure you've included a call to Metadata::package() in your application\n");
         return false;
     }
@@ -102,19 +115,23 @@ bool Installer::getPackageMetadata(const char *path, std::string &pkg, std::stri
     return true;
 }
 
-/*
- *
- */
-bool Installer::sendHeader(uint32_t filesz, const std::string &pkg)
+bool Installer::sendHeader(uint32_t filesz)
 {
     USBProtocolMsg m(USBProtocol::Installer);
-    m.header |= UsbVolumeManager::WriteHeader;
-    m.append((uint8_t*)&filesz, sizeof filesz);
-    if (pkg.size() + 1 > m.bytesFree()) {
-        fprintf(stderr, "package name too long\n");
-        return false;
+
+    if (isLauncher) {
+        m.header |= UsbVolumeManager::WriteLauncherHeader;
+        m.append((uint8_t*)&filesz, sizeof filesz);
+    } else {
+        m.header |= UsbVolumeManager::WriteGameHeader;
+        m.append((uint8_t*)&filesz, sizeof filesz);
+        if (package.size() + 1 > m.bytesFree()) {
+            fprintf(stderr, "package name too long\n");
+            return false;
+        }
+        m.append((uint8_t*)package.c_str(), package.size());
     }
-    m.append((uint8_t*)pkg.c_str(), pkg.size());
+
     dev.writePacket(m.bytes, m.len);
 
     // wait for response that header was processed
