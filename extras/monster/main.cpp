@@ -9,7 +9,8 @@
 using namespace Sifteo;
 
 static Metadata M = Metadata()
-    .title("Monsters SDK Example")
+    .title("Monsters")
+    .package("com.sifteo.extras.monsters", "1.0")
     .cubeRange(1);
 
 void main()

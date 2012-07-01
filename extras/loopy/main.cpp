@@ -7,8 +7,12 @@
 
 #include <sifteo.h>
 
+static Sifteo::Metadata M = Sifteo::Metadata()
+    .title("Infinite Loop")
+    .package("com.sifteo.extras.loopy", "1.0")
+    .cubeRange(0);
+
 void main()
 {
-    Sifteo::Metadata().title("Infinite Loop");
     while (1);
 }

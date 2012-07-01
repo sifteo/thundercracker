@@ -4,6 +4,7 @@ using namespace Sifteo;
 
 static Metadata M = Metadata()
     .title("Tinytracker")
+    .package("com.sifteo.extras.tinytracker", "1.0")
     .cubeRange(0);
 
 void main()

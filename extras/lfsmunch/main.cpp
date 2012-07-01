@@ -8,6 +8,7 @@ using namespace Sifteo;
 
 static Metadata M = Metadata()
     .title("LFS Muncher")
+    .package("com.sifteo.extras.lfsmunch", "1.0")
     .cubeRange(0);
 
 void main()

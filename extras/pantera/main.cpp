@@ -16,6 +16,7 @@ static AssetSlot MainSlot = AssetSlot::allocate()
 
 static Metadata M = Metadata()
     .title("Pantera")
+    .package("com.sifteo.extras.pantera", "1.0")
     .cubeRange(gNumCubes);
 
 CubeID ctilt = 0;

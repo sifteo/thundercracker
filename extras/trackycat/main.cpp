@@ -7,6 +7,7 @@ static AssetSlot MainSlot = AssetSlot::allocate()
 
 static Metadata M = Metadata()
     .title("Trackycat~")
+    .package("com.sifteo.extras.trackycat", "1.0")
     .cubeRange(1);
 
 static const AssetTracker *mods[] = { &Bubbles, &Vox, &Jungle1, &Guitar };

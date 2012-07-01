@@ -13,6 +13,7 @@ static AssetSlot MainSlot = AssetSlot::allocate()
 
 static Metadata M = Metadata()
     .title("Nyan~")
+    .package("com.sifteo.extras.nyan", "1.0")
     .cubeRange(1);
 
 void main()

@@ -5,6 +5,11 @@
 
 #include <sifteo.h>
 
+static Sifteo::Metadata M = Sifteo::Metadata()
+    .title("Flash Cache Thrasher")
+    .package("com.sifteo.extras.thrasher", "1.0")
+    .cubeRange(0);
+
 void main()
 {
     SCRIPT(LUA,
@@ -17,8 +22,6 @@ void main()
 
         Filesystem():setCallbacksEnabled(true)
     );
-    
-    Sifteo::Metadata().title("Flash Cache Thrasher").cubeRange(0);
 
     static const uint8_t flashData[64*1024] = { 1 };
     unsigned i = 0;
