@@ -4,6 +4,7 @@
 #include <stdio.h>
 #include <errno.h>
 #include <string.h>
+#include <strtol.h>
 
 int Delete::run(int argc, char **argv, IODevice &_dev)
 {
