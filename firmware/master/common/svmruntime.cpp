@@ -107,36 +107,30 @@ void SvmRuntime::fault(FaultCode code)
      * Draw a message to one enabled cube, and exit after a home-button press.
      */
 
-    _SYSCubeIDVector cubes = CubeSlots::vecEnabled;
-    if (cubes) {
+    PanicMessenger msg;
+    msg.init(0x10000);
 
-        PanicMessenger msg;
-        msg.init(0x10000);
+    // User-facing description
+    msg.at(1,1) << "Oh no!";
+    msg.at(1,2) << "Press button";
+    msg.at(1,3) << "to continue.";
 
-        // User-facing description
-        msg.at(1,1) << "Oh no!";
-        msg.at(1,2) << "Press button";
-        msg.at(1,3) << "to continue.";
+    // Getting more developer-oriented now... fault description
+    msg.at(1,5) << "In Volume<" << uint8_t(SvmLoader::getRunningVolume().block.code) << ">";
+    msg.at(1,6) << "Fault 0x" << uint8_t(code) << ":";
+    msg.at(1,7) << faultString14(code);
 
-        // Getting more developer-oriented now... fault description
-        msg.at(1,5) << "In Volume<" << uint8_t(SvmLoader::getRunningVolume().block.code) << ">";
-        msg.at(1,6) << "Fault 0x" << uint8_t(code) << ":";
-        msg.at(1,7) << faultString14(code);
+    // Begin the "Wall of text" register dump, after one blank line
+    uint32_t pcVA = SvmRuntime::reconstructCodeAddr(SvmCpu::reg(REG_PC));
+    msg.at(1,9) << "PC: " << pcVA;
 
-        // Begin the "Wall of text" register dump, after one blank line
-        uint32_t pcVA = SvmRuntime::reconstructCodeAddr(SvmCpu::reg(REG_PC));
-        msg.at(1,9) << "PC: " << pcVA;
+    dumpRegister(msg.at(1,10) << "SP: ", REG_SP);
 
-        dumpRegister(msg.at(1,10) << "SP: ", REG_SP);
+    // Only room for first 4 GPRs
+    for (unsigned r = 0; r < 4; r++)
+        dumpRegister(msg.at(1,11+r) << 'r' << char('0' + r) << ": ", r);
 
-        // Only room for first 4 GPRs
-        for (unsigned r = 0; r < 4; r++)
-            dumpRegister(msg.at(1,11+r) << 'r' << char('0' + r) << ": ", r);
-
-        // Paint on first enabled cube
-        msg.paint(Intrinsic::LZ(cubes));
-        msg.haltUntilButton();
-    }
+    msg.paintAndWait();
 
     // Exit with an error (Back to the launcher)
     SvmLoader::exit(true);

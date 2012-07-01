@@ -173,6 +173,20 @@ void PanicMessenger::haltUntilButton()
         animateLED();
 }
 
+void PanicMessenger::paintAndWait()
+{
+    _SYSCubeIDVector cubes = CubeSlots::vecEnabled;
+    if (cubes) {
+        // Paint on first enabled cube
+        paint(Intrinsic::LZ(cubes));
+        haltUntilButton();
+
+    } else {
+        // No cubes. Dump to UART only, and continue immediately.
+        dumpScreenToUART();
+    }
+}
+
 void PanicMessenger::animateLED()
 {
     static const uint8_t pattern[] = {

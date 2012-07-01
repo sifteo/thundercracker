@@ -26,6 +26,7 @@ public:
     void init(SvmMemory::VirtAddr vbufVA);
     void erase();
     void paint(_SYSCubeID cube);
+    void paintAndWait();
 
     /// This is a standard way to halt execution indefinitely, in case of fatal error.
     static void haltForever();
