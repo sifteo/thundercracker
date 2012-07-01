@@ -18,6 +18,7 @@ public:
 private:
     bool sendHeader(uint32_t filesz);
     bool getPackageMetadata(const char *path);
+    unsigned getInstallableElfSize(FILE *f);
     bool sendFileContents(FILE *f, uint32_t filesz);
     bool commit();
 

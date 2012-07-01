@@ -2,7 +2,7 @@
 #include "elfdebuginfo.h"
 #include <cxxabi.h>
 
-#include "sifteo/abi/elf.h"
+#include <sifteo/abi/elf.h>
 
 #include <string.h>
 #include <stdlib.h>
@@ -167,7 +167,7 @@ uint8_t* ELFDebugInfo::metadata(uint16_t key, uint32_t &actualSize)
 {
     const Elf::SectionHeader *hdr = findSection(".metadata");
     if (!hdr)
-        return false;
+        return 0;
 
     const uint32_t keySize = sizeof(_SYSMetadataKey);
     unsigned I, E;
@@ -206,6 +206,9 @@ uint8_t* ELFDebugInfo::metadata(uint16_t key, uint32_t &actualSize)
             return program.getData(valueOffset + I, avail);
         }
     }
+
+    // Ran past the end of the section
+    return 0;
 }
 
 std::string ELFDebugInfo::formatAddress(uint32_t address) const

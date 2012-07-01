@@ -65,17 +65,22 @@ bool Installer::install(const char *path, int vid, int pid, bool launcher)
         return false;
     }
 
-    if (launcher)
-        fprintf(stderr, "updating launcher\n");
-    else
-        fprintf(stderr, "installing %s, version %s\n", package.c_str(), version.c_str());
+    unsigned fileSize = getInstallableElfSize(f);
+    if (!fileSize) {
+        fprintf(stderr, "not a valid ELF file\n");
+        return false;
+    }
 
-    fseek(f, 0L, SEEK_END);
-    uint32_t filesz = ftell(f);
-    if (!sendHeader(filesz))
+    if (launcher)
+        fprintf(stderr, "updating launcher (%d bytes)\n", fileSize);
+    else
+        fprintf(stderr, "installing %s, version %s (%d bytes)\n",
+            package.c_str(), version.c_str(), fileSize);
+
+    if (!sendHeader(fileSize))
         return false;
 
-    if (!sendFileContents(f, filesz)) {
+    if (!sendFileContents(f, fileSize)) {
         return false;
     }
 
@@ -88,6 +93,37 @@ bool Installer::install(const char *path, int vid, int pid, bool launcher)
         dev.processEvents();
     }
     return true;
+}
+
+/*
+ * Return the size, in bytes, of the installable portion of this ELF.
+ * This excludes any debug sections, if any. If the file is not valid,
+ * returns zero.
+ *
+ * This works by looking for the end of the last program segment.
+ */
+unsigned Installer::getInstallableElfSize(FILE *f)
+{
+    Elf::FileHeader fh;
+    Elf::ProgramHeader ph;
+    unsigned size = 0;
+
+    rewind(f);
+    if (fread(&fh, sizeof fh, 1, f) < 1)
+        return 0;
+
+    if (fh.e_ident[0] != Elf::Magic0 || fh.e_ident[1] != Elf::Magic1 ||
+        fh.e_ident[2] != Elf::Magic2 || fh.e_ident[3] != Elf::Magic3)
+        return 0;
+
+    for (unsigned i = 0; i < fh.e_phnum; ++i) {
+        fseek(f, fh.e_phoff + i * fh.e_phentsize, SEEK_SET);
+        if (fread(&ph, sizeof ph, 1, f) < 1)
+            return 0;
+        size = std::max<unsigned>(size, ph.p_offset + ph.p_filesz);
+    }
+
+    return size;
 }
 
 /*
@@ -160,27 +196,31 @@ bool Installer::sendFileContents(FILE *f, uint32_t filesz)
     unsigned percent = 0;
     unsigned progress = 0;
 
-    while (!feof(f)) {
-
+    while (1) {
         USBProtocolMsg m(USBProtocol::Installer);
         m.header |= UsbVolumeManager::WritePayload;
-        m.len += fread(m.payload, 1,  m.bytesFree(), f);
-        if (m.len <= 0)
-            continue;
+
+        unsigned chunk = std::min(filesz - progress, m.bytesFree());
+        m.len += chunk;
+        progress += chunk;
+        if (!chunk)
+            return true;
+
+        if (fread(m.payload, chunk, 1, f) != 1) {
+            fprintf(stderr, "read error\n");
+            return false;
+        }
 
         dev.writePacket(m.bytes, m.len);
         while (dev.numPendingOUTPackets() > IODevice::MAX_OUTSTANDING_OUT_TRANSFERS)
             dev.processEvents();
 
-        progress += m.payloadLen();
         const unsigned progressPercent = ((float)progress / (float)filesz) * 100;
         if (progressPercent != percent) {
             percent = progressPercent;
             fprintf(stderr, "progress: %d%%\n", percent);
         }
     }
-
-    return true;
 }
 
 /*
