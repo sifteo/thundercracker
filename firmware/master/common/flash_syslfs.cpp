@@ -585,3 +585,15 @@ bool SysLFS::AssetSlotRecord::isEmpty() const
 {
     return tilesFree() == TILES_PER_ASSET_SLOT;
 }
+
+void SysLFS::deleteAll()
+{
+    FlashVolumeIter vi;
+    FlashVolume vol;
+
+    vi.begin();
+    while (vi.next(vol)) {
+        if (vol.getType() == FlashVolume::T_LFS && !vol.getParent().block.isValid())
+            vol.deleteSingle();
+    }
+}

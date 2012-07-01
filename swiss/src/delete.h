@@ -12,9 +12,13 @@ public:
     static int run(int argc, char **argv, IODevice &_dev);
 
     bool deleteEverything();
+    bool deleteSysLFS();
+    bool deleteVolume(unsigned code);
 
 private:
     IODevice &dev;
+
+    static bool parseVolumeCode(const char *str, unsigned &code);
 };
 
 #endif // INSTALLER_H

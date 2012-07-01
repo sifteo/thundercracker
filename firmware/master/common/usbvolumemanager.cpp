@@ -3,6 +3,7 @@
 #include "bits.h"
 #include "flash_volume.h"
 #include "flash_volumeheader.h"
+#include "flash_syslfs.h"
 
 #ifndef SIFTEO_SIMULATOR
 #include "usb/usbdevice.h"
@@ -69,6 +70,9 @@ void UsbVolumeManager::onUsbData(const USBProtocolMsg &m)
 
         VolumeOverviewReply *r = reply.zeroCopyAppend<VolumeOverviewReply>();
         reply.header |= VolumeOverview;
+
+        r->systemBytes = 0;
+        r->freeBytes = FlashDevice::CAPACITY;
         r->bits.clear();
 
         FlashVolumeIter vi;
@@ -76,22 +80,27 @@ void UsbVolumeManager::onUsbData(const USBProtocolMsg &m)
 
         vi.begin();
         while (vi.next(vol)) {
+            FlashBlockRef ref;
+            FlashVolumeHeader *hdr = FlashVolumeHeader::get(ref, vol.block);
+            ASSERT(hdr->isHeaderValid());
 
-            // Skip parented volumes
-            if (vol.getParent().block.isValid())
+            // Ignore deleted/incomplete volumes. (Treat them as free space)
+            if (hdr->type == FlashVolume::T_DELETED || hdr->type == FlashVolume::T_INCOMPLETE)
                 continue;
 
-            switch (vol.getType()) {
+            // All other volumes count against our free space
+            unsigned volSize = hdr->volumeSizeInBytes();
+            r->freeBytes -= volSize;
 
-                // Volume types to hide
-                case FlashVolume::T_LFS:
-                case FlashVolume::T_DELETED:
-                case FlashVolume::T_INCOMPLETE:
-                    break;
-
-                default:
-                    r->bits.mark(vol.block.code);
+            // Count space used by SysLFS
+            if (hdr->parentBlock == 0 && hdr->type == FlashVolume::T_LFS) {
+                r->systemBytes += volSize;
+                continue;
             }
+
+            // Other top-level volumes are marked in the bitmap
+            if (hdr->parentBlock == 0)
+                r->bits.mark(vol.block.code);
         }
         break;
     }
@@ -133,6 +142,26 @@ void UsbVolumeManager::onUsbData(const USBProtocolMsg &m)
                 }
             }
         }
+        break;
+    }
+    
+    case DeleteVolume: {
+        if (m.payloadLen() < sizeof(unsigned))
+            break;
+
+        unsigned volBlockCode = *m.castPayload<unsigned>();
+        FlashVolume vol = FlashMapBlock::fromCode(volBlockCode);
+
+        if (vol.isValid()) {
+            vol.deleteTree();
+            reply.header |= DeleteVolume;
+        }
+        break;
+    }
+
+    case DeleteSysLFS: {
+        SysLFS::deleteAll();
+        reply.header |= DeleteSysLFS;
         break;
     }
 

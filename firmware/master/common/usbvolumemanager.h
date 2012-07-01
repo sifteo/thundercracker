@@ -18,9 +18,13 @@ public:
         VolumeDetail,
         VolumeMetadata,
         DeleteEverything,
+        DeleteVolume,
+        DeleteSysLFS,
     };
 
     struct VolumeOverviewReply {
+        unsigned systemBytes;
+        unsigned freeBytes;
         BitVector<256> bits;
     };
 

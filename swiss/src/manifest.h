@@ -16,6 +16,7 @@ public:
 
 private:
     bool getVolumeOverview();
+    bool dumpOverview();
     bool dumpVolumes();
 
     bool getMetadata(USBProtocolMsg &buffer, unsigned volBlockCode, unsigned key);

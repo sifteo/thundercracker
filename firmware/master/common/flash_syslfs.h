@@ -209,6 +209,8 @@ namespace SysLFS {
         return write(k, (const uint8_t*) &obj, sizeof obj, gc) == sizeof obj;
     }
 
+    void deleteAll();
+
 } // end namespace SysLFS
 
 

@@ -39,7 +39,7 @@ static const Command commands[] = {
     {
         "delete",
         "delete data from the Sifteo Base",
-        "delete [--everything]",
+        "delete (--all | --sys | volume)",
         Delete::run
     }
 };

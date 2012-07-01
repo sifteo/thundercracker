@@ -22,7 +22,7 @@ int Manifest::run(int argc, char **argv, IODevice &_dev)
     }
 
     Manifest m(_dev);
-    bool success = m.getVolumeOverview() && m.dumpVolumes();
+    bool success = m.getVolumeOverview() && m.dumpOverview() && m.dumpVolumes();
 
     _dev.close();
     _dev.processEvents();
@@ -122,13 +122,22 @@ const char *Manifest::getVolumeTypeString(unsigned type)
     return volTypeBuffer;
 }
 
+bool Manifest::dumpOverview()
+{
+    printf("System: %d kB  Free: %d kB\n",
+        overview.systemBytes / 1024, overview.freeBytes / 1024);
+    return true;
+}
+
 bool Manifest::dumpVolumes()
 {
     unsigned volBlockCode;
 
-    fprintf(stderr, "%-4s %-8s %5s %5s %-30s %-10s %s\n",
+    // Heading for volume table
+    printf("%-4s %-8s %5s %5s %-30s %-10s %s\n",
         "Vol", "Type", "kbELF", "kbObj", "Package", "Version", "Title");
 
+    // Volume table
     while (overview.bits.clearFirst(volBlockCode)) {
         USBProtocolMsg buffer;
 
@@ -138,14 +147,14 @@ bool Manifest::dumpVolumes()
             detail = &zero;
         }
 
-        fprintf(stderr, "<%02x> %-8s %5d %5d ",
+        printf("<%02X> %-8s %5d %5d ",
             volBlockCode,
             getVolumeTypeString(detail->type),
             detail->selfBytes / 1024, detail->childBytes / 1024);
 
-        fprintf(stderr, "%-30s ", getMetadataString(buffer, volBlockCode, _SYS_METADATA_PACKAGE_STR));
-        fprintf(stderr, "%-10s ", getMetadataString(buffer, volBlockCode, _SYS_METADATA_VERSION_STR));
-        fprintf(stderr, "%s\n", getMetadataString(buffer, volBlockCode, _SYS_METADATA_TITLE_STR));
+        printf("%-30s ", getMetadataString(buffer, volBlockCode, _SYS_METADATA_PACKAGE_STR));
+        printf("%-10s ", getMetadataString(buffer, volBlockCode, _SYS_METADATA_VERSION_STR));
+        printf("%s\n", getMetadataString(buffer, volBlockCode, _SYS_METADATA_TITLE_STR));
     }
 
     return true;
