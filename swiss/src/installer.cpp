@@ -1,6 +1,7 @@
 #include "installer.h"
 #include "usbprotocol.h"
 #include "elfdebuginfo.h"
+#include "progressbar.h"
 
 #include <sifteo/abi/elf.h>
 
@@ -193,8 +194,9 @@ bool Installer::sendHeader(uint32_t filesz)
 bool Installer::sendFileContents(FILE *f, uint32_t filesz)
 {
     rewind(f);
-    unsigned percent = 0;
+ 
     unsigned progress = 0;
+    ScopedProgressBar pb(filesz);
 
     while (1) {
         USBProtocolMsg m(USBProtocol::Installer);
@@ -215,11 +217,7 @@ bool Installer::sendFileContents(FILE *f, uint32_t filesz)
         while (dev.numPendingOUTPackets() > IODevice::MAX_OUTSTANDING_OUT_TRANSFERS)
             dev.processEvents();
 
-        const unsigned progressPercent = ((float)progress / (float)filesz) * 100;
-        if (progressPercent != percent) {
-            percent = progressPercent;
-            fprintf(stderr, "progress: %d%%\n", percent);
-        }
+        pb.update(progress);
     }
 }
 

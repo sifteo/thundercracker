@@ -9,6 +9,7 @@ BIN := swiss
 
 OBJS := \
     src/main.o          \
+    src/progressbar.o   \
     src/usbdevice.o     \
     src/fwloader.o      \
     src/profiler.o      \
