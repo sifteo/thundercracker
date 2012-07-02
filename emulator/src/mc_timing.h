@@ -34,7 +34,7 @@ struct MCTiming {
 
     // Typical write timing for our flash chip
     static const unsigned TICKS_PER_PAGE_WRITE = 16512;
-    static const unsigned TICKS_PER_BLOCK_ERASE = TICK_HZ;
+    static const unsigned TICKS_PER_BLOCK_ERASE = 8000000;
 
     // Fairly arbitrary 1/4 second delay from cube startup to MC startup
     static const unsigned STARTUP_DELAY = TICK_HZ / 4;
