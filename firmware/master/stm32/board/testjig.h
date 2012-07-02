@@ -72,6 +72,7 @@
 #define BTN_HOME_GPIO       GPIOPin(&GPIOC, 0)
 #define BTN_HOME_EXTI_VEC   EXTI2
 
+#define PROFILER_TIM        TIM2
 
 // T E S T  J I G
 
