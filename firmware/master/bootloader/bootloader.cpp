@@ -89,9 +89,6 @@ void Bootloader::load()
         firstLoad = false;
     }
 
-    if (!eraseMcuFlash())
-        return;
-
     // initialize decryption
     // XXX: select actual values
     const uint32_t key[4] = { 0x2b7e1516, 0x28aed2a6, 0xabf71588, 0x09cf4f3c };
@@ -183,6 +180,7 @@ void Bootloader::onUsbData(const uint8_t *buf, unsigned numBytes)
     }
 
     case CmdResetAddrPtr:
+        eraseMcuFlash();
         update.addressPointer = APPLICATION_ADDRESS;
         break;
 
