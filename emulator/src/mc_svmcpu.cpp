@@ -860,8 +860,11 @@ static void emulateCLZ(uint32_t instr)
 
 static void traceFetch(uint16_t *pc)
 {
-    LOG(("[va=%08x pa=%p i=%04x]",
-        SvmRuntime::reconstructCodeAddr(regs[REG_PC]), pc, *pc));
+    unsigned va = SvmRuntime::reconstructCodeAddr(regs[REG_PC]);
+    unsigned fa = SvmMemory::virtToFlashAddr(va);
+
+    LOG(("[va=%08x fa=%08x pa=%p i=%04x]", va, fa, pc, *pc));
+
     for (unsigned r = 0; r < 8; r++) {
         // Display as a fixed-width low word and a variable-width high word.
         // The high word will usually be zero, and it helps to demarcate the
