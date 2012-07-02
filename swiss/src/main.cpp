@@ -19,9 +19,9 @@ static const Command commands[] = {
         Profiler::run
     },
     {
-        "fwload",
-        "install new firmware to the Sifteo Base",
-        "fwload <firmware.bin>",
+        "update",
+        "update the firmware on your Sifteo Base",
+        "update <firmware.bin>",
         FwLoader::run
     },
     {
