@@ -21,6 +21,7 @@
 #include "flash_blockcache.h"
 #include "flash_stack.h"
 #include "flash_volume.h"
+#include "flash_syslfs.h"
 #include "svmloader.h"
 #include "svmcpu.h"
 #include "svmruntime.h"
@@ -93,6 +94,9 @@ void SystemMC::autoInstall()
     FlashDevice::setStealthIO(1);
 
     do {
+
+        // Create an initial SysLFS volume
+        SysLFS::write(SysLFS::kDummy, 0, 0);
 
         // Install a launcher
         const char *launcher = sys->opt_launcherFilename.empty() ? NULL : sys->opt_launcherFilename.c_str();
