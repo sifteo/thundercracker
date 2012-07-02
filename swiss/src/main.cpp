@@ -89,14 +89,15 @@ int main(int argc, char **argv)
     const char *commandName = argv[1];
 
     for (unsigned i = 0; i < numCommands; ++i) {
-        if (!strcmp(commandName, commands[i].name))
-            return commands[i].run(argc - 1, argv + 1, usbdev);
+        if (!strcmp(commandName, commands[i].name)) {
+            int r = commands[i].run(argc - 1, argv + 1, usbdev);
+            UsbDevice::deinit();
+            return r;
+        }
     }
 
     fprintf(stderr, "no command named %s\n", commandName);
     usage();
-
-    UsbDevice::deinit();
 
     return 1;
 }
