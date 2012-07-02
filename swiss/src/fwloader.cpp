@@ -72,7 +72,7 @@ bool FwLoader::load(const char *path)
     if (!bootloaderVersionIsCompatible())
         return false;
 
-    resetWritePointer();
+    resetBootloader();
 
     if (!sendFirmwareFile(f, crc, plainsz)) {
         fprintf(stderr, "error sending file\n");
@@ -104,7 +104,7 @@ bool FwLoader::bootloaderVersionIsCompatible()
     return ((VERSION_COMPAT_MIN <= version) && (version <= VERSION_COMPAT_MAX));
 }
 
-void FwLoader::resetWritePointer()
+void FwLoader::resetBootloader()
 {
     const uint8_t ptrRequest[] = { Bootloader::CmdResetAddrPtr };
     dev.writePacket(ptrRequest, sizeof ptrRequest);

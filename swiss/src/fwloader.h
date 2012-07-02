@@ -20,7 +20,7 @@ private:
     static const unsigned VERSION_COMPAT_MAX = 1;
 
     bool bootloaderVersionIsCompatible();
-    void resetWritePointer();
+    void resetBootloader();
     bool checkFileDetails(FILE *f, uint32_t &plainsz, uint32_t &crc);
     bool sendFirmwareFile(FILE *f, uint32_t crc, uint32_t size);
 
