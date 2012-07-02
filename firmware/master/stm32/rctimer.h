@@ -32,6 +32,9 @@ private:
     // Logarithmic, higher values = slower filter
     static const int FILTER_SHIFT = 8;
 
+    // Initial value for filterState
+    static const int INIT_FILTER_STATE = 0x7fffffff;
+
     int filterState;
     uint16_t startTime;
     HwTimer timer;
@@ -48,6 +51,9 @@ private:
  */
 inline void RCTimer::init(uint16_t period, uint16_t prescaler)
 {
+    // Reset the filter
+    filterState = INIT_FILTER_STATE;
+
     pin.setControl(GPIOPin::OUT_2MHZ);
     pin.setLow();
 
@@ -105,9 +111,21 @@ ALWAYS_INLINE void RCTimer::isr()
         pin.setLow();
         pin.setControl(GPIOPin::OUT_2MHZ);
 
-        // Update our low-pass filter
-        int filterNext = int(sample) - lastReading() + filterState;
-        filterState = filterNext;
+        /*
+         * Update our low-pass filter. This is a really simple and fast-to-calculate
+         * first order filter, based on a power of two gain. We use a special sentinel
+         * value to indicate that the filter state is uninitialized, so that we can
+         * initialize it the first time.
+         *
+         * (Otherwise, the filter would ramp up slowly from zero at poweron, leading
+         * us to miss the beginning of the power-on sound)
+         */
+
+        int state = filterState;
+        if (state == INIT_FILTER_STATE)
+            filterState = int(sample) << FILTER_SHIFT;
+        else
+            filterState = state + int(sample) - lastReading();
     }
 }
 
