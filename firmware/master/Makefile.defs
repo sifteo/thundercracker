@@ -19,7 +19,8 @@ CCFLAGS += -ffast-math
 LDFLAGS += -lm
 
 # Versioning
-CCFLAGS += -DSDK_VERSION=$(shell git describe --tags)
+VERSION := SDK_VERSION=$(shell git describe --tags)
+CCFLAGS += -DSDK_VERSION=$(VERSION)
 
 # Always build with debug symbols (It can't hurt)
 CCFLAGS += -g3
