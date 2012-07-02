@@ -20,6 +20,7 @@ public:
         DeleteEverything,
         DeleteVolume,
         DeleteSysLFS,
+        FirmwareVersion,
     };
 
     struct VolumeOverviewReply {

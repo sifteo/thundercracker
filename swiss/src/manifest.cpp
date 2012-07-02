@@ -90,6 +90,27 @@ UsbVolumeManager::VolumeDetailReply *Manifest::getVolumeDetail(USBProtocolMsg &b
     return 0;
 }
 
+const char *Manifest::getFirmwareVersion(USBProtocolMsg &buffer)
+{
+    buffer.init(USBProtocol::Installer);
+    buffer.header |= UsbVolumeManager::FirmwareVersion;
+
+    dev.writePacket(buffer.bytes, buffer.len);
+
+    while (dev.numPendingINPackets() == 0) {
+        dev.processEvents();
+    }
+
+    buffer.len = dev.readPacket(buffer.bytes, buffer.MAX_LEN);
+    if ((buffer.header & 0xff) != UsbVolumeManager::FirmwareVersion) {
+        fprintf(stderr, "unexpected response\n");
+        return "(unknown)";
+    }
+
+    buffer.bytes[sizeof buffer.bytes - 1] = 0;
+    return buffer.castPayload<char>();
+}
+
 bool Manifest::getVolumeOverview()
 {
     USBProtocolMsg m(USBProtocol::Installer);
@@ -124,8 +145,12 @@ const char *Manifest::getVolumeTypeString(unsigned type)
 
 bool Manifest::dumpOverview()
 {
-    printf("System: %d kB  Free: %d kB\n",
-        overview.systemBytes / 1024, overview.freeBytes / 1024);
+    USBProtocolMsg buffer;
+
+    printf("System: %d kB  Free: %d kB  Firmware: %s\n",
+        overview.systemBytes / 1024, overview.freeBytes / 1024,
+        getFirmwareVersion(buffer));
+
     return true;
 }
 

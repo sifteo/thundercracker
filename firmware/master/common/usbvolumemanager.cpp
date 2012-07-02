@@ -200,6 +200,12 @@ void UsbVolumeManager::onUsbData(const USBProtocolMsg &m)
         break;
     }
 
+    case FirmwareVersion: {
+        reply.header |= FirmwareVersion;
+        reply.append((const uint8_t*) TOSTRING(SDK_VERSION), sizeof(TOSTRING(SDK_VERSION)));
+        break;
+    }
+
     default:
         return;
     }
