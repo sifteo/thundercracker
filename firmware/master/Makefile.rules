@@ -50,8 +50,8 @@ encrypted: $(BIN)
 	arm-none-eabi-objcopy -O binary $< master-stm32.bin
 	$(TC_DIR)/tools/fwdeploy/fwdeploy master-stm32.bin master-stm32.sft
 	
-fwload: encrypted
-	$(TC_DIR)/swiss/swiss fwload master-stm32.sft
+update: encrypted
+	$(SDK_DIR)/bin/swiss update master-stm32.sft
 
 objdump: $(BIN)
 	arm-none-eabi-objdump -d $< | arm-none-eabi-c++filt | less
