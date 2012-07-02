@@ -229,14 +229,15 @@ void SvmRuntime::ret(unsigned actions)
          * exec(), or via a fault) we need to calculate whether we're exiting
          * before the syscall, but we need to actually do the exit after.
          */
+
         if (actions & RET_SET_EXIT_FLAG)
             pendingExitFlag = true;
-        return;
-    }
 
-    if (pendingExitFlag && (actions & RET_EXIT)) {
-        pendingExitFlag = false;
-        SvmLoader::exit();
+        if (pendingExitFlag && (actions & RET_EXIT)) {
+            pendingExitFlag = false;
+            SvmLoader::exit();
+        }
+
         return;
     }
 
@@ -508,10 +509,12 @@ void SvmRuntime::tailSyscall(unsigned num)
      * everything else after.
      */
 
-    ret(RET_BRANCH | RET_SET_EXIT_FLAG);
+    const unsigned preActions = RET_BRANCH | RET_SET_EXIT_FLAG;
+
+    ret(preActions);
     TRACING_ONLY(LOG(("TAIL-")););
     syscall(num);
-    ret(RET_ALL ^ (RET_BRANCH | RET_SET_EXIT_FLAG));
+    ret(RET_ALL ^ preActions);
 }
 
 void SvmRuntime::postSyscallWork()
