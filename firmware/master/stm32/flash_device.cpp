@@ -32,12 +32,8 @@ void FlashDevice::write(uint32_t address, const uint8_t *buf, unsigned len) {
         flash.write(address, buf, len);
 }
 
-void FlashDevice::eraseSector(uint32_t address) {
-    flash.eraseSector(address);
-}
-
-void FlashDevice::chipErase() {
-    flash.chipErase();
+void FlashDevice::eraseBlock(uint32_t address) {
+    flash.eraseBlock(address);
 }
 
 void FlashDevice::readId(JedecID *id)

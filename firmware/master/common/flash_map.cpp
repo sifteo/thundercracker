@@ -9,12 +9,17 @@
 
 void FlashMapBlock::erase() const
 {
-    for (unsigned I = address(), E = I + BLOCK_SIZE; I != E;
-        I += FlashDevice::SECTOR_SIZE) {
-        ASSERT(I < E);
+    STATIC_ASSERT(FlashDevice::ERASE_BLOCK_SIZE <= BLOCK_SIZE);
+    STATIC_ASSERT((BLOCK_SIZE % FlashDevice::ERASE_BLOCK_SIZE) == 0);
 
-        FlashBlock::cacheEraseSector(I);
-        FlashDevice::eraseSector(I);
+    unsigned I = address();
+    unsigned E = I + BLOCK_SIZE;
+
+    FlashBlock::invalidate(I, E, FlashBlock::F_KNOWN_ERASED);
+
+    for (; I != E; I += FlashDevice::ERASE_BLOCK_SIZE) {
+        ASSERT(I < E);
+        FlashDevice::eraseBlock(I);
     }
 }
 

@@ -29,7 +29,7 @@ Lunar<LuaFilesystem>::RegType LuaFilesystem::methods[] = {
     LUNAR_DECLARE_METHOD(LuaFilesystem, volumeMap),
     LUNAR_DECLARE_METHOD(LuaFilesystem, volumeEraseCounts),
     LUNAR_DECLARE_METHOD(LuaFilesystem, volumePayload),
-    LUNAR_DECLARE_METHOD(LuaFilesystem, simulatedSectorEraseCounts),
+    LUNAR_DECLARE_METHOD(LuaFilesystem, simulatedBlockEraseCounts),
     LUNAR_DECLARE_METHOD(LuaFilesystem, rawRead),
     LUNAR_DECLARE_METHOD(LuaFilesystem, rawWrite),
     LUNAR_DECLARE_METHOD(LuaFilesystem, rawErase),
@@ -344,7 +344,7 @@ int LuaFilesystem::volumePayload(lua_State *L)
     return 1;
 }
 
-int LuaFilesystem::simulatedSectorEraseCounts(lua_State *L)
+int LuaFilesystem::simulatedBlockEraseCounts(lua_State *L)
 {
     /*
      * No parameters. Returns a table of simulated erase counts for the
@@ -418,20 +418,20 @@ int LuaFilesystem::rawWrite(lua_State *L)
 int LuaFilesystem::rawErase(lua_State *L)
 {
     /*
-     * Raw flash sector-erase (address)
+     * Raw flash block-erase (address)
      */
 
     unsigned addr = luaL_checkinteger(L, 1);
 
     if (addr >= FlashDevice::CAPACITY ||
-        (addr % FlashDevice::SECTOR_SIZE)) {
-        lua_pushfstring(L, "Not a valid sector-aligned flash address");
+        (addr % FlashDevice::ERASE_BLOCK_SIZE)) {
+        lua_pushfstring(L, "Not a valid block-aligned flash address");
         lua_error(L);
         return 0;
     }
 
     FlashScopedStealthIO sio;
-    FlashDevice::eraseSector(addr);
+    FlashDevice::eraseBlock(addr);
     return 0;
 }
 

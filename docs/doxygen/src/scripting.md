@@ -358,9 +358,9 @@ Given a volume's block code, return its parent's block code, if any. If this vol
 
 Given a volume's block code, return its payload data as a string.
 
-### Filesystem():simulatedSectorEraseCounts()
+### Filesystem():simulatedBlockEraseCounts()
 
-Return an array of simulated erase counts for every sector in the Base's flash memory. This data is tracked by Siftulator's simulation engine itself.
+Return an array of simulated erase counts for every 64K block in the Base's flash memory. This data is tracked by Siftulator's simulation engine itself.
 
 This can be used to measure how much flash wear and tear is being caused by a particular test.
 
@@ -378,7 +378,7 @@ Use this function with care. Remember you're bypassing the filesystem and writin
 
 ### Filesystem():rawErase( _address_ )
 
-Erase one 4 kB sector of the raw Flash device, starting at the specified sector-aligned address.
+Erase one 64 kB block of the raw Flash device, starting at the specified block-aligned address.
 
 ### Filesystem():invalidateCache()
 

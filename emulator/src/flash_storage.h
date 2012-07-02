@@ -38,7 +38,7 @@ class FlashStorage {
         uint8_t bytes[FlashDevice::CAPACITY];
 
         // Out-of-band endurance data
-        uint64_t eraseCounts[FlashDevice::CAPACITY / FlashDevice::SECTOR_SIZE];
+        uint64_t eraseCounts[FlashDevice::CAPACITY / FlashDevice::ERASE_BLOCK_SIZE];
     };
 
     struct HeaderRecord {
@@ -54,7 +54,7 @@ class FlashStorage {
                 uint32_t    cube_extSize;
                 uint32_t    cube_sectorSize;
                 uint32_t    mc_pageSize;
-                uint32_t    mc_sectorSize;
+                uint32_t    mc_blockSize;
                 uint32_t    mc_capacity;
                 uint32_t    uniqueID;
             };

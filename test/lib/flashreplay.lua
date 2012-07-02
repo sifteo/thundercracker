@@ -48,7 +48,7 @@ FlashLogger = {}
         self.file:close()
 
         -- Restore our filesystem backup
-        for i = 0, 0xfff000, 0x1000 do
+        for i = 0, 0xff000, 0x10000 do
             self.fs:rawErase(i)
         end
         self.fs:rawWrite(0, self.backup)

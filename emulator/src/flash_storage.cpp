@@ -120,7 +120,7 @@ void FlashStorage::initData()
     data->header.cube_sectorSize = Cube::FlashModel::SECTOR_SIZE;
     data->header.mc_pageSize = FlashDevice::PAGE_SIZE;
     data->header.mc_capacity = FlashDevice::CAPACITY;
-    data->header.mc_sectorSize = FlashDevice::SECTOR_SIZE;
+    data->header.mc_blockSize = FlashDevice::ERASE_BLOCK_SIZE;
 
     // Create a unique ID for this storage file
     data->header.uniqueID = rand() ^ rand() ^ uint32_t(OSTime::clock() * 1e6);
@@ -191,7 +191,7 @@ bool FlashStorage::checkData()
         data->header.cube_sectorSize != Cube::FlashModel::SECTOR_SIZE ||
         data->header.mc_pageSize != FlashDevice::PAGE_SIZE ||
         data->header.mc_capacity != FlashDevice::CAPACITY ||
-        data->header.mc_sectorSize != FlashDevice::SECTOR_SIZE) {
+        data->header.mc_blockSize != FlashDevice::ERASE_BLOCK_SIZE) {
         LOG(("FLASH: Storage file has an unsupported memory layout\n"));
         return false;
     }

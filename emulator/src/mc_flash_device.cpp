@@ -71,6 +71,7 @@ void FlashDevice::write(uint32_t address, const uint8_t *buf, unsigned len)
 
         if (!gStealthIOCounter) {
             LuaFilesystem::onRawWrite(address, buf, len);
+            SystemMC::elapseTicks(MCTiming::TICKS_PER_PAGE_WRITE);
         }
 
         // Program bits from 1 to 0 only.
@@ -86,33 +87,25 @@ void FlashDevice::write(uint32_t address, const uint8_t *buf, unsigned len)
     }
 }
 
-void FlashDevice::eraseSector(uint32_t address)
+void FlashDevice::eraseBlock(uint32_t address)
 {
     FlashStorage::MasterRecord &storage = SystemMC::getSystem()->flash.data->master;
 
     if (address < FlashDevice::CAPACITY) {
         // Address can be anywhere inside the actual sector
-        unsigned sector = address - (address % FlashDevice::SECTOR_SIZE);
+        unsigned sector = address - (address % FlashDevice::ERASE_BLOCK_SIZE);
 
         if (!gStealthIOCounter) {
             LuaFilesystem::onRawErase(address);
+            SystemMC::elapseTicks(MCTiming::TICKS_PER_BLOCK_ERASE);
         }
 
-        memset(storage.bytes + sector, 0xFF, FlashDevice::SECTOR_SIZE);
-        storage.eraseCounts[sector / FlashDevice::SECTOR_SIZE]++;
+        memset(storage.bytes + sector, 0xFF, FlashDevice::ERASE_BLOCK_SIZE);
+        storage.eraseCounts[sector / FlashDevice::ERASE_BLOCK_SIZE]++;
 
     } else {
         ASSERT(0 && "MC flash eraseSector() out of range");
     }
-}
-
-void FlashDevice::chipErase()
-{
-    FlashStorage::MasterRecord &storage = SystemMC::getSystem()->flash.data->master;
-    memset(storage.bytes, 0xFF, sizeof storage.bytes);
-
-    for (unsigned s = 0; s != arraysize(storage.eraseCounts); ++s)
-        storage.eraseCounts[s]++;
 }
 
 void FlashDevice::init()

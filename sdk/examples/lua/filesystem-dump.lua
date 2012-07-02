@@ -82,7 +82,7 @@ end
 
 function getMaxEraseCount()
     local maxEC = 0
-    for index, ec in ipairs(fs:simulatedSectorEraseCounts()) do
+    for index, ec in ipairs(fs:simulatedBlockEraseCounts()) do
         maxEC = math.max(maxEC, ec)
     end
     return maxEC
@@ -176,7 +176,7 @@ function dumpEndurance()
     local maxCount = 0
     local maxBin = 0    -- Due to quantization, may be less than numBins
 
-    for index, ec in ipairs(fs:simulatedSectorEraseCounts()) do
+    for index, ec in ipairs(fs:simulatedBlockEraseCounts()) do
         local bin = 1 + math.floor(ec / binWidth)
         histogram[bin] = 1 + (histogram[bin] or 0)
         maxCount = math.max(maxCount, histogram[bin])

@@ -31,9 +31,7 @@ public:
 
     void read(uint32_t address, uint8_t *buf, unsigned len);
     void write(uint32_t address, const uint8_t *buf, unsigned len);
-    void eraseSector(uint32_t address);
     void eraseBlock(uint32_t address);
-    void chipErase();
 
     void readId(FlashDevice::JedecID *id);
 

@@ -87,24 +87,6 @@ void MacronixMX25::write(uint32_t address, const uint8_t *buf, unsigned len)
 }
 
 /*
- * Any address within a sector is valid to erase that sector.
- */
-void MacronixMX25::eraseSector(uint32_t address)
-{
-    waitWhileBusy();
-    ensureWriteEnabled();
-
-    spi.begin();
-    spi.transfer(SectorErase);
-    spi.transfer(address >> 16);
-    spi.transfer(address >> 8);
-    spi.transfer(address >> 0);
-    spi.end();
-
-    mightBeBusy = true;
-}
-
-/*
  * Any address within a block is valid to erase that block.
  */
 void MacronixMX25::eraseBlock(uint32_t address)
@@ -117,18 +99,6 @@ void MacronixMX25::eraseBlock(uint32_t address)
     spi.transfer(address >> 16);
     spi.transfer(address >> 8);
     spi.transfer(address >> 0);
-    spi.end();
-
-    mightBeBusy = true;
-}
-
-void MacronixMX25::chipErase()
-{
-    waitWhileBusy();
-    ensureWriteEnabled();
-
-    spi.begin();
-    spi.transfer(ChipErase);
     spi.end();
 
     mightBeBusy = true;

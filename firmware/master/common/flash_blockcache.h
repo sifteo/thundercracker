@@ -134,11 +134,10 @@ public:
     // Global operations
     static void init();
     static void invalidate();
-    static void invalidate(uint32_t addrBegin, uint32_t addrEnd);
+    static void invalidate(uint32_t addrBegin, uint32_t addrEnd, unsigned flags = 0);
 
     // Cached block accessors
     static void preload(uint32_t blockAddr);
-    static void cacheEraseSector(uint32_t sectorAddr);
     static void get(FlashBlockRef &ref, uint32_t blockAddr, unsigned flags = 0);
 
     // Support for anonymous memory

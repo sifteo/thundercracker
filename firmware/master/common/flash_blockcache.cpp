@@ -262,7 +262,7 @@ void FlashBlock::invalidate()
     invalidate(0, 0xFFFFFFFF);
 }
 
-void FlashBlock::invalidate(uint32_t addrBegin, uint32_t addrEnd)
+void FlashBlock::invalidate(uint32_t addrBegin, uint32_t addrEnd, unsigned flags)
 {
     /*
      * Invalidate any cache blocks which overlap the given range of
@@ -288,7 +288,7 @@ void FlashBlock::invalidate(uint32_t addrBegin, uint32_t addrEnd)
             if (block->refCount) {
                 // In use. If it's backed by flash at all, reload it.
                 if (block->address != INVALID_ADDRESS)
-                    block->load(block->address);
+                    block->load(block->address, flags);
             } else {
                 // Nobody's using this block, quietly mark it as invalid / anonymous
                 block->address = INVALID_ADDRESS;
@@ -367,31 +367,6 @@ void FlashBlockWriter::relocate(uint32_t blockAddr)
 
         // Replace this block's address in the cache.
         block->address = blockAddr;
-    }
-}
-
-void FlashBlock::cacheEraseSector(uint32_t sectorAddr)
-{
-    /*
-     * A lighter-weight alternative to invalidate(), used when erasing one
-     * flash sector. Any cached blocks in this sector which have a reference
-     * are erased, and any unreferenced blocks are evicted.
-     *
-     * Cached blocks not part of this sector are left alone.
-     */
-
-    const unsigned mask = ~(FlashDevice::SECTOR_SIZE - 1);
-    ASSERT((sectorAddr & mask) == sectorAddr);
-
-    for (unsigned idx = 0; idx < NUM_CACHE_BLOCKS; idx++) {
-        FlashBlock *block = &instances[idx];
-
-        if ((block->address & mask) == sectorAddr) {
-            if (block->refCount)
-                block->load(block->address, F_KNOWN_ERASED);
-            else
-                block->address = INVALID_ADDRESS;
-        }
     }
 }
 

@@ -124,15 +124,15 @@ void FactoryTest::flashCommsHandler(uint8_t argc, const uint8_t *args)
 
 /*
  * len: 4
- * args[1] - sector number
- * args[2] - offset into sector
+ * args[1] - block number
+ * args[2] - offset into block
  */
 void FactoryTest::flashReadWriteHandler(uint8_t argc, const uint8_t *args)
 {
-    uint32_t sectorAddr = args[1] * FlashDevice::SECTOR_SIZE;
-    uint32_t addr = sectorAddr + args[2];
+    uint32_t ebAddr = args[1] * FlashDevice::ERASE_BLOCK_SIZE;
+    uint32_t addr = ebAddr + args[2];
 
-    FlashDevice::eraseSector(sectorAddr);
+    FlashDevice::eraseBlock(ebAddr);
 
     const uint8_t txbuf[] = { 0, 1, 2, 3, 4, 5, 6, 7, 8, 9 };
     FlashDevice::write(addr, txbuf, sizeof txbuf);
