@@ -89,24 +89,32 @@ void SystemMC::exit()
 
 void SystemMC::autoInstall()
 {
-    // Install a launcher
+    // Use stealth flash I/O, for speed
+    FlashDevice::setStealthIO(1);
 
-    const char *launcher = sys->opt_launcherFilename.empty() ? NULL : sys->opt_launcherFilename.c_str();
-    if (!sys->flash.installLauncher(launcher))
-        return;
+    do {
 
-    // Install any ELF data that we've previously queued
+        // Install a launcher
+        const char *launcher = sys->opt_launcherFilename.empty() ? NULL : sys->opt_launcherFilename.c_str();
+        if (!sys->flash.installLauncher(launcher))
+            break;
 
-    tthread::lock_guard<tthread::mutex> guard(pendingGameInstallLock);
+        // Install any ELF data that we've previously queued
 
-    while (!pendingGameInstalls.empty()) {
-        std::vector<uint8_t> &data = pendingGameInstalls.back();
-        FlashVolumeWriter writer;
-        writer.begin(FlashVolume::T_GAME, data.size());
-        writer.appendPayload(&data[0], data.size());
-        writer.commit();
-        pendingGameInstalls.pop_back();
-    }
+        tthread::lock_guard<tthread::mutex> guard(pendingGameInstallLock);
+
+        while (!pendingGameInstalls.empty()) {
+            std::vector<uint8_t> &data = pendingGameInstalls.back();
+            FlashVolumeWriter writer;
+            writer.begin(FlashVolume::T_GAME, data.size());
+            writer.appendPayload(&data[0], data.size());
+            writer.commit();
+            pendingGameInstalls.pop_back();
+        }
+
+    } while (0);
+
+    FlashDevice::setStealthIO(-1);
 }
 
 void SystemMC::threadFn(void *param)
