@@ -1,6 +1,7 @@
 #include "manifest.h"
 #include "usbprotocol.h"
 #include "elfdebuginfo.h"
+#include "tabularlist.h"
 
 #include <sifteo/abi/elf.h>
 #include <sifteo/abi/types.h>
@@ -8,6 +9,8 @@
 #include <stdio.h>
 #include <errno.h>
 #include <string.h>
+#include <iomanip>
+
 
 int Manifest::run(int argc, char **argv, IODevice &_dev)
 {
@@ -157,10 +160,17 @@ bool Manifest::dumpOverview()
 bool Manifest::dumpVolumes()
 {
     unsigned volBlockCode;
+    TabularList table;
 
-    // Heading for volume table
-    printf("%-4s %-8s %5s %5s %-30s %-10s %s\n",
-        "Vol", "Type", "kbELF", "kbObj", "Package", "Version", "Title");
+    // Heading
+    table.cell() << "VOL";
+    table.cell() << "TYPE";
+    table.cell() << "ELF-KB";
+    table.cell() << "OBJ-KB";
+    table.cell() << "PACKAGE";
+    table.cell() << "VERSION";
+    table.cell() << "TITLE";
+    table.endRow();
 
     // Volume table
     while (overview.bits.clearFirst(volBlockCode)) {
@@ -172,15 +182,17 @@ bool Manifest::dumpVolumes()
             detail = &zero;
         }
 
-        printf("<%02X> %-8s %5d %5d ",
-            volBlockCode,
-            getVolumeTypeString(detail->type),
-            detail->selfBytes / 1024, detail->childBytes / 1024);
-
-        printf("%-30s ", getMetadataString(buffer, volBlockCode, _SYS_METADATA_PACKAGE_STR));
-        printf("%-10s ", getMetadataString(buffer, volBlockCode, _SYS_METADATA_VERSION_STR));
-        printf("%s\n", getMetadataString(buffer, volBlockCode, _SYS_METADATA_TITLE_STR));
+        table.cell() << std::setiosflags(std::ios::hex) << std::setw(2) << std::setfill('0') << volBlockCode;
+        table.cell() << getVolumeTypeString(detail->type);
+        table.cell(table.RIGHT) << (detail->selfBytes / 1024);
+        table.cell(table.RIGHT) << (detail->childBytes / 1024);
+        table.cell() << getMetadataString(buffer, volBlockCode, _SYS_METADATA_PACKAGE_STR);
+        table.cell() << getMetadataString(buffer, volBlockCode, _SYS_METADATA_VERSION_STR);
+        table.cell() << getMetadataString(buffer, volBlockCode, _SYS_METADATA_TITLE_STR);
+        table.endRow();
     }
+
+    table.end();
 
     return true;
 }
