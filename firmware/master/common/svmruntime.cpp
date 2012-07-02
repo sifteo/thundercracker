@@ -509,6 +509,7 @@ void SvmRuntime::tailSyscall(unsigned num)
      */
 
     ret(RET_BRANCH | RET_SET_EXIT_FLAG);
+    TRACING_ONLY(LOG(("TAIL-")););
     syscall(num);
     ret(RET_ALL ^ (RET_BRANCH | RET_SET_EXIT_FLAG));
 }
