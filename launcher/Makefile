@@ -2,6 +2,6 @@ APP = launcher
 
 include $(SDK_DIR)/Makefile.defs
 
-OBJS = main.o
+OBJS = src/main.o
 
 include $(SDK_DIR)/Makefile.rules
