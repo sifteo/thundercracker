@@ -9,6 +9,7 @@
 #include "flash_lfs.h"
 #include "crc.h"
 #include "elfprogram.h"
+#include "svmloader.h"
 
 
 bool FlashVolume::isValid() const
@@ -30,7 +31,7 @@ bool FlashVolume::isValid() const
      */
 
     unsigned numMapEntries = hdr->numMapEntries();
-    if (hdr->type != T_DELETED && hdr->crcMap != hdr->calculateMapCRC(numMapEntries))
+    if (!hdr->isDeleted() && hdr->crcMap != hdr->calculateMapCRC(numMapEntries))
         return false;
     if (hdr->crcErase != hdr->calculateEraseCountCRC(block, numMapEntries))
         return false;
@@ -273,8 +274,11 @@ void FlashBlockRecycler::findOrphansAndDeletedVolumes()
         FlashVolumeHeader *hdr = FlashVolumeHeader::get(ref, vol.block);
         ASSERT(hdr->isHeaderValid());
 
-        if (hdr->type == FlashVolume::T_DELETED || hdr->type == FlashVolume::T_INCOMPLETE) {
-            // Remember deleted or incomplete recyclable volumes according to their header block
+        // Remember deleted or incomplete recyclable volumes according to their header block.
+        // If the volume is still mapped by SVM, skip it for now. This allows in-use volumes
+        // to be deleted, knowing that they won't be recycled until they are unmapped.
+
+        if (hdr->isDeleted() && !SvmLoader::isVolumeMapped(vol)) {
             vol.block.mark(deletedVolumes);
         }
 
@@ -322,7 +326,7 @@ void FlashBlockRecycler::findCandidateVolumes()
         FlashBlockRef eraseRef;
 
         ASSERT(FlashVolume(block).isValid());
-        ASSERT(hdr->type == FlashVolume::T_DELETED || hdr->type == FlashVolume::T_INCOMPLETE);
+        ASSERT(hdr->isDeleted());
         ASSERT(hdr->isHeaderValid());
 
         for (unsigned I = 0; I != numMapEntries; ++I) {

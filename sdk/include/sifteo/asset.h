@@ -68,6 +68,15 @@ struct AssetGroup {
     }
 
     /**
+     * @brief How many tiles will this group use up in its AssetSlot?
+     *
+     * This is numTiles(), rounded up to the nearest AssetSlot allocation unit.
+     */
+    unsigned tileAllocation() const {
+        return roundup<unsigned>(numTiles(), 16);
+    }
+
+    /**
      * @brief Get the compressed size of this asset group, in bytes
      */
     unsigned compressedSize() const {
@@ -186,7 +195,7 @@ public:
      * This does not check whether the specified group has already been installed.
      */
     bool hasRoomFor(const AssetGroup &group) const {
-        return tilesFree() >= group.numTiles();
+        return tilesFree() >= group.tileAllocation();
     }
 
     /**

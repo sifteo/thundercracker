@@ -45,6 +45,13 @@ public:
         return mapVols[0];
     }
 
+    // Is this volume mapped anywhere?
+    static bool isVolumeMapped(FlashVolume vol) {
+        STATIC_ASSERT(arraysize(mapVols) == 2);
+        return vol.block.code == mapVols[0].block.code ||
+               vol.block.code == mapVols[1].block.code;
+    }
+
     // Return the volume corresponding with a particular VA.
     // If the VA isn't a valid flash address, returns an invalid volume.
     static FlashVolume volumeForVA(SvmMemory::VirtAddr va);

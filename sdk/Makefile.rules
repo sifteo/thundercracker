@@ -32,7 +32,7 @@ $(ASSETS).gen.cpp: $(ASSETDEPS)
 	$(STIR) $(ASSETS).lua $(ASSET_GEN_FILES) -v
 
 clean:
-	rm -f $(BIN) *.o *.d $(GENERATED_FILES)
+	rm -f $(BIN) $(OBJS) $(OBJS:%.o=%.d) $(GENERATED_FILES)
 
 run: $(BIN)
 	siftulator $(SIFTULATOR_FLAGS) $<

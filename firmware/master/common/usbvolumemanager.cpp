@@ -85,7 +85,7 @@ void UsbVolumeManager::onUsbData(const USBProtocolMsg &m)
             ASSERT(hdr->isHeaderValid());
 
             // Ignore deleted/incomplete volumes. (Treat them as free space)
-            if (hdr->type == FlashVolume::T_DELETED || hdr->type == FlashVolume::T_INCOMPLETE)
+            if (hdr->isDeleted())
                 continue;
 
             // All other volumes count against our free space

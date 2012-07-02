@@ -55,6 +55,7 @@ namespace SysLFS {
      */
 
     enum Key {
+        kDummy          = 0x27,
         kCubeBase       = 0x28,
         kCubeCount      = _SYS_NUM_CUBE_SLOTS,
         kAssetSlotBase  = kCubeBase + kCubeCount,
