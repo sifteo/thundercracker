@@ -37,6 +37,7 @@ FlashBlockRef SvmRuntime::dataBlock;
 SvmMemory::PhysAddr SvmRuntime::stackLimit;
 reg_t SvmRuntime::eventFrame;
 bool SvmRuntime::eventDispatchFlag;
+bool SvmRuntime::pendingExitFlag;
 
 
 void SvmRuntime::run(uint32_t entryFunc, const StackInfo &stack)
@@ -55,6 +56,7 @@ void SvmRuntime::exec(uint32_t entryFunc, const StackInfo &stack)
     // Escape from any active events
     eventFrame = 0;
     eventDispatchFlag = false;
+    pendingExitFlag = false;
 
     // Reset stack limits
     initStack(stack);
@@ -219,9 +221,22 @@ void SvmRuntime::ret(unsigned actions)
     CallFrame *fp = reinterpret_cast<CallFrame*>(regFP);
 
     if (!fp) {
-        // No more functions on the stack. Return from main() is exit().
-        if (actions & RET_EXIT)
-            SvmLoader::exit();
+        /*
+         * No more functions on the stack. Return from main() is exit().
+         *
+         * In order to properly handle tail syscalls, even when the syscall
+         * might cause the current binary to change (either via an explict
+         * exec(), or via a fault) we need to calculate whether we're exiting
+         * before the syscall, but we need to actually do the exit after.
+         */
+        if (actions & RET_SET_EXIT_FLAG)
+            pendingExitFlag = true;
+        return;
+    }
+
+    if (pendingExitFlag && (actions & RET_EXIT)) {
+        pendingExitFlag = false;
+        SvmLoader::exit();
         return;
     }
 
@@ -493,9 +508,9 @@ void SvmRuntime::tailSyscall(unsigned num)
      * everything else after.
      */
 
-    ret(RET_BRANCH);
+    ret(RET_BRANCH | RET_SET_EXIT_FLAG);
     syscall(num);
-    ret(RET_ALL ^ RET_BRANCH);
+    ret(RET_ALL ^ (RET_BRANCH | RET_SET_EXIT_FLAG));
 }
 
 void SvmRuntime::postSyscallWork()

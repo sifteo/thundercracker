@@ -126,7 +126,8 @@ private:
         RET_BRANCH          = 1 << 0,
         RET_RESTORE_REGS    = 1 << 1,
         RET_POP_FRAME       = 1 << 2,
-        RET_EXIT            = 1 << 3,
+        RET_SET_EXIT_FLAG   = 1 << 3,
+        RET_EXIT            = 1 << 4,
         RET_ALL             = -1,
     };
 
@@ -135,6 +136,7 @@ private:
     static SvmMemory::PhysAddr stackLimit;
     static reg_t eventFrame;
     static bool eventDispatchFlag;
+    static bool pendingExitFlag;
 
     static void initStack(const StackInfo &stack);
 
