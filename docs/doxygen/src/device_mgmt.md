@@ -45,11 +45,11 @@ Swiss provides a few options for removing content from your Sifteo base. To remo
 
     swiss delete --all
 
-To remove a single game, remove delete it by specifying its __volume__.
+To remove a single game, delete it by specifying its __volume__.
 
 You can retrieve the volume number of a game from the `manifest` command above. For example, in the manifest output above the "Hello World SDK Example" is listed as __10__ in the __VOL__ column, so the command to remove it is:
 
-    swiss delete volume 10
+    swiss delete 10
 
 You can also remove all system bookkeeping information from the base, including Sifteo::AssetSlot allocation records.
 
