@@ -9,6 +9,7 @@
 #include "flash_lfs.h"
 #include "crc.h"
 #include "elfprogram.h"
+#include "svmloader.h"
 
 
 bool FlashVolume::isValid() const
@@ -273,8 +274,12 @@ void FlashBlockRecycler::findOrphansAndDeletedVolumes()
         FlashVolumeHeader *hdr = FlashVolumeHeader::get(ref, vol.block);
         ASSERT(hdr->isHeaderValid());
 
-        if (hdr->type == FlashVolume::T_DELETED || hdr->type == FlashVolume::T_INCOMPLETE) {
-            // Remember deleted or incomplete recyclable volumes according to their header block
+        // Remember deleted or incomplete recyclable volumes according to their header block.
+        // If the volume is still mapped by SVM, skip it for now. This allows in-use volumes
+        // to be deleted, knowing that they won't be recycled until they are unmapped.
+
+        if ((hdr->type == FlashVolume::T_DELETED || hdr->type == FlashVolume::T_INCOMPLETE)
+            && !SvmLoader::isVolumeMapped(vol)) {
             vol.block.mark(deletedVolumes);
         }
 

@@ -105,6 +105,10 @@ public:
      * will return a no-longer-meaningful FlashVolume from getParent(). If
      * a new volume is created at the same address later, the child volumes
      * will be incorrectly parented.
+     *
+     * Note that it's allowed to delete the currently-running volume. The
+     * volume will be marked as deleted, but its blocks will not be recycled
+     * as long as that volume is still running.
      */
     void deleteTree() const;
 
