@@ -193,6 +193,19 @@ unsigned inline umod(int a, int b)
     return r;
 }
 
+/// Ceiling division. Divide, rounding up instead of down.
+template <typename T> inline T ceildiv(T numerator, T denominator) {
+    return (numerator + (denominator - 1)) / denominator;
+}
+
+/**
+ * @brief Round 'numerator' up to the nearest multiple of 'denominator'.
+ * Only for integer types.
+ */
+template <typename T> inline T roundup(T numerator, T denominator) {
+    return ceildiv(numerator, denominator) * denominator;
+}
+
 /// Compute the natural log of a floating point number. Single-precision.
 float inline log(float a)
 {

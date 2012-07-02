@@ -370,9 +370,31 @@ public:
      * Always returns a valid pointer. If the game has no title, returns
      * a placeholder string.
      */
-    const char *title() const {
+    const char *title(const char *placeholder = "(untitled)") const {
         const char *p = metadata<char>(_SYS_METADATA_TITLE_STR);
-        return p ? p : "(untitled)";
+        return p ? p : placeholder;
+    }
+
+    /**
+     * @brief Retrieve a mapped, NUL-terminated string with the volume's package string.
+     *
+     * Always returns a valid pointer. If the game has no package, returns
+     * a placeholder string.
+     */
+    const char *package(const char *placeholder = "(none)") const {
+        const char *p = metadata<char>(_SYS_METADATA_PACKAGE_STR);
+        return p ? p : placeholder;
+    }
+
+    /**
+     * @brief Retrieve a mapped, NUL-terminated string with the volume's version string.
+     *
+     * Always returns a valid pointer. If the game has no package, returns
+     * a placeholder string.
+     */
+    const char *version(const char *placeholder = "(none)") const {
+        const char *p = metadata<char>(_SYS_METADATA_VERSION_STR);
+        return p ? p : placeholder;
     }
 
     /**
