@@ -10,6 +10,7 @@
 #endif
 
 #include <sifteo/abi.h>
+#include <sifteo/macros.h>
 
 namespace Sifteo {
 
@@ -133,6 +134,35 @@ class System {
     static void finish() {
         _SYS_finish();
     }
+
+    /**
+     * @brief Is this a debug build?
+     *
+     * Returns 'true' if slinky was invoked with '-g', or false otherwise.
+     */
+    static bool isDebug() {
+        return _SYS_lti_isDebug();
+    }
+
+    /**
+     * @brief Is this a debug build running in simulation?
+     *
+     * Returns 'true' if slinky was invoked with '-g' and we're running in
+     * siftulator rather than on real hardware. Returns false otherwise.
+     *
+     * Release builds cannot detect being run in Siftulator in this manner.
+     * On release buids, this function always returns false.
+     */
+    static bool isSimDebug()
+    {
+        if (_SYS_lti_isDebug()) {
+            unsigned flag = 0;
+            SCRIPT_FMT(LUA, "Runtime():poke(%p, 1)", &flag);
+            return flag;
+        }
+        return false;
+    }
+
 };
 
 
