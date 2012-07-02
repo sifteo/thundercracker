@@ -155,12 +155,9 @@ class System {
      */
     static bool isSimDebug()
     {
-        if (_SYS_lti_isDebug()) {
-            unsigned flag = 0;
-            SCRIPT_FMT(LUA, "Runtime():poke(%p, 1)", &flag);
-            return flag;
-        }
-        return false;
+        unsigned flag = 0;
+        SCRIPT_FMT(LUA, "Runtime():poke(%p, 1)", &flag);
+        return flag;
     }
 
 };
