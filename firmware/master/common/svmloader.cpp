@@ -18,6 +18,7 @@
 #include "cube.h"
 #include "panic.h"
 #include "audiomixer.h"
+#include "event.h"
 
 #ifdef SIFTEO_SIMULATOR
 #   include "system_mc.h"
@@ -53,6 +54,9 @@ void SvmLoader::loadRWData(const Elf::Program &program)
 
 void SvmLoader::prepareToExec(const Elf::Program &program, SvmRuntime::StackInfo &stack)
 {
+    // Reset all event vectors
+    Event::clearVectors();
+
     // Detach any existing video buffers.
     for (unsigned i = 0; i < _SYS_NUM_CUBE_SLOTS; i++) {
         CubeSlots::instances[i].setVideoBuffer(0);

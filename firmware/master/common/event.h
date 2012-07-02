@@ -28,6 +28,8 @@ class Event {
     // Only called by SvmRuntime. Do not call directly from syscalls!
     static void dispatch();
 
+    static void clearVectors();
+
     static void setBasePending(_SYSVectorID vid, uint32_t param) {
         ASSERT(vid < _SYS_NUM_VECTORS);
         if (Intrinsic::LZ(vid) & pending) {

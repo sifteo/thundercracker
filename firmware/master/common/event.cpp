@@ -12,6 +12,12 @@ uint32_t Event::pending;
 Event::VectorInfo Event::vectors[_SYS_NUM_VECTORS];
 
 
+void Event::clearVectors()
+{
+    memset(vectors, 0, sizeof vectors);
+}
+
+
 void Event::dispatch()
 {
     /*
