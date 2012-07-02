@@ -13,6 +13,7 @@ ASSETS = assets
 
 GENERATED_FILES = $(ASSETS).gen.h $(ASSETS).gen.cpp $(ASSETS).html
 CFLAGS += -I$(SDK_DIR)/include
+CFLAGS += -I.
 
 # Compile for a minimal environment, generate LLVM object files
 CFLAGS += -emit-llvm -ffreestanding -nostdinc -msoft-float
