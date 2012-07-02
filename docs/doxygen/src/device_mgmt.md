@@ -34,9 +34,9 @@ The `manifest` command provides a summary of the content installed on your Sifte
 Depending on what you have installed, you'll see some results similar to those below:
 
     C:\code\sifteo-sdk\examples>swiss manifest
-    System: 128 kB  Free: 15104 kB  Firmware:
-    VOL TYPE     ELF-KB OBJ-KB PACKAGE               VERSION TITLE
-    01  Launcher    128      0 (none)                (none)  (none)
+    System: 128 kB  Free: 15104 kB  Firmware: ---
+    VOL TYPE     ELF-KB OBJ-KB PACKAGE                 VERSION TITLE
+    0d  Launcher    128      0 com.sifteo.launcher     0.1     System Launcher
     10  Game        128      0 com.sifteo.extras.hello 0.1     Hello World SDK Example
 
 # Delete Content        {#delete}
