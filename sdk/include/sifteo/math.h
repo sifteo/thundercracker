@@ -810,7 +810,7 @@ struct Random {
 	
 	/// Returns a generated pseudorandom inverval for a poisson process (e.g. whack-a-mole timing).
 	float expovariate(float averageInterval) {
-		return averageInterval * log(1.0f - random());
+		return -averageInterval * log(1.0f - random());
 	}
 	
     /**
