@@ -5,6 +5,13 @@
 #include <stdlib.h>
 #include <assert.h>
 
+#if 0
+#define USB_TRACE(_x)   printf _x
+#else
+#define USB_TRACE(_x)
+#endif
+
+
 UsbDevice::UsbDevice() :
     mHandle(0)
 {
@@ -16,10 +23,15 @@ bool UsbDevice::open(uint16_t vendorId, uint16_t productId, uint8_t interface)
      * Iterate all connected devices, and open the first device we see that
      * matches the given vid/pid.
      */
+
+    USB_TRACE(("USB: Starting open()\n"));
+
     libusb_device **devs;
     int deviceCount = libusb_get_device_list(NULL, &devs);
     if (deviceCount < 0)
         return false;
+
+    USB_TRACE(("USB: Walking device list\n"));
 
     for (int i = 0; i < deviceCount; ++i) {
 
@@ -30,6 +42,7 @@ bool UsbDevice::open(uint16_t vendorId, uint16_t productId, uint8_t interface)
             continue;
 
         if (desc.idVendor == vendorId && desc.idProduct == productId) {
+            USB_TRACE(("USB: Starting libusb_open()\n"));
             r = libusb_open(dev, &mHandle);
             if (r >= 0) {
                  if (populateDeviceInfo(dev)) {
@@ -46,6 +59,7 @@ bool UsbDevice::open(uint16_t vendorId, uint16_t productId, uint8_t interface)
     if (!isOpen())
         return false;
 
+    USB_TRACE(("USB: Claiming interface\n"));
     int r = libusb_claim_interface(mHandle, interface);
     if (r < 0)
         return false;
@@ -56,9 +70,11 @@ bool UsbDevice::open(uint16_t vendorId, uint16_t productId, uint8_t interface)
      * Keeping multiple transfers open allows libusb to continue processing
      * incoming packets while we're handling recent arrivals in user space.
      */
+    USB_TRACE(("USB: Submitting initial IN transfers\n"));
     for (unsigned i = 0; i < NUM_CONCURRENT_IN_TRANSFERS; ++i)
         submitINTransfer();
 
+    USB_TRACE(("USB: Finished open()\n"));
     return true;
 }
 
@@ -68,6 +84,8 @@ bool UsbDevice::open(uint16_t vendorId, uint16_t productId, uint8_t interface)
  */
 bool UsbDevice::populateDeviceInfo(libusb_device *dev)
 {
+    USB_TRACE(("USB: Begin populateDeviceInfo()\n"));
+
     struct libusb_config_descriptor *cfg;
     int r = libusb_get_config_descriptor(dev, 0, &cfg);
     if (r < 0)
@@ -97,12 +115,15 @@ bool UsbDevice::populateDeviceInfo(libusb_device *dev)
 
     }
 
+    USB_TRACE(("USB: Finished populateDeviceInfo()\n"));
     return true;
 }
 
 
 bool UsbDevice::submitINTransfer()
 {
+    USB_TRACE(("USB: Submit IN\n"));
+
     libusb_transfer *txfer = libusb_alloc_transfer(0);
     if (!txfer)
         return false;
@@ -125,6 +146,8 @@ bool UsbDevice::submitINTransfer()
 
 void UsbDevice::close()
 {
+    USB_TRACE(("USB: Closing device\n"));
+
     if (!isOpen())
         return;
 
@@ -155,6 +178,9 @@ int UsbDevice::readPacket(uint8_t *buf, unsigned maxlen)
     delete pkt.buf;
     mBufferedINPackets.pop_front();
 
+    USB_TRACE(("USB: Read %d bytes, %02x%02x%02x%02x %02x%02x%02x%02x ...\n",
+        len, buf[0], buf[1], buf[2], buf[3], buf[4], buf[5], buf[6], buf[7]));
+
     return len;
 }
 
@@ -165,6 +191,9 @@ int UsbDevice::readPacketSync(uint8_t *buf, int maxlen, int *transferred, unsign
 
 int UsbDevice::writePacket(const uint8_t *buf, unsigned len)
 {
+    USB_TRACE(("USB: Write %d bytes, %02x%02x%02x%02x %02x%02x%02x%02x ...\n",
+        len, buf[0], buf[1], buf[2], buf[3], buf[4], buf[5], buf[6], buf[7]));
+
     libusb_transfer *txfer = libusb_alloc_transfer(0);
     if (!txfer) {
         return -1;
@@ -190,6 +219,9 @@ int UsbDevice::writePacket(const uint8_t *buf, unsigned len)
 
 int UsbDevice::writePacketSync(const uint8_t *buf, int maxlen, int *transferred, unsigned timeout)
 {
+    USB_TRACE(("USB: Sync write %d bytes, %02x%02x%02x%02x %02x%02x%02x%02x ...\n",
+        maxlen, buf[0], buf[1], buf[2], buf[3], buf[4], buf[5], buf[6], buf[7]));
+
     return libusb_bulk_transfer(mHandle, mOutEndpoint.address, (unsigned char*)buf, maxlen, transferred, timeout);
 }
 
@@ -198,6 +230,8 @@ int UsbDevice::writePacketSync(const uint8_t *buf, int maxlen, int *transferred,
  */
 void UsbDevice::handleRx(libusb_transfer *t)
 {
+    USB_TRACE(("USB: RX status %d\n", t->status));
+
     if (t->status == LIBUSB_TRANSFER_COMPLETED) {
 
         Packet pkt;
@@ -229,6 +263,8 @@ void UsbDevice::handleRx(libusb_transfer *t)
  */
 void UsbDevice::handleTx(libusb_transfer *t)
 {
+    USB_TRACE(("USB: TX status %d\n", t->status));
+
     removeTransfer(mOutEndpoint.pendingTransfers, t);
 
 #if 0
