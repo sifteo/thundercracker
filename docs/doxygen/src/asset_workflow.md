@@ -98,10 +98,12 @@ Here's an assets.lua containing two modules:
 
 ~~~~~~~~~~~~~{.lua}
 Bubbles = tracker{"bubbles.xm"}
-Slumberjack = tracker{"slumberjack.xm"}
+Slumberjack = tracker{"slumberjack.xm", loop=false}
 ~~~~~~~~~~~~~
 
-Each @b tracker element specifies that an AssetTracker module should be generated. No further configuration is available for tracker modules.
+Each @b tracker element specifies that an AssetTracker module should be generated.
+
+By default, tracker modules loop using the restart point defined in the XM file. Modules play only once if the restart point is not valid. You may specify the `loop=false` option to forcibly disable looping.
 
 ### Input
 

@@ -85,6 +85,8 @@ public:
     static bool argMatch(lua_State *L, const char *arg);
     static bool argMatch(lua_State *L, lua_Integer arg);
     static bool argEnd(lua_State *L);
+
+    static _SYSAudioLoopType toLoopType(lua_State *L, int index);
 };
 
 
@@ -419,12 +421,28 @@ public:
         return loader.size;
     }
 
+    // Returns the type of looping, as a _SYS_LOOP_* constant
+    _SYSAudioLoopType getLoopType() const {
+        return loopType;
+    }
+    
+    // Get the song's restartPosition, modified by our current loopType.
+    int getRestartPosition() const {
+        if (getLoopType() == _SYS_LOOP_ONCE)
+            return -1;
+        else
+            return (unsigned) loader.song.restartPosition;
+    }
+
 private:
     friend class Script;
     friend class XmTrackerLoader;
+
     std::string mName;
     std::string mFile;
     XmTrackerLoader loader;
+
+    _SYSAudioLoopType loopType;
 };
 
 };  // namespace Stir

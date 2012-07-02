@@ -512,7 +512,7 @@ void CPPSourceWriter::writeTracker(const Tracker &tracker)
     "extern const Sifteo::AssetTracker " << tracker.getName() << " = {{\n" <<
     indent << "/* patternOrderTable     */ reinterpret_cast<uint32_t>(" << tracker.getName() << "_patternOrderTable),\n" <<
     indent << "/* patternOrderTableSize */ " << song.patternOrderTableSize << ",\n" <<
-    indent << "/* restartPosition       */ " << (uint32_t)song.restartPosition << ",\n" <<
+    indent << "/* restartPosition       */ " << tracker.getRestartPosition() << ",\n" <<
     indent << "/* nChannels             */ " << (uint32_t)song.nChannels << ",\n" <<
     indent << "/* nPatterns             */ " << song.nPatterns << ",\n" <<
     indent << "/* patterns              */ reinterpret_cast<uint32_t>(" << tracker.getName() << "_patterns),\n" <<

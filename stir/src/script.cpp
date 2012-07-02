@@ -316,6 +316,16 @@ bool Script::argEnd(lua_State *L)
     return success;
 }
 
+_SYSAudioLoopType Script::toLoopType(lua_State *L, int index)
+{
+    int loopType = lua_tointeger(L, index);
+
+    if (loopType > _SYS_LOOP_REPEAT || loopType < _SYS_LOOP_ONCE)
+        luaL_error(L, "Unknown loop value %d, should be 0 or 1", loopType);
+
+    return _SYSAudioLoopType(loopType);
+}
+
 bool Script::collect()
 {
     /*
@@ -732,12 +742,7 @@ Sound::Sound(lua_State *L)
     }
 
     if (Script::argMatch(L, "loop")) {
-        int16_t loopType = lua_tonumber(L, -1);
-        if (loopType > _SYS_LOOP_REPEAT || loopType < _SYS_LOOP_ONCE) {
-            luaL_error(L, "Unknown loop value %d, should be 0 or 1", loopType);
-            return;
-        }
-        setLoopType((_SYSAudioLoopType)loopType);
+        setLoopType(Script::toLoopType(L, -1));
     } else {
         setLoopType(_SYS_LOOP_ONCE);
     }
@@ -768,6 +773,12 @@ Tracker::Tracker(lua_State *L)
     if (Script::argMatch(L, 1)) {
         const char *filename = lua_tostring(L, -1);
         mFile = filename;
+    }
+
+    if (Script::argMatch(L, "loop")) {
+        loopType = Script::toLoopType(L, -1);
+    } else {
+        loopType = _SYS_LOOP_UNDEF;
     }
 
     Script::argEnd(L);
