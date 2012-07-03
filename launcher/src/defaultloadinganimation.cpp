@@ -19,6 +19,8 @@ void DefaultLoadingAnimation::begin(CubeSet cubes)
         vid.attach(cube);
         vid.fb32.set(LoadingBitmap);
     }
+
+    startTime = SystemTime::now();
 }
 
 void DefaultLoadingAnimation::paint(CubeSet cubes, int percent)
@@ -41,7 +43,9 @@ void DefaultLoadingAnimation::paint(CubeSet cubes, int percent)
     unsigned completionIndex = 1 + lastAnimIndex - (1 + lastAnimIndex - firstAnimIndex) * percent / 100;
 
     const int shimmerPeriod = 32;
-    int shimmerIndex = SystemTime::now().cycleFrame(TimeDelta::hz(1.0), shimmerPeriod);
+    const float frameRate = 30.0;
+
+    int shimmerIndex = (SystemTime::now() - startTime).frames(TimeDelta::hz(frameRate)) % shimmerPeriod;
 
     for (CubeID cube : cubes) {
         auto& cmap = Shared::video[cube].colormap;
