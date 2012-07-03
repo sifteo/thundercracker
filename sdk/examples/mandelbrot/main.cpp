@@ -3,11 +3,13 @@
  */
 
 #include <sifteo.h>
+#include "assets.gen.h"
 using namespace Sifteo;
 
 static Metadata M = Metadata()
     .title("Mandelbrot SDK Example")
     .package("com.sifteo.sdk.mandelbrot", "1.0")
+    .icon(Icon)
     .cubeRange(1);
 
 RGB565 calculateMandelbrot(UInt2 pixel);
