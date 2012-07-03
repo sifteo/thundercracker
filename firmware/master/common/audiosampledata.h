@@ -15,20 +15,12 @@
 
 class AudioSampleData {
 public:
-    void init(uint32_t loop_start = 0)
-    {
-        // Block boundary at which we take an automatic snapshot
-        autoSnapshotPoint = loop_start & ~HALF_BUFFER_MASK;
-        snapshot.sampleNum = 0x7fffffff & ~HALF_BUFFER_MASK;
-
-        reset();
-    }
+    void init(const _SYSAudioModule &mod);
 
     // Seek to the beginning of the sample data.
     void ALWAYS_INLINE reset()
     {
         state.sampleNum = 0;
-        state.adpcm.init();
     }
 
     static uint32_t numSamples(const _SYSAudioModule &mod)
@@ -93,6 +85,8 @@ private:
         uint32_t sampleNum;     // Half-buffer-aligned state from immediately before this sample #
         ADPCMState adpcm;       // ADPCM decoder state
     } state, snapshot;
+
+    ADPCMState adpcmIC;         // Initial conditions for ADPCM codec
 
     void fetchBlockPCM(uint32_t sampleNum, const _SYSAudioModule &mod);
     void fetchBlockADPCM(uint32_t sampleNum, const _SYSAudioModule &mod);

@@ -21,7 +21,7 @@ void AudioChannelSlot::setSpeed(uint32_t sampleRate)
 void AudioChannelSlot::play(const struct _SYSAudioModule *module, _SYSAudioLoopType loopMode)
 {
     mod = *module;
-    samples.init(mod.loopStart);
+    samples.init(mod);
     offset = 0;
 
     // Let the module decide

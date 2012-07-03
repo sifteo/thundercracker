@@ -10,6 +10,23 @@
 #define LGPFX "AudioSampleData: "
 
 
+void AudioSampleData::init(const _SYSAudioModule &mod)
+{
+    // Block boundary at which we take an automatic snapshot
+    autoSnapshotPoint = mod.loopStart & ~HALF_BUFFER_MASK;
+    snapshot.sampleNum = 0x7fffffff & ~HALF_BUFFER_MASK;
+
+    // Load initial conditions for ADPCM
+    if (mod.type == _SYS_ADPCM) {
+        uint32_t buffer = 0;
+        FlashBlockRef tempRef;
+        SvmMemory::copyROData(tempRef, (SvmMemory::PhysAddr) &buffer, mod.pData, ADPCMState::HEADER_BYTES);
+        adpcmIC.readHeader(buffer);
+    }
+
+    reset();
+}
+
 void AudioSampleData::fetchBlockPCM(uint32_t sampleNum, const _SYSAudioModule &mod)
 {
     /*
@@ -44,11 +61,11 @@ void AudioSampleData::fetchBlockADPCM(uint32_t sampleNum, const _SYSAudioModule 
     // Argument is expected to be Half-buffer-aligned.
     ASSERT((sampleNum & HALF_BUFFER_MASK) == 0);
 
-    // Fast local copy of ADPCM CODEC state
-    ADPCMDecoder dec;
-    dec.load(state.adpcm);
+    // Fast local copy of ADPCM CODEC state (Either the last saved, or the initial conditions)
     unsigned stateSampleNum = state.sampleNum;
     ASSERT((stateSampleNum & HALF_BUFFER_MASK) == 0);
+    ADPCMDecoder dec;
+    dec.load(stateSampleNum ? state.adpcm : adpcmIC);
 
     // Are we not decoding contiguously? May need to loop so we can skip forward.
     while (1) {
@@ -63,7 +80,7 @@ void AudioSampleData::fetchBlockADPCM(uint32_t sampleNum, const _SYSAudioModule 
 
             } else {
                 // Back to the beginning!
-                dec.init();
+                dec.load(adpcmIC);
                 stateSampleNum = 0;
             }
         }
@@ -71,7 +88,7 @@ void AudioSampleData::fetchBlockADPCM(uint32_t sampleNum, const _SYSAudioModule 
         STATIC_ASSERT((HALF_BUFFER % NYBBLES_PER_BYTE) == 0);
         ASSERT((stateSampleNum & HALF_BUFFER_MASK) == 0);
         unsigned bytesRemaining = HALF_BUFFER / NYBBLES_PER_BYTE;
-        SvmMemory::VirtAddr va = mod.pData + (stateSampleNum / NYBBLES_PER_BYTE);
+        SvmMemory::VirtAddr va = mod.pData + ADPCMState::HEADER_BYTES + (stateSampleNum / NYBBLES_PER_BYTE);
 
         int16_t *dest = &samples[stateSampleNum & FULL_BUFFER_MASK];
         ASSERT(dest + HALF_BUFFER <= &samples[FULL_BUFFER]);

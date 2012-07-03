@@ -16,10 +16,24 @@
  */
 struct ADPCMState
 {
-    uint32_t value;
+    union {
+        uint32_t value;
+        struct {
+            int16_t sample;
+            uint8_t index;
+            uint8_t reserved;
+        };
+    };
 
-    void ALWAYS_INLINE init() {
-        value = 0;
+    // Our compressed ADPCM data includes a set of initial conditions as
+    // a header, to help us adapt fast enough for short samples which start
+    // with a steep slope.
+
+    static const unsigned HEADER_BYTES = 3;
+
+    void ALWAYS_INLINE readHeader(uint32_t buffer) {
+        value = buffer;
+        index = MIN(index, 88);
     }
 };
 
@@ -54,10 +68,10 @@ public:
         state.value = uint16_t(sample) | (index << 16);
     }
 
-    void ALWAYS_INLINE init()
+    void ALWAYS_INLINE init(const uint8_t *header)
     {
-        sample = 0;
-        index = 0;
+        sample = int16_t(header[0] | (unsigned(header[1]) << 8));
+        index = MIN(header[2], int(arraysize(stepSizeTable) - 1));
     }
 
     // Call once per nybble to update decoder state, least significant nybble first
