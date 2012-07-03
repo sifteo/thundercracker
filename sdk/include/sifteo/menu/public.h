@@ -18,8 +18,7 @@ namespace Sifteo {
  * @{
  */
 
-inline Menu::Menu(VideoBuffer &vid, struct MenuAssets *aAssets,
-    struct MenuItem *aItems)
+inline Menu::Menu(VideoBuffer &vid, const MenuAssets *aAssets, MenuItem *aItems)
     : vid(vid)
 {
     currentEvent.type = MENU_UNEVENTFUL;

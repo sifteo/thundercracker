@@ -95,7 +95,7 @@ typedef enum {
 
 class Menu {
  public:
-    Menu(VideoBuffer&, MenuAssets*, MenuItem*);
+    Menu(VideoBuffer&, const MenuAssets*, MenuItem*);
     bool pollEvent(struct MenuEvent *);
     void preventDefault();
     void reset();
@@ -136,7 +136,7 @@ class Menu {
 
     // external parameters and metadata
     VideoBuffer &vid;               // videobuffer and its attached cube
-    struct MenuAssets *assets;      // theme assets of the menu
+    const struct MenuAssets *assets; // theme assets of the menu
     uint8_t numTips;                // number of tips in the theme
     struct MenuItem *items;         // items in the strip
     uint8_t numItems;               // number of items in the strip
