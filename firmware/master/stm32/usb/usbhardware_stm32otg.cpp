@@ -270,14 +270,9 @@ uint16_t epReadPacket(uint8_t addr, void *buf, uint16_t len)
     return len;
 }
 
-void setDisconnected(bool disconnected)
+void disconnect()
 {
-    const uint32_t sdis = (1 << 1);
-
-    if (disconnected)
-        OTG.device.DCTL |= sdis;
-    else
-        OTG.device.DCTL &= ~sdis;
+    OTG.device.DCTL |= (1 << 1);    // SDIS
 }
 
 } // namespace UsbHardware
