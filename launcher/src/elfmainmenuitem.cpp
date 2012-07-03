@@ -137,6 +137,9 @@ void ELFMainMenuItem::bootstrap(Sifteo::CubeSet cubes, ProgressDelegate &progres
      *
      * XXX: Currently the firmware requires cubes to be enabled before bindSlots.
      *      It needs to support cubes dynamically coming and going.
+     *
+     * XXX: Need a separate way to control which A21 bank we use for drawing.
+     *      That shouldn't change until just before we exec.
      */
     _SYS_enableCubes(cubes);
     _SYS_asset_bindSlots(volume, numAssetSlots);
