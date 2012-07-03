@@ -7,6 +7,7 @@
 #include "mainmenu.h"
 #include "elfmainmenuitem.h"
 #include "assets.gen.h"
+#include "applet/getgames.h"
 
 using namespace Sifteo;
 
@@ -25,7 +26,11 @@ void main()
     while (1) {
         static MainMenu menu;
         menu.init();
+
+        // Populate the menu
         ELFMainMenuItem::findGames(menu);
+        GetGamesApplet::add(menu);
+
         menu.run();
     }
 }

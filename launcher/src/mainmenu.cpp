@@ -13,13 +13,33 @@
 using namespace Sifteo;
 
 
+const MenuAssets MainMenu::menuAssets = {
+    &Menu_BgTile, &Menu_Footer, NULL, {&Menu_Tip0, &Menu_Tip1, &Menu_Tip2, NULL}
+};
+
+
 void MainMenu::init()
 {
     // XXX: Fake cubeset initialization, until we have real cube connect/disconnect
     cubes = CubeSet(0,3);
     _SYS_enableCubes(cubes);
 
+    // Load assets on all cubes
     loadAssets(cubes);
+
+    // Pick one cube to be the 'main' cube, where we show the menu
+    mainCube = *cubes.begin();
+
+    // Display a background on all other cubes
+    for (CubeID cube : cubes) {
+        if (cube == mainCube)
+            continue;
+
+        auto& vid = Shared::video[cube];
+        vid.initMode(BG0);
+        vid.attach(cube);
+        vid.bg0.erase(Menu_StripeTile);
+    }
 }
 
 void MainMenu::append(MainMenuItem *item)
@@ -29,8 +49,20 @@ void MainMenu::append(MainMenuItem *item)
 
 void MainMenu::run()
 {
-    while (1) {
-        System::paint();
+    Menu m(Shared::video[mainCube], &menuAssets, &menuItems[0]);
+
+    m.setIconYOffset(8);
+
+    struct MenuEvent e;
+    while (m.pollEvent(&e)) {
+
+        switch(e.type) {
+            case MENU_ITEM_PRESS:
+                
+            default:
+                break;
+        }
+
     }
 }
 

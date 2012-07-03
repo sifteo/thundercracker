@@ -31,9 +31,11 @@ public:
     virtual void getAssets(Sifteo::MenuItem &assets) = 0;
 
     /**
-     * How many cubes are required by this menu item?
+     * How many cubes are required by this menu item, if any?
      */
-    virtual CubeRange getCubeRange() = 0;
+    virtual CubeRange getCubeRange() {
+        return CubeRange();
+    }
 
     /**
      * Bootstrap the assets necessary to launch this main menu.

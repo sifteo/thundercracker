@@ -28,7 +28,7 @@ void DefaultLoadingAnimation::paint(CubeSet cubes, int percent)
      */
 
     // Color scheme
-    const RGB565 bgColor = RGB565::fromRGB(0xffffff);
+    const RGB565 bgColor = RGB565::fromRGB(0x000000);
     const RGB565 fgColor = RGB565::fromRGB(0x21b6ff);
 
     // Palette layout
