@@ -160,11 +160,15 @@ void CPPSourceWriter::writeGroup(const Group &group)
 
 void CPPSourceWriter::writeSound(const Sound &sound)
 {
-    std::vector<uint8_t> data;
     AudioEncoder *enc = AudioEncoder::create(sound.getEncode());
     assert(enc != 0);
 
-    enc->encodeFile(sound.getFile(), data);
+    std::vector<uint8_t> raw;
+    std::vector<uint8_t> data;
+
+    LodePNG::loadFile(raw, sound.getFile());
+    enc->encode(raw, data);
+
     mLog.infoLineWithLabel(sound.getName().c_str(),
         "%7.02f kiB, %s (%s)",
         data.size() / 1024.0f, enc->getName(), sound.getFile().c_str());

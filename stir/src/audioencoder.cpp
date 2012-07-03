@@ -18,9 +18,10 @@
 
 using namespace std;
 
-AudioEncoder *AudioEncoder::create(std::string name)
+
+AudioEncoder *AudioEncoder::create(string name)
 {
-    std::transform(name.begin(), name.end(), name.begin(), ::tolower);
+    transform(name.begin(), name.end(), name.begin(), ::tolower);
 
     if (name == "pcm")
         return new PCMEncoder();
@@ -31,73 +32,170 @@ AudioEncoder *AudioEncoder::create(std::string name)
     return 0;
 }
 
-
-void PCMEncoder::encodeFile(const std::string &path,
-    std::vector<uint8_t> &out)
+void PCMEncoder::encode(const std::vector<uint8_t> &in, std::vector<uint8_t> &out)
 {
-    FILE *fin = fopen(path.c_str(), "rb");
-    if (fin == 0)
-        return;
-    
-    char inbuf[512];
-
-    for (;;) {
-        int rx = fread(inbuf, 1, sizeof inbuf, fin);
-        if (feof(fin) && rx == 0)
-            break;
-
-        out.insert(out.end(), &inbuf[0], &inbuf[rx]);
-    }
+    // Already in PCM format
+    out.insert(out.end(), in.begin(), in.end());
 }
 
-uint32_t PCMEncoder::encodeBuffer(void *buf, uint32_t bufsize)
+void ADPCMEncoder::encode(const std::vector<uint8_t> &in, std::vector<uint8_t> &out)
 {
-    // buffer is already PCM!
-    return bufsize;
+    State state;
+    optimizeIC(state, in);
+    encodeWithIC(state, in, out, in.size());
 }
 
-void ADPCMEncoder::encodeFile(const std::string &path, std::vector<uint8_t> &out)
-{
-    FILE *fin = fopen(path.c_str(), "rb");
-    if (fin == 0)
-        return;
-
-    for (;;) {
-        int16_t samples[2];
-        int rx = fread(samples, sizeof samples[0], 2, fin);
-        if (feof(fin) && rx <= 0)
-            break;
-
-        // 2 16-bit samples are stored in a single byte
-        uint8_t adpcmByte = encodeSample(samples[0]);
-        adpcmByte |= (encodeSample(samples[1]) << 4);
-        out.push_back(adpcmByte);
-    }
-
-    fclose(fin);
-}
-
-uint32_t ADPCMEncoder::encodeBuffer(void *buf, uint32_t bufsize)
-{
-    int16_t *rbuf = (int16_t *)buf;
-    uint8_t *wbuf = (uint8_t *)buf;
-    uint32_t r = 0;
-    uint32_t w = 0;
-
-    // In-place compression of samples
-    while (r < bufsize / sizeof(int16_t)) {
-        int16_t samples[2] = {rbuf[r++], 0};
-        if (r < bufsize / sizeof(int16_t)) samples[1] = rbuf[r++];
-
-        wbuf[w++] = encodeSample(samples[0]) | (encodeSample(samples[1]) << 4);
-    }
-
-    return w;
-}
-
-unsigned ADPCMEncoder::encodeSample(int sample)
+void ADPCMEncoder::optimizeIC(State &state, const std::vector<uint8_t> &in)
 {
     /*
+     * Find the best initial conditions for encoding a particular PCM sample.
+     *
+     * In the long run, the initial conditions don't matter as long as the
+     * encoder and decoder agree. But sometimes it can take dozens of samples
+     * for the CODEC to converge if the initial conditions are particularly
+     * bad. Therefore we support storing a customized set of initial conditions
+     * with each sample. This optimizer tries to find the best settings
+     * to use for any particular sample.
+     */
+
+    // Too short to compress even?
+    if (in.size() < 4) {
+        state.sample = 0;
+        state.index = 0;
+        return;
+    }
+
+    // First sample
+    state.sample = int16_t(in[0] | (in[1] << 8));
+
+    // Try at most 100 samples
+    unsigned inBytes = std::min<unsigned>(100, in.size());
+    std::vector<uint8_t> dummy;
+
+    /*
+     * Pick the best initial index value.
+     *
+     * We can't leave this to the hill-climber below, since the index in ADPCM
+     * is highly nonlinear. It's easy to find a rather terrible local minimum
+     * in the error.
+     *
+     * So, for our initial guess, try every index value.
+     */
+
+    uint64_t error = -1;
+    int bestIndex = 0;
+
+    for (state.index = 0; state.index < INDEX_MAX; state.index++)  {
+        uint64_t nextError = encodeWithIC(state, in, dummy, inBytes);
+        if (nextError < error) {
+            error = nextError;
+            bestIndex = state.index;
+        }
+    }
+
+    state.index = bestIndex;
+
+    /*
+     * Hill-climbing optimizer.
+     *
+     * At this point we're close to the best solution. Try making incremental
+     * changes along each axis, and stop when there's no single change which
+     * improves quality.
+     */
+
+    // Test a unit change in each direction on each axis
+    for (;;) {
+        uint64_t nextError;
+
+        state.sample += 1;
+        if ((nextError = encodeWithIC(state, in, dummy, inBytes)) < error) {
+            error = nextError;
+            continue;
+        }
+        state.sample -= 2;
+        if ((nextError = encodeWithIC(state, in, dummy, inBytes)) < error) {
+            error = nextError;
+            continue;
+        }
+        state.sample += 1;
+
+        if (state.index < INDEX_MAX) {
+            state.index++;
+            if ((nextError = encodeWithIC(state, in, dummy, inBytes)) < error) {
+                error = nextError;
+                continue;
+            }
+            state.index--;
+        }
+
+        if (state.index > 0) {
+            state.index--;
+            if ((nextError = encodeWithIC(state, in, dummy, inBytes)) < error) {
+                error = nextError;
+                continue;
+            }
+            state.index++;
+        }
+
+        break;
+    }
+}
+
+uint64_t ADPCMEncoder::encodeWithIC(State state, const std::vector<uint8_t> &in,
+    std::vector<uint8_t> &out, unsigned inBytes)
+{
+    /*
+     * Using the provided initial conditions, encode some PCM data
+     * to ADPCM, and calculate an error metric.
+     *
+     * The returned error is a 64-bit integer representation of
+     * mean squared error, calculated by summing the squares of the
+     * difference between actual sample and predictor state after
+     * encoding each sample.
+     *
+     * If the input is not an even number of samples, the additional
+     * bytes/samples will be truncated.
+     */
+
+    unsigned numPairs = inBytes / 4;
+    const int16_t *inPtr = reinterpret_cast<const int16_t*>(&in[0]);
+    uint64_t error = 0;
+
+    out.resize(0);
+    out.reserve(numPairs + HEADER_SIZE);
+
+    // Write the initial conditions header
+    out.push_back(state.sample);
+    out.push_back(state.sample >> 8);
+    out.push_back(state.index);
+
+    while (numPairs--) {
+        // Uncompressed samples
+        int s1 = *(inPtr++);
+        int s2 = *(inPtr++);
+        
+        // Compressed nybbles, and predictor errors
+        unsigned n1 = encodeSample(state, s1);
+        int e1 = state.sample - s1;
+        unsigned n2 = encodeSample(state, s2);
+        int e2 = state.sample - s2;
+
+        // Update error metric
+        error += e1*e1 + e2*e2;
+
+        // Write out one byte (2 samples)
+        out.push_back(n1 | (n2 << 4));
+    }
+
+    return error;
+}
+
+unsigned ADPCMEncoder::encodeSample(State &state, int sample)
+{
+    /*
+     * Encode a single sample to a nybble of compressed data, and updates
+     * the codec state in 'state'.
+     *
      * Important: This isn't *quite* standard IMA ADPCM. The rounding
      * rules are a little different, in order to support a fast implementation
      * on ARM with multiply and shift.
@@ -132,10 +230,12 @@ unsigned ADPCMEncoder::encodeSample(int sample)
         0x000008F1,
     };
 
+    int index = state.index;
     int step = stepSizeTable[index];
 
     // Difference between new sample and old prediction
-    int diff = sample - predsample;
+    int prevSample = state.sample;
+    int diff = sample - prevSample;
 
     // Find the best nybble for this diff
     unsigned bestCode = 0;
@@ -151,13 +251,11 @@ unsigned ADPCMEncoder::encodeSample(int sample)
     }
 
     // Update prediction
-    predsample = std::min(32767, std::max(-32768, predsample + bestDiff));
+    state.sample = std::min(32767, std::max(-32768, prevSample + bestDiff));
 
     // Update quantizer step size
-    int nextIndex = index + (codeTable[bestCode] >> 8);
-    nextIndex = std::max(nextIndex, 0);
-    nextIndex = std::min(nextIndex, 88);
-    index = nextIndex;
+    index += (codeTable[bestCode] >> 8);
+    state.index = std::min<int>(INDEX_MAX, std::max(0, index));
 
     return bestCode;
 }

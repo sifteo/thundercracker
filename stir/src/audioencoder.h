@@ -14,11 +14,12 @@
 #include <string>
 #include "sifteo/abi.h"
 
+
 class AudioEncoder {
 public:
     virtual ~AudioEncoder() {}
-    virtual void encodeFile(const std::string &path, std::vector<uint8_t> &out) = 0;
-    virtual uint32_t encodeBuffer(void *buf, uint32_t bufsize) = 0;
+
+    virtual void encode(const std::vector<uint8_t> &in, std::vector<uint8_t> &out) = 0;
 
     virtual const char *getTypeSymbol() = 0;
     virtual const char *getName() = 0;
@@ -30,8 +31,7 @@ public:
 
 class PCMEncoder : public AudioEncoder {
 public:
-    virtual void encodeFile(const std::string &path, std::vector<uint8_t> &out);
-    virtual uint32_t encodeBuffer(void *buf, uint32_t bufsize);
+    virtual void encode(const std::vector<uint8_t> &in, std::vector<uint8_t> &out);
 
     virtual const char *getTypeSymbol() {
         return "_SYS_PCM";
@@ -46,14 +46,13 @@ public:
     }
 };
 
+
 class ADPCMEncoder : public AudioEncoder {
 public:
-    ADPCMEncoder() :
-        index(0),
-        predsample(0)
-    {}
-    virtual void encodeFile(const std::string &path, std::vector<uint8_t> &out);
-    virtual uint32_t encodeBuffer(void *buf, uint32_t bufsize);
+    static const unsigned HEADER_SIZE = 3;
+    static const unsigned INDEX_MAX = 88;
+
+    virtual void encode(const std::vector<uint8_t> &in, std::vector<uint8_t> &out);
 
     virtual const char *getTypeSymbol() {
         return "_SYS_ADPCM";
@@ -68,10 +67,16 @@ public:
     }
 
 private:
-    unsigned index;
-    int predsample;
+    struct State {
+        unsigned index;
+        int sample;
+    };
 
-    unsigned encodeSample(int sample);
+    static void optimizeIC(State &state, const std::vector<uint8_t> &in);
+    static uint64_t encodeWithIC(State state, const std::vector<uint8_t> &in,
+        std::vector<uint8_t> &out, unsigned inBytes);
+
+    static unsigned encodeSample(State &state, int sample);
 };
 
 #endif

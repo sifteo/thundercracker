@@ -400,8 +400,11 @@ bool XmTrackerLoader::readSample(_SYSXMInstrument &instrument)
                 "For better quality, use uncompressed samples in your XM file and let stir "
                 "compress them.", filename, instruments.size());
 
-            std::vector<uint8_t> sampleData(sample.dataSize);
-            getbuf(&sampleData[0], sample.dataSize);
+            // Prefix with three zero bytes (default codec initial conditions)
+            std::vector<uint8_t> sampleData(sample.dataSize + 3);
+            memset(&sampleData[0], 0, 3);
+            getbuf(&sampleData[3], sample.dataSize);
+
             sample.pData = globalSampleDatas.size();
             size += sample.dataSize;
             globalSampleDatas.push_back(sampleData);
@@ -462,14 +465,18 @@ bool XmTrackerLoader::readSample(_SYSXMInstrument &instrument)
                 sample.loopEnd += addlLength;
             }
 
-            // Encode to today's default format
-            AudioEncoder *enc = AudioEncoder::create("");
-            sample.dataSize = enc->encodeBuffer(buf, numSamples * sizeof(int16_t));
-
-            std::vector<uint8_t> sampleData(sample.dataSize);
-            memcpy(&sampleData[0], buf, sample.dataSize);
+            /// XXX: We could just be using std::vector above too...
+            std::vector<uint8_t> rawBytes((const uint8_t*) buf,
+                (const uint8_t*) buf + (numSamples * sizeof(int16_t)));
             free(buf);
+
+            // Encode to today's default format
+            std::vector<uint8_t> sampleData;
+            AudioEncoder *enc = AudioEncoder::create("");
+            enc->encode(rawBytes, sampleData);
+
             sample.pData = globalSampleDatas.size();
+            sample.dataSize = sampleData.size();
             size += sample.dataSize;
             globalSampleDatas.push_back(sampleData);
             sample.type = enc->getType();
