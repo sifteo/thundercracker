@@ -26,9 +26,9 @@ public:
      *
      * If this data has been copied from elsewhere, they will point to
      * a constructed AssetGroup that the caller must load before using these
-     * assets.
+     * assets. The provided MappedVolume must be used to map this data.
      */
-    virtual void getAssets(Sifteo::MenuItem &assets) = 0;
+    virtual void getAssets(Sifteo::MenuItem &assets, Sifteo::MappedVolume &map) = 0;
 
     /**
      * How many cubes are required by this menu item, if any?

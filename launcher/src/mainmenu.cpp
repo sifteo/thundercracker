@@ -29,17 +29,6 @@ void MainMenu::init()
     _SYS_enableCubes(cubes);
 }
 
-void MainMenu::append(MainMenuItem *item)
-{
-    unsigned index = items.count();
-    items.append(item);
-    menuItems.setCount(index + 1);
-
-    MenuItem &mi = menuItems[index];
-    bzero(mi);
-    item->getAssets(mi);
-}
-
 void MainMenu::run()
 {
     // Load our own local assets plus all icon assets
@@ -95,28 +84,42 @@ void MainMenu::execItem(unsigned index)
 void MainMenu::loadAssets()
 {
     ScopedAssetLoader loader;
+    DefaultLoadingAnimation anim;
+    anim.begin(cubes);
 
     // Bind the local volume's slots.
     _SYS_asset_bindSlots(Volume::running(), Shared::NUM_SLOTS);
 
+    // First, load our own assets into the primary slot
     if (!loader.start(MenuGroup, Shared::primarySlot, cubes)) {
         Shared::primarySlot.erase();
         loader.start(MenuGroup, Shared::primarySlot, cubes);
     }
-
-    if (loader.isComplete())
-        return;
-
-    DefaultLoadingAnimation anim;
-    anim.begin(cubes);
-
     while (!loader.isComplete()) {
-
-        // Report progress individually for each cube
+        // XXX: Report overall progress
         for (CubeID cube : cubes)
             anim.paint(CubeSet(cube), loader.progress(cube));
-
         System::paint();
+    }
+
+    // Now load each menu item into the secondary slot.
+    // XXX: Report overall progress
+    // XXX: Erase the slot first, if necessary
+    //      (Both of these require asset group size accounting in the first pass)
+    // XXX: Remember to only load things that need loading, i.e. not applet icons.
+
+    for (MainMenuItem *item : items) {
+        MappedVolume map;
+        MenuItem &mi = menuItems.append();
+        bzero(mi);
+        item->getAssets(mi, map);
+
+        loader.start(mi.icon->assetGroup(), Shared::secondarySlot, cubes);
+        while (!loader.isComplete()) {
+            for (CubeID cube : cubes)
+                anim.paint(CubeSet(cube), loader.progress(cube));
+            System::paint();
+        }
     }
 
     anim.end(cubes);

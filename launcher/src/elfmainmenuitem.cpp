@@ -74,7 +74,7 @@ bool ELFMainMenuItem::init(Sifteo::Volume volume)
     /*
      * Load critical metadata from this volume into RAM, and check whether
      * it's suitable to include in the launcher menu. This loads only
-     * lightweight resources from the volume, no assets.
+     * lightweight resources from the volume. No assets are stored yet.
      */
 
     STATIC_ASSERT(MAX_INSTANCES < MainMenu::MAX_ITEMS);
@@ -102,8 +102,11 @@ bool ELFMainMenuItem::init(Sifteo::Volume volume)
     return true;
 }
 
-void ELFMainMenuItem::getAssets(Sifteo::MenuItem &assets)
+void ELFMainMenuItem::getAssets(Sifteo::MenuItem &assets, Sifteo::MappedVolume &map)
 {
+    /*
+     * Gather assets from this volume.
+     */
 }
 
 void ELFMainMenuItem::bootstrap(Sifteo::CubeSet cubes, ProgressDelegate &progress)

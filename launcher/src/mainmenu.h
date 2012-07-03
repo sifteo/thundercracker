@@ -31,7 +31,9 @@ public:
      * Append a new item to the internal list of menu items. The MainMenuItem
      * object must remain valid until the menu is run.
      */
-    void append(MainMenuItem *item);
+    void append(MainMenuItem *item) {
+        items.append(item);
+    }
 
     /**
      * Execute the menu's main loop. When an item is chosen, it is exec()'ed.

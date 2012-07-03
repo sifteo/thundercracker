@@ -18,7 +18,7 @@ class ELFMainMenuItem : public MainMenuItem
 {
 public:
 
-    virtual void getAssets(Sifteo::MenuItem &assets);
+    virtual void getAssets(Sifteo::MenuItem &assets, Sifteo::MappedVolume &map);
     virtual void bootstrap(Sifteo::CubeSet cubes, ProgressDelegate &progress);
 
     virtual void exec() {
@@ -61,6 +61,19 @@ private:
     Sifteo::Volume volume;
     CubeRange cubeRange;
     uint8_t numAssetSlots;
+
+    /*
+     * Local storage for icon assets.
+     *
+     * The 'image' here stores an uncompressed copy, in RAM, of the icon's tile
+     * indices. The 'group' references mapped AssetGroup data which isn't available
+     * after we unmap the game's volume, but perhaps more importantly it stores
+     * information about the load address of this icon's assets on each cube.
+     */
+    struct {
+        Sifteo::RelocatableTileBuffer<12,12> image;
+        Sifteo::AssetGroup group;
+    } icon;
 
     /**
      * Initialize from a Volume. Returns 'true' if we can successfully create
