@@ -20,6 +20,7 @@ class MainMenuItem;
 class MainMenu
 {
 public:
+    static const unsigned MAX_ITEMS = 32;
 
     /**
      * Set up the Main Menu's data structures, and empty its lists of items.
@@ -40,4 +41,7 @@ public:
 
 private:
     Sifteo::CubeSet cubes;
+    Sifteo::Array<MainMenuItem*, MAX_ITEMS> items;
+
+    static NOINLINE void loadAssets(Sifteo::CubeSet cubes);
 };

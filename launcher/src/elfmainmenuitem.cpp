@@ -77,6 +77,8 @@ bool ELFMainMenuItem::init(Sifteo::Volume volume)
      * lightweight resources from the volume, no assets.
      */
 
+    STATIC_ASSERT(MAX_INSTANCES < MainMenu::MAX_ITEMS);
+
     this->volume = volume;
     MappedVolume map(volume);
 
@@ -243,7 +245,7 @@ void ELFMainMenuItem::bootstrap(Sifteo::CubeSet cubes, ProgressDelegate &progres
      * As we load each group, calculate a global progress estimate for all groups.
      */
 
-    progress.begin();
+    progress.begin(cubes);
     ScopedAssetLoader loader;
 
     unsigned previousBytes = 0;
@@ -282,12 +284,13 @@ void ELFMainMenuItem::bootstrap(Sifteo::CubeSet cubes, ProgressDelegate &progres
             unsigned averageBytes = totalBytes / totalCubes;
             unsigned percent = (previousBytes + averageBytes) * 100 / totalBytes;
 
-            progress.paint(percent);
+            progress.paint(cubes, percent);
+            System::paint();
         }
 
         loader.finish();
         previousBytes += group.compressedSize();
     }
 
-    progress.end();
+    progress.end(cubes);
 }

@@ -9,13 +9,12 @@
 
 
 /**
- * A stub ProgressDelegate which uses Asset Loader Bypass mode
- * to load assets immediately.
+ * A simple loading animation, usable at any time.
  */
 
-class AssetLoaderBypassDelegate : public ProgressDelegate
+class DefaultLoadingAnimation : public ProgressDelegate
 {
 public:
     virtual void begin(Sifteo::CubeSet cubes);
-    virtual void end(Sifteo::CubeSet cubes);
+    virtual void paint(Sifteo::CubeSet cubes, int percent);
 };

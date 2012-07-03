@@ -1,2 +1,2 @@
-dofile("src/sounds.lua")
-dofile("src/menu.lua")
+dofile("sounds/sounds.lua")
+dofile("images/menu.lua")

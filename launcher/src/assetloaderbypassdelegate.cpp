@@ -8,17 +8,12 @@
 using namespace Sifteo;
  
 
-void AssetLoaderBypassDelegate::begin()
+void AssetLoaderBypassDelegate::begin(CubeSet cubes)
 {
     SCRIPT(LUA, System():setAssetLoaderBypass(not os.getenv("BOOTSTRAP_SLOWLY")));
 }
 
-void AssetLoaderBypassDelegate::end()
+void AssetLoaderBypassDelegate::end(CubeSet cubes)
 {
     SCRIPT(LUA, System():setAssetLoaderBypass(false));
-}
-
-void AssetLoaderBypassDelegate::paint(int percent)
-{
-    System::paint();
 }
