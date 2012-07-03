@@ -441,7 +441,7 @@ bool XmTrackerLoader::readSample(_SYSXMInstrument &instrument)
                  * to:
                  * [start][012345678987654321][end] (loop length: 18)
                  */
-                uint32_t loopLength = sample.loopEnd - sample.loopStart + 1;
+                uint32_t loopLength = sample.loopEnd - sample.loopStart;
 
                 // First and last samples of loop are not duplicated
                 uint32_t addlLength = loopLength - 2;
