@@ -41,7 +41,7 @@ void AudioChannelSlot::play(const struct _SYSAudioModule *module, _SYSAudioLoopT
     // Pre-calculate the loop endpoint (relatively expensive)
     offsetLimit = (state & STATE_LOOP) && mod.loopEnd
         ? ((uint64_t)mod.loopEnd) << SAMPLE_FRAC_SIZE
-        : ((uint64_t)samples.numSamples(mod) - 1) << SAMPLE_FRAC_SIZE;
+        : ((uint64_t)samples.numSamples(mod)) << SAMPLE_FRAC_SIZE;
 
     state &= ~STATE_STOPPED;
 }
@@ -69,6 +69,8 @@ bool AudioChannelSlot::mixAudio(int *buffer, uint32_t numFrames)
     const int latchedVolume = volume;
     const int latchedIncrement = increment;
     const uint64_t latchedLimit = offsetLimit;
+    const unsigned limitIndex = latchedLimit >> SAMPLE_FRAC_SIZE;
+    const unsigned loopStart = mod.loopStart;
 
     // Local copy of offset, to avoid writing back to RAM every time
     uint64_t localOffset = offset;
@@ -98,9 +100,27 @@ bool AudioChannelSlot::mixAudio(int *buffer, uint32_t numFrames)
             if (!fractional) {
                 // Offset is aligned with an asset sample
                 sample = samples.getSample(index, mod);
+
             } else {
-                // Linearly interpolate between the two relevant samples            
-                int next = samples.getSamplePair(index, mod, sample);
+                // At all other times, we use linear interpolation between two samples.
+
+                int next;
+
+                if (LIKELY(index + 1 < limitIndex)) {
+                    // Fast path for linear interpolation between two adjacent samples
+                    next = samples.getSamplePair(index, mod, sample);
+
+                } else if (state & STATE_LOOP) {
+                    // Next sample is on the other side of the loop
+                    sample = samples.getSample(index, mod);
+                    next = samples.getSample(loopStart, mod);
+
+                } else {
+                    // Not looping. Next sample is an implied zero.
+                    sample = samples.getSample(index, mod);
+                    next = 0;
+                }
+
                 sample += ((next - sample) * int(fractional)) >> SAMPLE_FRAC_SIZE;
             }
 

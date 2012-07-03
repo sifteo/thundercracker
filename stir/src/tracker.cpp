@@ -327,7 +327,7 @@ bool XmTrackerLoader::readNextInstrument()
         }
 
         // convert loopLength to loopEnd (zero-indexed)
-        sample.loopEnd += sample.loopStart - 1;
+        sample.loopEnd += sample.loopStart;
     }
 
     // Fast-forward through the extra sample headers, if any.
