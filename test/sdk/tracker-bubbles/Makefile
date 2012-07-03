@@ -1,4 +1,4 @@
-APP = test-tracker
+APP = test-tracker-bubbles
 
 include $(SDK_DIR)/Makefile.defs
 

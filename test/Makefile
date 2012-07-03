@@ -38,7 +38,7 @@ ifneq ($(BUILD_PLATFORM), windows32)
 	firmware/master \
 	sdk/adpcm \
 	sdk/pcm \
-	sdk/tracker
+	sdk/tracker-bubbles
 endif
 
 #############################################################
