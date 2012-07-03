@@ -47,7 +47,7 @@ struct _SYSAudioModule {
     uint8_t type;           /// _SYSAudioType code
     uint16_t volume;        /// Sample default volume (overridden by explicit channel volume)
     uint32_t dataSize;      /// Size of compressed data, in bytes
-    uint32_t pData;            /// Flash address for compressed data
+    uint32_t pData;         /// Flash address for compressed data
 };
 
 struct _SYSXMPattern {
