@@ -15,6 +15,7 @@ static AssetSlot MainSlot = AssetSlot::allocate()
 static Metadata M = Metadata()
     .title("Stars SDK Example")
     .package("com.sifteo.sdk.stars", "1.0")
+    .icon(Icon)
     .cubeRange(gNumCubes);
 
 
