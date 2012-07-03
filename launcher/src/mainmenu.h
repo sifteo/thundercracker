@@ -41,11 +41,13 @@ public:
 
 private:
     Sifteo::CubeSet cubes;
-    Sifteo::CubeID mainCube;
 
     Sifteo::Array<MainMenuItem*, MAX_ITEMS> items;
     Sifteo::Array<Sifteo::MenuItem, MAX_ITEMS+1> menuItems;
     static const Sifteo::MenuAssets menuAssets;
 
-    static NOINLINE void loadAssets(Sifteo::CubeSet cubes);
+    // Note: these functions are marked NOINLINE as a cache usage optimization.
+    NOINLINE void loadAssets();
+    NOINLINE void eventLoop(Sifteo::Menu &m);
+    NOINLINE void execItem(unsigned index);
 };

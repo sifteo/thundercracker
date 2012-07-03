@@ -20,53 +20,79 @@ const MenuAssets MainMenu::menuAssets = {
 
 void MainMenu::init()
 {
+    // Empty our arrays
+    items.clear();
+    menuItems.clear();
+
     // XXX: Fake cubeset initialization, until we have real cube connect/disconnect
     cubes = CubeSet(0,3);
     _SYS_enableCubes(cubes);
-
-    // Load assets on all cubes
-    loadAssets(cubes);
-
-    // Pick one cube to be the 'main' cube, where we show the menu
-    mainCube = *cubes.begin();
-
-    // Display a background on all other cubes
-    for (CubeID cube : cubes) {
-        if (cube == mainCube)
-            continue;
-
-        auto& vid = Shared::video[cube];
-        vid.initMode(BG0);
-        vid.attach(cube);
-        vid.bg0.erase(Menu_StripeTile);
-    }
 }
 
 void MainMenu::append(MainMenuItem *item)
 {
+    unsigned index = items.count();
     items.append(item);
+    menuItems.setCount(index + 1);
+
+    MenuItem &mi = menuItems[index];
+    bzero(mi);
+    item->getAssets(mi);
 }
 
 void MainMenu::run()
 {
+    // Load our own local assets plus all icon assets
+    loadAssets();
+
+    // Pick one cube to be the 'main' cube, where we show the menu
+    Sifteo::CubeID mainCube = *cubes.begin();
+
+    // Display a background on all other cubes
+    for (CubeID cube : cubes)
+        if (cube != mainCube) {
+            auto& vid = Shared::video[cube];
+            vid.initMode(BG0);
+            vid.attach(cube);
+            vid.bg0.erase(Menu_StripeTile);
+        }
+
+    // Run the menu on our main cube
     Menu m(Shared::video[mainCube], &menuAssets, &menuItems[0]);
-
     m.setIconYOffset(8);
+    eventLoop(m);
+}
 
+void MainMenu::eventLoop(Menu &m)
+{
     struct MenuEvent e;
     while (m.pollEvent(&e)) {
-
         switch(e.type) {
+
             case MENU_ITEM_PRESS:
-                
+                execItem(e.item);
+                return;
+
             default:
                 break;
         }
-
     }
 }
 
-void MainMenu::loadAssets(Sifteo::CubeSet cubes)
+void MainMenu::execItem(unsigned index)
+{
+    /// XXX: Instead of a separate animation, integrate this animation with the menu itself
+
+    DefaultLoadingAnimation anim;
+
+    ASSERT(index < arraysize(items));
+    MainMenuItem *item = items[index];
+
+    item->bootstrap(cubes, anim);
+    item->exec();
+}
+
+void MainMenu::loadAssets()
 {
     ScopedAssetLoader loader;
 

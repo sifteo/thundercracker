@@ -14,3 +14,7 @@ Menu_Tip2 = image{ "images/Tip2.png" }
 Menu_Footer = image{ "images/Footer.png" }
 
 Menu_LabelEmpty = image{ "images/LabelEmpty.png" }
+
+-- Applet icons
+
+Icon_GetGames = image{ "images/icon-getgames.png" }
