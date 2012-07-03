@@ -384,9 +384,22 @@ bool XmTrackerLoader::readSample(_SYSXMInstrument &instrument)
     
     bool pcm8 = false;
     instrument.compression = 4;
+
     switch (format) {
         case kSampleFormatADPCM: {
-            // if adpcm, read directly into memory and done
+            /*
+             * If ADPCM, read directly into memory and done.
+             *
+             * This isn't quite right, though! Our own variant of ADPCM doesn't
+             * quite match XM's variant. For now, we'll just copy it directly
+             * anyway (This may be less lossy than decoding and reencoding?) and
+             * issue a warning.
+             */
+
+            log->error("%s, instrument %u: ADPCM samples cannot be accurately re-encoded. "
+                "For better quality, use uncompressed samples in your XM file and let stir "
+                "compress them.", filename, instruments.size());
+
             std::vector<uint8_t> sampleData(sample.dataSize);
             getbuf(&sampleData[0], sample.dataSize);
             sample.pData = globalSampleDatas.size();
