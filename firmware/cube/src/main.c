@@ -108,7 +108,9 @@ init_3:
 
     while (1) {
         // Reset watchdog ONLY in main loop!
-        power_wdt_set();
+        #ifndef DISABLE_WDT
+            power_wdt_set();
+        #endif
 
         /*
          * Main tasks

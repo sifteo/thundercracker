@@ -48,8 +48,10 @@ void demo(void)
 #ifdef DEBUG_SCREEN
     draw_attr = ATTR_NONE;
     while(1) {
-
-    	power_wdt_set();		//reset watch-dog in debug mode loop
+        
+        #ifndef DISABLE_WDT
+    	    power_wdt_set();		//reset watch-dog in debug mode loop
+    	#endif
 
     	draw_xy = XY(14,0);
     	draw_hex(dbg_cnt++);	//show we are refreshing
