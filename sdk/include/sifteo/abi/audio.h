@@ -41,8 +41,8 @@ enum _SYSAudioLoopType {
 
 struct _SYSAudioModule {
     uint32_t sampleRate;    /// Native sampling rate of data
-    uint32_t loopStart;     /// Loop starting point, in samples
-    uint32_t loopEnd;       /// Loop ending point, in samples
+    uint32_t loopStart;     /// Index of first sample in loop
+    uint32_t loopEnd;       /// Index of first sample past the end of the loop
     uint8_t loopType;       /// Loop type, 0 (no looping) or 1 (forward loop)
     uint8_t type;           /// _SYSAudioType code
     uint16_t volume;        /// Sample default volume (overridden by explicit channel volume)

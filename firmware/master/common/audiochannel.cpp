@@ -77,7 +77,7 @@ bool AudioChannelSlot::mixAudio(int *buffer, uint32_t numFrames)
 
     do {
         // Looping logic
-        if (UNLIKELY(localOffset > latchedLimit)) {
+        if (UNLIKELY(localOffset >= latchedLimit)) {
             if (state & STATE_LOOP) {
                 uint64_t fpLoopStart = ((uint64_t)mod.loopStart) << SAMPLE_FRAC_SIZE;
                 localOffset = fpLoopStart + (localOffset - latchedLimit);
