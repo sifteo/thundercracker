@@ -39,6 +39,7 @@ ifneq ($(BUILD_PLATFORM), windows32)
 	sdk/adpcm \
 	sdk/pcm \
 	sdk/tracker-bubbles
+	sdk/tracker-sine
 endif
 
 #############################################################
