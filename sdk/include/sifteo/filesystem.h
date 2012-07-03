@@ -281,22 +281,47 @@ public:
     typedef _SYSUUID UUID;
     typedef _SYSMetadataCubeRange CubeRange;
 
+   /**
+     * @brief Construct a detached MappedVolume
+     *
+     * You must call attach() to connect this to a Volume.
+     */
+    MappedVolume()
+        : vol(0), offset(0) {
+        debugInstanceCounter(1);
+    }
+
     /**
      * @brief Map a view of the provided Volume
      *
      * The volume must contain an ELF binary.
      * No other MappedVolume instances may exist at this time.
      */
-    explicit MappedVolume(Volume vol)
-        : vol(vol), offset(_SYS_elf_map(vol)) {
+    explicit MappedVolume(Volume vol) {
         debugInstanceCounter(1);
+        attach(vol);
     }
 
-    ~MappedVolume() {
+    ~MappedVolume()
+    {
         debugInstanceCounter(-1);
 
         // Reclaim a little bit of memory by unmapping
         _SYS_elf_map(0);
+    }
+
+    /**
+     * @brief Attach this MappedVolume to a new volume
+     *
+     * Pointers obtained prior to this reattachment,
+     * if any, will no longer be valid.
+     */
+    void attach(Volume vol)
+    {
+        if (this->vol != vol) {
+            this->vol = vol;
+            offset = _SYS_elf_map(vol);
+        }
     }
 
     /// Returns the Volume associated with this mapping

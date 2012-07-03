@@ -91,14 +91,27 @@ public:
     }
 
     /// Synonym for push_back()
-    void append(const T &newItem) {
-        push_back(newItem);
+    T& append(const T &newItem) {
+        return push_back(newItem);
     }
 
-    /// Copy 'newItem' to the first unused slot in the array.
-    void push_back(const T &newItem) {
+    /// Synonym for push_back()
+    T& append() {
+        return push_back();
+    }
+
+    /// Copy 'newItem' to the first unused slot in the array, and return a reference to the copy.
+    T& push_back(const T &newItem) {
         ASSERT(count() < tCapacity);
-        items[numItems++] = newItem;
+        T &item = items[numItems++];
+        item = newItem;
+        return item;
+    }
+
+    /// Allocate the first unused slot in the array, and return an reference to this uninitialized slot.
+    T& push_back() {
+        ASSERT(count() < tCapacity);
+        return items[numItems++];
     }
 
     /// Equivalent to setCount(0)
