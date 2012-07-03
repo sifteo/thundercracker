@@ -45,7 +45,6 @@ bool Frontend::init(System *_sys)
     frameCount = 0;
     cubeCount = 0;
     toggleZoom = false;
-    viewExtent = targetViewExtent() * 3.0;
     isRunning = true;
     isRotationFixed = sys->opt_lockRotationByDefault;
 
@@ -65,6 +64,9 @@ bool Frontend::init(System *_sys)
     updateCubeCount();
     maxViewExtent = viewExtentForCubeCount(instance->sys->MAX_CUBES);
     createWalls();
+
+    // Zoom in from a slightly wider default view
+    viewExtent = targetViewExtent() * 3.0;
 
     // Listen for collisions. This is how we update our neighbor matrix.
     world.SetContactListener(&contactListener);
