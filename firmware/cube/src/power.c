@@ -159,13 +159,6 @@ void power_sleep(void)
     CTRL_PORT = CTRL_FLASH_WE | CTRL_FLASH_OE;
 #endif
 
-    ADDR_DIR = 0;               // Drive address bus
-    MISC_DIR = 0xFF;            // All MISC pins as inputs (I2C bus pulled up)
-    //CTRL_DIR = CTRL_DIR_VALUE;  // All CTRL pins driven
-    CTRL_DIR = CTRL_DIR_VALUE | CTRL_FLASH_LAT1;	//input on INT2 from acc
-    
-    BUS_PORT = 0;               // Drive bus port low
-    BUS_DIR = 0;
 
 #if HWREV >= 5
     /*
@@ -197,8 +190,14 @@ void power_sleep(void)
     
     __asm
         mov     _W2CON0, #0                     ; Turn off I2C peripheral
-        mov     _WUOPC1, #SHAKE_WUOPC_BIT       ; Enables shake to wake
+        anl     _MISC_DIR, #~MISC_I2C      		; Output drivers enabled
+        xrl     _MISC_PORT, #MISC_I2C      		; Now pulse I2C lines low
+        orl     _MISC_PORT, #MISC_I2C   		; Drive pins high - This delivers a 250 ns pulse
     __endasm;
+    ADDR_DIR = 0xff;            // Set addr pins to inputs
+    CTRL_DIR = 0xff;            // Set ctrl pins to inputs
+    MISC_DIR = 0xff;             // Set bus pins to inputs
+    WUOPC1 = SHAKE_WUOPC_BIT;
 
 #else
     /*
