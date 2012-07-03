@@ -186,8 +186,11 @@ inline void XmTrackerPlayer::loadNextNotes()
             phrase = next.phrase;
             memset(&loop, 0, sizeof(loop));
         } else if (next.phrase >= song.patternOrderTableSize) {
-            LOG((LGPFX"Warning: next phrase (%u) is larger than pattern order table (%u entries).\n",
-                 next.phrase, song.patternOrderTableSize));
+            /*
+             * Next pattern is out of range. This could be an error, but it
+             * more likely means that looping is disabled. (Stir gives us a
+             * loop point of 0xFF if we disable looping.)
+             */
             stop();
             return;
         }
