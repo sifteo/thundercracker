@@ -67,13 +67,25 @@ public:
     }
 
     /// Accessor for array elements
-    T operator[](unsigned index) const {
+    const T& operator[](unsigned index) const {
         ASSERT(index < count());
         return items[index];
     }
 
     /// Accessor for array elements
-    T operator[](int index) const {
+    const T& operator[](int index) const {
+        ASSERT(0 <= index && index < (int)count());
+        return items[index];
+    }
+
+    /// Accessor for array elements
+    T& operator[](unsigned index) {
+        ASSERT(index < count());
+        return items[index];
+    }
+
+    /// Accessor for array elements
+    T& operator[](int index) {
         ASSERT(0 <= index && index < (int)count());
         return items[index];
     }
