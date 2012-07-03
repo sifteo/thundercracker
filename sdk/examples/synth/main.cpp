@@ -3,11 +3,13 @@
  */
 
 #include <sifteo.h>
+#include "assets.gen.h"
 using namespace Sifteo;
 
 static Metadata M = Metadata()
     .title("TinySynth")
     .package("com.sifteo.sdk.synth", "1.0")
+    .icon(Icon)
     .cubeRange(1);
 
 static const CubeID cube = 0;
