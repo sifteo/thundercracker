@@ -19,6 +19,7 @@ static VideoBuffer vid[numCubes];
 static Metadata M = Metadata()
     .title("Asset Slot Example")
     .package("com.sifteo.sdk.assetslot", "0.5")
+    .icon(Icon)
     .cubeRange(numCubes);
 
 static MyLoader loader(allCubes, MainSlot, vid);

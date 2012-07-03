@@ -1,3 +1,8 @@
+-- Metadata
+
+IconAssets = group{quality=9.95}
+Icon = image{"icon.png"}
+
 -- Loading screen: Divided into two asset groups
 
 BootstrapGroup = group{ quality=9.8 }
