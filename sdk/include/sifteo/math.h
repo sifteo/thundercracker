@@ -820,12 +820,12 @@ struct Random {
     float random() {
         return raw() * (1.0f / 0xFFFFFFFF);
     }
-	
-	/// Returns a generated pseudorandom inverval for a poisson process (e.g. whack-a-mole timing).
-	float expovariate(float averageInterval) {
-		return -averageInterval * log(1.0f - random());
-	}
-	
+    
+    /// Returns a generated pseudorandom inverval for a poisson process (e.g. whack-a-mole timing).
+    float expovariate(float averageInterval) {
+        return -averageInterval * log(1.0f - random());
+    }
+    
     /**
      * @brief Take a chance. Returns a boolean that has a 'probability'
      * chance of being 'true'.

@@ -77,7 +77,9 @@ bool Bootloader::manualUpdateRequested()
 void Bootloader::load()
 {
     if (firstLoad) {
+
         Tasks::init();
+        NVIC.irqEnable(IVT.UsbOtg_FS);
         UsbDevice::init();
         Stm32Flash::unlock();
 
@@ -281,6 +283,7 @@ void Bootloader::cleanup()
     red.setHigh();
 
     UsbDevice::deinit();
+    NVIC.deinit();
 }
 
 /*

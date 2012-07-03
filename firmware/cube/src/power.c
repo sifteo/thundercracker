@@ -85,7 +85,9 @@ void power_init(void)
      * here until when we enter the main loop.
      */
     CLKLFCTRL = CLKLFCTRL_SRC_SYNTH;
-    power_wdt_set();
+    #ifndef DISABLE_WDT
+        power_wdt_set();
+    #endif
 
     /*
      * Neighbor Tx Experimental setting.

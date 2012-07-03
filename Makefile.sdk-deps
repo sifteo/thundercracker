@@ -19,7 +19,7 @@ endif
 ifeq ($(BUILD_PLATFORM), Darwin)
 	ALL_SDK_DEPS += \
 		sdk/bin/make \
-		sdk/bin/libusb-1.0.dylib
+		sdk/bin/libusb-1.0.0.dylib
 endif
 
 .PHONY: sdk-deps sdk-deps-clean
@@ -41,7 +41,7 @@ sdk/bin/libstdc++-6.dll: $(LLVM_BIN)/libstdc++-6.dll
 sdk/bin/libusb-1.0.dll: $(DEPS_DIR)/libusbx/lib/libusb-1.0.dll
 	install $< $@
 
-sdk/bin/libusb-1.0.dylib: $(DEPS_DIR)/libusbx/lib/libusb-1.0.dylib
+sdk/bin/libusb-1.0.0.dylib: $(DEPS_DIR)/libusbx/lib/libusb-1.0.0.dylib
 	install $< $@
 
 sdk/bin/make: $(DEPS_DIR)/gnu/make
