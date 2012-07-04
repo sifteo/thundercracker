@@ -18,7 +18,7 @@
 
 void ELFDebugInfo::clear()
 {
-    program.unmap();
+    mappedFile.unmap();
     sections.clear();
     sectionMap.clear();
 }
@@ -28,11 +28,11 @@ bool ELFDebugInfo::copyProgramBytes(uint32_t byteOffset, uint8_t *dest, uint32_t
     /*
      * Copy data out of the program's ELF
      */
-    if (!program.isMapped())
+    if (!mappedFile.isMapped())
         return false;
 
     unsigned avail;
-    uint8_t *p = program.getData(byteOffset, avail);
+    uint8_t *p = mappedFile.getData(byteOffset, avail);
     if (!p || length > avail)
         return false;
 
@@ -48,7 +48,7 @@ bool ELFDebugInfo::init(const char *elfPath)
      */
 
     clear();
-    if (!program.map(elfPath))
+    if (!mappedFile.map(elfPath))
         return false;
 
     Elf::FileHeader header;
@@ -180,7 +180,7 @@ uint8_t* ELFDebugInfo::metadata(uint16_t key, uint32_t &actualSize)
 
     while (I <= E) {
 
-        uint8_t *p = program.getData(I, avail);
+        uint8_t *p = mappedFile.getData(I, avail);
         if (!p)
             return 0;
 
@@ -203,7 +203,7 @@ uint8_t* ELFDebugInfo::metadata(uint16_t key, uint32_t &actualSize)
                 return 0;
 
             // Now we can calculate the address of the value, yay.
-            return program.getData(valueOffset + I, avail);
+            return mappedFile.getData(valueOffset + I, avail);
         }
     }
 

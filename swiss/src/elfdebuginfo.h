@@ -26,7 +26,7 @@ private:
     typedef std::vector<Elf::SectionHeader> sections_t;
     typedef std::map<std::string, Elf::SectionHeader*> sectionMap_t;
 
-    MappedFile program;
+    MappedFile mappedFile;
     sections_t sections;
     sectionMap_t sectionMap;
 
