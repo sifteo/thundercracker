@@ -43,6 +43,8 @@ TestJig::TestHandler const TestJig::handlers[] = {
     stopNeighborRxHandler,                  // 5
     writeToCubeI2CHandler,                  // 6
     setCubeSensorsEnabledHandler,           // 7
+    beginNeighborTxHandler,                 // 8
+    stopNeighborTxHandler,                  // 9
 };
 
 void TestJig::init()
@@ -316,6 +318,30 @@ void TestJig::writeToCubeI2CHandler(uint8_t argc, uint8_t *args)
 void TestJig::setCubeSensorsEnabledHandler(uint8_t argc, uint8_t *args)
 {
     sensorsTransaction.enabled = args[1];
+
+    const uint8_t response[] = { args[0] };
+    UsbDevice::write(response, sizeof response);
+}
+
+/*
+ * args[1-2] - uint16_t txdata, args[3] sideMask
+ */
+void TestJig::beginNeighborTxHandler(uint8_t argc, uint8_t *args)
+{
+    uint16_t txData = *reinterpret_cast<uint16_t*>(&args[1]);
+    uint16_t sideMask = args[3];
+    neighbor.beginTransmitting(txData, sideMask);
+
+    const uint8_t response[] = { args[0] };
+    UsbDevice::write(response, sizeof response);
+}
+
+/*
+ * No args.
+ */
+void TestJig::stopNeighborTxHandler(uint8_t argc, uint8_t *args)
+{
+    neighbor.stopTransmitting();
 
     const uint8_t response[] = { args[0] };
     UsbDevice::write(response, sizeof response);
