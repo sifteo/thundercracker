@@ -17,7 +17,7 @@ To install a new version of your application to your Sifteo base, use the `swiss
 
     swiss install myapplication.elf
 
-This will remove any previously installed versions of `myapplication.elf`, and install the new one. There is currently no restriction on installing a new version while your application is running, but it's not guaranteed to work, and not recommended!
+This will remove any previously installed versions of `myapplication.elf`, and install the new one. It's even possible to install a new version while your application is running. The old version will continue to run until you restart the app.
 
 To install an app that should be used as the launcher menu, use the `-l` flag:
 
