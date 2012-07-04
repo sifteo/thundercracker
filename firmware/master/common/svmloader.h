@@ -62,8 +62,8 @@ private:
     static uint8_t runLevel;
 
     static FlashVolume findLauncher();
-    static void prepareToExec(const Elf::Program &program, SvmRuntime::StackInfo &stack);
-    static void loadRWData(const Elf::Program &program);
+    static bool prepareToExec(const Elf::Program &program, SvmRuntime::StackInfo &stack);
+    static bool loadRWData(const Elf::Program &program);
 };
 
 

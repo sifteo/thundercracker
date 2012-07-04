@@ -38,8 +38,8 @@ extern "C" {
  */
 
 // SVM-specific program header types
-#define _SYS_ELF_PT_METADATA        0x7000f001
-#define _SYS_ELF_PT_LOAD_RLE        0x7000f002
+#define _SYS_ELF_PT_METADATA        0x7000f001      // Metadata key/value dictionary
+#define _SYS_ELF_PT_LOAD_FASTLZ     0x7000f002      // PT_LOAD, with FastLZ (Level 1) compression
 
 struct _SYSMetadataKey {
     uint16_t    stride;     // Byte offset from this value to the next

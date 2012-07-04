@@ -10,6 +10,7 @@
 #include "flash_volume.h"
 #include "svm.h"
 #include "svmmemory.h"
+#include "svmfastlz.h"
 #include "svmdebugpipe.h"
 #include "radio.h"
 #include "tasks.h"
@@ -34,25 +35,58 @@ FlashVolume SvmLoader::mapVols[SvmMemory::NUM_FLASH_SEGMENTS];
 uint8_t SvmLoader::runLevel;
 
 
-void SvmLoader::loadRWData(const Elf::Program &program)
+bool SvmLoader::loadRWData(const Elf::Program &program)
 {
+    /*
+     * The RWDATA segment is the only one wa actually *load*,
+     * instead of just mapping or zero'ing. As such, we support
+     * unpacking the data in a segment-type-specific way.
+     *
+     * Returns true on success, false on failure. Does not fault.
+     */
+
     FlashBlockRef ref;
     const Elf::ProgramHeader *ph = program.getRWDataSegment(ref);
-    if (!ph)
-        return;
+    if (!ph) {
+        // It's legal to have no RWDATA segment
+        return true;
+    }
 
     /*
-     * Temporarily use segment 0 to do the copy.
-     * If anything is wrong, this will cause an SVM fault, just as if
-     * the copy was done from userspace.
+     * Temporarily use segment 0 to do the copy, so we can use
+     * SvmMemory infrastructure to do this.
      */
+
     SvmMemory::setFlashSegment(0, program.getProgramSpan());
-    _SYS_memcpy8(reinterpret_cast<uint8_t*>( ph->p_vaddr ),
-                 reinterpret_cast<uint8_t*>( ph->p_offset + SvmMemory::SEGMENT_0_VA ),
-                 ph->p_memsz);
+    SvmMemory::VirtAddr srcVA = ph->p_offset + SvmMemory::SEGMENT_0_VA;
+    SvmMemory::VirtAddr destVA = ph->p_vaddr;
+    SvmMemory::PhysAddr destPA;
+
+    uint32_t destLen = ph->p_memsz;
+    uint32_t srcLen = ph->p_filesz;
+    if (!SvmMemory::mapRAM(destVA, destLen, destPA))
+        return false;
+
+    /*
+     * Type-specific loading operation.
+     */
+    
+    switch (ph->p_type) {
+
+        // Uncompressed
+        case Elf::PT_LOAD:
+            return SvmMemory::copyROData(ref, destPA, srcVA, destLen);
+
+        // Compressed with FastLZ level 1
+        case _SYS_ELF_PT_LOAD_FASTLZ:
+            return SvmFastLZ::decompressL1(ref, destPA, destLen, srcVA, srcLen);
+
+        default:
+            return false;
+    }
 }
 
-void SvmLoader::prepareToExec(const Elf::Program &program, SvmRuntime::StackInfo &stack)
+bool SvmLoader::prepareToExec(const Elf::Program &program, SvmRuntime::StackInfo &stack)
 {
     // Reset all event vectors
     Event::clearVectors();
@@ -77,14 +111,19 @@ void SvmLoader::prepareToExec(const Elf::Program &program, SvmRuntime::StackInfo
     secondaryUnmap();
 
     // Load RWDATA into RAM
-    loadRWData(program);
- 
+    if (!loadRWData(program)) {
+        SvmRuntime::fault(F_RWDATA_SEG);
+        return false;
+    }
+
     // Set up default flash segment
     SvmMemory::setFlashSegment(0, program.getRODataSpan());
 
     // Init stack
     stack.limit = program.getTopOfRAM();
     stack.top = SvmMemory::VIRTUAL_RAM_TOP;
+
+    return true;
 }
 
 FlashVolume SvmLoader::findLauncher()
@@ -114,8 +153,8 @@ void SvmLoader::runLauncher()
     mapVols[0] = vol;
 
     SvmRuntime::StackInfo stack;
-    prepareToExec(program, stack);
-    SvmRuntime::run(program.getEntry(), stack);
+    if (prepareToExec(program, stack))
+        SvmRuntime::run(program.getEntry(), stack);
 }
 
 void SvmLoader::exec(FlashVolume vol, RunLevel level)
@@ -130,8 +169,8 @@ void SvmLoader::exec(FlashVolume vol, RunLevel level)
     mapVols[0] = vol;
 
     SvmRuntime::StackInfo stack;
-    prepareToExec(program, stack);
-    SvmRuntime::exec(program.getEntry(), stack);
+    if (prepareToExec(program, stack))
+        SvmRuntime::exec(program.getEntry(), stack);
 }
 
 FlashMapSpan SvmLoader::secondaryMap(FlashVolume vol)

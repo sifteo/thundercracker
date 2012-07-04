@@ -81,6 +81,7 @@ enum FaultCode {
     F_NO_LAUNCHER,          // (0x1A) Launcher program not found
     F_SYSCALL_ADDR_ALIGN,   // (0x1B) Address in system call has insufficient alignment
     F_BAD_ASSETSLOT,        // (0x1C) Invalid or unbound AssetSlot
+    F_RWDATA_SEG,           // (0x1D) Failed to initialize read-write data segment
 };
 
 inline const char* faultString(FaultCode code)
@@ -115,6 +116,7 @@ inline const char* faultString(FaultCode code)
     case F_NO_LAUNCHER:         return "Launcher program not found";
     case F_SYSCALL_ADDR_ALIGN:  return "Address in system call has insufficient alignment";
     case F_BAD_ASSETSLOT:       return "Invalid or unbound AssetSlot";
+    case F_RWDATA_SEG:          return "Failed to initialize read-write data segment";
     default:                    return "Unknown error";
     }
 }
@@ -151,7 +153,8 @@ inline const char* faultString14(FaultCode code)
     case F_BAD_ASSET_IMAGE:     return "Bad AssetImage";
     case F_NO_LAUNCHER:         return "No launcher";
     case F_SYSCALL_ADDR_ALIGN:  return "Syscall align";
-    case F_BAD_ASSETSLOT:       return "Bad AssetSlot";
+    case F_BAD_ASSETSLOT:       return "Bad AssetSlot";    
+    case F_RWDATA_SEG:          return "RWDATA error";
     default:                    return "Unknown";
     }
 }
