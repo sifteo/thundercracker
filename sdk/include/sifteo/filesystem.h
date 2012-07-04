@@ -443,7 +443,7 @@ public:
      * This is only useful for programs which must bootstrap another
      * program's assets.
      */
-    void writeAssetGroup(const _SYSMetadataBootAsset &meta, AssetGroup &group)
+    void translate(const _SYSMetadataBootAsset &meta, AssetGroup &group)
     {
         bzero(group);
         group.sys.pHdr = translate(meta.pHdr);
@@ -454,17 +454,25 @@ public:
      *
      * Using this object's memory mapping, convert a _SYSMetadataImage
      * record into an AssetImage which references the image data mapped
-     * in from another volume. The image's AssetGroup data is also
-     * available via this mapping.
+     * in from another volume.
+     *
+     * Since the _SYSMetadataImage only stores information about the
+     * read-only data associated with an AssetGroup, you must also
+     * supply an AssetGroup object to be used for the read-write
+     * storage of state, such as load addresses for the group on each
+     * cube
      *
      * This function can be used to load graphics assets from another game
      * or other Volume on the system, as long as those assets have been
      * annotated in their game's metadata.
      */
-    void writeAssetImage(const _SYSMetadataImage *meta, AssetImage &image)
+    void translate(const _SYSMetadataImage *meta, AssetImage &image, AssetGroup &group)
     {
+        bzero(group);
+        group.sys.pHdr = translate(meta->groupHdr);
+
         bzero(image);
-        image.sys.pAssetGroup = translate(meta->groupHdr);
+        image.sys.pAssetGroup = reinterpret_cast<uint32_t>(&group);
         image.sys.width = meta->width;
         image.sys.height = meta->height;
         image.sys.frames = meta->frames;
