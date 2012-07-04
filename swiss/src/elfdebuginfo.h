@@ -26,13 +26,19 @@ private:
     typedef std::vector<Elf::SectionHeader> sections_t;
     typedef std::map<std::string, Elf::SectionHeader*> sectionMap_t;
 
-    MappedFile program;
+    MappedFile mappedFile;
+
     sections_t sections;
     sectionMap_t sectionMap;
 
     static void demangle(std::string &name);
     std::string readString(const Elf::SectionHeader *SI, uint32_t offset) const;
+
+    const Elf::FileHeader *getFileHeader() const;
     const Elf::SectionHeader *findSection(const std::string &name) const;
+    const Elf::ProgramHeader *getProgramHeader(const Elf::FileHeader *fh, unsigned index) const;
+
+    const Elf::ProgramHeader *getMetadataSegment() const;
 
     bool copyProgramBytes(uint32_t byteOffset, uint8_t *dest, uint32_t length) const;
 };

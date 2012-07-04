@@ -1,6 +1,7 @@
 
 #include "elfdebuginfo.h"
 #include <cxxabi.h>
+#include "macros.h"
 
 #include <sifteo/abi/elf.h>
 
@@ -18,7 +19,7 @@
 
 void ELFDebugInfo::clear()
 {
-    program.unmap();
+    mappedFile.unmap();
     sections.clear();
     sectionMap.clear();
 }
@@ -28,11 +29,11 @@ bool ELFDebugInfo::copyProgramBytes(uint32_t byteOffset, uint8_t *dest, uint32_t
     /*
      * Copy data out of the program's ELF
      */
-    if (!program.isMapped())
+    if (!mappedFile.isMapped())
         return false;
 
     unsigned avail;
-    uint8_t *p = program.getData(byteOffset, avail);
+    uint8_t *p = mappedFile.getData(byteOffset, avail);
     if (!p || length > avail)
         return false;
 
@@ -48,25 +49,25 @@ bool ELFDebugInfo::init(const char *elfPath)
      */
 
     clear();
-    if (!program.map(elfPath))
+    if (!mappedFile.map(elfPath))
         return false;
 
-    Elf::FileHeader header;
-    if (!copyProgramBytes(0, (uint8_t*)&header, sizeof header))
+    const Elf::FileHeader *header = getFileHeader();
+    if (!header)
         return false;
 
     // First pass, copy out all the headers.
-    for (unsigned i = 0; i < header.e_shnum; i++) {
+    for (unsigned i = 0; i < header->e_shnum; i++) {
         sections.push_back(Elf::SectionHeader());
         Elf::SectionHeader *pHdr = &sections.back();
-        uint32_t off = header.e_shoff + i * header.e_shentsize;
+        uint32_t off = header->e_shoff + i * header->e_shentsize;
         if (!copyProgramBytes(off, (uint8_t*)pHdr, sizeof *pHdr))
             memset(pHdr, 0xFF, sizeof *pHdr);
     }
 
     // Read section names, set up sectionMap.
-    if (header.e_shstrndx < sections.size()) {
-        const Elf::SectionHeader *strTab = &sections[header.e_shstrndx];
+    if (header->e_shstrndx < sections.size()) {
+        const Elf::SectionHeader *strTab = &sections[header->e_shstrndx];
         for (unsigned i = 0, e = sections.size(); i != e; ++i) {
             Elf::SectionHeader *pHdr = &sections[i];
             sectionMap[readString(strTab, pHdr->sh_name)] = pHdr;
@@ -76,6 +77,23 @@ bool ELFDebugInfo::init(const char *elfPath)
     return true;
 }
 
+/*
+ * FileHeader is located at offset 0, and maps the rest of the ELF.
+ */
+const Elf::FileHeader *ELFDebugInfo::getFileHeader() const
+{
+    unsigned avail;
+    uint8_t *fh = mappedFile.getData(0, avail);
+    if (!fh || avail < sizeof(Elf::FileHeader))
+        return 0;
+
+    return reinterpret_cast<Elf::FileHeader*>(fh);
+}
+
+/*
+ * We already collected a map of sections during init. Return the requested
+ * entry if it exists.
+ */
 const Elf::SectionHeader *ELFDebugInfo::findSection(const std::string &name) const
 {
     sectionMap_t::const_iterator I = sectionMap.find(name);
@@ -83,6 +101,39 @@ const Elf::SectionHeader *ELFDebugInfo::findSection(const std::string &name) con
         return 0;
     else
         return I->second;
+}
+
+/*
+ * Retrieve the requested ProgramHeader from the FileHeader, if available.
+ */
+const Elf::ProgramHeader *ELFDebugInfo::getProgramHeader(const Elf::FileHeader *fh, unsigned index) const
+{
+    ASSERT(index < fh->e_phnum);
+    unsigned offset = fh->e_phoff + index * sizeof(Elf::ProgramHeader);
+
+    unsigned avail;
+    uint8_t *p = mappedFile.getData(offset, avail);
+    if (!p || offset + sizeof(Elf::ProgramHeader) > avail)
+        return 0;
+
+    return reinterpret_cast<Elf::ProgramHeader*>((uint8_t*)fh + offset);
+}
+
+const Elf::ProgramHeader *ELFDebugInfo::getMetadataSegment() const
+{
+    const Elf::FileHeader *fh = getFileHeader();
+    ASSERT(fh);
+
+    for (unsigned i = 0; i < fh->e_phnum; ++i) {
+        const Elf::ProgramHeader *ph = getProgramHeader(fh, i);
+        if (!ph)
+            break;
+
+        // Segment must be of the proper type, and 32-bit aligned.
+        if (ph->p_type == _SYS_ELF_PT_METADATA && (ph->p_offset & 3) == 0)
+            return ph;
+    }
+    return 0;
 }
 
 std::string ELFDebugInfo::readString(const Elf::SectionHeader *SI, uint32_t offset) const
@@ -159,20 +210,20 @@ bool ELFDebugInfo::metadataString(uint16_t key, std::string &s)
     if (!m)
         return false;
 
-    s.assign((const char*)m, actualSize);
+    s = std::string((const char*)m, actualSize);
     return true;
 }
 
 uint8_t* ELFDebugInfo::metadata(uint16_t key, uint32_t &actualSize)
 {
-    const Elf::SectionHeader *hdr = findSection(".metadata");
-    if (!hdr)
+    const Elf::ProgramHeader *ph = getMetadataSegment();
+    if (!ph)
         return 0;
 
     const uint32_t keySize = sizeof(_SYSMetadataKey);
     unsigned I, E;
-    I = hdr->sh_offset;
-    E = I + hdr->sh_size - keySize;
+    I = ph->p_offset;
+    E = I + ph->p_filesz - keySize;
 
     bool foundKey = false;
     uint32_t valueOffset = 0;
@@ -180,7 +231,7 @@ uint8_t* ELFDebugInfo::metadata(uint16_t key, uint32_t &actualSize)
 
     while (I <= E) {
 
-        uint8_t *p = program.getData(I, avail);
+        uint8_t *p = mappedFile.getData(I, avail);
         if (!p)
             return 0;
 
@@ -203,7 +254,7 @@ uint8_t* ELFDebugInfo::metadata(uint16_t key, uint32_t &actualSize)
                 return 0;
 
             // Now we can calculate the address of the value, yay.
-            return program.getData(valueOffset + I, avail);
+            return mappedFile.getData(valueOffset + I, avail);
         }
     }
 
