@@ -178,7 +178,7 @@ void PanicMessenger::paintAndWait()
     _SYSCubeIDVector cubes = CubeSlots::vecEnabled;
     if (cubes) {
         // Paint on first enabled cube
-        paint(Intrinsic::LZ(cubes));
+        paint(Intrinsic::CLZ(cubes));
         haltUntilButton();
 
     } else {
