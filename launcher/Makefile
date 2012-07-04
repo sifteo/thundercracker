@@ -15,6 +15,8 @@ OBJS = \
 
 ASSETDEPS += images/*.png sounds/*.xm $(ASSETS).lua
 CDEPS += src/*.h
+
 CCFLAGS += -Isrc
+CCFLAGS += -DSDK_VERSION=$(shell git describe --tags)
 
 include $(SDK_DIR)/Makefile.rules

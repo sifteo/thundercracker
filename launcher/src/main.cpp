@@ -13,7 +13,7 @@ using namespace Sifteo;
 
 static Metadata M = Metadata()
     .title("System Launcher")
-    .package("com.sifteo.launcher", "0.1");
+    .package("com.sifteo.launcher", TOSTRING(SDK_VERSION));
 
 
 void main()
