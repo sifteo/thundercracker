@@ -167,7 +167,7 @@ bool SvmFastLZ::decompressL1(FlashBlockRef &ref, SvmMemory::PhysAddr dest,
         }
     } while (LIKELY(loop));
 
-    ASSERT(op - dest <= destLen);
+    ASSERT(unsigned(op - dest) <= destLen);
     destLen = op - dest;
     return true;
 }
