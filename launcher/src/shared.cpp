@@ -11,4 +11,4 @@ using namespace Sifteo;
 VideoBuffer Shared::video[CUBE_ALLOCATION];
 
 AssetSlot Shared::primarySlot = AssetSlot::allocate();
-AssetSlot Shared::secondarySlot = AssetSlot::allocate();
+AssetSlot Shared::iconSlot = AssetSlot::allocate();

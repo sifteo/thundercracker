@@ -20,9 +20,7 @@ const MenuAssets MainMenu::menuAssets = {
 
 void MainMenu::init()
 {
-    // Empty our arrays
     items.clear();
-    menuItems.clear();
 
     // XXX: Fake cubeset initialization, until we have real cube connect/disconnect
     cubes = CubeSet(0,3);
@@ -90,36 +88,129 @@ void MainMenu::loadAssets()
     // Bind the local volume's slots.
     _SYS_asset_bindSlots(Volume::running(), Shared::NUM_SLOTS);
 
-    // First, load our own assets into the primary slot
-    if (!loader.start(MenuGroup, Shared::primarySlot, cubes)) {
-        Shared::primarySlot.erase();
-        loader.start(MenuGroup, Shared::primarySlot, cubes);
-    }
-    while (!loader.isComplete()) {
-        // XXX: Report overall progress
-        for (CubeID cube : cubes)
-            anim.paint(CubeSet(cube), loader.progress(cube));
-        System::paint();
-    }
+    /*
+     * First, collect information about what we need to install.
+     * We need to know (a) which asset groups to install, and
+     * (b) whether the not-yet-installed ones will fit in our
+     * slot without erasing it.
+     *
+     * Note that we can't really calculate this ahead-of-time,
+     * since (a) depends on the state of the cubes we're using.
+     *
+     * To do this in a separate pass from the actual asset install,
+     * we do need to map the volumes twice. Gather as much data
+     * as possible now, so we can skip entire items below when
+     * we know they won't require any asset loading.
+     */
 
-    // Now load each menu item into the secondary slot.
-    // XXX: Report overall progress
-    // XXX: Erase the slot first, if necessary
-    //      (Both of these require asset group size accounting in the first pass)
-    // XXX: Remember to only load things that need loading, i.e. not applet icons.
+    unsigned uninstalledTiles = 0;
+    unsigned uninstalledBytes = 0;
+    unsigned totalBytes = 0;
 
-    for (MainMenuItem *item : items) {
+    Volume mappedVolumes[MAX_ITEMS];
+
+    BitArray<MAX_ITEMS> allLoadableItems;
+    BitArray<MAX_ITEMS> uninstalledItems;
+    allLoadableItems.clear();
+    uninstalledItems.clear();
+
+    // Clear the whole menuItems list. This zeroes the items we're
+    // about to fill in, and it NULL-terminates the list.
+    bzero(menuItems);
+
+    for (unsigned I = 0, E = items.count(); I != E; ++I) {
+        MainMenuItem *item = items[I];
         MappedVolume map;
-        MenuItem &mi = menuItems.append();
-        bzero(mi);
-        item->getAssets(mi, map);
 
-        loader.start(mi.icon->assetGroup(), Shared::secondarySlot, cubes);
+        // Copy asset tiles into RAM, and map the volume
+        MenuItem &mi = menuItems[I];
+        auto flags = item->getAssets(mi, map);
+
+        if (mi.icon && (flags & MainMenuItem::LOAD_ASSETS)) {
+            AssetGroup &group = mi.icon->assetGroup();
+
+            mappedVolumes[I] = map.volume();
+
+            totalBytes += group.compressedSize();
+            allLoadableItems.mark(I);
+
+            if (!group.isInstalled(cubes)) {
+                uninstalledTiles += group.tileAllocation();
+                uninstalledBytes += group.compressedSize();
+                uninstalledItems.mark(I);
+            }
+        }
+    }
+
+    /*
+     * Now we can calculate whether the iconSlot needs to be erased,
+     * and therefore whether we're installing just the not-yet-installed
+     * icon assets, or all icon assets. This lets us calculate overall
+     * progress for this whole series of loading operations.
+     */
+
+    if (Shared::iconSlot.tilesFree() < uninstalledTiles) {
+        // Erase the slot. Now everything is uninstalled.
+        Shared::iconSlot.erase();
+        uninstalledBytes = totalBytes;
+        uninstalledItems = allLoadableItems;
+    }
+
+    /*
+     * First asset load: Put our own menu assets into the primary slot,
+     * if they aren't already there. Odds are, they will be, but this
+     * lets applets repurpose the primary slot if they need to.
+     */
+
+    // Keep count of progress from previous load operations.
+    unsigned progress = 0;
+
+    if (!MenuGroup.isInstalled(cubes)) {
+
+        // Include the size of this group in our progress calculation
+        uninstalledBytes += MenuGroup.compressedSize();
+
+        if (!loader.start(MenuGroup, Shared::primarySlot, cubes)) {
+            Shared::primarySlot.erase();
+            loader.start(MenuGroup, Shared::primarySlot, cubes);
+        }
+
         while (!loader.isComplete()) {
-            for (CubeID cube : cubes)
-                anim.paint(CubeSet(cube), loader.progress(cube));
+            for (CubeID cube : cubes) {
+                anim.paint(CubeSet(cube), clamp<int>(loader.progressBytes(cube)
+                    * 100 / uninstalledBytes, 0, 100));
+            }
             System::paint();
         }
+
+        loader.finish();
+        progress += MenuGroup.compressedSize();
+    }
+
+    /*
+     * Now we can loop over the individual items that may need asset installation,
+     * and install each one while calculating total progress.
+     */
+
+    for (unsigned I : uninstalledItems) {
+        MappedVolume map(mappedVolumes[I]);
+        MenuItem &mi = menuItems[I];
+
+        ASSERT(mi.icon);
+        AssetGroup &group = mi.icon->assetGroup();
+
+        loader.start(group, Shared::iconSlot, cubes);
+
+        while (!loader.isComplete()) {
+            for (CubeID cube : cubes) {
+                anim.paint(CubeSet(cube), clamp<int>((progress + loader.progressBytes(cube))
+                    * 100 / uninstalledBytes, 0, 100));
+            }
+            System::paint();
+        }
+
+        loader.finish();
+        progress += group.compressedSize();
     }
 
     anim.end(cubes);

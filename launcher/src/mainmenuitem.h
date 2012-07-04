@@ -20,6 +20,11 @@ class ProgressDelegate;
 class MainMenuItem
 {
 public:
+    enum Flags {
+        NONE = 0,
+        LOAD_ASSETS = 1 << 0,       // Asset groups may need to be loaded before use
+    };
+
     /**
      * Retrieve pointers to the AssetImages for this menu item. These may
      * be local items in our own binary, or they may be copied from a game.
@@ -27,17 +32,10 @@ public:
      * If this data has been copied from elsewhere, they will point to
      * a constructed AssetGroup that the caller must load before using these
      * assets. The provided MappedVolume must be used to map this data.
+     *
+     * Returns a set of Flags bits.
      */
-    virtual void getAssets(Sifteo::MenuItem &assets, Sifteo::MappedVolume &map) = 0;
-
-    /**
-     * How much space in our AssetSlot will we need to store the results of
-     * calling getAssets()? This is used by the MainMenu to calculate how
-     * much space in asset flash will be required by all menu items.
-     */
-    virtual unsigned getTileAllocation() const {
-        return 0;
-    }
+    virtual Flags getAssets(Sifteo::MenuItem &assets, Sifteo::MappedVolume &map) = 0;
 
     /**
      * How many cubes are required by this menu item, if any?

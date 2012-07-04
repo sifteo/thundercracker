@@ -16,7 +16,7 @@ namespace Shared {
     extern Sifteo::VideoBuffer video[CUBE_ALLOCATION];
 
     static const unsigned NUM_SLOTS = 2;
-    extern Sifteo::AssetSlot primarySlot;
-    extern Sifteo::AssetSlot secondarySlot;
+    extern Sifteo::AssetSlot primarySlot;   // General purpose
+    extern Sifteo::AssetSlot iconSlot;      // Used only for main menu icons
 
 }

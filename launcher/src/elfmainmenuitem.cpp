@@ -116,12 +116,21 @@ bool ELFMainMenuItem::init(Sifteo::Volume volume)
     AssetImage iconImage;
     AssetGroup iconGroup;
     map.translate(iconMeta, iconImage, iconGroup);
-    tileAllocation = iconGroup.tileAllocation();
+    unsigned tileAllocation = iconGroup.tileAllocation();
+
+    // Check the size of this group. It should be no larger than the worst-case uncompressed size
+    unsigned maxTileAllocation = roundup(icon.image.numTiles(), _SYS_ASSET_GROUP_SIZE_UNIT);
+    if (tileAllocation > maxTileAllocation) {
+        LOG("LAUNCHER: Skipping game, icon AssetGroup is too large. "
+            "Make sure your icon is in an AssetGroup by itself! Found a "
+            "group with %d tiles, expected no more than %d.",
+            tileAllocation, maxTileAllocation);
+    }
 
     return true;
 }
 
-void ELFMainMenuItem::getAssets(Sifteo::MenuItem &assets, Sifteo::MappedVolume &map)
+MainMenuItem::Flags ELFMainMenuItem::getAssets(Sifteo::MenuItem &assets, Sifteo::MappedVolume &map)
 {
     /*
      * Gather assets from this volume.
@@ -144,6 +153,8 @@ void ELFMainMenuItem::getAssets(Sifteo::MenuItem &assets, Sifteo::MappedVolume &
     icon.image.init();
     icon.image.image(vec(0,0), iconSrc);
     assets.icon = icon.image;
+
+    return LOAD_ASSETS;
 }
 
 void ELFMainMenuItem::bootstrap(Sifteo::CubeSet cubes, ProgressDelegate &progress)

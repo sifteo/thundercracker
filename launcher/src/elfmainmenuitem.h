@@ -18,15 +18,11 @@ class ELFMainMenuItem : public MainMenuItem
 {
 public:
 
-    virtual void getAssets(Sifteo::MenuItem &assets, Sifteo::MappedVolume &map);
+    virtual MainMenuItem::Flags getAssets(Sifteo::MenuItem &assets, Sifteo::MappedVolume &map);
     virtual void bootstrap(Sifteo::CubeSet cubes, ProgressDelegate &progress);
 
     virtual void exec() {
         volume.exec();
-    }
-
-    virtual unsigned getTileAllocation() const {
-        return tileAllocation;
     }
 
     virtual CubeRange getCubeRange() const {
@@ -42,18 +38,18 @@ public:
 private:
     /**
      * Max number of ELF main menu items. This is mostly dictated by the system's
-     * limit on number of AssetGroups per AssetSlot, which is currently 24.
+     * limit on number of AssetGroups per AssetSlot.
      */
-    static const unsigned MAX_INSTANCES = 24;
+    static const unsigned MAX_INSTANCES = _SYS_ASSET_GROUPS_PER_SLOT;
 
     /// How many asset slots can one app use?
-    static const unsigned MAX_ASSET_SLOTS = 4;
+    static const unsigned MAX_ASSET_SLOTS = _SYS_ASSET_SLOTS_PER_BANK;
 
     /// How big is an empty asset slot?
-    static const unsigned TILES_PER_ASSET_SLOT = 4096;
+    static const unsigned TILES_PER_ASSET_SLOT = _SYS_TILES_PER_ASSETSLOT;
 
     /// Max number of bootstrap asset groups (Limited by max size of metadata values)
-    static const unsigned MAX_BOOTSTRAP_GROUPS = 32;
+    static const unsigned MAX_BOOTSTRAP_GROUPS = _SYS_MAX_METADATA_ITEM_BYTES / sizeof(_SYSMetadataBootAsset);
 
     struct SlotInfo {
         unsigned totalBytes;
@@ -63,7 +59,6 @@ private:
     };
 
     CubeRange cubeRange;
-    uint16_t tileAllocation;
     uint8_t numAssetSlots;
     Sifteo::Volume volume;
 

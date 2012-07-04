@@ -45,7 +45,7 @@ private:
     Sifteo::CubeSet cubes;
 
     Sifteo::Array<MainMenuItem*, MAX_ITEMS> items;
-    Sifteo::Array<Sifteo::MenuItem, MAX_ITEMS+1> menuItems;
+    Sifteo::MenuItem menuItems[MAX_ITEMS + 1];
     static const Sifteo::MenuAssets menuAssets;
 
     // Note: these functions are marked NOINLINE as a cache usage optimization.

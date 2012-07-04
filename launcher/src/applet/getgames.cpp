@@ -10,9 +10,10 @@
 using namespace Sifteo;
 
 
-void GetGamesApplet::getAssets(Sifteo::MenuItem &assets, Sifteo::MappedVolume&)
+MainMenuItem::Flags GetGamesApplet::getAssets(Sifteo::MenuItem &assets, Sifteo::MappedVolume&)
 {
     assets.icon = &Icon_GetGames;
+    return NONE;
 }
 
 void GetGamesApplet::exec()
