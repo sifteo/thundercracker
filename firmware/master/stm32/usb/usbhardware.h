@@ -25,7 +25,7 @@ namespace UsbHardware
     uint16_t epWritePacket(uint8_t addr, const void *buf, uint16_t len);
     uint16_t epReadPacket(uint8_t addr, void *buf, uint16_t len);
 
-    void setDisconnected(bool disconnected);
+    void disconnect();
 }
 
 #endif // USB_HARDWARE_H

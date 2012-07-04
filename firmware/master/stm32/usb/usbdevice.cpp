@@ -177,7 +177,7 @@ void UsbDevice::init() {
 
 void UsbDevice::deinit()
 {
-    UsbHardware::setDisconnected(true);
+    UsbHardware::disconnect();
     UsbHardware::deinit();
 }
 
