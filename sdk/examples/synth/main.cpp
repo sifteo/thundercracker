@@ -62,7 +62,7 @@ void main()
 
     vid.initMode(BG0_ROM);
     vid.attach(cube);
-   // vid.bg0rom.erase(bg);
+    vid.bg0rom.erase(bg);
     vid.bg0rom.fill(vec(0,0), vec(3,3), fg);
 
     synthInit();
