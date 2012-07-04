@@ -46,9 +46,9 @@ void synthesize(float hz, float timbre, float volume)
         squareWave[i] = i < dutyCycle ? 0x7fff : 0x8000;
     }
 
-    sine1Channel.setVolume(volume * 128.f);
-    sine2Channel.setVolume(volume * 96.f);
-    squareChannel.setVolume(volume * 32.f);
+    sine1Channel.setVolume(volume * 96.f);
+    sine2Channel.setVolume(volume * 64.f);
+    squareChannel.setVolume(volume * 16.f);
 
     sine1Channel.setSpeed(hz * arraysize(sineWave));                // Fundamental
     sine2Channel.setSpeed(hz * 1.02f * arraysize(sineWave));        // Beat frequency
@@ -73,10 +73,10 @@ void main()
         auto accel = cube.accel() / 128.f;
 
         // Glide to the target note (half-steps above or below middle C)
-        float note = 261.6f * pow(1.05946f, round(accel.y * 24.f));
+        float note = 261.6f * pow(1.05946f, 8 + round(accel.y * 24.f));
         hz += (note - hz) * 0.4f;
 
-        synthesize(hz, accel.x,
+        synthesize(hz, accel.x - 0.2f,
             clamp(accel.x + 0.5f, 0.f, 1.f));
 
         const Int2 center = LCD_center - vec(24,24)/2;
