@@ -205,6 +205,11 @@ class BitArray
 
 public:
     uint32_t words[(tSize + 31) / 32];
+  
+    /// Retrieve the size of this array in bits, always constant at compile-time.
+    static unsigned size() {
+        return tSize;
+    }
 
     /// Mark (set to 1) a single bit
     void mark(unsigned index)
