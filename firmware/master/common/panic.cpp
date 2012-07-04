@@ -179,7 +179,14 @@ void PanicMessenger::paintAndWait()
     if (cubes) {
         // Paint on first enabled cube
         paint(Intrinsic::CLZ(cubes));
+
+        // Don't wait on simulation (Fail fast, don't hang the unit tests).
+        // But on hardware, wait for a button press so there's time to read
+        // the message.
+
+        #ifndef SIFTEO_SIMULATOR
         haltUntilButton();
+        #endif
 
     } else {
         // No cubes. Dump to UART only, and continue immediately.
