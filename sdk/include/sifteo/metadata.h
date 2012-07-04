@@ -53,7 +53,7 @@ public:
             unsigned numAGSlots = _SYS_lti_counter("Sifteo.AssetGroupSlot", -1);
             _SYS_lti_metadata(_SYS_METADATA_NUM_ASLOTS, "b", numAGSlots);
 
-            // UUID for this particular build. Used by the system for asset caching.
+            // UUID for this particular build.
             _SYS_lti_metadata(_SYS_METADATA_UUID, "IIII",
                 _SYS_lti_uuid(0, 0), _SYS_lti_uuid(0, 1),
                 _SYS_lti_uuid(0, 2), _SYS_lti_uuid(0, 3));
