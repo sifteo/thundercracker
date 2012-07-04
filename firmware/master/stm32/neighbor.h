@@ -14,39 +14,64 @@
 class Neighbor {
 public:
     Neighbor(volatile TIM_t *txTimer, volatile TIM_t *rxTimer) :
+        txData(0),
+        txDataBuffer(0),
         txPeriodTimer(txTimer),
-        rxPeriodTimer(rxTimer)
+        rxPeriodTimer(rxTimer),
+        txState(Idle)
     {}
 
     void init();
 
-    void beginReceiving();
+    void beginReceiving(uint8_t mask);
     void stopReceiving();
 
-    void beginTransmit(uint16_t data);
+    void beginTransmitting(uint16_t data, uint8_t sideMask);
+    void stopTransmitting();
     bool isTransmitting() {
         return txData > 0;
     }
 
-    void transmitNextBit();
+    void txPeriodISR();
     void onRxPulse(uint8_t side);
     bool rxPeriodIsr(uint16_t *side, uint16_t *rxData);
 
-    inline static bool inIrqPending(uint8_t side) {
+    static inline bool inIrqPending(uint8_t side) {
         return inPins[side].irqPending();
     }
 
 private:
-    // pwm duty specifying the duration of a tx pulse
-    static const unsigned TX_ACTIVE_PULSE_DUTY = 25;
+    /*
+     * Timers are set to the neighbor transmission's bit width of 12us.
+     * TIM3 and TIM5 are on APB1 which has a rate of 36MHz.
+     *
+     * Pulse duration is 2us.
+     *
+     * 2us  / (1 / 36000000) == 72 ticks
+     * 12us / (1 / 36000000) == 432 ticks
+     *
+     */
+    static const unsigned PULSE_LEN_TICKS = 72;
+    static const unsigned BIT_PERIOD_TICKS = 432;
+
     // number of bits to wait for during an rx sequence
     static const unsigned NUM_RX_BITS = 16;
 
+    // number of bit periods to wait between transmissions
+    static const unsigned NUM_TX_WAIT_PERIODS = 50;
+
+#if (BOARD == BOARD_TEST_JIG)
+    static const unsigned NUM_PINS = 4;
+    static const unsigned SIDEMASK = 0xf;
+#else
+    static const unsigned NUM_PINS = 2;
+    static const unsigned SIDEMASK = 0x3;
+#endif
+
     void setDuty(uint16_t duty);
-    void enablePwm();
-    void disablePwm();
 
     volatile uint16_t txData;    // data in the process of being transmitted. if 0, we're done.
+    uint16_t txDataBuffer;
 
     // sad to make these static, but no good way to init them other than
     // a) providing a default ctor for GPIOPin
@@ -61,13 +86,23 @@ private:
     int8_t receivingSide;   // we only receive on one side at a time - which one?
     uint16_t rxDataBuffer;  // rx data in progress
     uint8_t rxBitCounter;   // how many bits have we shifted into rxDataBuffer?
+    uint16_t txWaitPeriods; // how many bit periods to wait before beginning our next transmission
 
     enum RxState {
         WaitingForStart,    // waiting for next start bit, rxBitCounter == 0
         ReceivingData       // an rx sequence is in progress
     };
 
+    enum TxState {
+        Idle,
+        BetweenTransmissions,
+        Transmitting
+    };
+
     RxState rxState;
+    TxState txState;
+
+
 };
 
 #endif

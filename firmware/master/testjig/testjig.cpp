@@ -18,7 +18,7 @@
 #include "adc.h"
 
 static I2CSlave i2c(&I2C1);
-static Neighbor neighbor(&TIM3, &TIM5);
+static Neighbor neighbor(&TIM5, &TIM3);
 
 // control for the pass-through USB of the master under test
 static GPIOPin testUsbEnable = USB_PWR_GPIO;
@@ -47,11 +47,11 @@ TestJig::TestHandler const TestJig::handlers[] = {
 
 void TestJig::init()
 {
-    NVIC.irqEnable(IVT.TIM3);                   // neighbor tx
-    NVIC.irqPrioritize(IVT.TIM3, 0x60);
+    NVIC.irqEnable(IVT.TIM3);                   // neighbor rx
+    NVIC.irqPrioritize(IVT.TIM3, 0x50);
 
-    NVIC.irqEnable(IVT.TIM5);                   // neighbor rx
-    NVIC.irqPrioritize(IVT.TIM5, 0x50);
+    NVIC.irqEnable(IVT.TIM5);                   // neighbor tx
+    NVIC.irqPrioritize(IVT.TIM5, 0x60);
 
     NVIC.irqEnable(IVT.EXTI0);                  // neighbor in2
     NVIC.irqPrioritize(IVT.EXTI0, 0x64);
@@ -248,7 +248,11 @@ void TestJig::getUsbCurrentHandler(uint8_t argc, uint8_t *args)
 
 void TestJig::beginNeighborRxHandler(uint8_t argc, uint8_t *args)
 {
-    neighbor.beginReceiving();
+    if (argc < 2)
+        return;
+
+    uint8_t mask = args[1];
+    neighbor.beginReceiving(mask);
 
     const uint8_t response[] = { args[0] };
     UsbDevice::write(response, sizeof response);
@@ -323,21 +327,19 @@ void TestJig::setCubeSensorsEnabledHandler(uint8_t argc, uint8_t *args)
 
 IRQ_HANDLER ISR_TIM3()
 {
-    if (TIM3.SR & 1)    // update event
-        neighbor.transmitNextBit();
     TIM3.SR = 0; // must clear status to acknowledge the ISR
 
-}
-
-IRQ_HANDLER ISR_TIM5()
-{
-    if (TIM5.SR & 1) {
+    if (TIM3.SR & 1) {
         uint16_t side, rxData;
         if (neighbor.rxPeriodIsr(&side, &rxData)) {
             TestJig::onNeighborMsgRx(side, rxData);
         }
     }
-    TIM5.SR = 0; // must clear status to acknowledge the ISR
+}
+
+IRQ_HANDLER ISR_TIM5()
+{
+    neighbor.txPeriodISR();
 }
 
 /*
