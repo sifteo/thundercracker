@@ -28,6 +28,9 @@ namespace Sifteo {
  * @brief A drawable that's backed by plain memory, instead of
  * by a VideoBuffer.
  *
+ * Template parameters specify the width and height of the buffer,
+ * in tiles, and optionally the number of frames.
+ *
  * You can draw on a TileBuffer in the same manner you'd
  * draw on BG0, for example.
  *
@@ -44,13 +47,13 @@ namespace Sifteo {
  * relocate assets.
  */
 
-template <unsigned tTileWidth, unsigned tTileHeight, unsigned tFrames = 1>
+template <unsigned tW, unsigned tH, unsigned tF = 1>
 struct TileBuffer {
     struct {
         _SYSAssetImage image;
         _SYSCubeID cube;
     } sys;
-    uint16_t tiles[tTileWidth * tTileHeight * tFrames];
+    uint16_t tiles[tW * tH * tF];
 
     // Implicit conversion to AssetImage base class
     operator const AssetImage& () const { return *reinterpret_cast<const AssetImage*>(&sys.image); }
@@ -97,9 +100,9 @@ struct TileBuffer {
     void init() {
         sys.cube = _SYS_CUBE_ID_INVALID;
         bzero(sys.image);
-        sys.image.width = tTileWidth;
-        sys.image.height = tTileHeight;
-        sys.image.frames = tFrames;
+        sys.image.width = tW;
+        sys.image.height = tH;
+        sys.image.frames = tF;
         sys.image.format = _SYS_AIF_FLAT;
         sys.image.pData = reinterpret_cast<uint32_t>(&tiles[0]);
     }
@@ -135,14 +138,14 @@ struct TileBuffer {
      * @brief Return the width, in tiles, of this mode
      */
     static unsigned tileWidth() {
-        return tTileWidth;
+        return tW;
     }
 
     /**
      * @brief Return the height, in tiles, of this mode
      */
     static unsigned tileHeight() {
-        return tTileHeight;
+        return tH;
     }
 
     /**
@@ -177,7 +180,7 @@ struct TileBuffer {
      * @brief Return the number of frames in this image.
      */
     static int numFrames() {
-        return tFrames;
+        return tF;
     }
 
     /**
@@ -399,6 +402,9 @@ struct TileBuffer {
  * @brief A drawable that's backed by plain memory, usable with
  * multiple cubes.
  *
+ * Template parameters specify the width and height of the buffer,
+ * in tiles, and optionally the number of frames.
+ *
  * This is a variation on TileBuffer, but instead of storing per-cube
  * (already relocated) tile indices, this stores per-asset-group (relocatable)
  * indices.
@@ -419,10 +425,10 @@ struct TileBuffer {
  * header we build in RAM needs to be initialized by the constructor.
  */
 
-template <unsigned tTileWidth, unsigned tTileHeight, unsigned tFrames = 1>
+template <unsigned tW, unsigned tH, unsigned tF = 1>
 struct RelocatableTileBuffer {
     _SYSAssetImage sys;
-    uint16_t tiles[tTileWidth * tTileHeight * tFrames];
+    uint16_t tiles[tW * tH * tF];
 
     /// Implicit conversion to AssetImage base class
     operator const AssetImage& () const { return *reinterpret_cast<const AssetImage*>(&sys); }
@@ -450,9 +456,9 @@ struct RelocatableTileBuffer {
      */
     void init() {
         bzero(sys);
-        sys.width = tTileWidth;
-        sys.height = tTileHeight;
-        sys.frames = tFrames;
+        sys.width = tW;
+        sys.height = tH;
+        sys.frames = tF;
         sys.format = _SYS_AIF_FLAT;
         sys.pData = reinterpret_cast<uint32_t>(&tiles[0]);
     }
@@ -468,14 +474,14 @@ struct RelocatableTileBuffer {
      * @brief Return the width, in tiles, of this mode
      */
     static unsigned tileWidth() {
-        return tTileWidth;
+        return tW;
     }
 
     /**
      * @brief Return the height, in tiles, of this mode
      */
     static unsigned tileHeight() {
-        return tTileHeight;
+        return tH;
     }
 
     /**
@@ -510,7 +516,7 @@ struct RelocatableTileBuffer {
      * @brief Return the number of frames in this image.
      */
     static int numFrames() {
-        return tFrames;
+        return tF;
     }
 
     /**
