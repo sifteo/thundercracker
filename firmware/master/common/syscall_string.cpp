@@ -14,6 +14,7 @@
 #include "svmmemory.h"
 #include "svmruntime.h"
 #include "crc.h"
+#include "svmfastlz.h"
 
 extern "C" {
 
@@ -72,6 +73,21 @@ uint32_t _SYS_crc32(const uint8_t *data, uint32_t count)
     }
 
     return crc;
+}
+
+uint32_t _SYS_decompress_fastlz1(uint8_t *dest, uint32_t destMax, const uint8_t *src, uint32_t srcLen)
+{
+    SvmMemory::VirtAddr srcVA = reinterpret_cast<SvmMemory::VirtAddr>(src);
+    FlashBlockRef ref;
+
+    if (!SvmMemory::mapRAM(dest, destMax) ||
+        !SvmFastLZ::decompressL1(ref, dest, destMax, srcVA, srcLen)) {
+        SvmRuntime::fault(F_SYSCALL_ADDRESS);
+        return 0;
+    }
+
+    // Actual length, written by decompressL1()
+    return destMax;
 }
 
 int32_t _SYS_memcmp8(const uint8_t *a, const uint8_t *b, uint32_t count)
