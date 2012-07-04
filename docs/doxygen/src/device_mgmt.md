@@ -59,15 +59,19 @@ Once you delete this system info, the base will need to install assets to your c
 
 # Update Firmware       {#fwupdate}
 
-Swiss can also update the firmware on your Sifteo base. This is a two step process. First, initialize the updater on the base:
+Swiss can also update the firmware on your Sifteo base.
+
+This is a two step process. First, the base must be in update mode. If the red LED is already illuminated, the base is already in update mode and you can skip this step. Otherwise, to initialize the updater on the base:
 
     swiss update --init
 
-This should cause your base to disconnect from USB and reboot into the updater. Once this has happened, you can install the new firmware:
+Your base will disconnect from USB and reboot into update mode. When the red LED is illuminated, your device is in update mode.
+
+Once in update mode, you can install new firmware:
 
     swiss update myNewFirmware.sft
 
-The red LED on the base will be illuminated during the update, and will turn off once the update is complete.
+## Recovery             {#recovery}
 
 If you need to force an update, you can use the following recovery process:
 * remove batteries from the base and disconnect from USB
@@ -75,4 +79,6 @@ If you need to force an update, you can use the following recovery process:
 * connect the base via USB (this will turn on the base)
 * continue holding down the home button on the base for one second
 
-After one second, the red LED illuminates and you can proceed with the normal update process as above.
+After one second, the red LED illuminates and you can install the update as normal:
+
+    swiss update myNewFirmware.sft
