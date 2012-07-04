@@ -31,9 +31,18 @@ public:
     virtual void getAssets(Sifteo::MenuItem &assets, Sifteo::MappedVolume &map) = 0;
 
     /**
+     * How much space in our AssetSlot will we need to store the results of
+     * calling getAssets()? This is used by the MainMenu to calculate how
+     * much space in asset flash will be required by all menu items.
+     */
+    virtual unsigned getTileAllocation() const {
+        return 0;
+    }
+
+    /**
      * How many cubes are required by this menu item, if any?
      */
-    virtual CubeRange getCubeRange() {
+    virtual CubeRange getCubeRange() const {
         return CubeRange();
     }
 

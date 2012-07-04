@@ -85,12 +85,14 @@ bool ELFMainMenuItem::init(Sifteo::Volume volume)
     LOG("LAUNCHER: Found Volume<%02x> %s, version %s \"%s\"\n",
         volume.sys & 0xFF, map.package(), map.version(), map.title());
 
+    // Save the cube range (required)
     cubeRange = map.metadata<_SYSMetadataCubeRange>(_SYS_METADATA_CUBE_RANGE);
     if (!cubeRange.isValid()) {
         LOG("LAUNCHER: Skipping game, invalid cube range\n");
         return false;
     }
 
+    // Save the number of asset slots (required)
     const uint8_t *slots = map.metadata<uint8_t>(_SYS_METADATA_NUM_ASLOTS);
     numAssetSlots = slots ? *slots : 0;
     if (numAssetSlots > MAX_ASSET_SLOTS) {
@@ -98,6 +100,23 @@ bool ELFMainMenuItem::init(Sifteo::Volume volume)
             numAssetSlots, MAX_ASSET_SLOTS);
         return false;
     }
+
+    // Validate the required icon, but don't save it yet.
+    auto iconMeta = map.metadata<_SYSMetadataImage>(_SYS_METADATA_ICON_96x96);
+    if (!iconMeta) {
+        LOG("LAUNCHER: Skipping game, no 96x96 icon found.\n");
+        return false;
+    }
+    if (iconMeta->width != icon.image.tileWidth() || iconMeta->height != icon.image.tileHeight()) {
+        LOG("LAUNCHER: Skipping game, icon size is incorrect.\n");
+        return false;
+    }
+
+    // Calculate how much space the icon's assets require
+    AssetImage iconImage;
+    AssetGroup iconGroup;
+    map.translate(iconMeta, iconImage, iconGroup);
+    tileAllocation = iconGroup.tileAllocation();
 
     return true;
 }
@@ -107,6 +126,24 @@ void ELFMainMenuItem::getAssets(Sifteo::MenuItem &assets, Sifteo::MappedVolume &
     /*
      * Gather assets from this volume.
      */
+
+    map.attach(volume);
+
+    // We already validated the icon metadata
+    auto iconMeta = map.metadata<_SYSMetadataImage>(_SYS_METADATA_ICON_96x96);
+    ASSERT(iconMeta);
+    ASSERT(iconMeta->width == icon.image.tileWidth());
+    ASSERT(iconMeta->height == icon.image.tileHeight());
+
+    // Mapping translation; convert to an AssetImage and AssetGroup.
+    AssetImage iconSrc;
+    map.translate(iconMeta, iconSrc, icon.group);
+
+    // The above AssetImage still references data in the mapped volume,
+    // which won't be available later. Copy / decompress it into RAM.
+    icon.image.init();
+    icon.image.image(vec(0,0), iconSrc);
+    assets.icon = icon.image;
 }
 
 void ELFMainMenuItem::bootstrap(Sifteo::CubeSet cubes, ProgressDelegate &progress)
@@ -170,7 +207,7 @@ void ELFMainMenuItem::bootstrap(Sifteo::CubeSet cubes, ProgressDelegate &progres
 
     for (unsigned i = 0; i != count; ++i) {
         AssetGroup group;
-        map.writeAssetGroup(vec[i], group);
+        map.translate(vec[i], group);
         AssetSlot slot(vec[i].slot);
 
         ASSERT(numAssetSlots <= MAX_ASSET_SLOTS);
@@ -262,7 +299,7 @@ void ELFMainMenuItem::bootstrap(Sifteo::CubeSet cubes, ProgressDelegate &progres
             continue;
 
         AssetGroup group;
-        map.writeAssetGroup(vec[i], group);
+        map.translate(vec[i], group);
         AssetSlot slot(vec[i].slot);
 
         LOG("LAUNCHER: Bootstrapping asset group %P in slot %d\n",

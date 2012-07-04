@@ -553,8 +553,9 @@ struct RelocatableTileBuffer {
      * If the same asset group is already associated, this is a no-op.
      */
     void setAssetGroup(AssetGroup &group) {
-        ASSERT(sys.pAssetGroup == 0 || sys.pAssetGroup == &group.sys);
-        sys.pAssetGroup = group.sys;
+        uint32_t pAssetGroup = reinterpret_cast<uint32_t>(&group.sys);
+        ASSERT(sys.pAssetGroup == 0 || sys.pAssetGroup == pAssetGroup);
+        sys.pAssetGroup = pAssetGroup;
     }
 
     /**

@@ -6,7 +6,7 @@
 #include "assetloaderbypassdelegate.h"
 #include <sifteo.h>
 using namespace Sifteo;
- 
+
 
 void AssetLoaderBypassDelegate::begin(CubeSet cubes)
 {

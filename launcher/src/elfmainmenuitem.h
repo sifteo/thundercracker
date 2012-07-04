@@ -25,7 +25,11 @@ public:
         volume.exec();
     }
 
-    virtual CubeRange getCubeRange() {
+    virtual unsigned getTileAllocation() const {
+        return tileAllocation;
+    }
+
+    virtual CubeRange getCubeRange() const {
         return cubeRange;
     }
 
@@ -58,9 +62,10 @@ private:
         unsigned uninstalledTiles;
     };
 
-    Sifteo::Volume volume;
     CubeRange cubeRange;
+    uint16_t tileAllocation;
     uint8_t numAssetSlots;
+    Sifteo::Volume volume;
 
     /*
      * Local storage for icon assets.
