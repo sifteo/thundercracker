@@ -69,7 +69,7 @@ void ADPCMEncoder::optimizeIC(State &state, const std::vector<uint8_t> &in)
     state.sample = int16_t(in[0] | (in[1] << 8));
 
     // Try at most 100 samples
-    unsigned inBytes = std::min<unsigned>(100, in.size());
+    unsigned inBytes = std::min<unsigned>(100 * sizeof(int16_t), in.size());
     std::vector<uint8_t> dummy;
 
     /*
@@ -153,11 +153,18 @@ uint64_t ADPCMEncoder::encodeWithIC(State state, const std::vector<uint8_t> &in,
      * difference between actual sample and predictor state after
      * encoding each sample.
      *
-     * If the input is not an even number of samples, the additional
-     * bytes/samples will be truncated.
+     * If the input is not a multiple of sizeof(int16_t), additional
+     * partial-sample bytes will be discarded.
+     *
+     * If the input is not a multiple of two samples, we will duplicate
+     * the last sample for padding. (We expect this sample to be truncated
+     * via loopEnd.)
      */
 
-    unsigned numPairs = inBytes / 4;
+    assert(inBytes <= in.size());
+    unsigned numSamples = inBytes / sizeof(int16_t);
+    unsigned numPairs = numSamples / 2;
+
     const int16_t *inPtr = reinterpret_cast<const int16_t*>(&in[0]);
     uint64_t error = 0;
 
@@ -170,24 +177,33 @@ uint64_t ADPCMEncoder::encodeWithIC(State state, const std::vector<uint8_t> &in,
     out.push_back(state.index);
 
     while (numPairs--) {
-        // Uncompressed samples
         int s1 = *(inPtr++);
         int s2 = *(inPtr++);
-        
-        // Compressed nybbles, and predictor errors
-        unsigned n1 = encodeSample(state, s1);
-        int e1 = state.sample - s1;
-        unsigned n2 = encodeSample(state, s2);
-        int e2 = state.sample - s2;
+        error += encodePair(state, s1, s2, out);
+    }
 
-        // Update error metric
-        error += e1*e1 + e2*e2;
-
-        // Write out one byte (2 samples)
-        out.push_back(n1 | (n2 << 4));
+    // Doubled final sample?
+    if (numSamples & 1) {
+        int s1 = *(inPtr++);
+        error += encodePair(state, s1, s1, out);
     }
 
     return error;
+}
+
+uint64_t ADPCMEncoder::encodePair(State &state, int s1, int s2, std::vector<uint8_t> &out)
+{
+    // Compressed nybbles, and predictor errors
+    unsigned n1 = encodeSample(state, s1);
+    int64_t e1 = state.sample - s1;
+    unsigned n2 = encodeSample(state, s2);
+    int64_t e2 = state.sample - s2;
+
+    // Write out one byte (2 samples)
+    out.push_back(n1 | (n2 << 4));
+
+    // Error metric, with 64-bit math
+    return e1*e1 + e2*e2;
 }
 
 unsigned ADPCMEncoder::encodeSample(State &state, int sample)

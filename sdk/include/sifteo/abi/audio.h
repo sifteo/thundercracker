@@ -40,10 +40,10 @@ enum _SYSAudioLoopType {
 };
 
 struct _SYSAudioModule {
-    uint32_t sampleRate;    /// Native sampling rate of data
+    uint32_t sampleRate;    /// Native sampling rate of data, in Hz
     uint32_t loopStart;     /// Index of first sample in loop
-    uint32_t loopEnd;       /// Index of first sample past the end of the loop
-    uint8_t loopType;       /// Loop type, 0 (no looping) or 1 (forward loop)
+    uint32_t loopEnd;       /// Index of first sample past the end of the loop/sample
+    uint8_t loopType;       /// Loop type, 0 (stop at loopEnd) or 1 (forward loop)
     uint8_t type;           /// _SYSAudioType code
     uint16_t volume;        /// Sample default volume (overridden by explicit channel volume)
     uint32_t dataSize;      /// Size of compressed data, in bytes
@@ -57,7 +57,7 @@ struct _SYSXMPattern {
 };
 
 struct _SYSXMInstrument {
-    struct _SYSAudioModule sample; /// Instrument's sample data
+    struct _SYSAudioModule sample;  /// Instrument's sample data
     int8_t finetune;                /// Minor frequency adjustment to note, as x/128 halftone (-1..127/128).
     int8_t relativeNoteNumber;      /// Relative note number (for increasing/decreasing native sample bitrate) (-96..95, 0 = C-4)
     uint8_t compression;            /// Original number of nibbles per sample

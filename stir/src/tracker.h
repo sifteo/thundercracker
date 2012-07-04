@@ -39,6 +39,8 @@ private:
     bool readNextPattern();
     bool savePatterns();
 
+    void emulatePingPongLoops(_SYSAudioModule &sample, std::vector<uint8_t> &pcmData);
+
     bool init();
 
     // Portable file functions, modules are little-endian binary files!
@@ -58,13 +60,23 @@ private:
     void processName(std::string &name);
 
     // constants
-    enum {
+    enum SampleFormat {
         kSampleFormatPCM8 = 0,
         kSampleFormatADPCM,
         kSampleFormatPCM16,
         kSampleFormatUnknown
     };
     static const char *encodings[3];
+
+    static unsigned bytesToSamples(unsigned fmt, unsigned bytes)
+    {
+        switch (fmt) {
+        case kSampleFormatPCM16:    return bytes / sizeof(int16_t);
+        case kSampleFormatPCM8:     return bytes;
+        case kSampleFormatADPCM:    return bytes * 2;
+        default:                    return 0;
+        }
+    }
 
     const char *filename;
     FILE *f;

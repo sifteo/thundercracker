@@ -23,15 +23,6 @@ public:
         state.sampleNum = 0;
     }
 
-    static uint32_t numSamples(const _SYSAudioModule &mod)
-    {
-        switch (mod.type) {    
-            case _SYS_PCM:      return mod.dataSize / sizeof(uint16_t);
-            case _SYS_ADPCM:    return mod.dataSize * NYBBLES_PER_BYTE;
-            default:            return 0;
-        }
-    }
-
     /*
      * This should be called after a unit of work has been finished, to
      * recycle the FlashBlockRef.
@@ -43,7 +34,7 @@ public:
     // Retrieve a single sample, via the cache
     int ALWAYS_INLINE getSample(unsigned sampleNum, const _SYSAudioModule &mod)
     {
-        ASSERT(sampleNum < numSamples(mod));
+        ASSERT(sampleNum < maxNumSamples(mod));
         ASSERT((state.sampleNum & HALF_BUFFER_MASK) == 0);
 
         unsigned diff = state.sampleNum - (sampleNum + 1);
@@ -57,7 +48,7 @@ public:
     int ALWAYS_INLINE getSamplePair(unsigned sampleNum, const _SYSAudioModule &mod, int &sample)
     {
         unsigned nextSample = sampleNum + 1;
-        ASSERT(nextSample < numSamples(mod));
+        ASSERT(nextSample < maxNumSamples(mod));
         ASSERT((state.sampleNum & HALF_BUFFER_MASK) == 0);
 
         unsigned diff = state.sampleNum - (nextSample + 1);
@@ -91,6 +82,10 @@ private:
     void fetchBlockPCM(uint32_t sampleNum, const _SYSAudioModule &mod);
     void fetchBlockADPCM(uint32_t sampleNum, const _SYSAudioModule &mod);
 
+    /*
+     * Grab the next block of audio samples, populating the cache block
+     * starting at sampleNum.
+     */
     void ALWAYS_INLINE fetchBlock(uint32_t sampleNum, const _SYSAudioModule &mod)
     {
         if (LIKELY(mod.type == _SYS_ADPCM))
@@ -98,6 +93,23 @@ private:
 
         ASSERT(mod.type == _SYS_PCM);
         return fetchBlockPCM(sampleNum, mod);
+    }
+
+    /*
+     * At most, how many samples could this buffer hold?
+     * Calculated based on the size of the module's compressed data buffer.
+     *
+     * This isn't exact, because of padding, headers, etc.
+     * We shouldn't rely on this number to know when the
+     * sample ends; instead, loopEnd must serve this purpose.
+     */
+    static uint32_t maxNumSamples(const _SYSAudioModule &mod)
+    {
+        switch (mod.type) {    
+            case _SYS_PCM:      return mod.dataSize / sizeof(uint16_t);
+            case _SYS_ADPCM:    return mod.dataSize * NYBBLES_PER_BYTE;
+            default:            return 0;
+        }
     }
 };
 

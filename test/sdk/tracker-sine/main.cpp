@@ -6,6 +6,6 @@ void main()
 {
     AudioTracker::play(TestSound);
 
-    while (SystemTime::now().uptimeMS() < 1000)
+    while (SystemTime::now().uptimeMS() < 5000)
         System::yield();
 }

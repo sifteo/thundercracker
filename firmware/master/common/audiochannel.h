@@ -70,7 +70,6 @@ private:
     static const int STATE_STOPPED  = (1 << 2);
 
     uint64_t offset;
-    uint64_t offsetLimit;
     int32_t increment;
     int16_t volume;
     uint8_t state;

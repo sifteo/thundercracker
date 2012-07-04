@@ -77,6 +77,7 @@ private:
         std::vector<uint8_t> &out, unsigned inBytes);
 
     static unsigned encodeSample(State &state, int sample);
+    static uint64_t encodePair(State &state, int s1, int s2, std::vector<uint8_t> &out);
 };
 
 #endif

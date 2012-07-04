@@ -38,11 +38,6 @@ void AudioChannelSlot::play(const struct _SYSAudioModule *module, _SYSAudioLoopT
     setSpeed(mod.sampleRate);
     setVolume(mod.volume);
 
-    // Pre-calculate the loop endpoint (relatively expensive)
-    offsetLimit = (state & STATE_LOOP) && mod.loopEnd
-        ? ((uint64_t)mod.loopEnd) << SAMPLE_FRAC_SIZE
-        : ((uint64_t)samples.numSamples(mod)) << SAMPLE_FRAC_SIZE;
-
     state &= ~STATE_STOPPED;
 }
 
@@ -55,32 +50,33 @@ bool AudioChannelSlot::mixAudio(int *buffer, uint32_t numFrames)
      */
 
     // Early out if this channel is in the process of being stopped by the main thread.
-    if ((state & STATE_STOPPED) || mod.dataSize == 0) {
+    if (state & STATE_STOPPED) {
         #ifdef SIFTEO_SIMULATOR
             MCAudioVisData::clearChannel(AudioMixer::instance.channelID(this));
         #endif
         return false;
     }
 
-    ASSERT(samples.numSamples(mod) > 0);
     ASSERT(numFrames > 0);
 
     // Read from slot only once
     const int latchedVolume = volume;
     const int latchedIncrement = increment;
-    const uint64_t latchedLimit = offsetLimit;
-    const unsigned limitIndex = latchedLimit >> SAMPLE_FRAC_SIZE;
-    const unsigned loopStart = mod.loopStart;
+    const unsigned loopEnd = mod.loopEnd;           // Before first sample
+    const unsigned loopStart = mod.loopStart;       // After last sample
 
     // Local copy of offset, to avoid writing back to RAM every time
     uint64_t localOffset = offset;
 
     do {
+        unsigned index = localOffset >> SAMPLE_FRAC_SIZE;
+        unsigned fractional = localOffset & SAMPLE_FRAC_MASK;
+
         // Looping logic
-        if (UNLIKELY(localOffset >= latchedLimit)) {
+        if (UNLIKELY(index >= loopEnd)) {
             if (state & STATE_LOOP) {
-                uint64_t fpLoopStart = ((uint64_t)mod.loopStart) << SAMPLE_FRAC_SIZE;
-                localOffset = fpLoopStart + (localOffset - latchedLimit);
+                localOffset -= (loopEnd - loopStart) << SAMPLE_FRAC_SIZE;
+                index = localOffset >> SAMPLE_FRAC_SIZE;
             } else {
                 #ifdef SIFTEO_SIMULATOR
                     MCAudioVisData::clearChannel(AudioMixer::instance.channelID(this));
@@ -94,8 +90,6 @@ bool AudioChannelSlot::mixAudio(int *buffer, uint32_t numFrames)
         // Compute the next sample
         if (buffer) {
             int sample;
-            unsigned index = localOffset >> SAMPLE_FRAC_SIZE;
-            unsigned fractional = localOffset & SAMPLE_FRAC_MASK;
 
             if (!fractional) {
                 // Offset is aligned with an asset sample
@@ -106,7 +100,7 @@ bool AudioChannelSlot::mixAudio(int *buffer, uint32_t numFrames)
 
                 int next;
 
-                if (LIKELY(index + 1 < limitIndex)) {
+                if (LIKELY(index + 1 < loopEnd)) {
                     // Fast path for linear interpolation between two adjacent samples
                     next = samples.getSamplePair(index, mod, sample);
 
@@ -149,32 +143,14 @@ bool AudioChannelSlot::mixAudio(int *buffer, uint32_t numFrames)
 
 void AudioChannelSlot::setPos(uint32_t ofs)
 {
-    uint32_t numSamples = samples.numSamples(mod);
-    uint32_t loopOffset = 0;
-
-    if (mod.loopType == _SYS_LOOP_EMULATED_PING_PONG) {
-        loopOffset = ((((mod.loopEnd + 1) - mod.loopStart) + 2) / 2) - 2;
-        numSamples -= loopOffset;
-    }
-
-    if(ofs < numSamples) {
-        offset = ofs + (ofs > mod.loopEnd ? loopOffset : 0);
-    } else if (state & STATE_LOOP) {
-        if (ofs == numSamples) {
-            offset = mod.loopStart;
+    // Seeking past the end of the loop?
+    if (ofs >= mod.loopEnd) {
+        if (state & STATE_LOOP) {
+            ofs = mod.loopStart + ((ofs - mod.loopStart) % (mod.loopEnd - mod.loopStart));
         } else {
-            /* Seeking out of bounds in a ping-pong sample is not well-defined;
-             * no tracker seems to implement loop directionality.
-             * Compute the offset based on the original sample's length, not
-             * the synthesized sample's length, and loop forward (same as
-             * MilkyTracker).
-             */
-            uint32_t loopLength = mod.loopEnd + 1 - (mod.loopStart + loopOffset);
-            // begin at loop start, modulo the length of the loop
-            offset = (ofs - mod.loopStart) % loopLength + mod.loopStart;
+            ofs = mod.loopEnd;
         }
-    } else {
-        return;
     }
-    offset <<= SAMPLE_FRAC_SIZE;
+
+    offset = ofs << SAMPLE_FRAC_SIZE;
 }

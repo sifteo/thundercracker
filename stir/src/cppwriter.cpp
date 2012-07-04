@@ -167,6 +167,8 @@ void CPPSourceWriter::writeSound(const Sound &sound)
     std::vector<uint8_t> data;
 
     LodePNG::loadFile(raw, sound.getFile());
+    uint32_t numSamples = raw.size() / sizeof(int16_t);
+
     enc->encode(raw, data);
 
     mLog.infoLineWithLabel(sound.getName().c_str(),
@@ -188,34 +190,22 @@ void CPPSourceWriter::writeSound(const Sound &sound)
     if (sound.getLoopLength() == 0)
         loopType = _SYS_LOOP_ONCE;
 
-    // Precompute the number of samples in the clip
-    uint32_t numSamples = data.size();
-    switch (enc->getType()) {
-        case _SYS_PCM:
-            if (numSamples & 1) {
-                mLog.error("File '%s' does not contain an integral number of samples.",
-                           sound.getFile().c_str());
-            }
-            numSamples /= sizeof(int16_t);
-            break;
-        case _SYS_ADPCM:
-            numSamples *= 2;
-            break;
-    }
+    // Compute loop length and check sanity.
 
-    // Compute loop length and check sanity
+    // Note that we compute the loop using our original number of samples;
+    // the CODEC may pad our sample data, but loopEnd will cause the extra
+    // samples to be truncated.
+
     uint32_t loopEnd;
     if (sound.getLoopLength() == 0) {
         loopEnd = numSamples;
     } else {
         loopEnd = sound.getLoopLength() + sound.getLoopStart();
     }
-    // loopEnd is zero-indexed
-    loopEnd -= 1;
 
     // Loop end bounds checking
-    assert(loopEnd < numSamples);
-    assert(sound.getLoopStart() < loopEnd);
+    assert(loopEnd <= numSamples);
+    assert(sound.getLoopStart() <= loopEnd);
 
     mStream <<
         "extern const Sifteo::AssetAudio " << sound.getName() << " = {{\n" <<

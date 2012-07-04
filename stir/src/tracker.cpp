@@ -290,6 +290,7 @@ bool XmTrackerLoader::readNextInstrument()
 
     // FILE: Sample format and loopType share a byte
     sample.loopType = get8();
+    uint8_t format = (sample.loopType >> 3) & 0x3;
 
     // FILE: Default panning
     seek(1);
@@ -310,24 +311,16 @@ bool XmTrackerLoader::readNextInstrument()
     seek(22);
 
     // Parse loop boundaries into sensible units
-    uint8_t format = (sample.loopType >> 3) & 0x3;
     if (sample.loopEnd == 0) {
-        // If loop length is 0, no looping
+        // If loop length is 0, no looping.
+        // Preserve the format information, it's used by readSample().
         sample.loopStart = 0;
-        // Preserve format information, it's used by readSample().
+        sample.loopEnd = bytesToSamples(format, sample.dataSize);
         sample.loopType &= 0xF8;
     } else {
-        // Compute offsets in samples
-        if (format == kSampleFormatPCM16) {
-            sample.loopStart /= sizeof(int16_t);
-            sample.loopEnd /= sizeof(int16_t);
-        } else if (format == kSampleFormatADPCM) {
-            sample.loopStart *= 2;
-            sample.loopEnd *= 2;
-        }
-
-        // convert loopLength to loopEnd (zero-indexed)
-        sample.loopEnd += sample.loopStart;
+        // Compute offsets in samples, convert to half-open interval
+        sample.loopStart = bytesToSamples(format, sample.loopStart);
+        sample.loopEnd = sample.loopStart + bytesToSamples(format, sample.loopEnd);
     }
 
     // Fast-forward through the extra sample headers, if any.
@@ -372,122 +365,143 @@ bool XmTrackerLoader::readNextInstrument()
  */
 bool XmTrackerLoader::readSample(_SYSXMInstrument &instrument)
 {
+    std::vector<uint8_t> sampleData;
     _SYSAudioModule &sample = instrument.sample;
+
     sample.pData = -1;
     sample.sampleRate = 8363;
-    uint8_t format = (sample.loopType >> 3) & 0x3;
 
     // Loop type should store only the loop type
+    uint8_t format = (sample.loopType >> 3) & 0x3;
     sample.loopType &= 0x3;
 
-    if (sample.dataSize == 0) return true;
-    
-    bool pcm8 = false;
-    instrument.compression = 4;
+    if (sample.dataSize == 0)
+        return true;
 
     switch (format) {
-        case kSampleFormatADPCM: {
-            /*
-             * If ADPCM, read directly into memory and done.
-             *
-             * This isn't quite right, though! Our own variant of ADPCM doesn't
-             * quite match XM's variant. For now, we'll just copy it directly
-             * anyway (This may be less lossy than decoding and reencoding?) and
-             * issue a warning.
-             */
 
+        /*
+         * If ADPCM, read directly into memory and done.
+         *
+         * This isn't quite right, though! Our own variant of ADPCM doesn't
+         * quite match XM's variant. For now, we'll just copy it directly
+         * anyway (This may be less lossy than decoding and reencoding?) and
+         * issue a warning.
+         */
+        case kSampleFormatADPCM: {
             log->error("%s, instrument %u: ADPCM samples cannot be accurately re-encoded. "
-                "For better quality, use uncompressed samples in your XM file and let stir "
-                "compress them.", filename, instruments.size());
+                "For correct decoding, use uncompressed samples in your XM file and let stir "
+                "compress them!", filename, instruments.size());
 
             // Prefix with three zero bytes (default codec initial conditions)
-            std::vector<uint8_t> sampleData(sample.dataSize + 3);
-            memset(&sampleData[0], 0, 3);
-            getbuf(&sampleData[3], sample.dataSize);
+            sampleData.resize(sample.dataSize + ADPCMEncoder::HEADER_SIZE);
+            memset(&sampleData[0], 0, ADPCMEncoder::HEADER_SIZE);
+            getbuf(&sampleData[ADPCMEncoder::HEADER_SIZE], sample.dataSize);
 
-            sample.pData = globalSampleDatas.size();
-            size += sample.dataSize;
-            globalSampleDatas.push_back(sampleData);
             sample.type = _SYS_ADPCM;
             instrument.compression = 1;
             break;
         }
-        case kSampleFormatPCM8:
-            pcm8 = true;
-            instrument.compression = 2;
-            // Intentional fall-through
-        case kSampleFormatPCM16: {
-            uint32_t numSamples = sample.dataSize / (pcm8 ? 1 : 2);
-            sample.dataSize = numSamples * sizeof(int16_t);
-            int16_t *buf = (int16_t*)malloc(sample.dataSize);
-            if (!buf) return false;
-            for (unsigned i = 0; i < numSamples; i++) {
-                buf[i] = pcm8
-                       ? (int16_t)((int8_t)get8() << 8)
-                       : (int16_t)get16();
+
+        /*
+         * 8-bit delta modulated PCM.
+         *
+         * Demodulate the 8-bit data, upconvert to 16-bit, emulate ping-pong
+         * loops, then recompress to the default sample format.
+         */
+        case kSampleFormatPCM8: {
+            uint32_t numSamples = sample.dataSize;
+            std::vector<uint8_t> pcmData;
+            int8_t state = 0;
+
+            for (unsigned i = 0; i != numSamples; ++i) {
+                state += int8_t(get8());
+                int16_t sample16 = std::min(0x7FFF, std::max(-0x8000, int(state) * 0x7FFF / 0x7F));
+                pcmData.push_back(sample16);
+                pcmData.push_back(sample16 >> 8);
             }
 
-            // XM uses delta modulation; mix into regular pcm.
-            int16_t mix = 0;
-            for(unsigned i = 0; i < numSamples; i++) {
-                // Allowing overflow here is intentional!
-                buf[i] = (mix += buf[i]);
-            }
+            emulatePingPongLoops(sample, pcmData);
 
-            // Ping-pong loops
-            if (sample.loopType == 2) {
-                /* Convert a ping-pong sample from:
-                 * [start][0123456789][end] (loop length: 10)
-                 * to:
-                 * [start][012345678987654321][end] (loop length: 18)
-                 */
-                uint32_t loopLength = sample.loopEnd - sample.loopStart;
-
-                // First and last samples of loop are not duplicated
-                uint32_t addlLength = loopLength - 2;
-
-                // Extend buffer
-                sample.dataSize += addlLength * sizeof(int16_t);
-                buf = (int16_t*)realloc(buf, sample.dataSize);
-                if (!buf) return false;
-
-                // Move non-looping end of sample
-                memcpy(buf + sample.loopStart + loopLength + addlLength,
-                       buf + sample.loopStart + loopLength,
-                       numSamples - (sample.loopStart + loopLength));
-
-                // Create the pong portion of the loop
-                for (unsigned i = 1; i <= addlLength; i++) {
-                    buf[sample.loopEnd + i] = buf[sample.loopEnd - i];
-                }
-
-                numSamples += addlLength;
-                sample.loopEnd += addlLength;
-            }
-
-            /// XXX: We could just be using std::vector above too...
-            std::vector<uint8_t> rawBytes((const uint8_t*) buf,
-                (const uint8_t*) buf + (numSamples * sizeof(int16_t)));
-            free(buf);
-
-            // Encode to today's default format
-            std::vector<uint8_t> sampleData;
             AudioEncoder *enc = AudioEncoder::create("");
-            enc->encode(rawBytes, sampleData);
-
-            sample.pData = globalSampleDatas.size();
-            sample.dataSize = sampleData.size();
-            size += sample.dataSize;
-            globalSampleDatas.push_back(sampleData);
+            enc->encode(pcmData, sampleData);
             sample.type = enc->getType();
+            instrument.compression = 2;
+            delete enc;
             break;
         }
-        default: {
+
+        /*
+         * 16-bit delta modulated PCM.
+         *
+         * Demodulate the 16-bit data, emulate ping-pong
+         * loops, then recompress to the default sample format.
+         */
+        case kSampleFormatPCM16: {
+            uint32_t numSamples = sample.dataSize / sizeof(int16_t);
+            std::vector<uint8_t> pcmData;
+            int16_t state = 0;
+
+            for (unsigned i = 0; i != numSamples; ++i) {
+                state += int16_t(get16());
+                pcmData.push_back(state);
+                pcmData.push_back(state >> 8);
+            }
+
+            emulatePingPongLoops(sample, pcmData);
+
+            AudioEncoder *enc = AudioEncoder::create("");
+            enc->encode(pcmData, sampleData);
+            sample.type = enc->getType();
+            instrument.compression = 4;
+            delete enc;
+            break;
+        }
+
+        default:
             log->error("%s, instrument %u: Unknown sample encoding", filename, instruments.size());
             return false;
-        }
     }
+
+    // Remember sample data
+
+    sample.pData = globalSampleDatas.size();
+    sample.dataSize = sampleData.size();
+    size += sample.dataSize;
+    globalSampleDatas.push_back(sampleData);
+
     return true;
+}
+
+void XmTrackerLoader::emulatePingPongLoops(_SYSAudioModule &sample, std::vector<uint8_t> &pcmData)
+{
+    if (sample.loopType != 2)
+        return;
+
+    /*
+     * Convert a ping-pong sample from:
+     *   [start][0123456789][end] (loop length: 10)
+     * to:
+     *   [start][012345678987654321][end] (loop length: 18)
+     *
+     * In other words, all samples in the loop *except* the first
+     * and last are duplicated, reversed, and inserted before loopEnd.
+     */
+
+    std::vector<uint8_t>::iterator loopStart = pcmData.begin() + sample.loopStart * sizeof(int16_t);
+    std::vector<uint8_t>::iterator loopEnd = pcmData.begin() + sample.loopEnd * sizeof(int16_t);
+
+    loopStart = std::min(loopStart, pcmData.end());
+    loopEnd = std::min(loopEnd, pcmData.end());
+
+    std::vector<uint8_t> reversed;
+    
+    for (std::vector<uint8_t>::iterator src = loopEnd - sizeof(int16_t)*2; src > loopStart; src -= sizeof(int16_t)) {
+        reversed.insert(reversed.end(), src, src + sizeof(int16_t));
+        sample.loopEnd++;
+    }
+
+    pcmData.insert(loopEnd, reversed.begin(), reversed.end());
 }
 
 /*
