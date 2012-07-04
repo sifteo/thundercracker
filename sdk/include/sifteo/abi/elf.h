@@ -37,7 +37,7 @@ extern "C" {
  * any value.
  */
 
-/// SVM-specific program header types
+// SVM-specific program header types
 #define _SYS_ELF_PT_METADATA        0x7000f001
 #define _SYS_ELF_PT_LOAD_RLE        0x7000f002
 
@@ -46,7 +46,10 @@ struct _SYSMetadataKey {
     uint16_t    key;        // _SYS_METADATA_*
 };
 
-/// System Metadata keys
+// Maximum size for a single metadata value
+#define _SYS_MAX_METADATA_ITEM_BYTES    0x100
+
+// System Metadata keys
 #define _SYS_METADATA_NONE          0x0000  // Ignored. (padding)
 #define _SYS_METADATA_UUID          0x0001  // Binary UUID for this specific build
 #define _SYS_METADATA_BOOT_ASSET    0x0002  // Array of _SYSMetadataBootAsset

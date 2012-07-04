@@ -73,7 +73,7 @@ struct AssetGroup {
      * This is numTiles(), rounded up to the nearest AssetSlot allocation unit.
      */
     unsigned tileAllocation() const {
-        return roundup<unsigned>(numTiles(), 16);
+        return roundup<unsigned>(numTiles(), _SYS_ASSET_GROUP_SIZE_UNIT);
     }
 
     /**

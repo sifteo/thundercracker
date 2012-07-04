@@ -37,16 +37,12 @@ namespace SysLFS {
 
     /*
      * Defined limits.
-     *
-     * These are things that userspace doesn't directly care about
-     * (so they aren't in abi.h) but they're vital to the binary
-     * compatibility of SysLFS records.
      */
 
-    const unsigned ASSET_SLOTS_PER_CUBE = 8;
-    const unsigned ASSET_SLOTS_PER_BANK = 4;
-    const unsigned TILES_PER_ASSET_SLOT = 4096;
-    const unsigned ASSET_GROUPS_PER_SLOT = 24;
+    const unsigned ASSET_SLOTS_PER_CUBE = _SYS_ASSET_SLOTS_PER_BANK * 2;
+    const unsigned ASSET_SLOTS_PER_BANK = _SYS_ASSET_SLOTS_PER_BANK;
+    const unsigned TILES_PER_ASSET_SLOT = _SYS_TILES_PER_ASSETSLOT;
+    const unsigned ASSET_GROUPS_PER_SLOT = _SYS_ASSET_GROUPS_PER_SLOT;
 
     /*
      * Key space
@@ -127,6 +123,7 @@ namespace SysLFS {
 
         static AssetGroupSize fromTileCount(unsigned tileCount)
         {
+            STATIC_ASSERT(_SYS_ASSET_GROUP_SIZE_UNIT == 16);
             STATIC_ASSERT(TILES_PER_ASSET_SLOT == 4096);
             ASSERT(tileCount >= 1 && tileCount <= 4096);
             AssetGroupSize result = { (tileCount - 1) >> 4 };

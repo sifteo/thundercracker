@@ -13,11 +13,14 @@
 extern "C" {
 #endif
 
-/*
- * Asset loading
- */
 
-#define _SYS_ASSETLOAD_BUF_SIZE  48   // Makes _SYSAssetLoaderCube come to 64 bytes
+#define _SYS_ASSETLOAD_BUF_SIZE     48      // Makes _SYSAssetLoaderCube come to 64 bytes
+#define _SYS_MAX_ASSET_SLOTS        4       // Number of AssetSlots maximum per-program
+#define _SYS_TILES_PER_ASSETSLOT    4096    // Number of tiles per AssetSlot
+#define _SYS_ASSET_GROUPS_PER_SLOT  24      // Number of AssetGroups we can track per-slot
+#define _SYS_ASSET_SLOTS_PER_BANK   4       // Number of AssetSlots maximum per-program
+#define _SYS_ASSET_GROUP_SIZE_UNIT  16      // Basic unit of AssetGroup allocation, in tiles
+
 
 struct _SYSAssetGroupHeader {
     uint8_t reserved;           /// OUT    Reserved, must be zero
@@ -69,6 +72,7 @@ struct _SYSAssetImage {
     uint8_t  reserved;          /// Reserved, must be zero
     uint32_t pData;             /// Format-specific data or data pointer
 };
+
 
 #ifdef __cplusplus
 }  // extern "C"
