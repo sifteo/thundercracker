@@ -1,5 +1,6 @@
 # We expect $(SDK_DIR)/Makefile.defs has already been included.
 
+
 ######## Normal target rules
 
 all: $(BIN)
@@ -34,12 +35,21 @@ $(ASSETS).gen.cpp: $(ASSETDEPS)
 clean:
 	rm -f $(BIN) $(OBJS) $(OBJS:%.o=%.d) $(GENERATED_FILES)
 
+.PHONY: clean all
+
+-include $(OBJS:%.o=%.d)
+
+
+######## Convenience rules
+
 run: $(BIN)
 	siftulator $(SIFTULATOR_FLAGS) $<
 
-.PHONY: clean all run
+install: $(BIN)
+	swiss install $<
 
--include $(OBJS:%.o=%.d)
+.PHONY: run install
+
 
 ######## Development utility rules
 
