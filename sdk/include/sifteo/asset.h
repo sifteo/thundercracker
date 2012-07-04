@@ -797,7 +797,7 @@ struct AssetAudio {
         const AssetAudio result = {{
             /* sampleRate  */  0,
             /* loopStart   */  0,
-            /* loopEnd     */  numSamples - 1,
+            /* loopEnd     */  numSamples,
             /* loopType    */  _SYS_LOOP_REPEAT,
             /* type        */  _SYS_PCM,
             /* volume      */  _SYS_AUDIO_DEFAULT_VOLUME,

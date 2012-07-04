@@ -28,7 +28,7 @@ static const AssetAudio squareAsset = AssetAudio::fromPCM(squareWave);
 void synthInit()
 {
     for (int i = 0; i != arraysize(sineWave); i++) {
-        float theta = i * float(M_PI * 2 / (arraysize(sineWave)-1));
+        float theta = i * float(M_PI * 2 / arraysize(sineWave));
         sineWave[i] = sin(theta) * 0x7fff;
     }
 
@@ -59,11 +59,12 @@ void main()
 {
     unsigned fg = BG0ROMDrawable::SOLID_FG ^ BG0ROMDrawable::LTBLUE;
     unsigned bg = BG0ROMDrawable::SOLID_FG ^ BG0ROMDrawable::BLACK;
-    
+
     vid.initMode(BG0_ROM);
-    vid.bg0rom.erase(bg);
-    vid.bg0rom.fill(vec(0,0), vec(3,3), fg);
     vid.attach(cube);
+   // vid.bg0rom.erase(bg);
+    vid.bg0rom.fill(vec(0,0), vec(3,3), fg);
+
     synthInit();
 
     float hz = 0;
