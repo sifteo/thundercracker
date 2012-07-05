@@ -21,7 +21,8 @@ DEPFILES := $(OBJS:.o=.d)
 FLAGS += -DSDK_VERSION=$(shell git describe --tags)
 
 # LLVM
-FLAGS += -D__STDC_LIMIT_MACROS -D__STDC_CONSTANT_MACROS -fno-rtti
+FLAGS += -D__STDC_LIMIT_MACROS -D__STDC_CONSTANT_MACROS
+CCFLAGS += -fno-rtti
 INCLUDES += -I$(LLVM_INC)
 LIBS += \
 	$(LLVM_LIB)/libLLVMInstCombine.a \
@@ -76,8 +77,9 @@ endif
 # Automatic dependency generation (*.d files)
 FLAGS += -MMD
 
-CCFLAGS := $(FLAGS) $(WARNFLAGS) $(INCLUDES)
-LDFLAGS := $(FLAGS) $(LIBS) $(LIB_STDCPP)
+CFLAGS += $(FLAGS) $(WARNFLAGS) $(INCLUDES)
+CCFLAGS += $(FLAGS) $(WARNFLAGS) $(INCLUDES)
+LDFLAGS += $(FLAGS) $(LIBS) $(LIB_STDCPP)
 
 # Symbol table trimming
 ifeq ($(BUILD_PLATFORM), Darwin)
@@ -113,7 +115,7 @@ endif
 	$(CC) -c $(CCFLAGS) $*.cpp -o $*.o
 
 %.o: %.c
-	$(CC) -c $(CCFLAGS) $*.c -o $*.o
+	$(CC) -c $(CFLAGS) $*.c -o $*.o
 
 .PHONY: clean
 
