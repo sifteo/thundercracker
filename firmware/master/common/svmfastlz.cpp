@@ -143,7 +143,7 @@ bool SvmFastLZ::decompressL1(FlashBlockRef &ref, SvmMemory::PhysAddr dest,
                 for(; len; --len)
                     *op++ = b;
             } else {
-                /* copy from rerence */
+                /* copy from reference */
                 r--;
                 *op++ = *r++;
                 *op++ = *r++;
@@ -158,7 +158,7 @@ bool SvmFastLZ::decompressL1(FlashBlockRef &ref, SvmMemory::PhysAddr dest,
                 return false;
 
             *op++ = br.read();
-            for(--ctrl; ctrl; ctrl--)
+            for (--ctrl; ctrl; ctrl--)
                 *op++ = br.read();
 
             loop = LIKELY(!br.eof());
