@@ -82,5 +82,10 @@ private:
      */
     bool init(Sifteo::Volume volume);
 
+    /**
+     * Validate volume metadata that will be required later by getAssets()
+     */
+    bool checkAssetMetadata();
+
     static ELFMainMenuItem instances[MAX_INSTANCES];
 };

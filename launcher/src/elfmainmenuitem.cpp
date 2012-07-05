@@ -61,7 +61,9 @@ void ELFMainMenuItem::findGames(MainMenu &menu)
 
     while (volI != volE) {
         ELFMainMenuItem *inst = &instances[itemI];
-        if (inst->init(volumes[volI])) {
+        Volume vol = volumes[volI];
+
+        if (inst->init(vol) && inst->checkAssetMetadata()) {
             menu.append(inst);
             itemI++;
         }
@@ -101,6 +103,13 @@ bool ELFMainMenuItem::init(Sifteo::Volume volume)
         return false;
     }
 
+    return true;
+}
+
+bool ELFMainMenuItem::checkAssetMetadata()
+{
+    MappedVolume map(volume);
+
     // Validate the required icon, but don't save it yet.
     auto iconMeta = map.metadata<_SYSMetadataImage>(_SYS_METADATA_ICON_96x96);
     if (!iconMeta) {
@@ -125,6 +134,7 @@ bool ELFMainMenuItem::init(Sifteo::Volume volume)
             "Make sure your icon is in an AssetGroup by itself! Found a "
             "group with %d tiles, expected no more than %d.",
             tileAllocation, maxTileAllocation);
+        return false;
     }
 
     return true;
