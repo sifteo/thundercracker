@@ -48,3 +48,9 @@ At a yield point, any number of Sifteo::Events handlers may be called. From your
 Most events are idempotent operations without any built-in side-effects. For example, if a cube registers several touches between two successive yield points, the touch event callback will only be invoked once.
 
 The big exception to this rule is neighbor events. The system internally updates its matrix of neighbor states, if necessary, during a yield point. Neighbor states as seen by Sifteo::Neighborhood will not change between two yield points. Typical games only yield during Sifteo::System::paint(), so this means that neighbor states are only updated between frames.
+
+## Multitasking
+
+The system runs using a combination of cooperative and preemptive multitasking. Many high-priority tasks, such as radio communication and audio output, can preempt the application at any time. These tasks are typically invisible to the application except in places where memory is specifically shared with these tasks, i.e. a Sifteo::VideoBuffer.
+
+Other low-priority system tasks exist which expect to run via a form of cooperative multitasking, similar to how Event dispatch works. These low-priority tasks may be starved if your application spends too much time in very tight loops, without making any system calls.
