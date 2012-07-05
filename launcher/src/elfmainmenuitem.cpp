@@ -340,19 +340,7 @@ void ELFMainMenuItem::bootstrap(Sifteo::CubeSet cubes, ProgressDelegate &progres
              * Calculate a new progress value, using the average number of
              * bytes sent to all cubes participating in this load.
              */
-
-            unsigned totalBytes = 0;
-            unsigned totalCubes = 0;
-            for (CubeID cube : cubes) {
-                totalBytes += loader.progressBytes(cube);
-                totalCubes++;
-            }
-            ASSERT(totalCubes != 0);
-
-            unsigned averageBytes = totalBytes / totalCubes;
-            unsigned percent = (previousBytes + averageBytes) * 100 / totalBytes;
-
-            progress.paint(cubes, percent);
+            progress.paint(cubes, (previousBytes + averageProgressBytes(loader, cubes)) * 100 / totalBytes);
             System::paint();
         }
 
@@ -361,4 +349,18 @@ void ELFMainMenuItem::bootstrap(Sifteo::CubeSet cubes, ProgressDelegate &progres
     }
 
     progress.end(cubes);
+}
+
+unsigned ELFMainMenuItem::averageProgressBytes(const Sifteo::AssetLoader &loader, Sifteo::CubeSet cubes)
+{
+    unsigned totalBytes = 0;
+    unsigned totalCubes = 0;
+
+    for (CubeID cube : cubes) {
+        totalBytes += loader.progressBytes(cube);
+        totalCubes++;
+    }
+
+    ASSERT(totalCubes != 0);
+    return totalBytes / totalCubes;
 }
