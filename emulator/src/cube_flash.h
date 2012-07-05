@@ -62,6 +62,7 @@ class Flash {
         prev_oe = 0;
         status_byte = 0;
         previous_clocks = 0;
+        buffer_counter = 0;
     }
 
     FlashStorage::CubeRecord *getStorage() const {
