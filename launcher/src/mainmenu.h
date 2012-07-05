@@ -48,6 +48,8 @@ private:
     Sifteo::MenuItem menuItems[MAX_ITEMS + 1];
     static const Sifteo::MenuAssets menuAssets;
 
+    void updateMusic();
+
     // Note: these functions are marked NOINLINE as a cache usage optimization.
     NOINLINE void loadAssets();
     NOINLINE void eventLoop(Sifteo::Menu &m);

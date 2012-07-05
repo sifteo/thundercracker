@@ -54,6 +54,9 @@ void MainMenu::eventLoop(Menu &m)
 {
     struct MenuEvent e;
     while (m.pollEvent(&e)) {
+
+        updateMusic();
+
         switch(e.type) {
 
             case MENU_ITEM_PRESS:
@@ -64,6 +67,17 @@ void MainMenu::eventLoop(Menu &m)
                 break;
         }
     }
+}
+
+void MainMenu::updateMusic()
+{
+    /*
+     * If no other music is playing, play our menu.
+     * (This lets the startup sound finish if it's still going)
+     */
+
+    if (AudioTracker::isStopped())
+        AudioTracker::play(UISound_MenuMusic);
 }
 
 void MainMenu::execItem(unsigned index)
