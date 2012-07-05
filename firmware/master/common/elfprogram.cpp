@@ -138,8 +138,7 @@ const Elf::ProgramHeader *Elf::Program::getRWDataSegment(FlashBlockRef &ref) con
             break;
 
         // Looking for a read/write segment with non-zero size on disk
-        if (ph->p_type == Elf::PT_LOAD &&
-            ph->p_flags == (Elf::PF_Write | Elf::PF_Read) &&
+        if (ph->p_flags == (Elf::PF_Write | Elf::PF_Read) &&
             ph->p_filesz != 0)
             return ph;
     }
