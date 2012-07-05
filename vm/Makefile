@@ -112,6 +112,9 @@ endif
 %.o: %.cpp $(TABLES)
 	$(CC) -c $(CCFLAGS) $*.cpp -o $*.o
 
+%.o: %.c
+	$(CC) -c $(CCFLAGS) $*.c -o $*.o
+
 .PHONY: clean
 
 clean:

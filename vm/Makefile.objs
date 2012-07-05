@@ -1,5 +1,6 @@
 OBJS = \
 	src/slinky.o \
+	src/fastlz.o \
 	src/Transforms/InlineGlobalCtors.o \
 	src/Transforms/EarlyLTI.o \
 	src/Transforms/LateLTI.o \
