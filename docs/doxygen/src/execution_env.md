@@ -2,10 +2,14 @@ Execution Environment     {#execution_env}
 =====================
 
 # Overview
-Sifteo applications are deployed as ELF binaries, a [standard file format](http://en.wikipedia.org/wiki/Executable_and_Linkable_Format), and run in a specialized sandbox called @b SVM.
 
-# Resource Usage Limits
-Sifteo applications run on the Sifteo Base, a (very) small mobile device with limited resources.
+Sifteo applications are deployed as ELF binaries, a [standard file format](http://en.wikipedia.org/wiki/Executable_and_Linkable_Format), and run in a specialized sandbox called __SVM__. Your C++ source is compiled by [Clang](http://clang.llvm.org/), the same top-notch C/C++ compiler used by Apple's iOS. Our __slinky__ optimizing linker and code-generator performs very aggressive whole-program optimizations, so you can continue to use very high-level and modern C++ while keeping your binaries small and fast.
+
+# Memory
+
+Sifteo applications run on the Sifteo Base, a (very) small mobile device with limited resources. The available memory is divided into read-only and writable address spaces:
+
+![](@ref svm-memory-map.png)
 
 ## Read-Write Data (RAM)
 Applications have a total of @b 32K RAM available, including static allocations and the stack. The system does not provide any built-in dynamic memory allocation facility.
@@ -23,13 +27,19 @@ The maximum size of a binary on the Sifteo platform is @b 16MB. Currently, this 
 
 The .elf binary for your application contains all of the code, data, and assets required to run your game, so the total size of the .elf binary is the effective size of your application.
 
+This ROM is relatively slow, but it may be accessed via normal pointers. This memory is demand-paged into a small (16K) cache in system RAM. In some cases this cache may be a bottleneck for application performance. You can examine cache hits and misses by passing the `--svm-flash-stats` option to `siftulator`.
+
 @note If your application is linked for Debug (the default), the .elf binary will also include debug information which does not get installed to hardware. To see the final size of your application, make sure you are linking a release build with `make clean && make RELEASE=1`.
 
 # Concurrency Model
 
+## Thread of execution
+
 Your application has only a single thread of execution available to it. Typical applications implement their own main loop, and are driven either by polling for events or by registering callbacks with Sifteo::Events.
 
 Applications may not create additional threads. Multithreading would require multiple separate stacks, which would use the limited available RAM much less efficiently than a single-threaded application could.
+
+## Events
 
 It isn't necessary for applications to write their own event dispatch code. Any handlers registered with Sifteo::Events will be invoked by the system at designated __yield points__. The Sifteo::System::paint() function includes an _implicit_ yield point, whereas Sifteo::System::yield() is an _explicit_ yield point.
 
