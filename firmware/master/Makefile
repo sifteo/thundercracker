@@ -1,4 +1,4 @@
-BIN = master-stm32.elf
+BIN = master-stm32
 TC_DIR = ../..
 
 include Makefile.objs

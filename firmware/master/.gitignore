@@ -2,6 +2,8 @@
 *.a
 *.o
 master-sim
+*.bin
+*.sft
 *.elf
 *.bc
 *.ll
