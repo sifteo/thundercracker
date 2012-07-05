@@ -7,5 +7,9 @@ master-sim
 *.elf
 *.bc
 *.ll
+*.id0
+*.id1
+*.nam
+*.til
 common/syscall-table.def
 stm32/target.ld
