@@ -119,7 +119,7 @@ class Flash {
                 
                 switch (busy) {
                 case BF_PROGRAM:
-                    busy_timer = deadline.setRelative(VirtualTime::usec(FlashModel::PROGRAM_TIME_US));
+                    busy_timer = deadline.setRelative(VirtualTime::usec(FlashModel::PROGRAM_BYTE_TIME_US));
                     break;
                 case BF_ERASE_SECTOR:
                     busy_timer = deadline.setRelative(VirtualTime::usec(FlashModel::ERASE_SECTOR_TIME_US));
@@ -316,7 +316,8 @@ class Flash {
             status_byte ^= FlashModel::STATUS_ERASE_TOGGLE;
     }
 
-    static const uint8_t CMD_FIFO_MASK = 0xF;
+    // Power of two, and large enough to hold the longest possible buffer-program op
+    static const uint8_t CMD_FIFO_MASK = 0x3F;
  
     struct cmd_state {
         uint32_t addr;
