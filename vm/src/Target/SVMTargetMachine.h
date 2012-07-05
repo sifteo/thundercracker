@@ -37,6 +37,7 @@ public:
     static uint32_t getBundleSize();
     static uint32_t getFlashBase();
     static uint32_t getRAMBase();
+    static uint32_t getRAMSize();
     static uint8_t getPaddingByte();
     static const char *getDataLayoutString();
     static bool isTargetCompatible(LLVMContext& Context, const TargetData &TD);

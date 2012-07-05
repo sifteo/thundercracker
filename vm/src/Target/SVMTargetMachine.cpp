@@ -63,6 +63,11 @@ uint32_t SVMTargetMachine::getRAMBase()
     return 0x10000;
 }
 
+uint32_t SVMTargetMachine::getRAMSize()
+{
+    return 0x8000;
+}
+
 uint8_t SVMTargetMachine::getPaddingByte()
 {
     /*

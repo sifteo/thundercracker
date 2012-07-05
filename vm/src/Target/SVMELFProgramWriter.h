@@ -77,6 +77,8 @@ namespace llvm {
         void writeProgramHeader(SVMProgramSection S);
         void writeSectionHeader(const MCAsmLayout &Layout, const MCSectionData *SD);  
         void writeDebugMessage();
+
+        void rwCompress(MCAssembler &Asm, const MCAsmLayout &Layout, SVMMemoryLayout &ML);
     };
 
 }  // end namespace

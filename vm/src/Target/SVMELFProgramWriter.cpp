@@ -7,7 +7,9 @@
 
 #include "SVMELFProgramWriter.h"
 #include "SVMMCAsmBackend.h"
+#include "SVMTargetMachine.h"
 #include "llvm/Support/CommandLine.h"
+#include "fastlz.h"
 using namespace llvm;
 
 cl::opt<bool> ELFDebug("g",
@@ -20,17 +22,22 @@ SVMELFProgramWriter::SVMELFProgramWriter(raw_ostream &OS)
 void SVMELFProgramWriter::WriteObject(MCAssembler &Asm,
     const MCAsmLayout &Layout)
 {
-    // First pass, allocate all non-debug sections (for symbol table)
+    // First pass, allocate all non-debug sections and compute the
+    // initial layout of the plaintext RWDATA segments.
+    ML.AllocateSections(Asm, Layout);
+
+    // Apply fixups that were stored in RecordRelocation
+    ML.ApplyLateFixups(Asm, Layout);
+
+    // Now we can know the final binary image of the RWDATA segments. Compress them.
+    rwCompress(Asm, Layout, ML);
     ML.AllocateSections(Asm, Layout);
 
     if (ELFDebug) {
-        // Second pass, allocate all sections
+        // Allocate all debug sections last
         EMB.BuildSections(Asm, Layout, ML);
         ML.AllocateSections(Asm, Layout);
     }
-    
-    // Apply fixups that were stored in RecordRelocation
-    ML.ApplyLateFixups(Asm, Layout);
 
     // Write header blocks
     writeELFHeader(Asm, Layout);
@@ -72,9 +79,6 @@ void SVMELFProgramWriter::WriteObject(MCAssembler &Asm,
             writeSectionHeader(Layout, SD);
         }
     }
-
-    // End-of-file should be block aligned
-    padToAlignment(SVMTargetMachine::getBlockSize());
 }
 
 void SVMELFProgramWriter::writeELFHeader(const MCAssembler &Asm, const MCAsmLayout &Layout)
@@ -130,9 +134,13 @@ void SVMELFProgramWriter::writeProgramHeader(SVMProgramSection S)
         Align = SVMTargetMachine::getBlockSize();
         break;
 
-    case SPS_RW:
     case SPS_BSS:
         Flags |= ELF::PF_W;
+        break;
+
+    case SPS_RW_Z:
+        Flags |= ELF::PF_W;
+        Type = SVMELF::PT_LOAD_FASTLZ;
         break;
 
     case SPS_META:
@@ -140,6 +148,7 @@ void SVMELFProgramWriter::writeProgramHeader(SVMProgramSection S)
         break;
 
     default:
+        assert(0);
         break;
     }
 
@@ -250,6 +259,70 @@ void SVMELFProgramWriter::writeDebugMessage()
           "|   sproing!  |\n"
           "+-------------+\n"
           "\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n";
+}
+
+void SVMELFProgramWriter::rwCompress(MCAssembler &Asm, const MCAsmLayout &Layout, SVMMemoryLayout &ML)
+{
+    /*
+     * Look for all segments with initialized data for RAM, flatten them, and
+     * compress the resulting data. Create a new segment with the compressed
+     * RWDATA. This segment will always be included in the binary. The originals
+     * are considered debug-only sections, since they are no longer needed
+     * at runtime.
+     */
+
+    // Flattened binary contents of RAM
+    std::vector<uint8_t> plaintext;
+
+    // Iterate over SPS_RW sections
+    for (MCAssembler::const_iterator IS = Asm.begin(), ES = Asm.end(); IS != ES; ++IS) {
+        const MCSectionData *SD = &*IS;
+        if (ML.getSectionKind(SD) != SPS_RW_PLAIN)
+            continue;
+
+        int offset = ML.getSectionMemAddress(SD) - SVMTargetMachine::getRAMBase();
+        int limit = SVMTargetMachine::getRAMSize();
+
+        // Iterate over fragments, pasting them into 'plaintext'
+        for (MCSectionData::const_iterator IF = SD->begin(), EF = SD->end(); IF != EF; ++IF) {
+            const MCFragment *F = &*IF;
+            if (F->getKind() == MCFragment::FT_Data) {
+                const MCDataFragment *DF = cast<MCDataFragment>(F);
+                int fragmentOffset = Layout.getFragmentOffset(F);
+                for (unsigned i = 0; i < DF->getContents().size(); i++) {
+                    int totalOffset = fragmentOffset + offset + i;
+                    if (totalOffset < limit) {
+                        while (totalOffset >= plaintext.size())
+                            plaintext.push_back(0);
+                        plaintext[totalOffset] = DF->getContents()[i];
+                    }
+                }
+            }
+        }
+    }
+
+    // FastLZ requires a minimum of 16 bytes to compress. Pad our section data.
+    while (plaintext.size() < 16)
+        plaintext.push_back(0);
+
+    // Compress using FastLZ level 1
+    std::vector<uint8_t> compressed(plaintext.size() * 2);
+    compressed.resize(fastlz_compress_level(1, &plaintext[0], plaintext.size(), &compressed[0]));
+
+    // Create the new section
+    const MCSectionELF *LZSection =
+        Asm.getContext().getELFSection(".rwdata.lz", ELF::SHT_NOTE,
+            0, SectionKind::getDataNoRel());
+    MCSectionData &LZSectionSD = Asm.getOrCreateSectionData(*LZSection);
+    LZSectionSD.setAlignment(1);
+
+    // Force it to be interpreted as SPS_RW, and set the decompressed size
+    ML.setSectionKind(&LZSectionSD, SPS_RW_Z);
+    ML.setSectionMemSize(&LZSectionSD, plaintext.size());
+
+    // Add compressed data
+    MCDataFragment *F = new MCDataFragment(&LZSectionSD);
+    F->getContents().append(compressed.begin(), compressed.end());
 }
 
 MCObjectWriter *llvm::createSVMELFProgramWriter(raw_ostream &OS)
