@@ -17,6 +17,11 @@ using namespace Sifteo;
 static const uint8_t refString[] = "Hello Worrrrrrrrrrrrrrrrrrrrrrrrrrrrrld! This is a test of compressed RWDATA!";
 uint8_t rwString[] = "Hello Worrrrrrrrrrrrrrrrrrrrrrrrrrrrrld! This is a test of compressed RWDATA!";
 
+// Optimization barrier
+template <typename T> T ob(T x) {
+    volatile T y = x;
+    return y;
+}
 
 void main()
 {
@@ -35,8 +40,8 @@ void main()
     ASSERT(!memcmp8(testdata_plaintext, buffer, size));
 
     // Yes, we can write to rwdata
-    rwString[0] ^= 0xFF;
-    rwString[0] ^= 0xFF;
+    rwString[0] ^= ob(0xFF);
+    rwString[0] ^= ob(0xFF);
 
     // Check the rwdata
     STATIC_ASSERT(sizeof refString == sizeof rwString);
