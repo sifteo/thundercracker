@@ -170,6 +170,23 @@ MainMenuItem::Flags ELFMainMenuItem::getAssets(Sifteo::MenuItem &assets, Sifteo:
 void ELFMainMenuItem::bootstrap(Sifteo::CubeSet cubes, ProgressDelegate &progress)
 {
     /*
+     * Set up this app's cubes and asset slots.
+     *
+     * After this point, we can't access any of the launcher's
+     * AssetGroups without reverting to our own binding.
+     *
+     * XXX: Currently the firmware requires cubes to be enabled before bindSlots.
+     *      It needs to support cubes dynamically coming and going.
+     *
+     * XXX: Need a separate way to control which A21 bank we use for drawing.
+     *      That shouldn't change until just before we exec.
+     */
+
+    LOG("LAUNCHER: Enabling cubes 0x%08x\n", _SYSCubeIDVector(cubes));
+    _SYS_enableCubes(cubes);
+    _SYS_asset_bindSlots(volume, numAssetSlots);
+
+    /*
      * Bootstrap any number of asset groups from this volume.
      */
 
@@ -188,19 +205,6 @@ void ELFMainMenuItem::bootstrap(Sifteo::CubeSet cubes, ProgressDelegate &progres
         LOG(("LAUNCHER: No cubes to load bootstrap assets on\n"));
         return;
     }
-
-    /*
-     * Now bind this volume's asset slots. After this point, we can't access
-     * any of the launcher's AssetGroups without reverting to our own binding.
-     *
-     * XXX: Currently the firmware requires cubes to be enabled before bindSlots.
-     *      It needs to support cubes dynamically coming and going.
-     *
-     * XXX: Need a separate way to control which A21 bank we use for drawing.
-     *      That shouldn't change until just before we exec.
-     */
-    _SYS_enableCubes(cubes);
-    _SYS_asset_bindSlots(volume, numAssetSlots);
 
     /*
      * First pass, size accounting.

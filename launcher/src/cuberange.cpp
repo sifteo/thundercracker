@@ -23,6 +23,7 @@ bool CubeRange::isValid()
 
 CubeSet CubeRange::initMinimum()
 {
+    LOG("LAUNCHER: Using cube range [%d,%d]\n", sys.minCubes, sys.maxCubes);
     CubeSet cubes(0, sys.minCubes);
     SCRIPT_FMT(LUA, "System():setOptions{ numCubes = %d }", sys.minCubes);
     _SYS_enableCubes(cubes);
