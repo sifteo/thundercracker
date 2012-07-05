@@ -337,6 +337,23 @@ struct BG1Drawable {
     }
 
     /**
+     * @brief Fill all BG1 tiles with the specified absolute index, without
+     * modifying the allocation mask.
+     */
+    void fill(uint16_t index = 0) {
+        _SYS_vbuf_fill(&sys.vbuf, _SYS_VA_BG1_TILES / 2,
+            _SYS_TILE77(index), numTiles());
+    }
+
+    /**
+     * @brief Fill all BG1 tiles with first tile from the specified PinnedAssetImage,
+     * without modifying the allocation mask.
+     */
+    void fill(const PinnedAssetImage &image) {
+        fill(image.tile(sys.cube, 0));
+    }
+
+    /**
      * @brief Erase just the allocation mask. All tiles will now be unallocated,
      * and BG1 will be fully transparent.
      *
