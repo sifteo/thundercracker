@@ -7,6 +7,7 @@
 #define SVMCPU_H
 
 #include "svm.h"
+#include "macros.h"
 
 /*
  * Instruction-level tracing, available in emulation only.
@@ -82,7 +83,7 @@ namespace SvmCpu {
      * not known at compile-time.
      */
 
-    ALWAYS_INLINE reg_t reg(uint8_t r)
+    ALWAYS_INLINE reg_t reg(unsigned r)
     {
         switch (r) {
         case 0:         return userRegs.hw.r0;
@@ -105,7 +106,7 @@ namespace SvmCpu {
         }
     }
 
-    ALWAYS_INLINE void setReg(uint8_t r, reg_t val)
+    ALWAYS_INLINE void setReg(unsigned r, reg_t val)
     {
         switch (r) {
         case 0:         userRegs.hw.r0 = val; break;
@@ -124,6 +125,37 @@ namespace SvmCpu {
         case REG_SP:    userRegs.sp = val - sizeof(HwContext); break;
         case REG_PC:    userRegs.hw.returnAddr = val; break;
         case REG_CPSR:  userRegs.hw.xpsr = val; break;
+        }
+    }
+
+    // For cases where the arg is not constant, but it's in the range [0, 7]
+    ALWAYS_INLINE reg_t reg07(unsigned r)
+    {
+        switch (r) {
+        case 0:         return userRegs.hw.r0;
+        case 1:         return userRegs.hw.r1;
+        case 2:         return userRegs.hw.r2;
+        case 3:         return userRegs.hw.r3;
+        case 4:         return userRegs.irq.r4;
+        case 5:         return userRegs.irq.r5;
+        case 6:         return userRegs.irq.r6;
+        case 7:         return userRegs.irq.r7;
+        default:        return 0;
+        }
+    }
+
+    // For cases where the arg is not constant, but it's in the range [0, 7]
+    ALWAYS_INLINE void setReg07(unsigned r, reg_t val)
+    {
+        switch (r) {
+        case 0:         userRegs.hw.r0 = val; break;
+        case 1:         userRegs.hw.r1 = val; break;
+        case 2:         userRegs.hw.r2 = val; break;
+        case 3:         userRegs.hw.r3 = val; break;
+        case 4:         userRegs.irq.r4 = val; break;
+        case 5:         userRegs.irq.r5 = val; break;
+        case 6:         userRegs.irq.r6 = val; break;
+        case 7:         userRegs.irq.r7 = val; break;
     }
 }
 

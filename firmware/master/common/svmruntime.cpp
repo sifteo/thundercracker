@@ -63,7 +63,7 @@ void SvmRuntime::exec(uint32_t entryFunc, const StackInfo &stack)
 
     // Zero all GPRs
     for (unsigned i = 0; i < 8; ++i)
-        SvmCpu::setReg(i, 0);
+        SvmCpu::setReg07(i, 0);
 
     // We're back in main() now, so set FP accordingly
     SvmCpu::setReg(REG_FP, 0);
@@ -83,7 +83,7 @@ void SvmRuntime::initStack(const StackInfo &stack)
 #endif
 }
 
-void SvmRuntime::dumpRegister(PanicMessenger &msg, unsigned reg)
+ALWAYS_INLINE void SvmRuntime::dumpRegister(PanicMessenger &msg, unsigned reg)
 {
     reg_t value = SvmCpu::reg(reg);
     SvmMemory::squashPhysicalAddr(value);
@@ -184,7 +184,7 @@ void SvmRuntime::call(reg_t addr)
     enterFunction(addr);
 }
 
-void SvmRuntime::tailcall(reg_t addr)
+ALWAYS_INLINE void SvmRuntime::tailcall(reg_t addr)
 {
     // Equivalent to a call() followed by a ret(), but without
     // allocating a new CallFrame on the stack.
@@ -208,7 +208,7 @@ void SvmRuntime::tailcall(reg_t addr)
     enterFunction(addr);
 }
 
-void SvmRuntime::enterFunction(reg_t addr)
+ALWAYS_INLINE void SvmRuntime::enterFunction(reg_t addr)
 {
     // Allocate stack space for this function, and enter it
     adjustSP(-(int)getSPAdjustWords(addr));
@@ -323,7 +323,7 @@ void SvmRuntime::svc(uint8_t imm8)
 
         switch (sub) {
         case 0x1c:  // 0b11100
-            validate(SvmCpu::reg(r));
+            validate(SvmCpu::reg07(r));
             break;
 
         case 0x1d:  // 0b11101
@@ -334,11 +334,11 @@ void SvmRuntime::svc(uint8_t imm8)
             break;
 
         case 0x1e:  // 0b11110
-            call(SvmCpu::reg(r));
+            call(SvmCpu::reg07(r));
             break;
 
         case 0x1f:  // 0b11111
-            tailcall(SvmCpu::reg(r));
+            tailcall(SvmCpu::reg07(r));
             break;
 
         default:
@@ -352,7 +352,7 @@ void SvmRuntime::svc(uint8_t imm8)
     #endif
 }
 
-void SvmRuntime::svcIndirectOperation(uint8_t imm8)
+ALWAYS_INLINE void SvmRuntime::svcIndirectOperation(uint8_t imm8)
 {
     // Should be checked by the validator
     ASSERT(imm8 < FlashBlock::BLOCK_SIZE / sizeof(uint32_t));
@@ -423,7 +423,7 @@ void SvmRuntime::addrOp(uint8_t opnum, reg_t address)
     }
 }
 
-void SvmRuntime::validate(reg_t address)
+ALWAYS_INLINE void SvmRuntime::validate(reg_t address)
 {
     /*
      * Map 'address' as either a flash or RAM address, and set the
@@ -487,7 +487,7 @@ void SvmRuntime::syscall(unsigned num)
     SvmCpu::setReg(1, result1);
 }
 
-void SvmRuntime::tailSyscall(unsigned num)
+ALWAYS_INLINE void SvmRuntime::tailSyscall(unsigned num)
 {
     /*
      * Tail syscalls incorporate a normal system call plus a return.
@@ -517,7 +517,7 @@ void SvmRuntime::tailSyscall(unsigned num)
     ret(RET_ALL ^ preActions);
 }
 
-void SvmRuntime::postSyscallWork()
+ALWAYS_INLINE void SvmRuntime::postSyscallWork()
 {
     /*
      * Deferred work items that must be handled after a syscall is fully
@@ -539,17 +539,17 @@ void SvmRuntime::postSyscallWork()
     }
 }
 
-void SvmRuntime::resetSP()
+ALWAYS_INLINE void SvmRuntime::resetSP()
 {
     setSP(SvmMemory::VIRTUAL_RAM_TOP);
 }
 
-void SvmRuntime::adjustSP(int words)
+ALWAYS_INLINE void SvmRuntime::adjustSP(int words)
 {
     setSP(SvmCpu::reg(REG_SP) + 4*words);
 }
 
-void SvmRuntime::setSP(reg_t addr)
+ALWAYS_INLINE void SvmRuntime::setSP(reg_t addr)
 {
     SvmCpu::setReg(REG_SP, mapSP(addr));
 }
@@ -574,7 +574,7 @@ void SvmRuntime::branch(reg_t addr)
     SvmCpu::setReg(REG_PC, mapBranchTarget(addr));
 }
 
-reg_t SvmRuntime::mapBranchTarget(reg_t addr)
+ALWAYS_INLINE reg_t SvmRuntime::mapBranchTarget(reg_t addr)
 {
     SvmMemory::PhysAddr pa;
 
@@ -584,7 +584,7 @@ reg_t SvmRuntime::mapBranchTarget(reg_t addr)
     return reinterpret_cast<reg_t>(pa);
 }
 
-void SvmRuntime::longLDRSP(unsigned reg, unsigned offset)
+ALWAYS_INLINE void SvmRuntime::longLDRSP(unsigned reg, unsigned offset)
 {
     SvmMemory::VirtAddr va = SvmCpu::reg(REG_SP) + (offset << 2);
     SvmMemory::PhysAddr pa;
@@ -593,12 +593,12 @@ void SvmRuntime::longLDRSP(unsigned reg, unsigned offset)
     ASSERT(reg < 8);
 
     if (SvmMemory::mapRAM(va, sizeof(uint32_t), pa))
-        SvmCpu::setReg(reg, *reinterpret_cast<uint32_t*>(pa));
+        SvmCpu::setReg07(reg, *reinterpret_cast<uint32_t*>(pa));
     else
         SvmRuntime::fault(F_LONG_STACK_LOAD);
 }
 
-void SvmRuntime::longSTRSP(unsigned reg, unsigned offset)
+ALWAYS_INLINE void SvmRuntime::longSTRSP(unsigned reg, unsigned offset)
 {
     SvmMemory::VirtAddr va = SvmCpu::reg(REG_SP) + (offset << 2);
     SvmMemory::PhysAddr pa;
@@ -607,7 +607,7 @@ void SvmRuntime::longSTRSP(unsigned reg, unsigned offset)
     ASSERT(reg < 8);
 
     if (SvmMemory::mapRAM(va, sizeof(uint32_t), pa))
-        *reinterpret_cast<uint32_t*>(pa) = SvmCpu::reg(reg);
+        *reinterpret_cast<uint32_t*>(pa) = SvmCpu::reg07(reg);
     else
         SvmRuntime::fault(F_LONG_STACK_STORE);
 }
