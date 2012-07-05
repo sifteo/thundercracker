@@ -292,7 +292,7 @@ void SVMELFProgramWriter::rwCompress(MCAssembler &Asm, const MCAsmLayout &Layout
                 for (unsigned i = 0; i < DF->getContents().size(); i++) {
                     int totalOffset = fragmentOffset + offset + i;
                     if (totalOffset < limit) {
-                        while (totalOffset >= plaintext.size())
+                        while (totalOffset >= int(plaintext.size()))
                             plaintext.push_back(0);
                         plaintext[totalOffset] = DF->getContents()[i];
                     }
