@@ -220,7 +220,11 @@ const char *em8051_exc_name(int aCode)
         "RNG error",
         "Nonvolatile memory write error",
         "Unsupported or invalid LF clock configuration",
+        "Badly formatted flash memory command",
+        "Operation attempted while flash is busy",
     };
+
+    STATIC_ASSERT(NUM_EXCEPTIONS == arraysize(exc_names));
 
     if (aCode < (int)(sizeof exc_names / sizeof exc_names[0]))
         return exc_names[aCode];
