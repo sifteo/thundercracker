@@ -29,36 +29,36 @@ struct VRAM {
 
     static const uint32_t DEFAULT_LOCK_FLAGS = _SYS_VBF_NEED_PAINT;
 
-    static uint32_t &selectCM1(_SYSVideoBuffer &vbuf, uint16_t addr) {
+    static ALWAYS_INLINE uint32_t &selectCM1(_SYSVideoBuffer &vbuf, uint16_t addr) {
         ASSERT(addr < _SYS_VRAM_WORDS);
         STATIC_ASSERT((_SYS_VRAM_WORD_MASK >> 5) < arraysize(vbuf.cm1));
         return vbuf.cm1[addr >> 5];
     }
 
-    static uint32_t indexCM1(uint16_t addr) {
+    static ALWAYS_INLINE uint32_t indexCM1(uint16_t addr) {
         ASSERT(addr < _SYS_VRAM_WORDS);
         return addr & 31;
     }
 
-    static uint32_t maskCM1(uint16_t addr) {
+    static ALWAYS_INLINE uint32_t maskCM1(uint16_t addr) {
         return Intrinsic::LZ(indexCM1(addr));
     }
 
-    static uint32_t maskCM16(uint16_t addr) {
+    static ALWAYS_INLINE uint32_t maskCM16(uint16_t addr) {
         ASSERT(addr < _SYS_VRAM_WORDS);
         STATIC_ASSERT((_SYS_VRAM_WORD_MASK >> 4) < 32);
         return Intrinsic::LZ(addr >> 4);
     }
 
-    static void truncateByteAddr(uint16_t &addr) {
+    static ALWAYS_INLINE void truncateByteAddr(uint16_t &addr) {
         addr &= _SYS_VRAM_BYTE_MASK;
     }
 
-    static void truncateWordAddr(uint16_t &addr) {
+    static ALWAYS_INLINE void truncateWordAddr(uint16_t &addr) {
         addr &= _SYS_VRAM_WORD_MASK;
     }
 
-    static void truncateWordAddr(unsigned &addr) {
+    static ALWAYS_INLINE void truncateWordAddr(unsigned &addr) {
         addr &= _SYS_VRAM_WORD_MASK;
     }
 
@@ -102,12 +102,12 @@ struct VRAM {
         }
     }
 
-    static uint16_t peek(const _SYSVideoBuffer &vbuf, uint16_t addr) {
+    static ALWAYS_INLINE uint16_t peek(const _SYSVideoBuffer &vbuf, uint16_t addr) {
         ASSERT(addr < _SYS_VRAM_WORDS);
         return vbuf.vram.words[addr];
     }
 
-    static uint8_t peekb(const _SYSVideoBuffer &vbuf, uint16_t addr) {
+    static ALWAYS_INLINE uint8_t peekb(const _SYSVideoBuffer &vbuf, uint16_t addr) {
         ASSERT(addr < _SYS_VRAM_BYTES);
         return vbuf.vram.bytes[addr];
     }
@@ -208,12 +208,12 @@ public:
         return true;
     }
 
-    uint16_t getTileAddr() const {
+    ALWAYS_INLINE uint16_t getTileAddr() const {
         ASSERT(hasTile());
         return tileAddr;
     }
 
-    bool hasTile() const {
+    ALWAYS_INLINE bool hasTile() const {
         // Is the current location allocated?
         return (bmpValue >> bmpShift) & 1;
     }
