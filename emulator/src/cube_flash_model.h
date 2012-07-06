@@ -47,8 +47,7 @@ struct FlashModel {
      */
 
     static const unsigned SIZE         = 4 * 1024 * 1024;
-    static const unsigned BLOCK_SIZE   = 64 * 1024;
-    static const unsigned SECTOR_SIZE  = 4 * 1024;
+    static const unsigned SECTOR_SIZE  = 64 * 1024;
     static const unsigned BUFFER_SIZE  = 32;
 
     /*
@@ -69,7 +68,6 @@ struct FlashModel {
     static const unsigned PROGRAM_BYTE_TIME_US    = 6;
     static const unsigned PROGRAM_BUFFER_TIME_US  = 96;
     static const unsigned ERASE_SECTOR_TIME_US    = 18000;
-    static const unsigned ERASE_BLOCK_TIME_US     = 18000;
     static const unsigned ERASE_CHIP_TIME_US      = 40000;
     
     /*
@@ -90,7 +88,6 @@ struct FlashModel {
     
     static const command_sequence cmd_byte_program[CMD_LENGTH];
     static const command_sequence cmd_sector_erase[CMD_LENGTH];
-    static const command_sequence cmd_block_erase[CMD_LENGTH];
     static const command_sequence cmd_chip_erase[CMD_LENGTH];
     static const command_sequence cmd_buffer_begin[CMD_LENGTH];
 };

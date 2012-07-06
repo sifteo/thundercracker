@@ -26,12 +26,11 @@ class Flash {
         BF_IDLE             = 0,
         BF_PROGRAM_BYTE     = (1 << 0),
         BF_PROGRAM_BUFFER   = (1 << 1),
-        BF_ERASE_BLOCK      = (1 << 2),
-        BF_ERASE_SECTOR     = (1 << 3),
-        BF_ERASE_CHIP       = (1 << 4),
+        BF_ERASE_SECTOR     = (1 << 2),
+        BF_ERASE_CHIP       = (1 << 3),
 
         BF_PROGRAM          = (BF_PROGRAM_BYTE | BF_PROGRAM_BUFFER),
-        BF_ERASE            = (BF_ERASE_BLOCK | BF_ERASE_SECTOR | BF_ERASE_CHIP),
+        BF_ERASE            = (BF_ERASE_SECTOR | BF_ERASE_CHIP),
     };
 
     struct Pins {
@@ -131,9 +130,6 @@ class Flash {
                 case BF_ERASE_SECTOR:
                     busy_timer = deadline.setRelative(VirtualTime::usec(FlashModel::ERASE_SECTOR_TIME_US));
                     break;
-                case BF_ERASE_BLOCK:
-                    busy_timer = deadline.setRelative(VirtualTime::usec(FlashModel::ERASE_BLOCK_TIME_US));
-                    break;
                 case BF_ERASE_CHIP:
                     busy_timer = deadline.setRelative(VirtualTime::usec(FlashModel::ERASE_CHIP_TIME_US));
                     break;
@@ -215,12 +211,11 @@ class Flash {
 
             if (pins->oe) {
                 pins->data_drv = 0;
+            } else {
 
                 // It's a mistake to try reading during a buffer write command
                 if (buffer_counter)
                     CPU::except(cpu, CPU::EXCEPTION_FLASH_BUSY);
-
-            } else {
 
                 // Toggle bits only change on an OE edge.
                 if (prev_oe)
@@ -396,14 +391,6 @@ class Flash {
             erase(st->addr, FlashModel::SECTOR_SIZE);
             status_byte = 0;
             busy = BF_ERASE_SECTOR;
-            erase_count++;
-
-        } else if (matchCommand(FlashModel::cmd_block_erase)) {
-            Tracer::log(cpu, "FLASH: block erase [%06x]", st->addr);
-
-            erase(st->addr, FlashModel::BLOCK_SIZE);
-            status_byte = 0;
-            busy = BF_ERASE_BLOCK;
             erase_count++;
 
         } else if (matchCommand(FlashModel::cmd_chip_erase)) {
