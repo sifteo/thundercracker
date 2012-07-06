@@ -23,7 +23,7 @@
 LoadstreamDecoder::LoadstreamDecoder(uint8_t *buffer, uint32_t bufferSize)
     : buffer(buffer), bufferSize(bufferSize)
 {
-    ASSERT((bufferSize % Cube::FlashModel::BLOCK_SIZE) == 0);
+    ASSERT((bufferSize % Cube::FlashModel::SECTOR_SIZE) == 0);
     reset();
 }
 
@@ -61,8 +61,8 @@ void LoadstreamDecoder::write8(uint8_t value)
     ASSERT(flashAddr < bufferSize);
 
     // Auto-erase
-    if ((flashAddr % Cube::FlashModel::BLOCK_SIZE) == 0)
-        memset(buffer + flashAddr, 0xFF, Cube::FlashModel::BLOCK_SIZE);
+    if ((flashAddr % Cube::FlashModel::SECTOR_SIZE) == 0)
+        memset(buffer + flashAddr, 0xFF, Cube::FlashModel::SECTOR_SIZE);
 
     // Endian swap
     buffer[flashAddr ^ 1] &= value;

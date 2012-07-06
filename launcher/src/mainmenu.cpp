@@ -54,6 +54,9 @@ void MainMenu::eventLoop(Menu &m)
 {
     struct MenuEvent e;
     while (m.pollEvent(&e)) {
+
+        updateMusic();
+
         switch(e.type) {
 
             case MENU_ITEM_PRESS:
@@ -66,16 +69,29 @@ void MainMenu::eventLoop(Menu &m)
     }
 }
 
+void MainMenu::updateMusic()
+{
+    /*
+     * If no other music is playing, play our menu.
+     * (This lets the startup sound finish if it's still going)
+     */
+
+    if (AudioTracker::isStopped())
+        AudioTracker::play(UISound_MenuMusic);
+}
+
 void MainMenu::execItem(unsigned index)
 {
     /// XXX: Instead of a separate animation, integrate this animation with the menu itself
+    /// XXX: Cube range init here is temporary.
 
     DefaultLoadingAnimation anim;
 
     ASSERT(index < arraysize(items));
     MainMenuItem *item = items[index];
 
-    item->bootstrap(cubes, anim);
+    CubeSet itemCubes = item->getCubeRange().initMinimum();
+    item->bootstrap(itemCubes, anim);
     item->exec();
 }
 

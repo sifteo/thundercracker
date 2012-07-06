@@ -87,5 +87,10 @@ private:
      */
     bool checkAssetMetadata();
 
+    /**
+     * Average bytes of asset loading progress across multiple cubes
+     */
+    static unsigned averageProgressBytes(const Sifteo::AssetLoader &loader, Sifteo::CubeSet cubes);
+
     static ELFMainMenuItem instances[MAX_INSTANCES];
 };

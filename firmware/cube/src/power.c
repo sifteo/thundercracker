@@ -194,6 +194,7 @@ void power_sleep(void)
         xrl     _MISC_PORT, #MISC_I2C      		; Now pulse I2C lines low
         orl     _MISC_PORT, #MISC_I2C   		; Drive pins high - This delivers a 250 ns pulse
     __endasm;
+    
     ADDR_DIR = 0xff;            // Set addr pins to inputs
     CTRL_DIR = 0xff;            // Set ctrl pins to inputs
     MISC_DIR = 0xff;             // Set bus pins to inputs

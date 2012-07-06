@@ -170,6 +170,23 @@ MainMenuItem::Flags ELFMainMenuItem::getAssets(Sifteo::MenuItem &assets, Sifteo:
 void ELFMainMenuItem::bootstrap(Sifteo::CubeSet cubes, ProgressDelegate &progress)
 {
     /*
+     * Set up this app's cubes and asset slots.
+     *
+     * After this point, we can't access any of the launcher's
+     * AssetGroups without reverting to our own binding.
+     *
+     * XXX: Currently the firmware requires cubes to be enabled before bindSlots.
+     *      It needs to support cubes dynamically coming and going.
+     *
+     * XXX: Need a separate way to control which A21 bank we use for drawing.
+     *      That shouldn't change until just before we exec.
+     */
+
+    LOG("LAUNCHER: Enabling cubes 0x%08x\n", _SYSCubeIDVector(cubes));
+    _SYS_enableCubes(cubes);
+    _SYS_asset_bindSlots(volume, numAssetSlots);
+
+    /*
      * Bootstrap any number of asset groups from this volume.
      */
 
@@ -188,19 +205,6 @@ void ELFMainMenuItem::bootstrap(Sifteo::CubeSet cubes, ProgressDelegate &progres
         LOG(("LAUNCHER: No cubes to load bootstrap assets on\n"));
         return;
     }
-
-    /*
-     * Now bind this volume's asset slots. After this point, we can't access
-     * any of the launcher's AssetGroups without reverting to our own binding.
-     *
-     * XXX: Currently the firmware requires cubes to be enabled before bindSlots.
-     *      It needs to support cubes dynamically coming and going.
-     *
-     * XXX: Need a separate way to control which A21 bank we use for drawing.
-     *      That shouldn't change until just before we exec.
-     */
-    _SYS_enableCubes(cubes);
-    _SYS_asset_bindSlots(volume, numAssetSlots);
 
     /*
      * First pass, size accounting.
@@ -336,19 +340,7 @@ void ELFMainMenuItem::bootstrap(Sifteo::CubeSet cubes, ProgressDelegate &progres
              * Calculate a new progress value, using the average number of
              * bytes sent to all cubes participating in this load.
              */
-
-            unsigned totalBytes = 0;
-            unsigned totalCubes = 0;
-            for (CubeID cube : cubes) {
-                totalBytes += loader.progressBytes(cube);
-                totalCubes++;
-            }
-            ASSERT(totalCubes != 0);
-
-            unsigned averageBytes = totalBytes / totalCubes;
-            unsigned percent = (previousBytes + averageBytes) * 100 / totalBytes;
-
-            progress.paint(cubes, percent);
+            progress.paint(cubes, (previousBytes + averageProgressBytes(loader, cubes)) * 100 / totalBytes);
             System::paint();
         }
 
@@ -357,4 +349,18 @@ void ELFMainMenuItem::bootstrap(Sifteo::CubeSet cubes, ProgressDelegate &progres
     }
 
     progress.end(cubes);
+}
+
+unsigned ELFMainMenuItem::averageProgressBytes(const Sifteo::AssetLoader &loader, Sifteo::CubeSet cubes)
+{
+    unsigned totalBytes = 0;
+    unsigned totalCubes = 0;
+
+    for (CubeID cube : cubes) {
+        totalBytes += loader.progressBytes(cube);
+        totalCubes++;
+    }
+
+    ASSERT(totalCubes != 0);
+    return totalBytes / totalCubes;
 }

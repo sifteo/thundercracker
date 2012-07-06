@@ -190,6 +190,10 @@ enum EM8051_EXCEPTION
     EXCEPTION_RNG,               // Random Number Generator error
     EXCEPTION_NVM,               // NVM write error (Write while read-only)
     EXCEPTION_CLKLF,             // Unsupported or invalid LF clock configuration
+    EXCEPTION_FLASH_CMD,         // Badly formatted flash memory command
+    EXCEPTION_FLASH_BUSY,        // Operation attempted while flash is busy
+
+    NUM_EXCEPTIONS,              // Must be last
 };
 
 enum WDSV_STATE

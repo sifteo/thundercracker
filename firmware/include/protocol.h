@@ -262,7 +262,13 @@ typedef union {
          *
          * The various bits in here are multi-purpose...
          *
-         *   [7]    Reserved. Always zero.
+         *   [7]    Query response bit. Normally zero. If set, this
+         *          is NOT a normal ACK packet, it's a response to
+         *          a particular kind of query command. Bits [6:0] are
+         *          then used for an ID which corresponds to the
+         *          query this response is paired with. The rest of the
+         *          packet's contents are interpreted in a query-specific
+         *          way.
          *
          *   [6]    Continuous rendering bit, captured synchronously
          *          with the firmware's read of this bit at the top of
@@ -358,7 +364,9 @@ typedef struct {
 #define FLS_OP_SPECIAL          0xe0    // Special symbols (below)
 
 #define FLS_OP_ADDRESS          0xe1    // Followed by a 2-byte (lat1:lat2) tile address. A21 in LSB of lat2.
+#define FLS_OP_QUERY_CHECKSUM   0xe2    // Args: (queryID, numSamples-1, stride-1)
 
-#define FLS_OP_RESERVED_0       0xe2    // From here until 0xFF are all reserved codes currently
+// From 0xe3 to 0xff are all reserved codes currently
+
 
 #endif
