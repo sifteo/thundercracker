@@ -296,11 +296,12 @@ class Flash {
 
         for (unsigned i = 0; i <= buffer_bytes; i++) {
             struct cmd_state *st = &cmd_fifo[(cmd_fifo_head - buffer_bytes + i) & CMD_FIFO_MASK];
-            Tracer::log(cpu, "FLASH: Buffer[%d] addr=%06x data=%02x\n", i, st->addr, st->data);
+            Tracer::log(cpu, "FLASH: Buffer[%d] addr=%06x data=%02x", i, st->addr, st->data);
         }
 
         // Check confirmation byte
         if (cmd_fifo[cmd_fifo_head].data != 0x29) {
+            Tracer::log(cpu, "FLASH: bad confirmation byte");
             CPU::except(cpu, CPU::EXCEPTION_FLASH_CMD);
             return;
         }
@@ -312,7 +313,22 @@ class Flash {
          */
         for (unsigned i = 0; i <= buffer_bytes; i++) {
             struct cmd_state *st = &cmd_fifo[(cmd_fifo_head - buffer_bytes + i) & CMD_FIFO_MASK];
-            if (bufOffsetAddr(st->addr) != i || bufPageAddr(st->addr) != bufPageAddr(buffer_addr)) {
+            
+            if (i < buffer_bytes && bufOffsetAddr(st->addr) != i) {
+                Tracer::log(cpu, "FLASH: addresses in [%d] not sequential as expected", i);
+                CPU::except(cpu, CPU::EXCEPTION_FLASH_CMD);
+                return;
+            }
+
+            if (sectorAddr(st->addr) != buffer_sa) {
+                Tracer::log(cpu, "FLASH: sector mismatch in [%d], sa=%06x", i, buffer_sa);
+                CPU::except(cpu, CPU::EXCEPTION_FLASH_CMD);
+                return;
+            }
+
+            if (bufPageAddr(st->addr) != bufPageAddr(cmd_fifo[cmd_fifo_head].addr)) {
+                Tracer::log(cpu, "FLASH: page mismatch in [%d] (%06x != %06x)",
+                    i, bufPageAddr(st->addr), bufPageAddr((cmd_fifo[cmd_fifo_head].addr)));
                 CPU::except(cpu, CPU::EXCEPTION_FLASH_CMD);
                 return;
             }
@@ -344,15 +360,15 @@ class Flash {
         // Counting down to the end of a buffer-write command?
         if (buffer_counter) {
             Tracer::log(cpu, "FLASH: buffer countdown, %d", buffer_counter);
-            if (sectorAddr(buffer_addr) == sectorAddr(st->addr)) {
+            if (buffer_sa == sectorAddr(st->addr)) {
                 if (!--buffer_counter) {
                     // Finished buffer.
                     handleBufferWrite(cpu);
                 }
                 return;
             } else {
-                Tracer::log(cpu, "FLASH: sector addr mismatch during buffer write [%06x, %06x]",
-                    buffer_addr, st->addr);
+                Tracer::log(cpu, "FLASH: sector addr mismatch during buffer write sa=%06x addr=%06x",
+                    buffer_sa, st->addr);
                 CPU::except(cpu, CPU::EXCEPTION_FLASH_CMD);
                 buffer_counter = 0;
             }
@@ -366,11 +382,11 @@ class Flash {
 
             buffer_bytes = st->data + 1;            // Parameter is byte count - 1
             buffer_counter = buffer_bytes + 1;      // One extra clock cycle for confirm cmd
-            buffer_addr = st->addr;
+            buffer_sa = sectorAddr(st->addr);
 
             // Make sure the buffer size is in range, and the sector addresses match.
             if (buffer_bytes > FlashModel::BUFFER_SIZE
-                || sectorAddr(buffer_addr) != sectorAddr(stPrev->addr)) {
+                || buffer_sa != sectorAddr(stPrev->addr)) {
                 // Buffer is too large
                 CPU::except(cpu, CPU::EXCEPTION_FLASH_CMD);
                 buffer_counter = 0;
@@ -451,7 +467,7 @@ class Flash {
     uint8_t prev_we;
     uint8_t prev_oe;
     uint8_t status_byte;
-    uint32_t buffer_addr;
+    uint32_t buffer_sa;
     struct cmd_state cmd_fifo[CMD_FIFO_MASK + 1];
 };
 
