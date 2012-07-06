@@ -88,7 +88,9 @@ void demo(void)
 	#endif
 
     	graphics_render();
-    	power_idle_poll();
+        #ifndef DISABLE_SLEEP
+            power_idle_poll();
+        #endif
     }
 
 #else

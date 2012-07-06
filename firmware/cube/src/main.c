@@ -122,7 +122,9 @@ init_3:
         graphics_ack();
 
         flash_handle_fifo();
-        power_idle_poll();
+        #ifndef DISABLE_SLEEP
+            power_idle_poll();
+        #endif
 
         /*
          * Idle-only tasks
