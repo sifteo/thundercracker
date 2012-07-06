@@ -12,6 +12,7 @@
 #ifndef SIFTEO_SIMULATOR
 #include "usb/usbdevice.h"
 #include "sampleprofiler.h"
+#include "powermanager.h"
 #endif
 
 uint32_t Tasks::pendingMask;
@@ -35,6 +36,11 @@ Tasks::Task Tasks::TaskList[] = {
     #if !defined(SIFTEO_SIMULATOR) && !defined(BOOTLOADER)
     { SampleProfiler::task, 0 },
     #endif
+
+    #ifndef SIFTEO_SIMULATOR
+    { PowerManager::railTransition, 0 },
+    #endif
+
 };
 
 void Tasks::init()

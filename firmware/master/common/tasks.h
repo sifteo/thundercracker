@@ -17,6 +17,7 @@ public:
         Debugger,
         AssetLoader,
         HomeButton,
+        PowerManager,
         Profiler
     };
 

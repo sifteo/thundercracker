@@ -21,6 +21,8 @@ public:
 
     static void onVBusEdge();
 
+    static void railTransition(void* p);
+
     static void shutdown();
 
     static GPIOPin vbus;

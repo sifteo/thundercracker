@@ -1,10 +1,13 @@
 #include "powermanager.h"
 #include "board.h"
+#include "systime.h"
+#include "tasks.h"
 
 #include "macros.h"
 
 PowerManager::State PowerManager::_state;
 GPIOPin PowerManager::vbus = USB_VBUS_GPIO;
+static SysTime::Ticks railTransitionDeadline;
 
 /*
  * Early initialization that can (and must) run before global ctors have been run.
@@ -48,6 +51,21 @@ void PowerManager::init()
  */
 void PowerManager::onVBusEdge()
 {
+    railTransitionDeadline = SysTime::ticks() + SysTime::msTicks(10); //10ms debounce time
+    Tasks::setPending(Tasks::PowerManager);
+}
+
+/*
+ * Provides for a little settling time from the last edge
+ * on vbus before initiating the actual rail transition
+ */
+void PowerManager::railTransition(void* p)
+{
+    if (SysTime::ticks() < railTransitionDeadline)
+        return;
+
+    Tasks::clearPending(Tasks::PowerManager);	//race condition?
+
     State s = static_cast<State>(vbus.isHigh());
     if (s != _state) {
 
