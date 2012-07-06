@@ -135,9 +135,11 @@ void flash_handle_fifo() __naked
 
         ; Set up time deadline
 
+#if 0
         mov     a, _sensor_tick_counter
         add     a, #FLASH_TIMESLICE_TICKS
         mov     r7, a
+#endif
 
 10$:                                        ; Loop over incoming bytes
 
@@ -150,10 +152,12 @@ void flash_handle_fifo() __naked
 
         setb    _global_busy_flag           ; System is definitely not idle now
 
+#if 0
         mov     a, r7                       ; Check for deadline
         cjne    a, _sensor_tick_counter, 2$
 3$:     ret
 2$:
+#endif
 
         ; Dequeue one more byte from the FIFO
 
@@ -172,8 +176,11 @@ void flash_handle_fifo() __naked
 
         ; XXX
 
-        mov     _DEBUG_REG, r6
-        ret
+        ; mov     _DEBUG_REG, r6
+        sjmp    10$
+
+3$: ret
+
     __endasm ;
 }
 
