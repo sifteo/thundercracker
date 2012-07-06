@@ -34,7 +34,7 @@ print "\n####Master Binary Generator\n####Compiling firmare for channel %s ...\n
 
 githash = subprocess.check_output(["git", "describe", "--tags"]).strip()
 
-# subprocess.check_call(["make", "clean"])
+subprocess.check_call(["make", "clean"])
 
 # Grab the current dir
 
@@ -72,6 +72,7 @@ for chan in channel:
     shutil.move("master-stm32.sft", os.path.join(destination, filename))
     print "#### Moving %s to %s " % (filename, destination)
     
+    #Added a delay. Here because of fast compilation.
     time.sleep(1)
 
 #Prints out version at the end for any excel copy paste action
