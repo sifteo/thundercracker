@@ -116,38 +116,6 @@ void demo(void)
     draw_image(img_radio_3);
 
     graphics_render();
-
-    // XXX: Flash testing
-    {
-        flash_addr_a21 = 0;             draw_xy = XY(1,1); draw_hex(0); graphics_render();
-        flash_addr_lat2 = 0x50;         draw_xy = XY(1,1); draw_hex(1); graphics_render();
-        flash_addr_lat1 = 0;            draw_xy = XY(1,1); draw_hex(2); graphics_render();
-        flash_addr_low = 0;             draw_xy = XY(1,1); draw_hex(3); graphics_render();
-        flash_buffer_begin();           
-        flash_buffer_word(0xFFFF);     
-        flash_buffer_word(0x1123);
-        flash_buffer_word(0x2123);
-        flash_buffer_word(0x3123);
-        flash_buffer_word(0x4123);
-        flash_buffer_word(0x5123);
-        flash_buffer_word(0x6123);
-        flash_buffer_word(0x7123);
-        flash_buffer_word(0x8123);
-        flash_buffer_word(0x9123);
-        flash_buffer_word(0xa123);
-        flash_buffer_word(0xb123);
-        flash_buffer_word(0xc123);
-        flash_buffer_word(0xd123);
-        flash_buffer_word(0xe123);
-        flash_buffer_word(0xffff);      
-        flash_buffer_commit();          draw_xy = XY(1,1); draw_hex(7); graphics_render();
-
-        vram.words[0] = 0x5000;
-        vram.mode = _SYS_VM_BG0;
-        vram.flags = _SYS_VF_CONTINUOUS;
-        while (1) graphics_render();
-    }
-
     draw_exit();
 
     #ifdef DEBUG_FLASH

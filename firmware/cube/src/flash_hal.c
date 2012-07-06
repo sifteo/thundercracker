@@ -131,8 +131,8 @@ void flash_buffer_begin(void)
      */
 
     // Set up A21
-    //i2c_a21_target = flash_addr_a21;
-    //i2c_a21_wait();
+    i2c_a21_target = flash_addr_a21;
+    i2c_a21_wait();
 
     // We can keep LAT2 loaded, since the prefix sequences don't use it.
     // Also, set up the bus direction and make sure the flash is otherwise idle.
