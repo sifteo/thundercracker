@@ -17,10 +17,13 @@
  *    0 - Early prototype dev board
  *    1 - Rev 1 PCB
  *    2 - Rev 2 PCB (March 2012)
+ *    3 - Rev 3 PCB
+ *    4 - Rev 4 PCB (New accelerometer address)
+ *    5 - Rev 5 PCB (Shake to wake)
  */
 
-#define HWREV_LATEST    2
-#define HWREV_DEFAULT   2
+#define HWREV_LATEST    5
+#define HWREV_DEFAULT   5
 #ifndef HWREV
 #  define HWREV HWREV_DEFAULT
 #endif
