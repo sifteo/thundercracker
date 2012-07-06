@@ -129,11 +129,12 @@ void flash_init(void)
     } while (--i);
 
     fifo_tail = flash_fifo_head;
-    state = state_OPCODE;
+//    state = state_OPCODE;
 }
 
 void flash_handle_fifo(void)
 {
+#if 0
     // Nothing to do? Exit early.
     if (flash_fifo_head == fifo_tail)
         return;
@@ -206,7 +207,11 @@ void flash_handle_fifo(void)
         mov   dph, (_state+1)
         jmp   @a+dptr
     __endasm ;
+#endif
 }
+
+
+#if 0
 
 /*
  * State machine.
@@ -560,3 +565,5 @@ static void state_TILE_P16_HIGH(void) __naked
     P16_NEXT_MASK();
     STATE_RETURN();
 }
+
+#endif
