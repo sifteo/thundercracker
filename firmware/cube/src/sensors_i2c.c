@@ -337,7 +337,7 @@ fs_6:
 fs_skip_fd:
 
         cjne    a, #0xfe, #fs_skip_fe   ; Check for flash reset [fe] packet
-        mov     _flash_fifo_head, #FLS_FIFO_RESET
+        setb    _flash_reset_request
         sjmp    #fs_6n
 fs_skip_fe:
 
@@ -370,17 +370,14 @@ fs_8:
 fs_9:
         mov     psw, #0                 ; Back to register bank 0
         push    0                       ; Save R0
-        mov     a, _flash_fifo_head     ; Load the flash write pointer
-        add     a, #_flash_fifo         ; Address relative to flash_fifo[]
-        mov     r0, a
+        mov     r0, _flash_fifo_head    ; Load the flash write pointer
         mov     a, _W2DAT               ; Store byte to the FIFO
         mov     @r0, a
+        inc     r0                      ; Advance head pointer
+        cjne    r0, #(_flash_fifo + FLS_FIFO_SIZE), 1$
+        mov     r0, #_flash_fifo        ; Wrap
+1$:     mov     _flash_fifo_head, r0
         pop     0                       ; Restore R0
-
-        mov     a, _flash_fifo_head     ; Advance head pointer
-        inc     a
-        anl     a, #(FLS_FIFO_SIZE - 1)
-        mov     _flash_fifo_head, a
 
         sjmp    fs_6n
 

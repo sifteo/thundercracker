@@ -705,25 +705,23 @@ rx_flash:
         mov     R_NYBBLE_COUNT, a               ;    Otherwise, this is the new loop iterator   
         
 rx_flash_loop:
-        mov     a, _flash_fifo_head             ; Load the flash write pointer
-        add     a, #_flash_fifo                 ; Address relative to flash_fifo[]
-        mov     R_TMP, a
+        mov     R_TMP, _flash_fifo_head         ; Load the flash write pointer
 
         SPI_WAIT
         mov     a, _SPIRDAT                     ; Load next SPI byte
         mov     _SPIRDAT, #0
         mov     @R_TMP, a                       ; Store it in the FIFO
 
-        mov     a, _flash_fifo_head             ; Advance head pointer
-        inc     a
-        anl     a, #(FLS_FIFO_SIZE - 1)
-        mov     _flash_fifo_head, a
+        inc     R_TMP                           ; Advance head pointer
+        cjne    R_TMP, #(_flash_fifo + FLS_FIFO_SIZE), 1$
+        mov     R_TMP, #_flash_fifo
+1$:     mov     _flash_fifo_head, R_TMP
 
         djnz    R_NYBBLE_COUNT, rx_flash_loop
         sjmp    rx_complete
 
 rx_flash_reset:
-        mov     _flash_fifo_head, #FLS_FIFO_RESET
+        setb    _flash_reset_request
 
         ; ... fall through to rx_complete
 

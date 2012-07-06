@@ -19,10 +19,11 @@
  */
 
 volatile extern uint8_t __idata flash_fifo[FLS_FIFO_SIZE];
-volatile extern uint8_t flash_fifo_head;
+volatile extern uint8_t flash_fifo_head;                        // Pointer to next write location
+volatile extern __bit flash_reset_request;                      // Pending reset?
 
 void flash_init(void);
-void flash_handle_fifo();
+void flash_handle_fifo() __naked;
 
 extern uint8_t flash_addr_low;          // Low 7 bits of address, left-justified
 extern uint8_t flash_addr_lat1;         // Middle 7 bits of address, left-justified

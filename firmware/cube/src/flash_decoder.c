@@ -27,6 +27,12 @@
  * becoming empty in the mean time. This means that the required
  * buffer space is proportional to radio latency, and if we can keep
  * the radio latency low, we can keep the buffer size to a minimum.
+ *
+ * We use buffered flash programming, meaning that we generate 32 bytes
+ * in one burst, then wait for it all to program. We must generate
+ * exactly 32 bytes, so we handle this by waiting until we have enough
+ * data in our input FIFO to yield 32 bytes of output, even with
+ * worst-case compression ratios.
  */
 
 #include "flash.h"
@@ -47,141 +53,143 @@
  * tick clock when starting.
  */
  
-#define FLASH_TIMESLICE_TICKS  3
+#define FLASH_TIMESLICE_TICKS  2
 
 /*
- * FIFO buffer, written by the radio ISR
+ * FIFO buffer, written by the radio ISR or testjig interface
  */
  
 volatile uint8_t __idata flash_fifo[FLS_FIFO_SIZE];
-volatile uint8_t flash_fifo_head;
+volatile uint8_t flash_fifo_head;                        // Pointer to next write location
+volatile __bit flash_reset_request;                      // Pending reset?
 
 /*
  * Loadstream codec state
  */
 
-union word16 {
-    uint16_t word;
-    struct {
-        uint8_t low, high;
-    };
-};
+static __idata uint16_t fls_lut[FLS_LUT_SIZE + 1];      // LUT proper, plus P16 value
+static uint8_t fls_state;                               // 8-bit state machine offset
+static uint8_t fls_st_1;                                // State-specific temporary 1
+static uint8_t fls_st_2;                                // State-specific temporary 2
+static uint8_t fls_tail;                                // Current read location in the FIFO
 
-// Color lookup table
-static __idata struct {
-    union word16 colors[FLS_LUT_SIZE];
-    union word16 p16;
-} lut;
-
-// Overlaid memory for individual states' use
-static union {
-    union word16 lutvec;
-
-    struct {
-        uint8_t rle1;
-        uint8_t rle2;
-    };
-} ovl;
-
-static uint8_t fifo_tail;
-static uint8_t opcode;
-static uint8_t counter;
-static uint8_t byte;
-static uint8_t tick_deadline;
-static void (*state)(void);
-
-// Shared temporaries, within a state
-static __bit nibIndex;
-
-/*
- * Decoder implementation.
- */
-
-static void state_OPCODE(void) __naked;
-static void state_ADDR_LOW(void) __naked;
-static void state_ADDR_HIGH(void) __naked;
-static void state_LUT1_COLOR1(void) __naked;
-static void state_LUT1_COLOR2(void) __naked;
-static void state_LUT16_VEC1(void) __naked;
-static void state_LUT16_VEC2(void) __naked;
-static void state_LUT16_COLOR1(void) __naked;
-static void state_LUT16_COLOR2(void) __naked;
-static void state_TILE_P1_R4(void) __naked;
-static void state_TILE_P2_R4(void) __naked;
-static void state_TILE_P4_R4(void) __naked;
-static void state_TILE_P16_MASK(void) __naked;
-static void state_TILE_P16_LOW(void) __naked;
-static void state_TILE_P16_HIGH(void) __naked;
-
-#define STATE_RETURN()  __asm ljmp state_return __endasm
 
 void flash_init(void)
 {
     /*
-     * Reset the state machine, reset the LUT.
+     * Handle power-on initialization _or_ a "flash reset" command.
      */
 
-    __idata uint8_t *l = (__idata uint8_t *) &lut;
-    uint8_t i = sizeof lut;
+    __asm
 
-    do {
-        *(l++) = 0;
-    } while (--i);
+        ; Zero out the whole LUT
 
-    fifo_tail = flash_fifo_head;
-//    state = state_OPCODE;
+        mov     r0, #_fls_lut
+        mov     r1, #((FLS_LUT_SIZE + 1) * 2)
+        clr     a
+1$:     mov     @r0, a
+        inc     r0
+        djnz    r1, 1$
+
+        ; Reset the state machine
+
+        mov     _fls_state, a
+        clr     _flash_reset_request
+
+        ; Reset FIFO pointers
+
+        mov     a, #_flash_fifo
+        mov     _fls_tail, a
+        mov     _flash_fifo_head, a
+
+        ; Flash reset must send back a full packet, including the HWID.
+        ; We acknowledge a reset as if it were one data byte.
+
+        inc     (_ack_data + RF_ACK_FLASH_FIFO)
+        orl     _ack_bits, #RF_ACK_BIT_HWID
+
+    __endasm ;
 }
 
-void flash_handle_fifo(void)
+
+void flash_handle_fifo() __naked
 {
-#if 0
-    // Nothing to do? Exit early.
-    if (flash_fifo_head == fifo_tail)
-        return;
-        
-    global_busy_flag = 1;
-
     /*
-     * Out-of-band cue to reset the state machine.
+     * Register usage during state machine:
      *
-     * We don't have to check for this every byte, since latency in
-     * initiating a reset isn't especially important.
+     *    R0 - temp
+     *    R1 - temp
+     *    R2 - temp
+     *    R3 - temp
+     *    R4 - temp
+     *    R5 - Current byte
+     *    R6 - Count of bytes available
+     *    R7 - Deadline timer
      */
-    
-    if (flash_fifo_head == FLS_FIFO_RESET) {
-        flash_fifo_head = 0;
-        flash_init();
 
-        /*
-         * Flash reset must send back a full packet, including the HWID.
-         */
-        __asm
-            inc     (_ack_data + RF_ACK_FLASH_FIFO)
-            orl     _ack_bits, #RF_ACK_BIT_HWID
-        __endasm ;
-
-        return;
-    }
-
-    // Prep the flash hardware to start writing
-    tick_deadline = sensor_tick_counter + FLASH_TIMESLICE_TICKS;
-    flash_program_start();
-    
-#ifdef DEBUG_LOADSTREAM
-    DEBUG_UART_INIT();
-#endif
-
-    // This is where STATE_RETURN() drops us after each state finishes.
     __asm
-        state_return:
-    __endasm ;
 
-    // No more data? Timeslice is over? Clean up and get out.
-    if (tick_deadline == sensor_tick_counter || flash_fifo_head == fifo_tail) {
-        flash_program_end();
-        return;
-    }
+        ; Handle reset requests with a tailcall to init
+
+        jb      _flash_reset_request, _flash_init
+
+        ; Set up time deadline
+
+        mov     a, _sensor_tick_counter
+        add     a, #FLASH_TIMESLICE_TICKS
+        mov     r7, a
+
+10$:                                        ; Loop over incoming bytes
+
+        mov     a, _flash_fifo_head         ; Start loading FIFO state
+        clr     c
+        subb    a, _fls_tail                ; Calculate number of bytes available
+        anl     a, #(FLS_FIFO_SIZE - 1)
+        jz      3$                          ; Return if FIFO is empty
+        mov     r6, a                       ; Otherwise, save byte count
+
+        setb    _global_busy_flag           ; System is definitely not idle now
+
+        mov     a, r7                       ; Check for deadline
+        cjne    a, _sensor_tick_counter, 2$
+3$:     ret
+2$:
+
+        ; Dequeue one more byte from the FIFO
+
+        mov     r0, _fls_tail               ; Read next byte from FIFO
+        mov     a, @r0
+        mov     r5, a
+        inc     r0                          ; Advance tail pointer
+        cjne    r0, #(_flash_fifo + FLS_FIFO_SIZE), 4$
+        mov     r0, #_flash_fifo            ; Wrap
+4$:     mov     _fls_tail, r0
+
+        ; Acknowledge receipt. After this point, the radio may resue this FIFO location.
     
+        inc     (_ack_data + RF_ACK_FLASH_FIFO)
+        orl     _ack_bits, #RF_ACK_BIT_FLASH_FIFO
+
+        ; XXX
+
+        mov     _DEBUG_REG, r6
+        ret
+    __endasm ;
+}
+
+#if 0
+        mov     a, _fls_tail                ; Read next byte from FIFO
+        add     a, #_flash_fifo
+        mov     r0, a
+        mov     a, @r0
+        mov     r5, a
+
+        mov     a, _flash_fifo_head
+        clr     c
+        subb    a, _fls_tail
+        
+
+
     /*
      * Dequeue one byte from the FIFO.
      *
@@ -189,26 +197,13 @@ void flash_handle_fifo(void)
      * overwrite the location we just freed up in the FIFO buffer.
      */
 
-    byte = flash_fifo[fifo_tail];       
-    fifo_tail = (fifo_tail + 1) & (FLS_FIFO_SIZE - 1);
+//    byte = flash_fifo[fls_tail];
+    fls_tail = (fls_tail + 1) & (FLS_FIFO_SIZE - 1);
 
-#ifdef DEBUG_LOADSTREAM
-    DEBUG_UART(byte);
+
 #endif
 
-    __asm
-        inc     (_ack_data + RF_ACK_FLASH_FIFO)
-        orl     _ack_bits, #RF_ACK_BIT_FLASH_FIFO
-    __endasm ;
-
-    __asm
-        clr   a
-        mov   dpl, _state
-        mov   dph, (_state+1)
-        jmp   @a+dptr
-    __endasm ;
-#endif
-}
+////////////////////////////////////////////////////////////////////////////CRUFT
 
 
 #if 0
