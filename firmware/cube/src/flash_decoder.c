@@ -43,6 +43,22 @@
 #include <protocol.h>
 
 /*
+ * Register usage during state machine.
+ *
+ * Other invariants:
+ *    - DPTR always contains the origin of the state machine
+ */
+
+#define R_TMP0          r0
+#define R_PTR           r1      // Used as input by flash_buffer_word()
+#define R_COUNT1        r2
+#define R_COUNT2        r3
+
+#define R_BYTE          r5
+#define R_BYTE_COUNT    r6
+#define R_DEADLINE      r7
+
+/*
  * To preserve interactivity even if our FIFO is staying full, we limit
  * the total amount of time we can spend on flash programming without
  * coming up for air. To measure this in a low-overhead way, we use
@@ -69,17 +85,38 @@ volatile __bit flash_reset_request;                      // Pending reset?
 
 static __idata uint16_t fls_lut[FLS_LUT_SIZE + 1];      // LUT proper, plus P16 value
 static uint8_t fls_state;                               // 8-bit state machine offset
-static uint8_t fls_st_1;                                // State-specific temporary 1
-static uint8_t fls_st_2;                                // State-specific temporary 2
 static uint8_t fls_tail;                                // Current read location in the FIFO
+static uint8_t fls_st[3];                               // State-specific temporaries
 
+/*
+ * State transition macro
+ */
+
+#pragma sdcc_hash +
+
+// Value of a state, by label
+#define STATE(_label)       #(_label - _flash_state_fn)
+
+// Return to a label on the next loop iteration
+#define NEXT(_label)                                            __endasm; \
+    __asm mov   _fls_state, STATE(_label)                       __endasm; \
+    __asm ljmp  flash_loop                                      __endasm; \
+    __asm
+
+// Return to the current state on the next loop iteration
+#define AGAIN()                                                 __endasm; \
+    __asm ljmp  flash_loop                                      __endasm; \
+    __asm
+
+
+/*
+ * flash_init --
+ *
+ *    Handle power-on initialization _or_ a "flash reset" command.
+ */
 
 void flash_init(void)
 {
-    /*
-     * Handle power-on initialization _or_ a "flash reset" command.
-     */
-
     __asm
 
         ; Zero out the whole LUT
@@ -93,7 +130,7 @@ void flash_init(void)
 
         ; Reset the state machine
 
-        mov     _fls_state, a
+        mov     _fls_state, STATE(flst_opcode)
         clr     _flash_reset_request
 
         ; Reset FIFO pointers
@@ -112,21 +149,110 @@ void flash_init(void)
 }
 
 
+/*
+ * flash_dequeue --
+ *
+ *    Assembly-callable utility for dequeueing one byte from the FIFO.
+ *    The space used by this byte is available immediately for reuse
+ *    by the radio ISR.
+ *
+ *    Returns the next byte in R_BYTE *and* in 'a'.
+ *    Trashes R_PTR.
+ *    Does NOT update R_BYTE_COUNT.
+ */
+
+static void flash_dequeue() __naked
+{
+    __asm
+        mov     R_PTR, _fls_tail                            ; Read next byte from FIFO
+        mov     a, @R_PTR
+
+        inc     (_ack_data + RF_ACK_FLASH_FIFO)             ; Acknowledge ASAP
+        orl     _ack_bits, #RF_ACK_BIT_FLASH_FIFO
+
+        inc     R_PTR                                       ; Advance tail pointer
+        cjne    R_PTR, #(_flash_fifo + FLS_FIFO_SIZE), 1$
+        mov     R_PTR, #_flash_fifo                         ; Wrap
+1$:     mov     _fls_tail, R_PTR
+
+        mov     R_BYTE, a                                   ; Also return byte in R_BYTE
+        ret
+    __endasm ;
+}
+
+
+/*
+ * flash_dequeue_st1p --
+ *
+ *    Dequeue the next byte, copy it to the byte pointed to by
+ *    fls_st[0], and increment fls_st[0].
+ *
+ *    Trashes R_PTR.
+ */
+
+static void flash_dequeue_st1p() __naked
+{
+    __asm
+        lcall   _flash_dequeue
+        mov     R_PTR, _fls_st
+        mov     @R_PTR, a
+        inc     _fls_st
+        ret
+    __endasm ;
+}
+
+
+/*
+ * flash_rr16 --
+ *
+ *     16-bit right rotate: 0 -> fls_st[2:1] -> C.
+ */
+
+static void flash_rr16() __naked
+{
+    __asm
+        clr     c
+        mov     a, _fls_st+2
+        rrc     a
+        mov     _fls_st+2, a
+        mov     a, _fls_st+1
+        rrc     a
+        mov     _fls_st+1, a
+        ret
+    __endasm ;
+}
+
+
+/*
+ * flash_addr_lut --
+ *
+ *    The low 4 bits of the R_BYTE are an index into the LUT.
+ *    Convert that into a pointer to the low byte, and store
+ *    that in fls_st[0] and R_PTR.
+ */
+static void flash_addr_lut() __naked
+{
+    __asm
+        mov     a, R_BYTE
+        anl     a, #0xF
+        rl      a
+        add     a, #_fls_lut
+        mov     _fls_st, a
+        mov     R_PTR, a
+        ret
+    __endasm ;
+}
+
+
+/*
+ * flash_handle_fifo --
+ *
+ *    Entry point for flash loadstream processing. Called periodically by
+ *    the main loop. Can run for a while, but should be bounded in duration.
+ */
+
 void flash_handle_fifo() __naked
 {
-    /*
-     * Register usage during state machine:
-     *
-     *    R0 - temp
-     *    R1 - temp
-     *    R2 - temp
-     *    R3 - temp
-     *    R4 - temp
-     *    R5 - Current byte
-     *    R6 - Count of bytes available
-     *    R7 - Deadline timer
-     */
-
     __asm
 
         ; Handle reset requests with a tailcall to init
@@ -135,126 +261,380 @@ void flash_handle_fifo() __naked
 
         ; Set up time deadline
 
-#if 0
         mov     a, _sensor_tick_counter
         add     a, #FLASH_TIMESLICE_TICKS
-        mov     r7, a
-#endif
+        mov     R_DEADLINE, a
 
-10$:                                        ; Loop over incoming bytes
+        ; Keep DPTR loaded to the state machine address
+
+        mov     dptr, #_flash_state_fn
+
+        ; Individual states can jump to flash_loop to transition to the
+        ; next state, or they can return to abort processing for now.
+        ; This does not automatically dequeue bytes, since some states may
+        ; want to retry later if R_BYTE_COUNT is too small.
+
+flash_loop:
 
         mov     a, _flash_fifo_head         ; Start loading FIFO state
         clr     c
         subb    a, _fls_tail                ; Calculate number of bytes available
         anl     a, #(FLS_FIFO_SIZE - 1)
         jz      3$                          ; Return if FIFO is empty
-        mov     r6, a                       ; Otherwise, save byte count
+        mov     R_BYTE_COUNT, a             ; Otherwise, save byte count
 
         setb    _global_busy_flag           ; System is definitely not idle now
 
-#if 0
-        mov     a, r7                       ; Check for deadline
+        mov     a, R_DEADLINE               ; Check for deadline
         cjne    a, _sensor_tick_counter, 2$
 3$:     ret
 2$:
-#endif
 
-        ; Dequeue one more byte from the FIFO
+        ; Branch to state handler
 
-        mov     r0, _fls_tail               ; Read next byte from FIFO
-        mov     a, @r0
-        mov     r5, a
-        inc     r0                          ; Advance tail pointer
-        cjne    r0, #(_flash_fifo + FLS_FIFO_SIZE), 4$
-        mov     r0, #_flash_fifo            ; Wrap
-4$:     mov     _fls_tail, r0
-
-        ; Acknowledge receipt. After this point, the radio may resue this FIFO location.
-    
-        inc     (_ack_data + RF_ACK_FLASH_FIFO)
-        orl     _ack_bits, #RF_ACK_BIT_FLASH_FIFO
-
-        ; XXX
-
-        ; mov     _DEBUG_REG, r6
-        sjmp    10$
-
-3$: ret
+        mov     a, _fls_state
+        jmp     @a+dptr 
 
     __endasm ;
 }
 
-#if 0
-        mov     a, _fls_tail                ; Read next byte from FIFO
-        add     a, #_flash_fifo
-        mov     r0, a
-        mov     a, @r0
-        mov     r5, a
 
-        mov     a, _flash_fifo_head
-        clr     c
-        subb    a, _fls_tail
-        
+/*
+ * flash_state_fn --
+ *
+ *    This is an 8-bit state machine, called by flash_handle_fifo.
+ *
+ *    Each state can take several actions:
+ *
+ *      - Writing a complete buffer of 16 pixels to flash
+ *      - Calling flash_dequeue() to get another byte from the FIFO
+ *      - Jumping to flash_loop to re-enter the state machine
+ *      - Returning, to go back to the main loop
+ *
+ *    States are guaranteed to be called with at least one byte available
+ *    in the FIFO. See the register declarations at the top of the file,
+ *    for registers which are maintained across state invocations.
+ */
+
+static void flash_state_fn() __naked
+{
+    __asm
+        ;--------------------------------------------------------------------
+        ; Opcode Lookup Table
+        ;--------------------------------------------------------------------
+
+        sjmp    op_lut1         ; 0x00
+        sjmp    op_lut16        ; 0x20
+        sjmp    op_tile_p0      ; 0x40
+        sjmp    op_tile_p1_r4   ; 0x60
+        sjmp    op_tile_p2_r4   ; 0x80
+        sjmp    op_tile_p4_r4   ; 0xa0
+        sjmp    op_tile_p16     ; 0xc0
+        sjmp    op_special      ; 0xe0
+
+        ;--------------------------------------------------------------------
+        ; Opcode Dispatch (DEFAULT STATE)
+        ;--------------------------------------------------------------------
+
+flst_opcode:
+
+        lcall   _flash_dequeue      ; Consume opcode byte
+        swap    a                   ; Directly convert to an offset in our LUT
+        anl     a, #0x0E
+        jmp     @a+dptr
+
+        ;--------------------------------------------------------------------
+        ; Opcode: LUT1
+        ;--------------------------------------------------------------------
+
+op_lut1:
+
+        lcall   _flash_addr_lut         ; Point to LUT entry from opcode argument
+        NEXT(1$)
+1$:     lcall   _flash_dequeue_st1p     ; Store low byte
+        NEXT(2$)
+2$:     lcall   _flash_dequeue_st1p     ; Store high byte
+
+flst_opcode_n:
+        NEXT(flst_opcode)
+
+        ;--------------------------------------------------------------------
+        ; Opcode: TILE_P0
+        ;--------------------------------------------------------------------
+
+        ; No additional data necessary to write the entire tile.
+
+op_tile_p0:
+        ljmp    _flash_tile_p0
+
+        ;--------------------------------------------------------------------
+        ; Opcode: TILE_P1_R4
+        ;--------------------------------------------------------------------
+
+op_tile_p1_r4:
+
+        ; One-time setup for this opcode
 
 
-    /*
-     * Dequeue one byte from the FIFO.
-     *
-     * As soon as we increment flash_fifo_bytes, the master may
-     * overwrite the location we just freed up in the FIFO buffer.
-     */
+        NEXT(1$)
+1$:     ljmp    _flash_tile_p1_r4
 
-//    byte = flash_fifo[fls_tail];
-    fls_tail = (fls_tail + 1) & (FLS_FIFO_SIZE - 1);
+        ;--------------------------------------------------------------------
+        ; Opcode: TILE_P2_R4
+        ;--------------------------------------------------------------------
+
+op_tile_p2_r4:
+
+        ; One-time setup for this opcode
 
 
-#endif
+        NEXT(1$)
+1$:     ljmp    _flash_tile_p2_r4
+
+        ;--------------------------------------------------------------------
+        ; Opcode: TILE_P4_R4
+        ;--------------------------------------------------------------------
+
+op_tile_p4_r4:
+
+        ; One-time setup for this opcode
+
+
+        NEXT(1$)
+1$:     ljmp    _flash_tile_p4_r4
+
+        ;--------------------------------------------------------------------
+        ; Opcode: TILE_P16
+        ;--------------------------------------------------------------------
+
+op_tile_p16:
+
+        ; One-time setup for this opcode
+
+        NEXT(1$)
+1$:     ljmp    _flash_tile_p16
+
+        ;--------------------------------------------------------------------
+        ; Opcode: SPECIAL
+        ;--------------------------------------------------------------------
+
+op_special:
+        mov     a, R_BYTE
+
+        ;---------------------------------
+        ; Special symbol: ADDRESS
+        ;---------------------------------
+
+        cjne    a, #FLS_OP_ADDRESS, op_address_end
+
+        mov     _flash_addr_low, #0
+
+        NEXT(1$)
+1$:     lcall   _flash_dequeue
+        anl     a, #0xfe                ; Must keep LSB clear
+        mov     _flash_addr_lat1, a
+
+        NEXT(2$)
+2$:     lcall   _flash_dequeue
+        rrc     a
+        mov     _flash_addr_a21, c
+        clr     c                       ; Keep LSB clear here too
+        rlc     a
+        mov     _flash_addr_lat2, a
+
+        ljmp    flst_opcode_n
+op_address_end:
+
+        ;---------------------------------
+
+        ; Unrecognized special symbol. Ignore it...
+        AGAIN();
+
+        ;--------------------------------------------------------------------
+        ; Opcode: LUT16
+        ;--------------------------------------------------------------------
+
+op_lut16:
+
+        ; The next two bytes are a 16-bit vector indicating which LUT entries
+        ; are being set. Entries are numbered from LSB to MSB. A zero bit
+        ; means we leave it alone, a one bit means that a new value for that
+        ; LUT entry is included.
+        ;
+        ; In these states, we keep the 16-bit shift register in fls_st[2:1],
+        ; with the write pointer in fls_st[0].
+
+        mov     _fls_st, #_fls_st+1
+        NEXT(1$)
+1$:     lcall   _flash_dequeue_st1p
+        NEXT(2$)
+2$:     lcall   _flash_dequeue_st1p
+        mov     _fls_st, #_fls_lut          ; Write to beginning of LUT
+        NEXT(3$)
+3$:
+
+        ; In this state, we iterate over the LUT, consuming bytes any time
+        ; there is a corresponding bit set in the bitmap. 
+
+        mov     a, _fls_st                  ; Exit when we reach the end of the LUT
+        cjne    a, #_fls_lut+32, 4$
+        ljmp    flst_opcode
+4$:
+        lcall   _flash_rr16                 ; 16-bit right rotate into C
+        jc      5$
+
+        ; C=0, skip this bit.
+        inc     _fls_st
+        inc     _fls_st
+        AGAIN()
+
+        ; C=1, read two bytes then back to this state.
+
+5$:     lcall   _flash_dequeue_st1p
+        NEXT(6$)
+6$:     lcall   _flash_dequeue_st1p
+        NEXT(3$)
+
+    __endasm ;
+}
+
+
+/*
+ * flash_tile_p0 --
+ *
+ *    Output one solid-color tile, using the LUT entry from
+ *    the current byte.
+ */
+
+static void flash_tile_p0() __naked
+{
+    __asm
+        lcall   _flash_addr_lut     ; Point to LUT entry from opcode argument
+
+        ; Output one whole tile (4 buffers, 16 words per buffer) with the same color.
+
+        mov     R_COUNT1, #4
+1$:     lcall   _flash_buffer_begin
+        mov     R_COUNT2, #16
+2$:     lcall   _flash_buffer_word
+        djnz    R_COUNT2, 2$
+        lcall   _flash_buffer_commit
+        djnz    R_COUNT1, 1$
+
+        AGAIN()
+    __endasm ;
+}
+
+
+/*
+ * flash_tile_p1_r4 --
+ *
+ *    Tiles at 1 bit per pixel, with 4-bit RLE.
+ */
+
+static void flash_tile_p1_r4() __naked
+{
+    __asm
+    
+
+        ; To decode a full 16 pixels, we require a worst-case of 4 bytes.
+        ; Check this before every entry to the state function.
+
+        mov     a, R_BYTE_COUNT
+        anl     a, #0xFC
+        jz      1$
+
+        AGAIN()
+
+    1$: ret
+
+    __endasm ;
+}
+
+
+/*
+ * flash_tile_p2_r4 --
+ *
+ *    Tiles at 2 bits per pixel, with 4-bit RLE.
+ */
+
+static void flash_tile_p2_r4() __naked
+{
+    __asm
+    
+
+        ; To decode a full 16 pixels, we require a worst-case of 8 bytes.
+        ; Check this before every entry to the state function.
+
+        mov     a, R_BYTE_COUNT
+        anl     a, #0xF8
+        jz      1$
+
+        AGAIN()
+
+    1$: ret
+
+    __endasm ;
+}
+
+
+/*
+ * flash_tile_p4_r4 --
+ *
+ *    Tiles at 4 bits per pixel, with 4-bit RLE.
+ */
+
+static void flash_tile_p4_r4() __naked
+{
+    __asm
+    
+
+        ; To decode a full 16 pixels, we require a worst-case of 16 bytes.
+        ; Check this before every entry to the state function.
+
+        mov     a, R_BYTE_COUNT
+        anl     a, #0xF0
+        jz      1$
+
+        AGAIN()
+
+    1$: ret
+
+    __endasm ;
+}
+
+
+/*
+ * flash_tile_p16 --
+ *
+ *    Tiles at 16 bits per pixel, with an 8-bit repeat mask for each 8 pixels.
+ */
+
+static void flash_tile_p16() __naked
+{
+    __asm
+
+
+        ; To decode a full 16 pixels, we require a worst-case of 34 bytes.
+        ; Check this before every entry to the state function.
+
+        mov     a, R_BYTE_COUNT
+        add     a, #(256-34)
+        jnc     1$
+
+        AGAIN()
+
+1$:     ret
+
+    __endasm ;
+}
+
 
 ////////////////////////////////////////////////////////////////////////////CRUFT
 
 
 #if 0
 
-/*
- * State machine.
- *
- * This is a state machine, in which each state is implemented as a
- * function chunk that we jump to. The state transition functions
- * process exactly one byte per invocation.
- */
-
-static void state_OPCODE(void) __naked
-{
-    opcode = byte;
-    switch (opcode & FLS_OP_MASK) {
-
-    case FLS_OP_LUT1:
-        state = state_LUT1_COLOR1;
-        STATE_RETURN();
-
-    case FLS_OP_LUT16:
-        state = state_LUT16_VEC1;
-        STATE_RETURN();
-
-    case FLS_OP_TILE_P0:
-        // Trivial solid-color tile, no repeats
-        __asm
-            mov   a, _byte
-            anl   a, #0xF
-            rl    a 
-            add   a, #_lut
-            mov   r0, a
-            mov   DPL, @r0
-            inc   r0
-            mov   DPH, @r0
-
-            mov   r0, #64
-            1$:
-            lcall _flash_program_word
-            djnz  r0, 1$
-        __endasm ;
-        STATE_RETURN();
-        
     case FLS_OP_TILE_P1_R4:
         counter = 64;
         ovl.rle1 = 0xFF;
@@ -278,98 +658,11 @@ static void state_OPCODE(void) __naked
         state = state_TILE_P16_MASK;
         STATE_RETURN();
 
-    case FLS_OP_SPECIAL:
-        switch (opcode) {
-            
-        case FLS_OP_ADDRESS:
-            state = state_ADDR_LOW;
-            STATE_RETURN();
-
-        default:
-            // Reserved
-            STATE_RETURN();
-        }
-        
     default:
         // Undefined opcode
         STATE_RETURN();
     }
 }
-
-static void state_ADDR_LOW(void) __naked
-{
-    flash_addr_low = 0;
-    flash_addr_lat1 = byte & 0xFE;
-    state = state_ADDR_HIGH;
-    STATE_RETURN();
-}
-
-static void state_ADDR_HIGH(void) __naked
-{
-    /*
-     * Note, we must not change LAT2 or A21 between start/end. The HAL assumes
-     * LAT2 doesn't change unless a rollover occurs. The most space-efficient
-     * way for us to change LAT2 is to end (finish the last op) then begin
-     * (reprogram LAT2) again.
-     */
-    flash_program_end();
-    flash_addr_lat2 = byte & 0xFE;
-    flash_a21 = byte & 1;
-    flash_need_autoerase = 1;
-    flash_program_start();
-
-    state = state_OPCODE;
-    STATE_RETURN();
-}
-
-static void state_LUT1_COLOR1(void) __naked
-{
-    lut.colors[opcode & 0xF].low = byte;
-    state = state_LUT1_COLOR2;
-    STATE_RETURN();
-}
-
-static void state_LUT1_COLOR2(void) __naked
-{
-    lut.colors[opcode & 0xF].high = byte;
-    state = state_OPCODE;
-    STATE_RETURN();
-}
-
-static void state_LUT16_VEC1(void) __naked
-{
-    ovl.lutvec.low = byte;
-    state = state_LUT16_VEC2;
-    STATE_RETURN();
-}
-
-static void state_LUT16_VEC2(void) __naked
-{
-    ovl.lutvec.high = byte;
-    counter = 0;
-    state = state_LUT16_COLOR1;
-    STATE_RETURN();
-}
-
-static void state_LUT16_COLOR1(void) __naked
-{
-    while (!(ovl.lutvec.low & 1)) {
-        // Skipped LUT entry
-        ovl.lutvec.word >>= 1;
-        counter++;
-    }
-    lut.colors[counter].low = byte;
-    state = state_LUT16_COLOR2;
-    STATE_RETURN();
-}
-
-static void state_LUT16_COLOR2(void) __naked
-{
-    lut.colors[counter++].high = byte;
-    ovl.lutvec.word >>= 1;
-    state = ovl.lutvec.word ? state_LUT16_COLOR1 : state_OPCODE;
-    STATE_RETURN();
-}       
 
 static void state_TILE_P1_R4(void) __naked
 {

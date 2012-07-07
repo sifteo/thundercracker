@@ -23,7 +23,7 @@ volatile extern uint8_t flash_fifo_head;                        // Pointer to ne
 volatile extern __bit flash_reset_request;                      // Pending reset?
 
 void flash_init(void);
-void flash_handle_fifo() __naked;
+void flash_handle_fifo(void) __naked;
 
 extern uint8_t flash_addr_low;          // Low 7 bits of address, left-justified
 extern uint8_t flash_addr_lat1;         // Middle 7 bits of address, left-justified
@@ -31,7 +31,7 @@ extern uint8_t flash_addr_lat2;         // High 7 bits of address, left-justifie
 extern __bit flash_addr_a21;            // Bank selection bit
 
 void flash_buffer_begin(void);
-void flash_buffer_word(uint16_t dat);
+void flash_buffer_word(void) __naked;   // Assembly-callable only
 void flash_buffer_commit(void);
 
 #endif

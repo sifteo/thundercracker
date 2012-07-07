@@ -46,9 +46,12 @@ __bit flash_addr_a21;        // Bank selection bit
 
 
 void flash_strobe();
-void flash_buffer_word(uint16_t dat)
+void flash_buffer_word(void) __naked
 {
     /*
+     * This is assembly-callable only. Copies a word, pointed to by r1,
+     * to the flash programming buffer. Trashes 'a' only.
+     *
      * Big endian, to match our LCD byte order.
      *
      * We don't reload the address at all here, we just pre-increment ADDR_PORT
@@ -61,20 +64,27 @@ void flash_buffer_word(uint16_t dat)
      * strobe instructions during setup.
      */
 
-    dat = dat;
     __asm
-        inc     ADDR_PORT
-        inc     ADDR_PORT
-        mov     BUS_PORT, DPH
-        mov     CTRL_PORT, #CTRL_FLASH_CMD
-        mov     CTRL_PORT, #CTRL_IDLE
+        inc     r1
+        mov     a, @r1
 
         inc     ADDR_PORT
         inc     ADDR_PORT
-        mov     BUS_PORT, DPL
+        mov     BUS_PORT, a
+        mov     CTRL_PORT, #CTRL_FLASH_CMD
+        mov     CTRL_PORT, #CTRL_IDLE
+
+        dec     r1
+        mov     a, @r1
+
+        inc     ADDR_PORT
+        inc     ADDR_PORT
+        mov     BUS_PORT, a
+
 _flash_strobe:
         mov     CTRL_PORT, #CTRL_FLASH_CMD
         mov     CTRL_PORT, #CTRL_IDLE
+        ret
     __endasm ;
 }
 
@@ -128,6 +138,8 @@ void flash_buffer_begin(void)
      *
      * If we do need to do an erase, that will require changing LAT1 and the
      * low byte, but we can go ahead and set up LAT2 and A21 now.
+     *
+     * Callers expect us not to clobber any of R0-R7 or DPTR!
      */
 
     // Set up A21
@@ -181,6 +193,10 @@ void flash_buffer_begin(void)
 
 void flash_buffer_commit(void)
 {
+    /*
+     * Callers expect us not to clobber any of R0-R7 or DPTR!
+     */
+    
     // Confirmation byte. This starts the program operation.
     BUS_PORT = 0x29;
     flash_strobe();
