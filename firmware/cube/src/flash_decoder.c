@@ -667,6 +667,7 @@ flr4_pixel_loop:
 
         mov     a, _fls_st+0            ; Look at the previous two nybbles.
         xrl     a, _fls_st+1            ;    Was this a run?
+        mov     _fls_st+0, #0xFF        ;    Prevent re-triggering the run detector
         jz      flr4_pixel_loop         ;    Yes. Go back up, to check for zero-len runs
 
         mov     _fls_st+0, _fls_st+1    ; No. Shift this into our run buffer.
