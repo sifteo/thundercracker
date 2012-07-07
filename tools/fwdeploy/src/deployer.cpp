@@ -1,6 +1,7 @@
 #include "deployer.h"
 #include "crc.h"
 #include "aes128.h"
+#include "securerandom.h"
 
 #include <stdio.h>
 #include <string.h>
@@ -37,6 +38,11 @@ bool Deployer::deploy(const char *inPath, const char *outPath)
     }
 
     Crc32::init();
+
+    if (!SecureRandom::generate(salt, SALT_LEN)) {
+        fprintf(stderr, "error generating random salt: %s\n", strerror(errno));
+        return false;
+    }
 
     uint32_t plainsz, calculatedCrc;
     if (!detailsForFile(fin, plainsz, calculatedCrc))
@@ -81,12 +87,16 @@ bool Deployer::detailsForFile(FILE *f, uint32_t &sz, uint32_t &crc)
 
     rewind(f);
     Crc32::reset();
+    unsigned fileOffset = 0;
 
     while (!feof(f)) {
         uint8_t crcbuffer[32];
         const int numBytes = fread(crcbuffer, 1, sizeof crcbuffer, f);
         if (numBytes <= 0)
             continue;
+
+        patchBlock(fileOffset, crcbuffer, numBytes);
+        fileOffset += numBytes;
 
         // must be word aligned
         ASSERT((numBytes & 0x3) == 0 && "firmware binary must be word aligned");
@@ -123,6 +133,7 @@ bool Deployer::encryptFWBinary(FILE *fin, FILE *fout)
     fseek(fin, 0L, SEEK_END);
     unsigned numPlainBytes = ftell(fin);
     rewind(fin);
+    unsigned fileOffset = 0;
 
     // cipherBuf holds the cipher in progress - starts with initialization vector
     uint8_t cipherBuf[AES128::BLOCK_SIZE] = AES_IV;
@@ -136,6 +147,10 @@ bool Deployer::encryptFWBinary(FILE *fin, FILE *fout)
             fprintf(stderr, "error reading from file to encrypt: %s\n", strerror(errno));
             return false;
         }
+
+        // Patch plaintext before encrypting it
+        patchBlock(fileOffset, plainBuf, sizeof plainBuf);
+        fileOffset += AES128::BLOCK_SIZE;
 
         AES128::xorBlock(cipherBuf, plainBuf);
 
@@ -172,3 +187,26 @@ bool Deployer::encryptFWBinary(FILE *fin, FILE *fout)
 
     return true;
 }
+
+void Deployer::patchBlock(unsigned address, uint8_t *block, unsigned len)
+{
+    /*
+     * This function is called once per block of plaintext, immediately prior to
+     * encryption. Right now it just solves one problem I'm somewhat paranoid
+     * about: If we release two master firmware binaries with a predictable
+     * difference in their plaintext, that may make it significantly easier to
+     * recover key material via differential cryptanalysis.
+     *
+     * To subvert this, we place some unpredictable (cryptographically secure
+     * random) "salt" data near the beginning of the binary image. To do this
+     * unobtrusively and without forcing any contortions in the bootloader,
+     * we just splat it into a reserved portion of the IVT.
+     */
+
+    for (unsigned i = 0; i < len; ++i) {
+        unsigned offset = address + i - SALT_OFFSET;
+        if (offset < SALT_LEN)
+            block[i] = salt[offset];
+    }
+}
+
