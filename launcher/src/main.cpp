@@ -11,6 +11,10 @@
 
 using namespace Sifteo;
 
+#ifndef SDK_VERSION
+#error No SDK_VERSION is defined. Build system bug?
+#endif
+
 static Metadata M = Metadata()
     .title("System Launcher")
     .package("com.sifteo.launcher", TOSTRING(SDK_VERSION));
