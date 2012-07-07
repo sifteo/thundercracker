@@ -53,10 +53,22 @@ for chan in channel:
 
     # Removes main.o and master-stm32.elf
     print "Removing master-stm32.elf"
-    os.remove( os.path.join(DIR, "../master-stm32.elf" ) )
+    try:
+        os.remove(os.path.join(DIR, "../master-stm32.elf" ))
+    except:
+        print "master-stm32.elf not found!"
     
     print "Removing main.stm32.o"
-    os.remove( os.path.join(DIR, "../stm32/main.stm32.o" ) )
+    try:
+        os.remove(os.path.join(DIR, "../stm32/main.stm32.o" ))
+    except:
+        print "main.stm32.o not found!"
+        
+    print "Removing cube.stm32.o"
+    try:
+        os.remove(os.path.join(DIR, "../common/cube.stm32.o"))
+    except:
+        print "cube.stm32.o not found!"
     
     myenv = dict(os.environ)
     
