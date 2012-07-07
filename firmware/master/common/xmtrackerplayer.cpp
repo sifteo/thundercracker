@@ -55,10 +55,6 @@ bool XmTrackerPlayer::play(const struct _SYSXMSong *pSong)
         }
     }
 
-    if (!isStopped()) {
-        LOG((LGPFX"Notice: play() called while already playing.\n"));
-    }
-
     // Does the world make any sense? 
     if (!pSong->nPatterns) {
         LOG((LGPFX"Warning: Invalid song (no patterns).\n"));
@@ -69,16 +65,6 @@ bool XmTrackerPlayer::play(const struct _SYSXMSong *pSong)
         LOG((LGPFX"Warning: Song has %u channels, %u supported.\n",
              pSong->nChannels, _SYS_AUDIO_MAX_CHANNELS));
         return false;
-    }
-
-    /* Make sure no one is currently using the channels I need.
-     * Unfortunately, there's no way to make sure no one else clobbers me
-     * during playback, but it won't take long for the perp to notice.
-     */
-    for (unsigned i = 0; i < pSong->nChannels; i++) {
-        if (AudioMixer::instance.isPlaying(CHANNEL_FOR(i))) {
-            LOG((LGPFX"Warning: Channel %u is busy. Module may clobber SFX.\n", CHANNEL_FOR(i)));
-        }
     }
 
     // Ok, things look (probably) good.
@@ -121,8 +107,6 @@ void XmTrackerPlayer::stop()
         for (unsigned i = 0; i < song.nChannels; i++)
             if (mixer.isPlaying(CHANNEL_FOR(i)))
                 mixer.stop(CHANNEL_FOR(i));
-    } else {
-        LOG((LGPFX"Warning: stop() called when no module was playing.\n"));
     }
 
     AudioMixer::instance.setTrackerCallbackInterval(0);
@@ -145,10 +129,6 @@ void XmTrackerPlayer::pause()
     if (isStopped()) {
         ASSERT(!isStopped());
         return;
-    }
-
-    if (isPaused()) {
-        LOG((LGPFX"Notice: pause() called while already paused.\n"));
     }
 
     paused = true;
