@@ -815,8 +815,8 @@ void Frontend::draw()
         overlay.drawCubeInspector(&c,
             0.5f + topRight.x,
             0.5f + topRight.y,
-            0.5f + worldToScreen(1.5f),
-            0.5f + worldToScreen(3.0f));
+            0.5f + worldToScreen(3.0f),
+            0.5f + worldToScreen(6.0f));
     }
 
     // Fixed portion of the overlay, should be topmost.
