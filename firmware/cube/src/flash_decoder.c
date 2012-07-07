@@ -86,7 +86,12 @@ volatile __bit flash_reset_request;                      // Pending reset?
 static __idata uint16_t fls_lut[FLS_LUT_SIZE + 1];      // LUT proper, plus P16 value
 static uint8_t fls_state;                               // 8-bit state machine offset
 static uint8_t fls_tail;                                // Current read location in the FIFO
-static uint8_t fls_st[3];                               // State-specific temporaries
+
+// State-specific temporaries
+static uint8_t fls_st[5];
+static __bit fls_bit0;
+static __bit fls_bit1;
+static __bit fls_bit2;
 
 /*
  * State transition macro
@@ -226,14 +231,14 @@ static void flash_rr16() __naked
 /*
  * flash_addr_lut --
  *
- *    The low 4 bits of the R_BYTE are an index into the LUT.
+ *    The low 4 bits of A are an index into the LUT.
+ *
  *    Convert that into a pointer to the low byte, and store
  *    that in fls_st[0] and R_PTR.
  */
 static void flash_addr_lut() __naked
 {
     __asm
-        mov     a, R_BYTE
         anl     a, #0xF
         rl      a
         add     a, #_fls_lut
@@ -330,7 +335,7 @@ static void flash_state_fn() __naked
         sjmp    op_tile_p2_r4   ; 0x80
         sjmp    op_tile_p4_r4   ; 0xa0
         sjmp    op_tile_p16     ; 0xc0
-        sjmp    op_special      ; 0xe0
+        sjmp    op_special_t    ; 0xe0
 
         ;--------------------------------------------------------------------
         ; Opcode Dispatch (DEFAULT STATE)
@@ -349,7 +354,9 @@ flst_opcode:
 
 op_lut1:
 
+        mov     a, R_BYTE
         lcall   _flash_addr_lut         ; Point to LUT entry from opcode argument
+
         NEXT(1$)
 1$:     lcall   _flash_dequeue_st1p     ; Store low byte
         NEXT(2$)
@@ -368,40 +375,27 @@ op_tile_p0:
         ljmp    _flash_tile_p0
 
         ;--------------------------------------------------------------------
-        ; Opcode: TILE_P1_R4
+        ; Opcode: TILE_P*_R4
         ;--------------------------------------------------------------------
 
 op_tile_p1_r4:
-
-        ; One-time setup for this opcode
-
-
-        NEXT(1$)
-1$:     ljmp    _flash_tile_p1_r4
-
-        ;--------------------------------------------------------------------
-        ; Opcode: TILE_P2_R4
-        ;--------------------------------------------------------------------
+        clr     _fls_bit0
+        clr     _fls_bit1
+        sjmp    op_tile_r4
 
 op_tile_p2_r4:
-
-        ; One-time setup for this opcode
-
-
-        NEXT(1$)
-1$:     ljmp    _flash_tile_p2_r4
-
-        ;--------------------------------------------------------------------
-        ; Opcode: TILE_P4_R4
-        ;--------------------------------------------------------------------
+        setb    _fls_bit0
+        clr     _fls_bit1
+        sjmp    op_tile_r4
 
 op_tile_p4_r4:
+        clr     _fls_bit0
+        setb    _fls_bit1
 
-        ; One-time setup for this opcode
-
-
-        NEXT(1$)
-1$:     ljmp    _flash_tile_p4_r4
+op_tile_r4:
+        lcall   _flash_tile_r4_init
+        NEXT(2$)
+2$:     ljmp    _flash_tile_r4
 
         ;--------------------------------------------------------------------
         ; Opcode: TILE_P16
@@ -415,40 +409,11 @@ op_tile_p16:
 1$:     ljmp    _flash_tile_p16
 
         ;--------------------------------------------------------------------
-        ; Opcode: SPECIAL
+        ; Trampolines
         ;--------------------------------------------------------------------
 
-op_special:
-        mov     a, R_BYTE
-
-        ;---------------------------------
-        ; Special symbol: ADDRESS
-        ;---------------------------------
-
-        cjne    a, #FLS_OP_ADDRESS, op_address_end
-
-        mov     _flash_addr_low, #0
-
-        NEXT(1$)
-1$:     lcall   _flash_dequeue
-        anl     a, #0xfe                ; Must keep LSB clear
-        mov     _flash_addr_lat1, a
-
-        NEXT(2$)
-2$:     lcall   _flash_dequeue
-        rrc     a
-        mov     _flash_addr_a21, c
-        clr     c                       ; Keep LSB clear here too
-        rlc     a
-        mov     _flash_addr_lat2, a
-
-        ljmp    flst_opcode_n
-op_address_end:
-
-        ;---------------------------------
-
-        ; Unrecognized special symbol. Ignore it...
-        AGAIN();
+op_special_t:
+        sjmp    op_special
 
         ;--------------------------------------------------------------------
         ; Opcode: LUT16
@@ -495,6 +460,42 @@ op_lut16:
 6$:     lcall   _flash_dequeue_st1p
         NEXT(3$)
 
+        ;--------------------------------------------------------------------
+        ; Opcode: SPECIAL
+        ;--------------------------------------------------------------------
+
+op_special:
+        mov     a, R_BYTE
+
+        ;---------------------------------
+        ; Special symbol: ADDRESS
+        ;---------------------------------
+
+        cjne    a, #FLS_OP_ADDRESS, op_address_end
+
+        mov     _flash_addr_low, #0
+
+        NEXT(1$)
+1$:     lcall   _flash_dequeue
+        anl     a, #0xfe                ; Must keep LSB clear
+        mov     _flash_addr_lat1, a
+
+        NEXT(2$)
+2$:     lcall   _flash_dequeue
+        rrc     a
+        mov     _flash_addr_a21, c
+        clr     c                       ; Keep LSB clear here too
+        rlc     a
+        mov     _flash_addr_lat2, a
+
+        ljmp    flst_opcode_n
+op_address_end:
+
+        ;---------------------------------
+
+        ; Unrecognized special symbol. Ignore it...
+        AGAIN();
+
     __endasm ;
 }
 
@@ -509,6 +510,7 @@ op_lut16:
 static void flash_tile_p0() __naked
 {
     __asm
+        mov     a, R_BYTE
         lcall   _flash_addr_lut     ; Point to LUT entry from opcode argument
 
         ; Output one whole tile (4 buffers, 16 words per buffer) with the same color.
@@ -527,78 +529,243 @@ static void flash_tile_p0() __naked
 
 
 /*
- * flash_tile_p1_r4 --
+ * flash_tile_r4_init --
  *
- *    Tiles at 1 bit per pixel, with 4-bit RLE.
+ *    Initialization for 4-bit RLE decompression state.
+ *
+ *    Here, we handle all of the similar 4-bit RLE codes. They only
+ *    differ in the way our final nybbles are expanded after the RLE
+ *    decompression stage. The state machine proper has already set
+ *    fls_bit[1:0] to reflect this.
+ *
+ *    In all of these codes, the opcode argument is a count of the number
+ *    of tiles to generate. Each of these tiles will be four programming
+ *    buffers worth of uncompressed data. We need to decode 16 pixels
+ *    at a time.
+ *
+ *    During RLE, we use the following temporaries:
+ *
+ *    fls_st[0]: Older stored RLE nybble
+ *    fls_st[1]: Newer stored RLE nybble
+ *    fls_st[2]: Count of remaining 16-pixel buffers
+ *    fls_st[3]: Next buffered nybble (if fls_bit2 is set)
+ *    fls_st[4]: Run length, number of times to repeat fls_st[1]
+ *
+ *    fls_bit[1:0] indicates which flavor of RLE we are dealing with:
+ *
+ *       00 = 1-bit
+ *       01 = 2-bit
+ *       10 = 4-bit
+ *       11 = not allowed
  */
 
-static void flash_tile_p1_r4() __naked
+static void flash_tile_r4_init() __naked
 {
     __asm
-    
 
-        ; To decode a full 16 pixels, we require a worst-case of 4 bytes.
-        ; Check this before every entry to the state function.
+        ; Initialize RLE state to something that will never match.
 
-        mov     a, R_BYTE_COUNT
-        anl     a, #0xFC
-        jz      1$
+        clr     a
+        clr     _fls_bit2       ; No buffered nybble
+        mov     _fls_st+4, a    ; Not in a run
+        mov     _fls_st+0, a    ; Init st[0] (older) to 0x00
+        cpl     a
+        mov     _fls_st+1, a    ; Init st[1] (newer) to 0xFF
 
-        AGAIN()
+        ; Convert our tile count to a buffer count, and store that
 
-    1$: ret
+        mov     a, R_BYTE
+        anl     a, #0x1F        ; Ignore opcode part
+        inc     a               ; Count is stored as N-1
+        rl      a               ; Each tile has four buffers
+        rl      a
+        mov     _fls_st+2, a
 
+fls_ret:
+        ret
     __endasm ;
 }
 
 
 /*
- * flash_tile_p2_r4 --
+ * flash_tile_r4 --
  *
- *    Tiles at 2 bits per pixel, with 4-bit RLE.
+ *    Tiles at 1/2/4 bit per pixel, with 4-bit RLE.
+ *
+ *    This function implements the state we're in after receiving a
+ *    relevant opcode, after the RLE state-specific data has been
+ *    initialized.
+ *
+ *    We check up-front to guarantee that we have enough data
+ *    to decompress a full 16-pixel buffer. If not, we return
+ *    back to the firmware's main loop.
+ *
+ *    The worst-case amount of data we need for 16 pixels is 12 bytes.
+ *    This happens if we use the 4-bit codec, and every pair of nybbles
+ *    is followed by a repeat count of zero. We could come up with a
+ *    tighter worst-case estimate for each variant of this codec, but
+ *    12 bytes still gives us plenty of room to keep the FIFO full
+ *    ahead of us, so no need to bother. Also, the 4-bit codec is usually
+ *    the most common, so we might as well optimize for it.
+ *
+ *    If we do continue on to program a buffer of pixels to the flash,
+ *    we should return via AGAIN(), so we can test whether we can
+ *    program another buffer before exiting all the way back to
+ *    the main loop.
  */
 
-static void flash_tile_p2_r4() __naked
+static void flash_tile_r4() __naked
 {
     __asm
-    
 
-        ; To decode a full 16 pixels, we require a worst-case of 8 bytes.
-        ; Check this before every entry to the state function.
+        ; Wait until we have 12 bytes ahead of us in the FIFO.
 
         mov     a, R_BYTE_COUNT
-        anl     a, #0xF8
-        jz      1$
+        add     a, #(256-12)
+        jnc     fls_ret
 
-        AGAIN()
+        ; Guaranteed to produce 16 pixels now. Begin the buffer,
+        ; and use R_COUNT1 to count the number of pixels left.
+        ; Note that 16 pixels is always a multiple of 1 nybble,
+        ; in any of our supported bit depths.
 
-    1$: ret
+        lcall   _flash_buffer_begin
+        mov     R_COUNT1, #16
+flr4_pixel_loop:
 
-    __endasm ;
-}
+        ;---------------------------------
+        ; Assemble Nybble Runs
+        ;---------------------------------
 
+        ; fls_st[4] tells us how many copies of the nybble in fls_st[1]
+        ; need to be unpacked. If fls_st[4] is zero, we need to un-RLE
+        ; another nybble. If not, go straight to the output stage below
 
-/*
- * flash_tile_p4_r4 --
- *
- *    Tiles at 4 bits per pixel, with 4-bit RLE.
- */
+        mov     a, _fls_st+4
+        jnz     flr4_output
 
-static void flash_tile_p4_r4() __naked
-{
-    __asm
-    
+        ; Now, dequeue another nybble. This may come from the FIFO
+        ; itself or from our nybble buffer. Either way, it ends
+        ; up in the low nybble of R_BYTE.
 
-        ; To decode a full 16 pixels, we require a worst-case of 16 bytes.
-        ; Check this before every entry to the state function.
+        mov     R_BYTE, _fls_st+3       ; Assume nybble is buffered
+        cpl     _fls_bit2               ; Negate buffer status
+        jnb      _fls_bit2, 1$          ; Done if we had a nybble indeed
 
-        mov     a, R_BYTE_COUNT
-        anl     a, #0xF0
-        jz      1$
+        lcall   _flash_dequeue          ; Refill our buffer
+        swap    a                       ; Save the most significant nybble for later
+        mov     _fls_st+3, a
+1$:     
 
-        AGAIN()
+        ; Is this a run count or a normal nybble? If the last two RLE bytes
+        ; match, this is a run count and we should interpret it as such.
+        ; Otherwise, it is a run of one nybble.
 
-    1$: ret
+        mov     a, R_BYTE               ; Literal masked nybble
+        anl     a, #0xF
+        mov     _fls_st+4, a            ; Store it as a run count for now
+
+        mov     a, _fls_st+0            ; Look at the previous two nybbles.
+        xrl     a, _fls_st+1            ;    Was this a run?
+        jz      flr4_pixel_loop         ;    Yes. Go back up, to check for zero-len runs
+
+        mov     _fls_st+0, _fls_st+1    ; No. Shift this into our run buffer.
+        mov     _fls_st+1, _fls_st+4
+        mov     _fls_st+4, #1           ; Single-nybble run
+        
+        ; Fall through to output the single-nybble run...
+
+        ;---------------------------------
+        ; Output Nybble Runs
+        ;---------------------------------
+
+flr4_output:
+
+        dec     _fls_st+4               ; Pre-decrement the run counter
+
+        jb      _fls_bit1, flr4_out_4bpp
+        jb      _fls_bit0, flr4_out_2bpp
+
+        ; Fall through to 1bpp...
+
+        ;---------------------------------
+        ; Output nybble - 1 bit per pixel
+        ;---------------------------------
+
+flr4_out_1bpp:
+
+        mov     R_COUNT2, #4    ; Pixel count
+        mov     a, _fls_st+1    ; Loop begins with shift register in A
+1$:
+        mov     R_BYTE, a       ; Output least significant pixel
+        anl     a, #1
+        lcall   _flash_addr_lut
+        lcall   _flash_buffer_word
+
+        mov     a, R_BYTE       ; Next pixel
+        rr      a
+        dec     R_COUNT1
+        djnz    R_COUNT2, 1$
+
+        sjmp    flr4_next_pixel
+
+        ;---------------------------------
+        ; Output nybble - 2 bit per pixel
+        ;---------------------------------
+
+flr4_out_2bpp:
+
+        mov     R_COUNT2, #2    ; Pixel count
+        mov     a, _fls_st+1    ; Loop begins with shift register in A
+1$:
+        mov     R_BYTE, a       ; Output least significant pixel
+        anl     a, #3
+        lcall   _flash_addr_lut
+        lcall   _flash_buffer_word
+
+        mov     a, R_BYTE       ; Next pixel
+        rr      a
+        rr      a
+        dec     R_COUNT1
+        djnz    R_COUNT2, 1$
+
+        sjmp    flr4_next_pixel
+
+        ;---------------------------------
+        ; Output nybble - 4 bit per pixel
+        ;---------------------------------
+
+flr4_out_4bpp:
+
+        mov     a, _fls_st+1    ; Whole nybble is color index
+        lcall   _flash_addr_lut
+        lcall   _flash_buffer_word
+
+        dec     R_COUNT1
+
+        ; Fall through to next...
+
+        ;---------------------------------
+        ; Next pixel loop
+        ;---------------------------------
+
+flr4_next_pixel:
+
+        ; All counters have already been updated.
+        ; If we still have more pixels to go, loop up,
+        ; otherwise end this flash buffer.
+
+        mov     a, R_COUNT1
+        jnz     flr4_pixel_loop
+
+        ; Done with this buffer. If we still have more,
+        ; stay in this state. Otherwise, look for the next opcode.
+
+        lcall   _flash_buffer_commit
+        
+        djnz    _fls_st+2, 1$
+        mov     _fls_state, STATE(flst_opcode)
+1$:     ljmp    flash_loop
 
     __endasm ;
 }
@@ -613,7 +780,6 @@ static void flash_tile_p4_r4() __naked
 static void flash_tile_p16() __naked
 {
     __asm
-
 
         ; To decode a full 16 pixels, we require a worst-case of 34 bytes.
         ; Check this before every entry to the state function.
@@ -632,37 +798,7 @@ static void flash_tile_p16() __naked
 
 ////////////////////////////////////////////////////////////////////////////CRUFT
 
-
 #if 0
-
-    case FLS_OP_TILE_P1_R4:
-        counter = 64;
-        ovl.rle1 = 0xFF;
-        state = state_TILE_P1_R4;
-        STATE_RETURN();
-
-    case FLS_OP_TILE_P2_R4:
-        counter = 64;
-        ovl.rle1 = 0xFF;
-        state = state_TILE_P2_R4;
-        STATE_RETURN();
-
-    case FLS_OP_TILE_P4_R4:
-        counter = 64;
-        ovl.rle1 = 0xFF;
-        state = state_TILE_P4_R4;
-        STATE_RETURN();
-        
-    case FLS_OP_TILE_P16:
-        counter = 8;
-        state = state_TILE_P16_MASK;
-        STATE_RETURN();
-
-    default:
-        // Undefined opcode
-        STATE_RETURN();
-    }
-}
 
 static void state_TILE_P1_R4(void) __naked
 {
