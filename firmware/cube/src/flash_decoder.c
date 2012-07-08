@@ -53,7 +53,7 @@
 #define R_PTR           r1      // Used as input by flash_buffer_word()
 #define R_COUNT1        r2
 #define R_COUNT2        r3
-
+#define R_SHIFT         r4
 #define R_BYTE          r5
 #define R_BYTE_COUNT    r6
 #define R_DEADLINE      r7
@@ -83,9 +83,9 @@ volatile __bit flash_reset_request;                      // Pending reset?
  * Loadstream codec state
  */
 
-static __idata uint16_t fls_lut[FLS_LUT_SIZE + 1];      // LUT proper, plus P16 value
-static uint8_t fls_state;                               // 8-bit state machine offset
-static uint8_t fls_tail;                                // Current read location in the FIFO
+static __idata uint16_t fls_lut[FLS_LUT_SIZE];
+static uint8_t fls_state;
+static uint8_t fls_tail;
 
 // State-specific temporaries
 static uint8_t fls_st[5];
@@ -127,7 +127,7 @@ void flash_init(void)
         ; Zero out the whole LUT
 
         mov     r0, #_fls_lut
-        mov     r1, #((FLS_LUT_SIZE + 1) * 2)
+        mov     r1, #(FLS_LUT_SIZE * 2)
         clr     a
 1$:     mov     @r0, a
         inc     r0
@@ -288,8 +288,6 @@ flash_loop:
         add     a, #FLS_FIFO_SIZE
 4$:     mov     R_BYTE_COUNT, a             ; Save byte count
 
-    mov _DEBUG_REG, a
-
         setb    _global_busy_flag           ; System is definitely not idle now
 
         mov     a, R_DEADLINE               ; Check for deadline
@@ -396,7 +394,7 @@ op_tile_p4_r4:
         setb    _fls_bit1
 
 op_tile_r4:
-        lcall   _flash_tile_r4_init
+        lcall   _flash_tile_init
         NEXT(2$)
 2$:     ljmp    _flash_tile_r4
 
@@ -405,9 +403,7 @@ op_tile_r4:
         ;--------------------------------------------------------------------
 
 op_tile_p16:
-
-        ; One-time setup for this opcode
-
+        lcall   _flash_tile_init
         NEXT(1$)
 1$:     ljmp    _flash_tile_p16
 
@@ -532,9 +528,12 @@ static void flash_tile_p0() __naked
 
 
 /*
- * flash_tile_r4_init --
+ * flash_tile_init --
  *
- *    Initialization for 4-bit RLE decompression state.
+ *    Initialization for decompression state shared by all tile codes.
+ *
+ *    RLE-4
+ *    -----
  *
  *    Here, we handle all of the similar 4-bit RLE codes. They only
  *    differ in the way our final nybbles are expanded after the RLE
@@ -560,9 +559,18 @@ static void flash_tile_p0() __naked
  *       01 = 2-bit
  *       10 = 4-bit
  *       11 = not allowed
+ *
+ *    Masked 16-bit
+ *    -------------
+ *
+ *    This decoder needs less state. We can get away with sharing the same
+ *    initialization code:
+ *
+ *    fls_st[0]: (Temporary)
+ *    fls_st[2]: Count of remaining 16-pixel buffers
  */
 
-static void flash_tile_r4_init() __naked
+static void flash_tile_init() __naked
 {
     __asm
 
@@ -586,6 +594,60 @@ static void flash_tile_r4_init() __naked
 
 fls_ret:
         ret
+    __endasm ;
+}
+
+
+/*
+ * flash_tile_p16 --
+ *
+ *    Tiles at 16 bits per pixel, with an 8-bit repeat mask for each 8 pixels.
+ */
+
+static void flash_tile_p16() __naked
+{
+    __asm
+
+        ; To decode a full 16 pixels, we require a worst-case of 34 bytes.
+        ; Check this before every entry to the state function.
+
+        mov     a, R_BYTE_COUNT
+        add     a, #(256 - FLS_MIN_TILE_P16)
+        jnc     fls_ret
+
+        ; We are guaranteed to produce 16 pixels as output, which always
+        ; means we handle exactly two mask bytes with a variable number
+        ; of input pixel bytes.
+        ;
+        ; We do this with two nested loops: R_COUNT1 counts mask bytes,
+        ; and R_COUNT2 counts bits in our shift register. The shift register
+        ; itself is in R_SHIFT.
+
+        lcall   _flash_buffer_begin
+
+        mov     R_COUNT1, #2
+1$:
+        lcall   _flash_dequeue  ; Next byte is 8-bit mask
+        mov     R_SHIFT, a
+        mov     R_COUNT2, #8
+2$:
+        mov     a, R_SHIFT      ; Shift out next bit
+        rrc     a
+        mov     R_SHIFT, a
+        jnc     3$              ; Zero bit? Skip pixel load.
+
+        mov     _fls_st+0, #(_fls_lut + 15*2)   ; Load pixel from FIFO into lut[15]
+        lcall   _flash_dequeue_st1p
+        lcall   _flash_dequeue_st1p
+3$:
+
+        mov     R_PTR, #(_fls_lut + 15*2)       ; Output pixel from lut[15]
+        lcall   _flash_buffer_word  
+
+        djnz    R_COUNT2, 2$
+        djnz    R_COUNT1, 1$
+        sjmp    flr4_buffer_done
+
     __endasm ;
 }
 
@@ -766,6 +828,9 @@ flr4_next_pixel:
 
         ; Done with this buffer. If we still have more,
         ; stay in this state. Otherwise, look for the next opcode.
+        ; This code fragment is shared by P16.
+
+flr4_buffer_done:
 
         lcall   _flash_buffer_commit
         
@@ -775,232 +840,3 @@ flr4_next_pixel:
 
     __endasm ;
 }
-
-
-/*
- * flash_tile_p16 --
- *
- *    Tiles at 16 bits per pixel, with an 8-bit repeat mask for each 8 pixels.
- */
-
-static void flash_tile_p16() __naked
-{
-    __asm
-
-        ; To decode a full 16 pixels, we require a worst-case of 34 bytes.
-        ; Check this before every entry to the state function.
-
-        mov     a, R_BYTE_COUNT
-        add     a, #(256-34)
-        jnc     1$
-
-        AGAIN()
-
-1$:     ret
-
-    __endasm ;
-}
-
-
-////////////////////////////////////////////////////////////////////////////CRUFT
-
-#if 0
-
-static void state_TILE_P1_R4(void) __naked
-{
-    uint8_t nybble = byte & 0x0F;
-    uint8_t runLength;
-    nibIndex = 1;
-
-    for (;;) {
-        if (ovl.rle1 == ovl.rle2) {
-            runLength = nybble;
-            nybble = ovl.rle1 | swap(ovl.rle1);
-            ovl.rle1 = 0xF0;
-            
-            if (!runLength)
-                goto no_runs;
-            
-            runLength = rl(runLength);
-            runLength = rl(runLength);
-            counter -= runLength;
-            
-        } else {
-            runLength = 4;
-            counter -= 4;
-            ovl.rle2 = ovl.rle1;
-            ovl.rle1 = nybble;
-        }
-
-        do {
-            uint8_t idx = nybble & 1;
-            flash_program_word(lut.colors[idx].word);
-            nybble = rr(nybble);
-        } while (--runLength);
-
-    no_runs:
-        if (!counter || (counter & 0x80))
-            if (opcode & FLS_ARG_MASK) {
-                opcode--;
-                counter += 64;
-            } else {
-                state = state_OPCODE;
-                STATE_RETURN();
-            }
-        if (!nibIndex)
-            STATE_RETURN();
-        nibIndex = 0;
-        nybble = byte >> 4;
-    }
-}
-                
-static void state_TILE_P2_R4(void) __naked
-{
-    uint8_t nybble = byte & 0x0F;
-    uint8_t runLength;
-    nibIndex = 1;
-    
-    for (;;) {
-        if (ovl.rle1 == ovl.rle2) {
-            runLength = nybble;
-            nybble = ovl.rle1 | swap(ovl.rle1);
-            ovl.rle1 = 0xF0;
-            
-            if (!runLength)
-                goto no_runs;
-            
-            runLength = rl(runLength);
-            counter -= runLength;
-            
-        } else {
-            runLength = 2;
-            counter -= 2;
-            ovl.rle2 = ovl.rle1;
-            ovl.rle1 = nybble;
-        }
-        
-        do {
-            uint8_t idx = nybble & 3;
-            flash_program_word(lut.colors[idx].word);
-            nybble = rr(nybble);
-            nybble = rr(nybble);
-        } while (--runLength);
-
-    no_runs:
-        if (!counter || (counter & 0x80))
-            if (opcode & FLS_ARG_MASK) {
-                opcode--;
-                counter += 64;
-            } else {
-                state = state_OPCODE;
-                STATE_RETURN();
-            }
-        if (!nibIndex)
-            STATE_RETURN();
-        nibIndex = 0;
-        nybble = byte >> 4;
-    }
-}
-
-static void state_TILE_P4_R4(void) __naked
-{
-    uint8_t nybble = byte & 0x0F;
-    register uint8_t runLength;
-    nibIndex = 1;
-
-    for (;;) {
-       if (ovl.rle1 == ovl.rle2) {
-           counter -= (runLength = nybble);
-           nybble = ovl.rle1;
-           ovl.rle1 = 0xF0;
-           
-           if (!runLength)
-               goto no_runs;
-
-       } else {
-           runLength = 1;
-           counter --;
-           ovl.rle2 = ovl.rle1;
-           ovl.rle1 = nybble;
-       }
-
-       {
-           register uint16_t color = lut.colors[nybble].word;
-           do {
-               flash_program_word(color);
-           } while (--runLength);
-       }
-    
-    no_runs:
-       if (!counter || (counter & 0x80))
-           if (opcode & FLS_ARG_MASK) {
-               opcode--;
-               counter += 64;
-           } else {
-               state = state_OPCODE;
-               STATE_RETURN();
-           }
-       if (!nibIndex)
-           STATE_RETURN();
-       nibIndex = 0;
-       nybble = byte >> 4;
-    }
-}
-
-#define P16_EMIT_RUNS() {                       \
-        do {                                    \
-            if (ovl.rle1 & 1) {                 \
-                state = state_TILE_P16_LOW;     \
-                STATE_RETURN();                 \
-            }                                   \
-            flash_program_word(lut.p16.word);   \
-            ovl.rle1 = rr(ovl.rle1);            \
-        } while (--ovl.rle2);                   \
-    }
-
-#define P16_NEXT_MASK() {                       \
-        if (--counter) {                        \
-            state = state_TILE_P16_MASK;        \
-        } else if (opcode & FLS_ARG_MASK) {     \
-            opcode--;                           \
-            counter = 8;                        \
-            state = state_TILE_P16_MASK;        \
-        } else {                                \
-            state = state_OPCODE;               \
-        }                                       \
-    }
-
-static void state_TILE_P16_MASK(void) __naked
-{
-    ovl.rle1 = byte;  // Mask byte for the next 8 pixels
-    ovl.rle2 = 8;     // Remaining pixels in mask
-    
-    P16_EMIT_RUNS();
-    P16_NEXT_MASK();
-    STATE_RETURN();
-}
-
-static void state_TILE_P16_LOW(void) __naked
-{
-    lut.p16.low = byte;
-    state = state_TILE_P16_HIGH;
-    STATE_RETURN();
-}
-
-static void state_TILE_P16_HIGH(void) __naked
-{
-    lut.p16.high = byte;
-    flash_program_word(lut.p16.word);
-
-    if (--ovl.rle2) {
-        // Still more pixels in this mask.
-        ovl.rle1 = rr(ovl.rle1);
-
-        P16_EMIT_RUNS();
-    }
-
-    P16_NEXT_MASK();
-    STATE_RETURN();
-}
-
-#endif
