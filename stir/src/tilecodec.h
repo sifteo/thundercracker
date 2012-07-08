@@ -156,7 +156,6 @@ class TileCodec {
     unsigned tileCount;
     TileCodecLUT lut;
     RLECodec4 rle;
-    uint32_t p16run;
     unsigned paddedOutputMin;
     FlashAddress currentAddress;
 

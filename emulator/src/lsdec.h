@@ -72,7 +72,6 @@ private:
     // Codec state
     uint32_t flashAddr;
     uint16_t lut[LUT_SIZE];
-    uint16_t p16run;
     uint16_t lutVector;
     uint8_t opcode;
     uint8_t state;

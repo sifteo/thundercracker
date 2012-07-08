@@ -277,7 +277,7 @@ void LoadstreamDecoder::handleByte(uint8_t byte)
                 state = S_TILE_P16_LOW;
                 return;
             }
-            write16(p16run);
+            write16(lut[15]);
             rle1 = (rle1 >> 1) | (rle1 << 7);
         } while (--rle2);
 
@@ -303,7 +303,7 @@ void LoadstreamDecoder::handleByte(uint8_t byte)
     }
 
     case S_TILE_P16_HIGH: {
-        p16run = partial | (byte << 8);
+        lut[15] = partial | (byte << 8);
         write8(byte);
 
         if (--rle2) {

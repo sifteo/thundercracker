@@ -164,7 +164,7 @@ void RLECodec4::encodeRun(std::vector<uint8_t>& out, bool terminal)
 
 TileCodec::TileCodec(std::vector<uint8_t>& buffer)
     : out(buffer), opIsBuffered(false), 
-      tileCount(0), p16run(0xFFFFFFFF),
+      tileCount(0),
       paddedOutputMin(0), currentAddress(0),
       statBucket(TilePalette::CM_INVALID)
 {
@@ -379,7 +379,9 @@ void TileCodec::encodeTileMasked16(const TileRef tile)
      * We emit rows which begin with an 8-bit mask, containing between
      * 0 and 8 pixel values. A '1' bit in the mask corresponds to a
      * new pixel value, and a '0' is copied from the previous
-     * value. Color runs may persist across the entire load stream.
+     * value.
+     *
+     * The "current" color for P16 is stored in entry [15] in the LUT.
      */
 
     for (unsigned y = 0; y < Tile::SIZE; y++) {
@@ -390,9 +392,9 @@ void TileCodec::encodeTileMasked16(const TileRef tile)
             reservePadding(FLS_MIN_TILE_P16);
 
         for (unsigned x = 0; x < Tile::SIZE; x++)
-            if (tile->pixel(x, y).value != p16run) {
+            if (tile->pixel(x, y) != lut.colors[15]) {
                 mask |= 1 << x;
-                p16run = tile->pixel(x, y).value;
+                lut.colors[15] = tile->pixel(x, y);
             }
 
         dataBuf.push_back(mask);
