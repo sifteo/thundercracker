@@ -624,7 +624,7 @@ static void flash_tile_r4() __naked
         ; Wait until we have 12 bytes ahead of us in the FIFO.
 
         mov     a, R_BYTE_COUNT
-        add     a, #(256-12)
+        add     a, #(256 - FLS_MIN_TILE_R4)
         jnc     fls_ret
 
         ; Guaranteed to produce 16 pixels now. Begin the buffer,
