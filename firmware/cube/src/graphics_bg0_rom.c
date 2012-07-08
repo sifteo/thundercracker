@@ -108,16 +108,24 @@ static void vm_bg0_rom_next_tile(void) __naked __using(GFX_BANK)
         mov     a, r0
         anl     a, #0xf0                ; Mask off four palette-select bits
         xrl     a, r3                   ;    Compare with r3
-        jz      1$                      ;    Palette has not changed
+        jz      bg0_pal_ident           ;    Palette has not changed
         xrl     a, r3                   ;    Make this the new current palette
         mov     r3, a
 
         mov     psw, #(GFX_BANK << 3)
         mov     dptr, #_rom_palettes
 
+        ; Hint the static analyzer to always assue we have no palette change.
+        ; The generated code uses no stack space and has no control flow
+        ; changes other than a return.
+        ;
+        ; NOTE dyn_branch bg0_pal_jmp bg0_pal_ident
+        
+bg0_pal_jmp:
         jmp     @a+dptr                 ; Tail call to generated code, loads r0-r7.
         
-1$:     ret                             ; No palette change
+bg0_pal_ident:
+        ret                             ; No palette change
 
     __endasm ; 
 }

@@ -340,8 +340,10 @@ rx_loop:                                        ; Fetch the next byte or nybble
         ; If that is not enough, you can put less frequently
         ; used sections of code elsewhere, and ljmp to them.
 
+        ; NOTE dyn_branch rx_j rxs_
+
         mov     a, R_STATE
-        jmp     @a+dptr 
+rx_j:   jmp     @a+dptr 
 
         ;-------------------------------------------
         ; 4-bit diff (continued from below)
@@ -423,19 +425,19 @@ rxs_literal:
         anl     a, #0xF
         mov     R_LOW, a        ; Store into R_LOW, as 0000xxxx
 
-        mov     R_STATE, #(19$ - rxs_default)
+        mov     R_STATE, #(rxs_l1 - rxs_default)
         sjmp    rx_next_sjmp
 
-19$:
+rxs_l1:
         mov     a, R_INPUT
         swap    a
         anl     a, #0xF0
         orl     AR_LOW, a       ; Add to R_LOW, as xxxx0000
 
-        mov     R_STATE, #(20$ - rxs_default)
+        mov     R_STATE, #(rxs_l2 - rxs_default)
         sjmp    rx_next_sjmp
 
-20$:
+rxs_l2:
         mov     _DPS, #1        ; Switch to VRAM DPTR
 
         clr     c               ; Shift a zero into R_LOW, and MSB into C
@@ -546,10 +548,10 @@ rxs_word9:
         anl     a, #0xF         ; Store bits 4321
         mov     R_LOW, a
 
-        mov     R_STATE, #(21$ - rxs_default)
+        mov     R_STATE, #(rxs_w6 - rxs_default)
         sjmp    rx_next_sjmp2
 
-21$:
+rxs_w6:
         mov     a, R_INPUT
         swap    a               ; Store bits 8765
         anl     a, #0xF0
@@ -571,37 +573,37 @@ rx_not_word9:
 
         ; -------- 0011 0010 xxxx xxxx xxxx xxxx -- Write literal 16-bit word
 
-        jb      acc.0, 22$
+        jb      acc.0, rxs_w5
 
-        mov     R_STATE, #(23$ - rxs_default)
+        mov     R_STATE, #(rxs_w1 - rxs_default)
         sjmp    rx_next_sjmp2
 
-23$:
+rxs_w1:
         mov     a, R_INPUT
         anl     a, #0xF
         mov     R_LOW, a        ; Store bits 3210
 
-        mov     R_STATE, #(24$ - rxs_default)
+        mov     R_STATE, #(rxs_w2 - rxs_default)
         sjmp    rx_next_sjmp2
 
-24$:
+rxs_w2:
         mov     a, R_INPUT
         anl     a, #0xF
         swap    a
         orl     AR_LOW, a       ; Store bits 7654
 
-        mov     R_STATE, #(25$ - rxs_default)
+        mov     R_STATE, #(rxs_w3 - rxs_default)
         sjmp    rx_next_sjmp2
 
-25$:
+rxs_w3:
         mov     a, R_INPUT
         anl     a, #0xF
         mov     R_HIGH, a       ; Store bits ba98
 
-        mov     R_STATE, #(26$ - rxs_default)
+        mov     R_STATE, #(rxs_w4 - rxs_default)
         sjmp    rx_next_sjmp2
 
-26$:
+rxs_w4:
         mov     a, R_INPUT
         anl     a, #0xF
         swap    a
@@ -623,7 +625,7 @@ rx_not_word9:
         mov     R_STATE, #0     ; Back to default state
         sjmp    rx_next_sjmp2
 
-22$:
+rxs_w5:
 
         ; -------- 0011 0011 -- Escape to flash mode
 

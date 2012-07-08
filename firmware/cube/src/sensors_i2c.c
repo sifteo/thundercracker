@@ -56,7 +56,7 @@ void spi_i2c_isr(void) __interrupt(VECTOR_SPI_I2C) __naked
 
         mov     dptr, #_i2c_state_fn    ; Call the state handler
         mov     a, _i2c_state
-        lcall   jmp_indirect
+        lcall   i2c_j
         mov     _i2c_state, a           ; Returns next state
 
         ; Return from IRQ. We get called back after the next byte finishes.
@@ -76,6 +76,9 @@ void spi_i2c_isr(void) __interrupt(VECTOR_SPI_I2C) __naked
         orl     _W2CON0, #W2CON0_STOP  
         mov     _i2c_state, #(as_nop - _i2c_state_fn)
         sjmp    #1$
+
+        ; Static analysis NOTE dyn_branch i2c_j [atf]s_[0-9]
+i2c_j:  jmp     @a+dptr
 
     __endasm ;
 }

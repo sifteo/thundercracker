@@ -295,10 +295,11 @@ flash_loop:
 3$:     ret
 2$:
 
-        ; Branch to state handler
+        ; Branch to state handler. All of our states are of the form flst_*
+        ; NOTE dyn_branch fls_j flst_
 
         mov     a, _fls_state
-        jmp     @a+dptr 
+fls_j:  jmp     @a+dptr 
 
     __endasm ;
 }
@@ -328,14 +329,16 @@ static void flash_state_fn() __naked
         ; Opcode Lookup Table
         ;--------------------------------------------------------------------
 
-        sjmp    op_lut1         ; 0x00
-        sjmp    op_lut16        ; 0x20
-        sjmp    op_tile_p0      ; 0x40
-        sjmp    op_tile_p1_r4   ; 0x60
-        sjmp    op_tile_p2_r4   ; 0x80
-        sjmp    op_tile_p4_r4   ; 0xa0
-        sjmp    op_tile_p16     ; 0xc0
-        sjmp    op_special_t    ; 0xe0
+        ; NOTE dyn_branch flo_j flop_
+
+flop_0: sjmp    op_lut1         ; 0x00
+flop_1: sjmp    op_lut16        ; 0x20
+flop_2: sjmp    op_tile_p0      ; 0x40
+flop_3: sjmp    op_tile_p1_r4   ; 0x60
+flop_4: sjmp    op_tile_p2_r4   ; 0x80
+flop_5: sjmp    op_tile_p4_r4   ; 0xa0
+flop_6: sjmp    op_tile_p16     ; 0xc0
+flop_7: sjmp    op_special_t    ; 0xe0
 
         ;--------------------------------------------------------------------
         ; Opcode Dispatch (DEFAULT STATE)
@@ -346,7 +349,7 @@ flst_opcode:
         lcall   _flash_dequeue      ; Consume opcode byte
         swap    a                   ; Directly convert to an offset in our LUT
         anl     a, #0x0E
-        jmp     @a+dptr
+flo_j:  jmp     @a+dptr
 
         ;--------------------------------------------------------------------
         ; Opcode: LUT1
@@ -358,10 +361,10 @@ op_lut1:
         lcall   _flash_addr_lut         ; Point to LUT entry from opcode argument
         mov     _fls_st+0, a
 
-        NEXT(1$)
-1$:     lcall   _flash_dequeue_st1p     ; Store low byte
-        NEXT(2$)
-2$:     lcall   _flash_dequeue_st1p     ; Store high byte
+        NEXT(flst_1)
+flst_1: lcall   _flash_dequeue_st1p     ; Store low byte
+        NEXT(flst_2)
+flst_2: lcall   _flash_dequeue_st1p     ; Store high byte
 
 flst_opcode_n:
         NEXT(flst_opcode)
@@ -395,8 +398,8 @@ op_tile_p4_r4:
 
 op_tile_r4:
         lcall   _flash_tile_init
-        NEXT(2$)
-2$:     ljmp    _flash_tile_r4
+        NEXT(flst_3)
+flst_3: ljmp    _flash_tile_r4
 
         ;--------------------------------------------------------------------
         ; Opcode: TILE_P16
@@ -404,8 +407,8 @@ op_tile_r4:
 
 op_tile_p16:
         lcall   _flash_tile_init
-        NEXT(1$)
-1$:     ljmp    _flash_tile_p16
+        NEXT(flst_4)
+flst_4: ljmp    _flash_tile_p16
 
         ;--------------------------------------------------------------------
         ; Trampolines
@@ -429,13 +432,13 @@ op_lut16:
         ; with the write pointer in fls_st[0].
 
         mov     _fls_st, #_fls_st+1
-        NEXT(1$)
-1$:     lcall   _flash_dequeue_st1p
-        NEXT(2$)
-2$:     lcall   _flash_dequeue_st1p
+        NEXT(flst_5)
+flst_5: lcall   _flash_dequeue_st1p
+        NEXT(flst_6)
+flst_6: lcall   _flash_dequeue_st1p
         mov     _fls_st, #_fls_lut          ; Write to beginning of LUT
-        NEXT(3$)
-3$:
+        NEXT(flst_7)
+flst_7:
 
         ; In this state, we iterate over the LUT, consuming bytes any time
         ; there is a corresponding bit set in the bitmap. 
@@ -452,12 +455,12 @@ op_lut16:
         inc     _fls_st
         AGAIN()
 
-        ; C=1, read two bytes then back to this state.
+        ; C=1, read two bytes then back
 
 5$:     lcall   _flash_dequeue_st1p
-        NEXT(6$)
-6$:     lcall   _flash_dequeue_st1p
-        NEXT(3$)
+        NEXT(flst_8)
+flst_8: lcall   _flash_dequeue_st1p
+        NEXT(flst_7)
 
         ;--------------------------------------------------------------------
         ; Opcode: SPECIAL
@@ -474,13 +477,13 @@ op_special:
 
         mov     _flash_addr_low, #0
 
-        NEXT(1$)
-1$:     lcall   _flash_dequeue
+        NEXT(flst_9)
+flst_9: lcall   _flash_dequeue
         anl     a, #0xfe                ; Must keep LSB clear
         mov     _flash_addr_lat1, a
 
-        NEXT(2$)
-2$:     lcall   _flash_dequeue
+        NEXT(flst_A)
+flst_A: lcall   _flash_dequeue
         rrc     a
         mov     _flash_addr_a21, c
         clr     c                       ; Keep LSB clear here too

@@ -49,9 +49,11 @@ __start__stack:
         .ds     1
 
         ; Emit code at the beginning of code space, in the IVT area.
+        ; The NOTE lines below are handled specially by the static analyzer.
+
         .area   HOME (CODE)
 
-v_0000: ; ============= 0x0000 - Reset
+v_0000: ; ============= NOTE vector 0x0000 __start__stack - Reset
 
         mov     sp, #(__start__stack - 1)       ; Init stack
         clr     a                               ; IRAM clear loop
@@ -61,7 +63,7 @@ v_0000: ; ============= 0x0000 - Reset
         sjmp    init_1
         .ds     1
 
-v_000b: ; ============= 0x000b - TF0
+v_000b: ; ============= NOTE vector 0x000b 2 - TF0
         ljmp    _tf0_isr
 
 init_1:
@@ -71,7 +73,7 @@ init_1:
         sjmp    init_2
         .ds     2
 
-v_001b: ; ============= 0x001b - TF1
+v_001b: ; ============= NOTE vector 0x001b 2 - TF1
         ljmp    _tf1_isr
 
 init_2:
@@ -82,17 +84,17 @@ init_2:
         sjmp    init_3
         .ds     1
 
-v_002b: ; ============= 0x002b - TF2
+v_002b: ; ============= NOTE vector 0x002b 2 - TF2
         ljmp    _tf2_isr
 
         .ds 29                      ; Reserved for now
 
-v_004b: ; ============= 0x004b - Radio
+v_004b: ; ============= NOTE vector 0x004b 2 - Radio
         ljmp    _radio_isr
 
         .ds 5
 
-v_0053: ; ============= 0x0053 - SPI/I2C
+v_0053: ; ============= NOTE vector 0x0053 2 - SPI/I2C
         ljmp    _spi_i2c_isr
 
 init_3:

@@ -10,8 +10,10 @@
 import binascii
 import os.path
 import re
+import struct
 
 ROM_SIZE = 1024 * 16
+
 
 class RSTParser:
     """Read one or more .rst files, and separate their contents out into
@@ -25,8 +27,10 @@ class RSTParser:
         self.symbols = {}           # Map symbol name to address
         self.byteModule = {}        # For each byte, tracks the module that owns that byte
         self.patchedAddrs = {}      # Tracks instruction addresses that are being patched
+        self.notes = []             # Raw list of NOTEs found in the source
+        self.lines = {}             # Raw RST lines, indexed by address
         self.contDataAddr = None
-        
+
     def parseFile(self, filename):
         module = os.path.split(filename)[-1]
         for line in open(filename, 'r'):
@@ -45,11 +49,32 @@ class RSTParser:
         addr = self.symbols[name]
         return (addr >> 8, addr & 0xFF)
 
+    def sym(self, name):
+        """Returns the value of a name, which may be a symbol or
+           a literal integer in any supported base.
+           """
+        try:
+            return self.symbols[name]
+        except KeyError:
+            return int(name, 0)
+
+    def symRegex(self, r):
+        """Run a regex over our symbol table, returning a list
+           of addresses, one for each symbol that matches.
+           """
+        r = re.compile(r)
+        l = []
+        for name, addr in self.symbols.iteritems():
+            if r.match(name):
+                l.append(addr)
+        return l
+
     def parseLine(self, line, module=None):
         address = line[3:7].strip()
         bytes = line[8:27].replace(' ', '').strip()
-        text = line[32:].strip().split(';', 1)[0]
+        text, comment = (line[32:].strip().split(';', 1) + [''])[:2]
         tokens = text.split()
+        ctokens = comment.split()
 
         # Is this continued data?
         if self.contDataAddr and not (address or text):
@@ -58,7 +83,15 @@ class RSTParser:
             self.contDataAddr = self.contDataAddr + len(b)
         else:
             self.contDataAddr = None
-                
+
+        # Does this have an address?
+        if bytes and address:
+            self.lines[int(address,16)] = line
+
+        # Notes in the comments?
+        if 'NOTE' in ctokens:
+            self.notes.append(tuple(ctokens[ctokens.index('NOTE')+1:]))
+
         # Normal lines
         if tokens:
      
@@ -144,7 +177,165 @@ class RSTParser:
             self.byteModule[address] = module
             address += 1
 
-  
+
+class CallGraph:
+    """Static call graph analyzer, with static stack-size calculation.
+       This follows all execution paths starting from each 'root'. Each
+       path is represented as a tuple of addresses, starting with the
+       root and including each function call-site address.
+
+       To make this static analysis tractable, we have a
+       few special requirements:
+
+       - No monkeying with the stack in any way aside from push/pop/call/ret.
+       - All dynamic branches must have their destinations annotated.
+       - For any possible way to reach the same path, the stack pointer
+         will be identical.
+
+       We generate a memo which maps (path, addr) to a stack pointer value.
+       """
+    def __init__(self, parser):
+        self.p = parser
+        self.opTable = opcodeTable()
+        self.memo = {}
+        self.roots = self.findRoots(parser.notes)
+        self.dynBranchInfo = self.makeDynBranchInfo(parser.notes)
+        self.unvisited = dict(self.p.instructions)
+
+        for (root, sp) in self.roots:
+            self.visit((root,), root, sp)
+
+        if self.unvisited:
+            raise ValueError("Found %d instructions not visited by static analyzer:\n%s" %
+                (len(self.unvisited), ''.join(parser.lines[a] for a in self.unvisited.keys())))
+
+    def findDeepest(self):
+        """Return the highest SP for each root, as dictionary of (path, sp) tuples,
+           keyed by root address.
+           """
+        results = {}
+        for (path, addr), sp in self.memo.iteritems():
+            root = path[0]
+            if root not in results or results[root][1] < sp:
+                results[root] = (path, sp)
+        return results
+
+    def findRoots(self, notes):
+        # Find all of the notes of the form:
+        #
+        #   NOTE vector <addr> <initial SP>
+
+        roots = []
+        for note in notes:
+            if note and note[0] == 'vector':
+                addr = self.p.sym(note[1])
+                sp = self.p.sym(note[2])
+                roots.append((addr, sp))
+
+        if not roots:
+            raise ValueError("No 'vector' annotations found")
+        return roots
+
+    def makeDynBranchInfo(self, notes):
+        # Create a dictinary of targets for each dynamic branch, using annotations
+        # from the source code. This looks for notes of the form:
+        #
+        #   NOTE dyn_branch <src> <dests>
+        #
+        # Where 'src' is a symbol name, and 'dests' is a regex which matches
+        # at least one symbol name.
+
+        d = {}
+        for note in notes:
+            if note and note[0] == 'dyn_branch':
+                src = self.p.symbols[note[1]]
+                dests = self.p.symRegex(note[2])
+                if not dests:
+                    raise ValueError("Regex %r matched no symbols" % note[2])
+                d[src] = dests
+
+        return d
+
+    def visit(self, path, addr, sp):
+        while True:
+            # Memoize this path/addr combination
+            key = (path, addr)
+            if key not in self.memo:
+                self.memo[key] = sp
+            elif self.memo[key] != sp:
+                raise ValueError("Multiple SP values %r at %r" % ((self.memo[key], sp), key))
+            else:
+                return
+
+            # Remember which instructions we've hit
+            if addr in self.unvisited:
+                del self.unvisited[addr]
+
+            # Decode the instruction
+            bytes = self.p.instructions[addr][0]
+            mnemonic = self.opTable[bytes[0]]
+            target_next = addr + len(bytes)
+            target_rel = target_next + signed8(bytes[-1])
+            target_imm11 = (addr & 0xF800) | ((bytes[0] >> 5) << 8) | bytes[-1]
+            if len(bytes) == 3:
+                target_imm16 = (bytes[1] << 8) | bytes[2]
+
+            #print "%04x %-20s -- sp=%02x path=%s" % (addr, mnemonic, sp, ', '.join("%04x" % a for a in path))
+
+            # Dynamic branch
+            if mnemonic == 'jmp_indir_a_dptr':
+                if addr not in self.dynBranchInfo:
+                    raise ValueError("Unannotated dynamic branch at %04x" % addr)
+                for target in self.dynBranchInfo[addr]:
+                    self.visit(path, target, sp)
+                return
+
+            # Unconditional jumps
+            if mnemonic == 'sjmp_offset':
+                return self.visit(path, target_rel, sp)
+            if mnemonic == 'ljmp_address':
+                return self.visit(path, target_imm16, sp)
+            if mnemonic == 'ajmp_offset':
+                return self.visit(path, target_imm11, sp)
+
+            # Function return
+            if 'ret' in mnemonic:
+                return
+
+            # Function call (Recurse into function, then return)
+            if mnemonic == 'acall_offset':
+                self.visit(path + (addr,), target_imm11, sp+2)
+                addr = target_next
+                continue
+            if mnemonic == 'lcall_address':
+                self.visit(path + (addr,), target_imm16, sp+2)
+                addr = target_next
+                continue
+
+            # Conditional jumps (Evaluate both paths)
+            if 'j' in mnemonic:
+                self.visit(path, target_rel, sp)
+                addr = target_next
+                continue
+
+            # Stack modification
+            if 'push' in mnemonic:
+                addr = target_next
+                sp = sp + 1
+                continue
+            if 'pop' in mnemonic:
+                addr = target_next
+                sp = sp - 1
+                continue
+
+            # All other instructions are non-branching
+            addr = target_next
+
+
+def signed8(b):
+    return struct.unpack('b', struct.pack('B', b))[0]
+
+
 def opcodeTable():
     t = {}
     for i in range(8):
