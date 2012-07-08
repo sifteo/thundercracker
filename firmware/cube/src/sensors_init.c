@@ -14,14 +14,13 @@
 #include "sensors.h"
 #include "sensors_i2c.h"
 #include "sensors_nb.h"
-#include "sensors_touch.h"
 
 volatile uint8_t sensor_tick_counter;
 volatile uint8_t sensor_tick_counter_high;
 
 uint8_t nb_bits_remaining;
 uint8_t nb_buffer[2];
-uint8_t nb_tx_packet[2];
+uint8_t nb_tx_id;
 
 __bit nb_tx_mode;
 __bit nb_rx_mask_state0;
@@ -29,22 +28,6 @@ __bit nb_rx_mask_state1;
 __bit nb_rx_mask_state2;
 __bit nb_rx_mask_bit0;
 __bit touch;
-
-#ifdef DEBUG_NBR
-	uint8_t __idata nbr_data[4];
-	uint8_t	nbr_temp;
-	uint8_t __idata nbr_data_valid[2];
-	uint8_t __idata nbr_data_invalid[2];
-#endif
-
-#ifdef DEBUG_TOUCH
-    uint8_t touch_count;
-#endif
-
-#ifdef TOUCH_DEBOUNCE
-    uint8_t touch_on;
-    uint8_t touch_off;
-#endif
 
 
 static void i2c_tx(const __code uint8_t *buf)
@@ -247,17 +230,7 @@ void sensors_init()
      *
      * The format of first byte is: "1 1 1 id[4] id[3] id[2] id[1] id[0]"
      * The format of second byte is: "/id[4] /id[3] /id[2] /id[1] /id[0] 0 0 0"
-     *
      */
 
-    nb_tx_packet[0] = 0xE0 | radio_get_cube_id();
-    nb_tx_packet[1] = (~nb_tx_packet[0])<<3;
-
-    /*
-     * Initialize touch detection
-     */
-    #ifdef TOUCH_DEBOUNCE
-        touch_on = TOUCH_DEBOUNCE_ON;
-        touch_off = TOUCH_DEBOUNCE_OFF;
-    #endif
+    nb_tx_id = 0xE0 | radio_get_cube_id();
 }
