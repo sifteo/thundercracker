@@ -119,6 +119,9 @@ void LoadstreamDecoder::handleByte(uint8_t byte)
         case OP_SPECIAL:
             switch (opcode) {
 
+            case OP_NOP:
+                return;
+
             case OP_ADDRESS:
                 state = S_ADDR_LOW;
                 return;

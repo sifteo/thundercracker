@@ -48,6 +48,8 @@ private:
     static const uint8_t OP_TILE_P4_R4  = 0xa0;
     static const uint8_t OP_TILE_P16    = 0xc0;
     static const uint8_t OP_SPECIAL     = 0xe0;
+
+    static const uint8_t OP_NOP         = 0xe0;
     static const uint8_t OP_ADDRESS     = 0xe1;
 
     // State machine states
