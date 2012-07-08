@@ -113,9 +113,9 @@ def stackAnalysis(p):
     cg = FirmwareLib.CallGraph(p)
     total = 0
 
-    for vector, (path, sp) in cg.findDeepest().iteritems():
+    for group, (path, sp) in cg.findDeepest().iteritems():
         total = total + sp
-        print "\n  Vector [%04x], 0x%02x bytes with path:" % (vector, sp)
+        print "\n  Group %s, 0x%02x bytes with path:" % (group, sp)
         for node in path:
             print "    %s" % p.lines[node].strip().expandtabs()
 

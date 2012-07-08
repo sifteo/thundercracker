@@ -202,7 +202,7 @@ class CallGraph:
         self.dynBranchInfo = self.makeDynBranchInfo(parser.notes)
         self.unvisited = dict(self.p.instructions)
 
-        for (root, sp) in self.roots:
+        for (root, sp, _) in self.roots:
             self.visit((root,), root, sp)
 
         if self.unvisited:
@@ -210,27 +210,34 @@ class CallGraph:
                 (len(self.unvisited), ''.join(parser.lines[a] for a in self.unvisited.keys())))
 
     def findDeepest(self):
-        """Return the highest SP for each root, as dictionary of (path, sp) tuples,
-           keyed by root address.
+        """Return the highest SP for each priority grouping, as dictionary
+           of (path, sp) tuples keyed by group name.
            """
+
+        rootToGroup = {}
+        for addr, sp, group in self.roots:
+            rootToGroup[addr] = group
+
         results = {}
         for (path, addr), sp in self.memo.iteritems():
             root = path[0]
-            if root not in results or results[root][1] < sp:
-                results[root] = (path, sp)
+            group = rootToGroup[root]
+            if group not in results or results[group][1] < sp:
+                results[group] = (path, sp)
         return results
 
     def findRoots(self, notes):
         # Find all of the notes of the form:
         #
-        #   NOTE vector <addr> <initial SP>
+        #   NOTE vector <addr> <initial SP> <priority grouping>
 
         roots = []
         for note in notes:
             if note and note[0] == 'vector':
                 addr = self.p.sym(note[1])
                 sp = self.p.sym(note[2])
-                roots.append((addr, sp))
+                group = note[3]
+                roots.append((addr, sp, group))
 
         if not roots:
             raise ValueError("No 'vector' annotations found")

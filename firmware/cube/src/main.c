@@ -53,28 +53,39 @@ __start__stack:
 
         .area   HOME (CODE)
 
-v_0000: ; ============= NOTE vector 0x0000 __start__stack - Reset
+        ;---------------------------------
+        ; Reset Vector
+        ;---------------------------------
 
+v_0000:
         mov     sp, #(__start__stack - 1)       ; Init stack
         clr     a                               ; IRAM clear loop
         mov     r0, a
 1$:     mov     @r0, a
         djnz    r0, 1$
         sjmp    init_1
+
         .ds     1
 
-v_000b: ; ============= NOTE vector 0x000b 2 - TF0
-        ljmp    _tf0_isr
+        ;---------------------------------
+        ; TF0 Vector
+        ;---------------------------------
+
+v_000b: ljmp    _tf0_isr
 
 init_1:
         lcall   _power_init         ; Start subsystem init sequence
         lcall   _radio_init
         lcall   _flash_init
         sjmp    init_2
+
         .ds     2
 
-v_001b: ; ============= NOTE vector 0x001b 2 - TF1
-        ljmp    _tf1_isr
+        ;---------------------------------
+        ; TF1 Vector
+        ;---------------------------------
+
+v_001b: ljmp    _tf1_isr
 
 init_2:
         lcall   _sensors_init       ; Subsystem init, continued
@@ -82,20 +93,30 @@ init_2:
         setb    _IEN_EN             ; Global interrupt enable (subsystem init done)
         setb    _RF_CE              ; Radio enable
         sjmp    init_3
+
         .ds     1
 
-v_002b: ; ============= NOTE vector 0x002b 2 - TF2
-        ljmp    _tf2_isr
+        ;---------------------------------
+        ; TF2 Vector
+        ;---------------------------------
+
+v_002b: ljmp    _tf2_isr
 
         .ds 29                      ; Reserved for now
 
-v_004b: ; ============= NOTE vector 0x004b 2 - Radio
-        ljmp    _radio_isr
+        ;---------------------------------
+        ; Radio Vector
+        ;---------------------------------
+
+v_004b: ljmp    _radio_isr
 
         .ds 5
 
-v_0053: ; ============= NOTE vector 0x0053 2 - SPI/I2C
-        ljmp    _spi_i2c_isr
+        ;---------------------------------
+        ; SPI/I2C Vector
+        ;---------------------------------
+
+v_0053: ljmp    _spi_i2c_isr
 
 init_3:
 
