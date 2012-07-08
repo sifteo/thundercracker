@@ -14,7 +14,7 @@
 #include "flash.h"
 #include "params.h"
 #include "battery.h"
-#include "demo.h"
+#include "disconnected.h"
 
 __bit global_busy_flag;
 
@@ -101,40 +101,40 @@ init_3:
 
     __endasm ;
 
-    // XXX
-    demo();
-
-    /*
+    /**********************************************************************
      * Main Loop
-     */
+     **********************************************************************/
 
-    while (1) {
-        // Reset watchdog ONLY in main loop!
-        #ifndef DISABLE_WDT
-            power_wdt_set();
-        #endif
+    // XXX: Will go into main loop later
+    disconnected_screen();
 
-        /*
-         * Main tasks
-         */
+    __asm
+_graphics_render_ret::
 
-        global_busy_flag = 0;
+        ; Reset watchdog ONLY in main loop!
+        __endasm; power_wdt_set(); __asm
         
-        graphics_render();
-        graphics_ack();
+        ;---------------------------------
+        ; Idle-only Tasks
+        ;---------------------------------
 
-        flash_handle_fifo();
+        jb      _global_busy_flag, 1$
+
+        lcall   _battery_poll
+
+1$:     clr     _global_busy_flag
+
+        ;---------------------------------
+        ; Main Tasks
+        ;---------------------------------
+
+        lcall   _flash_handle_fifo
+
         #ifndef DISABLE_SLEEP
-            power_idle_poll();
+            __endasm; power_idle_poll(); __asm
         #endif
 
-        /*
-         * Idle-only tasks
-         */
-        
-        if (global_busy_flag)
-            continue;
-        
-        battery_poll();
-    }
+        ljmp    _graphics_render
+
+    __endasm ;
 }

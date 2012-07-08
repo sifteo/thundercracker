@@ -30,8 +30,8 @@ OBJS = \
         src/params.rel \
         src/draw.rel \
         src/tilerom.rel \
-        src/demo.rel \
-        
+        src/disconnected.rel
+
 # Funny BG1 segment, to support ACALL alignment. Order matters.
 # bg1_line needs to be at the beginning of the segment; bg0_rom
 # is just the right size to pad the rest of the segment up until

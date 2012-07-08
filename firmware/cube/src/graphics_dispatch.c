@@ -51,7 +51,7 @@ void graphics_render(void) __naked
         rr      a
         xrl     a, _next_ack            ; Compare _SYS_VF_TOGGLE with bit 0
         rrc     a
-        jnc     gd_ret                  ; Return if no toggle
+        jnc     _graphics_ack           ; Return to ACK if no toggle
 1$:
 
         ; Increment frame counter field
@@ -85,14 +85,11 @@ void graphics_render(void) __naked
         ; Allow other modules to reuse this instruction
 gd_jmp: jmp     @a+dptr
 
-        ; Nearby return instruction, used above
-gd_ret: ret
-
         ; Computed jump table
         ; Static analysis NOTE dyn_branch gd_jmp gd_n
 
 gd_table:
-gd_n1:  ljmp    _lcd_sleep      ; 0x00
+gd_n1:  ljmp    _vm_powerdown   ; 0x00
         .ds 1
 gd_n2:  ljmp    _vm_bg0_rom     ; 0x04
         .ds 1
@@ -114,17 +111,23 @@ gd_n10: ljmp    _vm_bg2         ; 0x24
         .ds 1
 gd_n11: ljmp    _vm_stamp       ; 0x28
         .ds 1
-gd_n12: ljmp    _lcd_sleep      ; 0x2c (unused)
+gd_n12: ljmp    _vm_powerdown   ; 0x2c (unused)
         .ds 1
-gd_n13: ljmp    _lcd_sleep      ; 0x30 (unused)
+gd_n13: ljmp    _vm_powerdown   ; 0x30 (unused)
         .ds 1
-gd_n14: ljmp    _lcd_sleep      ; 0x34 (unused)
+gd_n14: ljmp    _vm_powerdown   ; 0x34 (unused)
         .ds 1
-gd_n15: ljmp    _lcd_sleep      ; 0x38 (unused)
+gd_n15: ljmp    _vm_powerdown   ; 0x38 (unused)
         .ds 1
-gd_n16: ljmp    _lcd_sleep      ; 0x3c (unused)
+gd_n16: ljmp    _vm_powerdown   ; 0x3c (unused)
 
     __endasm ;
+}
+
+void vm_powerdown() __naked
+{
+    lcd_sleep();
+    GRAPHICS_RET();
 }
 
 void graphics_ack(void) __naked
@@ -142,7 +145,7 @@ void graphics_ack(void) __naked
         xrl     (_ack_data + RF_ACK_FRAME), a
         orl     _ack_bits, #RF_ACK_BIT_FRAME
 1$:
-        ret
+        ljmp    _graphics_render_ret
 
     __endasm ;
 }

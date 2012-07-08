@@ -10,7 +10,7 @@
 #include "sensors.h"
 
 
-void vm_bg0_spr_bg1(void)
+void vm_bg0_spr_bg1(void) __naked
 {
     lcd_begin_frame();
     i2c_a21_wait();
@@ -38,6 +38,7 @@ void vm_bg0_spr_bg1(void)
     } while (y_spr_line != y_spr_line_limit);
     
     lcd_end_frame();
+    GRAPHICS_RET();
 }
 
 void vm_spr_setup()

@@ -12,7 +12,7 @@
 #include "sensors.h"
 
 
-void vm_bg0_bg1(void)
+void vm_bg0_bg1(void) __naked
 {
     uint8_t y = vram.num_lines;
 
@@ -32,6 +32,7 @@ void vm_bg0_bg1(void)
     } while (--y);    
 
     lcd_end_frame();
+    GRAPHICS_RET();
 }
 
 

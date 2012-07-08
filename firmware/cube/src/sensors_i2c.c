@@ -293,11 +293,11 @@ fs_2n:  NEXT    (fs_2)
         ; register bank.
 fs_2:
         mov     psw, #0             ; Back to register bank 0
-        push    0                   ; Save R0
+        mov     DPL, r0             ; Save R0
         mov     r0, _i2c_temp_1     ; Send next ACK byte
         mov     a, @r0
         mov     _W2DAT, a
-        pop     0                   ; Restore R0
+        mov     r0, DPL             ; Restore R0
 
         inc     _i2c_temp_1         ; Iterate over all ACK bytes
         djnz    _i2c_temp_2, fs_2n
@@ -372,7 +372,7 @@ fs_8:
         ; 9. Read flash loadstream byte from factory test packet.
 fs_9:
         mov     psw, #0                 ; Back to register bank 0
-        push    0                       ; Save R0
+        mov     DPL, r0                 ; Save R0
         mov     r0, _flash_fifo_head    ; Load the flash write pointer
         mov     a, _W2DAT               ; Store byte to the FIFO
         mov     @r0, a
@@ -380,7 +380,7 @@ fs_9:
         cjne    r0, #(_flash_fifo + FLS_FIFO_SIZE), 1$
         mov     r0, #_flash_fifo        ; Wrap
 1$:     mov     _flash_fifo_head, r0
-        pop     0                       ; Restore R0
+        mov     r0, DPL                 ; Restore R0
 
         sjmp    fs_6n
 

@@ -111,6 +111,7 @@ gx = {}
         -- Make sure the cube has stopped drawing
         gx.sys:vsleep(0.1)
         assertEquals(gx.cube:lcdPixelCount(), pixelCount)
+        gx:drawFrame()
     end
     
     function gx:setUp()

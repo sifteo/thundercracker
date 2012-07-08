@@ -6,10 +6,10 @@
  * Copyright <c> 2011 Sifteo, Inc. All rights reserved.
  */
 
-#ifndef _DEMO_H
-#define _DEMO_H
+#ifndef _DISCONNECTED_H
+#define _DISCONNECTED_H
 
-void demo(void);
+void disconnected_screen(void);
 
 #endif
 

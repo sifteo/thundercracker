@@ -13,26 +13,32 @@
 #include "radio.h"
 
 /*
- * Public entry point
+ * Public entry points.
+ *
+ * Note that to save stack space, we don't actually call graphics_render().
+ * We jump there from the main loop, the individual mode function jumps to
+ * graphics_ack, then that jumps to graphics_render_ret (back in the main loop)
  */
 
 void graphics_render() __naked;
 void graphics_ack() __naked;
+void graphics_render_ret() __naked;
+
+#define GRAPHICS_RET()  __asm ljmp _graphics_render_ret __endasm;
 
 /*
  * Video mode entry points
  */
- 
-void vm_powerdown(void);
-void vm_bg0_rom();
-void vm_solid();
-void vm_fb32();
-void vm_fb64();
-void vm_fb128();
-void vm_bg0();
-void vm_bg0_bg1();
-void vm_bg0_spr_bg1();
-void vm_bg2();
+
+void vm_bg0_rom() __naked;
+void vm_solid() __naked;
+void vm_fb32() __naked;
+void vm_fb64() __naked;
+void vm_fb128() __naked;
+void vm_bg0() __naked;
+void vm_bg0_bg1() __naked;
+void vm_bg0_spr_bg1() __naked;
+void vm_bg2() __naked;
 
 /*
  * Shared internal definitions
