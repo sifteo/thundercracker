@@ -83,7 +83,7 @@ for chan in channel:
         
         myenv["CFLAGS"] = flags
         
-        subprocess.check_call(["make", "-j%d" % (cores)], env=myenv)
+        subprocess.check_call(["make", "-j%d" % (cores), "cube.hex"], env=myenv)
 
         filename = "cube_chan_0x%x_addr_0x%x_%s.hex" % (chan, addr, githash)
         shutil.move("cube.hex", os.path.join(destination, filename))
