@@ -247,8 +247,6 @@ void TileCodec::flush()
     // Flush any final opcode(s)
     flushOp();
 
-    printf("Flushhh %d %d\n", (int)out.size(), paddedOutputMin);
-
     // Respect any minimum padding requirements from previous opcodes
     while (out.size() < paddedOutputMin)
         out.push_back(FLS_OP_NOP);
