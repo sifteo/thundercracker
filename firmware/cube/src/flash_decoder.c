@@ -283,9 +283,12 @@ flash_loop:
         mov     a, _flash_fifo_head         ; Start loading FIFO state
         clr     c
         subb    a, _fls_tail                ; Calculate number of bytes available
-        anl     a, #(FLS_FIFO_SIZE - 1)
         jz      3$                          ; Return if FIFO is empty
-        mov     R_BYTE_COUNT, a             ; Otherwise, save byte count
+        jnc     4$                          ; Handle wrap
+        add     a, #FLS_FIFO_SIZE
+4$:     mov     R_BYTE_COUNT, a             ; Save byte count
+
+    mov _DEBUG_REG, a
 
         setb    _global_busy_flag           ; System is definitely not idle now
 

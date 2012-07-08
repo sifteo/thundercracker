@@ -345,8 +345,8 @@ typedef struct {
 
 #define FLS_BLOCK_SIZE          (64*1024)   // Size of flash erase blocks
 
-#define FLS_FIFO_SIZE           64      // Size of buffer between radio and flash decoder
-#define FLS_FIFO_USABLE         63      // Usable size of FIFO (One byte for full/empty disambiguation)
+#define FLS_FIFO_SIZE           80      // Size of buffer between radio and flash decoder
+#define FLS_FIFO_USABLE         (FLS_FIFO_SIZE - 1)
 
 #define FLS_LUT_SIZE            16      // Size of persistent color LUT used by RLE encodings
 
