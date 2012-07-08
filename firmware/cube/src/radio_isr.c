@@ -89,6 +89,15 @@ static __bit radio_state_reset_not_pending;     // Next packet should start with
  * DPL/DPH temporarily, then restore them to the state pointer after.
  *
  * We're expected to set R_STATE to 0 after we're done.
+ *
+ * To save stack space, we jump here rather than calling it.
+ * There are only two possible ways to return:
+ *
+ *   - If R_STATE pointed to rxs_rle on entry, we jump directly
+ *     to rxs_default, to re-process the current nybble.
+ *
+ *   - Otherwise, we use RX_NEXT_NYBBLE to exit.
+ * 
  */
 
 static void rx_write_deltas(void) __naked __using(RF_BANK)
@@ -117,14 +126,14 @@ bsE:
 
         inc     R_LOW
 
-        ; Convert raw Diff to 8-bit signed diff, stow in R_STATE
+        ; Convert raw Diff to 8-bit signed diff, stow in R_TMP
 
         mov     a, R_DIFF
         anl     a, #0xF
         add     a, #-7
         clr     c
         rlc     a
-        mov     R_STATE, a
+        mov     R_TMP, a
         jb      acc.7, 3$       ; Negative diff
 
         ; ---- Loop for positive diffs
@@ -132,7 +141,7 @@ bsE:
 2$:
         movx    a, @dptr        ; Add and copy low byte
         inc     dptr
-        add     a, R_STATE
+        add     a, R_TMP
         mov     _DPS, #1
         movx    @dptr, a
         inc     dptr
@@ -148,17 +157,27 @@ bsE:
         mov     _DPS, #0
         djnz    R_LOW, 2$       ; Loop
 
-        ; Restore registers and exit
-        mov     R_STATE, #0
-        mov     dptr, #rxs_default
-        ret
+        ; ---- Return
+
+5$:
+        mov     dptr, #rxs_default      ; Restore DPTR
+        clr     a
+
+        ; From RLE state? Go to rxs_default
+        cjne    R_STATE, #(rxs_rle - rxs_default), 6$
+        mov     R_STATE, a
+        ljmp    rxs_default
+
+        ; Otherwise, next nybble.
+6$:     mov     R_STATE, a
+        ljmp    rx_next_sjmp
 
         ; ---- Loop for negative diffs
 
 3$:
         movx    a, @dptr        ; Add and copy low byte
         inc     dptr
-        add     a, R_STATE
+        add     a, R_TMP
         mov     _DPS, #1
         movx    @dptr, a
         inc     dptr
@@ -174,10 +193,7 @@ bsE:
         mov     _DPS, #0
         djnz    R_LOW, 3$       ; Loop
 
-        ; Restore registers and exit
-        mov     R_STATE, #0
-        mov     dptr, #rxs_default
-        ret
+        sjmp    5$
 
     __endasm ;
 }
@@ -352,9 +368,7 @@ rx_j:   jmp     @a+dptr
 rxs_diff_2:
         mov     R_DIFF, a
         mov     R_LOW, #0
-        lcall   #_rx_write_deltas
-        sjmp    #rx_next_sjmp
-
+        ljmp    _rx_write_deltas
 
         ;-------------------------------------------
         ; Default state (initial nybble)
@@ -378,8 +392,7 @@ rxs_default:
         mov     AR_SAMPLE, R_INPUT
         mov     R_DIFF, #RF_VRAM_DIFF_BASE
         mov     R_LOW, #0
-        lcall   #_rx_write_deltas
-        RX_NEXT_NYBBLE
+        ljmp    _rx_write_deltas
 11$:
 
         ; ------------ Nybble 10ss -- Diff
@@ -479,8 +492,7 @@ rxs_rle:
         jz      13$
 
         anl     AR_LOW, #0xF            ; Only the low nybble is part of the valid run length
-        lcall   #_rx_write_deltas
-        ljmp    rxs_default             ; Re-process this nybble starting from the default state
+        ljmp    _rx_write_deltas
 
 13$:
         mov     a, R_LOW        ; Check low two bits of the _first_ RLE nybble
@@ -648,9 +660,7 @@ rxs_wrdelta_1_fragment:
         add     a, #4           ; n+5  (rx_write_deltas already adds 1)
         mov     R_LOW, a
 
-        lcall   #_rx_write_deltas
-        sjmp    #rx_next_sjmp2
-
+        ljmp    _rx_write_deltas
 
         ;--------------------------------------------------------------------
         ; Special codes (8-bit copy encoding)
