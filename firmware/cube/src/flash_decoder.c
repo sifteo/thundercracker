@@ -199,9 +199,9 @@ static void flash_dequeue_st1p() __naked
 {
     __asm
         lcall   _flash_dequeue
-        mov     R_PTR, _fls_st
+        mov     R_PTR, _fls_st+0
         mov     @R_PTR, a
-        inc     _fls_st
+        inc     _fls_st+0
         ret
     __endasm ;
 }
@@ -234,7 +234,7 @@ static void flash_rr16() __naked
  *    The low 4 bits of A are an index into the LUT.
  *
  *    Convert that into a pointer to the low byte, and store
- *    that in fls_st[0] and R_PTR.
+ *    that in A and R_PTR.
  */
 static void flash_addr_lut() __naked
 {
@@ -242,7 +242,6 @@ static void flash_addr_lut() __naked
         anl     a, #0xF
         rl      a
         add     a, #_fls_lut
-        mov     _fls_st, a
         mov     R_PTR, a
         ret
     __endasm ;
@@ -356,6 +355,7 @@ op_lut1:
 
         mov     a, R_BYTE
         lcall   _flash_addr_lut         ; Point to LUT entry from opcode argument
+        mov     _fls_st+0, a
 
         NEXT(1$)
 1$:     lcall   _flash_dequeue_st1p     ; Store low byte
@@ -655,7 +655,7 @@ flr4_pixel_loop:
         lcall   _flash_dequeue          ; Refill our buffer
         swap    a                       ; Save the most significant nybble for later
         mov     _fls_st+3, a
-1$:     
+1$:
 
         ; Is this a run count or a normal nybble? If the last two RLE bytes
         ; match, this is a run count and we should interpret it as such.
@@ -664,16 +664,18 @@ flr4_pixel_loop:
         mov     a, R_BYTE               ; Literal masked nybble
         anl     a, #0xF
         mov     _fls_st+4, a            ; Store it as a run count for now
-
         mov     a, _fls_st+0            ; Look at the previous two nybbles.
-        xrl     a, _fls_st+1            ;    Was this a run?
-        mov     _fls_st+0, #0xFF        ;    Prevent re-triggering the run detector
-        jz      flr4_pixel_loop         ;    Yes. Go back up, to check for zero-len runs
+        xrl     a, _fls_st+1            ;   Z = run
+        jnz     2$                      ; Branch if not a run
 
-        mov     _fls_st+0, _fls_st+1    ; No. Shift this into our run buffer.
+        orl     _fls_st+1, #0xF0        ; Prevent re-triggering the run detector
+        sjmp    flr4_pixel_loop         ; Go back up, to check for zero-len runs
+
+2$:
+        mov     _fls_st+0, _fls_st+1    ; Shift nybble into our run buffer
         mov     _fls_st+1, _fls_st+4
         mov     _fls_st+4, #1           ; Single-nybble run
-        
+
         ; Fall through to output the single-nybble run...
 
         ;---------------------------------
