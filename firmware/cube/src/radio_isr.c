@@ -16,6 +16,17 @@
 RF_MemACKType __near ack_data;
 uint8_t __near ack_bits;
 
+// Disable to prevent radio from writing to VRAM, for testing
+#define WRITE_TO_VRAM
+
+#ifdef WRITE_TO_VRAM
+#define   VRAM_MOVX_DPTR_A   movx @dptr, a
+#define   VRAM_MOVX_A_DPTR   movx a, @dptr
+#else
+#define   VRAM_MOVX_DPTR_A   nop
+#define   VRAM_MOVX_A_DPTR   movx a, @dptr
+#endif
+
 
 /*
  * Assembly macros.
@@ -140,20 +151,20 @@ bsE:
         ; ---- Loop for positive diffs
 
 2$:
-        movx    a, @dptr        ; Add and copy low byte
+        VRAM_MOVX_A_DPTR        ; Add and copy low byte
         inc     dptr
         add     a, R_TMP
         mov     _DPS, #1
-        movx    @dptr, a
+        VRAM_MOVX_DPTR_A
         inc     dptr
         mov     _DPS, #0
 
-        movx    a, @dptr        ; Add and copy high byte
+        VRAM_MOVX_A_DPTR        ; Add and copy high byte
         inc     dptr
         jnc     1$
         add     a, #2           ; Add Carry to bit 1
 1$:     mov     _DPS, #1
-        movx    @dptr, a
+        VRAM_MOVX_DPTR_A
         inc     dptr
         mov     _DPS, #0
         djnz    R_LOW, 2$       ; Loop
@@ -176,20 +187,20 @@ bsE:
         ; ---- Loop for negative diffs
 
 3$:
-        movx    a, @dptr        ; Add and copy low byte
+        VRAM_MOVX_A_DPTR        ; Add and copy low byte
         inc     dptr
         add     a, R_TMP
         mov     _DPS, #1
-        movx    @dptr, a
+        VRAM_MOVX_DPTR_A
         inc     dptr
         mov     _DPS, #0
 
-        movx    a, @dptr        ; Add and copy high byte
+        VRAM_MOVX_A_DPTR        ; Add and copy high byte
         inc     dptr
         jc      4$
         add     a, #0xFE        ; Subtract borrow from bit 1
 4$:     mov     _DPS, #1
-        movx    @dptr, a
+        VRAM_MOVX_DPTR_A
         inc     dptr
         mov     _DPS, #0
         djnz    R_LOW, 3$       ; Loop
@@ -461,7 +472,7 @@ rxs_l2:
         clr     c               ; Shift a zero into R_LOW, and MSB into C
         mov     a, R_LOW
         rlc     a
-        movx    @dptr, a        ; Store low byte
+        VRAM_MOVX_DPTR_A        ; Store low byte
         inc     dptr
 
         mov     a, R_INPUT
@@ -469,7 +480,7 @@ rxs_l2:
         rlc     a               ; And again (dummy bit)
         anl     a, #0x3E        ; Mask covers input nybble plus shifted MSB
         orl     a, R_HIGH       ; Combine with saved two MSBs
-        movx    @dptr, a        ; Store high byte
+        VRAM_MOVX_DPTR_A        ; Store high byte
         inc     dptr
         anl     _DPH1, #3       ; Wrap DPH1 at 1 kB        
 
@@ -628,10 +639,10 @@ rxs_w4:
 
         mov     _DPS, #1        ; Switch to VRAM DPTR
         mov     a, R_LOW
-        movx    @dptr,a         ; Store low byte
+        VRAM_MOVX_DPTR_A        ; Store low byte
         inc     dptr
         mov     a, R_HIGH
-        movx    @dptr,a         ; Store high byte
+        VRAM_MOVX_DPTR_A        ; Store high byte
         inc     dptr
         anl     _DPH1, #3       ; Wrap DPH1 at 1 kB
         mov     _DPS, #0
