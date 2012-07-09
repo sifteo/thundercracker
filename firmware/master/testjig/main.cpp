@@ -10,6 +10,7 @@
 #include "tasks.h"
 #include "usb/usbdevice.h"
 #include "testjig.h"
+#include "gpio.h"
 
 /*
  * Test Jig application specific entry point.
@@ -30,7 +31,10 @@ int main()
     NVIC.irqEnable(IVT.UsbOtg_FS);
     NVIC.irqPrioritize(IVT.UsbOtg_FS, 0x90);    //  Lower prio than radio
 
-
+    //Set an LED high so we know we're up and running.
+    GPIOPin red = LED_GREEN2_GPIO;
+    red.setHigh();
+    
     /*
      * High-level hardware initialization
      */
