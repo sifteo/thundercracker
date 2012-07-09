@@ -15,7 +15,8 @@
 #include "sensors.h"
 #include "radio.h"
 
-static __bit lcd_is_awake;
+__bit lcd_is_awake;
+
 
 void lcd_reset_delay()
 {

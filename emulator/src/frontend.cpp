@@ -230,23 +230,44 @@ void Frontend::exit()
 
 bool Frontend::runFrame()
 {
-    tthread::lock_guard<tthread::mutex> guard(instanceLock);
+    double sleepTime;
 
-    if (!instance || !instance->isRunning || !instance->sys->isRunning())
-        return false;
+    /*
+     * Hold the lock while we're using 'instance'
+     */
+    {
+        tthread::lock_guard<tthread::mutex> guard(instanceLock);
 
-    instance->updateCubeCount();
-    instance->animate();
+        if (!instance || !instance->isRunning || !instance->sys->isRunning())
+            return false;
 
-    instance->frameCount++;
-    instance->idleFrames++;
+        instance->updateCubeCount();
+        instance->animate();
 
-    // Simulated hardware VSync (pre-draw)
-    if (!(instance->frameCount % FRAME_HZ_DIVISOR))
-        for (unsigned i = 0; i < instance->cubeCount; i++)
-            instance->sys->cubes[i].lcdPulseTE();
+        instance->frameCount++;
+        instance->idleFrames++;
 
-    instance->draw();
+        // Simulated hardware VSync (pre-draw)
+        if (!(instance->frameCount % FRAME_HZ_DIVISOR))
+            for (unsigned i = 0; i < instance->cubeCount; i++)
+                instance->sys->cubes[i].lcdPulseTE();
+
+        // Draw, but don't flush
+        instance->draw();
+
+        sleepTime = instance->frControl.getEndFrameSleepTime();
+    }
+
+    /*
+     * Only after releasing the lock, do things which will probably block:
+     * Rendering a frame, sleeping... Note that these don't require access
+     * to any Frontend instance members.
+     */
+
+    GLRenderer::endFrame();
+
+    if (sleepTime)
+        OSTime::sleep(sleepTime);
 
     return true;
 }
@@ -833,9 +854,6 @@ void Frontend::draw()
 
     bool isIdle = idleFrames > 100 && overlay.allowIdling();
     frControl.setTargetFPS(isIdle ? 10.0 : 75.0);
-
-    renderer.endFrame();
-    frControl.endFrame();
 }
 
 b2Vec2 Frontend::worldToScreen(b2Vec2 world)
@@ -975,12 +993,15 @@ void Frontend::ContactListener::updateSensors(b2Contact *contact, bool touching)
 FrameRateController::FrameRateController()
     : lastTimestamp(0), accumulator(0) {}
     
-void FrameRateController::endFrame()
+double FrameRateController::getEndFrameSleepTime()
 {
     /*
      * We try to synchronize to the host's vertical sync.
      * If the video drivers don't support that, this governor
      * prevents us from running way too fast.
+     *
+     * Returns the amount we need to sleep, or zero if we
+     * don't need to sleep.
      */
 
     /*
@@ -1002,10 +1023,12 @@ void FrameRateController::endFrame()
     accumulator += minPeriod - thisPeriod;
     
     if (accumulator < -limit)
-        accumulator = -limit;        
+        accumulator = -limit;
     else if (accumulator > slack) {
         if (accumulator > limit)
             accumulator = limit;
-        OSTime::sleep(accumulator - slack);
+        return accumulator - slack;
     }
+
+    return 0;
 }

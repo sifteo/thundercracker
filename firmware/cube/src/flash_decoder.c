@@ -83,15 +83,15 @@ volatile __bit flash_reset_request;                      // Pending reset?
  * Loadstream codec state
  */
 
-static __idata uint16_t fls_lut[FLS_LUT_SIZE];
-static uint8_t fls_state;
-static uint8_t fls_tail;
+__idata uint16_t fls_lut[FLS_LUT_SIZE];
+uint8_t fls_state;
+uint8_t fls_tail;
 
 // State-specific temporaries
-static uint8_t fls_st[5];
-static __bit fls_bit0;
-static __bit fls_bit1;
-static __bit fls_bit2;
+uint8_t fls_st[5];
+__bit fls_bit0;
+__bit fls_bit1;
+__bit fls_bit2;
 
 /*
  * State transition macro
