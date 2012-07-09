@@ -108,179 +108,26 @@ static void vm_bg0_rom_next_tile(void) __naked __using(GFX_BANK)
         mov     a, r0
         anl     a, #0xf0                ; Mask off four palette-select bits
         xrl     a, r3                   ;    Compare with r3
-        jz      1$                      ;    Palette has not changed
+        jz      bg0_pal_ident           ;    Palette has not changed
         xrl     a, r3                   ;    Make this the new current palette
         mov     r3, a
 
         mov     psw, #(GFX_BANK << 3)
         mov     dptr, #_rom_palettes
 
+        ; Hint the static analyzer to always assue we have no palette change.
+        ; The generated code uses no stack space and has no control flow
+        ; changes other than a return.
+        ;
+        ; NOTE dyn_branch bg0_pal_jmp bg0_pal_ident
+        
+bg0_pal_jmp:
         jmp     @a+dptr                 ; Tail call to generated code, loads r0-r7.
         
-1$:     ret                             ; No palette change
+bg0_pal_ident:
+        ret                             ; No palette change
 
     __endasm ; 
-}
-
-static void vm_bg0_rom_tiles_fast(void) __naked __using(GFX_BANK)
-{
-    /*
-     * Fast burst of whole tiles, with tile count in r5.
-     *
-     * This handles the bulk of the frame rendering (everything but
-     * initial and final partial-tiles), so it's where the heavy duty
-     * optimizations are made.
-     */
-
-    __asm
-
-        ; Tile loop
-2$:
-
-        lcall   _vm_bg0_rom_next_tile
-        mov     psw, #0
-        mov     _DPL1, r6
-        mov     _DPH1, r7
-
-        ; Fetch Plane 0 byte. This is necessary for both the 2-color and 4-color paths.
-
-        clr     a                       ; Grab tile bitmap byte
-        movc    a, @a+dptr
-        mov     (GFX_BANK*8+1), a       ;    Store in Plane 0 register
-
-        ; Bit unpacking loop
-
-        mov     a, r0                   ; Mode bit:
-        jnb     acc.3, 13$              ;    Are we using 2-color mode?
-        sjmp    3$                      ;    4-color mode
-        
-8$:
-        mov     psw, #0                 ; Restore bank
-        mov     _DPS, #0                ; Must restore DPTR
-        djnz    r5, 2$                  ; Next tile
-        ret
-
-        ; ---- 4-color mode
-
-3$:
-        mov     a, #2                   ; Offset by one tile (Undefined across 128-tile boundaries)
-        movc    a, @a+dptr              ; Grab second bitmap byte
-        mov     r2, a                   ;    Store in Plane 1 register
-        mov     r4, #8                  ; Loop over 8 bytes
-        mov     psw, #(GFX_BANK << 3)
-
-4$:
-        mov     a, ar2                  ; Shift out LSB on Plane 1
-        rrc     a
-        mov     ar2, a
-        jc      9$
-
-        mov     a, r1                   ; Plane 1 = 0, test Plane 0
-        rrc     a
-        mov     r1, a
-        jc      10$
-        PIXEL_FROM_REG(r0)
-        djnz    ar4, 4$
-        sjmp    8$
-10$:    PIXEL_FROM_REGS(r2,r3)
-        djnz    ar4, 4$
-        sjmp    8$
-
-9$:
-        mov     a, r1                   ; Plane 1 = 1, test Plane 0
-        rrc     a
-        mov     r1, a
-        jc      12$
-        PIXEL_FROM_REGS(r4,r5)
-        djnz    ar4, 4$
-        sjmp    8$
-12$:    PIXEL_FROM_REGS(r6,r7)
-        djnz    ar4, 4$
-        sjmp    8$
-
-        ; ---- 2-color loop (unrolled)
-
-        ; This is optimized for runs of index 0.  Since we require index 0
-        ; to have identical MSB and LSB, we can use this to avoid reloading
-        ; BUS_PORT at all, unless we hit a '1' bit.
-
-13$:
-        mov     psw, #(GFX_BANK << 3)
-        mov     a, r1
-        mov     BUS_PORT, r0            ; Default to index 0
-        jz      14$                     ; Blank-tile loop
-
-        rrc     a                       ; Index 0 ladder
-        jc      30$
-        ASM_ADDR_INC4()
-        rrc     a
-        jc      31$
-21$:    ASM_ADDR_INC4()
-        rrc     a
-        jc      32$
-22$:    ASM_ADDR_INC4()
-        rrc     a
-        jc      33$
-23$:    ASM_ADDR_INC4()
-        rrc     a
-        jc      34$
-24$:    ASM_ADDR_INC4()
-        rrc     a
-        jc      35$
-25$:    ASM_ADDR_INC4()
-        rrc     a
-        jc      36$
-26$:    ASM_ADDR_INC4()
-        rrc     a
-        jc      37$
-27$:    ASM_ADDR_INC4()
-        ljmp    8$
-
-14$:    ljmp    15$                     ; Longer jump to blank-tile loop
-
-30$:    PIXEL_FROM_REGS(r2,r3)          ; Index 1 ladder
-        rrc     a
-        jnc     41$
-31$:    PIXEL_FROM_REGS(r2,r3)
-        rrc     a
-        jnc     42$
-32$:    PIXEL_FROM_REGS(r2,r3)
-        rrc     a
-        jnc     43$
-33$:    PIXEL_FROM_REGS(r2,r3)
-        rrc     a
-        jnc     44$
-34$:    PIXEL_FROM_REGS(r2,r3)
-        rrc     a
-        jnc     45$
-35$:    PIXEL_FROM_REGS(r2,r3)
-        rrc     a
-        jnc     46$
-36$:    PIXEL_FROM_REGS(r2,r3)
-        rrc     a
-        jnc     47$
-37$:    PIXEL_FROM_REGS(r2,r3)
-        ljmp    8$
-
-41$:    mov     BUS_PORT, r0            ; Transition 1 -> 0 ladder
-        ljmp    21$
-42$:    mov     BUS_PORT, r0
-        ljmp    22$
-43$:    mov     BUS_PORT, r0
-        ljmp    23$
-44$:    mov     BUS_PORT, r0
-        ljmp    24$
-45$:    mov     BUS_PORT, r0
-        ljmp    25$
-46$:    mov     BUS_PORT, r0
-        ljmp    26$
-47$:    mov     BUS_PORT, r0
-        ljmp    27$
-
-15$:    lcall   _addr_inc32     ; Blank byte, no comparisons
-        ljmp    8$
-
-    __endasm ;
 }
 
 static void vm_bg0_rom_tile_partial(void) __naked __using(GFX_BANK)
@@ -290,11 +137,12 @@ static void vm_bg0_rom_tile_partial(void) __naked __using(GFX_BANK)
      * r5 may be zero, r4 must not be.
      *
      * This is only used for at most two tiles per line.
+     *
+     * Must call vm_bg0_rom_next_tile beforehand.
      */
 
     __asm
 
-        lcall   _vm_bg0_rom_next_tile
         mov     psw, #0
         mov     _DPL1, r6
         mov     _DPH1, r7
@@ -449,33 +297,191 @@ static void vm_bg0_rom_line(void)
      * Segment the line into a fast full-tile burst, and up to two slower partial tiles.
      */
 
+    // First tile, may be skipping up to 7 pixels from the beginning
+
     __asm
-
-        ; First tile, may be skipping up to 7 pixels from the beginning
-
         mov     r4, _x_bg0_first_w
         mov     r5, _x_bg0_last_w
+        lcall   _vm_bg0_rom_next_tile
         lcall   _vm_bg0_rom_tile_partial
+    __endasm ;
 
-        ; Always have a run of 15 full tiles
+    /*
+     * Fast burst of 15 whole tiles
+     *
+     * This handles the bulk of the frame rendering (everything but
+     * initial and final partial-tiles), so it's where the heavy duty
+     * optimizations are made.
+     */
+
+    __asm
+
+        ; Tile loop
 
         mov     r5, #15
-        lcall   _vm_bg0_rom_tiles_fast
+2$:
 
-        ; May have a final partial tile
+        lcall   _vm_bg0_rom_next_tile
+        mov     psw, #0
+        mov     _DPL1, r6
+        mov     _DPH1, r7
 
+        ; Fetch Plane 0 byte. This is necessary for both the 2-color and 4-color paths.
+
+        clr     a                       ; Grab tile bitmap byte
+        movc    a, @a+dptr
+        mov     (GFX_BANK*8+1), a       ;    Store in Plane 0 register
+
+        ; Bit unpacking loop
+
+        mov     a, r0                   ; Mode bit:
+        jnb     acc.3, 13$              ;    Are we using 2-color mode?
+        sjmp    3$                      ;    4-color mode
+        
+8$:
+        mov     psw, #0                 ; Restore bank
+        mov     _DPS, #0                ; Must restore DPTR
+        djnz    r5, 2$                  ; Next tile
+        ljmp    99$
+
+        ; ---- 4-color mode
+
+3$:
+        mov     a, #2                   ; Offset by one tile (Undefined across 128-tile boundaries)
+        movc    a, @a+dptr              ; Grab second bitmap byte
+        mov     r2, a                   ;    Store in Plane 1 register
+        mov     r4, #8                  ; Loop over 8 bytes
+        mov     psw, #(GFX_BANK << 3)
+
+4$:
+        mov     a, ar2                  ; Shift out LSB on Plane 1
+        rrc     a
+        mov     ar2, a
+        jc      9$
+
+        mov     a, r1                   ; Plane 1 = 0, test Plane 0
+        rrc     a
+        mov     r1, a
+        jc      10$
+        PIXEL_FROM_REG(r0)
+        djnz    ar4, 4$
+        sjmp    8$
+10$:    PIXEL_FROM_REGS(r2,r3)
+        djnz    ar4, 4$
+        sjmp    8$
+
+9$:
+        mov     a, r1                   ; Plane 1 = 1, test Plane 0
+        rrc     a
+        mov     r1, a
+        jc      12$
+        PIXEL_FROM_REGS(r4,r5)
+        djnz    ar4, 4$
+        sjmp    8$
+12$:    PIXEL_FROM_REGS(r6,r7)
+        djnz    ar4, 4$
+        sjmp    8$
+
+        ; ---- 2-color loop (unrolled)
+
+        ; This is optimized for runs of index 0.  Since we require index 0
+        ; to have identical MSB and LSB, we can use this to avoid reloading
+        ; BUS_PORT at all, unless we hit a '1' bit.
+
+13$:
+        mov     psw, #(GFX_BANK << 3)
+        mov     a, r1
+        mov     BUS_PORT, r0            ; Default to index 0
+        jz      14$                     ; Blank-tile loop
+
+        rrc     a                       ; Index 0 ladder
+        jc      30$
+        ASM_ADDR_INC4()
+        rrc     a
+        jc      31$
+21$:    ASM_ADDR_INC4()
+        rrc     a
+        jc      32$
+22$:    ASM_ADDR_INC4()
+        rrc     a
+        jc      33$
+23$:    ASM_ADDR_INC4()
+        rrc     a
+        jc      34$
+24$:    ASM_ADDR_INC4()
+        rrc     a
+        jc      35$
+25$:    ASM_ADDR_INC4()
+        rrc     a
+        jc      36$
+26$:    ASM_ADDR_INC4()
+        rrc     a
+        jc      37$
+27$:    ASM_ADDR_INC4()
+        ljmp    8$
+
+14$:    ljmp    15$                     ; Longer jump to blank-tile loop
+
+30$:    PIXEL_FROM_REGS(r2,r3)          ; Index 1 ladder
+        rrc     a
+        jnc     41$
+31$:    PIXEL_FROM_REGS(r2,r3)
+        rrc     a
+        jnc     42$
+32$:    PIXEL_FROM_REGS(r2,r3)
+        rrc     a
+        jnc     43$
+33$:    PIXEL_FROM_REGS(r2,r3)
+        rrc     a
+        jnc     44$
+34$:    PIXEL_FROM_REGS(r2,r3)
+        rrc     a
+        jnc     45$
+35$:    PIXEL_FROM_REGS(r2,r3)
+        rrc     a
+        jnc     46$
+36$:    PIXEL_FROM_REGS(r2,r3)
+        rrc     a
+        jnc     47$
+37$:    PIXEL_FROM_REGS(r2,r3)
+        ljmp    8$
+
+41$:    mov     BUS_PORT, r0            ; Transition 1 -> 0 ladder
+        ljmp    21$
+42$:    mov     BUS_PORT, r0
+        ljmp    22$
+43$:    mov     BUS_PORT, r0
+        ljmp    23$
+44$:    mov     BUS_PORT, r0
+        ljmp    24$
+45$:    mov     BUS_PORT, r0
+        ljmp    25$
+46$:    mov     BUS_PORT, r0
+        ljmp    26$
+47$:    mov     BUS_PORT, r0
+        ljmp    27$
+
+15$:    lcall   _addr_inc32     ; Blank byte, no comparisons
+        ljmp    8$
+
+99$:
+    __endasm ;
+
+    // May have a final partial tile
+
+    __asm
         mov     a, _x_bg0_last_w
         jz      1$
         inc     r1              ; Negate the x-wrap check for this tile
         mov     r4, a           ; Width computed earlier
         mov     r5, #0          ; No skipped bits
+        lcall   _vm_bg0_rom_next_tile
         lcall   _vm_bg0_rom_tile_partial
 1$:
-
     __endasm ;
 }
 
-void vm_bg0_rom(void)
+void vm_bg0_rom(void) __naked
 {
     uint8_t y = vram.num_lines;
 
@@ -488,4 +494,5 @@ void vm_bg0_rom(void)
     } while (--y);    
 
     lcd_end_frame();
+    GRAPHICS_RET();
 }

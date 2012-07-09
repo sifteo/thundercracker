@@ -42,7 +42,7 @@ def fixupImage(p):
             instrBase = addr + instr * 2
             p.instructions[instrBase] = [p.dataMemory[instrBase : instrBase+2]]
 
-            
+
 class CodeGenerator:
     def __init__(self, parser):
         self.p = parser

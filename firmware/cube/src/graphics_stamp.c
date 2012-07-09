@@ -115,7 +115,7 @@ _vm_stamp_latch_parameters:
     __endasm ;
 }
 
-void vm_stamp(void)
+void vm_stamp(void) __naked
 {
     lcd_begin_frame();
     LCD_WRITE_BEGIN();
@@ -144,4 +144,5 @@ void vm_stamp(void)
     }
 
     lcd_end_frame();
+    GRAPHICS_RET();
 }

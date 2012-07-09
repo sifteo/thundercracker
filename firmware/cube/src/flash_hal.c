@@ -7,349 +7,225 @@
  */
 
 /*
- * Flash hardware abstraction layer.
+ * Low-level hardware abstraction layer.
  *
- * Currently this is written for SST flashes, specifically the
- * SST39VF1681. But we expect to have to modify this to suit whatever
- * commodity flash memory we source for the product.
-
- NOTE: this has been updated to also support the Winbond W29GL032C.
- Relevant changes:
-  - flash_addr_lat2 increments by 2 instead of 4 for adjacent sector addresses for erase
-  - lat1 and lat2 lines are swapped on buddy cube rev 1 - this is accounted for in cube_hardware.h
-  - due to a routing error on buddy cube rev 1, we must use WORD_MODE instead of
-    BYTE_MODE, and your board must be modded accordingly, since the BYTE select
-    pin would normally be tied low.
-
- TODO: the winbond part also provides a bulk programming mode that would allow
-        us to optimize by  only sending the unlock sequence for each
-        batch of bytes that we want to program, rather than for each byte as we do now.
+ * Specific to Winbond W29GL032C or similar. Assumptions:
+ *
+ *   - 8-bit parallel bus
+ *   - 32-byte programming buffer
+ *   - 64 KB sector erase
+ *
+ * This HAL assumes we always program the flash 16 words at a time,
+ * and we auto-erase just before programming any page that starts
+ * at the beginning of an erase-sector.
+ *
+ * To program:
+ *
+ *   - Set the address (flash_addr_*)
+ *   - Call flash_buffer_begin()
+ *   - Call flash_buffer_word() exactly 32 times
+ *   - Call flash_buffer_commit()
+ *   - The address will have now been incremented by 32 bytes
+ *
+ * There is no longer any distinction between beginning/ending one
+ * buffer vs. beginning/ending a higher-level programming "operation".
+ * Calling flash_buffer_commit() always waits for the write to complete.
+ * This takes approximately 96us (1500 cycles) on the W29GL032C.
+ * Because this delay is so long, any useful work we'd have to do between
+ * buffers would be short compared to the time we spend waiting, so it's
+ * not worth the code size and complexity.
  */
 
 #include "flash.h"
-#include "radio.h"
 #include "sensors.h"
 
-uint8_t flash_addr_low;
-uint8_t flash_addr_lat1;
-uint8_t flash_addr_lat2;
-__bit flash_need_autoerase;
-__bit flash_a21;
+uint8_t flash_addr_low;      // Low 7 bits of address, left-justified
+uint8_t flash_addr_lat1;     // Middle 7 bits of address, left-justified
+uint8_t flash_addr_lat2;     // High 7 bits of address, left-justified
+__bit flash_addr_a21;        // Bank selection bit
 
-/*
- * We can poll in a much tighter loop (and therefore exit the polling
- * with lower latency) if we use Data# polling as opposed to toggle
- * polling, since we don't need to pulse the OE pin. This is probably
- * also rather lower power consumption, since we aren't toggling an
- * external pin in a tight loop!
- *
- * This polling is based on verifying the programmed byte. While
- * busy, the MSB will be the inverse of true data. When we're finished,
- * the whole byte must match.
- *
- * If any programming failure happens (programming a '0' bit to '1',
- * hardware faults, noise on the bus) this polling will never complete,
- * and we rely on a high-level watchdog timer to reset us.
- *
- * Note that we can poll the entire byte using exactly the same number of
- * clock cycles (4) as it would take to poll a single bit, using the
- * cjne instruction.
- */
 
-static uint8_t flash_poll_byte;
+void flash_strobe();
+void flash_buffer_word(void) __naked
+{
+    /*
+     * This is assembly-callable only. Copies a word, pointed to by r1,
+     * to the flash programming buffer. Trashes 'a' only.
+     *
+     * Big endian, to match our LCD byte order.
+     *
+     * We don't reload the address at all here, we just pre-increment ADDR_PORT
+     * twice before each byte. This does generate spurious LCD strobes, which
+     * we expect to be ignored after lcd_end_frame().
+     *
+     * Already expects everything to be set up for writing to the LCD.
+     *
+     * We have a second entry point, specifically for reuse of the
+     * strobe instructions during setup.
+     */
 
-/*
- * Output a constant unlock prefix. Only the low 12 bits of address
- * matter, so we don't have to set LAT2. We *must* keep the address
- * and data stable for the entire time that WE is asserted.
- */
+    __asm
+        inc     r1
+        mov     a, @r1
 
-#define FLASH_CMD_STROBE()                      \
-    CTRL_PORT = CTRL_FLASH_CMD;                 \
-    CTRL_PORT = CTRL_IDLE;
+        inc     ADDR_PORT
+        inc     ADDR_PORT
+        mov     BUS_PORT, a
+        mov     CTRL_PORT, #CTRL_FLASH_CMD
+        mov     CTRL_PORT, #CTRL_IDLE
 
-#define FLASH_CMD_PREFIX(_addr, _dat)           \
+        dec     r1
+        mov     a, @r1
+
+        inc     ADDR_PORT
+        inc     ADDR_PORT
+        mov     BUS_PORT, a
+
+_flash_strobe:
+        mov     CTRL_PORT, #CTRL_FLASH_CMD
+        mov     CTRL_PORT, #CTRL_IDLE
+        ret
+    __endasm ;
+}
+
+#define FLASH_CMD_PREFIX(_addr, _data)          \
     ADDR_PORT = ((_addr) >> 6) & 0xFE;          \
     CTRL_PORT = CTRL_IDLE | CTRL_FLASH_LAT1;    \
     ADDR_PORT = (_addr) << 1;                   \
-    BUS_PORT = (_dat);                          \
-    FLASH_CMD_STROBE()
+    BUS_PORT = (_data);                         \
+    flash_strobe();
 
-#define FLASH_OUT()                             \
-    BUS_DIR = 0xFF;                             \
-    CTRL_PORT = CTRL_FLASH_OUT;
-
-/*
-    Byte mode vs Word Mode.
-    Normally we'd like to program a byte a time, but buddy cube rev 1
-    has a routing mistake that means we must use word mode - but we're still only
-    feeding it a byte at a time, so we're essentially discarding the most
-    significant byte and only using half our available storage :(
-
-    Presume this will be removed for subsequent designs
-*/
-#define BYTE_MODE   1
-#define WORD_MODE   2
-
-#if HWREV == 1
-#define FLASH_PROGRAM_MODE WORD_MODE
-#else
-#define FLASH_PROGRAM_MODE BYTE_MODE
-#endif
 
 static void flash_prefix_aa_55()
 {
-#if FLASH_PROGRAM_MODE == BYTE_MODE
     FLASH_CMD_PREFIX(0xAAA, 0xAA);
     FLASH_CMD_PREFIX(0x555, 0x55);
-#elif FLASH_PROGRAM_MODE == WORD_MODE
-    FLASH_CMD_PREFIX(0x555, 0xAA);
-    FLASH_CMD_PREFIX(0x2AA, 0x55);
-#endif
 }
 
-static void flash_write_unlock()
-{
-    // Write unlock prefix
-    flash_prefix_aa_55();
-#if FLASH_PROGRAM_MODE == BYTE_MODE
-    FLASH_CMD_PREFIX(0xAAA, 0xA0);
-#elif FLASH_PROGRAM_MODE == WORD_MODE
-    FLASH_CMD_PREFIX(0x555, 0xA0);
-#endif
-}
-    
-static void flash_autoerase(void)
+static void flash_wait()
 {
     /*
-     * Erase one sector (64Kb) at the current address, if and only if
-     * we're pointed to the first byte of a flash block. Guaranteed
-     * to be called at tile boundaries only.
+     * Wait for a program/erase to complete, by waiting for DQ6 to stop toggling.
+     * This function will put the flash in output mode and disable bus drivers.
      *
-     * This is invoked prior to a write, any time the flash_need_autoerase
-     * flag is set. This flag is set when the address is modified, or when
-     * lat1 wraps.
-     *
-     * Erase operations are self-contained: we do all address setup
-     * (including lat2) and we wait for the erase to finish.
+     * If we see DQ5 go high while DQ6 is still toggling, this means the program
+     * or erase operation has timed out! Currently we don't have a good way to handle
+     * this, so we'll keep looping until the WDT resets us. To clear the condition,
+     * we'd need to pulse RESET on the flash, which we can't do directly- only by
+     * turning the 3.3v bus off and back on. It's not worth spending the code space
+     * on such a mediocre solution yet.
      */
 
-    flash_need_autoerase = 0;
+    BUS_DIR = 0xFF;
 
-    // Check sector alignment
-    if (flash_addr_lat1)
-        return;
-    if (flash_addr_lat2 & 7)
-        return;
+    __asm
+1$:     mov     CTRL_PORT, #CTRL_IDLE           ; Read cycle 1
+        mov     CTRL_PORT, #CTRL_FLASH_OUT
+        mov     a, BUS_PORT
+
+        mov     CTRL_PORT, #CTRL_IDLE           ; Read cycle 2
+        mov     CTRL_PORT, #CTRL_FLASH_OUT
+        cjne    a, BUS_PORT, 1$
+    __endasm;
 
     CTRL_PORT = CTRL_IDLE;
-    BUS_DIR = 0;
-
-    #if FLASH_PROGRAM_MODE == WORD_MODE
-    radio_critical_section({
-    #endif
-
-        // Common unlock prefix for all erase ops
-        flash_prefix_aa_55();
-        #if FLASH_PROGRAM_MODE == BYTE_MODE
-        FLASH_CMD_PREFIX(0xAAA, 0x80);
-        #elif FLASH_PROGRAM_MODE == WORD_MODE
-        FLASH_CMD_PREFIX(0x555, 0x80);
-        #endif
-        flash_prefix_aa_55();
-
-        // Sector erase. (Low bits of address are Don't Care)
-        ADDR_PORT = flash_addr_lat2;
-        CTRL_PORT = CTRL_IDLE | CTRL_FLASH_LAT2;
-        ADDR_PORT = 0;
-        BUS_PORT = 0x30;
-        FLASH_CMD_STROBE();
-
-        #if FLASH_PROGRAM_MODE == WORD_MODE
-            // XXX - we need to make up for our WORD/BYTE screwiness and erase
-            //       an extra sector. In WORD mode, the device sectors are
-            //       64 kbytes or 32 kwords, so they appear as 32 kB to us.
-            //
-            // NOTE: after the first sector erase command has been received,
-            // subsequent commands may be received within a 50us timeout
-            // without having to send another unlock sequence.
-            // ie, don't put anything else in this loop :)
-            // longer term, master should only be telling us exactly
-            // what it wants us to erase
-
-            ADDR_PORT = flash_addr_lat2 + 4;
-            CTRL_PORT = CTRL_IDLE | CTRL_FLASH_LAT2;
-            ADDR_PORT = 0;
-            BUS_PORT = 0x30;
-            FLASH_CMD_STROBE();
-    )};
-    #endif
-
-    // Wait for completion
-    FLASH_OUT();
-    __asm  2$:  jnb     BUS_PORT.7, 2$  __endasm;
-
-    flash_program_start();
 }
 
-void flash_program_start(void)
+void flash_buffer_begin(void)
 {
     /*
-     * Perform infrequent initialization steps that only need to occur
-     * before a batch of program operations, and after any intervening
-     * flash reads.
+     * Set up pre-erase addressing.
+     *
+     * If we do need to do an erase, that will require changing LAT1 and the
+     * low byte, but we can go ahead and set up LAT2 and A21 now.
+     *
+     * Callers expect us not to clobber any of R0-R7 or DPTR!
      */
 
     // Set up A21
-    i2c_a21_target = flash_a21;
+    i2c_a21_target = flash_addr_a21;
     i2c_a21_wait();
 
     // We can keep LAT2 loaded, since the prefix sequences don't use it.
+    // Also, set up the bus direction and make sure the flash is otherwise idle.
     ADDR_PORT = flash_addr_lat2;
-    CTRL_PORT = CTRL_FLASH_OUT | CTRL_FLASH_LAT2;
+    CTRL_PORT = CTRL_IDLE | CTRL_FLASH_LAT2;
+    BUS_DIR = 0;
 
-    // Set flash_poll_byte to whatever data is at the current address,
-    // so we don't have to special-case the first program operation.
+    /*
+     * If we're at a sector boundary (64 KB, 512 tiles, x:xxxxx00:0000000:0000000)
+     * If so, erase the sector and wait for the erase to finish.
+     */
+    if (flash_addr_low == 0 && flash_addr_lat1 == 0 && (flash_addr_lat2 & 7) == 0) {
 
-    flash_poll_byte = BUS_PORT;
-}    
+        // Common unlock prefix for all erase ops
+        flash_prefix_aa_55();
+        FLASH_CMD_PREFIX(0xAAA, 0x80);
+        flash_prefix_aa_55();
 
-void flash_program_end(void)
+        // Sector erase. (LAT2 already contains sector addr, low bits are don't-care)
+        BUS_PORT = 0x30;
+        flash_strobe();
+
+        // Wait for completion
+        flash_wait();
+        BUS_DIR = 0;
+    }
+
+    flash_prefix_aa_55();       // Unlock
+    BUS_PORT = 0x25;            // Buffer program
+    flash_strobe();
+    BUS_PORT = 31;              // Writing 32 bytes
+    flash_strobe();
+
+    /*
+     * Now that they won't be clobbered by commands, set up the remainder
+     * of the address. LAT1 stays constant throughout the block, and LOW lives
+     * in ADDR_PORT from here on.
+     *
+     * We subtract two here to undo the preincrement on our first byte.
+     */
+
+    ADDR_PORT = flash_addr_lat1;
+    CTRL_PORT = CTRL_IDLE | CTRL_FLASH_LAT1;
+    ADDR_PORT = flash_addr_low - 2;
+}
+
+void flash_buffer_commit(void)
 {
     /*
-     * The counterpart to flash_program_start(). Wait for the last
-     * write to finish, and release the bus.
+     * Callers expect us not to clobber any of R0-R7 or DPTR!
+     */
+    
+    // Confirmation byte. This starts the program operation.
+    BUS_PORT = 0x29;
+    flash_strobe();
+
+    /*
+     * Anything we do here is effectively free, as far as CPU time goes.
+     * Unfortunately there isn't much we can do on the main thread
+     * without flash, unless we feel like rendering part of a scanline
+     * and we don't need flash to do that.
+     *
+     * So.. for now, all we have to do is update our address counter.
      */
      
     __asm
-        mov     a, _flash_poll_byte
-1$:     cjne    a, BUS_PORT, 1$
-    __endasm ;
-    
-    CTRL_PORT = CTRL_IDLE;
-}
-
-void flash_program_word(uint16_t dat) __naked
-{
-    /*
-     * Program two bytes, at any aligned address. Increment the
-     * address. We use Big Endian here, to match the LCD's byte order.
-     *
-     * The run length must be at least 1.
-     * The bytes MUST have been erased first.
-     *
-     * This routine is highly performance critical itself, plus we
-     * need to be careful about its impact on the flash decoder code.
-     * This routine is written without any temporary registers, and we
-     * use "#pragma callee_saves" to allow SDCC to notice this and
-     * omit unnecessary save/restore code.
-     */
-
-    dat = dat;
-
-    /*
-     * Low byte
-     */
-
-    // Wait on the previous word-write
-    __asm
-        mov     a, _flash_poll_byte
-1$:     cjne    a, BUS_PORT, 1$
-    __endasm ;
-
-    // Do an autoerase, if necessary
-    if (flash_need_autoerase)
-        flash_autoerase();
-
-    CTRL_PORT = CTRL_IDLE;
-    BUS_DIR = 0;
-
-    flash_write_unlock();
-
-    // Write byte
-    __asm
-        mov     ADDR_PORT, _flash_addr_lat1
-        mov     CTRL_PORT, #(CTRL_IDLE | CTRL_FLASH_LAT1)
-        mov     ADDR_PORT, _flash_addr_low
-        mov     BUS_PORT, DPH
-    __endasm ;
-    FLASH_CMD_STROBE();
-    FLASH_OUT();
-
-    /*
-     * We can do other useful work in-between bytes. This is
-     * effectively free, since we'd be waiting anyway.
-     */
-
-    flash_addr_low += 2;
-
-    // Calculate the next byte to verify
-    flash_poll_byte = DPL;
-
-    /*
-     * High byte
-     */
-
-    // Wait for the low byte to finish
-    __asm
-        mov     a, DPH
-6$:     cjne    a, BUS_PORT, 6$
-    __endasm ;
-
-    CTRL_PORT = CTRL_IDLE;
-    BUS_DIR = 0;
-
-    flash_write_unlock();
-
-    // Write data byte, without any temporary registers
-    __asm
-        mov     ADDR_PORT, _flash_addr_lat1
-        mov     CTRL_PORT, #(CTRL_IDLE | CTRL_FLASH_LAT1)
-        mov     ADDR_PORT, _flash_addr_low
-        mov     BUS_PORT, DPL
-    __endasm ;
-    FLASH_CMD_STROBE();
-    FLASH_OUT();
-
-    // Increment flash_addr on our way out, without any temporaries
-    __asm
-        ; Common case, no overflow
-        mov     a, _flash_addr_low
-        add     a, #2
+        mov     a, _flash_addr_low      ; 32 bytes
+        add     a, #64
         mov     _flash_addr_low, a
-        jz      11$
-        ret
+        jnz     1$
 
-        ; Low byte overflow 
-11$:
         mov     a, _flash_addr_lat1
         add     a, #2
         mov     _flash_addr_lat1, a
-        jz      12$
-        ret
+        jnz     1$
 
-        ; Lat1 overflow
-12$:
-
-        ; Since we keep lat2 loaded into the latch, we need to at some point
-        ; reload the latch before the next write. But we must not touch the
-        ; latch while the flash is busy! In the interest of keeping the common
-        ; case fast, just wait for the current write to finish then update lat2.
-
-        mov     a, _flash_poll_byte
-8$:     cjne    a, BUS_PORT, 8$
-
-        setb    _flash_need_autoerase
-
-        mov     a, _flash_addr_lat2
-        add     a, #2
-        mov     _flash_addr_lat2, a
-        mov     ADDR_PORT, a
-        mov     CTRL_PORT, #(CTRL_IDLE | CTRL_FLASH_LAT2)
-
-        mov     _flash_poll_byte, BUS_PORT
-
-        ret
-
+        inc     _flash_addr_lat2
+        inc     _flash_addr_lat2
+1$:
     __endasm ;
+
+    // Wait for the program to finish, and release the bus.
+    flash_wait();
 }

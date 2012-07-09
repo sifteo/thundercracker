@@ -73,7 +73,7 @@
 
 extern uint8_t nb_bits_remaining;   // Bit counter for transmit or receive
 extern uint8_t nb_buffer[2];        // Packet shift register for TX/RX
-extern uint8_t nb_tx_packet[2];     // The packet we're broadcasting
+extern uint8_t nb_tx_id;            // The ID byte we're broadcasting
 extern __bit nb_tx_mode;            // We're in the middle of an active transmission
 extern __bit nb_rx_mask_state0;
 extern __bit nb_rx_mask_state1;

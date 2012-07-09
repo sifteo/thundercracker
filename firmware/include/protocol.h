@@ -345,9 +345,8 @@ typedef struct {
 
 #define FLS_BLOCK_SIZE          (64*1024)   // Size of flash erase blocks
 
-#define FLS_FIFO_SIZE           64      // Size of buffer between radio and flash decoder
-#define FLS_FIFO_USABLE         63      // Usable size of FIFO (One byte for full/empty disambiguation)
-#define FLS_FIFO_RESET          0xFF    // Reserved FIFO index used to signal RF_OP_FLASH_RESET
+#define FLS_FIFO_SIZE           73      // Size of buffer between radio and flash decoder
+#define FLS_FIFO_USABLE         72      // Usable space in FIFO (SIZE-1)
 
 #define FLS_LUT_SIZE            16      // Size of persistent color LUT used by RLE encodings
 
@@ -363,10 +362,23 @@ typedef struct {
 #define FLS_OP_TILE_P16         0xc0    // Tile with 16-bit pixels and 8-bit repetition mask (arg = count-1)
 #define FLS_OP_SPECIAL          0xe0    // Special symbols (below)
 
+#define FLS_OP_NOP              0xe0    // Permanently reserved as a no-op
 #define FLS_OP_ADDRESS          0xe1    // Followed by a 2-byte (lat1:lat2) tile address. A21 in LSB of lat2.
 #define FLS_OP_QUERY_CHECKSUM   0xe2    // Args: (queryID, numSamples-1, stride-1)
 
 // From 0xe3 to 0xff are all reserved codes currently
 
+/*
+ * Minimum operand sizes for various opcodes:
+ *
+ * In order to support buffered flash programming, we need a quick way
+ * to check whether enough data is buffered in order to send an entire
+ * decompressed block of 16 pixels to the flash chip at once. So, the
+ * nontrivial tile opcodes have a minimum number of buffered bytes requred,
+ * corresponding to the worst-case data size of 16 pixels.
+ */
+
+#define FLS_MIN_TILE_R4        12       // 4-bpp RLE with worst-case run count overhead
+#define FLS_MIN_TILE_P16       34       // 16 pixels, plus bitmap overhead
 
 #endif

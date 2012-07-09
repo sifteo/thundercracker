@@ -71,8 +71,19 @@ void tf0_isr(void) __interrupt(VECTOR_TF0) __naked
         
         setb    _nb_tx_mode
 
-        mov     _nb_buffer, _nb_tx_packet
-        mov     (_nb_buffer + 1), (_nb_tx_packet + 1)
+        ; Start transmitting.
+        ;
+        ; The first byte is already computed in nb_tx_id.
+        ; The second is complemented and shifted left by 3.
+
+        mov     a, _nb_tx_id
+        mov     _nb_buffer, a
+        cpl     a
+        swap    a
+        rr      a
+        anl     a, #0xF8
+        mov     _nb_buffer+1, a
+
         mov     _nb_bits_remaining, #NB_TX_BITS
         mov     _TL2, #(0x100 - NB_BIT_TICKS)
         setb    _T2CON_T2I0

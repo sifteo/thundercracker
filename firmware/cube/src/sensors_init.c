@@ -14,14 +14,13 @@
 #include "sensors.h"
 #include "sensors_i2c.h"
 #include "sensors_nb.h"
-#include "sensors_touch.h"
 
 volatile uint8_t sensor_tick_counter;
 volatile uint8_t sensor_tick_counter_high;
 
 uint8_t nb_bits_remaining;
 uint8_t nb_buffer[2];
-uint8_t nb_tx_packet[2];
+uint8_t nb_tx_id;
 
 __bit nb_tx_mode;
 __bit nb_rx_mask_state0;
@@ -29,22 +28,6 @@ __bit nb_rx_mask_state1;
 __bit nb_rx_mask_state2;
 __bit nb_rx_mask_bit0;
 __bit touch;
-
-#ifdef DEBUG_NBR
-	uint8_t __idata nbr_data[4];
-	uint8_t	nbr_temp;
-	uint8_t __idata nbr_data_valid[2];
-	uint8_t __idata nbr_data_invalid[2];
-#endif
-
-#ifdef DEBUG_TOUCH
-    uint8_t touch_count;
-#endif
-
-#ifdef TOUCH_DEBOUNCE
-    uint8_t touch_on;
-    uint8_t touch_off;
-#endif
 
 
 static void i2c_tx(const __code uint8_t *buf)
@@ -150,7 +133,20 @@ void sensors_init()
      *       It's our baud clock. Timing is critical for the same reasons
      *       as above. (Luckily we should never have these two high-prio
      *       interrupts competing. They're mutually exclusive)
+     *
+     * These interrupt priority levels MUST be kept in sync; always update
+     * this comment, the register settings below, and the static analysis
+     * annotations below if you change anything.
      */
+
+    __asm
+        ; Reset -- NOTE vector 0x0000 __start__stack main-thread
+        ; TF0   -- NOTE vector 0x000b 2 irq-prio-2
+        ; TF1   -- NOTE vector 0x001b 2 irq-prio-3
+        ; TF2   -- NOTE vector 0x002b 2 irq-prio-3
+        ; Radio -- NOTE vector 0x004b 2 irq-prio-0
+        ; I2C   -- NOTE vector 0x0053 2 irq-prio-1
+    __endasm ;
 
     /*
      * A/D converter (MISC irq) Priority
@@ -247,17 +243,7 @@ void sensors_init()
      *
      * The format of first byte is: "1 1 1 id[4] id[3] id[2] id[1] id[0]"
      * The format of second byte is: "/id[4] /id[3] /id[2] /id[1] /id[0] 0 0 0"
-     *
      */
 
-    nb_tx_packet[0] = 0xE0 | radio_get_cube_id();
-    nb_tx_packet[1] = (~nb_tx_packet[0])<<3;
-
-    /*
-     * Initialize touch detection
-     */
-    #ifdef TOUCH_DEBOUNCE
-        touch_on = TOUCH_DEBOUNCE_ON;
-        touch_off = TOUCH_DEBOUNCE_OFF;
-    #endif
+    nb_tx_id = 0xE0 | radio_get_cube_id();
 }

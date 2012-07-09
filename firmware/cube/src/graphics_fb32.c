@@ -75,7 +75,7 @@ static void vm_fb32_line(uint16_t src)
     __endasm ;
 }
 
-void vm_fb32(void)
+void vm_fb32(void) __naked
 {
     lcd_begin_frame();
     LCD_WRITE_BEGIN();
@@ -98,4 +98,5 @@ void vm_fb32(void)
     }
 
     lcd_end_frame();
+    GRAPHICS_RET();
 }
