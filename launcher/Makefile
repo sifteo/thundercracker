@@ -11,6 +11,7 @@ OBJS = \
 	src/assetloaderbypassdelegate.o \
 	src/defaultloadinganimation.o \
 	src/cuberange.o \
+	src/nineblock.o \
 	src/applet/getgames.o
 
 ASSETDEPS += images/*.png sounds/*.xm $(ASSETS).lua

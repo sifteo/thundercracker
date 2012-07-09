@@ -6,6 +6,7 @@
 #include "elfmainmenuitem.h"
 #include "mainmenu.h"
 #include "assetloaderbypassdelegate.h"
+#include "nineblock.h"
 #include <sifteo.h>
 #include <sifteo/menu.h>
 using namespace Sifteo;
@@ -63,7 +64,7 @@ void ELFMainMenuItem::findGames(MainMenu &menu)
         ELFMainMenuItem *inst = &instances[itemI];
         Volume vol = volumes[volI];
 
-        if (inst->init(vol) && inst->checkAssetMetadata()) {
+        if (inst->init(vol)) {
             menu.append(inst);
             itemI++;
         }
@@ -71,7 +72,7 @@ void ELFMainMenuItem::findGames(MainMenu &menu)
     }
 }
 
-bool ELFMainMenuItem::init(Sifteo::Volume volume)
+bool ELFMainMenuItem::init(Volume volume)
 {
     /*
      * Load critical metadata from this volume into RAM, and check whether
@@ -103,21 +104,25 @@ bool ELFMainMenuItem::init(Sifteo::Volume volume)
         return false;
     }
 
+    // Save the UUID
+    uuid = *map.uuid();
+
+    // See if there's a usable icon? We'll load it later, if so.
+    hasValidIcon = checkIcon(map);
+
     return true;
 }
 
-bool ELFMainMenuItem::checkAssetMetadata()
+bool ELFMainMenuItem::checkIcon(MappedVolume &map)
 {
-    MappedVolume map(volume);
-
     // Validate the required icon, but don't save it yet.
     auto iconMeta = map.metadata<_SYSMetadataImage>(_SYS_METADATA_ICON_96x96);
     if (!iconMeta) {
-        LOG("LAUNCHER: Skipping game, no 96x96 icon found.\n");
+        LOG("LAUNCHER: Warning, no 96x96 icon found.\n");
         return false;
     }
     if (iconMeta->width != icon.image.tileWidth() || iconMeta->height != icon.image.tileHeight()) {
-        LOG("LAUNCHER: Skipping game, icon size is incorrect.\n");
+        LOG("LAUNCHER: Warning, icon size is incorrect.\n");
         return false;
     }
 
@@ -130,7 +135,7 @@ bool ELFMainMenuItem::checkAssetMetadata()
     // Check the size of this group. It should be no larger than the worst-case uncompressed size
     unsigned maxTileAllocation = roundup(icon.image.numTiles(), _SYS_ASSET_GROUP_SIZE_UNIT);
     if (tileAllocation > maxTileAllocation) {
-        LOG("LAUNCHER: Skipping game, icon AssetGroup is too large. "
+        LOG("LAUNCHER: Warning, icon AssetGroup is too large. "
             "Make sure your icon is in an AssetGroup by itself! Found a "
             "group with %d tiles, expected no more than %d.",
             tileAllocation, maxTileAllocation);
@@ -142,29 +147,42 @@ bool ELFMainMenuItem::checkAssetMetadata()
 
 MainMenuItem::Flags ELFMainMenuItem::getAssets(Sifteo::MenuItem &assets, Sifteo::MappedVolume &map)
 {
-    /*
-     * Gather assets from this volume.
-     */
+    if (hasValidIcon) {
+        /*
+         * Gather an icon from this volume.
+         */
 
-    map.attach(volume);
+        map.attach(volume);
 
-    // We already validated the icon metadata
-    auto iconMeta = map.metadata<_SYSMetadataImage>(_SYS_METADATA_ICON_96x96);
-    ASSERT(iconMeta);
-    ASSERT(iconMeta->width == icon.image.tileWidth());
-    ASSERT(iconMeta->height == icon.image.tileHeight());
+        // We already validated the icon metadata
+        auto iconMeta = map.metadata<_SYSMetadataImage>(_SYS_METADATA_ICON_96x96);
+        ASSERT(iconMeta);
+        ASSERT(iconMeta->width == icon.image.tileWidth());
+        ASSERT(iconMeta->height == icon.image.tileHeight());
 
-    // Mapping translation; convert to an AssetImage and AssetGroup.
-    AssetImage iconSrc;
-    map.translate(iconMeta, iconSrc, icon.group);
+        // Mapping translation; convert to an AssetImage and AssetGroup.
+        AssetImage iconSrc;
+        map.translate(iconMeta, iconSrc, icon.group);
 
-    // The above AssetImage still references data in the mapped volume,
-    // which won't be available later. Copy / decompress it into RAM.
-    icon.image.init();
-    icon.image.image(vec(0,0), iconSrc);
-    assets.icon = icon.image;
+        // The above AssetImage still references data in the mapped volume,
+        // which won't be available later. Copy / decompress it into RAM.
+        icon.image.init();
+        icon.image.image(vec(0,0), iconSrc);
+        assets.icon = icon.image;
 
-    return LOAD_ASSETS;
+        return LOAD_ASSETS;
+
+    } else {
+        /*
+         * No icon? Create a randomly generated icon.
+         */
+
+        icon.image.init();
+        NineBlock::generate(crc32(uuid), icon.image);
+        assets.icon = icon.image;
+
+        return NONE;
+    }
 }
 
 void ELFMainMenuItem::bootstrap(Sifteo::CubeSet cubes, ProgressDelegate &progress)
