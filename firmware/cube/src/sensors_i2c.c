@@ -23,6 +23,8 @@ __bit i2c_a21_current;  // Set by main thread only. What do we want A21 to be?
 __bit i2c_a21_target;   // Set by ISR only. What was A21 last updated to?
 __bit i2c_a21_lock;     // Set by ISR only. Is an A21 update in progress?
 
+static __bit i2c_saved_dps;   // Store DPS in a bit variable, to save space
+
 
 /*
  * I2C ISR --
@@ -47,7 +49,10 @@ void spi_i2c_isr(void) __interrupt(VECTOR_SPI_I2C) __naked
         push    psw
         push    dpl
         push    dph
-        push    _DPS
+
+        mov     a, _DPS
+        rrc     a
+        mov     _i2c_saved_dps, c
         mov     _DPS, #0
 
         mov     a, _W2CON1              ; Check status of I2C engine.
@@ -62,7 +67,11 @@ void spi_i2c_isr(void) __interrupt(VECTOR_SPI_I2C) __naked
         ; Return from IRQ. We get called back after the next byte finishes.
 
 1$:
-        pop     _DPS
+
+        mov     c, _i2c_saved_dps
+        rlc     a
+        mov     _DPS, a
+
         pop     dph
         pop     dpl
         pop     psw

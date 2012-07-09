@@ -74,6 +74,7 @@ uint8_t __near ack_bits;
 
 static uint16_t vram_dptr;                      // Current VRAM write pointer
 static __bit radio_state_reset_not_pending;     // Next packet should start with a clean slate
+static __bit radio_saved_dps;                   // Store DPS in a bit variable, to save space
 
 
 /*
@@ -218,11 +219,15 @@ void radio_isr(void) __interrupt(VECTOR_RF) __naked __using(RF_BANK)
         push    acc
         push    dpl
         push    dph
-        push    _DPS
         push    _DPL1
         push    _DPH1
         push    psw
         mov     psw, #(RF_BANK << 3)
+
+        mov     a, _DPS
+        rrc     a
+        mov     _radio_saved_dps, c
+
         mov     _DPL1, _vram_dptr
         mov     _DPH1, _vram_dptr+1
 
@@ -868,12 +873,16 @@ no_ack:
         ; Cleanup
         ;--------------------------------------------------------------------
 
+        mov     c, _radio_saved_dps
+        rlc     a
+        mov     _DPS, a
+
         mov     _vram_dptr, _DPL1
         mov     _vram_dptr+1, _DPH1
+
         pop     psw
         pop     _DPH1
         pop     _DPL1
-        pop     _DPS
         pop     dph
         pop     dpl
         pop     acc

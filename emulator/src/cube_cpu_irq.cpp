@@ -193,7 +193,7 @@ void irq_check(em8051 *aCPU, int i)
                  aCPU->irql[i].dph != aCPU->mSFR[REG_DPH] ||
                  aCPU->irql[i].dpl1 != aCPU->mSFR[REG_DPL1] ||
                  aCPU->irql[i].dph1 != aCPU->mSFR[REG_DPH1] ||
-                 aCPU->irql[i].dps != aCPU->mSFR[REG_DPS]))
+                 (aCPU->irql[i].dps & 1) != (aCPU->mSFR[REG_DPS] & 1)))
         except(aCPU, EXCEPTION_IRET_DP_MISMATCH);    
 
     if (UNLIKELY(memcmp(aCPU->irql[i].r, aCPU->mSFR, 8)))
