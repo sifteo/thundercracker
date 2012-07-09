@@ -50,12 +50,12 @@ except:
     os.mkdir(githash)
 
 for chan in channel:
-    
+
     # Changes the name of the files if they're debug versions
     if neighbor_debug or touch_debug:
         destination = os.path.join( githash , "DEBUG_rev_%d_0x%x_%s" % (hwrev,chan,githash))
     else:
-        destination = os.path.join(githash, "/rev_%d_chan_0x%x_%s" % (hwrev,chan,githash))
+        destination = os.path.join(githash, "rev_%d_chan_0x%x_%s" % (hwrev,chan,githash))
     
     # Checks to see if the destination folder exists. If not create it.
     try:
