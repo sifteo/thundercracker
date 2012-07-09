@@ -23,7 +23,7 @@ __bit i2c_a21_current;  // Set by main thread only. What do we want A21 to be?
 __bit i2c_a21_target;   // Set by ISR only. What was A21 last updated to?
 __bit i2c_a21_lock;     // Set by ISR only. Is an A21 update in progress?
 
-static __bit i2c_saved_dps;   // Store DPS in a bit variable, to save space
+__bit i2c_saved_dps;    // Store DPS in a bit variable, to save space
 
 
 /*

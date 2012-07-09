@@ -72,9 +72,9 @@ uint8_t __near ack_bits;
 #define R_NYBBLE_COUNT          r7
 #define AR_NYBBLE_COUNT         (RF_BANK*8 + 7)
 
-static uint16_t vram_dptr;                      // Current VRAM write pointer
-static __bit radio_state_reset_not_pending;     // Next packet should start with a clean slate
-static __bit radio_saved_dps;                   // Store DPS in a bit variable, to save space
+uint16_t vram_dptr;                      // Current VRAM write pointer
+__bit radio_state_reset_not_pending;     // Next packet should start with a clean slate
+__bit radio_saved_dps;                   // Store DPS in a bit variable, to save space
 
 
 /*

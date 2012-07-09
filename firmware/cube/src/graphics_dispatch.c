@@ -10,7 +10,7 @@
 #include "main.h"
 #include "sensors.h"
 
-static uint8_t next_ack;
+uint8_t next_ack;
 
 
 void graphics_render(void) __naked
