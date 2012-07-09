@@ -13,7 +13,7 @@ public:
 
     static int run(int argc, char **argv, IODevice &_dev);
 
-    bool install(const char *path, int vid, int pid, bool launcher=false);
+    bool install(const char *path, int vid, int pid, bool launcher=false, bool rpc=false);
 
 private:
     bool sendHeader(uint32_t filesz);
@@ -25,6 +25,7 @@ private:
     IODevice &dev;
     std::string package, version;
     bool isLauncher;
+    bool isRPC;
 };
 
 #endif // INSTALLER_H

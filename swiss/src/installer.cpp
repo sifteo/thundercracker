@@ -12,11 +12,14 @@
 int Installer::run(int argc, char **argv, IODevice &_dev)
 {
     bool launcher = false;
+    bool rpc = false;
     const char *path = NULL;
 
     for (unsigned i = 1; i < argc; i++) {
         if (!strcmp(argv[i], "-l")) {
             launcher = true;
+        } else if (!strcmp(argv[i], "--rpc")) {
+            rpc = true;
         } else if (!path) {
             path = argv[i];
         } else {
@@ -28,7 +31,7 @@ int Installer::run(int argc, char **argv, IODevice &_dev)
     Installer installer(_dev);
 
     bool success = installer.install(path,
-        IODevice::SIFTEO_VID, IODevice::BASE_PID, launcher);
+        IODevice::SIFTEO_VID, IODevice::BASE_PID, launcher, rpc);
 
     _dev.close();
     _dev.processEvents();
@@ -49,8 +52,9 @@ Installer::Installer(IODevice &_dev) :
  * - Send the content of the application.
  * - Commit the transaction.
  */
-bool Installer::install(const char *path, int vid, int pid, bool launcher)
+bool Installer::install(const char *path, int vid, int pid, bool launcher, bool rpc)
 {
+    isRPC = rpc;
     isLauncher = launcher;
     if (!launcher && !getPackageMetadata(path))
         return false;
@@ -205,6 +209,9 @@ bool Installer::sendFileContents(FILE *f, uint32_t filesz)
         unsigned chunk = std::min(filesz - progress, m.bytesFree());
         m.len += chunk;
         progress += chunk;
+        if (isRPC) {
+            fprintf(stdout, "::progress:%u:%u\n", progress, filesz); fflush(stdout);
+        }
         if (!chunk)
             return true;
 
