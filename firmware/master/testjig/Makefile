@@ -1,4 +1,4 @@
-BIN = testjig.elf
+BIN = testjig
 TC_DIR = ../../..
 
 include $(TC_DIR)/firmware/master/Makefile.objs

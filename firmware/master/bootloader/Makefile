@@ -1,4 +1,4 @@
-BIN = bootloader.elf
+BIN = bootloader
 TC_DIR = ../../..
 
 LDSCRIPT := bootloader-target.ld
