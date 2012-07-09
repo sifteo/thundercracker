@@ -1,4 +1,4 @@
-BIN = rftest.elf
+BIN = rftest
 TC_DIR = ../../..
 
 include $(TC_DIR)/firmware/master/Makefile.objs
@@ -10,6 +10,6 @@ OBJS_STM32 += \
     $(MASTER_DIR)/stm32/sampleprofiler.stm32.o
 
 # rftest specific flags
-CCFLAGS += -I. -DRFTEST
+CCFLAGS += -I. -I../bootloader -DRFTEST
 
 include $(TC_DIR)/firmware/master/Makefile.rules

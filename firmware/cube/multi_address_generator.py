@@ -14,6 +14,7 @@ import subprocess, multiprocessing
 neighbor_debug = 0
 touch_debug = 0
 disable_wdt = 1
+disable_sleep = 0
 
 hwrev = 5
 num_cubes = 3
@@ -71,16 +72,17 @@ for chan in channel:
         
         myenv = dict(os.environ)
         
+        flags = "-DCUBE_ADDR=0x%x -DCUBE_CHAN=0x%x -DHWREV=%d" % (addr, chan, hwrev)
         # Sets the environment variables accordingly
         if neighbor_debug:
-            flags = "-DCUBE_ADDR=0x%x -DCUBE_CHAN=0x%x -DHWREV=%d -DDEBUG_NBR=1" % (addr, chan, hwrev)
-        elif touch_debug:
-            flags = "-DCUBE_ADDR=0x%x -DCUBE_CHAN=0x%x -DHWREV=%d -DDEBUG_TOUCH=1" % (addr, chan, hwrev)
-        elif disable_wdt:
-            flags = "-DDISABLE_WDT=1 -DCUBE_ADDR=0x%x -DCUBE_CHAN=0x%x -DHWREV=%d" % (addr, chan, hwrev)
-        else:
-            flags = "-DCUBE_ADDR=0x%x -DCUBE_CHAN=0x%x -DHWREV=%d" % (addr, chan, hwrev)
         
+            flags += " -DDEBUG_NBR=1"
+        if touch_debug:
+            flags += " -DDEBUG_TOUCH=1"
+        if disable_wdt:
+            flags += " -DDISABLE_WDT=1"
+        if disable_sleep:
+            flags += " -DDISABLE_SLEEP=1"
         myenv["CFLAGS"] = flags
         
         subprocess.check_call(["make", "-j%d" % (cores), "cube.hex"], env=myenv)

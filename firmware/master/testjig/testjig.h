@@ -38,6 +38,8 @@ private:
     static void stopNeighborRxHandler(uint8_t argc, uint8_t *args);
     static void writeToCubeI2CHandler(uint8_t argc, uint8_t *args);
     static void setCubeSensorsEnabledHandler(uint8_t argc, uint8_t *args);
+    static void beginNeighborTxHandler(uint8_t argc, uint8_t *args);
+    static void stopNeighborTxHandler(uint8_t argc, uint8_t *args);
 
     struct SensorsTransaction {
         bool enabled;
