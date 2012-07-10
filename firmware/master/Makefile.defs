@@ -76,6 +76,12 @@ else
     LDSCRIPT_GEN := python $(MASTER_DIR)/tools/ldscript-gen.py --bootloadable
 endif
 
+#adding a flag for the test jig
+#mostly used for compiling the bootloader for the testjig
+ifneq ($(TEST_JIG),)
+	CCFLAGS += -DBOARD=BOARD_TEST_JIG
+endif
+
 # default linker script handling
 ifeq ($(LDSCRIPT), )
 LDSCRIPT := $(MASTER_DIR)/stm32/target.ld

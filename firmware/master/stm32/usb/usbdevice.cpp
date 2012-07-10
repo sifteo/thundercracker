@@ -14,7 +14,7 @@
 #include "usbprotocol.h"
 #include "macros.h"
 
-#if (BOARD == BOARD_TEST_JIG)
+#if ((BOARD == BOARD_TEST_JIG) && !defined(BOOTLOADER))
 #include "testjig.h"
 #endif
 
@@ -151,7 +151,7 @@ void UsbDevice::handleOUTData(void *p)
     USBProtocolMsg m;
     m.len = UsbHardware::epReadPacket(OutEpAddr, m.bytes, m.bytesFree());
     if (m.len > 0) {
-#if (BOARD == BOARD_TEST_JIG)
+#if ((BOARD == BOARD_TEST_JIG) && !defined(BOOTLOADER))
         TestJig::onTestDataReceived(m.bytes, m.len);
 #elif defined(BOOTLOADER)
         Bootloader::onUsbData(m.bytes, m.len);
