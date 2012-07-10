@@ -117,46 +117,6 @@ __bit fls_bit2;
 
 
 /*
- * flash_init --
- *
- *    Handle power-on initialization _or_ a "flash reset" command.
- */
-
-void flash_init(void)
-{
-    __asm
-
-        ; Zero out the whole LUT
-
-        mov     r0, #_fls_lut
-        mov     r1, #(FLS_LUT_SIZE * 2)
-        clr     a
-1$:     mov     @r0, a
-        inc     r0
-        djnz    r1, 1$
-
-        ; Reset the state machine
-
-        mov     _fls_state, STATE(flst_opcode)
-        clr     _flash_reset_request
-
-        ; Reset FIFO pointers
-
-        mov     a, #_flash_fifo
-        mov     _fls_tail, a
-        mov     _flash_fifo_head, a
-
-        ; Flash reset must send back a full packet, including the HWID.
-        ; We acknowledge a reset as if it were one data byte.
-
-        inc     (_ack_data + RF_ACK_FLASH_FIFO)
-        orl     _ack_bits, #RF_ACK_BIT_HWID
-
-    __endasm ;
-}
-
-
-/*
  * flash_dequeue --
  *
  *    Assembly-callable utility for dequeueing one byte from the FIFO.
@@ -246,6 +206,46 @@ static void flash_addr_lut() __naked
         add     a, #_fls_lut
         mov     R_PTR, a
         ret
+    __endasm ;
+}
+
+
+/*
+ * flash_init --
+ *
+ *    Handle power-on initialization _or_ a "flash reset" command.
+ */
+
+void flash_init(void)
+{
+    __asm
+
+        ; Zero out the whole LUT
+
+        mov     r0, #_fls_lut
+        mov     r1, #(FLS_LUT_SIZE * 2)
+        clr     a
+1$:     mov     @r0, a
+        inc     r0
+        djnz    r1, 1$
+
+        ; Reset the state machine
+
+        mov     _fls_state, STATE(flst_opcode)
+        clr     _flash_reset_request
+
+        ; Reset FIFO pointers
+
+        mov     a, #_flash_fifo
+        mov     _fls_tail, a
+        mov     _flash_fifo_head, a
+
+        ; Flash reset must send back a full packet, including the HWID.
+        ; We acknowledge a reset as if it were one data byte.
+
+        inc     (_ack_data + RF_ACK_FLASH_FIFO)
+        orl     _ack_bits, #RF_ACK_BIT_HWID
+
     __endasm ;
 }
 
