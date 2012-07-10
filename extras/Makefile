@@ -4,6 +4,7 @@ SUBDIRS = \
 	pantera \
 	monster \
 	loopy \
+	kersplody \
 	thrasher \
 	trackycat \
 	tinytracker \
