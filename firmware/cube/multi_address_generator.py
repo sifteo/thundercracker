@@ -52,11 +52,7 @@ except:
 
 for chan in channel:
 
-    # Changes the name of the files if they're debug versions
-    if neighbor_debug or touch_debug:
-        destination = os.path.join( githash , "DEBUG_rev_%d_0x%x_%s" % (hwrev,chan,githash))
-    else:
-        destination = os.path.join(githash, "rev_%d_chan_0x%x_%s" % (hwrev,chan,githash))
+    destination = os.path.join(githash, "rev_%d_chan_0x%x_%s" % (hwrev,chan,githash))
     
     # Checks to see if the destination folder exists. If not create it.
     try:
@@ -75,7 +71,6 @@ for chan in channel:
         flags = "-DCUBE_ADDR=0x%x -DCUBE_CHAN=0x%x -DHWREV=%d" % (addr, chan, hwrev)
         # Sets the environment variables accordingly
         if neighbor_debug:
-        
             flags += " -DDEBUG_NBR=1"
         if touch_debug:
             flags += " -DDEBUG_TOUCH=1"
@@ -83,6 +78,7 @@ for chan in channel:
             flags += " -DDISABLE_WDT=1"
         if disable_sleep:
             flags += " -DDISABLE_SLEEP=1"
+            
         myenv["CFLAGS"] = flags
         
         subprocess.check_call(["make", "-j%d" % (cores), "cube.hex"], env=myenv)

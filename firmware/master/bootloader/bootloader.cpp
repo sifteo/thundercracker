@@ -57,7 +57,13 @@ bool Bootloader::manualUpdateRequested()
         return false;
 
     GPIOPin homeButton = BTN_HOME_GPIO;
-    homeButton.setControl(GPIOPin::IN_FLOAT);
+    
+    #ifdef BOARD_TEST_JIG
+      homeButton.setControl(GPIOPin::IN_PULL);
+      homeButton.pulldown();
+    #else
+      homeButton.setControl(GPIOPin::IN_FLOAT);
+    #endif
 
     while (SysTime::ticks() < SysTime::sTicks(1)) {
         // active high - bail if released
@@ -84,9 +90,15 @@ void Bootloader::load()
         Stm32Flash::unlock();
 
         // Indicate we're loading
-        GPIOPin red = LED_RED_GPIO;
-        red.setControl(GPIOPin::OUT_2MHZ);
-        red.setLow();
+        #if BOARD == BOARD_TEST_JIG
+          GPIOPin red = LED_RED1_GPIO;
+          red.setControl(GPIOPin::OUT_2MHZ);
+          red.setHigh();
+        #else
+          GPIOPin red = LED_RED_GPIO;
+          red.setControl(GPIOPin::OUT_2MHZ);
+          red.setLow();
+        #endif
 
         firstLoad = false;
     }
@@ -279,8 +291,12 @@ bool Bootloader::mcuFlashIsValid()
 void Bootloader::cleanup()
 {
     // ensure LED is off
-    GPIOPin red = LED_RED_GPIO;
-    red.setHigh();
+    #if BOARD == BOARD_TEST_JIG
+      GPIOPin red = LED_RED1_GPIO;
+    #else
+      GPIOPin red = LED_RED_GPIO;
+    #endif
+    red.setControl(GPIOPin::IN_FLOAT);
 
     UsbDevice::deinit();
     NVIC.deinit();

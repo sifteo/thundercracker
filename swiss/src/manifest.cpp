@@ -14,9 +14,15 @@
 
 int Manifest::run(int argc, char **argv, IODevice &_dev)
 {
-    if (argc != 1) {
-        fprintf(stderr, "incorrect args\n");
-        return 1;
+    bool rpc = false;
+    
+    for (unsigned i = 1; i < argc; i++) {
+        if (!strcmp(argv[i], "--rpc")) {
+            rpc = true;
+        } else {
+            fprintf(stderr, "incorrect args\n");
+            return 1;
+        }
     }
 
     if (!_dev.open(IODevice::SIFTEO_VID, IODevice::BASE_PID)) {
@@ -24,7 +30,7 @@ int Manifest::run(int argc, char **argv, IODevice &_dev)
         return 1;
     }
 
-    Manifest m(_dev);
+    Manifest m(_dev, rpc);
     bool success = m.getVolumeOverview() && m.dumpOverview() && m.dumpVolumes();
 
     _dev.close();
@@ -33,8 +39,8 @@ int Manifest::run(int argc, char **argv, IODevice &_dev)
     return success ? 0 : 1;
 }
 
-Manifest::Manifest(IODevice &_dev) :
-    dev(_dev)
+Manifest::Manifest(IODevice &_dev, bool rpc) :
+    dev(_dev), isRPC(rpc)
 {}
 
 bool Manifest::getMetadata(USBProtocolMsg &buffer, unsigned volBlockCode, unsigned key)
@@ -65,6 +71,15 @@ const char *Manifest::getMetadataString(USBProtocolMsg &buffer, unsigned volBloc
 {
     if (!getMetadata(buffer, volBlockCode, key))
         return "(none)";
+
+    buffer.bytes[sizeof buffer.bytes - 1] = 0;
+    return buffer.castPayload<char>();
+}
+
+const char *Manifest::getMetadataStringRPC(USBProtocolMsg &buffer, unsigned volBlockCode, unsigned key)
+{
+    if (!getMetadata(buffer, volBlockCode, key))
+        return "";
 
     buffer.bytes[sizeof buffer.bytes - 1] = 0;
     return buffer.castPayload<char>();
@@ -153,6 +168,11 @@ bool Manifest::dumpOverview()
     printf("System: %d kB  Free: %d kB  Firmware: %s\n",
         overview.systemBytes / 1024, overview.freeBytes / 1024,
         getFirmwareVersion(buffer));
+        
+    if (isRPC) {
+        fprintf(stdout, "::firmware:%s\n", getFirmwareVersion(buffer)); fflush(stdout);
+        fprintf(stdout, "::storage:%u:%u\n", overview.systemBytes, overview.freeBytes); fflush(stdout);
+    }
 
     return true;
 }
@@ -190,6 +210,22 @@ bool Manifest::dumpVolumes()
         table.cell() << getMetadataString(buffer, volBlockCode, _SYS_METADATA_VERSION_STR);
         table.cell() << getMetadataString(buffer, volBlockCode, _SYS_METADATA_TITLE_STR);
         table.endRow();
+        
+        if (isRPC) {
+            std::string package = getMetadataStringRPC(buffer, volBlockCode, _SYS_METADATA_PACKAGE_STR);
+            std::string version = getMetadataStringRPC(buffer, volBlockCode, _SYS_METADATA_VERSION_STR);
+            std::string title = getMetadataStringRPC(buffer, volBlockCode, _SYS_METADATA_TITLE_STR);
+            
+            fprintf(stdout, "::volume:%u:%u:%u:%u:%s:%s:%s\n",
+                volBlockCode,
+                detail->type,
+                detail->selfBytes,
+                detail->childBytes,
+                package.c_str(),
+                version.c_str(),
+                title.c_str());
+            fflush(stdout);
+        }
     }
 
     table.end();
