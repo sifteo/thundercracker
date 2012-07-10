@@ -309,27 +309,25 @@ static const __code uint8_t lcd_setup_table[] =
     /*
      * Gamma, power, and oscillator init.
      *
-     * This is currently DISABLED, because it seems to produce
-     * slightly worse performance than the default settings on
-     * this controller. I'm getting some flickering/interlacing
-     * artifacts with these settings, which may be due to badly
-     * matched positive and negative gamma curves.
+     * XXX: This is the magic init sequence we got from Tianma, but it
+     *      seems to exhibit some annoying flickering/interlacing
+     *      artifacts. It's a little better than the default config
+     *      in terms of color quality, though, so we're still using
+     *      this... though I suspect we can optimize it.
      */
-    #ifdef USE_JANKY_TIANMA_INIT
-        2, 0xc6, 0x31,                      // UADJ   (60Hz frame rate)
-        3, 0xb1, 0x00, 0x00,                // SETPWCTR
-        3, 0xbf, 0x04, 0x38,                // SETPTBA
-        5, 0xc0, 0x50, 0x08, 0x0c, 0xca,    // SETSTBA
-        2, 0xcc, 0x00,                      // SETPANEL
-        5, 0xe3, 0x08, 0x00, 0x04, 0x10,    // EQ
-        4, 0xb6, 0x94, 0x78, 0x64,          // VCOM
+    2, 0xc6, 0x31,                      // UADJ   (60Hz frame rate)
+    3, 0xb1, 0x00, 0x00,                // SETPWCTR
+    3, 0xbf, 0x04, 0x38,                // SETPTBA
+    5, 0xc0, 0x50, 0x08, 0x0c, 0xca,    // SETSTBA
+    2, 0xcc, 0x00,                      // SETPANEL
+    5, 0xe3, 0x08, 0x00, 0x04, 0x10,    // EQ
+    4, 0xb6, 0x94, 0x78, 0x64,          // VCOM
 
-        20, 0xe0,                           // Gamma
-        0x00, 0x74, 0x71, 0x0a, 0xff, 0x01, 0x07, 0x0f,
-        0x06, 0x01, 0x60, 0x30, 0x77, 0x0d, 0xf0, 0x0e,
-        0x0a, 0x08, 0x0f,
-    #endif
-    
+    20, 0xe0,                           // Gamma
+    0x00, 0x74, 0x71, 0x0a, 0xff, 0x01, 0x07, 0x0f,
+    0x06, 0x01, 0x60, 0x30, 0x77, 0x0d, 0xf0, 0x0e,
+    0x0a, 0x08, 0x0f,
+
 #endif // LCD_MODEL_TIANMA_HX8353
 
     /**************************************************************
