@@ -362,7 +362,7 @@ class LCD {
 
     // Vendor-specific commands that we use to detect an LCD model
     static const uint8_t CMD_MAGIC_TRULY            = 0xC4;
-    static const uint8_t CMD_MAGIC_TIANMA_HX8353    = 0xE3;
+    static const uint8_t CMD_MAGIC_TIANMA_HX8353    = 0xB9;
 
     // Width of emulated TE pulses
     static const unsigned TE_WIDTH_US = 1000;

@@ -300,21 +300,35 @@ static const __code uint8_t lcd_setup_table[] =
     1, LCD_CMD_SWRESET,
     1, LCD_CMD_SLPOUT,
 
-    LONG_DELAY,
+    SHORT_DELAY,
 
+    // Magic command to enable HX8353 "extended" commands.
+    // We also use this for model detection in siftulator.
     4, 0xb9, 0xff, 0x83, 0x53,          // SETEXC
-    2, 0xc6, 0x31,                      // UADJ   (60Hz frame rate)
-    3, 0xb1, 0x00, 0x00,                // SETPWCTR
-    3, 0xbf, 0x04, 0x38,                // SETPTBA
-    5, 0xc0, 0x50, 0x08, 0x0c, 0xca,    // SETSTBA
-    2, 0xcc, 0x00,                      // SETPANEL
-    5, 0xe3, 0x08, 0x00, 0x04, 0x10,    // EQ
-    4, 0xb6, 0x94, 0x78, 0x64,          // VCOM
 
-    20, 0xe0,                           // Gamma
-    0x00, 0x74, 0x71, 0x0a, 0xff, 0x01, 0x07, 0x0f,
-    0x06, 0x01, 0x60, 0x30, 0x77, 0x0d, 0xf0, 0x0e,
-    0x0a, 0x08, 0x0f,
+    /*
+     * Gamma, power, and oscillator init.
+     *
+     * This is currently DISABLED, because it seems to produce
+     * slightly worse performance than the default settings on
+     * this controller. I'm getting some flickering/interlacing
+     * artifacts with these settings, which may be due to badly
+     * matched positive and negative gamma curves.
+     */
+    #ifdef USE_JANKY_TIANMA_INIT
+        2, 0xc6, 0x31,                      // UADJ   (60Hz frame rate)
+        3, 0xb1, 0x00, 0x00,                // SETPWCTR
+        3, 0xbf, 0x04, 0x38,                // SETPTBA
+        5, 0xc0, 0x50, 0x08, 0x0c, 0xca,    // SETSTBA
+        2, 0xcc, 0x00,                      // SETPANEL
+        5, 0xe3, 0x08, 0x00, 0x04, 0x10,    // EQ
+        4, 0xb6, 0x94, 0x78, 0x64,          // VCOM
+
+        20, 0xe0,                           // Gamma
+        0x00, 0x74, 0x71, 0x0a, 0xff, 0x01, 0x07, 0x0f,
+        0x06, 0x01, 0x60, 0x30, 0x77, 0x0d, 0xf0, 0x0e,
+        0x0a, 0x08, 0x0f,
+    #endif
     
 #endif // LCD_MODEL_TIANMA_HX8353
 
