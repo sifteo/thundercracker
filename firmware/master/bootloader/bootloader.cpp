@@ -90,7 +90,7 @@ void Bootloader::load()
         Stm32Flash::unlock();
 
         // Indicate we're loading
-        #ifdef BOARD_TEST_JIG
+        #if BOARD == BOARD_TEST_JIG
           GPIOPin red = LED_RED1_GPIO;
           red.setControl(GPIOPin::OUT_2MHZ);
           red.setHigh();
@@ -291,7 +291,7 @@ bool Bootloader::mcuFlashIsValid()
 void Bootloader::cleanup()
 {
     // ensure LED is off
-    #ifdef BOARD_TEST_JIG
+    #if BOARD == BOARD_TEST_JIG
       GPIOPin red = LED_RED1_GPIO;
     #else
       GPIOPin red = LED_RED_GPIO;
