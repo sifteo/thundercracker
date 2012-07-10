@@ -97,13 +97,14 @@ class Menu {
  public:
     Menu(VideoBuffer&, const MenuAssets*, MenuItem*);
     bool pollEvent(struct MenuEvent *);
-    void preventDefault();
+    void performDefault();
     void reset();
     void replaceIcon(uint8_t item, const AssetImage *icon, const AssetImage *label = 0);
     bool itemVisible(uint8_t item);
     void setIconYOffset(uint8_t px);
     void setPeekTiles(uint8_t numTiles);
     void anchor(uint8_t item);
+    
 
  private:
     static const float kTimeDilator = 13.1f;
@@ -186,7 +187,6 @@ class Menu {
     // events.h
     bool dispatchEvent(struct MenuEvent *ev);
     void clearEvent();
-    void performDefault();
     void handleNeighborAdd();
     void handleNeighborRemove();
     void handleItemArrive();
