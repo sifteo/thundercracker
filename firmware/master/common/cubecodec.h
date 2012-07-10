@@ -137,6 +137,7 @@ class CubeCodec {
          */
         if (txBits.hasRoomForFlush(buf, 8)) {
             txBits.append(0x79, 8);
+            txBits.flush(buf);
             return true;
         }
         return false;
