@@ -109,11 +109,9 @@ inline Menu::Menu(VideoBuffer &vid, const MenuAssets *aAssets, MenuItem *aItems)
 
 inline bool Menu::pollEvent(struct MenuEvent *ev)
 {
-    // handle/clear pending events
-    //if (currentEvent.type != MENU_UNEVENTFUL) {
-    //  performDefault();
-    //}
+    // Events not handled at this point are discarded
     ASSERT(currentEvent.type != MENU_PREPAINT);
+    clearEvent();
     
     /* state changes can happen in the default event handler which may dispatch
      * events (like MENU_STATE_STATIC -> MENU_STATE_FINISH dispatches a

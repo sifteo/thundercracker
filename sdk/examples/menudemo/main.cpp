@@ -33,7 +33,8 @@ static void begin() {
     }
 }
 
-void main() {
+void main()
+{
     begin();
 
     Menu m(gVideo[0], &gAssets, gItems);
@@ -41,13 +42,17 @@ void main() {
 
     struct MenuEvent e;
     uint8_t item;
-    while(1) {
-        while(m.pollEvent(&e)) {
-            switch(e.type) {
+
+    while (1) {
+        while (m.pollEvent(&e)) {
+
+            switch (e.type) {
+
                 case MENU_ITEM_PRESS:
                     // Game Buddy is not clickable, so don't do anything on press
                     if (e.item >= 3) {
-                        m.preventDefault();
+                        // Prevent the default action
+                        continue;
                     } else {
                         m.anchor(e.item);
                     }
@@ -57,6 +62,7 @@ void main() {
                         m.replaceIcon(e.item, gItems[randomIcon].icon, gItems[randomIcon].label);
                     }
                     break;
+
                 case MENU_EXIT:
                     // this is not possible when pollEvent is used as the condition to the while loop.
                     // NOTE: this event should never have its default handler skipped.
@@ -67,6 +73,7 @@ void main() {
                     LOG("found cube %d on side %d of menu (neighbor's %d side)\n",
                          e.neighbor.neighbor, e.neighbor.masterSide, e.neighbor.neighborSide);
                     break;
+
                 case MENU_NEIGHBOR_REMOVE:
                     LOG("lost cube %d on side %d of menu (neighbor's %d side)\n",
                          e.neighbor.neighbor, e.neighbor.masterSide, e.neighbor.neighborSide);
@@ -76,6 +83,7 @@ void main() {
                     LOG("arriving at menu item %d\n", e.item);
                     item = e.item;
                     break;
+
                 case MENU_ITEM_DEPART:
                     LOG("departing from menu item %d, scrolling %s\n", item, e.direction > 0 ? "forward" : "backward");
                     break;
@@ -90,9 +98,14 @@ void main() {
                     ASSERT(false);
                     break;
             }
+
+            m.performDefault();
         }
 
+        // Handle the exit event (so we can re-enter the same Menu)
         ASSERT(e.type == MENU_EXIT);
+        m.performDefault();
+
         LOG("Selected Game: %d\n", e.item);
     }
 }
