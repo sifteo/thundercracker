@@ -300,7 +300,7 @@ static const __code uint8_t lcd_setup_table[] =
     1, LCD_CMD_SWRESET,
     1, LCD_CMD_SLPOUT,
 
-    SHORT_DELAY,
+    LONG_DELAY,
 
     // Magic command to enable HX8353 "extended" commands.
     // We also use this for model detection in siftulator.
