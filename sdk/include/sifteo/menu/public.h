@@ -110,9 +110,11 @@ inline Menu::Menu(VideoBuffer &vid, const MenuAssets *aAssets, MenuItem *aItems)
 inline bool Menu::pollEvent(struct MenuEvent *ev)
 {
     // handle/clear pending events
-    if (currentEvent.type != MENU_UNEVENTFUL) {
-        performDefault();
-    }
+    //if (currentEvent.type != MENU_UNEVENTFUL) {
+    //  performDefault();
+    //}
+    ASSERT(currentEvent.type != MENU_PREPAINT);
+    
     /* state changes can happen in the default event handler which may dispatch
      * events (like MENU_STATE_STATIC -> MENU_STATE_FINISH dispatches a
      * MENU_PREPAINT).
@@ -185,21 +187,6 @@ inline bool Menu::pollEvent(struct MenuEvent *ev)
     currentEvent.type = MENU_PREPAINT;
     dispatchEvent(ev);
     return true;
-}
-
-inline void Menu::preventDefault()
-{
-    /* paints shouldn't be prevented because:
-     * the caller shouldn't be painting while the menu owns the context.
-     */
-    ASSERT(currentEvent.type != MENU_PREPAINT);
-    /* exit shouldn't be prevented because:
-     * the default handler is responsible for resetting the menu if the event
-     * pump is restarted.
-     */
-    ASSERT(currentEvent.type != MENU_EXIT);
-
-    clearEvent();
 }
 
 inline void Menu::reset()

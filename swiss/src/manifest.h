@@ -10,7 +10,7 @@
 class Manifest
 {
 public:
-    Manifest(IODevice &_dev);
+    Manifest(IODevice &_dev, bool rpc=false);
 
     static int run(int argc, char **argv, IODevice &_dev);
 
@@ -21,6 +21,7 @@ private:
 
     bool getMetadata(USBProtocolMsg &buffer, unsigned volBlockCode, unsigned key);
     const char *getMetadataString(USBProtocolMsg &buffer, unsigned volBlockCode, unsigned key);
+    const char *getMetadataStringRPC(USBProtocolMsg &buffer, unsigned volBlockCode, unsigned key);
     const char *getFirmwareVersion(USBProtocolMsg &buffer);
     UsbVolumeManager::VolumeDetailReply *getVolumeDetail(USBProtocolMsg &buffer, unsigned volBlockCode);
 
@@ -29,6 +30,7 @@ private:
     UsbVolumeManager::VolumeOverviewReply overview;
     IODevice &dev;
     char volTypeBuffer[16];
+    bool isRPC;
 };
 
 #endif // INSTALLER_H
