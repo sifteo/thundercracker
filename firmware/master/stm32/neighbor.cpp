@@ -30,8 +30,9 @@ void Neighbor::init()
     rxPeriodTimer.init(BIT_PERIOD_TICKS, 0);
 
     for (unsigned i = 0; i < NUM_PINS; ++i) {
-        txPeriodTimer.configureChannelAsOutput(i + 1, HwTimer::ActiveLow, HwTimer::Pwm1);
-        outPins[i].setControl(GPIOPin::IN_FLOAT);
+
+        txPeriodTimer.configureChannelAsOutput(i + 1, HwTimer::ActiveHigh, HwTimer::Pwm1);
+        outPins[i].setControl(GPIOPin::IN_PULL);
         txPeriodTimer.enableChannel(i + 1);
 
         GPIOPin &in = inPins[i];
@@ -62,7 +63,7 @@ void Neighbor::beginTransmitting(uint16_t data, uint8_t sideMask)
 
     // configure pins according to sideMask
     for (unsigned i = 0; i < NUM_PINS; ++i) {
-        GPIOPin::Control c = (sideMask & (1 << i)) ? GPIOPin::OUT_ALT_50MHZ : GPIOPin::IN_FLOAT;
+        GPIOPin::Control c = (sideMask & (1 << i)) ? GPIOPin::OUT_ALT_50MHZ : GPIOPin::IN_PULL;
         outPins[i].setControl(c);
     }
 
@@ -80,7 +81,7 @@ void Neighbor::stopTransmitting()
     txPeriodTimer.disableUpdateIsr();
     setDuty(0);
     for (unsigned i = 0; i < NUM_PINS; ++i)
-        outPins[i].setControl(GPIOPin::IN_FLOAT);
+        outPins[i].setControl(GPIOPin::IN_PULL);
     txState = Idle;
 }
 
