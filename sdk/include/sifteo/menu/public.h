@@ -113,6 +113,8 @@ inline bool Menu::pollEvent(struct MenuEvent *ev)
     //if (currentEvent.type != MENU_UNEVENTFUL) {
     //  performDefault();
     //}
+    ASSERT(currentEvent.type != MENU_PREPAINT);
+    
     /* state changes can happen in the default event handler which may dispatch
      * events (like MENU_STATE_STATIC -> MENU_STATE_FINISH dispatches a
      * MENU_PREPAINT).
