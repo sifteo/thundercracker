@@ -707,11 +707,14 @@ rx_special:
         cjne    R_SAMPLE, #1, 2$
 
         mov     _ack_bits, #0xFF                ; Do ALL the acks!
-        ljmp    rx_next_sjmp                    ; Process the next nybble like usual.
 
 2$:
         ; -------- 
 
+        ; Unknown code, or fall-through from a code we finished handling.
+        ; Process the next nybble like usual.
+
+        ljmp    rx_next_sjmp
 
         ;--------------------------------------------------------------------
         ; Flash FIFO Write
