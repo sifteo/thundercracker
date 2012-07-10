@@ -452,9 +452,17 @@ bool CubeCodec::flashSend(PacketBuffer &buf, _SYSAssetLoaderCube *lc, _SYSCubeID
     if (!txBits.hasRoomForFlush(buf, escapeSizeInBits + dataSizeInBits))
         return false;
 
-    // The cube also must have enough buffer space to receive our minimum data
-    if (loadBufferAvail < dataSizeInBytes)
+    /*
+     * The cube also must have enough buffer space to receive our minimum data.
+     * If the cube appears to have too little buffer space left, this may mean
+     * the cube is actually out of buffer (flow control) or it may just be that
+     * we dropped ACK packets. If we get into this state, try to restart the
+     * pipeline by requesting an explicit ACK from the cube.
+     */
+    if (loadBufferAvail < dataSizeInBytes) {
+        explicitAckRequest(buf);
         return false;
+    }
 
     /*
      * Read 'progress' from untrusted memory only once. See if we're done.
@@ -470,6 +478,9 @@ bool CubeCodec::flashSend(PacketBuffer &buf, _SYSAssetLoaderCube *lc, _SYSCubeID
     if (progress >= dataSize && fifoCount == 0) {
         if (loadBufferAvail == FLS_FIFO_USABLE)
             done = true;
+
+        // Poll for dropped ACKs here too
+        explicitAckRequest(buf);
         return false;
     }
 

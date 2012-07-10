@@ -145,8 +145,8 @@
  * redundant encodings for the 4-bit 'copy' code:
  *
  *   1000 0111             Sensor timer sync escape
+ *   1001 0111             Explicit full ACK request
  *
- *   1001 0111             Reserved for future use
  *   1010 0111             Reserved for future use
  *   1011 0111             Reserved for future use
  *

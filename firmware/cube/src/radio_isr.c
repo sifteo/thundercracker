@@ -684,9 +684,11 @@ rxs_wrdelta_1_fragment:
 
 rx_special:
 
+        mov     R_STATE, #0                     ; Catch-all, go back to default state
+        anl     AR_SAMPLE, #3                   ; Specific ops are in low two bits...
+
         ; -------- 1000 0111 <LOW> <HIGH> -- Sensor timer sync escape
 
-        anl     AR_SAMPLE, #3
         cjne    R_SAMPLE, #0, 1$
 
         clr     _TCON_TR0                       ; Stop timer
@@ -696,11 +698,20 @@ rx_special:
         mov     TH0, _SPIRDAT                   ; High byte
         mov     _SPIRDAT, #0
         setb    _TCON_TR0                       ; Restart timer
-1$:
 
+        sjmp    rx_complete                     ; Ignore rest of packet
+
+1$:
+        ; -------- 1001 0111 -- Explicit ACK request
+
+        cjne    R_SAMPLE, #1, 2$
+
+        mov     _ack_bits, #0xFF                ; Do ALL the acks!
+        ljmp    rx_next_sjmp                    ; Process the next nybble like usual.
+
+2$:
         ; -------- 
 
-        sjmp    rx_complete
 
         ;--------------------------------------------------------------------
         ; Flash FIFO Write
