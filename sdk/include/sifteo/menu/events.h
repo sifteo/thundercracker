@@ -13,8 +13,8 @@
  * which copies it into the caller's event structure, and returns control to
  * the caller to handle the event.
  *
- * Default event handling is performed at the beginning of pollEvent, before
- * re-entering the state machine.
+ * The default handler for an event, if any, must be explicitly invoked
+ * at some point during the event loop, by calling performDefault().
  */
 
 #pragma once
