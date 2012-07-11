@@ -46,6 +46,9 @@ void power_init(void)
      *
      * Safe defaults, everything off.
      * all control lines must be low before supply rails are turned on.
+     *
+     * We need to sequence this carefully, so that we can bring up
+     * the 3.3v and 2.0v rails without causing any contention.
      */
 
     MISC_PORT = 0;
@@ -56,20 +59,17 @@ void power_init(void)
     CTRL_DIR = CTRL_DIR_VALUE;
     ADDR_DIR = 0;
 
-    // Sequence 3.3v boost, followed by 2.0v downstream
-    #if HWREV >= 2
-        // Turn on 3.3V boost
-        CTRL_PORT = CTRL_3V3_EN;
+    // Turn on 3.3V boost
+    CTRL_PORT = CTRL_3V3_EN;
 
-        // Give 3.3V boost >1ms to turn-on
-        power_delay();
+    // Give 3.3V boost >1ms to turn-on
+    power_delay();
 
-        // Turn on 2V ds load switch
-        CTRL_PORT = CTRL_3V3_EN | CTRL_DS_EN;
+    // Turn on 2V ds load switch
+    CTRL_PORT = CTRL_3V3_EN | CTRL_DS_EN;
 
-        // Give load-switch time to turn-on (Datasheet unclear so >1ms should suffice)
-        power_delay();
-    #endif
+    // Give load-switch time to turn-on (Datasheet unclear so >1ms should suffice)
+    power_delay();
 
     // Now turn-on other control lines.
     // (On Rev 1, we just turn everything on at once.)
@@ -97,11 +97,7 @@ void power_init(void)
         MISC_CON = 0x60;
         MISC_CON = 0x61;
         MISC_CON = 0x65;
-        #if HWREV >= 1
-            MISC_CON = 0x64;
-        #else
-            MISC_CON = 0x67;
-        #endif
+        MISC_CON = 0x64;
     #endif
 
     /*
@@ -112,11 +108,7 @@ void power_init(void)
         MISC_CON = 0x30;
         MISC_CON = 0x31;
         MISC_CON = 0x35;
-        #if HWREV >= 1
-            MISC_CON = 0x34;
-        #else
-            MISC_CON = 0x37;
-        #endif
+        MISC_CON = 0x34;
     #endif
 }
 
@@ -126,8 +118,6 @@ void power_sleep(void)
      * Turn off all peripherals, and put the CPU into Deep Sleep mode.
      * Order matters, don't cause bus contention!
      */
-
-#if HWREV >= 1   // Rev 1 was the first with sleep support
 
     lcd_sleep();                // Sleep sequence for LCD controller
     cli();                      // Stop all interrupt handlers
@@ -145,7 +135,6 @@ void power_sleep(void)
     ADDR_PORT = 0;              // Address bus must be all zero
     MISC_PORT = 0;              // Neighbor/I2C set to idle-mode as well
 
-#if HWREV >= 2
     // Sequencing is important. First, bring flash control lines low
     CTRL_PORT = CTRL_3V3_EN | CTRL_DS_EN;
 
@@ -154,11 +143,6 @@ void power_sleep(void)
 
     // Turn off the 3.3V rail
     CTRL_PORT = 0;
-#else
-    // Turn the 3.3v boost and backlight off, leave WE/OE driven high (flash idle).
-    CTRL_PORT = CTRL_FLASH_WE | CTRL_FLASH_OE;
-#endif
-
 
 #if HWREV >= 5
     /*
@@ -211,18 +195,13 @@ void power_sleep(void)
     // We must latch these port states, to preserve them during sleep.
     // This latch stays locked until early wakeup, in power_init().
     OPMCON = OPMCON_LATCH_LOCKED;
-    // We must also disable WDT in the memory retention mode
-    //OPMCON = OPMCON_LATCH_LOCKED | OPMCON_WDT_RESET_ENABLE;
 
     while (1) {
         PWRDWN = 1;
-        //PWRDWN = 3;
 
         /*
          * We loop purely out of paranoia. This point should never be reached.
          * On wakeup, the system experiences a soft reset.
          */
     }
-
-#endif  // HWREV >= 1
 }

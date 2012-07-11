@@ -132,8 +132,7 @@ void lcd_sleep()
     if (lcd_is_awake) {
         lcd_is_awake = 0;
 
-#if HWREV >= 2
-        // On Rev 2 we have independent control over LCD reset and
+        // We have independent control over LCD reset and
         // backlight, via the latches and DCX. First turn off the
         // backlight, then hold the LCD controller in reset mode.
         //
@@ -148,18 +147,6 @@ void lcd_sleep()
         CTRL_PORT = CTRL_IDLE & ~CTRL_LCD_DCX;
         CTRL_PORT = (CTRL_IDLE & ~CTRL_LCD_DCX) | CTRL_FLASH_LAT1;  // Backlight off
         CTRL_PORT = (CTRL_IDLE & ~CTRL_LCD_DCX) | CTRL_FLASH_LAT2;  // Enter reset
-#else
-        // On Rev 1 and earlier, we have only software control over
-        // LCD sleep. Send it a sleep command.
-        {
-            static const __code uint8_t table[] = {
-                1, LCD_CMD_SLPIN, 0x00,
-                1, LCD_CMD_DISPOFF, 0x00,
-                0,
-            };
-            lcd_cmd_table(table);
-        }
-#endif
     }   
 }
     
@@ -177,8 +164,6 @@ void lcd_begin_frame()
     if (!lcd_is_awake) {
         lcd_is_awake = 1;
         
-#if HWREV >= 2
-        // On Rev 2, we can explicitly sequence power-on.
         // First, we take the LCD controller out of reset.
         // Then we fully initialize it. We turn on the backlight
         // after both initialization is complete and the first
@@ -188,15 +173,9 @@ void lcd_begin_frame()
         CTRL_PORT = (CTRL_IDLE & ~CTRL_LCD_DCX) | CTRL_FLASH_LAT2;  // Enter reset
 
         lcd_reset_delay();
+
         CTRL_PORT = CTRL_IDLE;
         CTRL_PORT = CTRL_IDLE | CTRL_FLASH_LAT2;  // Exit reset
-#else
-        // On Rev 1 and earlier, backlight and reset are tied to the
-        // same pin, and we must take the LCD out of reset before
-        // doing the software init sequence. So, turn on the backlight now.
-        
-        CTRL_PORT = CTRL_IDLE;
-#endif
         
         // Controller initialization
         lcd_cmd_table(lcd_setup_table);
@@ -253,13 +232,13 @@ void lcd_end_frame()
     
     lcd_cmd_table(table);
 
-#if HWREV >= 2
-    // Now that the LCD is fully ready, turn on the backlight if it isn't
-    // already on. Note that rendering from flash can cause this to happen
-    // earlier, but in BG0_ROM mode we can successfully delay backlight enable
-    // until after the first frame has fully rendered.
+    /*
+     * Now that the LCD is fully ready, turn on the backlight if it isn't
+     * already on. Note that rendering from flash can cause this to happen
+     * earlier, but in BG0_ROM mode we can successfully delay backlight enable
+     * until after the first frame has fully rendered.
+     */
     CTRL_PORT = CTRL_IDLE | CTRL_FLASH_LAT1;
-#endif
 }
 
 void lcd_address_and_write(void)

@@ -97,7 +97,6 @@ static void power_init(void)
     CTRL_DIR = CTRL_DIR_VALUE;
     ADDR_DIR = 0;
 
-#if HWREV >= 2      // Sequence 3.3v boost, followed by 2.0v downstream
     // Turn on 3.3V boost
     CTRL_PORT = CTRL_3V3_EN;
 
@@ -109,7 +108,6 @@ static void power_init(void)
 
     // Give load-switch time to turn-on (Datasheet unclear so >1ms should suffice)
     delay();
-#endif
 
     // Now turn-on other control lines.
     // (On Rev 1, we just turn everything on at once.)
