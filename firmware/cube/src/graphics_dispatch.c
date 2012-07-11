@@ -143,7 +143,7 @@ void graphics_ack(void) __naked
         xrl     a, (_ack_data + RF_ACK_FRAME)
         jz      1$
         xrl     (_ack_data + RF_ACK_FRAME), a
-        setb    RF_ACK_BIT_FRAME
+        orl     _ack_bits, #RF_ACK_BIT_FRAME
 1$:
         ljmp    _graphics_render_ret
 

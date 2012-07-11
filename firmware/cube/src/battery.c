@@ -92,7 +92,7 @@ void battery_poll()
         __asm
             mov     (_ack_data + RF_ACK_BATTERY_V), _ADCDATL
             mov     (_ack_data + RF_ACK_BATTERY_V + 1), _ADCDATH
-            setb    RF_ACK_BIT_BATTERY_V
+            orl     _ack_bits, #RF_ACK_BIT_BATTERY_V
         __endasm ;
     } radio_irq_enable();
     
