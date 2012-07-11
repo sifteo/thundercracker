@@ -81,7 +81,7 @@ def findAllGenerators():
 
 def xcrc(byte, crc, gen=BEST_GEN):
     # Experimental CRC based on galois field multiplication
-    return tableGFM(tableGFM(crc, gen) ^ (byte & 0x0F), gen) ^ (byte >> 4)
+    return tableGFM(crc, gen) ^ byte
 
 def crcList(l, gen=BEST_GEN):
     reg = INITIAL
@@ -170,5 +170,5 @@ def crcSamples():
 if __name__ == "__main__":
     findAllGenerators()
     testCRCBytes()
-    #testCRCBitErrors()
+    testCRCBitErrors()
     crcSamples()
