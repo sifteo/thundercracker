@@ -6,7 +6,7 @@
 #ifndef TASKS_H
 #define TASKS_H
 
-#include <stdint.h>
+#include "macros.h"
 
 class Tasks
 {
@@ -38,13 +38,17 @@ public:
     static void setPending(TaskID id, void *p = 0);
     static void clearPending(TaskID id);
 
-    #ifndef SIFTEO_SIMULATOR
-    static void waitForInterrupt()
-    {
-        /// Block until the next hardware event
+    /*
+     * Block until the next hardware event occurs.
+     * (Emulated in siftulator, one instruction in hardware)
+     */
+#ifdef SIFTEO_SIMULATOR
+    static void waitForInterrupt();
+#else
+    static ALWAYS_INLINE void waitForInterrupt() {
         __asm__ __volatile__ ("wfi");
     }
-    #endif
+#endif
 
 private:
     typedef void (*TaskCallback)(void *);
