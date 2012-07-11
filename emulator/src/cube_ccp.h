@@ -1,0 +1,64 @@
+/* -*- mode: C; c-basic-offset: 4; intent-tabs-mode: nil -*-
+ *
+ * Sifteo Thundercracker simulator
+ * M. Elizabeth Scott <beth@sifteo.com>
+ *
+ * Copyright <c> 2012 Sifteo, Inc. All rights reserved.
+ */
+
+/*
+ * Implements the nRF24LE1's Crypto Co-Processor unit (CCP), a Galois Field
+ * multiplier that's intended to accelerate software implementations of AES.
+ *
+ * (Naturally, our firmware uses this peripheral for other purposes...)
+ */
+ 
+#ifndef _CUBE_CCP_H
+#define _CUBE_CCP_H
+
+#include <stdint.h>
+#include "cube_cpu.h"
+
+namespace Cube {
+
+
+class CCP {
+public:
+
+    ALWAYS_INLINE int read(CPU::em8051 &cpu)
+    {
+        return galoisFieldMultiply(cpu.mSFR[REG_CCPDATIA], cpu.mSFR[REG_CCPDATIB]);
+    }
+
+private:
+    static ALWAYS_INLINE void gfmBit(uint8_t &a, uint8_t &b, uint8_t &p)
+    {
+        if (b & 1)
+            p ^= a;
+        uint8_t msb = a & 0x80;
+        a <<= 1;
+        if (msb)
+            a ^= 0x1b;
+        b >>= 1;
+    }
+
+    /// GF(2^8) multiplier, using the AES polynomial
+    static uint8_t galoisFieldMultiply(uint8_t a, uint8_t b)
+    {
+        uint8_t p = 0;
+        gfmBit(a, b, p);  // 0
+        gfmBit(a, b, p);  // 1
+        gfmBit(a, b, p);  // 2
+        gfmBit(a, b, p);  // 3
+        gfmBit(a, b, p);  // 4
+        gfmBit(a, b, p);  // 5
+        gfmBit(a, b, p);  // 6
+        gfmBit(a, b, p);  // 7
+        return p;
+    }
+};
+ 
+
+};  // namespace Cube
+
+#endif

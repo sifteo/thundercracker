@@ -107,7 +107,7 @@ struct SFR {
         case REG_ARCON:
             self->mdu.write(*self->time, *cpu, reg - REG_MD0);
             break;
-        
+
         case REG_RNGCTL:
             self->rng.controlWrite(*self->time, *cpu);
             break;
@@ -165,6 +165,9 @@ struct SFR {
         case REG_MD5:
         case REG_ARCON:
             return self->mdu.read(*self->time, *cpu, reg - REG_MD0);
+
+        case REG_CCPDATO:
+            return self->ccp.read(*cpu);
 
         case REG_RNGCTL:
             return self->rng.controlRead(*self->time, *cpu);
