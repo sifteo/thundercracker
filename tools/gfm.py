@@ -17,7 +17,11 @@ import random
 from hex import hexDump
 
 # Honestly, with the 4-bit algorithm below, these are all pretty much equally good.
-BEST_GEN = 0x8e
+# Note that we want one that's both a generator and which has a 1:1 mapping for CRCs.
+BEST_GEN = 0x84
+
+# Initial conditions for CRC
+INITIAL = 0xff
 
 def gfm(a, b):
     # GF(2^8) multiplier, using the AES polynomial
@@ -80,7 +84,7 @@ def xcrc(byte, crc, gen=BEST_GEN):
     return tableGFM(tableGFM(crc, gen) ^ (byte & 0x0F), gen) ^ (byte >> 4)
 
 def crcList(l, gen=BEST_GEN):
-    reg = 0
+    reg = INITIAL
     for x in l:
         reg = xcrc(x, reg, gen)
     return reg
@@ -150,8 +154,21 @@ def testCRCBitErrors():
     print "\nHistogram for best (%02x):" % best[1]
     hexDump(best[2], prefix="\t")
 
+def crcSamples():
+    print "\nSample output for CRC:"
+    assert testOneToOneProperty(BEST_GEN)
+    for s in [
+        "",
+        "\x00",
+        "\xff",
+        "Hello world",
+        "Hello World",
+        ]:
+        print "\t%-30r = %02x" % (s, crcList(map(ord, s)))
+
 
 if __name__ == "__main__":
     findAllGenerators()
     testCRCBytes()
-    testCRCBitErrors()
+    #testCRCBitErrors()
+    crcSamples()
