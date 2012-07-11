@@ -16,8 +16,16 @@ uint8_t power_sleep_timer;
 
 void power_delay()
 {
-    // Arbitrary delay, currently about 12 ms.
-    uint8_t delay_i = 0, delay_j;
+    /*
+     * Arbitrary delay, currently about 2 ms.
+     *
+     * This needs to be long enough for the boost and the load switch
+     * to turn on, but keeping the delay to a minimum will ensure
+     * that we limit the duration of any flash-of-white-LCD after coming
+     * back from a brownout reset. See below.
+     */
+
+    uint8_t delay_i = 43, delay_j;
     do {
         delay_j = 0;
         while (--delay_j);
@@ -71,8 +79,19 @@ void power_init(void)
     // Give load-switch time to turn-on (Datasheet unclear so >1ms should suffice)
     power_delay();
 
-    // Now turn-on other control lines.
-    // (On Rev 1, we just turn everything on at once.)
+    /*
+     * Now turn-on other control lines. Sequence them so that we're sure to latch
+     * a value of zero for BLE and RST, so that the LCD powers up in reset and with
+     * the backlight off.
+     *
+     * NB: There can still be a brief flash due to the delays above! If we happen
+     *     to reboot while there's still some power on the DS rail, the latch's
+     *     default state can be HIGH. I don't think we can safely latch a LOW
+     *     state earlier than this, though, without risk of causing a latchup
+     *     by driving LAT1/LAT2 above the DS rail voltage.
+     */
+    CTRL_PORT = CTRL_IDLE & ~CTRL_LCD_DCX;
+    CTRL_PORT = (CTRL_IDLE & ~CTRL_LCD_DCX) | CTRL_FLASH_LAT1 | CTRL_FLASH_LAT2;
     CTRL_PORT = CTRL_IDLE;
     MISC_PORT = MISC_IDLE;
 
