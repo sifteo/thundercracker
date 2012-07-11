@@ -26,8 +26,8 @@
  *
  *   C9     MPAGE      x_bg0_wrap
  *   B4     RTC2CMP0   x_bg0_first_addr
- *   B5     RTC2CMP1   x_bg0_last_w
- *   A1     PWMDC0     x_bg0_first_w
+ *   B5     RTC2CMP1   y_spr_line
+ *   A1     PWMDC0     y_spr_line_limit
  *   A2     PWMDC1     y_bg0_addr_l
  *   C2     CCL1       x_bg1_first_addr
  *   C3     CCH1       x_bg1_last_addr
@@ -35,6 +35,8 @@
  *   C5     CCH2       y_bg1_bit_index
  *   C6     CCL3       x_bg1_shift
  *   C7     CCH3       y_spr_active
+ *   DD     CCPDATIA   x_bg0_first_w
+ *   DE     CCPDATIB   x_bg0_last_w
  */
 
 static void overlay_memory() __naked {
@@ -47,17 +49,12 @@ _y_bg0_map::
 _y_bg1_map::
     .ds 2
 
-_y_spr_line::
-    .ds 1
-_y_spr_line_limit::
-    .ds 1
-
 _x_spr::            ; 20 bytes
-_bg2_state::        ; 14 bytes
 _lcd_window_x::
     .ds 1           ; 0
 _lcd_window_y::
     .ds 1           ; 1
+_bg2_state::        ; 14 bytes
 _draw_xy::
     .ds 2           ; 2
 _draw_attr::
