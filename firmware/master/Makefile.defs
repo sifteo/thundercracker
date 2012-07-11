@@ -93,7 +93,7 @@ ARCH := -mthumb -mcpu=cortex-m3 -mfix-cortex-m3-ldrd \
 
 CCFLAGS += $(ARCH)
 LDFLAGS += $(ARCH) \
-              -Wl,-Map=master-stm32.map,--cref,--gc-sections,-u,IVT \
+              -Wl,-Map=$(BIN).map,--cref,--gc-sections,-u,IVT \
               -T $(LDSCRIPT) -nostartfiles
 
 # Select JTAG device for programming - default to Olimex
