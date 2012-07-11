@@ -125,11 +125,22 @@ def scoreHistogram(histogram):
     for v in histogram:
         err += (v-avg)*(v-avg)
     return err / len(histogram)
+    
+def testOneToOneProperty(gen):
+    # Make sure every byte hashes to a unique value
+    bytes = range(256)
+    hashes = [ crcList([x], gen) for x in bytes ]
+    hashes.sort()
+    return hashes == bytes
 
 def testCRCBitErrors():
     print "\nEvaluating bit-error detection for generators:"
     best = None
     for gen in findNBitGenerators(8)[0]:
+        if not testOneToOneProperty(gen):
+            print "\t%02x: (not 1:1)" % gen
+            continue
+
         hist = bitErrorDetectionHistogram(gen)
         score = scoreHistogram(hist)
         print "\t%02x: Score %f" % (gen, score)
