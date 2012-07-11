@@ -38,6 +38,14 @@ public:
     static void setPending(TaskID id, void *p = 0);
     static void clearPending(TaskID id);
 
+    #ifndef SIFTEO_SIMULATOR
+    static void waitForInterrupt()
+    {
+        /// Block until the next hardware event
+        __asm__ __volatile__ ("wfi");
+    }
+    #endif
+
 private:
     typedef void (*TaskCallback)(void *);
 
@@ -48,9 +56,6 @@ private:
     };
 
     static Task TaskList[];
-
-    /// Block until the next hardware event
-    static void waitForInterrupt();
 };
 
 #endif // TASKS_H

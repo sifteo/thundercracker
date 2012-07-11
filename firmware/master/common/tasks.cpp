@@ -104,10 +104,3 @@ void Tasks::idle()
     work();
     waitForInterrupt();
 }
-
-#ifndef SIFTEO_SIMULATOR
-void Tasks::waitForInterrupt()
-{
-    __asm__ __volatile__ ("wfi");
-}
-#endif

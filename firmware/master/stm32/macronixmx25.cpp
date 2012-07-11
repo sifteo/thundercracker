@@ -7,6 +7,7 @@
 #include "flash_device.h"
 #include "board.h"
 #include "macros.h"
+#include "tasks.h"
 
 
 void MacronixMX25::init()
@@ -175,6 +176,10 @@ void MacronixMX25::waitWhileBusy()
 void MacronixMX25::waitForDma()
 {
     while (spi.dmaInProgress()) {
-        // Kill time.. not safe to execute tasks here.
+        /*
+         * Kill time.. not safe to execute tasks here. We can yield until
+         * the DMA IRQ comes back, to give the DMA controller more bus bandwidth.
+         */
+        Tasks::waitForInterrupt();
     }
 }

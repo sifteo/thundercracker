@@ -158,13 +158,20 @@ void SPIMaster::transferDma(const uint8_t *txbuf, uint8_t *rxbuf, unsigned len)
 
     For now, enable both channels, and provide a dummy mem pointer for RX and
     disable its MINC bit.
+
+    NB: I've been seeing what appear to be highly intermittent DMA failures, but
+        they've been so debugging-resistant that I can't narrow down exactly when
+        or why they happen. So, for added superstition, I'm keeping the priority
+        equal for the TX and RX DMA transfers, even though we don't need the RX
+        data in this case. I think this may be able to trigger some kind of deadlock
+        between the SPI peripheral and DMA controller.
 */
 void SPIMaster::txDma(const uint8_t *txbuf, unsigned len)
 {
     static uint8_t dummy;
     dmaRxChan->CNDTR = len;
     dmaRxChan->CMAR = (uint32_t)&dummy;
-    dmaRxChan->CCR =    (0 << 12)|  // PL - priority level, 0 == LOW
+    dmaRxChan->CCR =    (2 << 12)|  // PL - priority level, 2 == HIGH
                         (0 << 7) |  // MINC - memory pointer increment
                         (0 << 4) |  // DIR - direction, 0 == read from peripheral
                         (1 << 3) |  // TEIE - transfer error ISR enable
