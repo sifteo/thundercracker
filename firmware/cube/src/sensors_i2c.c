@@ -193,21 +193,21 @@ as_9:
         xrl     a, (_ack_data + RF_ACK_ACCEL + 2)
         jz      1$
         xrl     (_ack_data + RF_ACK_ACCEL + 2), a
-        orl     _ack_bits, #RF_ACK_BIT_ACCEL
+        setb    RF_ACK_BIT_ACCEL
 1$:
 
         mov     a, _i2c_temp_2
         xrl     a, (_ack_data + RF_ACK_ACCEL + 1)
         jz      2$
         xrl     (_ack_data + RF_ACK_ACCEL + 1), a
-        orl     _ack_bits, #RF_ACK_BIT_ACCEL
+        setb    RF_ACK_BIT_ACCEL
 2$:
 
         mov     a, _i2c_temp_1
         xrl     a, (_ack_data + RF_ACK_ACCEL + 0)
         jz      3$
         xrl     (_ack_data + RF_ACK_ACCEL + 0), a
-        orl     _ack_bits, #RF_ACK_BIT_ACCEL
+        setb    RF_ACK_BIT_ACCEL
 3$:
 
         ; Fall through...

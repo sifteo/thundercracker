@@ -135,7 +135,7 @@ static void flash_dequeue() __naked
         mov     a, @R_PTR
 
         inc     (_ack_data + RF_ACK_FLASH_FIFO)             ; Acknowledge ASAP
-        orl     _ack_bits, #RF_ACK_BIT_FLASH_FIFO
+        setb    RF_ACK_BIT_FLASH_FIFO
 
         inc     R_PTR                                       ; Advance tail pointer
         cjne    R_PTR, #(_flash_fifo + FLS_FIFO_SIZE), 1$
@@ -244,11 +244,10 @@ void flash_init(void)
         ; We acknowledge a reset as if it were one data byte.
 
         inc     (_ack_data + RF_ACK_FLASH_FIFO)
-        orl     _ack_bits, #RF_ACK_BIT_HWID
+        setb    RF_ACK_BIT_HWID
 
     __endasm ;
 }
-
 
 /*
  * flash_handle_fifo --

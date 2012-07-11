@@ -145,11 +145,11 @@ void tf0_isr(void) __interrupt(VECTOR_TF0) __naked
 
         ; Okay! We are actually making a difference here. Update the neighbor
         ; bits in the ACK packet (leaving the other bits alone) and mark
-        ; the ack_bits.
+        ; the RF_ACK_BIT.
 
         xrl     a, @r0
         mov     @r0, a
-        orl     _ack_bits, #RF_ACK_BIT_NEIGHBOR
+        setb    RF_ACK_BIT_NEIGHBOR
 
 #ifdef DEBUG_NBR
         mov     _nbr_temp, a
@@ -203,7 +203,7 @@ void tf0_isr(void) __interrupt(VECTOR_TF0) __naked
 7$: 
 
         xrl     (_ack_data + RF_ACK_NEIGHBOR + 0), #(NB0_FLAG_TOUCH)
-        orl     _ack_bits, #RF_ACK_BIT_NEIGHBOR
+        setb    RF_ACK_BIT_NEIGHBOR
         
 8$:
         ;--------------------------------------------------------------------

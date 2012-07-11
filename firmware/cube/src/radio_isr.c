@@ -14,7 +14,6 @@
 #include "power.h"
 
 RF_MemACKType __near ack_data;
-uint8_t __near ack_bits;
 
 // Disable to prevent radio from writing to VRAM, for testing
 #define WRITE_TO_VRAM
@@ -706,7 +705,7 @@ rx_special:
 
         cjne    R_SAMPLE, #1, 2$
 
-        mov     _ack_bits, #0xFF                ; Do ALL the acks!
+        mov     RF_ACK_REG, #0xFF               ; Do ALL the acks!
 
 2$:
         ; -------- 
@@ -821,43 +820,43 @@ rx_complete_0:
         ; ACK packet write
         ;--------------------------------------------------------------------
 
-        ; The packet length comes from _ack_bits, and the first portion of
+        ; The packet length comes from RF_ACK_REG, and the first portion of
         ; the data from _ack_data. To send data back to the master, we
         ; update bytes in _ack_data, then set the corresponding bit in
-        ; ack_bits. We decode those bits into a length here.
+        ; RF_ACK_REG. We decode those bits into a length here.
 
 rx_ack:
-        mov     a, _ack_bits                            ; Leave ack_bits in acc
+        mov     a, RF_ACK_REG
         jz      no_ack                                  ; Skip the ACK entirely if empty
 
         clr     _RF_CSN                                 ; Begin SPI transaction
         mov     _SPIRDAT, #RF_CMD_W_ACK_PAYLD           ; Start sending ACK packet
         mov     R_TMP, #_ack_data
 
-        ; Decode length of the memory portion of the packet, from ack_bits.
+        ; Decode length of the memory portion of the packet, from RF_ACK_REG.
         ; Must be in descending order. If we are also sending the HWID,
         ; set the carry bit.
 
         clr     c
 
-        jnb     RF_ACK_ABIT_HWID, $10
+        jnb     RF_ACK_BIT_HWID, $10
         mov     R_INPUT, #RF_MEM_ACK_LEN
         setb    c
         sjmp    $20
 
-$10:    jnb     RF_ACK_ABIT_BATTERY_V, $11
+$10:    jnb     RF_ACK_BIT_BATTERY_V, $11
         mov     R_INPUT, #RF_ACK_LEN_BATTERY_V
         sjmp    $20
 
-$11:    jnb     RF_ACK_ABIT_FLASH_FIFO, $12
+$11:    jnb     RF_ACK_BIT_FLASH_FIFO, $12
         mov     R_INPUT, #RF_ACK_LEN_FLASH_FIFO
         sjmp    $20
 
-$12:    jnb     RF_ACK_ABIT_NEIGHBOR, $13
+$12:    jnb     RF_ACK_BIT_NEIGHBOR, $13
         mov     R_INPUT, #RF_ACK_LEN_NEIGHBOR
         sjmp    $20
 
-$13:    jnb     RF_ACK_ABIT_ACCEL, $14
+$13:    jnb     RF_ACK_BIT_ACCEL, $14
         mov     R_INPUT, #RF_ACK_LEN_ACCEL
         sjmp    $20
 
@@ -888,7 +887,7 @@ $20:
 
         ; End of ACK
 
-        mov     _ack_bits, #0                           ; Reset pending ACK bits
+        mov     RF_ACK_REG, #0                          ; Reset pending ACK bits
         SPI_WAIT                                        ; RX last dummy byte
         mov     a, _SPIRDAT
         setb    _RF_CSN                                 ; End SPI transaction
