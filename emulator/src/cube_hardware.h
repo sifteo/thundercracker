@@ -17,6 +17,7 @@
 #include "cube_spi.h"
 #include "cube_i2c.h"
 #include "cube_mdu.h"
+#include "cube_ccp.h"
 #include "cube_rng.h"
 #include "cube_lcd.h"
 #include "cube_flash.h"
@@ -70,6 +71,7 @@ class Hardware {
     I2CBus i2c;
     ADC adc;
     MDU mdu;
+    CCP ccp;
     Flash flash;
     Neighbors neighbors;
     RNG rng;

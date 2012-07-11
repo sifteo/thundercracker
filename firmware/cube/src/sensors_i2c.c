@@ -163,15 +163,11 @@ as_6:
         NEXT    (as_7)
 
         ; 7. Read Y axis high byte.
+        ;    (Y axis is inverted on rev 2+ hardware)
 as_7:
-        #if HWREV >= 2
-            ; y axis is inverted on rev 2 hardware
-            mov     a, _W2DAT
-            cpl     a
-            mov     _i2c_temp_2, a
-        #else
-            mov     _i2c_temp_2, _W2DAT
-        #endif
+        mov     a, _W2DAT
+        cpl     a
+        mov     _i2c_temp_2, a
         NEXT    (as_8)
 
         ; 8. Read (and discard) Z axis low byte.

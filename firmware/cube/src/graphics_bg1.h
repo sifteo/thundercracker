@@ -46,16 +46,16 @@ extern __bit x_bg1_offset_bit0;         // Panning offset from BG0, as three sep
 extern __bit x_bg1_offset_bit1;
 extern __bit x_bg1_offset_bit2;
 
-extern uint8_t x_bg1_first_addr;        // X portion of address for first pixel
-extern uint8_t x_bg1_last_addr;         // X portion of address for last tile
+__sfr __at 0xC2 x_bg1_first_addr;       // X portion of address for first pixel
+__sfr __at 0xC3 x_bg1_last_addr;        // X portion of address for last tile
 
-extern uint8_t y_bg1_addr_l;            // Low part of tile addresses, inc by 32 each line
-extern uint8_t y_bg1_bit_index;         // Index into bitmap array, inc by 1 each line
+__sfr __at 0xC4 y_bg1_addr_l;           // Low part of tile addresses, inc by 32 each line
+__sfr __at 0xC5 y_bg1_bit_index;        // Index into bitmap array, inc by 1 each line
 extern uint16_t y_bg1_map;              // Map address for the first tile on this line
 extern __bit y_bg1_empty;               // Current line of the bitmap is empty. Set during setup/next.
 
 extern __bit x_bg1_rshift, x_bg1_lshift;
-extern uint8_t x_bg1_shift;
+__sfr __at 0xC6 x_bg1_shift;
 
 // Scanline bitmap in MD3..MD0
 

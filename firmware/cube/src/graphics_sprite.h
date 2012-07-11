@@ -32,9 +32,9 @@ struct x_sprite_t {
 // Horizontal state for each sprite
 extern struct x_sprite_t x_spr[_SYS_SPRITES_PER_LINE];
 
-extern uint8_t   y_spr_line;            // Current rendering line, zero-based
-extern uint8_t   y_spr_line_limit;      // Rendering ends at this line
-extern uint8_t   y_spr_active;          // Number of sprites in x_spr[]
+__sfr __at 0xB5 y_spr_line;            // Current rendering line, zero-based
+__sfr __at 0xA1 y_spr_line_limit;      // Rendering ends at this line
+__sfr __at 0xC7 y_spr_active;          // Number of sprites in x_spr[]
 
 /*
  * Scanline renderer registers
