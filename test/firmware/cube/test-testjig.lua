@@ -8,6 +8,7 @@
 require('luaunit')
 require('vram')
 require('testjig')
+require('flash-crc')
 
 TestTestjig = {}
 
@@ -49,11 +50,11 @@ TestTestjig = {}
 
         jig:flashReset()
         jig:programFlashAndWait(
-            'fde1fd00fd00' ..       -- Address 0x0000
-            'fd00fdabfdcd' ..       -- LUT1    [0] = 0xabcd
-            'fd01fdfdfdff' ..       -- LUT1    [1] = 0xfdff
-            'fd40' ..               -- TILE_P0 [0]
-            'fd41'                  -- TILE_P0 [1]
+            'e10000' ..     -- Address 0x0000
+            '00abcd' ..     -- LUT1    [0] = 0xabcd
+            '01fdff' ..     -- LUT1    [1] = 0xfdff
+            '40' ..         -- TILE_P0 [0]
+            '41'            -- TILE_P0 [1]
         )
 
         -- Check contents of flash memory
@@ -75,15 +76,15 @@ TestTestjig = {}
             -- Write 0xFFFF at 0x0000 to force an auto-erase
             -- without actually programming any zero bits.
 
-            'fde1fd00fd00' ..       -- Address 0x0000
-            'fd00fdfffdff' ..       -- LUT1    [0] = 0xffff
-            'fd01fdf0fdf1' ..       -- LUT1    [1] = 0xf0f1
-            'fd40' ..               -- TILE_P0 [0]
+            'e10000' ..     -- Address 0x0000
+            '00ffff' ..     -- LUT1    [0] = 0xffff
+            '01f0f1' ..     -- LUT1    [1] = 0xf0f1
+            '40' ..         -- TILE_P0 [0]
 
             -- Write a test pattern to the second tile
 
-            'fde1fd02fd00' ..       -- Address 0x0002
-            'fd41'                  -- TILE_P0 [1]
+            'e10200' ..     -- Address 0x0002
+            '41'            -- TILE_P0 [1]
         )
 
         -- Check memory contents
@@ -98,8 +99,8 @@ TestTestjig = {}
         -- Same thing, again.
 
         jig:programFlashAndWait(
-            'fde1fd02fd00' ..       -- Address 0x0002
-            'fd41'                  -- TILE_P0 [1]
+            'e10200' ..     -- Address 0x0002
+            '41'            -- TILE_P0 [1]
         )
 
         -- Check memory contents
@@ -119,4 +120,73 @@ TestTestjig = {}
             self:test_flash_verify()
         end
     end
+
+    function TestTestjig:test_flash_crc()
+
+        -- Write some simple tiles, plus erase the first block
+        jig:flashReset()
+        jig:programFlashAndWait(
+            'e10000' ..     -- Address 00:00
+            '00abcd' ..     -- LUT1    [0] = 0xabcd
+            '01fdff' ..     -- LUT1    [1] = 0xfdff
+            '40' ..         -- TILE_P0 [0]
+            '41'            -- TILE_P0 [1]
+        )
+
+        -- First, verify the CRC of some erased memory (Tiles 16-31)
+        jig:programFlashAndWait(
+            'e12000' ..     -- Address 00:20
+            'e24201'        -- CRC, one block
+        )
+        assertEquals(unpackHex(radio:expectQuery(0x42)),
+                     unpackHex(flashCRC(gx.cube, 0x20 * 0x40, 1)))
+
+        -- Now go back and write some 1bpp tile data
+        jig:programFlashAndWait(
+            'e12000' ..     -- Address 00:20
+            '60' ..         -- TILE_P1_R4 (count=1)
+            '01234567' ..   -- 16 nybbles of pixel data
+            '89abcdef' ..
+            ('e0'):rep(10)  -- 10 pad bytes (12 past origin of quarter-tile)
+        )
+
+        -- Verify the same CRC again
+        jig:programFlashAndWait(
+            'e12000' ..     -- Address 00:20
+            'e21901'        -- CRC, one block
+        )
+        assertEquals(unpackHex(radio:expectQuery(0x19)),
+                     unpackHex(flashCRC(gx.cube, 0x20 * 0x40, 1)))
+
+        -- Now verify a longer CRC
+        jig:programFlashAndWait(
+            'e10000' ..     -- Address 00:00
+            'e21904'        -- CRC, four blocks
+        )
+        local expected = unpackHex(flashCRC(gx.cube, 0, 4))
+        assertEquals(unpackHex(radio:expectQuery(0x19)), expected)
+
+        -- Try the 'check query' command, to verify this without using the radio.
+        -- Do it twice, to make sure it doesn't hang the FIFO nor corrupt the query buffer.
+        -- Also make sure we can check just the header byte.
+        jig:programFlashAndWait(
+            'e31199' .. expected ..
+            'e31199' .. expected ..
+            'e30199'
+        )
+
+        -- Now a negative test. Make sure we hang the FIFO when the query buffer doesn't match.
+        -- The 'check query' command itself should succeed... but any future commands will time
+        -- out until the flash state machine is reset.
+
+        -- Nop, just to verify the FIFO is still alive
+        jig:programFlashAndWait('e0')
+
+        -- This command succeeds, but it leaves the FIFO hung
+        jig:programFlashAndWait('e31199' .. expected:sub(1,30) .. '00')
+
+        -- Verify the FIFO is now hung
+        assertError(jig.programFlashAndWait, jig, 'e0')
+    end
+
     

@@ -31,12 +31,38 @@ jig = {}
         return string.byte(string.sub(gx.cube:testGetACK(), 9, 9))
     end
 
-    function jig:programFlashAndWait(hexCommands, acks)
-        acks = acks or (string.len(hexCommands) / 4)
-        local baseline = self:getFlashACK()
-        local deadline = gx.sys:vclock() + 15
+    function jig:programFlashAndWait(hexCommands, acks, hexPrefix)
+        local commands = packHex(hexCommands)
+        local prefix = packHex(hexPrefix or '')
+        acks = acks or #commands
 
-        gx.cube:testWrite(packHex(hexCommands))
+        local baseline = self:getFlashACK()
+
+        -- Send the prefix
+
+        if #prefix then
+            gx.cube:testWrite(prefix)
+            gx.sys:vsleep(0.1)
+        end
+
+        -- Break the commands up into chunks that we can send in a single
+        -- testjig transaction. The command data is always escaped with 0xFD bytes.
+
+        local chunk = 6
+
+        for i = 1, math.ceil(#commands / chunk) * chunk, chunk do
+            local r = {}
+            for j = i, math.min(i + chunk - 1, #commands) do
+                r[1+#r] = string.char(0xFD)
+                r[1+#r] = commands:sub(j,j)
+            end
+            gx.cube:testWrite(table.concat(r))
+            gx.sys:vsleep(0.1)
+        end
+        
+        -- Wait for acknowledgment from the flash state machine
+        
+        local deadline = gx.sys:vclock() + 1
 
         repeat
             gx.yield()
@@ -50,5 +76,5 @@ jig = {}
     end
 
     function jig:flashReset()
-        jig:programFlashAndWait('fe', 1)
+        jig:programFlashAndWait('', 1, 'fe')
     end
