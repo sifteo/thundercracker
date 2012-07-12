@@ -250,6 +250,7 @@
 #define FRAME_ACK_CONTINUOUS    0x40
 #define FRAME_ACK_COUNT         0x3F
 #define FRAME_ACK_TOGGLE        0x01
+#define QUERY_ACK_BIT           0x80
 
 typedef union {
     uint8_t bytes[RF_ACK_LEN_MAX];
@@ -364,7 +365,7 @@ typedef struct {
 
 #define FLS_OP_NOP              0xe0    // Permanently reserved as a no-op
 #define FLS_OP_ADDRESS          0xe1    // Followed by a 2-byte (lat1:lat2) tile address. A21 in LSB of lat2.
-#define FLS_OP_QUERY_CHECKSUM   0xe2    // Args: (queryID, numSamples-1, stride-1)
+#define FLS_OP_QUERY_CRC        0xe2    // Args: (queryID, numBlocks)
 
 // From 0xe3 to 0xff are all reserved codes currently
 

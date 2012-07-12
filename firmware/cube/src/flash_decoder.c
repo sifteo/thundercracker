@@ -95,6 +95,11 @@ __bit fls_bit0;
 __bit fls_bit1;
 __bit fls_bit2;
 
+// Flash CRC buffer
+#define FCRC_HEAD    (_fls_lut)
+#define FCRC_DATA    (_fls_lut+1)
+#define FCRC_END     (_fls_lut+17)
+
 /*
  * State transition macro
  */
@@ -504,9 +509,153 @@ flst_A: lcall   _flash_dequeue
 op_address_end:
 
         ;---------------------------------
+        ; Special symbol: QUERY_CRC
+        ;---------------------------------
+
+        cjne    a, #FLS_OP_QUERY_CRC, op_query_crc_end
+
+        NEXT(flst_B)
+flst_B: lcall   _flash_dequeue
+        orl     a, #QUERY_ACK_BIT       ; Ensure query bit is set
+        mov     FCRC_HEAD, a
+
+        NEXT(flst_C)
+flst_C: ljmp    _flash_query_crc
+
+op_query_crc_end:
+
+        ;---------------------------------
 
         ; Unrecognized special symbol. Ignore it...
         AGAIN();
+
+    __endasm ;
+}
+
+
+/*
+ * flash_query_crc --
+ *
+ *    Implements the FLS_OP_QUERY_CRC special opcode.
+ *
+ *    This op takes two byte-long arguments:
+ *
+ *     - A query ID (7 bits) which is sent back over the radio
+ *       (Already stowed in FCRC_HEAD, with QUERY_ACK_BIT set)
+ *
+ *     - Count of 16-tile blocks to process. Zero is interpreted
+ *     as 256 blocks. (Sitting in the FIFO on entry)
+ *
+ *    Generates a 16-byte result. This is pushed into the radio
+ *    ACK buffer, with the one-byte query ID prepended.
+ */
+
+static void flash_query_crc() __naked
+{
+    __asm
+
+        ;--------------------------------------------------------------------
+        ; Setup
+        ;--------------------------------------------------------------------
+
+        lcall   _flash_dequeue      ; Store block count
+        mov     R_COUNT1, a
+
+        mov     _CCPDATIB, #0x84    ; Generator polynomial (See tools/gfm.py)
+
+        mov     R_PTR, #FCRC_DATA   ; Use LUT buffer as temporary space
+        clr     a
+1$:     mov     @R_PTR, a           ; Zero the CRC buffer
+        inc     R_PTR
+        cjne    R_PTR, #FCRC_END, 1$
+
+        mov     CTRL_PORT, #CTRL_IDLE
+
+        ;--------------------------------------------------------------------
+        ; One allocation block (16 tiles)
+        ;--------------------------------------------------------------------
+
+2$:
+        mov     ADDR_PORT, _flash_addr_lat2
+        mov     CTRL_PORT, #(CTRL_IDLE | CTRL_FLASH_LAT2)
+        mov     ADDR_PORT, _flash_addr_lat1
+        mov     CTRL_PORT, #(CTRL_IDLE | CTRL_FLASH_LAT1)
+
+        mov     ADDR_PORT, #0       ; Initial sampling point
+        mov     _CCPDATIA, #0xFF    ; Initial conditions for CRC
+
+        mov     R_PTR, #FCRC_DATA   ; Init output pointer / counter
+
+        ;--------------------------------------------------------------------
+        ; One tile
+        ;--------------------------------------------------------------------
+
+3$:
+        ; Four rounds of CRC + addressing feedback, for every tile.
+        ; This CRCs the byte pointed to by ADDR_PORT using our GF
+        ; multiplier, then uses the upper bits of the intermediate
+        ; CRC result as the sampling point for the next round.
+
+        mov     CTRL_PORT, #CTRL_FLASH_OUT
+
+        mov     a, BUS_PORT         ; Load flash data byte
+        xrl     a, _CCPDATO         ; XOR data byte with multiplier output
+        mov     ADDR_PORT, a        ; Use new CRC as feedback for sampling point
+        mov     _CCPDATIA, a        ; Save updated CRC
+
+        mov     a, BUS_PORT         ; Load flash data byte
+        xrl     a, _CCPDATO         ; XOR data byte with multiplier output
+        mov     ADDR_PORT, a        ; Use new CRC as feedback for sampling point
+        mov     _CCPDATIA, a        ; Save updated CRC
+
+        mov     a, BUS_PORT         ; Load flash data byte
+        xrl     a, _CCPDATO         ; XOR data byte with multiplier output
+        mov     ADDR_PORT, a        ; Use new CRC as feedback for sampling point
+        mov     _CCPDATIA, a        ; Save updated CRC
+
+        mov     a, BUS_PORT         ; Load flash data byte
+        xrl     a, _CCPDATO         ; XOR data byte with multiplier output
+        mov     _CCPDATIA, a        ; Save updated CRC
+
+        mov     R_TMP0, a           ; Remember it as the next sampling point
+        xrl     a, @R_PTR           ; XOR with the output buffer
+        mov     @R_PTR, a
+
+        mov     a, _flash_addr_lat1 ; Advance to next tile
+        add     a, #2
+        mov     _flash_addr_lat1, a
+        mov     ADDR_PORT, a
+        mov     CTRL_PORT, #(CTRL_FLASH_OUT | CTRL_FLASH_LAT1)
+
+        mov     ADDR_PORT, R_TMP0   ; Now go to the next sampling point
+
+        inc     R_PTR               ; Loop until we finish the allocation block
+        cjne    R_PTR, #FCRC_END, 3$
+
+        djnz    R_COUNT1, 2$        ; Loop over all blocks
+
+        ;--------------------------------------------------------------------
+        ; Query response
+        ;--------------------------------------------------------------------
+
+        mov     R_PTR, #FCRC_HEAD                   ; Packet header address
+
+        clr     _IEN_RF                             ; Begin RF critical section
+        clr     _RF_CSN                             ; Begin SPI transaction
+        mov     _SPIRDAT, #RF_CMD_W_ACK_PAYLD       ; Start sending ACK packet
+
+4$:     mov     _SPIRDAT, @R_PTR
+        inc     R_PTR
+        SPI_WAIT
+        mov     a, _SPIRDAT                         ; RX dummy byte
+        cjne    R_PTR, #FCRC_END, 4$                ; Loop over whole buffer
+
+        SPI_WAIT                                    ; RX last dummy byte
+        mov     a, _SPIRDAT
+        setb    _RF_CSN                             ; End SPI transaction
+        setb    _IEN_RF                             ; End RF critical section
+
+        ljmp    flst_opcode_n                       ; Done, next opcode.
 
     __endasm ;
 }

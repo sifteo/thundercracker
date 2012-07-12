@@ -32,11 +32,6 @@ uint8_t __near ack_bits;
  * Assembly macros.
  */
 
-#define SPI_WAIT                                        __endasm; \
-        __asm   mov     a, _SPIRSTAT                    __endasm; \
-        __asm   jnb     acc.2, (.-2)                    __endasm; \
-        __asm
-
 #define RX_NEXT_NYBBLE                                  __endasm; \
         __asm   djnz    R_NYBBLE_COUNT, rx_loop         __endasm; \
         __asm   ljmp    rx_complete                     __endasm; \
@@ -829,6 +824,19 @@ rx_complete_0:
         ; One caveat: We should be sure to reset ack_bits before sampling the
         ; actual ACK packet data, so that it is not possible for ACKs to get
         ; lost if a higher-priority IRQ preempts us and sets an ack_bit.
+        ;
+        ; Note: We can send up to one ACK packet per receive ISR right here.
+        ;       We can also enqueue ACKs from the main thread, as part of an
+        ;       asynchronous query. Normally we have no more than one buffered
+        ;       ACK packet, but query responses may arbitrarily increase that
+        ;       number, up until we hit the hardware limit of 3 packets.
+        ;
+        ;       Ideally we would avoid transmitting this automatic ACK if
+        ;       the hardware buffer is not empty, in order to avoid inflating
+        ;       our radio latency. But the nRF does not include this information
+        ;       in the STATUS byte. We would have to read FIFO_STATUS in a
+        ;       separate SPI transaction. That really is not worth the
+        ;       performance penalty of doing this on every packet.
 
 rx_ack:
 

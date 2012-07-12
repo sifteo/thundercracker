@@ -62,4 +62,9 @@ extern uint8_t __near ack_bits;
 #define radio_rx_disable()          { RF_CE = 0;  }
 #define radio_critical_section(_x)  { radio_irq_disable() _x radio_irq_enable() }
 
+#define SPI_WAIT                                        __endasm; \
+        __asm   mov     a, _SPIRSTAT                    __endasm; \
+        __asm   jnb     acc.2, (.-2)                    __endasm; \
+        __asm
+
 #endif
