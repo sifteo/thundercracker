@@ -99,8 +99,8 @@ namespace Atomic {
  */
 
 namespace Intrinsic {
-	
-	static ALWAYS_INLINE uint32_t POPCOUNT(uint32_t i) {
+
+    static ALWAYS_INLINE uint32_t POPCOUNT(uint32_t i) {
         // Returns the number of 1-bits in i.
         return __builtin_popcount(i);
     }
