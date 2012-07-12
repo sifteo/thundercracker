@@ -9,6 +9,8 @@
 #include <stdint.h>
 #include "protocol.h"
 
+#define NUM_SAMPLES 100
+
 class TestJig
 {
 public:
