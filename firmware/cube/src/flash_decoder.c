@@ -85,7 +85,7 @@ volatile __bit flash_reset_request;                      // Pending reset?
  * Loadstream codec state
  */
 
-__idata uint16_t fls_lut[FLS_LUT_SIZE];
+uint16_t fls_lut[FLS_LUT_SIZE];
 uint8_t fls_state;
 uint8_t fls_tail;
 
