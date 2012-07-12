@@ -2,7 +2,7 @@
 # Override default CDEPS
 CDEPS := $(MASTER_DIR)/common/syscall-table.def
 
-all: $(BIN).elf $(BIN).bin
+all: $(BIN).elf $(BIN).bin $(BIN).hex
 
 encrypted: $(BIN).sft
 
@@ -11,6 +11,9 @@ $(BIN).elf: $(OBJS_STM32)
 
 $(BIN).bin: $(BIN).elf
 	arm-none-eabi-objcopy -O binary $< $@
+
+$(BIN).hex: $(BIN).elf
+	arm-none-eabi-objcopy -O ihex $< $@
 
 $(BIN).sft: $(BIN).bin
 	$(TC_DIR)/tools/fwdeploy/fwdeploy $(BIN).bin $(BIN).sft
@@ -36,7 +39,7 @@ unlock:
 		-c "stm32f1x unlock 0" \
 		-c reset \
 		-c exit
-		
+
 erase:
 	openocd -f $(MASTER_DIR)/stm32/$(PROG_CONFIG) \
 	-c init \
@@ -55,7 +58,7 @@ program: $(BIN).elf
 		-c exit
 
 update: encrypted
-	$(SDK_DIR)/bin/swiss update master-stm32.sft
+	$(SDK_DIR)/bin/swiss update $(BIN).sft
 
 objdump: $(BIN).elf
 	arm-none-eabi-objdump -d $< | arm-none-eabi-c++filt | less
@@ -67,7 +70,7 @@ readelf: $(BIN).elf
 
 # Several steps, to work around Win32 command line length limits
 clean:
-	rm -f $(BIN).bin $(BIN).elf $(BIN).sft
+	rm -f $(BIN).bin $(BIN).elf $(BIN).sft $(BIN).hex
 	rm -f $(OBJS_STM32)
 	rm -f $(MASTER_DIR)/stm32/target.ld
 	rm -rf .dep

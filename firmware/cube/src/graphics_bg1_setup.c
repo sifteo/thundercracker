@@ -12,7 +12,7 @@
 #include "sensors.h"
 
 
-void vm_bg0_bg1(void)
+void vm_bg0_bg1(void) __naked
 {
     uint8_t y = vram.num_lines;
 
@@ -32,6 +32,7 @@ void vm_bg0_bg1(void)
     } while (--y);    
 
     lcd_end_frame();
+    GRAPHICS_RET();
 }
 
 
@@ -161,28 +162,28 @@ static uint8_t bitcount16_x2(uint16_t x) __naked
         push    ar2
         
         mov     r0, dpl
-        mov         r1, dph
+        mov     r1, dph
         mov     dptr, #_bitcount16_x2_lut_1_1
 
-        mov         a, #0x0F
+        mov     a, #0x0F
         anl     a, r0
         movc    a, @a+dptr
         mov     r2, a
 
-        mov         a, #0xF0
+        mov     a, #0xF0
         anl     a, r0
         swap    a
         movc    a, @a+dptr
         add     a, r2
         mov     r2, a
 
-        mov         a, #0x0F
+        mov     a, #0x0F
         anl     a, r1
         movc    a, @a+dptr
         add     a, r2
         mov     r2, a
 
-        mov         a, #0xF0
+        mov     a, #0xF0
         anl     a, r1
         swap    a
         movc    a, @a+dptr

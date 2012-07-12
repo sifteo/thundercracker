@@ -102,7 +102,7 @@ class I2CAccelerometer {
     }
 
  private:
-    static const uint8_t deviceAddress = 0x30;
+    static const uint8_t deviceAddress = 0x32;
     uint8_t regAddress;
 
     // Matches device register layout. Assumes little-endian.

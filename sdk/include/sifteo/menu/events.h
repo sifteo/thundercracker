@@ -13,18 +13,8 @@
  * which copies it into the caller's event structure, and returns control to
  * the caller to handle the event.
  *
- * If the caller would like to prevent the default handling of the event,
- * calling Menu::preventDefault will clear the event. This is useful for
- * multistate items (the MENU_ITEM_PRESS event can replace the item's icon
- * using replaceIcon to reflect the new state instead of animating out of the
- * menu).
- * NOTE: MENU_PREPAINT should never have its default behaviour disabled as the
- * menu tracks internally if a synchronous paint is needed. If the caller needs
- * a synchronous paint for the other cubes in the system, Menu::paintSync will
- * force a synchronous paint for the current paint operation.
- *
- * Default event handling is performed at the beginning of pollEvent, before
- * re-entering the state machine.
+ * The default handler for an event, if any, must be explicitly invoked
+ * at some point during the event loop, by calling performDefault().
  */
 
 #pragma once

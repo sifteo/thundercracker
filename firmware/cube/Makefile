@@ -30,8 +30,8 @@ OBJS = \
         src/params.rel \
         src/draw.rel \
         src/tilerom.rel \
-        src/demo.rel \
-        
+        src/disconnected.rel
+
 # Funny BG1 segment, to support ACALL alignment. Order matters.
 # bg1_line needs to be at the beginning of the segment; bg0_rom
 # is just the right size to pad the rest of the segment up until
@@ -60,6 +60,12 @@ LDFLAGS += -Wl-bBG1LINE=0x2000
 # Don't use any standard library code! (Size optimization)
 LDFLAGS += --nostdlib
 
+# Simple size profiler, based on the .rst parser used by our emulator's SBT.
+# This is the default build target; this runs static analysis checks which
+# should be performed on every automated build.
+sizeprof: $(BIN)
+	python ../../emulator/resources/firmware-sizeprof.py src/*.rst
+
 $(BIN): $(OBJS)
 	$(SDCC) -o $@ $(LDFLAGS) $(OBJS)
 
@@ -73,9 +79,5 @@ src/tilerom.c: tilerom/src-palettes.png tilerom/src-tiles.png tilerom/romgen.py
 
 clean:
 	rm -f *.mem src/*.rel src/*.rst src/*.sym *.lnk src/*.lst *.map src/*.asm
-
-# Simple size profiler, based on the .rst parser used by our emulator's SBT
-sizeprof: $(BIN)
-	python ../../emulator/resources/firmware-sizeprof.py src/*.rst
     
 .PHONY: clean sizeprof

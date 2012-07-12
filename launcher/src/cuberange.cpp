@@ -27,5 +27,6 @@ CubeSet CubeRange::initMinimum()
     CubeSet cubes(0, sys.minCubes);
     SCRIPT_FMT(LUA, "System():setOptions{ numCubes = %d }", sys.minCubes);
     _SYS_enableCubes(cubes);
+    _SYS_disableCubes(~cubes);
     return cubes;
 }

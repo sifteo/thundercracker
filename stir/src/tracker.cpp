@@ -191,9 +191,6 @@ bool XmTrackerLoader::readNextInstrument()
     // FILE: Number of samples
     uint16_t nSamples = get16();
     if (nSamples == 0) {
-        log->error("%s, instrument %u: Instruments with no samples have not been tested",
-                   filename, instruments.size());
-
         // Instruments with no samples have no envelopes to read.
         instrument.volumeEnvelopePoints = -1;
 

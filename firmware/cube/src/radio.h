@@ -22,11 +22,12 @@
 
 void radio_isr(void) __interrupt(VECTOR_RF) __naked __using(RF_BANK);
 void radio_init(void);
-
+void radio_ack_query() __naked;
 uint8_t radio_get_cube_id(void);
 
 extern RF_MemACKType __near ack_data;
 extern uint8_t __near ack_bits;
+extern uint8_t radio_query[32];
 
 /*
  * We track the length of the next ACK packet using a bitmap, where each
@@ -61,5 +62,10 @@ extern uint8_t __near ack_bits;
 #define radio_rx_enable()           { RF_CE = 1;  }
 #define radio_rx_disable()          { RF_CE = 0;  }
 #define radio_critical_section(_x)  { radio_irq_disable() _x radio_irq_enable() }
+
+#define SPI_WAIT                                        __endasm; \
+        __asm   mov     a, _SPIRSTAT                    __endasm; \
+        __asm   jnb     acc.2, (.-2)                    __endasm; \
+        __asm
 
 #endif

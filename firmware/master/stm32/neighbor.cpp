@@ -24,20 +24,26 @@ GPIOPin Neighbor::outPins[] = {
 #endif
 };
 
+GPIOPin Neighbor::bufferPin = NBR_BUF_GPIO;
+
 void Neighbor::init()
 {
+    bufferPin.setControl(GPIOPin::OUT_2MHZ);
+
     txPeriodTimer.init(BIT_PERIOD_TICKS, 0);
     rxPeriodTimer.init(BIT_PERIOD_TICKS, 0);
 
     for (unsigned i = 0; i < NUM_PINS; ++i) {
-        txPeriodTimer.configureChannelAsOutput(i + 1, HwTimer::ActiveLow, HwTimer::Pwm1);
-        outPins[i].setControl(GPIOPin::IN_FLOAT);
+
+        txPeriodTimer.configureChannelAsOutput(i + 1, HwTimer::ActiveHigh, HwTimer::Pwm1);
+        outPins[i].setControl(GPIOPin::IN_PULL);
         txPeriodTimer.enableChannel(i + 1);
 
         GPIOPin &in = inPins[i];
         in.irqInit();
         in.irqSetFallingEdge();
         in.irqDisable();
+        in.setControl(GPIOPin::IN_FLOAT);
     }
 }
 
@@ -62,7 +68,7 @@ void Neighbor::beginTransmitting(uint16_t data, uint8_t sideMask)
 
     // configure pins according to sideMask
     for (unsigned i = 0; i < NUM_PINS; ++i) {
-        GPIOPin::Control c = (sideMask & (1 << i)) ? GPIOPin::OUT_ALT_50MHZ : GPIOPin::IN_FLOAT;
+        GPIOPin::Control c = (sideMask & (1 << i)) ? GPIOPin::OUT_ALT_50MHZ : GPIOPin::IN_PULL;
         outPins[i].setControl(c);
     }
 
@@ -80,7 +86,7 @@ void Neighbor::stopTransmitting()
     txPeriodTimer.disableUpdateIsr();
     setDuty(0);
     for (unsigned i = 0; i < NUM_PINS; ++i)
-        outPins[i].setControl(GPIOPin::IN_FLOAT);
+        outPins[i].setControl(GPIOPin::IN_PULL);
     txState = Idle;
 }
 
@@ -132,25 +138,27 @@ void Neighbor::txPeriodISR()
 }
 
 /*
- * Initialize state, and enable IRQs on input pins & rx timer.
+ * Initialize state, and enable IRQs on input pins.
+ * Bit period timer gets enabled after we receive a start bit.
  */
 void Neighbor::beginReceiving(uint8_t mask)
 {
-    mask &= SIDEMASK;
+    bufferPin.setHigh();
 
     rxState = WaitingForStart;
     receivingSide = 0;  // just initialize to something safe
     rxBitCounter = 0;   // incremented at the end of each bit period
 
-    for (unsigned i = 0; mask != 0; ++i, mask >>= 1) {
-        if (mask & 0x1) {
-            GPIOPin &in = inPins[i];
-            in.setControl(GPIOPin::IN_FLOAT);
-            in.irqEnable();
-        }
-    }
+    for (unsigned i = 0; i < NUM_PINS; ++i) {
 
-    rxPeriodTimer.enableUpdateIsr();
+        outPins[i].setControl(GPIOPin::IN_FLOAT);
+
+        GPIOPin &in = inPins[i];
+        if (mask & (1 << i))
+            in.irqEnable();
+        else
+            in.irqDisable();
+    }
 }
 
 /*
@@ -162,6 +170,7 @@ void Neighbor::stopReceiving()
         inPins[i].irqDisable();
 
     rxPeriodTimer.disableUpdateIsr();
+    bufferPin.setLow();
 }
 
 /*
@@ -177,7 +186,7 @@ void Neighbor::onRxPulse(uint8_t side)
     // TODO: may need to time the squelch more precisely to ensure we don't
     // worsen the ringing
     GPIOPin &out = outPins[side];
-    out.setControl(GPIOPin::OUT_50MHZ);
+    out.setControl(GPIOPin::OUT_2MHZ);
     out.setLow();
 
     /*
@@ -185,22 +194,30 @@ void Neighbor::onRxPulse(uint8_t side)
      * Record which side we're listening to and disable the others.
      */
     if (rxState == WaitingForStart) {
+        /*
+         * Treat this as though we're at the end of our first bit period,
+         * during which we received a pulse. We're now just starting our
+         * second bit period to listen for the next pulse.
+         */
+        rxBitCounter = 1;
+        rxDataBuf.halfword = 1 << 1;     // init bit 0 to 1 - we're here because we received a pulse after all
 
         receivingSide = side;
-        rxDataBuffer = 1;   // init bit 0 to 1 - we're here because we received a pulse after all
         rxState = ReceivingData;
 
         /*
          * Sync our counter to this start bit, but wait as long as posible
          * to reset our counter, such that we're sampling
          * as far into the bit period as possible
-         **/
+         */
         rxPeriodTimer.setCount(0);
+        rxPeriodTimer.enableUpdateIsr();
 
     } else {
         // Otherwise, record the new bit that has arrived.
-        if (side == receivingSide)
-            rxDataBuffer |= 0x1;
+        if (side == receivingSide) {
+            rxDataBuf.halfword |= 0x1;
+        }
     }
 }
 
@@ -213,32 +230,47 @@ void Neighbor::onRxPulse(uint8_t side)
  * and reset our state. Otherwise, shift the value received during this bit
  * period along 'rxDataBuffer'
  */
-bool Neighbor::rxPeriodIsr(uint16_t *side, uint16_t *rxData)
+bool Neighbor::rxPeriodIsr(uint8_t &side, uint16_t &rxdata)
 {
-    outPins[receivingSide].setControl(GPIOPin::IN_FLOAT);
+    uint32_t status = rxPeriodTimer.status();
+    rxPeriodTimer.clearStatus();
 
-    // if we haven't gotten a start bit, nothing to do here
-    if (rxState == WaitingForStart)
-        return false;
+    // update event
+    if (status & 0x1) {
+        outPins[receivingSide].setControl(GPIOPin::IN_FLOAT);
 
-    rxBitCounter++;
+        // if we haven't gotten a start bit, nothing to do here
+        if (rxState == WaitingForStart)
+            return false;
 
-    if (rxBitCounter < NUM_RX_BITS) {
-        rxDataBuffer <<= 1;
-    } else {
+        rxBitCounter++;
 
-        rxState = WaitingForStart;
+        if (rxBitCounter < NUM_RX_BITS) {
+            rxDataBuf.halfword <<= 1;
+        } else {
 
-        /*
-         * The second byte of a successful message must match the complement
-         * of its first byte. Enforce that here before forwarding the message.
-         */
-        int8_t lsb = rxDataBuffer & 0xff;
-        int8_t msb = (rxDataBuffer >> 8) & 0xff;
-        if (lsb == ~msb) {
-            *side = receivingSide;
-            *rxData = rxDataBuffer;
-            return true;
+            rxPeriodTimer.disableUpdateIsr();
+            rxState = WaitingForStart;
+
+            /*
+             * The second byte of a successful message must match the complement
+             * of its first byte, rotated right by 5.
+             * Enforce that here before forwarding the message.
+             */
+            uint8_t checkbyte = ror8(~rxDataBuf.bytes[1], 5);
+
+            /*
+             * Check the header explicitly - packets with a bogus header would
+             * get rejected on the cubes since they would start listening on
+             * the wrong side and the packet would be dropped.
+             */
+            bool headerOK = (rxDataBuf.bytes[1] & 0xe0) == 0xe0;
+
+            if (headerOK && checkbyte == rxDataBuf.bytes[0]) {
+                side = receivingSide;
+                rxdata = rxDataBuf.halfword;
+                return true;
+            }
         }
     }
 

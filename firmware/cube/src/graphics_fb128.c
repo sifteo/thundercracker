@@ -65,7 +65,7 @@ static void vm_fb128_line(uint16_t ptr)
     __endasm ;
 }
 
-void vm_fb128(void)
+void vm_fb128(void) __naked
 {
     lcd_begin_frame();
     LCD_WRITE_BEGIN();
@@ -83,4 +83,5 @@ void vm_fb128(void)
     }
 
     lcd_end_frame();
+    GRAPHICS_RET();
 }

@@ -34,7 +34,7 @@ public:
 
     void txPeriodISR();
     void onRxPulse(uint8_t side);
-    bool rxPeriodIsr(uint16_t *side, uint16_t *rxData);
+    bool rxPeriodIsr(uint8_t &side, uint16_t &rxdata);
 
     static inline bool inIrqPending(uint8_t side) {
         return inPins[side].irqPending();
@@ -49,7 +49,7 @@ private:
      *
      * 2us  / (1 / 36000000) == 72 ticks
      * 12us / (1 / 36000000) == 432 ticks
-     *
+     * 16us / (1 / 36000000) == 576 ticks
      */
     static const unsigned PULSE_LEN_TICKS = 72;
     static const unsigned BIT_PERIOD_TICKS = 432;
@@ -62,13 +62,15 @@ private:
 
 #if (BOARD == BOARD_TEST_JIG)
     static const unsigned NUM_PINS = 4;
-    static const unsigned SIDEMASK = 0xf;
 #else
     static const unsigned NUM_PINS = 2;
-    static const unsigned SIDEMASK = 0x3;
 #endif
 
     void setDuty(uint16_t duty);
+
+    static ALWAYS_INLINE uint8_t ror8(uint8_t a, uint8_t b) {
+        return (a >> b) | (a << (8 - b));
+    }
 
     volatile uint16_t txData;    // data in the process of being transmitted. if 0, we're done.
     uint16_t txDataBuffer;
@@ -79,12 +81,17 @@ private:
     // not wanting to do either for now, so settle for a little brittleness
     static GPIOPin inPins[];
     static GPIOPin outPins[];
+    static GPIOPin bufferPin;
 
     HwTimer txPeriodTimer;
     HwTimer rxPeriodTimer;
 
+    union {
+        uint16_t halfword;
+        uint8_t bytes[2];
+    } rxDataBuf;
+
     int8_t receivingSide;   // we only receive on one side at a time - which one?
-    uint16_t rxDataBuffer;  // rx data in progress
     uint8_t rxBitCounter;   // how many bits have we shifted into rxDataBuffer?
     uint16_t txWaitPeriods; // how many bit periods to wait before beginning our next transmission
 
@@ -101,8 +108,6 @@ private:
 
     RxState rxState;
     TxState txState;
-
-
 };
 
 #endif

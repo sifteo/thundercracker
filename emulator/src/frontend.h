@@ -24,7 +24,8 @@
 class FrameRateController {
 public:
     FrameRateController();
-    void endFrame();
+
+    double getEndFrameSleepTime();
 
     void setTargetFPS(double target) {
         targetFPS = target;

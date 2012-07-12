@@ -5,6 +5,7 @@
 
 #include "svmcpu.h"
 #include "svmruntime.h"
+#include "panic.h"
 
 #include "vectors.h"
 
@@ -50,9 +51,9 @@ void run(reg_t sp, reg_t pc)
         :
         : [sp_arg] "r"(sp), [target] "r"(pc | 0x1)
     );
-    for (;;) {
-        asm volatile ("wfi");
-    }
+
+    // Cannot be reached unless we jumped into bad code that the validator failed to catch!
+    PanicMessenger::haltForever();
 }
 
 } // namespace SvmCpu

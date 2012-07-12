@@ -43,6 +43,8 @@ TestJig::TestHandler const TestJig::handlers[] = {
     stopNeighborRxHandler,                  // 5
     writeToCubeI2CHandler,                  // 6
     setCubeSensorsEnabledHandler,           // 7
+    beginNeighborTxHandler,                 // 8
+    stopNeighborTxHandler,                  // 9
 };
 
 void TestJig::init()
@@ -52,6 +54,8 @@ void TestJig::init()
 
     NVIC.irqEnable(IVT.TIM5);                   // neighbor tx
     NVIC.irqPrioritize(IVT.TIM5, 0x60);
+
+    // neighbor 0 and 1 are on ISR_EXTI9_5 - see exti.cpp
 
     NVIC.irqEnable(IVT.EXTI0);                  // neighbor in2
     NVIC.irqPrioritize(IVT.EXTI0, 0x64);
@@ -229,9 +233,15 @@ void TestJig::setSimulatedBatteryVoltageHandler(uint8_t argc, uint8_t *args)
  */
 void TestJig::getBatterySupplyCurrentHandler(uint8_t argc, uint8_t *args)
 {
-    uint16_t sample = adc.sample(V3_CURRENT_ADC_CH);
+    uint32_t sampleSum = 0;
 
-    const uint8_t response[] = { args[0], sample & 0xff, sample >> 8 };
+    for (unsigned i = 0; i < NUM_CURRENT_SAMPLES; i++) {
+        sampleSum += adc.sample(V3_CURRENT_ADC_CH);
+    }
+    
+    uint16_t sampleAvg = sampleSum / NUM_CURRENT_SAMPLES;
+
+    const uint8_t response[] = { args[0], sampleAvg & 0xff, sampleAvg >> 8 };
     UsbDevice::write(response, sizeof response);
 }
 
@@ -240,9 +250,15 @@ void TestJig::getBatterySupplyCurrentHandler(uint8_t argc, uint8_t *args)
  */
 void TestJig::getUsbCurrentHandler(uint8_t argc, uint8_t *args)
 {
-    uint16_t sample = adc.sample(USB_CURRENT_ADC_CH);
+    uint32_t sampleSum = 0;
 
-    const uint8_t response[] = { args[0], sample & 0xff, sample >> 8 };
+    for (unsigned i = 0; i < NUM_CURRENT_SAMPLES; i++) {
+        sampleSum += adc.sample(V3_CURRENT_ADC_CH);
+    }
+
+    uint16_t sampleAvg = sampleSum / NUM_CURRENT_SAMPLES;
+
+    const uint8_t response[] = { args[0], sampleAvg & 0xff, sampleAvg >> 8 };
     UsbDevice::write(response, sizeof response);
 }
 
@@ -321,19 +337,40 @@ void TestJig::setCubeSensorsEnabledHandler(uint8_t argc, uint8_t *args)
     UsbDevice::write(response, sizeof response);
 }
 
+/*
+ * args[1-2] - uint16_t txdata, args[3] sideMask
+ */
+void TestJig::beginNeighborTxHandler(uint8_t argc, uint8_t *args)
+{
+    uint16_t txData = *reinterpret_cast<uint16_t*>(&args[1]);
+    uint8_t sideMask = args[3];
+    neighbor.beginTransmitting(txData, sideMask);
+
+    const uint8_t response[] = { args[0] };
+    UsbDevice::write(response, sizeof response);
+}
+
+/*
+ * No args.
+ */
+void TestJig::stopNeighborTxHandler(uint8_t argc, uint8_t *args)
+{
+    neighbor.stopTransmitting();
+
+    const uint8_t response[] = { args[0] };
+    UsbDevice::write(response, sizeof response);
+}
+
 /*******************************************
  * I N T E R R U P T  H A N D L E R S
  ******************************************/
 
 IRQ_HANDLER ISR_TIM3()
 {
-    TIM3.SR = 0; // must clear status to acknowledge the ISR
-
-    if (TIM3.SR & 1) {
-        uint16_t side, rxData;
-        if (neighbor.rxPeriodIsr(&side, &rxData)) {
-            TestJig::onNeighborMsgRx(side, rxData);
-        }
+    uint8_t side;
+    uint16_t rxData;
+    if (neighbor.rxPeriodIsr(side, rxData)) {
+        TestJig::onNeighborMsgRx(side, rxData);
     }
 }
 

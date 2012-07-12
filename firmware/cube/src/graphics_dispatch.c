@@ -10,7 +10,7 @@
 #include "main.h"
 #include "sensors.h"
 
-static uint8_t next_ack;
+uint8_t next_ack;
 
 
 void graphics_render(void) __naked
@@ -51,7 +51,7 @@ void graphics_render(void) __naked
         rr      a
         xrl     a, _next_ack            ; Compare _SYS_VF_TOGGLE with bit 0
         rrc     a
-        jnc     gd_ret                  ; Return if no toggle
+        jnc     _graphics_ack           ; Return to ACK if no toggle
 1$:
 
         ; Increment frame counter field
@@ -83,53 +83,51 @@ void graphics_render(void) __naked
         mov     dptr, #gd_table
     
         ; Allow other modules to reuse this instruction
-jmp_indirect::
-        jmp     @a+dptr
+gd_jmp: jmp     @a+dptr
 
-        ; Nearby return instruction, used above
-gd_ret:
-        ret
-
-        ; Computed jump table.
-        ; These redundant labels are required by the binary translator!
-        ; It needs a label to identify any point where we might jump to.
+        ; Computed jump table
+        ; Static analysis NOTE dyn_branch gd_jmp gd_n
 
 gd_table:
-10$:    ljmp    _lcd_sleep      ; 0x00
-        nop
-11$:    ljmp    _vm_bg0_rom     ; 0x04
-        nop
-12$:    ljmp    _vm_solid       ; 0x08
-        nop
-13$:    ljmp    _vm_fb32        ; 0x0c
-        nop
-14$:    ljmp    _vm_fb64        ; 0x10
-        nop
-15$:    ljmp    _vm_fb128       ; 0x14
-        nop
-16$:    ljmp    _vm_bg0         ; 0x18
-        nop
-17$:    ljmp    _vm_bg0_bg1     ; 0x1c
-        nop
-18$:    ljmp    _vm_bg0_spr_bg1 ; 0x20
-        nop
-19$:    ljmp    _vm_bg2         ; 0x24
-        nop
-20$:    ljmp    _vm_stamp       ; 0x28
-        nop
-21$:    ljmp    _lcd_sleep      ; 0x2c (unused)
-        nop
-22$:    ljmp    _lcd_sleep      ; 0x30 (unused)
-        nop
-23$:    ljmp    _lcd_sleep      ; 0x34 (unused)
-        nop
-24$:    ljmp    _lcd_sleep      ; 0x38 (unused)
-        nop
-25$:    ljmp    _lcd_sleep      ; 0x3c (unused)
-
-3$:     ret
+gd_n1:  ljmp    _vm_powerdown   ; 0x00
+        .ds 1
+gd_n2:  ljmp    _vm_bg0_rom     ; 0x04
+        .ds 1
+gd_n3:  ljmp    _vm_solid       ; 0x08
+        .ds 1
+gd_n4:  ljmp    _vm_fb32        ; 0x0c
+        .ds 1
+gd_n5:  ljmp    _vm_fb64        ; 0x10
+        .ds 1
+gd_n6:  ljmp    _vm_fb128       ; 0x14
+        .ds 1
+gd_n7:  ljmp    _vm_bg0         ; 0x18
+        .ds 1
+gd_n8:  ljmp    _vm_bg0_bg1     ; 0x1c
+        .ds 1
+gd_n9:  ljmp    _vm_bg0_spr_bg1 ; 0x20
+        .ds 1
+gd_n10: ljmp    _vm_bg2         ; 0x24
+        .ds 1
+gd_n11: ljmp    _vm_stamp       ; 0x28
+        .ds 1
+gd_n12: ljmp    _vm_powerdown   ; 0x2c (unused)
+        .ds 1
+gd_n13: ljmp    _vm_powerdown   ; 0x30 (unused)
+        .ds 1
+gd_n14: ljmp    _vm_powerdown   ; 0x34 (unused)
+        .ds 1
+gd_n15: ljmp    _vm_powerdown   ; 0x38 (unused)
+        .ds 1
+gd_n16: ljmp    _vm_powerdown   ; 0x3c (unused)
 
     __endasm ;
+}
+
+void vm_powerdown() __naked
+{
+    lcd_sleep();
+    GRAPHICS_RET();
 }
 
 void graphics_ack(void) __naked
@@ -147,7 +145,7 @@ void graphics_ack(void) __naked
         xrl     (_ack_data + RF_ACK_FRAME), a
         orl     _ack_bits, #RF_ACK_BIT_FRAME
 1$:
-        ret
+        ljmp    _graphics_render_ret
 
     __endasm ;
 }

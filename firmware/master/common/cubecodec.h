@@ -112,7 +112,8 @@ class CubeCodec {
 
     bool endPacket(PacketBuffer &buf);
 
-    void timeSync(PacketBuffer &buf, uint16_t rawTimer) {
+    void timeSync(PacketBuffer &buf, uint16_t rawTimer)
+    {
         /*
          * Timer synchronization escape. This sends the sync escape,
          * plus a dummy nybble to force a flush if necessary. We then
@@ -126,7 +127,22 @@ class CubeCodec {
         buf.append(rawTimer & 0x1F);    // Low 5 bits
         buf.append(rawTimer >> 5);      // High 8 bits
     }
-    
+
+    bool explicitAckRequest(PacketBuffer &buf)
+    {
+        /*
+         * If the buffer has room, adds an "Explicit ACK request" packet and
+         * returns true. Otherwise, returns false. Additional compression codes
+         * may follow this one; no codec state is affected.
+         */
+        if (txBits.hasRoomForFlush(buf, 8)) {
+            txBits.append(0x79, 8);
+            txBits.flush(buf);
+            return true;
+        }
+        return false;
+    }
+
  private:
     // Try to keep these ordered to minimize padding...
 

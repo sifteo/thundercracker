@@ -179,7 +179,7 @@ extern struct {
     __asm
     
 
-void vm_bg2(void)
+void vm_bg2(void) __naked
 {
     uint8_t y;
 
@@ -203,9 +203,9 @@ void vm_bg2(void)
     bg2_state.affine.cy -= bg2_state.affine.xy;
 
     // Prepare graphics loop
-    y = vram.num_lines;
     lcd_begin_frame();
     i2c_a21_wait();
+    y = vram.num_lines;
 
     /*
      * Initialize tile cache. This stays valid as long as we don't use the
@@ -317,4 +317,5 @@ void vm_bg2(void)
     } while (--y);    
 
     lcd_end_frame();
+    GRAPHICS_RET();
 }

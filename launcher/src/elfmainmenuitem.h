@@ -60,6 +60,8 @@ private:
 
     CubeRange cubeRange;
     uint8_t numAssetSlots;
+    bool hasValidIcon;
+    Sifteo::MappedVolume::UUID uuid;
     Sifteo::Volume volume;
 
     /*
@@ -85,7 +87,7 @@ private:
     /**
      * Validate volume metadata that will be required later by getAssets()
      */
-    bool checkAssetMetadata();
+    bool checkIcon(Sifteo::MappedVolume &map);
 
     /**
      * Average bytes of asset loading progress across multiple cubes

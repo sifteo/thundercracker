@@ -11,12 +11,11 @@ OBJS = \
 	src/assetloaderbypassdelegate.o \
 	src/defaultloadinganimation.o \
 	src/cuberange.o \
+	src/nineblock.o \
 	src/applet/getgames.o
 
 ASSETDEPS += images/*.png sounds/*.xm $(ASSETS).lua
 CDEPS += src/*.h
-
 CCFLAGS += -Isrc
-CCFLAGS += -DSDK_VERSION=$(shell git describe --tags)
 
 include $(SDK_DIR)/Makefile.rules

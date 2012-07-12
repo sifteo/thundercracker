@@ -98,17 +98,3 @@ tilerom-atlas.png
 
 tilerom.c
    Source code, to be compiled into the firmware ROM.
-
-ROM Font
-========
-
-An ASCII font is included in the ROM, for use mainly by debugging or
-informational displays. It is at the very top of src-tiles, in ASCII
-order starting with character 0x20 (space).
-
-The font is a slightly modified version of the free "Apple ]["
-typeface by Ivan Rood: http://www.dafont.com/ivan-oliver.d1555
-
- - The lowercase p and q were modified to fit in the 8x8 character cell.
- - The tilde was replaced with something a bit cuter.
- - The lowercase t was moved left by one pixel to improve kerning.

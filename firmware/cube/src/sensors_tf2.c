@@ -28,9 +28,9 @@ void tf2_isr(void) __interrupt(VECTOR_TF2) __naked
         ; Squelch immediately. Doesnt matter if it is Tx
 
         #ifdef NBR_SQUELCH_ENABLE
-        jb		_nb_rx_mask_state2, no_squelch				; no squelch required for data bits
+        jb      _nb_rx_mask_state2, no_squelch              ; no squelch required for data bits
 squelch:
-        mov		_MISC_DIR, #(MISC_DIR_VALUE ^ MISC_NB_OUT)	; Squelch all sides
+        mov     _MISC_DIR, #(MISC_DIR_VALUE ^ MISC_NB_OUT)  ; Squelch all sides
 no_squelch:
         #endif
 
@@ -54,29 +54,29 @@ no_squelch:
 
 h_bit:
 
-        jb		_nb_rx_mask_state0, s0_bit		; First bit?
-		#ifdef NBR_RX
+        jb      _nb_rx_mask_state0, s0_bit      ; First bit?
+        #ifdef NBR_RX
         mov     _MISC_DIR, #(MISC_DIR_VALUE & ~MISC_NB_MASK0)
-		#endif
+        #endif
         setb    _nb_rx_mask_state0
-        sjmp    read_buf                    	; End of masking
+        sjmp    read_buf                        ; End of masking
 
 s0_bit:
 
-        jb		_nb_rx_mask_state1, s1_bit		; s0 bit?
-		#ifdef NBR_RX
-        mov		_MISC_DIR, #(MISC_DIR_VALUE & ~MISC_NB_MASK1)
-		#endif
+        jb      _nb_rx_mask_state1, s1_bit      ; s0 bit?
+        #ifdef NBR_RX
+        mov     _MISC_DIR, #(MISC_DIR_VALUE & ~MISC_NB_MASK1)
+        #endif
         mov     _nb_rx_mask_bit0, c             ; Store first mask bit
         setb    _nb_rx_mask_state1
         sjmp    read_buf
 
 s1_bit:
 
-        jb		_nb_rx_mask_state2, read_buf	; s1 bit?
-		#ifdef NBR_RX
-        mov		_MISC_DIR, #MISC_DIR_VALUE		; unmask already so we start listening early
-		#endif
+        jb      _nb_rx_mask_state2, read_buf    ; s1 bit?
+        #ifdef NBR_RX
+        mov     _MISC_DIR, #MISC_DIR_VALUE      ; unmask already so we start listening early
+        #endif
 
 s_mask:
         ; We set the side mask only once (after receiving s1_bit).
@@ -90,26 +90,26 @@ s_mask:
         ; All sides have also been unmasked before entering here.
         ; We decode rapidly using a jump tree and mask sides we dont want to listen on
 
-       	#ifdef NBR_RX
+        #ifdef NBR_RX
 top:
-        jb  	_nb_rx_mask_bit0, bottom
-        jc		left
-        mov   	_MISC_DIR, #((MISC_DIR_VALUE ^ MISC_NB_OUT) | MISC_NB_0_TOP)
-        sjmp  	s_mask_done
+        jb      _nb_rx_mask_bit0, bottom
+        jc      left
+        mov     _MISC_DIR, #((MISC_DIR_VALUE ^ MISC_NB_OUT) | MISC_NB_0_TOP)
+        sjmp    s_mask_done
 
 left:
-        mov   	_MISC_DIR, #((MISC_DIR_VALUE ^ MISC_NB_OUT) | MISC_NB_1_LEFT)
-        sjmp  	s_mask_done
+        mov     _MISC_DIR, #((MISC_DIR_VALUE ^ MISC_NB_OUT) | MISC_NB_1_LEFT)
+        sjmp    s_mask_done
 
 bottom:
-        jc		right
-        mov   	_MISC_DIR, #((MISC_DIR_VALUE ^ MISC_NB_OUT) | MISC_NB_2_BOTTOM)
-        sjmp  	s_mask_done
+        jc      right
+        mov     _MISC_DIR, #((MISC_DIR_VALUE ^ MISC_NB_OUT) | MISC_NB_2_BOTTOM)
+        sjmp    s_mask_done
 
 right:
-        mov   	_MISC_DIR, #((MISC_DIR_VALUE ^ MISC_NB_OUT) | MISC_NB_3_RIGHT)
+        mov     _MISC_DIR, #((MISC_DIR_VALUE ^ MISC_NB_OUT) | MISC_NB_3_RIGHT)
 
-		#endif	//NBR_RX
+        #endif  //NBR_RX
 
 s_mask_done:
 
@@ -190,18 +190,18 @@ nb_bit_done:
         mov     a, _nb_buffer
         orl     a, #0xE0                        ; Put the implied bits back in
         cpl     a                               ; Complement
-        swap	a								; match second byte format
-        rr		a
+        swap    a                               ; match second byte format
+        rr      a
         xrl     a, (_nb_buffer+1)               ; Check byte
 #ifdef DEBUG_NBR
-        jz		dbg_skip
-        mov		a, _nb_buffer
-        mov		_nbr_data_invalid, a
-        mov		a, (_nb_buffer+1)
-        swap	a
-        rl		a
-        mov		(_nbr_data_invalid+1), a
-        sjmp	nb_packet_done
+        jz      dbg_skip
+        mov     a, _nb_buffer
+        mov     _nbr_data_invalid, a
+        mov     a, (_nb_buffer+1)
+        swap    a
+        rl      a
+        mov     (_nbr_data_invalid+1), a
+        sjmp    nb_packet_done
 dbg_skip:
 #endif
         jnz     nb_packet_done                  ;   Invalid, ignore the packet.
@@ -226,12 +226,12 @@ dbg_skip:
         mov     @r0, a
 
 #ifdef DEBUG_NBR
-        mov		a, _nb_buffer
-        mov		_nbr_data_valid, a
-        mov		a, (_nb_buffer+1)
-        swap	a
-        rl		a
-        mov		(_nbr_data_valid+1), a
+        mov     a, _nb_buffer
+        mov     _nbr_data_valid, a
+        mov     a, (_nb_buffer+1)
+        swap    a
+        rl      a
+        mov     (_nbr_data_valid+1), a
 #endif
 
         pop     0
@@ -249,30 +249,30 @@ nb_tx_handoff:
         ; frequency very close to our neighbor resonance. So, this keeps the
         ; signals cleaner.
 
-        mov     _i2c_state, #0            		; Reset our state machine
-        mov     _W2CON0, #0               		; Reset I2C master
-        anl     _MISC_DIR, #~MISC_I2C      		; Output drivers enabled
-        xrl     MISC_PORT, #MISC_I2C       		; Now pulse I2C lines low
-        orl     MISC_PORT, #MISC_I2C       		; Drive pins high - This delivers a 250 ns pulse
-        mov     _W2CON0, #1               		; Turn on I2C controller
-        mov     _W2CON0, #7               		; Master mode, 100 kHz.
-        mov     _W2DAT, #ACCEL_ADDR_TX    		; Trigger the next I2C transaction
+        mov     _i2c_state, #0                  ; Reset our state machine
+        mov     _W2CON0, #0                     ; Reset I2C master
+        anl     _MISC_DIR, #~MISC_I2C           ; Output drivers enabled
+        xrl     MISC_PORT, #MISC_I2C            ; Now pulse I2C lines low
+        orl     MISC_PORT, #MISC_I2C            ; Drive pins high - This delivers a 250 ns pulse
+        mov     _W2CON0, #1                     ; Turn on I2C controller
+        mov     _W2CON0, #7                     ; Master mode, 100 kHz.
+        mov     _W2DAT, #ACCEL_ADDR_TX          ; Trigger the next I2C transaction
         
         ;--------------------------------------------------------------------
 
 nb_packet_done:
 
-        mov     TL1, #0xFF              		; RX mode: Interrupt on the next incoming edge
+        mov     TL1, #0xFF                      ; RX mode: Interrupt on the next incoming edge
         mov     TH1, #0xFF
         clr     _nb_tx_mode
         setb    _TCON_TR1
 #if defined(NBR_TX) || defined(NBR_RX)
-        orl     _MISC_DIR, #MISC_NB_OUT			; Let the LC tanks float
+        orl     _MISC_DIR, #MISC_NB_OUT         ; Let the LC tanks float
 #endif
 
 nb_irq_ret:
 
-        clr     _IR_TF2                  		; Must ack IRQ (TF2 is not auto-clear)
+        clr     _IR_TF2                         ; Must ack IRQ (TF2 is not auto-clear)
 
         pop     psw
         pop     acc

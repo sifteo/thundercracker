@@ -67,13 +67,13 @@
 #define NB_RX_BITS          16      // 1 header, 2 mask, 13 payload
 
 // 2us pulses, 9.75us bit periods, 156us packets
-#define NB_BIT_TICKS        16      // In 0.75 us ticks
-#define NB_BIT_TICK_FIRST   9     	// Sampling tweak to ignore secondary pulses
-#define NB_DEADLINE         17      // Max amount Timer0 can be late by
+#define NB_BIT_TICKS        21      // In 0.75 us ticks
+#define NB_BIT_TICK_FIRST   14     	// Sampling tweak to ignore secondary pulses
+#define NB_DEADLINE         22      // Max amount Timer0 can be late by
 
 extern uint8_t nb_bits_remaining;   // Bit counter for transmit or receive
 extern uint8_t nb_buffer[2];        // Packet shift register for TX/RX
-extern uint8_t nb_tx_packet[2];     // The packet we're broadcasting
+extern uint8_t nb_tx_id;            // The ID byte we're broadcasting
 extern __bit nb_tx_mode;            // We're in the middle of an active transmission
 extern __bit nb_rx_mask_state0;
 extern __bit nb_rx_mask_state1;

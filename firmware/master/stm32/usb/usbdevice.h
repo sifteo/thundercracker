@@ -15,7 +15,7 @@ class UsbDevice
 {
 public:
     static const uint16_t VendorID = 0x22FA;
-#if (BOARD == BOARD_TEST_JIG)
+#if ((BOARD == BOARD_TEST_JIG) && !defined(BOOTLOADER))
     static const uint16_t ProductID = 0x0110;
 #elif (defined(BOOTLOADER))
     static const uint16_t ProductID = 0x0115;

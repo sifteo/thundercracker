@@ -191,6 +191,8 @@ class CubeSlot {
 
     void requestFlashReset();
     uint16_t calculateTimeSync();
+
+    void queryResponse(const PacketBuffer &packet);
 };
 
 #endif

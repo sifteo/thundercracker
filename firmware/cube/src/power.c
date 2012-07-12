@@ -30,8 +30,16 @@ uint8_t debug_wkp2;
 
 void power_delay()
 {
-    // Arbitrary delay, currently about 12 ms.
-    uint8_t delay_i = 0, delay_j;
+    /*
+     * Arbitrary delay, currently about 2 ms.
+     *
+     * This needs to be long enough for the boost and the load switch
+     * to turn on, but keeping the delay to a minimum will ensure
+     * that we limit the duration of any flash-of-white-LCD after coming
+     * back from a brownout reset. See below.
+     */
+
+    uint8_t delay_i = 43, delay_j;
     do {
         delay_j = 0;
         while (--delay_j);
@@ -111,6 +119,9 @@ void power_init(void)
      *
      * Safe defaults, everything off.
      * all control lines must be low before supply rails are turned on.
+     *
+     * We need to sequence this carefully, so that we can bring up
+     * the 3.3v and 2.0v rails without causing any contention.
      */
 
     MISC_PORT = 0;
@@ -121,23 +132,31 @@ void power_init(void)
     CTRL_DIR = CTRL_DIR_VALUE;
     ADDR_DIR = 0;
 
-    // Sequence 3.3v boost, followed by 2.0v downstream
-    #if HWREV >= 2
-        // Turn on 3.3V boost
-        CTRL_PORT = CTRL_3V3_EN;
+    // Turn on 3.3V boost
+    CTRL_PORT = CTRL_3V3_EN;
 
-        // Give 3.3V boost >1ms to turn-on
-        power_delay();
+    // Give 3.3V boost >1ms to turn-on
+    power_delay();
 
-        // Turn on 2V ds load switch
-        CTRL_PORT = CTRL_3V3_EN | CTRL_DS_EN;
+    // Turn on 2V ds load switch
+    CTRL_PORT = CTRL_3V3_EN | CTRL_DS_EN;
 
-        // Give load-switch time to turn-on (Datasheet unclear so >1ms should suffice)
-        power_delay();
-    #endif
+    // Give load-switch time to turn-on (Datasheet unclear so >1ms should suffice)
+    power_delay();
 
-    // Now turn-on other control lines.
-    // (On Rev 1, we just turn everything on at once.)
+    /*
+     * Now turn-on other control lines. Sequence them so that we're sure to latch
+     * a value of zero for BLE and RST, so that the LCD powers up in reset and with
+     * the backlight off.
+     *
+     * NB: There can still be a brief flash due to the delays above! If we happen
+     *     to reboot while there's still some power on the DS rail, the latch's
+     *     default state can be HIGH. I don't think we can safely latch a LOW
+     *     state earlier than this, though, without risk of causing a latchup
+     *     by driving LAT1/LAT2 above the DS rail voltage.
+     */
+    CTRL_PORT = CTRL_IDLE & ~CTRL_LCD_DCX;
+    CTRL_PORT = (CTRL_IDLE & ~CTRL_LCD_DCX) | CTRL_FLASH_LAT1 | CTRL_FLASH_LAT2;
     CTRL_PORT = CTRL_IDLE;
     MISC_PORT = MISC_IDLE;
 
@@ -162,11 +181,7 @@ void power_init(void)
         MISC_CON = 0x60;
         MISC_CON = 0x61;
         MISC_CON = 0x65;
-        #if HWREV >= 1
-            MISC_CON = 0x64;
-        #else
-            MISC_CON = 0x67;
-        #endif
+        MISC_CON = 0x64;
     #endif
 
     /*
@@ -177,11 +192,7 @@ void power_init(void)
         MISC_CON = 0x30;
         MISC_CON = 0x31;
         MISC_CON = 0x35;
-        #if HWREV >= 1
-            MISC_CON = 0x34;
-        #else
-            MISC_CON = 0x37;
-        #endif
+        MISC_CON = 0x34;
     #endif
 }
 
@@ -191,8 +202,6 @@ void power_sleep(void)
      * Turn off all peripherals, and put the CPU into Deep Sleep mode.
      * Order matters, don't cause bus contention!
      */
-
-#if HWREV >= 1   // Rev 1 was the first with sleep support
 
     lcd_sleep();                // Sleep sequence for LCD controller
     cli();                      // Stop all interrupt handlers
@@ -210,7 +219,6 @@ void power_sleep(void)
     ADDR_PORT = 0;              // Address bus must be all zero
     MISC_PORT = 0;              // Neighbor/I2C set to idle-mode as well
 
-#if HWREV >= 2
     // Sequencing is important. First, bring flash control lines low
     CTRL_PORT = CTRL_3V3_EN | CTRL_DS_EN;
 
@@ -219,11 +227,6 @@ void power_sleep(void)
 
     // Turn off the 3.3V rail
     CTRL_PORT = 0;
-#else
-    // Turn the 3.3v boost and backlight off, leave WE/OE driven high (flash idle).
-    CTRL_PORT = CTRL_FLASH_WE | CTRL_FLASH_OE;
-#endif
-
 
 #if HWREV >= 5
     /*
@@ -298,6 +301,4 @@ void power_sleep(void)
          * On wakeup, the system experiences a soft reset.
          */
     }
-
-#endif  // HWREV >= 1
 }

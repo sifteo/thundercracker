@@ -339,18 +339,12 @@ TileRef Tile::reduce(ColorReducer &reducer) const
 {
     /*
      * Reduce a tile's color palette, using a completed optimized
-     * ColorReducer instance.  Uses maxMSE to provide hysteresis for
-     * the color selections, emphasizing color runs when possible.
+     * ColorReducer instance.
      */
-
-    RGB565 run;
 
     Identity reduced;   
     reduced.options = mID.options;
 
-    // Hysteresis amount
-    double limit = mID.options.getMaxMSE() * 0.05;
-    
     for (unsigned i = 0; i < PIXELS; i++) {
         RGB565 original = mID.pixels[i];
         
@@ -358,11 +352,7 @@ TileRef Tile::reduce(ColorReducer &reducer) const
             // Don't touch it if this is a special keyed color
             reduced.pixels[i] = original;
         } else {
-            RGB565 color = reducer.nearest(original);
-            double error = CIELab(color).meanSquaredError(CIELab(run));
-            if (error > limit)
-                run = color;
-            reduced.pixels[i] = run;
+            reduced.pixels[i] = reducer.nearest(original);
         }
     }
 

@@ -65,7 +65,10 @@ void MainMenu::eventLoop(Menu &m)
 
             default:
                 break;
+
         }
+
+        m.performDefault();
     }
 }
 

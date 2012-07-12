@@ -26,6 +26,7 @@ public:
 
 private:
     static const unsigned I2C_SLAVE_ADDRESS = 0x55;
+    static const unsigned NUM_CURRENT_SAMPLES = 100;
 
     typedef void(*TestHandler)(uint8_t argc, uint8_t *args);
     static const TestHandler handlers[];
@@ -38,6 +39,8 @@ private:
     static void stopNeighborRxHandler(uint8_t argc, uint8_t *args);
     static void writeToCubeI2CHandler(uint8_t argc, uint8_t *args);
     static void setCubeSensorsEnabledHandler(uint8_t argc, uint8_t *args);
+    static void beginNeighborTxHandler(uint8_t argc, uint8_t *args);
+    static void stopNeighborTxHandler(uint8_t argc, uint8_t *args);
 
     struct SensorsTransaction {
         bool enabled;

@@ -20,12 +20,12 @@
  * Shared state
  */
 
-extern uint8_t x_bg0_first_w;           // Width of first displayed background tile, [1, 8]
-extern uint8_t x_bg0_last_w;            // Width of last displayed background tile, [0, 7]
-extern uint8_t x_bg0_first_addr;        // Low address offset for first displayed tile
-extern uint8_t x_bg0_wrap;              // Load value for a dec counter to the next X map wraparound
+__sfr __at 0xDD x_bg0_first_w;          // Width of first displayed background tile, [1, 8]
+__sfr __at 0xDE x_bg0_last_w;           // Width of last displayed background tile, [0, 7]
+__sfr __at 0xB4 x_bg0_first_addr;       // Low address offset for first displayed tile
+__sfr __at 0xC9 x_bg0_wrap;             // Load value for a dec counter to the next X map wraparound
 
-extern uint8_t y_bg0_addr_l;            // Low part of tile addresses, inc by 32 each line
+__sfr __at 0xA2 y_bg0_addr_l;           // Low part of tile addresses, inc by 32 each line
 extern uint16_t y_bg0_map;              // Map address for the first tile on this line
 
 /*

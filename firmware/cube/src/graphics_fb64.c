@@ -59,7 +59,7 @@ void vm_fb64_line(uint16_t ptr)
     __endasm ;
 }
 
-void vm_fb64(void)
+void vm_fb64(void) __naked
 {
     lcd_begin_frame();
     LCD_WRITE_BEGIN();
@@ -78,4 +78,5 @@ void vm_fb64(void)
     }
 
     lcd_end_frame();
+    GRAPHICS_RET();
 }

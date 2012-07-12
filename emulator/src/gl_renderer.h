@@ -45,7 +45,7 @@ class GLRenderer {
     void setViewport(int width, int height);
 
     void beginFrame(float viewExtent, b2Vec2 viewCenter, unsigned pixelZoomMode=0);
-    void endFrame();
+    static void endFrame();
 
     void drawDefaultBackground(float extent, float scale);
     void drawSolidBackground(const float color[4]);

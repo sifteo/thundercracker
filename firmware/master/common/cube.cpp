@@ -260,18 +260,30 @@ void CubeSlot::radioAcknowledge(const PacketBuffer &packet)
         LOG(("%u cubes connected\n",
             Intrinsic::POPCOUNT(CubeSlots::vecConnected)));
     }
-    
+
+    RF_ACKType *ack = (RF_ACKType *) packet.bytes;
+
+    // ACKs are always at least one byte.
+    if (packet.len < 1) {
+        ASSERT(0 && "Empty ACK packet. Radio bug?");
+        return;
+    }
+
+    // If this is a query response, it doesn't follow the usual ACK format.
+    // (Queries include an ID, so this isn't subject to the 'stale ACK' test below)
+    if (ack->frame_count & QUERY_ACK_BIT) {
+        queryResponse(packet);
+        return;
+    }
+
     // If we're expecting a stale packet, completely ignore its contents.
     if (CubeSlots::expectStaleACK & bit()) {
         Atomic::ClearLZ(CubeSlots::expectStaleACK, id());
         return;
     }
 
-    RF_ACKType *ack = (RF_ACKType *) packet.bytes;
-
-    if (packet.len >= offsetof(RF_ACKType, frame_count) + sizeof ack->frame_count) {
-        // This ACK includes a valid frame_count counter
-
+    // All ACKs have a header byte with frame rate control info
+    {
         uint8_t delta = ack->frame_count - framePrevACK;
         delta &= FRAME_ACK_COUNT;
         framePrevACK = ack->frame_count;
@@ -302,26 +314,15 @@ void CubeSlot::radioAcknowledge(const PacketBuffer &packet)
                 if (loadACK)
                     Atomic::ClearLZ(CubeSlots::flashResetWait, id());
             } else {
-                // Acknowledge FIFO bytes
-
                 /*
-                 * XXX: Since we can always lose ACK packets without
-                 *      warning, we could theoretically deadlock here,
-                 *      where we perpetually wait on an ACK that the
-                 *      cube has already sent. Since flash writes are
-                 *      somewhat pipelined, in practice we'd actually
-                 *      have to lose several ACKs in a row. But it
-                 *      could indeed happen. We should have a watchdog
-                 *      here, to assume FIFO has been drained (or
-                 *      explicitly request another flash ACK) if we've
-                 *      been waiting for more than some safe amount of
-                 *      time.
+                 * Acknowledge FIFO bytes
                  *
-                 *      Alternatively, we could solve this on the cube
-                 *      end by having it send a longer-than-strictly-
-                 *      necessary ACK packet every so often.
+                 * Note that these ACKs may get lost; CubeCodec will explicitly request
+                 * a resend if it's out of buffer space! (Normally dropped ACKs aren't
+                 * an issue, since we'll have other ACKs in the pipeline. But if we hit
+                 * a pipeline bubble and/or multiple ACKs drop in a row, we need to
+                 * intervene)
                  */
-
                 codec.flashAckBytes(loadACK);
             }
 
@@ -484,4 +485,9 @@ uint16_t CubeSlot::calculateTimeSync()
     unsigned slotID = rev5[id()];
 
     return (cubeTicks + slotID * slotWidth) & timerMask;
+}
+
+void CubeSlot::queryResponse(const PacketBuffer &packet)
+{
+    /// XXX implement me
 }

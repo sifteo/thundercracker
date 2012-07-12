@@ -16,15 +16,21 @@
 RF_MemACKType __near ack_data;
 uint8_t __near ack_bits;
 
+// Disable to prevent radio from writing to VRAM, for testing
+#define WRITE_TO_VRAM
+
+#ifdef WRITE_TO_VRAM
+#define   VRAM_MOVX_DPTR_A   movx @dptr, a
+#define   VRAM_MOVX_A_DPTR   movx a, @dptr
+#else
+#define   VRAM_MOVX_DPTR_A   nop
+#define   VRAM_MOVX_A_DPTR   movx a, @dptr
+#endif
+
 
 /*
  * Assembly macros.
  */
-
-#define SPI_WAIT                                        __endasm; \
-        __asm   mov     a, _SPIRSTAT                    __endasm; \
-        __asm   jnb     acc.2, (.-2)                    __endasm; \
-        __asm
 
 #define RX_NEXT_NYBBLE                                  __endasm; \
         __asm   djnz    R_NYBBLE_COUNT, rx_loop         __endasm; \
@@ -72,8 +78,9 @@ uint8_t __near ack_bits;
 #define R_NYBBLE_COUNT          r7
 #define AR_NYBBLE_COUNT         (RF_BANK*8 + 7)
 
-static uint16_t vram_dptr;                      // Current VRAM write pointer
-static __bit radio_state_reset_not_pending;     // Next packet should start with a clean slate
+uint16_t vram_dptr;                      // Current VRAM write pointer
+__bit radio_state_reset_not_pending;     // Next packet should start with a clean slate
+__bit radio_saved_dps;                   // Store DPS in a bit variable, to save space
 
 
 /*
@@ -89,6 +96,15 @@ static __bit radio_state_reset_not_pending;     // Next packet should start with
  * DPL/DPH temporarily, then restore them to the state pointer after.
  *
  * We're expected to set R_STATE to 0 after we're done.
+ *
+ * To save stack space, we jump here rather than calling it.
+ * There are only two possible ways to return:
+ *
+ *   - If R_STATE pointed to rxs_rle on entry, we jump directly
+ *     to rxs_default, to re-process the current nybble.
+ *
+ *   - Otherwise, we use RX_NEXT_NYBBLE to exit.
+ * 
  */
 
 static void rx_write_deltas(void) __naked __using(RF_BANK)
@@ -117,67 +133,74 @@ bsE:
 
         inc     R_LOW
 
-        ; Convert raw Diff to 8-bit signed diff, stow in R_STATE
+        ; Convert raw Diff to 8-bit signed diff, stow in R_TMP
 
         mov     a, R_DIFF
         anl     a, #0xF
         add     a, #-7
         clr     c
         rlc     a
-        mov     R_STATE, a
+        mov     R_TMP, a
         jb      acc.7, 3$       ; Negative diff
 
         ; ---- Loop for positive diffs
 
 2$:
-        movx    a, @dptr        ; Add and copy low byte
+        VRAM_MOVX_A_DPTR        ; Add and copy low byte
         inc     dptr
-        add     a, R_STATE
+        add     a, R_TMP
         mov     _DPS, #1
-        movx    @dptr, a
+        VRAM_MOVX_DPTR_A
         inc     dptr
         mov     _DPS, #0
 
-        movx    a, @dptr        ; Add and copy high byte
+        VRAM_MOVX_A_DPTR        ; Add and copy high byte
         inc     dptr
         jnc     1$
         add     a, #2           ; Add Carry to bit 1
 1$:     mov     _DPS, #1
-        movx    @dptr, a
+        VRAM_MOVX_DPTR_A
         inc     dptr
         mov     _DPS, #0
         djnz    R_LOW, 2$       ; Loop
 
-        ; Restore registers and exit
-        mov     R_STATE, #0
-        mov     dptr, #rxs_default
-        ret
+        ; ---- Return
+
+5$:
+        mov     dptr, #rxs_default      ; Restore DPTR
+        clr     a
+
+        ; From RLE state? Go to rxs_default
+        cjne    R_STATE, #(rxs_rle - rxs_default), 6$
+        mov     R_STATE, a
+        ljmp    rxs_default
+
+        ; Otherwise, next nybble.
+6$:     mov     R_STATE, a
+        ljmp    rx_next_sjmp
 
         ; ---- Loop for negative diffs
 
 3$:
-        movx    a, @dptr        ; Add and copy low byte
+        VRAM_MOVX_A_DPTR        ; Add and copy low byte
         inc     dptr
-        add     a, R_STATE
+        add     a, R_TMP
         mov     _DPS, #1
-        movx    @dptr, a
+        VRAM_MOVX_DPTR_A
         inc     dptr
         mov     _DPS, #0
 
-        movx    a, @dptr        ; Add and copy high byte
+        VRAM_MOVX_A_DPTR        ; Add and copy high byte
         inc     dptr
         jc      4$
         add     a, #0xFE        ; Subtract borrow from bit 1
 4$:     mov     _DPS, #1
-        movx    @dptr, a
+        VRAM_MOVX_DPTR_A
         inc     dptr
         mov     _DPS, #0
         djnz    R_LOW, 3$       ; Loop
 
-        ; Restore registers and exit
-        mov     R_STATE, #0
-        mov     dptr, #rxs_default
-        ret
+        sjmp    5$
 
     __endasm ;
 }
@@ -202,11 +225,15 @@ void radio_isr(void) __interrupt(VECTOR_RF) __naked __using(RF_BANK)
         push    acc
         push    dpl
         push    dph
-        push    _DPS
         push    _DPL1
         push    _DPH1
         push    psw
         mov     psw, #(RF_BANK << 3)
+
+        mov     a, _DPS
+        rrc     a
+        mov     _radio_saved_dps, c
+
         mov     _DPL1, _vram_dptr
         mov     _DPH1, _vram_dptr+1
 
@@ -340,8 +367,10 @@ rx_loop:                                        ; Fetch the next byte or nybble
         ; If that is not enough, you can put less frequently
         ; used sections of code elsewhere, and ljmp to them.
 
+        ; NOTE dyn_branch rx_j rxs_
+
         mov     a, R_STATE
-        jmp     @a+dptr 
+rx_j:   jmp     @a+dptr 
 
         ;-------------------------------------------
         ; 4-bit diff (continued from below)
@@ -350,9 +379,7 @@ rx_loop:                                        ; Fetch the next byte or nybble
 rxs_diff_2:
         mov     R_DIFF, a
         mov     R_LOW, #0
-        lcall   #_rx_write_deltas
-        sjmp    #rx_next_sjmp
-
+        ljmp    _rx_write_deltas
 
         ;-------------------------------------------
         ; Default state (initial nybble)
@@ -376,8 +403,7 @@ rxs_default:
         mov     AR_SAMPLE, R_INPUT
         mov     R_DIFF, #RF_VRAM_DIFF_BASE
         mov     R_LOW, #0
-        lcall   #_rx_write_deltas
-        RX_NEXT_NYBBLE
+        ljmp    _rx_write_deltas
 11$:
 
         ; ------------ Nybble 10ss -- Diff
@@ -423,25 +449,25 @@ rxs_literal:
         anl     a, #0xF
         mov     R_LOW, a        ; Store into R_LOW, as 0000xxxx
 
-        mov     R_STATE, #(19$ - rxs_default)
+        mov     R_STATE, #(rxs_l1 - rxs_default)
         sjmp    rx_next_sjmp
 
-19$:
+rxs_l1:
         mov     a, R_INPUT
         swap    a
         anl     a, #0xF0
         orl     AR_LOW, a       ; Add to R_LOW, as xxxx0000
 
-        mov     R_STATE, #(20$ - rxs_default)
+        mov     R_STATE, #(rxs_l2 - rxs_default)
         sjmp    rx_next_sjmp
 
-20$:
+rxs_l2:
         mov     _DPS, #1        ; Switch to VRAM DPTR
 
         clr     c               ; Shift a zero into R_LOW, and MSB into C
         mov     a, R_LOW
         rlc     a
-        movx    @dptr, a        ; Store low byte
+        VRAM_MOVX_DPTR_A        ; Store low byte
         inc     dptr
 
         mov     a, R_INPUT
@@ -449,7 +475,7 @@ rxs_literal:
         rlc     a               ; And again (dummy bit)
         anl     a, #0x3E        ; Mask covers input nybble plus shifted MSB
         orl     a, R_HIGH       ; Combine with saved two MSBs
-        movx    @dptr, a        ; Store high byte
+        VRAM_MOVX_DPTR_A        ; Store high byte
         inc     dptr
         anl     _DPH1, #3       ; Wrap DPH1 at 1 kB        
 
@@ -477,8 +503,7 @@ rxs_rle:
         jz      13$
 
         anl     AR_LOW, #0xF            ; Only the low nybble is part of the valid run length
-        lcall   #_rx_write_deltas
-        ljmp    rxs_default             ; Re-process this nybble starting from the default state
+        ljmp    _rx_write_deltas
 
 13$:
         mov     a, R_LOW        ; Check low two bits of the _first_ RLE nybble
@@ -546,10 +571,10 @@ rxs_word9:
         anl     a, #0xF         ; Store bits 4321
         mov     R_LOW, a
 
-        mov     R_STATE, #(21$ - rxs_default)
+        mov     R_STATE, #(rxs_w6 - rxs_default)
         sjmp    rx_next_sjmp2
 
-21$:
+rxs_w6:
         mov     a, R_INPUT
         swap    a               ; Store bits 8765
         anl     a, #0xF0
@@ -571,37 +596,37 @@ rx_not_word9:
 
         ; -------- 0011 0010 xxxx xxxx xxxx xxxx -- Write literal 16-bit word
 
-        jb      acc.0, 22$
+        jb      acc.0, rxs_w5
 
-        mov     R_STATE, #(23$ - rxs_default)
+        mov     R_STATE, #(rxs_w1 - rxs_default)
         sjmp    rx_next_sjmp2
 
-23$:
+rxs_w1:
         mov     a, R_INPUT
         anl     a, #0xF
         mov     R_LOW, a        ; Store bits 3210
 
-        mov     R_STATE, #(24$ - rxs_default)
+        mov     R_STATE, #(rxs_w2 - rxs_default)
         sjmp    rx_next_sjmp2
 
-24$:
+rxs_w2:
         mov     a, R_INPUT
         anl     a, #0xF
         swap    a
         orl     AR_LOW, a       ; Store bits 7654
 
-        mov     R_STATE, #(25$ - rxs_default)
+        mov     R_STATE, #(rxs_w3 - rxs_default)
         sjmp    rx_next_sjmp2
 
-25$:
+rxs_w3:
         mov     a, R_INPUT
         anl     a, #0xF
         mov     R_HIGH, a       ; Store bits ba98
 
-        mov     R_STATE, #(26$ - rxs_default)
+        mov     R_STATE, #(rxs_w4 - rxs_default)
         sjmp    rx_next_sjmp2
 
-26$:
+rxs_w4:
         mov     a, R_INPUT
         anl     a, #0xF
         swap    a
@@ -609,10 +634,10 @@ rx_not_word9:
 
         mov     _DPS, #1        ; Switch to VRAM DPTR
         mov     a, R_LOW
-        movx    @dptr,a         ; Store low byte
+        VRAM_MOVX_DPTR_A        ; Store low byte
         inc     dptr
         mov     a, R_HIGH
-        movx    @dptr,a         ; Store high byte
+        VRAM_MOVX_DPTR_A        ; Store high byte
         inc     dptr
         anl     _DPH1, #3       ; Wrap DPH1 at 1 kB
         mov     _DPS, #0
@@ -623,7 +648,7 @@ rx_not_word9:
         mov     R_STATE, #0     ; Back to default state
         sjmp    rx_next_sjmp2
 
-22$:
+rxs_w5:
 
         ; -------- 0011 0011 -- Escape to flash mode
 
@@ -646,9 +671,7 @@ rxs_wrdelta_1_fragment:
         add     a, #4           ; n+5  (rx_write_deltas already adds 1)
         mov     R_LOW, a
 
-        lcall   #_rx_write_deltas
-        sjmp    #rx_next_sjmp2
-
+        ljmp    _rx_write_deltas
 
         ;--------------------------------------------------------------------
         ; Special codes (8-bit copy encoding)
@@ -656,9 +679,11 @@ rxs_wrdelta_1_fragment:
 
 rx_special:
 
+        mov     R_STATE, #0                     ; Catch-all, go back to default state
+        anl     AR_SAMPLE, #3                   ; Specific ops are in low two bits...
+
         ; -------- 1000 0111 <LOW> <HIGH> -- Sensor timer sync escape
 
-        anl     AR_SAMPLE, #3
         cjne    R_SAMPLE, #0, 1$
 
         clr     _TCON_TR0                       ; Stop timer
@@ -668,11 +693,23 @@ rx_special:
         mov     TH0, _SPIRDAT                   ; High byte
         mov     _SPIRDAT, #0
         setb    _TCON_TR0                       ; Restart timer
-1$:
 
+        sjmp    rx_complete                     ; Ignore rest of packet
+
+1$:
+        ; -------- 1001 0111 -- Explicit ACK request
+
+        cjne    R_SAMPLE, #1, 2$
+
+        mov     _ack_bits, #0xFF                ; Do ALL the acks!
+
+2$:
         ; -------- 
 
-        sjmp    rx_complete
+        ; Unknown code, or fall-through from a code we finished handling.
+        ; Process the next nybble like usual.
+
+        ljmp    rx_next_sjmp
 
         ;--------------------------------------------------------------------
         ; Flash FIFO Write
@@ -705,25 +742,23 @@ rx_flash:
         mov     R_NYBBLE_COUNT, a               ;    Otherwise, this is the new loop iterator   
         
 rx_flash_loop:
-        mov     a, _flash_fifo_head             ; Load the flash write pointer
-        add     a, #_flash_fifo                 ; Address relative to flash_fifo[]
-        mov     R_TMP, a
+        mov     R_TMP, _flash_fifo_head         ; Load the flash write pointer
 
         SPI_WAIT
         mov     a, _SPIRDAT                     ; Load next SPI byte
         mov     _SPIRDAT, #0
         mov     @R_TMP, a                       ; Store it in the FIFO
 
-        mov     a, _flash_fifo_head             ; Advance head pointer
-        inc     a
-        anl     a, #(FLS_FIFO_SIZE - 1)
-        mov     _flash_fifo_head, a
+        inc     R_TMP                           ; Advance head pointer
+        cjne    R_TMP, #(_flash_fifo + FLS_FIFO_SIZE), 1$
+        mov     R_TMP, #_flash_fifo
+1$:     mov     _flash_fifo_head, R_TMP
 
         djnz    R_NYBBLE_COUNT, rx_flash_loop
         sjmp    rx_complete
 
 rx_flash_reset:
-        mov     _flash_fifo_head, #FLS_FIFO_RESET
+        setb    _flash_reset_request
 
         ; ... fall through to rx_complete
 
@@ -785,10 +820,29 @@ rx_complete_0:
         ; the data from _ack_data. To send data back to the master, we
         ; update bytes in _ack_data, then set the corresponding bit in
         ; ack_bits. We decode those bits into a length here.
+        ;
+        ; One caveat: We should be sure to reset ack_bits before sampling the
+        ; actual ACK packet data, so that it is not possible for ACKs to get
+        ; lost if a higher-priority IRQ preempts us and sets an ack_bit.
+        ;
+        ; Note: We can send up to one ACK packet per receive ISR right here.
+        ;       We can also enqueue ACKs from the main thread, as part of an
+        ;       asynchronous query. Normally we have no more than one buffered
+        ;       ACK packet, but query responses may arbitrarily increase that
+        ;       number, up until we hit the hardware limit of 3 packets.
+        ;
+        ;       Ideally we would avoid transmitting this automatic ACK if
+        ;       the hardware buffer is not empty, in order to avoid inflating
+        ;       our radio latency. But the nRF does not include this information
+        ;       in the STATUS byte. We would have to read FIFO_STATUS in a
+        ;       separate SPI transaction. That really is not worth the
+        ;       performance penalty of doing this on every packet.
 
 rx_ack:
+
         mov     a, _ack_bits                            ; Leave ack_bits in acc
         jz      no_ack                                  ; Skip the ACK entirely if empty
+        mov     _ack_bits, #0                           ; Reset pending ACK bits
 
         clr     _RF_CSN                                 ; Begin SPI transaction
         mov     _SPIRDAT, #RF_CMD_W_ACK_PAYLD           ; Start sending ACK packet
@@ -848,7 +902,6 @@ $20:
 
         ; End of ACK
 
-        mov     _ack_bits, #0                           ; Reset pending ACK bits
         SPI_WAIT                                        ; RX last dummy byte
         mov     a, _SPIRDAT
         setb    _RF_CSN                                 ; End SPI transaction
@@ -858,12 +911,16 @@ no_ack:
         ; Cleanup
         ;--------------------------------------------------------------------
 
+        mov     c, _radio_saved_dps
+        rlc     a
+        mov     _DPS, a
+
         mov     _vram_dptr, _DPL1
         mov     _vram_dptr+1, _DPH1
+
         pop     psw
         pop     _DPH1
         pop     _DPL1
-        pop     _DPS
         pop     dph
         pop     dpl
         pop     acc

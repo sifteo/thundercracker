@@ -107,6 +107,22 @@ def visualMap(p):
     for code, module in sorted(kv):
         print "%10s = %s" % (code, module)
 
+def stackAnalysis(p):
+    print "\nStatic RAM analysis:"
+
+    cg = FirmwareLib.CallGraph(p)
+    total = 0
+
+    for group, (path, sp) in cg.findDeepest().iteritems():
+        total = total + sp
+        print "\n  Group %s, 0x%02x bytes with path:" % (group, sp)
+        for node in path:
+            print "    %s" % p.lines[node].strip().expandtabs()
+
+    print "\n  Total RAM: 0x%02x bytes\n" % total
+    if total >= 0x100:
+        raise ValueError("Oh no, stack overflow is possible!")
+
 
 if __name__ == '__main__':
     p = FirmwareLib.RSTParser()
@@ -116,3 +132,4 @@ if __name__ == '__main__':
     visualMap(p)
     profileModuleSizes(p)
     profileSymbolSizes(p)
+    stackAnalysis(p)

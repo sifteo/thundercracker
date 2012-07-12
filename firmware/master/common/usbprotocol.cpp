@@ -21,7 +21,7 @@
  */
 const USBProtocol::SubSystemHandler USBProtocol::subsystemHandlers[] = {
     UsbVolumeManager::onUsbData,            // 0
-    #if (defined(SIFTEO_SIMULATOR) || (BOARD == BOARD_TEST_JIG) || defined(RFTEST))
+    #if (defined(SIFTEO_SIMULATOR) || ((BOARD == BOARD_TEST_JIG) && !defined(BOOTLOADER) ) || defined(RFTEST))
     0,
     0
     #else

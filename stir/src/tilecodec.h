@@ -156,7 +156,7 @@ class TileCodec {
     unsigned tileCount;
     TileCodecLUT lut;
     RLECodec4 rle;
-    uint32_t p16run;
+    unsigned paddedOutputMin;
     FlashAddress currentAddress;
 
     // Stats
@@ -168,7 +168,12 @@ class TileCodec {
     int statBucket;
     
     void newStatsTile(unsigned bucket);
+
+    void reservePadding(unsigned bytes);
+
     void encodeOp(uint8_t op);
+    void flushOp();
+
     void encodeLUT(uint16_t newColors);
     void encodeWord(uint16_t w);
     void encodeTileRLE4(const TileRef tile, unsigned bits);

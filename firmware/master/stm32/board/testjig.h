@@ -43,6 +43,9 @@
 #define NBR_IN3_GPIO        GPIOPin(&GPIOB, 0)
 #define NBR_IN4_GPIO        GPIOPin(&GPIOB, 1)
 
+// XXX: these are not currently broken out separately per channel
+#define NBR_BUF_GPIO        GPIOPin(&GPIOC, 8)
+
 // U A R T
 #define UART_DBG            USART3
 #define UART_RX_GPIO        GPIOPin(&GPIOB, 11)
@@ -69,7 +72,7 @@
 #define VOLUME_GPIO         GPIOPin(&GPIOA, 1)
 
 // M I S C
-#define BTN_HOME_GPIO       GPIOPin(&GPIOC, 0)
+#define BTN_HOME_GPIO       GPIOPin(&GPIOA, 0)
 #define BTN_HOME_EXTI_VEC   EXTI2
 
 #define PROFILER_TIM        TIM2

@@ -14,7 +14,7 @@
 #include "flash.h"
 #include "params.h"
 #include "battery.h"
-#include "demo.h"
+#include "disconnected.h"
 
 __bit global_busy_flag;
 
@@ -49,30 +49,43 @@ __start__stack:
         .ds     1
 
         ; Emit code at the beginning of code space, in the IVT area.
+        ; The NOTE lines below are handled specially by the static analyzer.
+
         .area   HOME (CODE)
 
-v_0000: ; ============= 0x0000 - Reset
+        ;---------------------------------
+        ; Reset Vector
+        ;---------------------------------
 
+v_0000:
         mov     sp, #(__start__stack - 1)       ; Init stack
         clr     a                               ; IRAM clear loop
         mov     r0, a
 1$:     mov     @r0, a
         djnz    r0, 1$
         sjmp    init_1
+
         .ds     1
 
-v_000b: ; ============= 0x000b - TF0
-        ljmp    _tf0_isr
+        ;---------------------------------
+        ; TF0 Vector
+        ;---------------------------------
+
+v_000b: ljmp    _tf0_isr
 
 init_1:
         lcall   _power_init         ; Start subsystem init sequence
         lcall   _radio_init
         lcall   _flash_init
         sjmp    init_2
+
         .ds     2
 
-v_001b: ; ============= 0x001b - TF1
-        ljmp    _tf1_isr
+        ;---------------------------------
+        ; TF1 Vector
+        ;---------------------------------
+
+v_001b: ljmp    _tf1_isr
 
 init_2:
         lcall   _sensors_init       ; Subsystem init, continued
@@ -80,59 +93,69 @@ init_2:
         setb    _IEN_EN             ; Global interrupt enable (subsystem init done)
         setb    _RF_CE              ; Radio enable
         sjmp    init_3
+
         .ds     1
 
-v_002b: ; ============= 0x002b - TF2
-        ljmp    _tf2_isr
+        ;---------------------------------
+        ; TF2 Vector
+        ;---------------------------------
+
+v_002b: ljmp    _tf2_isr
 
         .ds 29                      ; Reserved for now
 
-v_004b: ; ============= 0x004b - Radio
-        ljmp    _radio_isr
+        ;---------------------------------
+        ; Radio Vector
+        ;---------------------------------
+
+v_004b: ljmp    _radio_isr
 
         .ds 5
 
-v_0053: ; ============= 0x0053 - SPI/I2C
-        ljmp    _spi_i2c_isr
+        ;---------------------------------
+        ; SPI/I2C Vector
+        ;---------------------------------
+
+v_0053: ljmp    _spi_i2c_isr
 
 init_3:
 
     __endasm ;
 
-    // XXX
-    demo();
-
-    /*
+    /**********************************************************************
      * Main Loop
-     */
+     **********************************************************************/
 
-    while (1) {
-        // Reset watchdog ONLY in main loop!
-        #ifndef DISABLE_WDT
-            power_wdt_set();
-        #endif
+    // XXX: Will go into main loop later
+    disconnected_screen();
 
-        /*
-         * Main tasks
-         */
+    __asm
+_graphics_render_ret::
 
-        global_busy_flag = 0;
+        ; Reset watchdog ONLY in main loop!
+        __endasm; power_wdt_set(); __asm
         
-        graphics_render();
-        graphics_ack();
+        ;---------------------------------
+        ; Idle-only Tasks
+        ;---------------------------------
 
-        flash_handle_fifo();
+        jb      _global_busy_flag, 1$
+
+        lcall   _battery_poll
+
+1$:     clr     _global_busy_flag
+
+        ;---------------------------------
+        ; Main Tasks
+        ;---------------------------------
+
+        lcall   _flash_handle_fifo
+
         #ifndef DISABLE_SLEEP
-            power_idle_poll();
+            __endasm; power_idle_poll(); __asm
         #endif
 
-        /*
-         * Idle-only tasks
-         */
-        
-        if (global_busy_flag)
-            continue;
-        
-        battery_poll();
-    }
+        ljmp    _graphics_render
+
+    __endasm ;
 }
