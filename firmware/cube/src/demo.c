@@ -45,6 +45,13 @@ void demo(void)
     draw_attr = ATTR_GRAY;
     draw_hex(radio_get_cube_id());
 
+#ifdef DEBUG_WKP
+	draw_xy = XY(5,15);
+	draw_attr = ATTR_GRAY;
+	draw_hex(debug_wkp);
+	draw_hex(debug_wkp2);
+#endif
+
 #ifdef DEBUG_SCREEN
     draw_attr = ATTR_NONE;
     while(1) {

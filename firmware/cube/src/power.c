@@ -12,7 +12,21 @@
 #include "radio.h"
 #include "sensors_i2c.h"
 
+/*
+ * We maintain a state variable in data-retentive SRAM
+ * to determine whether we are waking up on battery insertion
+ * or just waking up from sleep
+ * This location overlaps vram space
+ */
+#define _POWERDOWN_STATE		0x0000
+#define _POWERDOWN_SLEEP		0xaa
+
 uint8_t power_sleep_timer;
+
+#ifdef DEBUG_WKP
+uint8_t debug_wkp;
+uint8_t debug_wkp2;
+#endif
 
 void power_delay()
 {
@@ -36,7 +50,58 @@ void power_init(void)
      * something useful with the value read back from PWRDWN.
      */
 
-    PWRDWN;
+    //PWRDWN;
+	if ( !(PWRDWN & PWRDWN_WAKEUP_ON_PIN) )
+	{
+		__asm
+    		mov 	dptr, #_POWERDOWN_STATE
+    		movx	a, @dptr
+#ifdef DEBUG_WKP
+    		mov		_debug_wkp, a
+#endif
+    		cjne	a, #0xaa, 00002$
+
+    	00001$:
+    		; check for radio packets
+    		lcall 	_radio_init						; Radio init
+            setb    _RF_CE              			; Radio enable
+            mov		r0, #0x03
+
+            mov		r1, #0x00
+        00004$:
+            mov		r0, #0x00
+            ;mov		a, #0x00						; wait for radio ping (4*256 cycles = 64us)
+            ;djnz	acc, .
+
+        00003$:
+            clr     _RF_CSN                         ; Begin SPI transaction
+            mov     _SPIRDAT, #RF_CMD_NOP  			; Read transceiver status
+            ; mov     _SPIRDAT, #0                    ; First dummy byte, keep the TX FIFO full
+            mov     a, _SPIRSTAT					; Wait for Command/STATUS byte
+            jnb     acc.2, (.-2)
+            mov     a, _SPIRDAT                     ; Keep the STATUS byte
+            setb    _RF_CSN                         ; End SPI transaction
+#ifdef DEBUG_WKP
+            mov		_debug_wkp2, a
+#endif
+            orl		a, #0xf1
+            inc		a
+            jnz		00002$							; continue powerup
+
+            djnz	r0, 00003$
+            djnz	r1, 00004$
+            ; sjmp	00003$							; retry
+
+            clr		_RF_CE							; Radio disable
+            clr		_RF_CKEN						; Radio clock disable
+            mov		_PWRDWN, #0x03					; go back to sleep
+
+
+        00002$:
+    		; continue powerup
+    	__endasm;
+	}
+
     OPMCON = 0;
     WUOPC1 = 0;
     PWRDWN = 0;
@@ -205,18 +270,28 @@ void power_sleep(void)
      * Wakeup on touch
      */
 
-    WUOPC1 = TOUCH_WUOPC_BIT;
+    //WUOPC1 = TOUCH_WUOPC_BIT;
 #endif
 
     // We must latch these port states, to preserve them during sleep.
     // This latch stays locked until early wakeup, in power_init().
     OPMCON = OPMCON_LATCH_LOCKED;
-    // We must also disable WDT in the memory retention mode
-    //OPMCON = OPMCON_LATCH_LOCKED | OPMCON_WDT_RESET_ENABLE;
+
+    CLKLFCTRL = CLKLFCTRL_SRC_RC;
+    //Watchdog reset in 10s
+    WDSV;
+    WDSV = 0x00;
+    WDSV = 0x05;
+    __asm
+    	mov 	dptr, #_POWERDOWN_STATE
+    	mov		a, #_POWERDOWN_SLEEP
+    	movx	@dptr, a
+    __endasm;
+
 
     while (1) {
-        PWRDWN = 1;
-        //PWRDWN = 3;
+        //PWRDWN = 1;
+        PWRDWN = 3;
 
         /*
          * We loop purely out of paranoia. This point should never be reached.
