@@ -330,6 +330,10 @@ fls_j:  jmp     @a+dptr
  *    States are guaranteed to be called with at least one byte available
  *    in the FIFO. See the register declarations at the top of the file,
  *    for registers which are maintained across state invocations.
+ *
+ *    Warning: This is another almost-full 8-bit state machine. Be
+ *             careful when adding new code here, and be sure to check
+ *             the state offsets afterward.
  */
 
 static void flash_state_fn() __naked
@@ -520,8 +524,26 @@ flst_C: ljmp    _flash_query_crc
 op_query_crc_end:
 
         ;---------------------------------
+        ; Special symbol: CHECK_QUERY
+        ;---------------------------------
+
+        cjne    a, #FLS_OP_CHECK_QUERY, op_check_query_end
+
+        NEXT(flst_D)
+flst_D: lcall   _flash_dequeue
+        mov     _fls_st+0, a            ; Save byte count
+
+        NEXT(flst_E)
+flst_E: ljmp    _flash_check_query
+
+op_check_query_end:
+
+        ;---------------------------------
 
         ; Unrecognized special symbol. Ignore it...
+        ; Also use this as a state which always loops back to itself (hang)
+
+flst_hang:
         AGAIN();
 
     __endasm ;
@@ -633,10 +655,63 @@ static void flash_query_crc() __naked
         ; Query response
         ;--------------------------------------------------------------------
 
+        mov     CTRL_PORT, #CTRL_IDLE
+
         mov     r0, #17             ; Send back 17-byte response
         lcall   _radio_ack_query
 
         ljmp    flst_opcode_n       ; Done, next opcode.
+
+    __endasm ;
+}
+
+
+/*
+ * flash_check_query --
+ *
+ *    Implements the FLS_OP_CHECK_QUERY special opcode.
+ *
+ *    This op takes two byte-long arguments:
+ *
+ *     - A byte count, stowed in fls_st[0]
+ *     - Bytes to compare with the query buffer
+ *
+ *    If the supplied bytes match the query buffer, this
+ *    command acts like a no-op. If they do not match,
+ *    it is an error and this command will lock the
+ *    state machine in an infinite loop after completing.
+ *
+ *    (This error state can be tested by sending a NOP
+ *    command and waiting for the lack of acknowledgment)
+ */
+
+static void flash_check_query() __naked
+{
+    __asm
+
+        mov     a, R_BYTE_COUNT         ; Wait until we have the whole command
+        clr     c
+        subb    a, _fls_st+0
+        jnc     1$
+        AGAIN()
+1$:
+
+        mov     R_COUNT2, #0            ; Keep track of mismatches in R_COUNT2
+        mov     R_TMP0, #_radio_query   ; Loop over the query buffer
+2$:
+        lcall   _flash_dequeue          ; Clobbers R_PTR, R_BYTE
+        xrl     a, @R_TMP0              ; XOR with command byte,
+        orl     a, R_COUNT2             ;   OR difference with R_COUNT2
+        mov     R_COUNT2, a
+
+        inc     R_TMP0                  ; Next byte
+        djnz    _fls_st+0, 2$
+
+        mov     a, R_COUNT2             ; Check result
+        jz      3$
+
+        NEXT(flst_hang)                 ; Failed, enter hang state
+3$:     ljmp    flst_opcode_n           ; Succeeded, back to opcode state
 
     __endasm ;
 }

@@ -366,6 +366,7 @@ typedef struct {
 #define FLS_OP_NOP              0xe0    // Permanently reserved as a no-op
 #define FLS_OP_ADDRESS          0xe1    // Followed by a 2-byte (lat1:lat2) tile address. A21 in LSB of lat2.
 #define FLS_OP_QUERY_CRC        0xe2    // Args: (queryID, numBlocks)
+#define FLS_OP_CHECK_QUERY      0xe3    // Args: (numBytes, bytes...)
 
 // From 0xe3 to 0xff are all reserved codes currently
 
