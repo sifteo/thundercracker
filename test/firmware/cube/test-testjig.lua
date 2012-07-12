@@ -113,14 +113,6 @@ TestTestjig = {}
         end
     end
 
-    function TestTestjig:test_flash_verify_loop()
-        -- Run the test-flash-verify test many times, to check for transient failures
-    
-        for i = 1, 100 do
-            self:test_flash_verify()
-        end
-    end
-
     function TestTestjig:test_flash_crc()
 
         -- Write some simple tiles, plus erase the first block
