@@ -55,6 +55,8 @@ void TestJig::init()
     NVIC.irqEnable(IVT.TIM5);                   // neighbor tx
     NVIC.irqPrioritize(IVT.TIM5, 0x60);
 
+    // neighbor 0 and 1 are on ISR_EXTI9_5 - see exti.cpp
+
     NVIC.irqEnable(IVT.EXTI0);                  // neighbor in2
     NVIC.irqPrioritize(IVT.EXTI0, 0x64);
 
@@ -329,7 +331,7 @@ void TestJig::setCubeSensorsEnabledHandler(uint8_t argc, uint8_t *args)
 void TestJig::beginNeighborTxHandler(uint8_t argc, uint8_t *args)
 {
     uint16_t txData = *reinterpret_cast<uint16_t*>(&args[1]);
-    uint16_t sideMask = args[3];
+    uint8_t sideMask = args[3];
     neighbor.beginTransmitting(txData, sideMask);
 
     const uint8_t response[] = { args[0] };
@@ -353,13 +355,10 @@ void TestJig::stopNeighborTxHandler(uint8_t argc, uint8_t *args)
 
 IRQ_HANDLER ISR_TIM3()
 {
-    TIM3.SR = 0; // must clear status to acknowledge the ISR
-
-    if (TIM3.SR & 1) {
-        uint16_t side, rxData;
-        if (neighbor.rxPeriodIsr(&side, &rxData)) {
-            TestJig::onNeighborMsgRx(side, rxData);
-        }
+    uint8_t side;
+    uint16_t rxData;
+    if (neighbor.rxPeriodIsr(side, rxData)) {
+        TestJig::onNeighborMsgRx(side, rxData);
     }
 }
 

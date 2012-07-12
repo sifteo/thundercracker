@@ -43,6 +43,9 @@
 #define NBR_IN3_GPIO        GPIOPin(&GPIOB, 0)
 #define NBR_IN4_GPIO        GPIOPin(&GPIOB, 1)
 
+// XXX: these are not currently broken out separately per channel
+#define NBR_BUF_GPIO        GPIOPin(&GPIOC, 8)
+
 // U A R T
 #define UART_DBG            USART3
 #define UART_RX_GPIO        GPIOPin(&GPIOB, 11)
