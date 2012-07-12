@@ -233,9 +233,15 @@ void TestJig::setSimulatedBatteryVoltageHandler(uint8_t argc, uint8_t *args)
  */
 void TestJig::getBatterySupplyCurrentHandler(uint8_t argc, uint8_t *args)
 {
-    uint16_t sample = adc.sample(V3_CURRENT_ADC_CH);
+    uint32_t sampleSum = 0;
 
-    const uint8_t response[] = { args[0], sample & 0xff, sample >> 8 };
+    for (unsigned i = 0; i < NUM_CURRENT_SAMPLES; i++) {
+        sampleSum += adc.sample(V3_CURRENT_ADC_CH);
+    }
+    
+    uint16_t sampleAvg = sampleSum / NUM_CURRENT_SAMPLES;
+
+    const uint8_t response[] = { args[0], sampleAvg & 0xff, sampleAvg >> 8 };
     UsbDevice::write(response, sizeof response);
 }
 
@@ -244,9 +250,15 @@ void TestJig::getBatterySupplyCurrentHandler(uint8_t argc, uint8_t *args)
  */
 void TestJig::getUsbCurrentHandler(uint8_t argc, uint8_t *args)
 {
-    uint16_t sample = adc.sample(USB_CURRENT_ADC_CH);
+    uint32_t sampleSum = 0;
 
-    const uint8_t response[] = { args[0], sample & 0xff, sample >> 8 };
+    for (unsigned i = 0; i < NUM_CURRENT_SAMPLES; i++) {
+        sampleSum += adc.sample(V3_CURRENT_ADC_CH);
+    }
+
+    uint16_t sampleAvg = sampleSum / NUM_CURRENT_SAMPLES;
+
+    const uint8_t response[] = { args[0], sampleAvg & 0xff, sampleAvg >> 8 };
     UsbDevice::write(response, sizeof response);
 }
 
