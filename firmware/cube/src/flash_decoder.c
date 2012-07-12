@@ -85,20 +85,15 @@ volatile __bit flash_reset_request;                      // Pending reset?
  * Loadstream codec state
  */
 
-uint16_t fls_lut[FLS_LUT_SIZE];
-uint8_t fls_state;
-uint8_t fls_tail;
+extern uint16_t fls_lut[FLS_LUT_SIZE];
+extern uint8_t fls_state;
+extern uint8_t fls_tail;
 
 // State-specific temporaries
-uint8_t fls_st[5];
+extern uint8_t fls_st[5];
 __bit fls_bit0;
 __bit fls_bit1;
 __bit fls_bit2;
-
-// Flash CRC buffer
-#define FCRC_HEAD    (_fls_lut)
-#define FCRC_DATA    (_fls_lut+1)
-#define FCRC_END     (_fls_lut+17)
 
 /*
  * State transition macro
@@ -517,7 +512,7 @@ op_address_end:
         NEXT(flst_B)
 flst_B: lcall   _flash_dequeue
         orl     a, #QUERY_ACK_BIT       ; Ensure query bit is set
-        mov     FCRC_HEAD, a
+        mov     _radio_query, a
 
         NEXT(flst_C)
 flst_C: ljmp    _flash_query_crc
@@ -541,10 +536,10 @@ op_query_crc_end:
  *    This op takes two byte-long arguments:
  *
  *     - A query ID (7 bits) which is sent back over the radio
- *       (Already stowed in FCRC_HEAD, with QUERY_ACK_BIT set)
+ *       (Already stowed in radio_query[0], with QUERY_ACK_BIT set)
  *
  *     - Count of 16-tile blocks to process. Zero is interpreted
- *     as 256 blocks. (Sitting in the FIFO on entry)
+ *       as 256 blocks. (Sitting in the FIFO on entry)
  *
  *    Generates a 16-byte result. This is pushed into the radio
  *    ACK buffer, with the one-byte query ID prepended.
@@ -563,11 +558,11 @@ static void flash_query_crc() __naked
 
         mov     _CCPDATIB, #0x84    ; Generator polynomial (See tools/gfm.py)
 
-        mov     R_PTR, #FCRC_DATA   ; Use LUT buffer as temporary space
+        mov     R_PTR, #(_radio_query+1)
         clr     a
 1$:     mov     @R_PTR, a           ; Zero the CRC buffer
         inc     R_PTR
-        cjne    R_PTR, #FCRC_END, 1$
+        cjne    R_PTR, #(_radio_query+17), 1$
 
         mov     CTRL_PORT, #CTRL_IDLE
 
@@ -581,10 +576,10 @@ static void flash_query_crc() __naked
         mov     ADDR_PORT, _flash_addr_lat1
         mov     CTRL_PORT, #(CTRL_IDLE | CTRL_FLASH_LAT1)
 
-        mov     ADDR_PORT, #0       ; Initial sampling point
-        mov     _CCPDATIA, #0xFF    ; Initial conditions for CRC
+        mov     ADDR_PORT, #0               ; Initial sampling point
+        mov     _CCPDATIA, #0xFF            ; Initial conditions for CRC
 
-        mov     R_PTR, #FCRC_DATA   ; Init output pointer / counter
+        mov     R_PTR, #(_radio_query+1)    ; Init output pointer / counter
 
         ;--------------------------------------------------------------------
         ; One tile
@@ -630,7 +625,7 @@ static void flash_query_crc() __naked
         mov     ADDR_PORT, R_TMP0   ; Now go to the next sampling point
 
         inc     R_PTR               ; Loop until we finish the allocation block
-        cjne    R_PTR, #FCRC_END, 3$
+        cjne    R_PTR, #(_radio_query+17), 3$
 
         djnz    R_COUNT1, 2$        ; Loop over all blocks
 
@@ -638,24 +633,10 @@ static void flash_query_crc() __naked
         ; Query response
         ;--------------------------------------------------------------------
 
-        mov     R_PTR, #FCRC_HEAD                   ; Packet header address
+        mov     r0, #17             ; Send back 17-byte response
+        lcall   _radio_ack_query
 
-        clr     _IEN_RF                             ; Begin RF critical section
-        clr     _RF_CSN                             ; Begin SPI transaction
-        mov     _SPIRDAT, #RF_CMD_W_ACK_PAYLD       ; Start sending ACK packet
-
-4$:     mov     _SPIRDAT, @R_PTR
-        inc     R_PTR
-        SPI_WAIT
-        mov     a, _SPIRDAT                         ; RX dummy byte
-        cjne    R_PTR, #FCRC_END, 4$                ; Loop over whole buffer
-
-        SPI_WAIT                                    ; RX last dummy byte
-        mov     a, _SPIRDAT
-        setb    _RF_CSN                             ; End SPI transaction
-        setb    _IEN_RF                             ; End RF critical section
-
-        ljmp    flst_opcode_n                       ; Done, next opcode.
+        ljmp    flst_opcode_n       ; Done, next opcode.
 
     __endasm ;
 }

@@ -44,22 +44,40 @@ static void overlay_memory() __naked {
 
     .area DSEG    (DATA)
 
-_y_bg0_map::
-    .ds 2
-_y_bg1_map::
-    .ds 2
+; ----------------------------------
 
-_x_spr::            ; 20 bytes
-_lcd_window_x::
-    .ds 1           ; 0
-_lcd_window_y::
-    .ds 1           ; 1
-_bg2_state::        ; 14 bytes
-_draw_xy::
-    .ds 2           ; 2
-_draw_attr::
-    .ds 1           ; 4
-    .ds 20-5        ; 5
+_y_bg0_map::        ; 2 bytes
+    .ds 2
+_y_bg1_map::        ; 2 bytes
+    .ds 2
+_fls_state::        ; 1 byte
+    .ds 1
+_fls_tail::         ; 1 byte
+    .ds 1
+_fls_st::           ; 5 bytes
+    .ds 5
+
+; ----------------------------------
+
+_x_spr::            ;     20 bytes
+_lcd_window_x::     ;     1 byte
+    .ds 1           ; +0
+_lcd_window_y::     ;     1 byte
+    .ds 1           ; +1
+_bg2_state::        ;     14 bytes
+_draw_xy::          ;     2 bytes
+    .ds 2           ; +2
+_draw_attr::        ;     1 byte
+    .ds 1           ; +4
+    .ds 20-5        ; +5
+
+; ----------------------------------
+
+_fls_lut::          ;     32 bytes
+_radio_query::      ;     32 bytes
+    .ds 32          ; +0
+
+; ----------------------------------
 
     .area BSEG    (BIT)
 
@@ -75,6 +93,8 @@ _x_bg1_offset_bit2::
     .ds 1
 _y_bg1_empty::
     .ds 1
+
+; ----------------------------------
 
     __endasm ;
 }

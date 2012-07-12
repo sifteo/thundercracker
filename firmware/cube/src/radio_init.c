@@ -121,3 +121,30 @@ uint8_t radio_get_cube_id(void)
 
     return id;
 }
+
+void radio_ack_query() __naked
+{
+    // Assembly callable only. Packet length in r0.
+    // Clobbers r0 and r1. Call on main thread ONLY.
+
+    __asm
+        mov     r1, #_radio_query
+
+        clr     _IEN_RF                             ; Begin RF critical section
+        clr     _RF_CSN                             ; Begin SPI transaction
+        mov     _SPIRDAT, #RF_CMD_W_ACK_PAYLD       ; Start sending ACK packet
+
+4$:     mov     _SPIRDAT, @r1
+        inc     r1
+        SPI_WAIT
+        mov     a, _SPIRDAT                         ; RX dummy byte
+        djnz    r0, 4$
+
+        SPI_WAIT                                    ; RX last dummy byte
+        mov     a, _SPIRDAT
+        setb    _RF_CSN                             ; End SPI transaction
+        setb    _IEN_RF                             ; End RF critical section
+
+        ret
+    __endasm ;
+}
