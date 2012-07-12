@@ -1,5 +1,6 @@
 #include "powermanager.h"
 #include "board.h"
+#include "usb/usbdevice.h"
 #include "systime.h"
 #include "tasks.h"
 
@@ -74,11 +75,13 @@ void PowerManager::railTransition(void* p)
 
         switch (s) {
         case BatteryPwr:
+        	UsbDevice::deinit();
             vcc3v3.setLow();
             break;
 
         case UsbPwr:
             vcc3v3.setHigh();
+            UsbDevice::init();
             break;
 
         default:
