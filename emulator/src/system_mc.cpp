@@ -249,13 +249,22 @@ void SystemMC::doRadioPacket()
                 LOG((" -- Cube %d: ACK[%2d] ", cube->id(), buf.reply.len));
                 for (unsigned i = 0; i < buf.reply.len; i++) {
                     switch (i) {
+
+                        // First byte ('frame' et al) is always special
                         case RF_ACK_LEN_FRAME:
+                            LOG(("-"));
+                            break;
+
+                        // ACK packet delimiters (omit for query responses)
                         case RF_ACK_LEN_ACCEL:
                         case RF_ACK_LEN_NEIGHBOR:
                         case RF_ACK_LEN_FLASH_FIFO:
                         case RF_ACK_LEN_BATTERY_V:
                         case RF_ACK_LEN_HWID:
-                            LOG(("-"));
+                            if (!(buf.reply.payload[0] & QUERY_ACK_BIT)) {
+                                LOG(("-"));
+                            }
+                            break;
                     }
                     LOG(("%02x", buf.reply.payload[i]));
                 }
