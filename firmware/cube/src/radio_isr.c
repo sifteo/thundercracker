@@ -825,10 +825,16 @@ rx_complete_0:
         ; the data from _ack_data. To send data back to the master, we
         ; update bytes in _ack_data, then set the corresponding bit in
         ; ack_bits. We decode those bits into a length here.
+        ;
+        ; One caveat: We should be sure to reset ack_bits before sampling the
+        ; actual ACK packet data, so that it is not possible for ACKs to get
+        ; lost if a higher-priority IRQ preempts us and sets an ack_bit.
 
 rx_ack:
+
         mov     a, _ack_bits                            ; Leave ack_bits in acc
         jz      no_ack                                  ; Skip the ACK entirely if empty
+        mov     _ack_bits, #0                           ; Reset pending ACK bits
 
         clr     _RF_CSN                                 ; Begin SPI transaction
         mov     _SPIRDAT, #RF_CMD_W_ACK_PAYLD           ; Start sending ACK packet
@@ -888,7 +894,6 @@ $20:
 
         ; End of ACK
 
-        mov     _ack_bits, #0                           ; Reset pending ACK bits
         SPI_WAIT                                        ; RX last dummy byte
         mov     a, _SPIRDAT
         setb    _RF_CSN                                 ; End SPI transaction
