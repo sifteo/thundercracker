@@ -9,8 +9,6 @@
 #include <stdint.h>
 #include "protocol.h"
 
-#define NUM_SAMPLES 100
-
 class TestJig
 {
 public:
@@ -28,6 +26,7 @@ public:
 
 private:
     static const unsigned I2C_SLAVE_ADDRESS = 0x55;
+    static const unsigned NUM_CURRENT_SAMPLES = 100;
 
     typedef void(*TestHandler)(uint8_t argc, uint8_t *args);
     static const TestHandler handlers[];
