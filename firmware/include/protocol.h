@@ -115,6 +115,27 @@
  * This scheme is designed to preserve the entropy in our HWID, to be
  * very simple to implement in the cube firmware, and to produce addresses
  * and channels which meet the nRF's constraints.
+ *
+ *   Idle Hopping
+ *  --------------
+ *
+ * This is a very minimal channel hopping scheme, intended solely to ensure
+ * that a cube isn't permanently unconnectable just because its default
+ * channel happens to be super noisy.
+ *
+ * One second after entering the idle state, and every second thereafter,
+ * we flip a "channel toggle" bit and reassign the idle channel address.
+ * When this toggle bit is 1, the address (after step 5 above) is modified:
+ *
+ *    1. Add 62 to the address
+ *    2. If it's greater than 125, subtract 125
+ *
+ *
+ * Also XXX: Radio nap timer!
+ *    - Nap duration as first byte of hop packet?
+ *    - Encoding? (hop? time sync? other? Should be very easy to
+ *      include in every packet if we need to.)
+ *    - Which timebase to use?
  */
 
 
