@@ -328,11 +328,6 @@ if __name__ == "__main__":
     for img in (
         "tilerom/img-logo.png",
         "tilerom/img-battery.png",
-        "tilerom/img-radio-0.png",
-        "tilerom/img-radio-1.png",
-        "tilerom/img-radio-2.png",
-        "tilerom/img-radio-3.png",
-        "tilerom/img-power.png",
         ):
         t.loadImage(img)
 

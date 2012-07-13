@@ -11,12 +11,6 @@
 
 extern const __code uint8_t img_logo[];
 extern const __code uint8_t img_battery[];
-extern const __code uint8_t img_power[];
-extern const __code uint8_t img_radio_0[];
-extern const __code uint8_t img_radio_1[];
-extern const __code uint8_t img_radio_2[];
-extern const __code uint8_t img_radio_3[];
-
 
 /*
  * Update the screen, showing the "disconnected" animation.
@@ -49,11 +43,4 @@ void disconnected_screen(void)
 
     draw_xy = XY(0,0);
     draw_image(img_battery);
-    draw_xy = XY(1,1);
-    draw_image(img_power);
-
-    draw_xy = XY(12,0);
-    draw_image(img_radio_0);
-    draw_xy = XY(12,0);
-    draw_image(img_radio_3);
 }
