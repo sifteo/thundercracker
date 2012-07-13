@@ -160,6 +160,23 @@ IRQ_HANDLER ISR_TIM4()
     if (!PwmAudioOut::buffer.empty()) {
         int sample = PwmAudioOut::buffer.dequeue();
 
+        /*
+         * We've now extracted the sign, and the remaining sample is a 15-bit
+         * unsigned value. Convert it to a hardware PWM duty cycle, ranging from
+         * 0 to just below PWM_PERIOD.
+         *
+         * This conversion is lossy, since our PWM resolution is lower than our
+         * original 16-bit audio. To decorrelate the quantization error and improve
+         * our performance especially with lower volume levels, add a random dither
+         * of less than 1 LSB.
+         *
+         * This means that, prior to scaling, our dither needs to be at
+         * most 2^15 / PWM_PERIOD.
+         */
+
+        sample += PRNG::valueInline(&PwmAudioOut::dither) & PwmAudioOut::DITHER_MASK;
+        sample = Intrinsic::SSAT(sample, 16);
+
         if (sample > 0) {
             // + output held HIGH, - output modulated
             ctrlA = GPIOPin::OUT_ALT_50MHZ;
@@ -171,25 +188,7 @@ IRQ_HANDLER ISR_TIM4()
         }
 
         if (sample) {
-            /*
-             * We've now extracted the sign, and the remaining sample is a 15-bit
-             * unsigned value. Convert it to a hardware PWM duty cycle, ranging from
-             * 0 to just below PWM_PERIOD.
-             *
-             * This conversion is lossy, since our PWM resolution is lower than our
-             * original 16-bit audio. To decorrelate the quantization error and improve
-             * our performance especially with lower volume levels, add a random dither
-             * of less than 1 LSB.
-             *
-             * This means that, prior to scaling, our dither needs to be at
-             * most 2^15 / PWM_PERIOD.
-             */
-
-            sample += PRNG::valueInline(&PwmAudioOut::dither) & PwmAudioOut::DITHER_MASK;
-            sample = Intrinsic::SSAT(sample, 16);
-
             unsigned duty = (sample * PwmAudioOut::PWM_PERIOD) >> 15;
-
             const HwTimer pwmTimer(&TIM1);
             pwmTimer.setDuty(AUDIO_PWM_CHAN, duty);
         }

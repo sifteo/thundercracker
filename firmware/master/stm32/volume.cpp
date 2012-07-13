@@ -7,8 +7,8 @@
 
 static RCTimer gVolumeTimer(HwTimer(&VOLUME_TIM), VOLUME_CHAN, VOLUME_GPIO);
 
-static int calibratedMin;
-static int calibratedScale;
+static uint32_t calibratedMin;
+static uint64_t calibratedScale;
 
 
 namespace Volume {
@@ -21,9 +21,11 @@ void init()
      * I have observed the min to be around 60, and max to be around 640.
      * Tightening the window a bit to make sure we can get all the way to the
      * extremes, even when accommodating some variation.
+     *
+     * These values are in arbitrary units, as returned by RCTimer::lastReading().
      */
-    const int DefaultMin = 100;
-    const int DefaultMax = 600;
+    const int DefaultMin = 100 << 8;
+    const int DefaultMax = 600 << 8;
 
     /*
      * TODO: read calibration readings taken at factory test time
@@ -35,9 +37,9 @@ void init()
     int calibratedMax = DefaultMax;
 
     /*
-     * Calculate a scale factor from raw units to volume units, in 16.16 fixed point.
+     * Calculate a scale factor from raw units to volume units, in 32.32 fixed point.
      */
-    calibratedScale = (_SYS_AUDIO_MAX_VOLUME << 16) / (calibratedMax - calibratedMin);
+    calibratedScale = (uint64_t(MAX_VOLUME) << 32) / (calibratedMax - calibratedMin);
 
     /*
      * Specify the rate at which we'd like to sample the volume level.
@@ -54,8 +56,8 @@ void init()
 int systemVolume()
 {
     int reading = gVolumeTimer.lastReading();
-    int scaled = ((reading - calibratedMin) * calibratedScale + 0x8000) >> 16;
-    return clamp<int>(scaled, 0, _SYS_AUDIO_MAX_VOLUME);
+    int scaled = ((reading - calibratedMin) * calibratedScale + 0x80000000) >> 32;
+    return clamp<int>(scaled, 0, MAX_VOLUME);
 }
 
 int calibrate(CalibrationState state)

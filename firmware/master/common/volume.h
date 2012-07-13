@@ -16,9 +16,19 @@ namespace Volume
     };
 
     void init();
-
-    int systemVolume();  // current system volume
     int calibrate(CalibrationState state);
+
+    /*
+     * Current system volume.
+     *
+     * Unlike the individual mixer volumes, this is a 16-bit value
+     * in order to give us enough dynamic range to be very very quiet
+     * without dropping out completely.
+     */
+    int systemVolume();
+
+    static const int MAX_VOLUME = 0x10000;
+    static const int MAX_VOLUME_LOG2 = 16;
 }
 
 #endif // _VOLUME_H
