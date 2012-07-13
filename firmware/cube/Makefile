@@ -77,7 +77,13 @@ $(BIN): $(OBJS)
 src/tilerom.c: tilerom/src-palettes.png tilerom/src-tiles.png tilerom/romgen.py
 	python tilerom/romgen.py
 
+debug: $(BIN)
+	../../sdk/bin/siftulator -l ../../extras/loopy/loopy.elf -n 1 -d -f $(BIN)
+
+tests: $(BIN)
+	cd ../../test/firmware/cube; ../../../sdk/bin/siftulator --headless -e tests.lua -l mc-stub.elf  -f ../../../firmware/cube/cube.hex
+
 clean:
 	rm -f *.mem src/*.rel src/*.rst src/*.sym *.lnk src/*.lst *.map src/*.asm
     
-.PHONY: clean sizeprof
+.PHONY: clean sizeprof debug tests
