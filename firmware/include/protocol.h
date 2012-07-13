@@ -17,6 +17,109 @@
 
 /**************************************************************************
  *
+ * Radio Connection Management
+ *
+ *   Background
+ *  ------------
+ *
+ * To communicate with a cube, our base needs to know the address
+ * and channel. We also want both endpoints to know when a connection
+ * is established or broken. We want to initiate connection quickly with
+ * cubes whose HWID we already know. We want to discover new cubes to
+ * pair with by sending them a neighbor packet.
+ *
+ * This HWID needs to be the only token required to connect to a known
+ * cube, since it is the only piece of unique information known to the
+ * cube firmware.
+ *
+ *   Cube States
+ *  -------------
+ *
+ * The cube can be in one of three radio states. These states can also
+ * be thought of as two major states, one of which has two minor states:
+ *
+ *    +-----------+
+ *    | Connected |
+ *    +-----------+
+ *
+ *    +------------------------------+
+ *    |        Disconnected          |
+ *    | +--------+     +-----------+ |
+ *    | |  Idle  |     |  Pairing  | |
+ *    | +--------+     +-----------+ |
+ *    +------------------------------+
+ *
+ * "Idle" is the default state upon powerup or wake from sleep.
+ *
+ * State transitions:
+ *
+ *    Disconnected -> Connected     Received first "radio hop" packet
+ *    Idle -> Pairing               Pairing packet received over neighbor RX
+ *    Connected -> Idle             Time limit since last received packet has expired
+ *    Pairing -> Idle               Timeout since neighbor packet was received
+ *
+ * Detailed description of the states:
+ *
+ * 1. Idle
+ *
+ *    The cube is not expecting to receive commands other than a "radio hop"
+ *    or the pairing packet. It starts listening on an address and an initial
+ *    channel which are both derived from its HWID. The channel automatically
+ *    hops slowly, in a fixed pattern, but it always starts up on the same
+ *    channel. This same initial channel and address are also used to wake
+ *    up sleeping cubes.
+ *
+ * 2. Pairing
+ *
+ *    The pairing state is entered by a packet received over the neighbor
+ *    RX which includes a small number of bits which select a pairing channel.
+ *    The pairing address is fixed. These radio settings are used for the
+ *    duration of the pairing state.
+ *
+ *    There is no user-visible difference between Idle and Pairing states;
+ *    they only affect the cube's radio address and channel.
+ *
+ * 3. Connected
+ *
+ *    In this state, our radio settings are fully under remote control by
+ *    the base. Connected state is entered via a Hop command which switches
+ *    channel and address. Additional Hop commands can be used to change
+ *    channel or address dynamically. Additionally, this same Hop sets up
+ *    a session ID which is used for neighbor TX. (No neighbor TX occurs
+ *    when disconnected)
+ *
+ *   Idle Channel / Address
+ *  ------------------------
+ *
+ * In the idle state, we use a simple algorithm to generate the 5-byte
+ * address and channel from the entropy in our 64-bit HWID. Note that
+ * the HWID is not completely random. Currently we use the first byte
+ * as a version number, and the rest are random. To future-proof our
+ * scheme a bit, we assume later bytes in the HWID have more entropy.
+ *
+ * This is based on the Galois Field CRC we use for flash CRCs:
+ *
+ *   1. Start by CRC'ing the first three bytes of the HWID
+ *   2. Next, for each of the remaining five bytes:
+ *      a. CRC this byte of the HWID
+ *      b. If the result is one of the disallowed values (00, FF, AA, 55)
+ *         repeatedly CRC a zero byte until the value is no longer disallowed.
+ *         With a proper generator polynomial this loop is guaranteed to
+ *         terminate.
+ *      c. Store the current 8-bit CRC state as an address byte
+ *   3. CRC a single zero byte
+ *   4. If the low 7 bits of the result are greater than 125, repeatedly
+ *      CRC additional zero bytes until it is <= 125.
+ *   5. Take the low 7 bits of the current CRC state as our channel number.
+ *
+ * This scheme is designed to preserve the entropy in our HWID, to be
+ * very simple to implement in the cube firmware, and to produce addresses
+ * and channels which meet the nRF's constraints.
+ */
+
+
+/**************************************************************************
+ *
  * Master -> Cube (RF) packet format
  *
  *   Background

@@ -16,7 +16,7 @@
 import random
 from hex import hexDump
 
-# Honestly, with the 4-bit algorithm below, these are all pretty much equally good.
+# Honestly, with the current algorithm, these are all pretty much equally good.
 # Note that we want one that's both a generator and which has a 1:1 mapping for CRCs.
 BEST_GEN = 0x84
 
@@ -166,9 +166,55 @@ def crcSamples():
         ]:
         print "\t%-30r = %02x" % (s, crcList(map(ord, s)))
 
+def hwidToRadioSettings(hwid):
+    assert len(hwid) == 8
+
+    reg = INITIAL
+    reg = xcrc(hwid[0], reg)
+    reg = xcrc(hwid[1], reg)
+    reg = xcrc(hwid[2], reg)
+
+    addr = []
+    for byte in hwid[3:]:
+        reg = xcrc(byte, reg)
+        while 1:
+            if reg in (0x00, 0xFF, 0xAA, 0x55):
+                reg = xcrc(0, reg)
+            else:
+                addr.append(reg)
+                break
+
+    while 1:
+        reg = xcrc(0, reg)
+        ch = reg & 0x7F
+        if ch <= 125:
+            break
+
+    return tuple(addr), ch
+
+def hexlist(bytes):
+    return ''.join("%02x" % x for x in bytes)
+
+def testHWID(hwid):
+    addr, ch = hwidToRadioSettings(hwid)
+    print "\t%s: %s ch=%d" % (hexlist(hwid), hexlist(addr), ch)
+
+def testRadioSettings():
+    print "\nSample radio settings for various HWIDs:"
+
+    for i in range(30):
+        hwid = [random.randrange(256) for i in range(8)]
+        hwid[0] = 1
+        testHWID(hwid)
+
+    for i in range(10):
+        hwid[0] = i
+        testHWID(hwid)
+
 
 if __name__ == "__main__":
     findAllGenerators()
     testCRCBytes()
     testCRCBitErrors()
     crcSamples()
+    testRadioSettings()
