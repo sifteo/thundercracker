@@ -61,22 +61,19 @@ void tf0_isr(void) __interrupt(VECTOR_TF0) __naked
         ;      different time source. It actually isnt that bad at the moment,
         ;      and we end up here infrequently.
 
-        mov    a, TH0
-        jnz    1$
-        mov    a, TL0
-        addc   a, #(0x100 - NB_DEADLINE)
-        jc     1$
-
-        ; Okay, there is still time! Start the TX IRQ.
-        
-        setb    _nb_tx_mode
-
-        ; Start transmitting.
-        ;
-        ; The first byte is already computed in nb_tx_id.
-        ; The second is complemented and shifted left by 3.
+        mov     a, TH0
+        jnz     1$
+        mov     a, TL0
+        addc    a, #(0x100 - NB_DEADLINE)
+        jc      1$                              ; Not enough time left, skip transmit
 
         mov     a, _nb_tx_id
+        jz      1$                              ; Neighbor transmit disabled
+
+        ; The first byte of the packet is identical to nb_tx_id,
+        ; which is already in A. The second is complemented and shifted left by 3.
+        ; Prepare our 16-bit transmit buffer with both bytes of the packet.
+
         mov     _nb_buffer, a
         cpl     a
         swap    a
@@ -84,6 +81,9 @@ void tf0_isr(void) __interrupt(VECTOR_TF0) __naked
         anl     a, #0xF8
         mov     _nb_buffer+1, a
 
+        ; Start transmitting.
+
+        setb    _nb_tx_mode
         mov     _nb_bits_remaining, #NB_TX_BITS
         mov     _TL2, #(0x100 - NB_BIT_TICKS)
         setb    _T2CON_T2I0

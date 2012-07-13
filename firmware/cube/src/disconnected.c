@@ -21,16 +21,6 @@ void disconnected_screen(void)
 {
     draw_clear();
 
-    #ifdef CUBE_CHAN
-        draw_xy = XY(0,15);
-        draw_attr = ATTR_GRAY;
-        draw_hex(CUBE_CHAN);
-    #endif
-
-    draw_xy = XY(14,15);
-    draw_attr = ATTR_GRAY;
-    draw_hex(radio_get_cube_id());
-
     draw_xy = XY(1,12);
     draw_attr = ATTR_RED;
     draw_string("Thunder");
@@ -43,4 +33,6 @@ void disconnected_screen(void)
 
     draw_xy = XY(0,0);
     draw_image(img_battery);
+    
+    draw_hex(0x42);
 }

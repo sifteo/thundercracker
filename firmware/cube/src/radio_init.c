@@ -68,21 +68,6 @@ void radio_init(void)
         /* 16-bit CRC, radio enabled, PRX mode, RX_DR IRQ enabled */
         2, RF_CMD_W_REGISTER | RF_REG_CONFIG,         0x3f,
 
-        /*
-         * XXX: Hardcoded cube addresses, for testing only
-         */
-
-#ifdef CUBE_CHAN
-        2, RF_CMD_W_REGISTER | RF_REG_RF_CH,          CUBE_CHAN,
-#else
-        2, RF_CMD_W_REGISTER | RF_REG_RF_CH,          0x02,
-#endif
-
-#ifdef CUBE_ADDR
-        6, RF_CMD_W_REGISTER | RF_REG_TX_ADDR,        CUBE_ADDR, 0xe7, 0xe7, 0xe7, 0xe7,
-        6, RF_CMD_W_REGISTER | RF_REG_RX_ADDR_P0,     CUBE_ADDR, 0xe7, 0xe7, 0xe7, 0xe7,
-#endif
-
         0,
     };
 
@@ -90,36 +75,6 @@ void radio_init(void)
     RF_CKEN = 1;                        // Radio clock running
     radio_transfer_table(table);        // Send initialization commands
     radio_irq_enable();
-}
-
-
-uint8_t radio_get_cube_id(void)
-{
-    /*
-     * XXX: This is temporary, until we have a real pairing mechanism.
-     *      Our cube will be identified by radio address and channel, but
-     *      also by an ID between 0 and 31. This will eventually come from
-     *      the master cube, but for now we take it from the LSB of the
-     *      radio address. That can be set at compile time with CUBE_ADDR,
-     *      or it could be provided as a hardware default by the simulator.
-     */
-
-    uint8_t id;
-
-    radio_irq_disable();
-    RF_CSN = 0;
-
-    SPIRDAT = RF_CMD_R_REGISTER | RF_REG_TX_ADDR;
-    SPIRDAT = 0;
-    while (!(SPIRSTAT & SPI_RX_READY));
-    SPIRDAT;
-    while (!(SPIRSTAT & SPI_RX_READY));
-    id = SPIRDAT;
-
-    RF_CSN = 1;
-    radio_irq_enable();
-
-    return id;
 }
 
 void radio_ack_query() __naked

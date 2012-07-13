@@ -245,5 +245,5 @@ void sensors_init()
      * The format of second byte is: "/id[4] /id[3] /id[2] /id[1] /id[0] 0 0 0"
      */
 
-    nb_tx_id = 0xE0 | radio_get_cube_id();
+    nb_tx_id = 0xE0;
 }

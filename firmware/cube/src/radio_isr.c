@@ -15,6 +15,8 @@
 
 RF_MemACKType __near ack_data;
 uint8_t __near ack_bits;
+__bit radio_connected;
+
 
 // Disable to prevent radio from writing to VRAM, for testing
 #define WRITE_TO_VRAM
@@ -244,8 +246,13 @@ rx_begin_packet:
         ;--------------------------------------------------------------------
 
         ; If the last radio packet was not maximum length, reset state now.
+        ; Also, if we are not connected, we always reset packet state, as we
+        ; need the protocol to be stateless while in disconnected mode.
 
+        jnb     _radio_connected, state_reset
         jb      _radio_state_reset_not_pending, no_state_reset
+
+state_reset:
         setb    _radio_state_reset_not_pending
 
         mov     R_STATE, #0        
@@ -697,16 +704,23 @@ rx_special:
         sjmp    rx_complete                     ; Ignore rest of packet
 
 1$:
+        ; -------- 1010 0111 -- Radio Hop
+
+        cjne    R_SAMPLE, #2, 2$
+        ljmp    _radio_hop
+2$:
+
         ; -------- 1001 0111 -- Explicit ACK request
 
-        cjne    R_SAMPLE, #1, 2$
+        cjne    R_SAMPLE, #1, 3$
 
         mov     _ack_bits, #0xFF                ; Do ALL the acks!
+                                                ; Fall through
+3$:
 
-2$:
         ; -------- 
 
-        ; Unknown code, or fall-through from a code we finished handling.
+        ; Reserved code, or fall-through from a code we finished handling.
         ; Process the next nybble like usual.
 
         ljmp    rx_next_sjmp
@@ -773,6 +787,12 @@ rx_complete:
 rx_complete_0:
         setb    _RF_CSN         ; End SPI transaction
 
+        ; Turn radio receiver back on. Only has an effect if we were just processing a
+        ; Hop command, but we want to delay turning it back on until we are no longer
+        ; in the middle of an SPI transaction.
+
+        setb    _RF_CE
+
         ; nRF Interrupt acknowledge
 
         clr     _RF_CSN                                         ; Begin SPI transaction
@@ -780,7 +800,7 @@ rx_complete_0:
         mov     _SPIRDAT, #RF_STATUS_RX_DR                      ; Clear interrupt flag
         SPI_WAIT                                                ; RX STATUS byte
         mov     a, _SPIRDAT
-        
+
         ; Reset powerdown timer
         
         POWER_IDLE_RESET_ASM()
@@ -926,5 +946,138 @@ no_ack:
         pop     acc
         reti
         
+    __endasm ;
+}
+
+
+/*
+ * radio_hop --
+ *
+ *    This handles the Radio Hop command, which escapes from nybble
+ *    mode and takes up to 7 bytes of arguments:
+ *
+ *      - Radio channel
+ *      - Radio address (5 byte)
+ *      - Neighbor ID
+ *
+ *    This command always switches to Connected mode, if we aren't
+ *    there already. Also, we always cause a state reset, in part because
+ *    this function requires re-using a bunch of our state registers
+ *    as temporary space to store the new radio address.
+ *
+ *    Note that the hop occurs immediately without leaving the ISR, but
+ *    after the radio has already sent the ACK. It's possible that this
+ *    ACK may get dropped, so if the master sees a timeout it may need
+ *    to retry on our new channel/address.
+ *
+ *    Temporary space used:
+ *
+ *      r0                      Loop iterator / pointer
+ *      R_LOW+ (r1-r7)          Parameter bytes
+ *      _vram_dptr              Count of argument bytes
+ *      _vram_dptr+1            Copy of argument count
+ */
+
+void radio_hop(void) __naked __using(RF_BANK)
+{
+    __asm
+        ; State changes
+
+        clr     _radio_state_reset_not_pending
+        setb    _radio_connected
+
+        ;--------------------------------------------------------------------
+        ; Read Arguments
+        ;--------------------------------------------------------------------
+
+        mov     a, R_NYBBLE_COUNT               ; Convert nybble count to byte count
+        dec     a
+        clr     c
+        rrc     a
+        jz      10$                             ; Zero bytes (done)
+        mov     _vram_dptr, a                   ; Otherwise, this is the new byte count
+
+        add     a, #(256 - 7)                   ; Clamp count to 7 (ignore remainder)
+        jnc     1$
+        mov     _vram_dptr, #7
+1$:
+
+        mov     _vram_dptr+1, _vram_dptr        ; Save copy of argument count
+        mov     R_TMP, #AR_LOW                  ; Start writing to r1
+
+2$:
+        SPI_WAIT
+        mov     a, _SPIRDAT                     ; Load next SPI byte
+        mov     _SPIRDAT, #0                    ; Dummy write
+        mov     @R_TMP, a                       ; Store it in our temporary space
+
+        inc     R_TMP                           ; Advance head pointer
+        djnz    _vram_dptr, 2$                  ; Next byte
+
+        ;--------------------------------------------------------------------
+        ; Write Channel
+        ;--------------------------------------------------------------------
+
+        SPI_WAIT
+        mov     a, _SPIRDAT                     ; Throw away one extra dummy byte
+        setb    _RF_CSN                         ; End SPI transaction
+        clr     _RF_CE                          ; Turn off radio receiver temporarily
+        clr     _RF_CSN                         ; Begin SPI transaction
+
+        mov     _SPIRDAT, #(RF_CMD_W_REGISTER | RF_REG_RF_CH)
+
+        mov     a, R_LOW                        ; Channel is masked with 0x7F to stay in hardware spec
+        anl     a, #0x7F
+        mov     _SPIRDAT, a
+
+        SPI_WAIT                                ; Flush one byte, leave a single dummy byte in FIFO
+        mov     a, _SPIRDAT
+
+        ;--------------------------------------------------------------------
+        ; Write Address
+        ;--------------------------------------------------------------------
+
+        mov     a, _vram_dptr+1                 ; Only proceed if we have 6+ bytes
+        add     a, #(256 - 6)
+        jnc     10$
+
+        SPI_WAIT
+        setb    _RF_CSN                         ; End SPI transaction
+        mov     a, _SPIRDAT                     ; Throw away one extra dummy byte from FIFO
+        clr     _RF_CSN                         ; Begin SPI transaction
+
+        mov     _SPIRDAT, #(RF_CMD_W_REGISTER | RF_REG_RX_ADDR_P0)
+
+        mov     R_TMP, #(AR_LOW + 1)            ; Write 5 bytes, starting with the 2nd buffered byte
+3$:
+        mov     a, @R_TMP
+        mov     _SPIRDAT, a
+        inc     R_TMP
+        SPI_WAIT
+        mov     a, _SPIRDAT
+        cjne    R_TMP, #(AR_LOW + 1 + 5), 3$
+
+        ;--------------------------------------------------------------------
+        ; Neighbor ID
+        ;--------------------------------------------------------------------
+
+        ; Note: We expect the neighbor ID to already have the three high bits set,
+        ;       but we do not enforce this. Maybe it will be useful in the future to
+        ;       transmit slightly different neighbor packets under master control.
+
+        mov     a, _vram_dptr+1
+        cjne    a, #7, 10$                      ; Only proceed if we have exactly 7 bytes
+        mov     _nb_tx_id, (AR_LOW + 6)         ;   Save byte 7 as new neighbor ID
+
+        ;--------------------------------------------------------------------
+        ; Finish packet
+        ;--------------------------------------------------------------------
+
+        ; Note that rx_complete expects us to still be at the end of an SPI
+        ; transaction. It will read one dummy byte, then end the transfer.
+
+10$:
+        ljmp    rx_complete
+
     __endasm ;
 }

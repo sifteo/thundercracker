@@ -73,13 +73,23 @@
 
 extern uint8_t nb_bits_remaining;   // Bit counter for transmit or receive
 extern uint8_t nb_buffer[2];        // Packet shift register for TX/RX
-extern uint8_t nb_tx_id;            // The ID byte we're broadcasting
+
 extern __bit nb_tx_mode;            // We're in the middle of an active transmission
 extern __bit nb_rx_mask_state0;
 extern __bit nb_rx_mask_state1;
 extern __bit nb_rx_mask_state2;
 extern __bit nb_rx_mask_bit0;
 extern __bit nb_rx_mask_bit1;
+
+/*
+ * Our current neighbor ID. Valid IDs have the three MSBs set to 1,
+ * i.e. they're already formatted properly for use as the first byte
+ * of the raw neighbor packet.
+ *
+ * If this is zero (the default while disconnected), neighbor transmit
+ * is disabled.
+ */
+extern uint8_t nb_tx_id;
 
 /*
  * We do a little bit of signal conditioning on neighbors before
