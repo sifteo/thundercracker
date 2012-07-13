@@ -247,10 +247,13 @@
  * all, we have a reserved region of the diff codes, which are
  * redundant encodings for the 4-bit 'copy' code:
  *
- *   1000 0111             Sensor timer sync escape
- *   1001 0111             Explicit full ACK request
+ *   1000 0111             Sensor timer sync escape (Byte args: TL0, TH0)
+ *   1001 0111             Explicit full ACK request (No args)
+ *   1010 0111             Radio hop (Byte args: Channel, Optional 5-byte addr, Optional neighbor ID)
  *
- *   1010 0111             Reserved for future use
+ *     Notes: Radio Hop always switches a cube into Connected state.
+ *            The codec state is always reset after a Radio Hop packet.
+ *
  *   1011 0111             Reserved for future use
  *
  * Next, the RLE codes. These begin with a 4-bit code that repeats the
