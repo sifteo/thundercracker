@@ -20,11 +20,11 @@
  *
  *  Timer period:    162.76 Hz   Overflow rate of 13-bit Timer 0 at clk/12
  *  Packet length:   16 bits     Long enough for one data byte and one check byte
- *  # of timeslots:  32          Maximum number of supported cubes in master
- *  Timeslot size:   192 us      Period is split evenly into 32 slots
+ *  # of timeslots:  24          Maximum number of supported cubes in master
+ *  Timeslot size:   256 us      Period is split evenly into 24 slots
  *
  * These parameters on their own would give us a maximum bit period of
- * 12 us.  But that assumes that we can perfectly synchronize all
+ * 16 us.  But that assumes that we can perfectly synchronize all
  * cubes. The more margin we can give ourselves for timer drift and
  * communication latency, the better. Our electronics seem to be able
  * to handle pulses down to ~4 us, but it's also better not to push these
@@ -66,9 +66,9 @@
 #define NB_TX_BITS          16      // 1 header, 2 mask, 13 payload
 #define NB_RX_BITS          16      // 1 header, 2 mask, 13 payload
 
-// 2us pulses, 9.75us bit periods, 156us packets
+// 2us pulses, 15.75us bit periods, 252us packets
 #define NB_BIT_TICKS        21      // In 0.75 us ticks
-#define NB_BIT_TICK_FIRST   14     	// Sampling tweak to ignore secondary pulses
+#define NB_BIT_TICK_FIRST   14      // Sampling tweak to ignore secondary pulses
 #define NB_DEADLINE         22      // Max amount Timer0 can be late by
 
 extern uint8_t nb_bits_remaining;   // Bit counter for transmit or receive
