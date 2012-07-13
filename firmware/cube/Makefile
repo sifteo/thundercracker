@@ -39,9 +39,10 @@ OBJS = \
 OBJS += \
         src/graphics_bg1_line.rel \
         src/graphics_bg0_rom.rel \
-        
+
+TC_DIR = ../..
 FIRMWARE_INC = ../include
-SDK_DIR = ../../sdk
+SDK_DIR = $(TC_DIR)/sdk
 
 SDCC = sdcc
 CDEPS = src/*.h $(FIRMWARE_INC)/*.h $(SDK_DIR)/include/sifteo/*.h
@@ -64,7 +65,7 @@ LDFLAGS += --nostdlib
 # This is the default build target; this runs static analysis checks which
 # should be performed on every automated build.
 sizeprof: $(BIN)
-	python ../../emulator/resources/firmware-sizeprof.py src/*.rst
+	python $(TC_DIR)/emulator/resources/firmware-sizeprof.py src/*.rst
 
 $(BIN): $(OBJS)
 	$(SDCC) -o $@ $(LDFLAGS) $(OBJS)
@@ -78,10 +79,10 @@ src/tilerom.c: tilerom/src-palettes.png tilerom/src-tiles.png tilerom/romgen.py
 	python tilerom/romgen.py
 
 debug: $(BIN)
-	../../sdk/bin/siftulator -l ../../extras/loopy/loopy.elf -n 1 -d -f $(BIN)
+	$(SDK_DIR)/bin/siftulator -l $(TC_DIR)/extras/loopy/loopy.elf -n 1 -d -f $(BIN)
 
 tests: $(BIN)
-	cd ../../test/firmware/cube; ../../../sdk/bin/siftulator --headless -e tests.lua -l mc-stub.elf  -f ../../../firmware/cube/cube.hex
+	cd $(TC_DIR)/test/firmware/cube; ../../../sdk/bin/siftulator --headless -e tests.lua -l mc-stub.elf  -f ../../../firmware/cube/cube.hex
 
 clean:
 	rm -f *.mem src/*.rel src/*.rst src/*.sym *.lnk src/*.lst *.map src/*.asm
