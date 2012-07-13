@@ -10,7 +10,7 @@ public:
 
     enum SubSystem {
         None,
-        AudioISR,
+        Reserved_1,
         AudioPull,
         SVCISR,
         RFISR,

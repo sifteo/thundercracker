@@ -31,8 +31,8 @@ class GPIOPin {
         OUT_ALT_OPEN_50MHZ = 15,
     };
 
-    GPIOPin(volatile GPIO_t *port, unsigned bit)
-        : value(bit + (uintptr_t)port) {}
+    ALWAYS_INLINE GPIOPin(volatile GPIO_t *port, unsigned bit)
+        : value(bit | (uintptr_t)port) {}
 
     ALWAYS_INLINE void setHigh() const {
         port()->ODR |= bit();
@@ -109,6 +109,25 @@ class GPIOPin {
 
     ALWAYS_INLINE unsigned bit() const {
         return 1 << pin();
+    }
+
+    ALWAYS_INLINE static void setControl(volatile GPIO_t *port, unsigned bit, Control c)
+    {
+        /*
+         * Change this pin's control nybble
+         */
+
+        volatile uint32_t *ptr = &port->CRL;
+
+        if (bit >= 8) {
+            bit -= 8;
+            ptr++;
+        }
+
+        unsigned shift = bit << 2;
+        unsigned mask = 0xF << shift;
+
+        *ptr = (*ptr & ~mask) | (c << shift);
     }
 
  private:

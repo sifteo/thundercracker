@@ -30,13 +30,3 @@ void AudioOutDevice::stop()
 {
     gPortAudio.stop();
 }
-
-void AudioOutDevice::suspend()
-{
-    // Nothing to do yet
-}
-
-void AudioOutDevice::resume()
-{
-    // Nothing to do yet
-}

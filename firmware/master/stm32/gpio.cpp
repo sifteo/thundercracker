@@ -6,22 +6,7 @@
 #include "gpio.h"
 
 void GPIOPin::setControl(Control c) const {
-    /*
-     * Change this pin's control nybble
-     */
-
-    unsigned p = pin();
-    volatile uint32_t *ptr = &port()->CRL;
-    
-    if (p >= 8) {
-        p -= 8;
-        ptr++;
-    }
-
-    unsigned shift = p << 2;
-    unsigned mask = 0xF << shift;
-
-    *ptr = (*ptr & ~mask) | (c << shift);
+    setControl(port(), pin(), c);
 }
 
 void GPIOPin::irqInit() const
