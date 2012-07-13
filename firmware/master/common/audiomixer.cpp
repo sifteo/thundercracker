@@ -236,7 +236,7 @@ void AudioMixer::pullAudio(void *p)
 
         int *ptr = blockBuffer;
         do {
-            int sample = (*(ptr++) * mixerVolume) >> Volume::MAX_VOLUME_LOG2;
+            int sample = (*(ptr++) * (mixerVolume >> 1)) >> (Volume::MAX_VOLUME_LOG2 - 1);
             int16_t sample16 = Intrinsic::SSAT(sample, 16);
 
             #ifdef SIFTEO_SIMULATOR
