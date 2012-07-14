@@ -43,7 +43,7 @@ FwLoader::FwLoader(IODevice &_dev) :
 bool FwLoader::requestBootloaderUpdate()
 {
     if (!dev.open(IODevice::SIFTEO_VID, IODevice::BASE_PID)) {
-        fprintf(stderr, "device is not attached\n");
+        fprintf(stderr, "device is not attached - if the red LED is illuminated, `swiss update --init` is not required.\n");
         return false;
     }
 
@@ -56,7 +56,7 @@ bool FwLoader::requestBootloaderUpdate()
 bool FwLoader::load(const char *path)
 {
     if (!dev.open(IODevice::SIFTEO_VID, IODevice::BOOTLOADER_PID)) {
-        fprintf(stderr, "device is not attached\n");
+        fprintf(stderr, "device is not attached - please ensure your device is in update mode, with the red LED illuminated\n");
         return false;
     }
 
