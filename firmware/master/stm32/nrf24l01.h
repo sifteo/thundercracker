@@ -29,6 +29,7 @@ public:
     void init();
     void beginTransmitting();
 
+    void setRetryCount(int hard, int soft);
     void setTxPower(Radio::TxPower pwr);
     Radio::TxPower txPower();
 
@@ -88,13 +89,12 @@ public:
         MAX_RT                  = 1 << 4,
     };
 
-    static const unsigned SOFT_RETRY_MAX = 32;
-
     GPIOPin ce;
     SPIMaster spi;
 
     PacketTransmission txBuffer;
     PacketBuffer rxBuffer;
+    unsigned softRetriesMax;
     unsigned softRetriesLeft;
 
     /*

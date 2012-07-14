@@ -23,6 +23,9 @@ NRF24L01 NRF24L01::instance(RF_CE_GPIO,
 
 void NRF24L01::init() {
 
+    STATIC_ASSERT(Radio::DEFAULT_HARD_RETRIES == 15);
+    softRetriesMax = Radio::DEFAULT_SOFT_RETRIES;
+
     /*
      * Common hardware initialization, regardless of radio usage mode.
      */
@@ -49,7 +52,7 @@ void NRF24L01::init() {
         2, CMD_W_REGISTER | REG_RX_PW_P0,       32,
         
         /* Auto retry delay, 500us, 15 retransmits */
-        2, CMD_W_REGISTER | REG_SETUP_RETR,     0x1f,
+        2, CMD_W_REGISTER | REG_SETUP_RETR,     0x10 | Radio::DEFAULT_HARD_RETRIES,
 
         /* 5-byte address width */
         2, CMD_W_REGISTER | REG_SETUP_AW,       0x03,
@@ -183,6 +186,20 @@ void NRF24L01::setConstantCarrier(bool enabled, unsigned channel)
     }
 }
 
+/*
+ * Configure the retry behavior of the radio driver.
+ * Always maintain our auto retry delay of 500us
+ */
+void NRF24L01::setRetryCount(int hard, int soft)
+{
+    softRetriesMax = soft;
+
+    spi.begin();
+    spi.transfer(CMD_W_REGISTER | REG_SETUP_RETR);
+    spi.transfer(0x10 | (hard & 0xf));
+    spi.end();
+}
+
 void NRF24L01::setTxPower(Radio::TxPower pwr)
 {
     spi.begin();
@@ -312,7 +329,7 @@ void NRF24L01::beginTransmit()
 
     txBuffer.noAck = false;
     RadioManager::produce(txBuffer);
-    softRetriesLeft = SOFT_RETRY_MAX;
+    softRetriesLeft = softRetriesMax;
 
 #ifdef DEBUG_MASTER_TX
     Debug::logToBuffer(txBuffer.packet.bytes, txBuffer.packet.len);

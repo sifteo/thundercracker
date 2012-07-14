@@ -147,6 +147,17 @@ class Radio {
      */
     static void setTxPower(TxPower pwr);
     static TxPower txPower();
+
+    static const unsigned DEFAULT_HARD_RETRIES = 15;
+    static const unsigned DEFAULT_SOFT_RETRIES = 32;
+
+    /*
+     * Retry control.
+     *
+     * The radio hardware supports up to 15 automatic retries, and we allow
+     * a 'soft' retry count, that acts as a multiplier of the hard retry value.
+     */
+    static void setRetryCount(int hard, int soft);
 };
 
 /**
@@ -168,6 +179,10 @@ class RadioManager {
     static void ackWithPacket(const PacketBuffer &packet);
     static void ackEmpty();
     static void timeout();
+
+    static void setRFTestEnabled(bool enabled) {
+        rfTestModeEnabled = enabled;
+    }
 
  private:
     /*
@@ -204,6 +219,8 @@ class RadioManager {
         epHead = (epHead + 1) & (FIFO_SIZE - 1);
         return id;
     }
+
+    static bool rfTestModeEnabled;
 };
 
 #endif

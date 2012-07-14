@@ -3,6 +3,7 @@
 
 #include <stdint.h>
 #include "usbprotocol.h"
+#include "radio.h"
 
 class FactoryTest
 {
@@ -15,9 +16,20 @@ public:
     static void onUartIsr();
     static void usbHandler(const USBProtocolMsg &m);
 
+    // RF test handlers
+    static void produce(PacketTransmission &tx);
+    static void onRFTimeout();
+    static void onRFAckWithPacket(const PacketBuffer &packet);
+    static void onRFAckEmpty();
+
 private:
     static uint8_t commandBuf[UART_MAX_COMMAND_LEN];
     static uint8_t commandLen;
+
+    static volatile uint16_t rfTransmissionsRemaining;
+    static uint16_t rfSuccessCount;
+
+    static void handleRfPacketComplete();
 
     typedef void(*TestHandler)(uint8_t argc, const uint8_t *args);
     static const TestHandler handlers[];
@@ -33,6 +45,7 @@ private:
     static void shutdownHandler(uint8_t argc, const uint8_t *args);
     static void audioTestHandler(uint8_t argc, const uint8_t *args);
     static void bootloadRequestHandler(uint8_t argc, const uint8_t *args);
+    static void rfPacketTestHandler(uint8_t argc, const uint8_t *args);
 };
 
 #endif // FACTORYTEST_H
