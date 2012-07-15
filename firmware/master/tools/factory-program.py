@@ -27,7 +27,7 @@ class App:
         frame = Frame(master, height=100, width=100)
         frame.pack()
         
-        self.program = Button(frame, text="Program", command=self.program, padx=100, pady=100)
+        self.program = Button(frame, text="Program", command=self.program, padx=50, pady=50, font=('Courier New', 50, 'bold'))
         self.program.pack()
 
     def program(self):
