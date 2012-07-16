@@ -75,13 +75,13 @@ void PowerManager::railTransition(void* p)
 
         switch (s) {
         case BatteryPwr:
-        	UsbDevice::deinit();
+            UsbDevice::handleSuspend();
             vcc3v3.setLow();
             break;
 
         case UsbPwr:
             vcc3v3.setHigh();
-            UsbDevice::init();
+            UsbDevice::handleResume();
             break;
 
         default:

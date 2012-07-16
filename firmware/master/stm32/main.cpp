@@ -130,6 +130,7 @@ int main()
     AudioOutDevice::init(&AudioMixer::instance);
     AudioOutDevice::start();
 
+    UsbDevice::init();
     SampleProfiler::init();
 
     /*
