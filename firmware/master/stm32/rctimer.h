@@ -25,7 +25,8 @@ public:
     void isr();
 
     ALWAYS_INLINE int lastReading() const {
-        return (filterState + ((1 << FILTER_SHIFT) / 2 - 1)) >> FILTER_SHIFT;
+        // Units are arbitrary, and depend on FILTER_SHIFT
+        return filterState;
     }
 
 private:
@@ -125,7 +126,7 @@ ALWAYS_INLINE void RCTimer::isr()
         if (state == INIT_FILTER_STATE)
             filterState = int(sample) << FILTER_SHIFT;
         else
-            filterState = state + int(sample) - lastReading();
+            filterState = state + int(sample) - (lastReading() >> FILTER_SHIFT);
     }
 }
 

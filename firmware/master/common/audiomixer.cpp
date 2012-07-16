@@ -180,7 +180,7 @@ void AudioMixer::pullAudio(void *p)
 
     // Calculating volume is relatively expensive; do it only if we have audio to mix.
     const int mixerVolume = Volume::systemVolume();
-    ASSERT(mixerVolume >= 0 && mixerVolume <= _SYS_AUDIO_MAX_VOLUME);
+    ASSERT(mixerVolume >= 0 && mixerVolume <= Volume::MAX_VOLUME);
 
     do {
         bool mixed;
@@ -236,7 +236,7 @@ void AudioMixer::pullAudio(void *p)
 
         int *ptr = blockBuffer;
         do {
-            int sample = (*(ptr++) * mixerVolume) >> _SYS_AUDIO_MAX_VOLUME_LOG2;
+            int sample = (*(ptr++) * (mixerVolume >> 1)) >> (Volume::MAX_VOLUME_LOG2 - 1);
             int16_t sample16 = Intrinsic::SSAT(sample, 16);
 
             #ifdef SIFTEO_SIMULATOR

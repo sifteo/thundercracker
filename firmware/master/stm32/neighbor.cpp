@@ -145,6 +145,7 @@ void Neighbor::beginReceiving(uint8_t mask)
 {
     bufferPin.setHigh();
 
+    rxPeriodTimer.disableUpdateIsr();
     rxState = WaitingForStart;
     receivingSide = 0;  // just initialize to something safe
     rxBitCounter = 0;   // incremented at the end of each bit period
@@ -183,8 +184,6 @@ void Neighbor::onRxPulse(uint8_t side)
 {
     inPins[side].irqAcknowledge();
 
-    // TODO: may need to time the squelch more precisely to ensure we don't
-    // worsen the ringing
     GPIOPin &out = outPins[side];
     out.setControl(GPIOPin::OUT_2MHZ);
     out.setLow();

@@ -21,7 +21,7 @@ int systemVolume()
     ASSERT(initialized);
 
     // TODO: hook this into something in the siftulator.
-    return _SYS_AUDIO_MAX_VOLUME;
+    return MAX_VOLUME;
 }
 
 } // namespace Volume

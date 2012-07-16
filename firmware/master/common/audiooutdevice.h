@@ -25,9 +25,6 @@ public:
     static void init(AudioMixer *mixer);
     static void start();
     static void stop();
-
-    static void suspend();
-    static void resume();
 };
 
 

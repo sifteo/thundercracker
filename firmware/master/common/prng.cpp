@@ -16,8 +16,7 @@
 
 #include "prng.h"
 #include "systime.h"
-
-#define rot(x,k) (((x)<<(k))|((x)>>(32-(k))))
+#include <stdio.h>
 
 void PRNG::init(_SYSPseudoRandomState *state, uint32_t seed)
 {
@@ -32,15 +31,8 @@ void PRNG::init(_SYSPseudoRandomState *state, uint32_t seed)
 
 uint32_t PRNG::value(_SYSPseudoRandomState *state)
 {
-    uint32_t e = state->a - rot(state->b, 27);
-    state->a = state->b ^ rot(state->c, 17);
-    state->b = state->c + state->d;
-    state->c = state->d + e;
-    state->d = e + state->a;
-    return state->d;
+    return valueInline(state);
 }
-
-#include <stdio.h>
 
 uint32_t PRNG::valueBounded(_SYSPseudoRandomState *state, uint32_t limit)
 {
