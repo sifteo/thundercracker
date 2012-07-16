@@ -115,3 +115,21 @@ TestRadio = {}
         assertEquals(radio:expectWake() < 0.2, true)
     end
 
+    function TestRadio:test_idle_addr()
+        -- Our protocol defines an algorithm for generating the default
+        -- radio address and channel from the programmed HWID. Here we
+        -- forcibly set several different HWIDs, and verify the resulting
+        -- radio address.
+
+        radio:setHWID("01f263338b1351cf")
+        assertEquals(gx.cube:getRadioAddress(), "5c/85851d2793")
+
+        radio:setHWID("01b636d36540699d")
+        assertEquals(gx.cube:getRadioAddress(), "74/ecde5b7c12")
+
+        radio:setHWID("00b636d36540699d")
+        assertEquals(gx.cube:getRadioAddress(), "4f/1f4bcd7d96")
+
+        radio:setHWID("04b636d36540699d")
+        assertEquals(gx.cube:getRadioAddress(), "72/fe93e32f4b")
+    end

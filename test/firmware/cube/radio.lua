@@ -105,3 +105,16 @@ radio = {}
         until packet:byte(1) == bit.bor(idByte, 0x80)
         return packet:sub(2)
     end
+    
+    function radio:setHWID(hexString)
+        -- Change the cube's hardware ID and reboot it
+
+        local i = 0
+        for hexByte in hexString:gmatch("..") do
+            gx.cube:nbPoke(i, tonumber(hexByte, 16))
+            i = i + 1
+        end
+
+        gx.cube:reset()
+        gx.sys:vsleep(0.4)
+    end
