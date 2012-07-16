@@ -5,6 +5,7 @@
 
 #include "neighbor.h"
 #include "board.h"
+#include "bits.h"
 
 GPIOPin Neighbor::inPins[] = {
     NBR_IN1_GPIO,
@@ -256,7 +257,7 @@ bool Neighbor::rxPeriodIsr(uint8_t &side, uint16_t &rxdata)
              * of its first byte, rotated right by 5.
              * Enforce that here before forwarding the message.
              */
-            uint8_t checkbyte = ror8(~rxDataBuf.bytes[1], 5);
+            uint8_t checkbyte = ROR8(~rxDataBuf.bytes[1], 5);
 
             /*
              * Check the header explicitly - packets with a bogus header would
