@@ -71,9 +71,7 @@ _lcd_window_y::     ;     1 byte
 _bg2_state::        ;     14 bytes
 _draw_xy::          ;     2 bytes
     .ds 2           ; +2
-_draw_attr::        ;     1 byte
-    .ds 1           ; +4
-    .ds 20-5        ; +5
+    .ds 20-4        ; +4
 
 ; ----------------------------------
 

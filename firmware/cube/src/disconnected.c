@@ -12,29 +12,24 @@
 
 extern const __code uint8_t img_logo[];
 extern const __code uint8_t img_battery[];
+extern const __code uint8_t img_battery_bars_1[];
+extern const __code uint8_t img_battery_bars_2[];
+extern const __code uint8_t img_battery_bars_3[];
+extern const __code uint8_t img_battery_bars_4[];
 
 
 void disconnected_init(void)
 {
     draw_clear();
 
-    draw_xy = XY(1,12);
-    draw_attr = ATTR_RED;
-    draw_string("Thunder");
-    draw_attr = ATTR_ORANGE;
-    draw_string("cracker");
-
     draw_xy = XY(1,5);
-    draw_attr = ATTR_NONE;
     draw_image(img_logo);
 
-    draw_xy = XY(0,0);
+    draw_xy = XY(11,0);
     draw_image(img_battery);
-    
-    draw_hex(0x42);
 
-    // XXX Cheat, to keep unit tests working before master knows about Hop
-    radio_connected = 1;
+    draw_xy = XY(12,1);
+    draw_image(img_battery_bars_1);
 }
 
 

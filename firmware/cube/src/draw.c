@@ -31,7 +31,6 @@ void draw_clear()
 
     // Reset state
     draw_xy = XY(0, 0);
-    draw_attr = ATTR_NONE;
 }
 
 void draw_image(const __code uint8_t *image)
@@ -77,12 +76,11 @@ void draw_image(const __code uint8_t *image)
         inc     a
         jz      3$              ; Jump if 16-bit
 
-        ; 8-bit source, MSB comes from _draw_attr
+        ; 8-bit source
 
         mov     a, r3           ; Start with common MSB
         rlc     a               ; Extra bit from C
         rl      a               ; Index to 7:7
-        xrl     a, _draw_attr   ; XOR in draw_attr
         movx    @dptr, a        ; Write to high byte
         inc     dptr
         mov     _DPS, #0        ; Next source byte
@@ -99,7 +97,6 @@ void draw_image(const __code uint8_t *image)
 
         rlc     a               ; Rotate in extra bit from C
         rl      a               ; Index to 7:7
-        xrl     a, _draw_attr   ; XOR in the draw_attr
         movx    @dptr, a        ; Write to high byte
         inc     dptr
         mov     _DPS, #0        ; Next source byte
@@ -126,76 +123,4 @@ void draw_image(const __code uint8_t *image)
         mov     (_draw_xy + 1), _DPH1
 
     __endasm ;  
-}
-
-void draw_string(const __code char *str)
-{
-    str = str;
-    __asm
-        mov     _DPL1, _draw_xy
-        mov     _DPH1, (_draw_xy + 1)
-
-1$:
-        clr     a               ; Read string byte
-        movc    a, @a+DPTR
-        jz      2$              ; NUL terminator?
-
-        add     a, #-0x20       ; Font starts at 0x20
-        clr     c               ; Tile index to low 7 bits, with extra bit in C
-        rlc     a
-
-        mov     _DPS, #1        ; Write low byte to destination
-        movx    @dptr, a
-        inc     dptr
-
-        mov     a, _draw_attr   ; Add C to _draw_attr
-        addc    a, #0
-        movx    @dptr, a        ; Write to high byte
-        inc     dptr
-
-        mov     _DPS, #0        ; Next string byte
-        inc     dptr
-        sjmp    1$
-
-2$:
-        mov     _draw_xy, _DPL1
-        mov     (_draw_xy + 1), _DPH1
-
-    __endasm ;
-}
-
-void draw_hex(uint8_t value)
-{
-    value = value;
-    __asm
-        mov     a, DPL
-        mov     _DPL, _draw_xy
-        mov     _DPH, (_draw_xy + 1)
-
-        mov     r0, a           ; Store low nybble for later    
-        swap    a               ; Start with the high nybble
-        mov     r1, #2          ; Loop over two nybbles
-2$:
-
-        anl     a, #0xF
-        clr     ac
-        clr     c
-        da      a               ; If > 9, add 6. This almost covers the gap between '9' and 'A'
-        jnb     acc.4, 1$       ;   ... at least we can test efficiently whether the nybble was >9 now
-        inc     a               ;   and add one more. This closes the total gap (7 characters)
-1$:     add     a, #0x10        ; Add index for '0'
-        rl      a               ; Index to 7:7
-
-        movx    @dptr, a        ; Draw, with current address and attribute
-        inc     dptr
-        mov     a, _draw_attr
-        movx    @dptr, a
-        inc     dptr
-
-        mov     a, r0           ; Restore saved nybble
-        djnz    r1, 2$          ; Next!
-
-        mov     _draw_xy, _DPL
-        mov     (_draw_xy + 1), _DPH
-    __endasm ;
 }
