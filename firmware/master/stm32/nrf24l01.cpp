@@ -20,13 +20,11 @@ NRF24L01 NRF24L01::instance(RF_CE_GPIO,
                                       RF_SPI_MISO_GPIO,     //   MISO
                                       RF_SPI_MOSI_GPIO,     //   MOSI
                                       staticSpiCompletionHandler));
-bool NRF24L01::rfTestModeEnabled;
+bool NRF24L01::rfTestModeEnabled = false;
 
 void NRF24L01::init() {
 
-    STATIC_ASSERT(Radio::DEFAULT_HARD_RETRIES == 15);
-    softRetriesMax = Radio::DEFAULT_SOFT_RETRIES;
-    rfTestModeEnabled = false;
+    STATIC_ASSERT(Radio::DEFAULT_HARD_RETRIES == MAX_HW_RETRIES);
 
     /*
      * Common hardware initialization, regardless of radio usage mode.
@@ -54,7 +52,7 @@ void NRF24L01::init() {
         2, CMD_W_REGISTER | REG_RX_PW_P0,       32,
         
         /* Auto retry delay, 500us, 15 retransmits */
-        2, CMD_W_REGISTER | REG_SETUP_RETR,     0x10 | Radio::DEFAULT_HARD_RETRIES,
+        2, CMD_W_REGISTER | REG_SETUP_RETR,     0x10 | hardRetries,
 
         /* 5-byte address width */
         2, CMD_W_REGISTER | REG_SETUP_AW,       0x03,
@@ -192,13 +190,14 @@ void NRF24L01::setConstantCarrier(bool enabled, unsigned channel)
  * Configure the retry behavior of the radio driver.
  * Always maintain our auto retry delay of 500us
  */
-void NRF24L01::setRetryCount(int hard, int soft)
+void NRF24L01::applyRetryCount()
 {
-    softRetriesMax = soft;
+    hardRetries = hardRetriesPending;
+    softRetriesMax = softRetriesMaxPending;
 
     spi.begin();
     spi.transfer(CMD_W_REGISTER | REG_SETUP_RETR);
-    spi.transfer(0x10 | (hard & 0xf));
+    spi.transfer(0x10 | hardRetries);
     spi.end();
 }
 
@@ -281,11 +280,11 @@ void NRF24L01::handleTimeout()
      * timeout on to RadioManager so it can take more permanent action.
      */
 
-    if (--softRetriesLeft) {
+    if (softRetriesLeft) {
         /*
          * Retry.. again. The packet is still in our buffer.
          */
-
+        softRetriesLeft--;
         pulseCE();
 
     } else {
@@ -328,6 +327,11 @@ void NRF24L01::beginTransmit()
      * for this function to be re-entered, but only in limited
      * ways. We assume that re-entry only occurs after ce.setHigh().
      */
+
+    // Retry update requested?
+    if (hardRetriesPending != hardRetries || softRetriesMaxPending != softRetriesMax) {
+        applyRetryCount();
+    }
 
     txBuffer.noAck = false;
     produce(txBuffer);

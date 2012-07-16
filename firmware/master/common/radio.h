@@ -161,7 +161,7 @@ class Radio {
      * The radio hardware supports up to 15 automatic retries, and we allow
      * a 'soft' retry count, that acts as a multiplier of the hard retry value.
      */
-    static void setRetryCount(int hard, int soft);
+    static void setRetryCount(uint8_t hard, uint8_t soft);
 #ifndef SIFTEO_SIMULATOR
     static void setRfTestEnabled(bool enabled);
 #endif
