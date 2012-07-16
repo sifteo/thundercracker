@@ -249,15 +249,8 @@ nb_tx_handoff:
         ; frequency very close to our neighbor resonance. So, this keeps the
         ; signals cleaner.
 
-        mov     _i2c_state, #0                  ; Reset our state machine
-        mov     _W2CON0, #0                     ; Reset I2C master
-        anl     _MISC_DIR, #~MISC_I2C           ; Output drivers enabled
-        xrl     MISC_PORT, #MISC_I2C            ; Now pulse I2C lines low
-        orl     MISC_PORT, #MISC_I2C            ; Drive pins high - This delivers a 250 ns pulse
-        mov     _W2CON0, #1                     ; Turn on I2C controller
-        mov     _W2CON0, #7                     ; Master mode, 100 kHz.
-        mov     _W2DAT, #ACCEL_ADDR_TX          ; Trigger the next I2C transaction
-        
+        I2C_INITIATE()
+
         ;--------------------------------------------------------------------
 
 nb_packet_done:

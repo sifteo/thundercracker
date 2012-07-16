@@ -64,4 +64,28 @@ extern static void i2c_tx(const __code uint8_t *);
 #define FACTORY_ADDR_TX         0xAA
 #define FACTORY_ADDR_RX         0xAB
 
+/*
+ * I2C initiation.
+ *
+ * The I2C state machine responds to completion interrupts. We need an external
+ * event to initiate each transaction. This could come in multiple places: From TF2
+ * if we're just finishing up neighbor transmit, or from TF0 if we're skipping
+ * neighbor transmit.
+ *
+ * This is a small macro, since we don't want to spend the stack space on a function
+ * call from these call sites.
+ */
+
+#pragma sdcc_hash +
+#define I2C_INITIATE()                                                                               __endasm; \
+    __asm mov     _i2c_state, #0                  ; Reset our state machine                          __endasm; \
+    __asm mov     _W2CON0, #0                     ; Reset I2C master                                 __endasm; \
+    __asm anl     _MISC_DIR, #~MISC_I2C           ; Output drivers enabled                           __endasm; \
+    __asm xrl     MISC_PORT, #MISC_I2C            ; Now pulse I2C lines low                          __endasm; \
+    __asm orl     MISC_PORT, #MISC_I2C            ; Drive pins high - This delivers a 250 ns pulse   __endasm; \
+    __asm mov     _W2CON0, #1                     ; Turn on I2C controller                           __endasm; \
+    __asm mov     _W2CON0, #7                     ; Master mode, 100 kHz.                            __endasm; \
+    __asm mov     _W2DAT, #ACCEL_ADDR_TX          ; Trigger the next I2C transaction                 __endasm; \
+    __asm
+
 #endif

@@ -12,6 +12,7 @@
 
 #include "radio.h"
 #include "sensors.h"
+#include "sensors_i2c.h"
 #include "sensors_nb.h"
 
 uint8_t __idata nb_instant_state[4];
@@ -87,12 +88,19 @@ void tf0_isr(void) __interrupt(VECTOR_TF0) __naked
         mov     _nb_bits_remaining, #NB_TX_BITS
         mov     _TL2, #(0x100 - NB_BIT_TICKS)
         setb    _T2CON_T2I0
+        sjmp    nb_filter
 
 1$:
+    
+        ; Skip transmitting, go right to I2C.
+
+        I2C_INITIATE()
 
         ;--------------------------------------------------------------------
         ; Neighbor Filtering
         ;--------------------------------------------------------------------
+
+nb_filter:
 
         ; Any valid neighbor packets we receive in this period are latched into
         ; nb_instant_state by the RX code. Ideally we would get one packet from
