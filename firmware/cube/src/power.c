@@ -12,15 +12,6 @@
 #include "radio.h"
 #include "sensors_i2c.h"
 
-/*
- * We maintain a state variable in data-retentive SRAM
- * to determine whether we are waking up on battery insertion
- * or just waking up from sleep
- * This location overlaps vram space
- */
-#define _POWERDOWN_STATE		0x0000
-#define _POWERDOWN_SLEEP		0xaa
-
 uint8_t power_sleep_timer;
 
 void power_delay()
@@ -53,55 +44,7 @@ void power_init(void)
      * something useful with the value read back from PWRDWN.
      */
 
-#define WAKE_ON_RF
-#ifdef WAKE_ON_RF
- 	__asm
-		mov		a,_PWRDWN
-		jb		acc.7, wakeup					; was it wake-on-shake?
-
-		mov 	dptr, #_POWERDOWN_STATE			; check stamp in memory (data-retentive)
-		movx	a, @dptr
-		cjne	a, #_POWERDOWN_SLEEP, wakeup	; was it wake-on-rf?
-
-	radio_setup:
-		; check for radio packets
-		lcall 	_radio_init						; Radio init
-		setb    _RF_CE              			; Radio enable
-
-		mov		r1, #0x02
-	loop:
-		mov		r0, #0x00
-
-	radio_ping:
-		clr     _RF_CSN                         ; Begin SPI transaction
-		mov     _SPIRDAT, #RF_CMD_NOP  			; dummy cmd to read radio status
-		mov     a, _SPIRSTAT					; Wait for Command/STATUS byte
-		jnb     acc.2, (.-2)
-		mov     a, _SPIRDAT                     ; Keep the STATUS byte
-		setb    _RF_CSN                         ; End SPI transaction
-		orl		a, #0xf1						; check for fifo status bits
-		inc		a
-		jnz		wakeup							; fifo non-empty?
-
-		djnz	r0, radio_ping
-		djnz	r1, loop
-
-		clr		_RF_CE							; Radio disable
-		clr		_RF_CKEN						; Radio clock disable
-		mov 	_CLKLFCTRL, #CLKLFCTRL_SRC_RC
-		mov		a, _WDSV
-		mov		_WDSV, #0x80
-		mov 	_WDSV, #0x00
-		mov		_PWRDWN, #0x03					; go back to sleep
-
-	wakeup:
-		; continue powerup
-
-	__endasm;
-#else
-	PWRDWN;
-#endif
-
+    PWRDWN;
     OPMCON = 0;
     WUOPC1 = 0;
     PWRDWN = 0;
@@ -265,28 +208,15 @@ void power_sleep(void)
      * Wakeup on touch
      */
 
-    //WUOPC1 = TOUCH_WUOPC_BIT;
+    WUOPC1 = TOUCH_WUOPC_BIT;
 #endif
 
     // We must latch these port states, to preserve them during sleep.
     // This latch stays locked until early wakeup, in power_init().
     OPMCON = OPMCON_LATCH_LOCKED;
 
-    CLKLFCTRL = CLKLFCTRL_SRC_RC;
-    //Watchdog reset in 1s
-    //WDSV;
-    //WDSV = 0x80;
-    //WDSV = 0x00;
-    __asm
-    	mov 	dptr, #_POWERDOWN_STATE
-    	mov		a, #_POWERDOWN_SLEEP
-    	movx	@dptr, a
-    __endasm;
-
-
     while (1) {
-        //PWRDWN = 1;
-        PWRDWN = 3;
+        PWRDWN = 1;
 
         /*
          * We loop purely out of paranoia. This point should never be reached.
