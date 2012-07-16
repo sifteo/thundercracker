@@ -242,15 +242,4 @@ void sensors_init()
     IP0 |= 0x20;                // Highest priority for TF2 interrupt
     IP1 |= 0x20;
     IEN_TF2_EXF2 = 1;           // Enable TF2 interrupt
-
-    /*
-     * XXX: Build a trivial outgoing neighbor packet based on our trivial cube ID.
-     * Second byte is a complement of the first byte used for error-checking
-     * Second byte is reordered so the last 3 bits are 0s and serve as damping bits
-     *
-     * The format of first byte is: "1 1 1 id[4] id[3] id[2] id[1] id[0]"
-     * The format of second byte is: "/id[4] /id[3] /id[2] /id[1] /id[0] 0 0 0"
-     */
-
-    nb_tx_id = 0xE0;
 }

@@ -129,8 +129,45 @@
  *
  *    1. Add 62 to the address
  *    2. If it's greater than 125, subtract 125
+ *
+ *  Pairing Channel / Address
+ * ---------------------------
+ *
+ * Neighbor packets look like this:
+ *
+ *    First byte:   "1 1 1 id[4] id[3] id[2] id[1] id[0]"
+ *    Second byte:  "/id[4] /id[3] /id[2] /id[1] /id[0] 0 0 0"
+ *
+ * The ID complement bits act as a check, and the final 0 bits serve as
+ * damping for the LC tank. ID values normally range from 0 to 23, corresponding
+ * to a CubeID in the SDK.
+ *
+ * The eight IDs from 24 through 31 are reserved for use by the base's neighbor
+ * transmitters. Normally the base will cycle pseudorandomly through these eight
+ * IDs, and will only interpret a neighbor event as coming from "this" base if the
+ * ID matches the one currently being transmitted. Using a single neighbor ID,
+ * there's a 1 in 8 chance of collision. But by cycling the master ID quickly and
+ * observing this change, the master may further reduce the chance of collision.
+ * Using one cycle (two samples) it is reduced to 1 in 64. Using four cycles, it's
+ * only 1 in 4096.
+ *
+ * During pairing, this ID is used to determine the channel we listen on. The
+ * address is fixed, as the base doesn't yet know our HWID.
+ *
+ * The address during pairing is an arbitrary random pattern:
+ *
+ *   ec 4f a9 52 18
+ *
+ * The channel is derived from the master ID (24-31) via Galois Field multiplication
+ * by the constant 0x1C, using the 8-bit AES Galois Field. This is efficient to
+ * implement on the nRF using its GF multiplication accelerator. Elsewhere, we can use
+ * a simple lookup table.
+ *
+ * IDs 24 through 31 correspond with channels:
+ *
+ *   [59, 39, 3, 31, 75, 87, 115, 111]
+ *
  */
-
 
 /**************************************************************************
  *
@@ -495,7 +532,7 @@ typedef struct {
 #define FLS_OP_QUERY_CRC        0xe2    // Args: (queryID, numBlocks)
 #define FLS_OP_CHECK_QUERY      0xe3    // Args: (numBytes, bytes...)
 
-// From 0xe3 to 0xff are all reserved codes currently
+// From 0xe4 to 0xff are all reserved codes currently
 
 /*
  * Minimum operand sizes for various opcodes:

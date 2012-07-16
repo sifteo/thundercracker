@@ -211,10 +211,24 @@ def testRadioSettings():
         hwid[0] = i
         testHWID(hwid)
 
+def findPairingChannels():
+    print "\nFinding pairing channels:"
+    for g in range(256):
+        isOkay = True
+        l = []
+        for x in range(24, 32):
+            channel = gfm(x, g)
+            if channel in l or channel > 125:
+                isOkay = False
+            l.append(channel)
+        if isOkay:
+            m = sorted(l)
+            print "\t0x%02x - Span %d, %s" % (g, m[-1] - m[0], l)
 
 if __name__ == "__main__":
-    findAllGenerators()
-    testCRCBytes()
-    testCRCBitErrors()
-    crcSamples()
-    testRadioSettings()
+    #findAllGenerators()
+    #testCRCBytes()
+    #testCRCBitErrors()
+    #crcSamples()
+    #testRadioSettings()
+    findPairingChannels()
