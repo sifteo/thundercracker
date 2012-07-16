@@ -103,13 +103,13 @@
  *   2. Next, for each of the remaining five bytes:
  *      a. CRC this byte of the HWID
  *      b. If the result is one of the disallowed values (00, FF, AA, 55)
- *         repeatedly CRC a zero byte until the value is no longer disallowed.
+ *         repeatedly CRC a 0xFF byte until the value is no longer disallowed.
  *         With a proper generator polynomial this loop is guaranteed to
  *         terminate.
  *      c. Store the current 8-bit CRC state as an address byte
- *   3. CRC a single zero byte
+ *   3. CRC a single 0xFF byte
  *   4. If the low 7 bits of the result are greater than 125, repeatedly
- *      CRC additional zero bytes until it is <= 125.
+ *      CRC additional 0xFF bytes until it is <= 125.
  *   5. Take the low 7 bits of the current CRC state as our channel number.
  *
  * This scheme is designed to preserve the entropy in our HWID, to be
@@ -128,7 +128,7 @@
  * When this toggle bit is 1, the address (after step 5 above) is modified:
  *
  *    1. Add 62 to the address
- *    2. If it's greater than 125, subtract 125
+ *    2. If it's greater than 125, subtract 126
  *
  *  Pairing Channel / Address
  * ---------------------------

@@ -179,16 +179,18 @@ def hwidToRadioSettings(hwid):
         reg = xcrc(byte, reg)
         while 1:
             if reg in (0x00, 0xFF, 0xAA, 0x55):
-                reg = xcrc(0, reg)
+                print "(disallowed byte %02x)" % reg
+                reg = xcrc(0xFF, reg)
             else:
                 addr.append(reg)
                 break
 
     while 1:
-        reg = xcrc(0, reg)
+        reg = xcrc(0xFF, reg)
         ch = reg & 0x7F
         if ch <= 125:
             break
+        print "(disallowed channel %d)" % ch
 
     return tuple(addr), ch
 
@@ -197,7 +199,7 @@ def hexlist(bytes):
 
 def testHWID(hwid):
     addr, ch = hwidToRadioSettings(hwid)
-    print "\t%s: %s ch=%d" % (hexlist(hwid), hexlist(addr), ch)
+    print "\t%s: %02x/%s" % (hexlist(hwid), ch, hexlist(addr))
 
 def testRadioSettings():
     print "\nSample radio settings for various HWIDs:"
@@ -230,5 +232,5 @@ if __name__ == "__main__":
     #testCRCBytes()
     #testCRCBitErrors()
     #crcSamples()
-    #testRadioSettings()
-    findPairingChannels()
+    testRadioSettings()
+    #findPairingChannels()
