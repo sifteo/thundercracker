@@ -77,7 +77,7 @@ v_000b: ljmp    _tf0_isr
 
 init_1:
         lcall   _power_init         ; Start subsystem init sequence
-        lcall   _radio_init
+        lcall   _params_init
         lcall   _flash_init
         sjmp    init_2
 
@@ -92,8 +92,8 @@ v_001b: ljmp    _tf1_isr
         ;---------------------------------
 
 init_2:
-        lcall   _sensors_init       ; Subsystem init, continued
-        lcall   _params_init
+        lcall   _radio_init         ; Subsystem init, continued
+        lcall   _sensors_init
         setb    _IEN_EN             ; Global interrupt enable (subsystem init done)
         setb    _RF_CE              ; Radio enable
         sjmp    init_3
