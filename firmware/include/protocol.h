@@ -479,7 +479,7 @@ typedef struct {
     int8_t accel[3];
     uint8_t neighbors[4];
     uint8_t flash_fifo_bytes;
-    uint16_t battery_v[2];
+    uint8_t battery_v[2];
 } RF_MemACKType;
 
 
