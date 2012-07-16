@@ -97,6 +97,10 @@ _x_bg1_offset_bit2::
     .ds 1
 _y_bg1_empty::
     .ds 1
+_radio_connected::
+    .ds 1
+_radio_idle_hop::
+    .ds 1
 
 ; ----------------------------------
 

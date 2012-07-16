@@ -15,7 +15,6 @@
 
 RF_MemACKType __near ack_data;
 uint8_t __near ack_bits;
-__bit radio_connected;
 
 
 // Disable to prevent radio from writing to VRAM, for testing
@@ -876,7 +875,10 @@ rx_complete_1:
 
 rx_ack:
 
+        mov     a, #0xFF
+        jnb     _radio_connected, 1$                    ; Always send full ACK when disconnected
         mov     a, _ack_bits                            ; Leave ack_bits in acc
+1$:
         jz      no_ack                                  ; Skip the ACK entirely if empty
         mov     _ack_bits, #0                           ; Reset pending ACK bits
 
@@ -890,29 +892,29 @@ rx_ack:
 
         clr     c
 
-        jnb     RF_ACK_ABIT_HWID, $10
+        jnb     RF_ACK_ABIT_HWID, 10$
         mov     R_INPUT, #RF_MEM_ACK_LEN
         setb    c
-        sjmp    $20
+        sjmp    20$
 
-$10:    jnb     RF_ACK_ABIT_BATTERY_V, $11
+10$:    jnb     RF_ACK_ABIT_BATTERY_V, 11$
         mov     R_INPUT, #RF_ACK_LEN_BATTERY_V
-        sjmp    $20
+        sjmp    20$
 
-$11:    jnb     RF_ACK_ABIT_FLASH_FIFO, $12
+11$:    jnb     RF_ACK_ABIT_FLASH_FIFO, 12$
         mov     R_INPUT, #RF_ACK_LEN_FLASH_FIFO
-        sjmp    $20
+        sjmp    20$
 
-$12:    jnb     RF_ACK_ABIT_NEIGHBOR, $13
+12$:    jnb     RF_ACK_ABIT_NEIGHBOR, 13$
         mov     R_INPUT, #RF_ACK_LEN_NEIGHBOR
-        sjmp    $20
+        sjmp    20$
 
-$13:    jnb     RF_ACK_ABIT_ACCEL, $14
+13$:    jnb     RF_ACK_ABIT_ACCEL, 14$
         mov     R_INPUT, #RF_ACK_LEN_ACCEL
-        sjmp    $20
+        sjmp    20$
 
-$14:    mov     R_INPUT, #RF_ACK_LEN_FRAME
-$20:
+14$:    mov     R_INPUT, #RF_ACK_LEN_FRAME
+20$:
 
         ; Send the portion of the packet that comes from ack_data.
         

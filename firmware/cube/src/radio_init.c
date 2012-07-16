@@ -9,7 +9,24 @@
 #include <protocol.h>
 #include <cube_hardware.h>
 #include "radio.h"
+#include "params.h"
 
+
+static void radio_tx_sync() __naked
+{
+    /*
+     * Transmit a single byte over SPI, from 'A', and wait for the result.
+     * This is fully synchronous, with no pipelining! It should only be used
+     * by initialization code, where space is more important than speed.
+     */
+
+    __asm
+        mov     _SPIRDAT, a
+        SPI_WAIT
+        mov     a, _SPIRDAT
+        ret
+    __endasm ;
+}
 
 static void radio_transfer_table(const __code uint8_t *ptr)
 {
@@ -19,22 +36,26 @@ static void radio_transfer_table(const __code uint8_t *ptr)
      * isn't intended to be efficient.
      */
 
-    uint8_t len;
+    __asm
 
-    while ((len = *ptr)) {
-        ptr++;
+3$:     clr     a               ; Read length prefix
+        movc    a, @a+dptr
+        jz      1$              ; Zero terminator
+        inc     dptr
+        mov     r0, a
 
-        RF_CSN = 0;
+        clr     _RF_CSN         ; Begin SPI transfer
 
-        do {
-            SPIRDAT = *ptr;
-            ptr++;
-            while (!(SPIRSTAT & SPI_RX_READY));
-            SPIRDAT;
-        } while (--len);
+2$:     clr     a               ; Transfer one byte from buffer
+        movc    a, @a+dptr
+        inc     dptr
+        lcall   _radio_tx_sync
 
-        RF_CSN = 1;
-    }
+        djnz    r0, 2$          ; Loop until done
+        setb    _RF_CSN
+        sjmp    3$
+1$:
+    __endasm ;
 }
 
 void radio_init(void)
@@ -79,6 +100,7 @@ void radio_init(void)
     radio_rx_disable();                 // Receiver starts out disabled
     RF_CKEN = 1;                        // Radio clock running
     radio_transfer_table(table);        // Send initialization commands
+    radio_set_idle_addr();              // Default address and channel
     radio_irq_enable();
 }
 
@@ -106,5 +128,113 @@ void radio_ack_query() __naked
         setb    _IEN_RF                             ; End RF critical section
 
         ret
+    __endasm ;
+}
+
+void radio_set_idle_addr(void)
+{
+    /*
+     * Program the radio with a channel and address derived from our HWID,
+     * for use when we're idle. If the radio_idle_hop bit is set, we use
+     * the alternate channel rather than the default one.
+     *
+     * Must be called while the radio receiver is disabled.
+     *
+     * Algorithm:
+     *
+     *   1. Start by CRC'ing the first three bytes of the HWID
+     *   2. Next, for each of the remaining five bytes:
+     *      a. CRC this byte of the HWID
+     *      b. If the result is one of the disallowed values (00, FF, AA, 55)
+     *         repeatedly CRC a zero byte until the value is no longer disallowed.
+     *         With a proper generator polynomial this loop is guaranteed to
+     *         terminate.
+     *      c. Store the current 8-bit CRC state as an address byte
+     *   3. CRC a single zero byte
+     *   4. If the low 7 bits of the result are greater than 125, repeatedly
+     *      CRC additional zero bytes until it is <= 125.
+     *   5. Take the low 7 bits of the current CRC state as our channel number.
+     *
+     * If idle_hop is set:
+     *
+     *   1. Add 62 to the address
+     *   2. If it's greater than 125, subtract 126
+     */
+
+    __asm
+
+        mov     _CCPDATIA, #0xFF    ; Initial condition for CRC
+        mov     _CCPDATIB, #0x84    ; Generator polynomial (See tools/gfm.py)
+        mov     dptr, #PARAMS_HWID  ; Point to stored 64-bit HWID
+
+        ; Step (1), feed three bytes through CRC
+
+        mov     r0, #3
+1$:     movx    a, @dptr            ; CRC next byte of HWID
+        inc     dptr
+        xrl     a, _CCPDATO
+        mov     _CCPDATIA, a
+        djnz    r0, 1$
+
+        ; Begin write to RX address
+
+        clr     _RF_CSN
+        mov     a, #(RF_CMD_W_REGISTER | RF_REG_RX_ADDR_P0)
+        lcall   _radio_tx_sync
+
+        ; Step (2), use remaining 5 bytes to generate RX address
+
+        mov     r0, #5
+2$:     movx    a, @dptr            ; CRC next byte of HWID
+        inc     dptr
+        sjmp    4$                  ; (skip zero)
+3$:     mov     a, #0xFF            ; Retry, CRC a 0xFF byte
+4$:     xrl     a, _CCPDATO
+        mov     _CCPDATIA, a
+
+        jz      3$                  ; Disallowed value 0x00
+        cpl     a
+        jz      3$                  ; Disallowed value 0xFF
+        xrl     a, #0x55
+        jz      3$                  ; Disallowed value 0xAA
+        cpl     a
+        jz      3$                  ; Disallowed value 0x55
+        xrl     a, #0x55            ; Its okay! Get the original byte back.
+
+        lcall   _radio_tx_sync
+        djnz    r0, 2$              ; Next byte
+        setb    _RF_CSN             ; End SPI transfer
+
+        ; Begin write to channel
+
+        clr     _RF_CSN
+        mov     a, #(RF_CMD_W_REGISTER | RF_REG_RF_CH)
+        lcall   _radio_tx_sync
+
+        ; Step (3), prepare channel byte
+
+5$:     mov     a, _CCPDATO
+        xrl     a, #0xFF
+        mov     _CCPDATIA, a
+        anl     a, #0x7F            ; Only examine low 7 bits
+        mov     r0, a               ; Save channel
+        add     a, #(256 - 126)     ; Is it 126 or greater?
+        jc      5$                  ;    (4) Try again
+
+        ; Handle idle_hop, rotate our channel by 62.
+
+        jnb     _radio_idle_hop, 6$
+
+        mov     a, r0               ; Add 62 to the channel
+        add     a, #62
+        mov     r0, a               ; Assume this channel is good
+        add     a, #(256 - 126)     ;   Did it overflow?
+        jnc     6$                  ; No, it was good. Keep using that.
+        mov     r0, a               ; Yes, it overflowed. Use the version we subtracted 126 from
+
+6$:     mov     a, r0
+        lcall   _radio_tx_sync      ; Write channel
+        setb    _RF_CSN             ; End SPI transfer
+
     __endasm ;
 }
