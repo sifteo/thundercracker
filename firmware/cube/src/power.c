@@ -142,6 +142,7 @@ void power_sleep(void)
     cli();                      // Stop all interrupt handlers
     radio_rx_disable();         // Take the radio out of RX mode
 
+    RTC2CON = 0;                // Turn off RTC2 timer and interrupts
     RF_CKEN = 0;                // Stop the radio clock
     RNGCTL = 0;                 // RNG peripheral off
     ADCCON1 = 0;                // ADC peripheral off

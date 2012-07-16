@@ -71,6 +71,9 @@ void radio_init(void)
         0,
     };
 
+    // RTC2 external capture on (timestamp all incoming radio packets)
+    RTC2CON = 0x09;
+
     radio_rx_disable();                 // Receiver starts out disabled
     RF_CKEN = 1;                        // Radio clock running
     radio_transfer_table(table);        // Send initialization commands

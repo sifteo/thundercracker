@@ -8,16 +8,13 @@
 
 #include "graphics.h"
 #include "draw.h"
+#include "power.h"
 
 extern const __code uint8_t img_logo[];
 extern const __code uint8_t img_battery[];
 
-/*
- * Update the screen, showing the "disconnected" animation.
- * Called from the main loop, when we aren't connected to anybody yet.
- */
 
-void disconnected_screen(void)
+void disconnected_init(void)
 {
     draw_clear();
 
@@ -35,4 +32,10 @@ void disconnected_screen(void)
     draw_image(img_battery);
     
     draw_hex(0x42);
+}
+
+
+void disconnected_poll(void)
+{
+    power_idle_poll();
 }

@@ -116,7 +116,7 @@ class RSTParser:
                 # that we patch into, store the instruction.
 
                 a = int(address, 16)
-                if a not in self.patchedAddrs:
+                if a not in self.patchedAddrs and not text.startswith("."):
                     self.storeCode(a, binascii.a2b_hex(bytes), tokens[-1].split(',')[-1], module)
 
             elif tokens[0][-1] == ':':

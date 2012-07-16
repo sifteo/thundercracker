@@ -134,6 +134,12 @@ void sensors_init()
      *       as above. (Luckily we should never have these two high-prio
      *       interrupts competing. They're mutually exclusive)
      *
+     *    Waking from radio naps (RTC2)
+     *
+     *       This isn't really as critical as the other two here, but
+     *       we're stuck sharing a priority level. This handler is extremely
+     *       short, though, so it doesn't cost much.
+     *
      * These interrupt priority levels MUST be kept in sync; always update
      * this comment, the register settings below, and the static analysis
      * annotations below if you change anything.
@@ -146,6 +152,7 @@ void sensors_init()
         ; TF2   -- NOTE vector 0x002b 2 irq-prio-3
         ; Radio -- NOTE vector 0x004b 2 irq-prio-0
         ; I2C   -- NOTE vector 0x0053 2 irq-prio-1
+        ; TICK  -- NOTE vector 0x006b 2 irq-prio-3
     __endasm ;
 
     /*

@@ -681,8 +681,11 @@ rxs_wrdelta_1_fragment:
         ljmp    _rx_write_deltas
 
         ;--------------------------------------------------------------------
-        ; Special codes (8-bit copy encoding)
+        ; Special escape codes (8-bit copy encoding)
         ;--------------------------------------------------------------------
+
+        ; These are all escape codes which return to rx_complete after optionally
+        ; dequeueing argument bytes directly from the RX FIFO.
 
 rx_special:
 
@@ -701,29 +704,47 @@ rx_special:
         mov     _SPIRDAT, #0
         setb    _TCON_TR0                       ; Restart timer
 
-        sjmp    rx_complete                     ; Ignore rest of packet
-
+        sjmp    rx_complete
 1$:
-        ; -------- 1010 0111 -- Radio Hop
-
-        cjne    R_SAMPLE, #2, 2$
-        ljmp    _radio_hop
-2$:
 
         ; -------- 1001 0111 -- Explicit ACK request
 
         cjne    R_SAMPLE, #1, 3$
 
         mov     _ack_bits, #0xFF                ; Do ALL the acks!
-                                                ; Fall through
+
+        sjmp    rx_complete
 3$:
 
-        ; -------- 
+        ; -------- 1010 0111 -- Radio Hop
 
-        ; Reserved code, or fall-through from a code we finished handling.
-        ; Process the next nybble like usual.
+        cjne    R_SAMPLE, #2, 2$
+        ljmp    _radio_hop
+2$:
 
-        ljmp    rx_next_sjmp
+        ; -------- 1011 0111 <LOW> <HIGH> -- Radio nap
+
+        ; Turn off the radio, and turn it off at the given time (measured
+        ; in CLKLF ticks) after the current packet timestamp, which was captured
+        ; by RTC2 when the radio interrupt occurred.
+
+        mov     a, _SPIRDAT                     ; Low byte
+        mov     _SPIRDAT, #0
+        add     a, _RTC2CPT00                   ; Add current packet timestamp
+        mov     _RTC2CMP0, a                    ; Set RTC2 compare value
+        SPI_WAIT                                ; (Does not affect flags)
+        mov     a, _SPIRDAT                     ; High byte
+        mov     _SPIRDAT, #0
+        addc    a, _RTC2CPT01                   ; Add high bytes
+        mov     _RTC2CMP1, a
+
+        ; Enable RTC2 compare interrupt, and turn the radio off. We turn it back on
+        ; in the RTC2 ISR.
+
+        mov     _RTC2CON, #0x0D
+        clr     _RF_CE
+
+        sjmp    rx_complete
 
         ;--------------------------------------------------------------------
         ; Flash FIFO Write

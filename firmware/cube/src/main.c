@@ -73,6 +73,8 @@ v_0000:
 
 v_000b: ljmp    _tf0_isr
 
+        ;---------------------------------
+
 init_1:
         lcall   _power_init         ; Start subsystem init sequence
         lcall   _radio_init
@@ -86,6 +88,8 @@ init_1:
         ;---------------------------------
 
 v_001b: ljmp    _tf1_isr
+
+        ;---------------------------------
 
 init_2:
         lcall   _sensors_init       ; Subsystem init, continued
@@ -102,7 +106,30 @@ init_2:
 
 v_002b: ljmp    _tf2_isr
 
-        .ds 29                      ; Reserved for now
+init_3:
+        lcall   _disconnected_init              ; Set up disconnected-mode idle screen
+        ; Fall through...
+
+        ;---------------------------------
+        ; Graphics return (Main Loop)
+        ;---------------------------------
+
+_graphics_render_ret::
+
+        ; Reset watchdog ONLY in main loop!
+        __endasm; power_wdt_set(); __asm
+
+        jb      _global_busy_flag, 1$           ; Skip idle-only tasks if busy
+        lcall   _battery_poll
+1$:     clr     _global_busy_flag
+
+        jb      _radio_connected, 2$            ; Skip disconnected tasks if connected
+        lcall   _disconnected_poll
+2$:
+
+        sjmp    loop_1
+
+        .ds 2
 
         ;---------------------------------
         ; Radio Vector
@@ -118,44 +145,22 @@ v_004b: ljmp    _radio_isr
 
 v_0053: ljmp    _spi_i2c_isr
 
-init_3:
-
-    __endasm ;
-
-    /**********************************************************************
-     * Main Loop
-     **********************************************************************/
-
-    // XXX: Will go into main loop later
-    disconnected_screen();
-
-    __asm
-_graphics_render_ret::
-
-        ; Reset watchdog ONLY in main loop!
-        __endasm; power_wdt_set(); __asm
-        
-        ;---------------------------------
-        ; Idle-only Tasks
         ;---------------------------------
 
-        jb      _global_busy_flag, 1$
+loop_1:
 
-        lcall   _battery_poll
+        lcall   _flash_handle_fifo              ; Flash polling task
+        ljmp    _graphics_render                ; Branch to graphics mode handler
 
-1$:     clr     _global_busy_flag
+        .ascii "(C) Sifteo 2012"
 
         ;---------------------------------
-        ; Main Tasks
+        ; TICK (RTC2) Vector
         ;---------------------------------
 
-        lcall   _flash_handle_fifo
-
-        #ifndef DISABLE_SLEEP
-            __endasm; power_idle_poll(); __asm
-        #endif
-
-        ljmp    _graphics_render
+v_006b: setb    _RF_CE              ; Turn the radio back on
+        mov     _RTC2CON, #0x09     ; Disable IRQ until the next nap
+        reti
 
     __endasm ;
 }
