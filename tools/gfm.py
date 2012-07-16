@@ -219,7 +219,7 @@ def findPairingChannels():
         isOkay = True
         l = []
         for x in range(24, 32):
-            channel = gfm(x, g)
+            channel = gfm(0xE0 | x, g)
             if channel in l or channel > 125:
                 isOkay = False
             l.append(channel)
@@ -232,5 +232,5 @@ if __name__ == "__main__":
     #testCRCBytes()
     #testCRCBitErrors()
     #crcSamples()
-    testRadioSettings()
-    #findPairingChannels()
+    #testRadioSettings()
+    findPairingChannels()

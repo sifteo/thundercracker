@@ -158,14 +158,14 @@
  *
  *   ec 4f a9 52 18
  *
- * The channel is derived from the master ID (24-31) via Galois Field multiplication
- * by the constant 0x1C, using the 8-bit AES Galois Field. This is efficient to
- * implement on the nRF using its GF multiplication accelerator. Elsewhere, we can use
- * a simple lookup table.
+ * The channel is derived from the first byte of the neighbor packet (0xE0 - 0xFF)
+ * via Galois Field multiplication by the constant 0x1C, using the 8-bit AES Galois
+ * Field. This is efficient to implement on the nRF using its GF multiplication
+ * accelerator. Elsewhere, we can use a simple lookup table.
  *
  * IDs 24 through 31 correspond with channels:
  *
- *   [59, 39, 3, 31, 75, 87, 115, 111]
+ *   [85, 73, 109, 113, 37, 57, 29, 1]
  *
  */
 
