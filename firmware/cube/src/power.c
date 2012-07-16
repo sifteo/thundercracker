@@ -169,36 +169,28 @@ void power_sleep(void)
      * Wakeup on shake
      */
 
-    //Sends brief 250 ns pulse on both I2C lines
-    __asm 
-        mov     _W2CON0, #0               		; Reset I2C master
-        anl     _MISC_DIR, #~MISC_I2C      		; Output drivers enabled
-        xrl     _MISC_PORT, #MISC_I2C      		; Now pulse I2C lines low
-        orl     _MISC_PORT, #MISC_I2C   		; Drive pins high - This delivers a 250 ns pulse
-        mov     _W2CON0, #1               		; Turn on I2C controller
-        mov     _W2CON0, #7               		; Master mode, 100 kHz.
-    __endasm;
-
-    // Enable inertial interrupt on INT2
     {
         static const __code uint8_t init[] = {
-            3, ACCEL_ADDR_TX, ACCEL_CTRL_REG2, ACCEL_REG2_INIT,
-            3, ACCEL_ADDR_TX, ACCEL_CTRL_REG6, ACCEL_REG6_INIT,
-            3, ACCEL_ADDR_TX, ACCEL_INT1_CFG,  ACCEL_CFG_INIT,
-            3, ACCEL_ADDR_TX, ACCEL_INT1_THS,  ACCEL_THS_INIT,
-            3, ACCEL_ADDR_TX, ACCEL_INT1_DUR,  ACCEL_DUR_INIT,
+            // ADC turned off
+            ACCEL_TEMP_CFG_REG, 0,
+
+            // Enable inertial interrupt on INT2
+            ACCEL_CTRL_REG2, ACCEL_REG2_INIT,
+            ACCEL_CTRL_REG6, ACCEL_REG6_INIT,
+            ACCEL_INT1_CFG,  ACCEL_CFG_INIT,
+            ACCEL_INT1_THS,  ACCEL_THS_INIT,
+            ACCEL_INT1_DUR,  ACCEL_DUR_INIT,
+
             0
         };
-        i2c_tx(init);
+
+        i2c_accel_tx(init);
+    
+        // I2C controller off
+        W2CON0 = 0;
+        __asm I2C_PULSE() __endasm;
     }
-    
-    __asm
-        mov     _W2CON0, #0                     ; Turn off I2C peripheral
-        anl     _MISC_DIR, #~MISC_I2C      		; Output drivers enabled
-        xrl     _MISC_PORT, #MISC_I2C      		; Now pulse I2C lines low
-        orl     _MISC_PORT, #MISC_I2C   		; Drive pins high - This delivers a 250 ns pulse
-    __endasm;
-    
+
     ADDR_DIR = 0xff;            // Set addr pins to inputs
     CTRL_DIR = 0xff;            // Set ctrl pins to inputs
     MISC_DIR = 0xff;             // Set bus pins to inputs

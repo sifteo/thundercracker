@@ -49,9 +49,12 @@
 #define ACCEL_INT1_DUR          0x33
 #define ACCEL_DUR_INIT          0x0A    // duration (@50HZ ODR -> LSB = 20ms)
 
+#define ACCEL_TEMP_CFG_REG      0x1f    // Temperature and ADC config
+#define ACCEL_TEMP_CFG_INIT     0x80    //   ADC on, Temperature sensor off
+
 #define ACCEL_START_READ_X      0xA8    // (AUTO_INC_BIT | OUT_X_L)
 
-extern static void i2c_tx(const __code uint8_t *);
+extern static void i2c_accel_tx(const __code uint8_t *);
 
 /*
  * Factory test hardware
@@ -73,14 +76,23 @@ extern static void i2c_tx(const __code uint8_t *);
  */
 
 #pragma sdcc_hash +
-#define I2C_INITIATE()                                                                               __endasm; \
-    __asm mov     _i2c_state, #0                  ; Reset our state machine                          __endasm; \
-    __asm mov     _W2CON0, #0                     ; Reset I2C master                                 __endasm; \
+
+#define I2C_PULSE()                                                                                  __endasm; \
     __asm anl     _MISC_DIR, #~MISC_I2C           ; Output drivers enabled                           __endasm; \
-    __asm xrl     MISC_PORT, #MISC_I2C            ; Now pulse I2C lines low                          __endasm; \
-    __asm orl     MISC_PORT, #MISC_I2C            ; Drive pins high - This delivers a 250 ns pulse   __endasm; \
+    __asm xrl     _MISC_PORT, #MISC_I2C           ; Now pulse I2C lines low                          __endasm; \
+    __asm orl     _MISC_PORT, #MISC_I2C           ; Drive pins high - This delivers a 250 ns pulse   __endasm; \
+    __asm
+
+#define I2C_RESET()                                                                                  __endasm; \
+    __asm mov     _W2CON0, #0                     ; Reset I2C master                                 __endasm; \
+    __asm I2C_PULSE()                             ; Drive pins high - This delivers a 250 ns pulse   __endasm; \
     __asm mov     _W2CON0, #1                     ; Turn on I2C controller                           __endasm; \
     __asm mov     _W2CON0, #7                     ; Master mode, 100 kHz.                            __endasm; \
+    __asm
+
+#define I2C_INITIATE()                                                                               __endasm; \
+    __asm mov     _i2c_state, #0                  ; Reset our state machine                          __endasm; \
+    __asm I2C_RESET()                             ; Reset I2C master                                 __endasm; \
     __asm mov     _W2DAT, #ACCEL_ADDR_TX          ; Trigger the next I2C transaction                 __endasm; \
     __asm
 

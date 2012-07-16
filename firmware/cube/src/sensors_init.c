@@ -30,53 +30,76 @@ __bit nb_rx_mask_bit0;
 __bit touch;
 
 
-static void i2c_tx(const __code uint8_t *buf)
+static void i2c_tx_byte() __naked
+{
+    /*
+     * Synchronous I2C write of one byte, from r0. Includes retry.
+     * Error status is in W2CON_NACK_ABIT.
+     */
+
+    __asm
+2$:     clr     _IR_SPI
+        mov     _W2DAT, r0
+1$:     jnb     _IR_SPI, 1$             ; Wait until done
+
+        mov     a, _W2CON1              ; Read/clear status
+        jnb     W2CON1_READY_ABIT, 2$   ; Retry if not ready
+        ret
+    __endasm ;
+}
+
+static void i2c_accel_tx(const __code uint8_t *buf)
 {
     /*
      * Standalone I2C transmit, used during initialization.
      *
-     * Transmits any number of transactions, which are sequences of bytes
-     * that begin with a length byte. The sequence of transmissions
-     * ends when a zero length is encountered.
+     * Transmit a sequence of register writes, each represented
+     * by two bytes: register name and register value. The list
+     * is zero-terminated, and must not be empty.
+     *
+     * Begins with an I2C_RESET.
      */
 
-    uint8_t len;
-    for (;;) {
-        len = *(buf++);
-        if (!len)
-            return;
+    buf = buf;
+    __asm
 
-        do {
-            uint8_t b = *(buf++);
+        I2C_RESET()
 
-            for (;;) {
-                uint8_t status;
+3$:
+        ; Start transaction, read address
 
-                // Transmit one byte, and wait for it.
-                IR_SPI = 0;
-                W2DAT = b;
-                while (!IR_SPI);
-            
-                status = W2CON1;
-                if (!(status & W2CON1_READY)) {
-                    // Retry whole byte
-                    continue;
-                }
-                if (status & W2CON1_NACK) {
-                    // Failed!
-                    W2CON0 |= W2CON0_STOP;
-                    return;
-                } else {
-                    break;
-                }
-            }
+        mov     r0, #ACCEL_ADDR_TX
+        lcall   _i2c_tx_byte
+        jb      W2CON1_NACK_ABIT, 1$
 
-        } while (--len);
+        ; Send two bytes from list
 
-        W2CON0 |= W2CON0_STOP;
-    }
+        mov     r1, #2              ; Two bytes total
+2$:
+        clr     a                   ; Send next byte from *dptr
+        movc    a, @a+dptr
+        mov     r0, a
+        inc     dptr
+
+        lcall   _i2c_tx_byte 
+        jb      W2CON1_NACK_ABIT, 1$
+        djnz    r1, 2$
+
+        ; End of transaction
+
+        orl     _W2CON0, #W2CON0_STOP
+        
+        clr     a                   ; Check for end of list
+        movc    a, @a+dptr
+        jnz     3$
+        ret
+
+        ; Error return
+1$:
+        orl     _W2CON0, #W2CON0_STOP
+
+    __endasm ;
 }
-
 
 void sensors_init()
 {
@@ -165,29 +188,27 @@ void sensors_init()
      * I2C / 2Wire, for the accelerometer
      */
 
-    MISC_PORT |= MISC_I2C;      // Drive the I2C lines high
-    MISC_DIR &= ~MISC_I2C;      // Output drivers enabled
-
-    W2CON0 = 0;                 // Reset I2C master
-    W2CON0 = 1;                 // turn it on
-    W2CON0 = 7;                 // Turn on I2C controller, Master mode, 100 kHz.
     INTEXP |= 0x04;             // Enable 2Wire IRQ -> iex3
     W2CON1 = 0;                 // Unmask interrupt, leave everything at default
     T2CON |= 0x40;              // iex3 rising edge
-    IRCON = 0;                  // Reset interrupt flag (used below)
-    
-    // Put LIS3D in low power mode with all 3 axes enabled & block data update enabled
+
     {
         static const __code uint8_t init[] = {
-            3, ACCEL_ADDR_TX, ACCEL_CTRL_REG1, ACCEL_REG1_INIT,
-            3, ACCEL_ADDR_TX, ACCEL_CTRL_REG4, ACCEL_REG4_INIT,
-            3, ACCEL_ADDR_TX, ACCEL_CTRL_REG6, ACCEL_IO_00,
+
+            // Put LIS3D in low power mode with all 3 axes enabled & block data update enabled
+            ACCEL_CTRL_REG1, ACCEL_REG1_INIT,
+            ACCEL_CTRL_REG4, ACCEL_REG4_INIT,
+            ACCEL_CTRL_REG6, ACCEL_IO_00,
+
+            // Enable the ADC
+            ACCEL_TEMP_CFG_REG, ACCEL_TEMP_CFG_INIT,
+
             0
         };
-        i2c_tx(init);
+        i2c_accel_tx(init);
     }
 
-    IRCON = 0;                  // Clear any spurious IRQs from the above initialization
+    IRCON = 0;                  // Reset interrupt flag
     IP0 |= 0x04;                // Interrupt priority level 1.
     IEN_SPI_I2C = 1;            // Global enable for SPI interrupts
 

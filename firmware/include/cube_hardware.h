@@ -426,8 +426,10 @@ __sbit __at 0xEA RF_CKEN;
 #define W2CON0_STOP     0x20
 
 // W2CON1 bits
-#define W2CON1_NACK     0x02
-#define W2CON1_READY    0x01
+#define W2CON1_NACK         0x02
+#define W2CON1_READY        0x01
+#define W2CON1_NACK_ABIT    acc.1
+#define W2CON1_READY_ABIT   acc.0
 
 // OPMCON bits
 #define OPMCON_WDT_RESET_ENABLE 0x01
