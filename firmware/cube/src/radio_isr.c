@@ -807,12 +807,7 @@ rx_complete:
         mov     a, _SPIRDAT     ; Throw away one extra dummy byte
 rx_complete_0:
         setb    _RF_CSN         ; End SPI transaction
-
-        ; Turn radio receiver back on. Only has an effect if we were just processing a
-        ; Hop command, but we want to delay turning it back on until we are no longer
-        ; in the middle of an SPI transaction.
-
-        setb    _RF_CE
+rx_complete_1:
 
         ; nRF Interrupt acknowledge
 
@@ -1094,11 +1089,14 @@ void radio_hop(void) __naked __using(RF_BANK)
         ; Finish packet
         ;--------------------------------------------------------------------
 
-        ; Note that rx_complete expects us to still be at the end of an SPI
-        ; transaction. It will read one dummy byte, then end the transfer.
-
 10$:
-        ljmp    rx_complete
+
+        SPI_WAIT
+        mov     a, _SPIRDAT     ; Throw away one extra dummy byte
+        setb    _RF_CSN         ; End SPI transaction
+        setb    _RF_CE          ; Turn radio receiver back on
+
+        ljmp    rx_complete_1
 
     __endasm ;
 }

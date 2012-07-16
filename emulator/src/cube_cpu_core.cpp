@@ -256,7 +256,7 @@ NEVER_INLINE void timer_clklf_tick(em8051 *aCPU)
 
         // RTC2 compare
         if (rtc2con & RTC2CON_COMPARE_EN) {
-            uint16_t cmp = aCPU->mSFR[REG_RTC2CMP0] | (aCPU->mSFR[REG_RTC2CMP1] << 16);
+            uint16_t cmp = aCPU->mSFR[REG_RTC2CMP0] | (aCPU->mSFR[REG_RTC2CMP1] << 8);
             if (cmp == rtc2) {
                 // Compare matched!
                 aCPU->mSFR[REG_IRCON] |= IRCON_TICK;

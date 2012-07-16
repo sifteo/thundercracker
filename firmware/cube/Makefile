@@ -84,6 +84,9 @@ debug: $(BIN)
 tests: $(BIN)
 	cd $(TC_DIR)/test/firmware/cube; ../../../sdk/bin/siftulator --headless -e tests.lua -l mc-stub.elf  -f ../../../firmware/cube/cube.hex
 
+cube.bin: cube.hex
+	makebin -p $< $@
+
 clean:
 	rm -f *.mem src/*.rel src/*.rst src/*.sym *.lnk src/*.lst *.map src/*.asm
     

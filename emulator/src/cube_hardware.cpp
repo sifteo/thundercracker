@@ -279,7 +279,8 @@ void Hardware::traceExecution()
     Tracer::logV(&cpu,
         "@%04X i%d a%02X reg%d[%02X%02X%02X%02X-%02X%02X%02X%02X] "
         "dptr%d[%04X%04X] port[%02X%02X%02X%02X-%02X%02X%02X%02X] "
-        "lat[%02x.%02x] wdt%d[%06x] tmr[%02X%02X%02X%02X%02X%02X]  %s",
+        "lat[%02x.%02x] wdt%d[%06x] tmr[%02X%02X%02X%02X%02X%02X] "
+        "rtc[%04x-%02x%02x]  %s",
 
         cpu.mPC, cpu.irq_count,
         cpu.mSFR[REG_ACC],
@@ -324,6 +325,11 @@ void Hardware::traceExecution()
         cpu.mSFR[REG_TL1],
         cpu.mSFR[REG_TH2],
         cpu.mSFR[REG_TL2],
+
+        // rtc
+        cpu.rtc2,
+        cpu.mSFR[REG_RTC2CMP1],
+        cpu.mSFR[REG_RTC2CMP0],
 
         assembly);
 }

@@ -94,5 +94,24 @@ TestRadio = {}
         -- additional bytes are currently ignored.
         radio:tx("7a494567face5500aabbccddeeff")
         assertEquals(gx.cube:getRadioAddress(), "49/4567face55")
-
     end
+
+    function TestRadio:test_nap()
+        -- Test the "radio nap" command, which puts the radio to sleep for
+        -- a specified duration (in 16-bit CLKLF units)
+
+        assertEquals(radio:isListening(), true)
+
+        radio:tx("7b0000")
+        assertEquals(math.abs(radio:expectWake() - 2.0) < 0.2, true)
+
+        radio:tx("7b0080")
+        assertEquals(math.abs(radio:expectWake() - 1.0) < 0.2, true)
+
+        radio:tx("7b0040")
+        assertEquals(math.abs(radio:expectWake() - 0.5) < 0.2, true)
+
+        radio:tx("7b0500")
+        assertEquals(radio:expectWake() < 0.2, true)
+    end
+

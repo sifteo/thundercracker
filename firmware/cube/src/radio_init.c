@@ -72,7 +72,9 @@ void radio_init(void)
     };
 
     // RTC2 external capture on (timestamp all incoming radio packets)
+    // Interrupt on, but compare disabled until we begin a nap.
     RTC2CON = 0x09;
+    IEN_TICK = 1;
 
     radio_rx_disable();                 // Receiver starts out disabled
     RF_CKEN = 1;                        // Radio clock running

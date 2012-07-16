@@ -73,6 +73,25 @@ radio = {}
         return ack
     end
 
+    function radio:isListening()
+        -- Is the radio ACK'ing received packets right now? We test by sending a ping.
+        return self:tx('ff') ~= nil
+    end
+
+    function radio:expectWake()
+        -- Called when the radio is asleep. Poll for it to wake up, and return
+        -- the amount of time it took to do so.
+
+        local timeref = gx.sys:vclock()
+        local deadline = timeref + 4
+        repeat
+            if gx.sys:vclock() > deadline then
+                error("Timeout while waiting for radio wakeup")
+            end
+        until self:isListening()
+        return gx.sys:vclock() - timeref
+    end
+
     function radio:expectQuery(idByte)
         -- Expect a query result to arrive. Poll for that, for a limited
         -- time, while ignoring any normal ACK packets that come back.
