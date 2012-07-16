@@ -254,6 +254,21 @@ enum CLKLFCTRL_SOURCES
     CLKLFSRC_NONE = 7
 };
 
+enum RTC2CON_MASKS
+{
+    RTC2CON_SFRCAPTURE = 0x10,
+    RTC2CON_EXTERNAL = 0x08,
+    RTC2CON_COMPARE_EN = 0x04,
+    RTC2CON_COMPARE_RST = 0x02,
+    RTC2CON_ENABLE = 0x01
+};
+
+enum RTC2CON_COMPARE_MODES
+{
+    RTC2CON_CM_WITH_RESET = 3 << 1,
+    RTC2CON_CM_WITHOUT_RESET = 2 << 1
+};
+
 // The active DPTR registers depend on the value of DPS.
 #define SEL_DPL(dps)   (((dps) & 1) ? REG_DPL1 : REG_DPL)
 #define SEL_DPH(dps)   (((dps) & 1) ? REG_DPH1 : REG_DPH)

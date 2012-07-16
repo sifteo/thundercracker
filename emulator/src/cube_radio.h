@@ -137,6 +137,14 @@ class Radio {
             cpu->mSFR[REG_IRCON] |= IRCON_RF;
             cpu->needInterruptDispatch = true;
             irq_edge = 0;
+
+            // Radio IRQ edges also trigger the RTC2 external capture, if that's enabled.
+            uint8_t mask = RTC2CON_ENABLE | RTC2CON_EXTERNAL;
+            if (mask == (cpu->mSFR[REG_RTC2CON] & mask)) {
+                uint16_t rtc2 = cpu->rtc2;
+                cpu->mSFR[REG_RTC2CPT00] = rtc2;
+                cpu->mSFR[REG_RTC2CPT01] = rtc2 >> 8;
+            }
         }
     }
 

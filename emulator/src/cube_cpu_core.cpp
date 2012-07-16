@@ -236,6 +236,7 @@ NEVER_INLINE void timer_clklf_tick(em8051 *aCPU)
 {
     /*
      * Tick at approximately 32 kHz.
+     * This is used by the watchdog timer and RTC2.
      */
 
     if (aCPU->wdtEnabled) {
@@ -246,6 +247,30 @@ NEVER_INLINE void timer_clklf_tick(em8051 *aCPU)
             ((Cube::Hardware*) aCPU->callbackData)->logWatchdogReset();
             em8051_reset(aCPU, true);
         }
+    }
+
+    uint8_t rtc2con = aCPU->mSFR[REG_RTC2CON];
+    if (rtc2con & RTC2CON_ENABLE) {
+        // Tick RTC2
+        unsigned rtc2 = aCPU->rtc2 + 1;
+
+        // RTC2 compare
+        if (rtc2con & RTC2CON_COMPARE_EN) {
+            uint16_t cmp = aCPU->mSFR[REG_RTC2CMP0] | (aCPU->mSFR[REG_RTC2CMP1] << 16);
+            if (cmp == rtc2) {
+                // Compare matched!
+                aCPU->mSFR[REG_IRCON] |= IRCON_TICK;
+                aCPU->needInterruptDispatch = true;
+                if (rtc2con & RTC2CON_COMPARE_RST)
+                    rtc2 = 0;
+            }
+        }
+
+        aCPU->rtc2 = rtc2;
+
+    } else {
+        // Clock off, RTC2 reset
+        aCPU->rtc2 = 0;
     }
 }
 
