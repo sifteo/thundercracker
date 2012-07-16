@@ -129,13 +129,6 @@
  *
  *    1. Add 62 to the address
  *    2. If it's greater than 125, subtract 125
- *
- *
- * Also XXX: Radio nap timer!
- *    - Nap duration as first byte of hop packet?
- *    - Encoding? (hop? time sync? other? Should be very easy to
- *      include in every packet if we need to.)
- *    - Which timebase to use?
  */
 
 
@@ -271,11 +264,18 @@
  *   1000 0111             Sensor timer sync escape (Byte args: TL0, TH0)
  *   1001 0111             Explicit full ACK request (No args)
  *   1010 0111             Radio hop (Byte args: Channel, Optional 5-byte addr, Optional neighbor ID)
+ *   1011 0111             Radio nap (Byte args: Duration low, duration high)
  *
- *     Notes: Radio Hop always switches a cube into Connected state.
- *            The codec state is always reset after a Radio Hop packet.
+ *     Notes:
  *
- *   1011 0111             Reserved for future use
+ *       - All of these are escape codes which exit nybble mode and process
+ *         the remainder of the packet as byte arguments for this code.
+ *
+ *       - Additional bytes after these escapes are reserved for future expansion.
+ *         Current firmware will ignore them.
+ *
+ *       - Radio Hop always switches a cube into Connected state.
+ *       - The codec state is always reset after a Radio Hop packet.
  *
  * Next, the RLE codes. These begin with a 4-bit code that repeats the
  * last primary code. However, consecutive copies of this repeat code
