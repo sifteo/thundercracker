@@ -401,7 +401,7 @@ bool CubeCodec::flashSend(PacketBuffer &buf, _SYSAssetLoaderCube *lc, _SYSCubeID
      * running in interrupt context. All of our state must come from the
      * _SYSAssetLoaderCube object in RAM.
      *
-     * Returns 'true' if and only if we sent a flashEscape.
+     * Returns 'true' if and only if we sent an escape which ends the packet.
      * Sets 'done' to 'true' if and only if the assset group is fully written.
      */
 
@@ -461,7 +461,7 @@ bool CubeCodec::flashSend(PacketBuffer &buf, _SYSAssetLoaderCube *lc, _SYSCubeID
      */
     if (loadBufferAvail < dataSizeInBytes) {
         explicitAckRequest(buf);
-        return false;
+        return true;
     }
 
     /*
@@ -481,7 +481,7 @@ bool CubeCodec::flashSend(PacketBuffer &buf, _SYSAssetLoaderCube *lc, _SYSCubeID
 
         // Poll for dropped ACKs here too
         explicitAckRequest(buf);
-        return false;
+        return true;
     }
 
     /*
