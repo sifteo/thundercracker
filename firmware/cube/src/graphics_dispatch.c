@@ -9,6 +9,7 @@
 #include "graphics.h"
 #include "main.h"
 #include "sensors.h"
+#include "power.h"
 
 uint8_t next_ack;
 
@@ -64,10 +65,11 @@ void graphics_render(void) __naked
 
     __endasm ;
 
-    global_busy_flag = 1;
-
     // Set up colormap (Used by FB32, STAMP)
     DPH1 = _SYS_VA_COLORMAP >> 8;
+
+    // Reset watchdog ONLY in main loop!
+    power_wdt_set();
 
     /*
      * Video mode jump table.

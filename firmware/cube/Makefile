@@ -24,7 +24,6 @@ OBJS = \
         src/lcd.rel \
         src/radio_init.rel \
         src/radio_isr.rel \
-        src/battery.rel \
         src/flash_hal.rel \
         src/flash_decoder.rel \
         src/params.rel \

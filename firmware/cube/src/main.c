@@ -116,20 +116,19 @@ init_3:
 
 _graphics_render_ret::
 
-        ; Reset watchdog ONLY in main loop!
-        __endasm; power_wdt_set(); __asm
-
-        jb      _global_busy_flag, 1$           ; Skip idle-only tasks if busy
-        lcall   _battery_poll
-1$:     clr     _global_busy_flag
-
         jb      _radio_connected, 2$            ; Skip disconnected tasks if connected
         lcall   _disconnected_poll
 2$:
 
-        sjmp    loop_1
+        lcall   _flash_handle_fifo              ; Flash polling task
+        sjmp    _graphics_render                ; Branch to graphics mode handler
 
-        .ds 2
+        ;---------------------------------
+
+        .ds 4
+        .db 0
+        .ascii "@scanlime"
+        .db 0
 
         ;---------------------------------
         ; Radio Vector
@@ -147,12 +146,9 @@ v_0053: ljmp    _spi_i2c_isr
 
         ;---------------------------------
 
-loop_1:
-
-        lcall   _flash_handle_fifo              ; Flash polling task
-        ljmp    _graphics_render                ; Branch to graphics mode handler
-
-        .ascii "(C) Sifteo 2012"
+        .db 0
+        .ascii "(C) 2012 Sifteo Inc"
+        .db 0
 
         ;---------------------------------
         ; TICK (RTC2) Vector

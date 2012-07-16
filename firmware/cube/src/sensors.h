@@ -16,8 +16,6 @@ void sensors_init();
 /*
  * We export a global tick counter, which can be used by other modules
  * who need a low-frequency timebase.
- *
- * This is currently used by battery voltage polling, and LCD delays.
  */
 extern volatile uint8_t sensor_tick_counter;
 extern volatile uint8_t sensor_tick_counter_high;

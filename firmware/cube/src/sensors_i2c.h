@@ -53,6 +53,7 @@
 #define ACCEL_TEMP_CFG_INIT     0x80    //   ADC on, Temperature sensor off
 
 #define ACCEL_START_READ_X      0xA8    // (AUTO_INC_BIT | OUT_X_L)
+#define ACCEL_START_READ_BAT    0x88    // (AUTO_INC_BIT | OUT_1_L)
 
 extern static void i2c_accel_tx(const __code uint8_t *);
 
