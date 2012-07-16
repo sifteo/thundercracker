@@ -27,11 +27,6 @@
 
 extern uint8_t power_sleep_timer;
 
-#ifdef DEBUG_WKP
-extern uint8_t debug_wkp;
-extern uint8_t debug_wkp2;
-#endif
-
 void power_init();
 void power_sleep();
 
