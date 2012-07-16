@@ -35,3 +35,8 @@ void Radio::setRetryCount(int hard, int soft)
 {
     NRF24L01::instance.setRetryCount(hard, soft);
 }
+
+void Radio::setRfTestEnabled(bool enabled)
+{
+    NRF24L01::instance.setRfTestEnabled(enabled);
+}

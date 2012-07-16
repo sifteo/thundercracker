@@ -12,7 +12,6 @@ _SYSCubeID RadioManager::epFifo[RadioManager::FIFO_SIZE];
 uint8_t RadioManager::epHead;
 uint8_t RadioManager::epTail;
 _SYSCubeID RadioManager::schedNext;
-bool RadioManager::rfTestModeEnabled = false;
 
 void RadioManager::produce(PacketTransmission &tx)
 {

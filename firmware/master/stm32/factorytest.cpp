@@ -110,36 +110,26 @@ void FactoryTest::produce(PacketTransmission &tx)
 
     uint8_t packetLen = MIN(1, rfTransmissionsRemaining & PacketBuffer::MAX_LEN);
     for (unsigned i = 0; i < packetLen; ++i)
-        tx.packet.append(0x11);
+        tx.packet.append(RF_TEST_BYTE);
 }
 
-void FactoryTest::onRFTimeout()
-{
-    rfTransmissionsRemaining--;
-}
-
-void FactoryTest::onRFAckWithPacket(const PacketBuffer &packet)
+void FactoryTest::ackWithPacket(const PacketBuffer &packet)
 {
     // compare to what we sent
     uint8_t packetLen = MIN(1, rfTransmissionsRemaining & PacketBuffer::MAX_LEN);
     if (packet.len == packetLen) {
+        bool matched = true;
+        for (unsigned i = 0; i < packetLen; ++i) {
+            if (packet.bytes[i] != RF_TEST_BYTE) {
+                matched = false;
+                break;
+            }
+        }
 
-        const uint8_t cmp[PacketBuffer::MAX_LEN] = {
-            0x11, 0x11, 0x11, 0x11, 0x11, 0x11, 0x11, 0x11,
-            0x11, 0x11, 0x11, 0x11, 0x11, 0x11, 0x11, 0x11,
-            0x11, 0x11, 0x11, 0x11, 0x11, 0x11, 0x11, 0x11,
-            0x11, 0x11, 0x11, 0x11, 0x11, 0x11, 0x11, 0x11
-        };
-        if (!memcmp(cmp, packet.bytes, packetLen))
+        if (matched)
             rfSuccessCount++;
     }
 
-    rfTransmissionsRemaining--;
-}
-
-void FactoryTest::onRFAckEmpty()
-{
-    // should never get an empty ACK
     rfTransmissionsRemaining--;
 }
 
@@ -354,13 +344,13 @@ void FactoryTest::rfPacketTestHandler(uint8_t argc, const uint8_t *args)
     rfTransmissionsRemaining = *reinterpret_cast<const uint16_t*>(&args[1]);
 
     Radio::setRetryCount(0, 0);
-    RadioManager::setRFTestEnabled(true);
+    Radio::setRfTestEnabled(true);
 
     while (rfTransmissionsRemaining)
         Tasks::waitForInterrupt();
 
     Radio::setRetryCount(Radio::DEFAULT_HARD_RETRIES, Radio::DEFAULT_SOFT_RETRIES);
-    RadioManager::setRFTestEnabled(false);
+    Radio::setRfTestEnabled(false);
 
     /*
      * Respond with the number of packets sent, and the number of successful transmissions

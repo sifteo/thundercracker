@@ -18,9 +18,13 @@ public:
 
     // RF test handlers
     static void produce(PacketTransmission &tx);
-    static void onRFTimeout();
-    static void onRFAckWithPacket(const PacketBuffer &packet);
-    static void onRFAckEmpty();
+    static void ackWithPacket(const PacketBuffer &packet);
+    static void ALWAYS_INLINE timeout() {
+        rfTransmissionsRemaining--;
+    }
+    static void ALWAYS_INLINE ackEmpty() {
+        rfTransmissionsRemaining--;
+    }
 
 private:
     static uint8_t commandBuf[UART_MAX_COMMAND_LEN];
@@ -28,6 +32,7 @@ private:
 
     static volatile uint16_t rfTransmissionsRemaining;
     static uint16_t rfSuccessCount;
+    static const uint8_t RF_TEST_BYTE = 0x11;
 
     static void handleRfPacketComplete();
 

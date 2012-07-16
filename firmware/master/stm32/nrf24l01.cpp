@@ -20,11 +20,13 @@ NRF24L01 NRF24L01::instance(RF_CE_GPIO,
                                       RF_SPI_MISO_GPIO,     //   MISO
                                       RF_SPI_MOSI_GPIO,     //   MOSI
                                       staticSpiCompletionHandler));
+bool NRF24L01::rfTestModeEnabled;
 
 void NRF24L01::init() {
 
     STATIC_ASSERT(Radio::DEFAULT_HARD_RETRIES == 15);
     softRetriesMax = Radio::DEFAULT_SOFT_RETRIES;
+    rfTestModeEnabled = false;
 
     /*
      * Common hardware initialization, regardless of radio usage mode.
@@ -250,7 +252,7 @@ void NRF24L01::isr()
 
     case TX_DS:
         // Successful transmit, no ACK data
-        RadioManager::ackEmpty();
+        ackEmpty();
         beginTransmit();
         break;
 
@@ -295,7 +297,7 @@ void NRF24L01::handleTimeout()
         spi.transfer(CMD_FLUSH_TX);
         spi.end();
 
-        RadioManager::timeout();
+        timeout();
         beginTransmit();
     }
 }
@@ -328,7 +330,7 @@ void NRF24L01::beginTransmit()
      */
 
     txBuffer.noAck = false;
-    RadioManager::produce(txBuffer);
+    produce(txBuffer);
     softRetriesLeft = softRetriesMax;
 
 #ifdef DEBUG_MASTER_TX
@@ -404,7 +406,7 @@ void NRF24L01::onSpiComplete()
             spi.end();
 
             txnState = Idle;
-            RadioManager::timeout();
+            timeout();
             break;
         }
 
@@ -415,7 +417,7 @@ void NRF24L01::onSpiComplete()
         break;
 
     case RXPayload:
-        RadioManager::ackWithPacket(rxBuffer);
+        ackWithPacket(rxBuffer);
         beginTransmit();
         break;
 

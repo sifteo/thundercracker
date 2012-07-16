@@ -13,7 +13,7 @@
 #include "spi.h"
 #include "gpio.h"
 #include "radio.h"
-
+#include "factorytest.h"
 
 class NRF24L01 {
 public:
@@ -35,6 +35,10 @@ public:
 
     void setConstantCarrier(bool enabled, unsigned channel = 0);
     void setPRXMode(bool enabled);
+
+    static void setRfTestEnabled(bool enabled) {
+        rfTestModeEnabled = enabled;
+    }
 
     void isr();
     GPIOPin irq;
@@ -117,6 +121,40 @@ public:
     void beginReceive();
     void beginTransmit();
     void pulseCE();
+
+    /*
+     * Helpers to forward RF events to the appropriate destination.
+     */
+
+    static bool rfTestModeEnabled;
+
+    static void ALWAYS_INLINE timeout() {
+        if (rfTestModeEnabled)
+            FactoryTest::timeout();
+        else
+            RadioManager::timeout();
+    }
+
+    static void ALWAYS_INLINE ackEmpty() {
+        if (rfTestModeEnabled)
+            FactoryTest::ackEmpty();
+        else
+            RadioManager::ackEmpty();
+    }
+
+    static void ALWAYS_INLINE ackWithPacket(const PacketBuffer &packet) {
+        if (rfTestModeEnabled)
+            FactoryTest::ackWithPacket(packet);
+        else
+            RadioManager::ackWithPacket(packet);
+    }
+
+    static void ALWAYS_INLINE produce(PacketTransmission &tx) {
+        if (rfTestModeEnabled)
+            FactoryTest::produce(tx);
+        else
+            RadioManager::produce(tx);
+    }
 
     enum TransactionState {
         Idle,
