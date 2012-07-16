@@ -16,13 +16,22 @@ public:
     static void onUartIsr();
     static void usbHandler(const USBProtocolMsg &m);
 
-    // RF test handlers
+    /*
+     * RF test handlers.
+     *
+     * Since we're not sending meaningful protocol data, we treat any ACK,
+     * with payload or not, as a success.
+     */
     static void produce(PacketTransmission &tx);
-    static void ackWithPacket(const PacketBuffer &packet);
+    static void ALWAYS_INLINE ackWithPacket(const PacketBuffer &packet) {
+        rfSuccessCount++;
+        rfTransmissionsRemaining--;
+    }
     static void ALWAYS_INLINE timeout() {
         rfTransmissionsRemaining--;
     }
     static void ALWAYS_INLINE ackEmpty() {
+        rfSuccessCount++;
         rfTransmissionsRemaining--;
     }
 

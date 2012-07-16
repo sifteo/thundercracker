@@ -107,30 +107,11 @@ void FactoryTest::produce(PacketTransmission &tx)
      */
     CubeSlot &slot = CubeSlot::getInstance(0);
     tx.dest = slot.getRadioAddress();
+    tx.packet.len = 0;
 
-    uint8_t packetLen = MIN(1, rfTransmissionsRemaining & PacketBuffer::MAX_LEN);
+    uint8_t packetLen = MAX(1, rfTransmissionsRemaining % PacketBuffer::MAX_LEN);
     for (unsigned i = 0; i < packetLen; ++i)
         tx.packet.append(RF_TEST_BYTE);
-}
-
-void FactoryTest::ackWithPacket(const PacketBuffer &packet)
-{
-    // compare to what we sent
-    uint8_t packetLen = MIN(1, rfTransmissionsRemaining & PacketBuffer::MAX_LEN);
-    if (packet.len == packetLen) {
-        bool matched = true;
-        for (unsigned i = 0; i < packetLen; ++i) {
-            if (packet.bytes[i] != RF_TEST_BYTE) {
-                matched = false;
-                break;
-            }
-        }
-
-        if (matched)
-            rfSuccessCount++;
-    }
-
-    rfTransmissionsRemaining--;
 }
 
 /**************************************************************************
@@ -356,7 +337,7 @@ void FactoryTest::rfPacketTestHandler(uint8_t argc, const uint8_t *args)
      * Respond with the number of packets sent, and the number of successful transmissions
      */
     const uint8_t report[] = { args[0], args[1], args[2],
-                               (rfSuccessCount >> 8) & 0xff, rfSuccessCount & 0xff };
+                               rfSuccessCount & 0xff, (rfSuccessCount >> 8) & 0xff };
     UsbDevice::write(report, sizeof report);
 }
 
