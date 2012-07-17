@@ -7,7 +7,7 @@
 class FwLoader
 {
 public:
-    FwLoader(IODevice &_dev);
+    FwLoader(IODevice &_dev, bool rpc=false);
 
     static int run(int argc, char **argv, IODevice &dev);
     bool requestBootloaderUpdate();
@@ -25,6 +25,7 @@ private:
     bool sendFirmwareFile(FILE *f, uint32_t crc, uint32_t size);
 
     IODevice &dev;
+    bool isRPC;
 };
 
 #endif // FW_LOADER_H

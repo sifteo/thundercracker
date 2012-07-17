@@ -16,14 +16,30 @@ int FwLoader::run(int argc, char **argv, IODevice &_dev)
         return 1;
 
 
-
-    FwLoader loader(_dev);
     bool success;
-
-    if (!strcmp(argv[1], "--init")) {
+    bool init = false;
+    bool rpc = false;
+    const char *path = NULL;
+    
+    for (unsigned i = 1; i < argc; i++) {
+        if (!strcmp(argv[i], "--init")) {
+            init = true;
+        } else if (!strcmp(argv[i], "--rpc")) {
+            rpc = true;
+        } else if (!path) {
+            path = argv[i];
+        } else {
+            fprintf(stderr, "incorrect args\n");
+            return 1;
+        }
+    }
+    
+    FwLoader loader(_dev, rpc);
+    
+    if (init) {
         success = loader.requestBootloaderUpdate();
     } else {
-        success = loader.load(argv[1]);
+        success = loader.load(path);
     }
 
     while (_dev.numPendingOUTPackets()) {
@@ -35,8 +51,8 @@ int FwLoader::run(int argc, char **argv, IODevice &_dev)
     return success ? 0 : 1;
 }
 
-FwLoader::FwLoader(IODevice &_dev) :
-    dev(_dev)
+FwLoader::FwLoader(IODevice &_dev, bool rpc) :
+    dev(_dev), isRPC(rpc)
 {
 }
 
@@ -197,6 +213,9 @@ bool FwLoader::sendFirmwareFile(FILE *f, uint32_t crc, uint32_t size)
             percent = progressPercent;
             fprintf(stderr, "progress: %d%%\n", percent);
             fflush(stderr);
+            if (isRPC) {
+                fprintf(stdout, "::progress:%u:%u\n", percent, 100); fflush(stdout);
+            }
         }
     }
 
