@@ -5,6 +5,7 @@
 
 #include "neighbor.h"
 #include "board.h"
+#include "bits.h"
 
 GPIOPin Neighbor::inPins[] = {
     NBR_IN1_GPIO,
@@ -145,6 +146,7 @@ void Neighbor::beginReceiving(uint8_t mask)
 {
     bufferPin.setHigh();
 
+    rxPeriodTimer.disableUpdateIsr();
     rxState = WaitingForStart;
     receivingSide = 0;  // just initialize to something safe
     rxBitCounter = 0;   // incremented at the end of each bit period
@@ -183,8 +185,6 @@ void Neighbor::onRxPulse(uint8_t side)
 {
     inPins[side].irqAcknowledge();
 
-    // TODO: may need to time the squelch more precisely to ensure we don't
-    // worsen the ringing
     GPIOPin &out = outPins[side];
     out.setControl(GPIOPin::OUT_2MHZ);
     out.setLow();
@@ -257,7 +257,7 @@ bool Neighbor::rxPeriodIsr(uint8_t &side, uint16_t &rxdata)
              * of its first byte, rotated right by 5.
              * Enforce that here before forwarding the message.
              */
-            uint8_t checkbyte = ror8(~rxDataBuf.bytes[1], 5);
+            uint8_t checkbyte = ROR8(~rxDataBuf.bytes[1], 5);
 
             /*
              * Check the header explicitly - packets with a bogus header would

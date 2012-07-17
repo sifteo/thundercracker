@@ -12,6 +12,7 @@
 #ifndef SIFTEO_SIMULATOR
 #include "usb/usbdevice.h"
 #include "sampleprofiler.h"
+#include "powermanager.h"
 #endif
 
 uint32_t Tasks::pendingMask;
@@ -22,6 +23,7 @@ Tasks::Task Tasks::TaskList[] = {
     #ifdef SIFTEO_SIMULATOR
     { 0 },
     #else
+    { PowerManager::railTransition, 0 },
     { UsbDevice::handleOUTData, 0},
     #endif
 

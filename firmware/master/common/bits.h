@@ -210,14 +210,11 @@ public:
 /**
  * 8-bit right rotate
  */
-inline uint8_t ROR8(uint8_t a, unsigned shift)
+uint8_t ALWAYS_INLINE ROR8(uint8_t a, unsigned shift)
 {
     return (a << (8 - shift)) | (a >> shift);
 }
 
-
 static uint8_t computeCheckByte(uint8_t a, uint8_t b);
-
-
 
 #endif

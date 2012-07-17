@@ -147,6 +147,24 @@ class Radio {
      */
     static void setTxPower(TxPower pwr);
     static TxPower txPower();
+
+    /*
+     * 15 is the maximum number of HW retries supported by the nordic radios.
+     * Soft retries can be adjusted based on our desired timeout duration.
+     */
+    static const unsigned DEFAULT_HARD_RETRIES = 15;
+    static const unsigned DEFAULT_SOFT_RETRIES = 32;
+
+    /*
+     * Retry control.
+     *
+     * The radio hardware supports up to 15 automatic retries, and we allow
+     * a 'soft' retry count, that acts as a multiplier of the hard retry value.
+     */
+    static void setRetryCount(uint8_t hard, uint8_t soft);
+#ifndef SIFTEO_SIMULATOR
+    static void setRfTestEnabled(bool enabled);
+#endif
 };
 
 /**

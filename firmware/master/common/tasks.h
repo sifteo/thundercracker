@@ -12,6 +12,7 @@ class Tasks
 {
 public:
     enum TaskID {
+        PowerManager,
         UsbOUT,
         AudioPull,
         Debugger,

@@ -42,17 +42,17 @@ public:
 
 private:
     /*
-     * Timers are set to the neighbor transmission's bit width of 12us.
+     * Timers are set to the neighbor transmission's bit width of 16us.
      * TIM3 and TIM5 are on APB1 which has a rate of 36MHz.
      *
      * Pulse duration is 2us.
      *
      * 2us  / (1 / 36000000) == 72 ticks
-     * 12us / (1 / 36000000) == 432 ticks
+     * 12us / (1 / 36000000) == 432 ticks (this is the old bit period width, if you ever need it)
      * 16us / (1 / 36000000) == 576 ticks
      */
     static const unsigned PULSE_LEN_TICKS = 72;
-    static const unsigned BIT_PERIOD_TICKS = 432;
+    static const unsigned BIT_PERIOD_TICKS = 576;
 
     // number of bits to wait for during an rx sequence
     static const unsigned NUM_RX_BITS = 16;
@@ -67,10 +67,6 @@ private:
 #endif
 
     void setDuty(uint16_t duty);
-
-    static ALWAYS_INLINE uint8_t ror8(uint8_t a, uint8_t b) {
-        return (a >> b) | (a << (8 - b));
-    }
 
     volatile uint16_t txData;    // data in the process of being transmitted. if 0, we're done.
     uint16_t txDataBuffer;

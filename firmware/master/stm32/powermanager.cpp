@@ -1,10 +1,14 @@
 #include "powermanager.h"
 #include "board.h"
+#include "usb/usbdevice.h"
+#include "systime.h"
+#include "tasks.h"
 
 #include "macros.h"
 
 PowerManager::State PowerManager::_state;
 GPIOPin PowerManager::vbus = USB_VBUS_GPIO;
+static SysTime::Ticks railTransitionDeadline;
 
 /*
  * Early initialization that can (and must) run before global ctors have been run.
@@ -30,11 +34,11 @@ void PowerManager::init()
 
     GPIOPin vcc3v3 = VCC33_ENABLE_GPIO;
     vcc3v3.setControl(GPIOPin::OUT_2MHZ);
+    vcc3v3.setLow();
 
     // set initial state
     _state = PowerManager::Uninitialized;
     vbus.setControl(GPIOPin::IN_FLOAT);
-    onVBusEdge();
 
     // and start listening for edges
     vbus.irqInit();
@@ -48,27 +52,36 @@ void PowerManager::init()
  */
 void PowerManager::onVBusEdge()
 {
+    railTransitionDeadline = SysTime::ticks() + SysTime::msTicks(10); //10ms debounce time
+    Tasks::setPending(Tasks::PowerManager);
+}
+
+/*
+ * Provides for a little settling time from the last edge
+ * on vbus before initiating the actual rail transition
+ */
+void PowerManager::railTransition(void* p)
+{
+    if (SysTime::ticks() < railTransitionDeadline)
+        return;
+
+    Tasks::clearPending(Tasks::PowerManager);
+
     State s = static_cast<State>(vbus.isHigh());
     if (s != _state) {
 
 #if (BOARD >= BOARD_TC_MASTER_REV2)
-        /*
-         * The order in which we sequence these enable lines is important,
-         * especially to ensure that the flash doesn't see 3v before its
-         * regulator has been enabled.
-         * - on transition to usb power, enable flash then enable 3v3
-         * - on transition to battery power, disable 3v3 then disable flash
-         */
-
         GPIOPin vcc3v3 = VCC33_ENABLE_GPIO;
 
         switch (s) {
         case BatteryPwr:
+            UsbDevice::deinit();
             vcc3v3.setLow();
             break;
 
         case UsbPwr:
             vcc3v3.setHigh();
+            UsbDevice::init();
             break;
 
         default:

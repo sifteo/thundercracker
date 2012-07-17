@@ -130,7 +130,7 @@ int main()
     AudioOutDevice::init(&AudioMixer::instance);
     AudioOutDevice::start();
 
-    UsbDevice::init();
+    PowerManager::onVBusEdge();                     // force detect vbus on startup
     SampleProfiler::init();
 
     /*
