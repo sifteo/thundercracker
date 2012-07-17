@@ -136,7 +136,7 @@ class CubeSlot {
 
     uint64_t getHWID();
 
-    uint16_t ALWAYS_INLINE getRawBatteryV() const {
+    unsigned ALWAYS_INLINE getRawBatteryV() const {
         return rawBatteryV;
     }
 
@@ -184,10 +184,8 @@ class CubeSlot {
     uint8_t framePrevACK;
     uint8_t neighbors[4];
     uint8_t hwid[_SYS_HWID_BYTES];
-
-    // Other sensor data
+    uint8_t rawBatteryV;
     _SYSByte4 accelState;
-    uint16_t rawBatteryV;
 
     void requestFlashReset();
     uint16_t calculateTimeSync();

@@ -393,8 +393,8 @@
 #define RF_ACK_LEN_ACCEL        4
 #define RF_ACK_LEN_NEIGHBOR     8
 #define RF_ACK_LEN_FLASH_FIFO   9
-#define RF_ACK_LEN_BATTERY_V    11
-#define RF_ACK_LEN_HWID         19
+#define RF_ACK_LEN_BATTERY_V    10
+#define RF_ACK_LEN_HWID         18
 #define RF_ACK_LEN_MAX          RF_ACK_LEN_HWID
 
 // Struct offsets. Matches the C code before, but intended for inline assembly use
@@ -403,7 +403,7 @@
 #define RF_ACK_NEIGHBOR         4
 #define RF_ACK_FLASH_FIFO       8
 #define RF_ACK_BATTERY_V        9
-#define RF_ACK_HWID             11
+#define RF_ACK_HWID             10
 
 #define HWID_LEN                8
 
@@ -459,8 +459,8 @@ typedef union {
          */
         uint8_t flash_fifo_bytes;
 
-        // Current raw battery voltage level (16-bit little endian)
-        uint8_t battery_v[2];
+        // Filtered 8-bit battery voltage level
+        uint8_t battery_v;
 
         // Unique hardware ID
         uint8_t hwid[HWID_LEN];
@@ -479,7 +479,7 @@ typedef struct {
     int8_t accel[3];
     uint8_t neighbors[4];
     uint8_t flash_fifo_bytes;
-    uint8_t battery_v[2];
+    uint8_t battery_v;
 } RF_MemACKType;
 
 

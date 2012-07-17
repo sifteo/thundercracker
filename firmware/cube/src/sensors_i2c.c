@@ -454,13 +454,12 @@ void i2c_battery_store_results() __naked
      * The high byte is in W2DAT. The low byte is ignored. The ADC is only 10-bit,
      * and even the high 8 bits are pretty noisy. For battery voltage, we'd much
      * prefer a slower but higher resolution result, so we integrate this noisy
-     * data over time in order to get a higher-resolution and more stable 16-bit
-     * battery voltage reading.
+     * data over time in order to get a stable 8-bit battery voltage reading.
      *
      * The voltage we sample from the accelerometer is formatted as a signed
-     * 16-bit value, where 0 is the middle of the range, and polarity is inverted.
-     * To convert it back to an unsigned number with the proper polarity, we subtract
-     * the high byte from 0x7F.
+     * value, where 0 is the middle of the range, and polarity is inverted.
+     * To convert it back to an unsigned number with the proper polarity, we
+     * subtract the sample from 0x7F.
      */
 
     __asm
@@ -484,14 +483,32 @@ void i2c_battery_store_results() __naked
 
         djnz    _i2c_battery_count, 1$
 
-        ; Always set the LSB, to differentiate a very low battery from
-        ; the uknown state we power up in, before the first sample integrates.
+        ; Apply hysteresis. The reading must change by more than one LSB
+        ; before we actually update it.
 
-        mov     a, _i2c_battery_total+0
-        orl     a, #1
-        mov     (_ack_data + RF_ACK_BATTERY_V + 0), a
-        mov     (_ack_data + RF_ACK_BATTERY_V + 1), _i2c_battery_total+1
+        mov     a, _i2c_battery_total+1
+        clr     c
+        subb    a, (_ack_data + RF_ACK_BATTERY_V)
+        jz      3$                                      ; Skip if no delta
+        dec     a
+        jz      3$                                      ; Skip if delta +1
+        add     a, #2
+        jz      3$                                      ; Skip if delta -1
+
+        ; Force the battery voltage to be nonzero. We reserve zero to
+        ; mean we have not yet finished integrating.
+
+        mov     a, _i2c_battery_total+1
+        jnz     2$
+        inc     a
+2$:
+
+        ; Update the ACK buffer
+
+        mov     (_ack_data + RF_ACK_BATTERY_V), a
         orl     _ack_bits, #RF_ACK_BIT_BATTERY_V
+
+3$:     ; Clear accumulator and exit
 
         clr     a
         mov     _i2c_battery_total+0, a

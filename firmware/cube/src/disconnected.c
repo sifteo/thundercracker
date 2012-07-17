@@ -71,8 +71,7 @@ void draw_hex(uint8_t value)
 void disconnected_poll(void)
 {
     draw_xy = 0;
-    draw_hex(ack_data.battery_v[1]);
-    draw_hex(ack_data.battery_v[0]);
+    draw_hex(ack_data.battery_v);
 
     power_idle_poll();
 }
