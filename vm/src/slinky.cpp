@@ -46,6 +46,9 @@
 #include <memory>
 using namespace llvm;
 
+#define STRINGIFY(_x)   #_x
+#define TOSTRING(_x)    STRINGIFY(_x)
+
 extern "C" void LLVMInitializeSVMAsmPrinter();
 extern "C" void LLVMInitializeSVMTarget();
 extern "C" void LLVMInitializeSVMTargetMC();
@@ -68,8 +71,10 @@ static const char HelpText[] =
     "    code generator. It converts one or more LLVM object files (.o) to\n"
     "    a single fully-linked Sifteo VM executable, in ELF format.\n"
     "\n"
-    "    This tool takes many of the standard LLVM code generation and\n"
+    "    Slinky takes many of the standard LLVM code generation and\n"
     "    diagnostic command line options, detailed below.\n"
+    "\n"
+    "    Sifteo SDK (" TOSTRING(SDK_VERSION) ")\n"
     ;
 static cl::extrahelp LicenseText(
     "\n"

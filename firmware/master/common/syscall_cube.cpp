@@ -29,7 +29,9 @@ void _SYS_disableCubes(_SYSCubeIDVector cv)
 
 void _SYS_setVideoBuffer(_SYSCubeID cid, struct _SYSVideoBuffer *vbuf)
 {
-    if (!SvmMemory::mapRAM(vbuf, sizeof *vbuf))
+    if (!isAligned(vbuf))
+        return SvmRuntime::fault(F_SYSCALL_ADDR_ALIGN);
+    if (!SvmMemory::mapRAM(vbuf, sizeof *vbuf, true))
         return SvmRuntime::fault(F_SYSCALL_ADDRESS);
     if (!CubeSlots::validID(cid))
         return SvmRuntime::fault(F_SYSCALL_PARAM);

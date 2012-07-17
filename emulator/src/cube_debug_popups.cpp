@@ -405,7 +405,7 @@ void emu_help(CPU::em8051 *aCPU)
     wmove(exc, 2, 2);
     waddstr(exc, "Sifteo Thundercracker simulator - M. Elizabeth Scott <beth@sifteo.com>");
     wmove(exc, 3, 2);
-    waddstr(exc, APP_COPYRIGHT);
+    waddstr(exc, APP_COPYRIGHT_ASCII);
 
     wmove(exc, 5, 2);
     waddstr(exc, "Based on 8051 Emulator v. 0.72 - http://iki.fi/sol/");

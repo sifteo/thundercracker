@@ -7,7 +7,7 @@
 
 #define IS_ADVANCED(t) ((t) == &TIM1 || (t) == &TIM8)
 
-void HwTimer::init(uint16_t period, uint16_t prescaler)
+void HwTimer::init(uint16_t period, uint16_t prescaler) const
 {
     if (tim == &TIM2) {
         RCC.APB1ENR |= (1 << 0); // TIM2 enable
@@ -53,7 +53,7 @@ void HwTimer::init(uint16_t period, uint16_t prescaler)
                 (1 << 0);       // EN - enable
 }
 
-void HwTimer::deinit()
+void HwTimer::deinit() const
 {
     tim->CR1  = 0;  // control disabled
     tim->DIER = 0;  // IRQs disabled
@@ -77,7 +77,7 @@ void HwTimer::deinit()
 }
 
 // channels are numbered 1-4
-void HwTimer::configureChannelAsOutput(int ch, Polarity polarity, TimerMode timmode, OutputMode outmode, DmaMode dmamode)
+void HwTimer::configureChannelAsOutput(int ch, Polarity polarity, TimerMode timmode, OutputMode outmode, DmaMode dmamode) const
 {
     uint8_t mode, pol;
 
@@ -95,11 +95,11 @@ void HwTimer::configureChannelAsOutput(int ch, Polarity polarity, TimerMode timm
         pol |= 1 << 2;                      // enable OCxNE
     }
 
-    tim->CCR[ch - 1] = 0;
+    tim->compareCapRegs[ch - 1].CCR = 0;
     tim->CCER |= (pol << ((ch - 1) * 4));
 }
 
-void HwTimer::configureChannelAsInput(int ch, InputCaptureEdge edge, uint8_t filterFreq, uint8_t prescaler)
+void HwTimer::configureChannelAsInput(int ch, InputCaptureEdge edge, uint8_t filterFreq, uint8_t prescaler) const
 {
     uint8_t mode =  (1 << 0) |       // configured as input, mapped on TI1
                     ((filterFreq & 0xF) << 4) |

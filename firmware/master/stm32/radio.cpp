@@ -11,25 +11,14 @@
 #include "radio.h"
 #include "nrf24l01.h"
 
-void Radio::open()
+void Radio::init()
 {
     NRF24L01::instance.init();
-    NRF24L01::instance.ptxMode();
 }
 
-void Radio::halt()
+void Radio::begin()
 {
-    /*
-     * Wait for any interrupt
-     *
-     * Disabled during debug builds. WFI loops make JTAG debugging
-     * very annoying, since the JTAG clock is also turned off while
-     * we're waiting.
-     */
-
-#ifndef DEBUG
-    __asm__ __volatile__ ("wfi");
-#endif
+    NRF24L01::instance.beginTransmitting();
 }
 
 void Radio::setTxPower(TxPower pwr)
@@ -40,4 +29,14 @@ void Radio::setTxPower(TxPower pwr)
 Radio::TxPower Radio::txPower()
 {
     return NRF24L01::instance.txPower();
+}
+
+void Radio::setRetryCount(uint8_t hard, uint8_t soft)
+{
+    NRF24L01::instance.setRetryCount(hard, soft);
+}
+
+void Radio::setRfTestEnabled(bool enabled)
+{
+    NRF24L01::instance.setRfTestEnabled(enabled);
 }

@@ -72,6 +72,7 @@ struct MenuEvent {
     union {
         struct MenuNeighbor neighbor;
         uint8_t item;
+        int8_t direction;
     };
 };
 
@@ -94,13 +95,16 @@ typedef enum {
 
 class Menu {
  public:
-    Menu(VideoBuffer&, MenuAssets*, MenuItem*);
+    Menu(VideoBuffer&, const MenuAssets*, MenuItem*);
     bool pollEvent(struct MenuEvent *);
-    void preventDefault();
+    void performDefault();
     void reset();
-    void replaceIcon(uint8_t item, const AssetImage *);
+    void replaceIcon(uint8_t item, const AssetImage *icon, const AssetImage *label = 0);
     bool itemVisible(uint8_t item);
     void setIconYOffset(uint8_t px);
+    void setPeekTiles(uint8_t numTiles);
+    void anchor(uint8_t item);
+    
 
  private:
     static const float kTimeDilator = 13.1f;
@@ -110,10 +114,10 @@ class Menu {
     static const uint8_t kNumVisibleTilesX = 16;
     static const uint8_t kNumTilesY = 18;
     static const uint8_t kNumVisibleTilesY = 16;
-    static const float kAccelThresholdOn = 1.15f;
+    static const float kAccelThresholdOn = 7.15f;
     static const float kAccelThresholdOff = 0.85f;
     static const uint8_t kDefaultIconYOffset = 16;
-    static const unsigned kPeekTiles = 1;
+    static const uint8_t kDefaultPeekTiles = 1;
 
     // instance-constants
     uint8_t kHeaderHeight;
@@ -122,7 +126,8 @@ class Menu {
     uint8_t kIconTileWidth;
     uint8_t kIconTileHeight;
     int8_t kEndCapPadding;
-    
+    uint8_t kPeekTiles;
+
     // runtime computed constants
     unsigned kIconPixelWidth() const { return kIconTileWidth * TILE; }
     unsigned kIconPixelHeight() const { return kIconTileHeight * TILE; }
@@ -132,10 +137,11 @@ class Menu {
 
     // external parameters and metadata
     VideoBuffer &vid;               // videobuffer and its attached cube
-    struct MenuAssets *assets;      // theme assets of the menu
+    const struct MenuAssets *assets; // theme assets of the menu
     uint8_t numTips;                // number of tips in the theme
     struct MenuItem *items;         // items in the strip
     uint8_t numItems;               // number of items in the strip
+    uint8_t startingItem;           // centered item in strip on first draw
     // event breadcrumb
     struct MenuEvent currentEvent;
     // state tracking
@@ -181,7 +187,6 @@ class Menu {
     // events.h
     bool dispatchEvent(struct MenuEvent *ev);
     void clearEvent();
-    void performDefault();
     void handleNeighborAdd();
     void handleNeighborRemove();
     void handleItemArrive();

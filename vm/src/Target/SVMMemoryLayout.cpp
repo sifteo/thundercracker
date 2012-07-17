@@ -16,11 +16,13 @@ using namespace llvm;
 
 void SVMMemoryLayout::AllocateSections(MCAssembler &Asm, const MCAsmLayout &Layout)
 {
-    memset(spsSize, 0, sizeof spsSize);
+    memset(spsMemSize, 0, sizeof spsMemSize);
+    memset(spsDiskSize, 0, sizeof spsDiskSize);
     bssAlign = 1;
-    
+
     // Leave one free block at the beginning of DEBUG, for a special message.
-    spsSize[SPS_DEBUG] = SVMTargetMachine::getBlockSize();
+    spsMemSize[SPS_DEBUG] = SVMTargetMachine::getBlockSize();
+    spsDiskSize[SPS_DEBUG] = spsMemSize[SPS_DEBUG];
 
     for (MCAssembler::const_iterator it = Asm.begin(), ie = Asm.end();
         it != ie; ++it) {
@@ -32,19 +34,31 @@ void SVMMemoryLayout::AllocateSections(MCAssembler &Asm, const MCAsmLayout &Layo
         case SPS_BSS:
             // Also track BSS segment alignment, then fall through...
             bssAlign = std::max(bssAlign, SD->getAlignment());
+
         case SPS_RO:
-        case SPS_RW:
+        case SPS_RW_Z:
+        case SPS_RW_PLAIN:
         case SPS_DEBUG:
         case SPS_META:
-            spsSize[sps] = RoundUpToAlignment(spsSize[sps], SD->getAlignment());
-            SectionOffsetMap[SD] = spsSize[sps];
-            spsSize[sps] += Layout.getSectionAddressSize(SD);
+            spsMemSize[sps] = RoundUpToAlignment(spsMemSize[sps], SD->getAlignment());
+            spsDiskSize[sps] = RoundUpToAlignment(spsDiskSize[sps], SD->getAlignment());
+
+            SectionOffsetMap[SD] = spsDiskSize[sps];
+
+            spsMemSize[sps] += getSectionMemSize(SD, Layout);
+            spsDiskSize[sps] += Layout.getSectionAddressSize(SD);
             break;
 
         default:
             break;
         }
     }
+
+    unsigned memUsed = getSectionMemAddress(SPS_END) - SVMTargetMachine::getRAMBase();
+    unsigned memMax = SVMTargetMachine::getRAMSize();
+    if (memUsed > memMax)
+        report_fatal_error("Application is too large to fit in RAM! Need "
+            + Twine(memUsed) + " bytes, which exceeds the maximum of " + Twine(memMax));
 }
 
 uint32_t SVMMemoryLayout::getSectionDiskSize(enum SVMProgramSection s) const
@@ -52,10 +66,11 @@ uint32_t SVMMemoryLayout::getSectionDiskSize(enum SVMProgramSection s) const
     switch (s) {
     case SPS_META:
     case SPS_DEBUG:
+    case SPS_RW_PLAIN:
     case SPS_RO:
-    case SPS_RW:    return spsSize[s];
-    case SPS_BSS:   return 0;
-    default:        llvm_unreachable("Bad SVM Program Section");
+    case SPS_RW_Z:      return spsDiskSize[s];
+    case SPS_BSS:       return 0;
+    default:            llvm_unreachable("Bad SVM Program Section");
     }
 }
 
@@ -63,18 +78,18 @@ uint32_t SVMMemoryLayout::getSectionMemSize(enum SVMProgramSection s) const
 {
     switch (s) {
     case SPS_RO:
-    case SPS_RW:
-    case SPS_BSS:   return spsSize[s];
+    case SPS_RW_Z:
+    case SPS_RW_PLAIN:
+    case SPS_BSS:       return spsMemSize[s];
     case SPS_META:
-    case SPS_DEBUG: return 0;
-    default:        llvm_unreachable("Bad SVM Program Section");
+    case SPS_DEBUG:     return 0;
+    default:            llvm_unreachable("Bad SVM Program Section");
     }
 }
 
 uint32_t SVMMemoryLayout::getSectionDiskOffset(enum SVMProgramSection s) const
 {
     uint32_t blockAlign = SVMTargetMachine::getBlockSize();
-    uint32_t minAlign = sizeof(uint32_t);
 
     /*
      * A note on disk alignment: RO must be aligned on disk, since we're fetching
@@ -85,19 +100,20 @@ uint32_t SVMMemoryLayout::getSectionDiskOffset(enum SVMProgramSection s) const
      */
 
     switch (s) {
-    case SPS_META:  return SVMELF::HdrSize;
-    case SPS_RO:    return RoundUpToAlignment(getSectionDiskEnd(SPS_META), blockAlign);
-    case SPS_RW:    return RoundUpToAlignment(getSectionDiskEnd(SPS_RO), minAlign);
-    case SPS_BSS:   return 0;
-    case SPS_DEBUG: return RoundUpToAlignment(getSectionDiskEnd(SPS_RW), blockAlign);
-    case SPS_END:   return getSectionDiskEnd(SPS_DEBUG);
-    default:        llvm_unreachable("Bad SVM Program Section");
+    case SPS_META:      return SVMELF::HdrSize;
+    case SPS_RO:        return RoundUpToAlignment(getSectionDiskEnd(SPS_META), blockAlign);
+    case SPS_RW_Z:      return getSectionDiskEnd(SPS_RO);
+    case SPS_BSS:       return 0;
+    case SPS_DEBUG:     return RoundUpToAlignment(getSectionDiskEnd(SPS_RW_Z), blockAlign);
+    case SPS_RW_PLAIN:  return RoundUpToAlignment(getSectionDiskEnd(SPS_DEBUG), blockAlign);
+    case SPS_END:       return getSectionDiskEnd(SPS_RW_PLAIN);
+    default:            llvm_unreachable("Bad SVM Program Section");
     }
 }
 
 uint32_t SVMMemoryLayout::getSectionDiskEnd(enum SVMProgramSection s) const
 {
-    return getSectionDiskOffset(s) + spsSize[s];
+    return getSectionDiskOffset(s) + spsDiskSize[s];
 }
 
 uint32_t SVMMemoryLayout::getSectionMemAddress(enum SVMProgramSection s) const
@@ -106,14 +122,15 @@ uint32_t SVMMemoryLayout::getSectionMemAddress(enum SVMProgramSection s) const
     uint32_t ramBase = SVMTargetMachine::getRAMBase();
 
     switch (s) {
-    case SPS_RO:    return flashBase;
-    case SPS_RW:    return ramBase;
-    case SPS_BSS:   return getSectionMemAddress(SPS_RW) +
-                           RoundUpToAlignment(spsSize[SPS_RW], bssAlign);
-    case SPS_END:   return getSectionMemAddress(SPS_BSS) + spsSize[SPS_BSS];
+    case SPS_RO:        return flashBase;
+    case SPS_RW_Z:      return ramBase;
+    case SPS_RW_PLAIN:  return ramBase;
+    case SPS_BSS:       return getSectionMemAddress(SPS_RW_PLAIN) +
+                            RoundUpToAlignment(spsMemSize[SPS_RW_PLAIN], bssAlign);
+    case SPS_END:       return getSectionMemAddress(SPS_BSS) + spsMemSize[SPS_BSS];
     case SPS_META:
-    case SPS_DEBUG: return 0;
-    default:        llvm_unreachable("Bad SVM Program Section");
+    case SPS_DEBUG:     return 0;
+    default:            llvm_unreachable("Bad SVM Program Section");
     }
 }
 
@@ -209,7 +226,7 @@ SVMSymbolInfo SVMMemoryLayout::getSymbol(const MCAssembler &Asm,
     if (Deco.isSys) {
         // Numeric syscall
 
-        if (Deco.sysNumber> 0x3FFF)
+        if (Deco.sysNumber > 0x3FFF)
             report_fatal_error("Syscall number " + Twine(Deco.sysNumber) +
                 " is out of range.");
 
@@ -344,7 +361,15 @@ SVMProgramSection SVMMemoryLayout::getSectionKind(const MCSectionData *SD) const
      * Categorize a MCSection as one of the several predefined
      * SVMProgramSection types. This determines which program section
      * we'll lump it in with, or whether it'll be included as debug-only.
+     *
+     * This value can be specifically overridden with setSectionKind().
+     * If we have no override, we calculate the proper section kind
+     * using the section's name, size, type, and other data.
      */
+
+    SectionKindOverrides_t::const_iterator it = SectionKindOverrides.find(SD);
+    if (it != SectionKindOverrides.end())
+        return it->second;
 
     const MCSection *S = &SD->getSection();
     SectionKind k = S->getKind();
@@ -365,10 +390,29 @@ SVMProgramSection SVMMemoryLayout::getSectionKind(const MCSectionData *SD) const
         if (k.isReadOnly() || k.isText())
             return SPS_RO;
         if (k.isGlobalWriteableData())
-            return SPS_RW;
+            return SPS_RW_PLAIN;
     }
 
     return SPS_DEBUG;
+}
+
+void SVMMemoryLayout::setSectionKind(const MCSectionData *SD, SVMProgramSection kind)
+{
+    SectionKindOverrides[SD] = kind;
+}
+
+uint32_t SVMMemoryLayout::getSectionMemSize(const MCSectionData *SD, const MCAsmLayout &Layout) const
+{
+    SectionMemSizeOverrides_t::const_iterator it = SectionMemSizeOverrides.find(SD);
+    if (it == SectionMemSizeOverrides.end())
+        return Layout.getSectionAddressSize(SD);
+    else
+        return it->second;
+}
+
+void SVMMemoryLayout::setSectionMemSize(const MCSectionData *SD, uint32_t size)
+{
+    SectionMemSizeOverrides[SD] = size;
 }
 
 uint32_t SVMMemoryLayout::getSectionDiskOffset(const MCSectionData *SD) const

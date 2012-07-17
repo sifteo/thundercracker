@@ -7,14 +7,18 @@
  */
 
 #include "frontend.h"
+#include "ostime.h"
 #include <time.h>
-// for MAX HAX
-#if __APPLE__
-#include <CoreFoundation/CoreFoundation.h>
-#endif
 
+/*
+ * NB: button handling should go through FrontendMothership once that
+ * is resurrected.
+ */
+#include "homebutton.h"
 
 Frontend *Frontend::instance = NULL;
+tthread::mutex Frontend::instanceLock;
+
 
 Frontend::Frontend() 
   : frameCount(0),
@@ -30,38 +34,19 @@ Frontend::Frontend()
 
 bool Frontend::init(System *_sys)
 {
+    tthread::lock_guard<tthread::mutex> guard(instanceLock);
+
+    // Enforce singleton-ness
+    if (instance)
+        return false;
+
     instance = this;
     sys = _sys;
     frameCount = 0;
+    cubeCount = 0;
     toggleZoom = false;
-    viewExtent = targetViewExtent() * 3.0;
     isRunning = true;
     isRotationFixed = sys->opt_lockRotationByDefault;
-
-    /*
-     * Create cubes in a grid. Height is the square root of the number
-     * of cubes, rounding down. For sizes up to 3 cubes, this produces
-     * a horizontal line layout. For larger layout, it gives us a square.
-     */
-
-    if (sys->opt_numCubes) {
-        gridH = sqrtf(sys->opt_numCubes);
-        gridW = (sys->opt_numCubes + gridH - 1) / gridH;
-        for (unsigned y = 0, cubeID = 0; y < gridH && cubeID < sys->opt_numCubes; y++)
-            for (unsigned x = 0; x < gridW && cubeID < sys->opt_numCubes; x++, cubeID++) {
-                const float spacing = CubeConstants::SIZE * 2.7;
-                cubes[cubeID].init(cubeID, &sys->cubes[cubeID], world,
-                                   ((gridW - 1) * -0.5 + x) * spacing,
-                                   ((gridH - 1) * -0.5 + y) * spacing);
-                if (isRotationFixed) {
-                    cubes[cubeID].toggleRotationLock(isRotationFixed);
-                }
-
-            }
-    } else {
-        gridW = 0;
-        gridH = 0;
-    }
 
 #if MOTHERSHIP
     mothershipCount = 1;
@@ -71,93 +56,86 @@ bool Frontend::init(System *_sys)
     mothershipCount = 0;
 #endif
 
+    /*
+     * We need to first position our default set of cubes, then
+     * pick a permanent maxViewExtent, then use that max extent
+     * to create our thick walls.
+     */
+    updateCubeCount();
+    maxViewExtent = viewExtentForCubeCount(instance->sys->MAX_CUBES);
+    createWalls();
 
+    // Zoom in from a slightly wider default view
+    viewExtent = targetViewExtent() * 3.0;
+
+    // Listen for collisions. This is how we update our neighbor matrix.
+    world.SetContactListener(&contactListener);
+
+    // Open our GUI window
+    glfwInit();
+    if (!openWindow(800, 600))
+        return false;
+
+    overlay.init(&renderer, sys);
+
+    return true;
+}
+
+b2Vec2 Frontend::getCubeGridLoc(unsigned index, unsigned total)
+{
+    const float spacing = CubeConstants::SIZE * 2.7;
+
+    unsigned gridW = std::min(3U, std::max(1U, total));
+    unsigned gridH = (total + gridW - 1) / gridW;
+
+    unsigned x = index % gridW;
+    unsigned y = index / gridW;
+
+    return b2Vec2( ((gridW - 1) * -0.5 + x) * spacing,
+                   ((gridH - 1) * -0.5 + y) * spacing );
+}
+
+float Frontend::viewExtentForCubeCount(unsigned num)
+{
     /*
      * The view area should scale with number of cubes. So, scale the
      * linear size of our view with the square root of the number of
      * cubes. We don't just want to make sure they initially fit, but
      * we want there to be a good amount of working space for
      * manipulating the cubes.
-     *
-     * Special-case one cube, since you don't really need space to
-     * work with a single cube.
-     *
-     * In any case, these are resizable dynamically. It's just nice
-     * in everyone's best interest to pick sane defaults :)
      */
-
-    if (sys->opt_numCubes > 1)
-        normalViewExtent = CubeConstants::SIZE * 2.5 * sqrtf(sys->opt_numCubes);
-    else
-        normalViewExtent = CubeConstants::SIZE * 1.4;
-
-    maxViewExtent = normalViewExtent * 10.0f;
-
-    /*
-     * Create the rest of the world
-     */
-
-    createWalls();
-
-    /*
-     * Listen for collisions. This is how we update our neighbor matrix.
-     */
-
-    world.SetContactListener(&contactListener);
-    
-    /*
-     * Open our GUI window
-     */
-     
-    if (sys->opt_numCubes > 1) {
-        // 2 or more cubes: Large window
-        if (!openWindow(800, 600))
-            return false;
-    } else {    
-        // Zero or one cube: Small window
-        if (!openWindow(300, 300))
-            return false;
-    }
-    
-    overlay.init(&renderer, sys);
-    
-    return true;
+    return CubeConstants::SIZE * 2.5 * sqrtf(std::max(1U, num));
 }
 
-void Frontend::numCubesChanged()
+void Frontend::updateCubeCount()
 {
-    unsigned i;
+    /*
+     * Sample the value of sys->opt_numCubes, and initialize or destroy
+     * UI cubes as necessary. Any time the number of cubes changes, we
+     * arrange the new set of cubes into a grid. New cubes are added
+     * immediately at the proper location, but existing cubes are moved
+     * there gradually.
+     */
 
-    idleFrames = 0;
+    unsigned targetCubeCount = sys->opt_numCubes;
+    if (cubeCount != targetCubeCount) {
 
-    for (i = 0; i < sys->opt_numCubes; i++)
-        if (!cubes[i].isInitialized()) {
-            // Create new cubes at the mouse cursor for now
-            b2Vec2 v = mouseVec(normalViewExtent);
-            cubes[i].init(i, &sys->cubes[i], world, v.x, v.y);
-            if (isRotationFixed) {
-                cubes[i].toggleRotationLock(isRotationFixed);
+        cubeCount = targetCubeCount;
+        isAnimatingNewCubeLayout = true;
+        idleFrames = 0;
+
+        unsigned i;
+        for (i = 0; i < targetCubeCount; ++i)
+            if (!cubes[i].isInitialized()) {
+                b2Vec2 v = getCubeGridLoc(i, targetCubeCount);
+                cubes[i].init(i, &sys->cubes[i], world, v.x, v.y);
+                cubes[i].setRotationLock(isRotationFixed);
             }
-        }
+        for (; i < instance->sys->MAX_CUBES; i++)
+            if (instance->cubes[i].isInitialized())
+                instance->cubes[i].exit();
 
-    for (;i < sys->MAX_CUBES; i++)
-        if (cubes[i].isInitialized())
-            cubes[i].exit();
-}
-
-void Frontend::addCube()
-{
-    if (sys->opt_numCubes < sys->MAX_CUBES) {
-        sys->setNumCubes(sys->opt_numCubes + 1);
-        numCubesChanged();
-    }
-}
-
-void Frontend::removeCube()
-{
-    if (sys->opt_numCubes > 0) {
-        sys->setNumCubes(sys->opt_numCubes - 1);
-        numCubesChanged();
+        normalViewExtent = viewExtentForCubeCount(targetCubeCount);
     }
 }
 
@@ -241,27 +219,66 @@ unsigned Frontend::cubeID(FrontendCube *cube)
 }
 
 void Frontend::exit()
-{             
-    glfwTerminate();
+{
+    tthread::lock_guard<tthread::mutex> guard(instanceLock);
+
+    if (instance) {
+        instance = 0;
+        glfwTerminate();
+    }
 }
 
 bool Frontend::runFrame()
 {
-    if (!isRunning || !sys->isRunning())
-        return false;
-        
-    // Simulated hardware VSync
-    if (!(frameCount % FRAME_HZ_DIVISOR))
-        for (unsigned i = 0; i < sys->opt_numCubes; i++)
-            sys->cubes[i].lcdPulseTE();
+    double sleepTime;
 
-    animate();
-    draw();
+    /*
+     * Hold the lock while we're using 'instance'
+     */
+    {
+        tthread::lock_guard<tthread::mutex> guard(instanceLock);
 
-    frameCount++;
-    idleFrames++;
+        if (!instance || !instance->isRunning || !instance->sys->isRunning())
+            return false;
+
+        instance->updateCubeCount();
+        instance->animate();
+
+        instance->frameCount++;
+        instance->idleFrames++;
+
+        // Simulated hardware VSync (pre-draw)
+        if (!(instance->frameCount % FRAME_HZ_DIVISOR))
+            for (unsigned i = 0; i < instance->cubeCount; i++)
+                instance->sys->cubes[i].lcdPulseTE();
+
+        // Draw, but don't flush
+        instance->draw();
+
+        sleepTime = instance->frControl.getEndFrameSleepTime();
+    }
+
+    /*
+     * Only after releasing the lock, do things which will probably block:
+     * Rendering a frame, sleeping... Note that these don't require access
+     * to any Frontend instance members.
+     */
+
+    GLRenderer::endFrame();
+
+    if (sleepTime)
+        OSTime::sleep(sleepTime);
 
     return true;
+}
+
+void Frontend::postMessage(std::string msg)
+{
+    tthread::lock_guard<tthread::mutex> guard(instanceLock);
+    if (!instance)
+        return;
+
+    instance->overlay.postMessage(msg);
 }
 
 bool Frontend::openWindow(int width, int height, bool fullscreen)
@@ -328,26 +345,32 @@ void GLFWCALL Frontend::onKey(int key, int state)
 {
     if (state == GLFW_PRESS) {
         switch (key) {
-        
+
         case 'H':
         case '/':
         case GLFW_KEY_F1:
             instance->overlay.toggleHelp();
             break;
-        
+
         case 'Q':
         case GLFW_KEY_ESC:
             instance->isRunning = false;
             break;
-        
+
         case '1':
+            instance->isAnimatingNewCubeLayout = false;
             instance->normalViewExtent = instance->pixelViewExtent();
             break;
-        
+
         case '2':
+            instance->isAnimatingNewCubeLayout = false;
             instance->normalViewExtent = instance->pixelViewExtent() / 2.0f;
             break;
-        
+
+        case 'B':
+            HomeButton::onChange();
+            break;
+
         case 'Z':
             instance->toggleZoom ^= true;
             break;
@@ -355,7 +378,7 @@ void GLFWCALL Frontend::onKey(int key, int state)
         case 'F':
             instance->toggleFullscreen();
             break;
-                
+
         case 'S': {
             std::string name = instance->createScreenshotName();
             instance->overlay.postMessage("Saved screenshot \"" + name + "\"");
@@ -369,6 +392,10 @@ void GLFWCALL Frontend::onKey(int key, int state)
 
         case 'I':
             instance->overlay.toggleInspector();
+            break;
+
+        case 'V':
+            instance->overlay.toggleAudioVisualizer();
             break;
 
         case 'R':
@@ -385,15 +412,27 @@ void GLFWCALL Frontend::onKey(int key, int state)
                 instance->hoverOrRotate();
             break;
 
-        case '-':
-            instance->removeCube();
+            /*
+             * On adding/removing cubes: By calling System::setNumCubes(),
+             * we make System responsible for thread synchronization. It will
+             * create or destroy system cube objects, and the frontend
+             * will asynchronously adjust its UI accordingly (and "cubeCount")
+             * at the top of the next frame.
+             */
+        case '-': {
+            unsigned n = instance->sys->opt_numCubes;
+            if (n > 0)
+                instance->sys->setNumCubes(n - 1);
             break;
-
+        }
         case '+':
-        case '=':
-            instance->addCube();
+        case '=': {
+            unsigned n = instance->sys->opt_numCubes;
+            if (n < instance->sys->MAX_CUBES)
+                instance->sys->setNumCubes(n + 1);
             break;
-        
+        }
+
         case GLFW_KEY_BACKSPACE:
             instance->toggleRotationLock();
             break;
@@ -402,10 +441,19 @@ void GLFWCALL Frontend::onKey(int key, int state)
             return;
 
         }
-        
+
         // Any handled key resets the idle timer
         instance->idleFrames = 0;
-    }   
+
+    } else if (state == GLFW_RELEASE) {
+        switch (key) {
+
+        case 'B':
+            HomeButton::onChange();
+            break;
+
+        }
+    }
 }
 
 void Frontend::toggleFullscreen()
@@ -422,7 +470,7 @@ void Frontend::toggleFullscreen()
         glfwCloseWindow();
         openWindow(mode.Width, mode.Height, true);
     }
-}           
+}
 
 void GLFWCALL Frontend::onMouseMove(int x, int y)
 {
@@ -467,6 +515,8 @@ void Frontend::onMouseDown(int button)
     
     if (!mouseBody) {
         mousePicker.test(world, mouseVec(normalViewExtent));
+
+        isAnimatingNewCubeLayout = false;
 
         if (mousePicker.mCube) {
             // This body represents the mouse itself now as a physical object
@@ -659,12 +709,20 @@ void Frontend::animate()
             idleFrames = 0;
         }
     }
-    
-    /* Local per-cube animations */
+
     for (unsigned i = 0; i < mothershipCount; ++i) {
+        /* Mothership animations */
         motherships[i].animate();
     }
-    for (unsigned i = 0; i < sys->opt_numCubes; i++) {
+
+    for (unsigned i = 0; i < cubeCount; i++) {
+        /* Grid layout animation */
+        if (isAnimatingNewCubeLayout) {
+            pushBodyTowards(cubes[i].getBody(),
+                getCubeGridLoc(i, cubeCount), 20.0f);
+        }
+
+        /* Local per-cube animations */
         cubes[i].animate();
     }
 
@@ -722,6 +780,7 @@ unsigned Frontend::pixelZoomMode()
 
 void Frontend::scaleViewExtent(float ratio)
 {
+    isAnimatingNewCubeLayout = false;
     normalViewExtent = b2Clamp<float>(normalViewExtent * ratio,
                                       CubeConstants::SIZE * 0.1, maxViewExtent);
 }
@@ -734,12 +793,18 @@ void Frontend::draw()
     renderer.beginFrame(viewExtent, viewCenter, effectivePixelZoomMode);
 
     float ratio = std::max(1.0f, renderer.getHeight() / (float)renderer.getWidth());
-    renderer.drawBackground(viewExtent * ratio * 50.0f, 0.2f);
+
+    if (sys->opt_whiteBackground) {
+        static const float color[] = { 1.f, 1.f, 1.f, 0.f };
+        renderer.drawSolidBackground(color);
+    } else {
+        renderer.drawDefaultBackground(viewExtent * ratio * 50.0f, 0.2f);
+    }
 
     for (unsigned i = 0; i < mothershipCount; ++i) {
         motherships[i].draw(renderer);
     }
-    for (unsigned i = 0; i < sys->opt_numCubes; i++) {
+    for (unsigned i = 0; i < cubeCount; i++) {
         if (cubes[i].draw(renderer)) {
             // We found a cube that isn't idle.
             idleFrames = 0;
@@ -749,7 +814,7 @@ void Frontend::draw()
     renderer.beginOverlay();
 
     // Per-cube status overlays
-    for (unsigned i = 0; i < sys->opt_numCubes;  i++) {
+    for (unsigned i = 0; i < cubeCount; i++) {
         FrontendCube &c = cubes[i]; 
 
         // Overlays are positioned relative to the cube's AABB.
@@ -771,8 +836,8 @@ void Frontend::draw()
         overlay.drawCubeInspector(&c,
             0.5f + topRight.x,
             0.5f + topRight.y,
-            0.5f + worldToScreen(1.5f),
-            0.5f + worldToScreen(3.0f));
+            0.5f + worldToScreen(3.0f),
+            0.5f + worldToScreen(6.0f));
     }
 
     // Fixed portion of the overlay, should be topmost.
@@ -786,10 +851,9 @@ void Frontend::draw()
      * This throttling is vital when we can't sync to the host's vertical refresh, and the idling
      * is really nice to avoid killing laptop batteries...
      */
-    frControl.setTargetFPS(idleFrames > 100 ? 10.0 : 75.0);
-        
-    renderer.endFrame();
-    frControl.endFrame();
+
+    bool isIdle = idleFrames > 100 && overlay.allowIdling();
+    frControl.setTargetFPS(isIdle ? 10.0 : 75.0);
 }
 
 b2Vec2 Frontend::worldToScreen(b2Vec2 world)
@@ -819,7 +883,7 @@ float Frontend::zoomedViewExtent()
     float scale = (renderer.getHeight() < renderer.getWidth())
         ? renderer.getWidth() / (float) renderer.getHeight() : 1.0f;
         
-    if (sys->opt_numCubes > 1) {
+    if (cubeCount > 1) {
         // Zoom in one one cube
         return scale * CubeConstants::SIZE * 1.1;
     } else {
@@ -851,22 +915,22 @@ b2Vec2 Frontend::mouseVec(float viewExtent)
 
 std::string Frontend::createScreenshotName()
 {
-        char buffer[128];
+    char buffer[128];
     time_t t = time(NULL);
-        const struct tm *now = localtime(&t);
-        strftime(buffer, sizeof buffer, "siftulator-%Y%m%d-%H%M%S", now);
-        return std::string(buffer);
+    const struct tm *now = localtime(&t);
+    strftime(buffer, sizeof buffer, "siftulator-%Y%m%d-%H%M%S", now);
+    return std::string(buffer);
 }
 
-void Frontend::toggleRotationLock() {
+void Frontend::toggleRotationLock()
+{
     isRotationFixed = !isRotationFixed;
 
     overlay.postMessage(std::string("Rotation lock ")
         + (isRotationFixed ? "on" : "off"));
 
-    for (unsigned i = 0; i < sys->opt_numCubes; i++) {
-        cubes[i].toggleRotationLock(isRotationFixed);
-    }
+    for (unsigned i = 0; i < cubeCount; i++)
+        cubes[i].setRotationLock(isRotationFixed);
 }
 
 void Frontend::MousePicker::test(b2World &world, b2Vec2 point)
@@ -929,12 +993,15 @@ void Frontend::ContactListener::updateSensors(b2Contact *contact, bool touching)
 FrameRateController::FrameRateController()
     : lastTimestamp(0), accumulator(0) {}
     
-void FrameRateController::endFrame()
+double FrameRateController::getEndFrameSleepTime()
 {
     /*
      * We try to synchronize to the host's vertical sync.
      * If the video drivers don't support that, this governor
      * prevents us from running way too fast.
+     *
+     * Returns the amount we need to sleep, or zero if we
+     * don't need to sleep.
      */
 
     /*
@@ -948,7 +1015,7 @@ void FrameRateController::endFrame()
      */
     const double limit = 1.0;
 
-    double now = glfwGetTime();
+    double now = OSTime::clock();
     const double minPeriod = 1.0 / targetFPS;
     double thisPeriod = now - lastTimestamp;
     lastTimestamp = now;
@@ -956,10 +1023,12 @@ void FrameRateController::endFrame()
     accumulator += minPeriod - thisPeriod;
     
     if (accumulator < -limit)
-        accumulator = -limit;        
+        accumulator = -limit;
     else if (accumulator > slack) {
         if (accumulator > limit)
             accumulator = limit;
-        glfwSleep(accumulator - slack);
+        return accumulator - slack;
     }
+
+    return 0;
 }

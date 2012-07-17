@@ -8,6 +8,7 @@
 
 #include <stdio.h>
 #include "system.h"
+#include "ostime.h"
 #include "system_cubes.h"
 
 
@@ -56,45 +57,30 @@ bool SystemCubes::init(System *sys)
     return true;
 }
 
-void SystemCubes::startThread()
-{
-    mThreadRunning = true;
-    __asm__ __volatile__ ("" : : : "memory");
-    mThread = new tthread::thread(threadFn, this);
-}
-
-void SystemCubes::stopThread()
-{
-    mThreadRunning = false;
-    __asm__ __volatile__ ("" : : : "memory");
-    deadlineSync.wake();
-    mThread->join();
-    delete mThread;
-    mThread = 0;
-}
-
 void SystemCubes::setNumCubes(unsigned n)
 {
     if (n == sys->opt_numCubes)
         return;
 
     // Must change opt_numCubes only while our thread is stopped!
-    stopThread();
+    tthread::lock_guard<tthread::mutex> guard(mBigCubeLock);
 
+    // Initialize any new cubes
     while (sys->opt_numCubes < n)
         if (initCube(sys->opt_numCubes))
             sys->opt_numCubes++;
         else
             break;
 
-    startThread();
+    // Nothing special needed to remove a cube
+    ASSERT(sys->opt_numCubes >= n);
+    sys->opt_numCubes = n;
 }
 
 void SystemCubes::resetCube(unsigned id)
 {
-    stopThread();
+    tthread::lock_guard<tthread::mutex> guard(mBigCubeLock);
     sys->cubes[id].reset();
-    startThread();
 }
 
 bool SystemCubes::initCube(unsigned id, bool wakeFromSleep)
@@ -139,12 +125,22 @@ void SystemCubes::start()
         Cube::Debug::stopOnException = !sys->opt_continueOnException;
     }
 
-    startThread();
+    mThreadRunning = true;
+    __asm__ __volatile__ ("" : : : "memory");
+    mThread = new tthread::thread(threadFn, this);
 }
 
 void SystemCubes::stop()
 {
-    stopThread();
+    if (mThreadRunning == false)
+        return;
+    
+    mThreadRunning = false;
+    __asm__ __volatile__ ("" : : : "memory");
+    deadlineSync.wake();
+    mThread->join();
+    delete mThread;
+    mThread = 0;
 
     if (sys->opt_cube0Debug)
         Cube::Debug::exit();
@@ -152,6 +148,7 @@ void SystemCubes::stop()
 
 void SystemCubes::exit()
 {
+    stop();
     if (!sys->opt_cube0Profile.empty())
         Cube::Debug::writeProfile(&sys->cubes[0].cpu, sys->opt_cube0Profile.c_str());
 }
@@ -178,8 +175,8 @@ void SystemCubes::threadFn(void *param)
         Cube::Debug::attach(&sys->cubes[0]);
 
     // Seed PRNG per-thread
-    srand(glfwGetTime() * 1e6);
-        
+    srand(OSTime::clock() * 1e6);
+
     while (self->mThreadRunning) {
         /*
          * Pick one of several specific tick batch loops. This keeps the loop tight by
@@ -188,14 +185,18 @@ void SystemCubes::threadFn(void *param)
          * All batch loops are marked NEVER_INLINE, so that they will show up separately
          * in profilers.
          */
-         
-        if (debug) {
+
+        self->mBigCubeLock.lock();
+        if (nCubes == 0) {
+            self->tickLoopEmpty();
+        } else if (debug) {
             self->tickLoopDebug();
-        } else if (nCubes < 1 || !sys->cubes[0].cpu.sbt || sys->cubes[0].cpu.mProfileData || Tracer::isEnabled()) {
+        } else if (!sys->cubes[0].cpu.sbt || sys->cubes[0].cpu.mProfileData || Tracer::isEnabled()) {
             self->tickLoopGeneral();
         } else {
             self->tickLoopFastSBT();
         }
+        self->mBigCubeLock.unlock();
 
         /*
          * Use TimeGovernor to keep us running no faster than real-time.
@@ -278,22 +279,21 @@ NEVER_INLINE void SystemCubes::tickLoopFastSBT()
     unsigned batch = sys->time.timestepTicks();
     unsigned nCubes = sys->opt_numCubes;
     unsigned stepSize = 1;
-    
-    while (batch) {
+
+    /*
+     * Run until our batch is empty, or someone tells us to stop.
+     *
+     * Note: stepSize is only equal to 0 in exceptional cases, such as
+     *       if our thread is exiting and deadlineSync is halted on the same
+     *       clock tick, preventing us from making forward progress.
+     */
+
+    while (batch && stepSize) {
         unsigned nextStep;
 
         batch -= stepSize;
         nextStep = batch;
-        
-#if 0
-        // Debugging batch sizes
-        printf("batch %d, cubes: %d @%04x, %d @%04x, %d @%04x\n",
-                stepSize,
-                cubes[0].cpu.mTickDelay, cubes[0].cpu.mPC,
-                cubes[1].cpu.mTickDelay, cubes[1].cpu.mPC,
-                cubes[2].cpu.mTickDelay, cubes[2].cpu.mPC);        
-#endif
-        
+
         for (unsigned i = 0; i < nCubes; i++) {
             Cube::Hardware &cube = sys->cubes[i];
             if (!cube.isSleeping())
@@ -305,3 +305,22 @@ NEVER_INLINE void SystemCubes::tickLoopFastSBT()
     }
 }
 
+NEVER_INLINE void SystemCubes::tickLoopEmpty()
+{
+    /*
+     * Special-case tick loop for when the cube emulator is emulating no cubes.
+     * We still need to advance the clock, and operate deadlineSync.
+     */
+
+    System *sys = this->sys;
+    unsigned batch = sys->time.timestepTicks();
+    unsigned stepSize = 1;
+
+    while (batch && stepSize) {
+        unsigned nextStep;
+        batch -= stepSize;
+        nextStep = batch;
+        tick(stepSize);
+        stepSize = std::min(nextStep, (unsigned)deadlineSync.remaining());
+    }
+}

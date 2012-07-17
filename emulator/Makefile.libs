@@ -115,7 +115,7 @@ else ifeq ($(BUILD_PLATFORM),windows32)
 else
 	LIBS += -lX11 -lpthread
 	INCLUDES += -Isrc/glfw/x11
-	FLAGS += -D_GLFW_HAS_PTHREAD
+	FLAGS += -D_GLFW_HAS_PTHREAD -D_GLFW_HAS_GLXGETPROCADDRESS
 	OBJS += \
 	    src/glfw/x11/x11_enable.o	   src/glfw/x11/x11_keysym2unicode.o	\
 	    src/glfw/x11/x11_fullscreen.o  src/glfw/x11/x11_thread.o		\
@@ -174,6 +174,10 @@ endif
 
 ifeq ($(BUILD_PLATFORM), windows32)
 	LIBS +=	 -lole32 -lwinmm
+endif
+
+ifeq ($(BUILD_PLATFORM), Linux)
+	LIBS +=	 -lasound
 endif
 
 #######################################################################

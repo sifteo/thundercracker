@@ -7,8 +7,7 @@
 #define SVM_IMAGEDECODER_H
 
 #include <sifteo/abi.h>
-#include <stdint.h>
-#include <inttypes.h>
+#include "macros.h"
 #include "svmmemory.h"
 
 
@@ -29,11 +28,11 @@ public:
 
     int tile(unsigned x, unsigned y, unsigned frame);
 
-    unsigned getWidth() const {
+    ALWAYS_INLINE unsigned getWidth() const {
         return header.width;
     }
 
-    unsigned getHeight() const {
+    ALWAYS_INLINE unsigned getHeight() const {
         return header.height;
     }
 
@@ -76,12 +75,12 @@ public:
           right(decoder.getWidth()), bottom(decoder.getHeight()),
           frame(frame), blockMask(decoder.getBlockMask()) {}
 
-    void reset() {
+    ALWAYS_INLINE void reset() {
         x = left;
         y = top;
     }
 
-    bool next() {
+    ALWAYS_INLINE bool next() {
         {
             unsigned nextX = x + 1;                         // Next tile over within the block
             if ((nextX & blockMask) && nextX < right) {     // Still inside the block and image?
@@ -94,40 +93,40 @@ public:
         return nextWork();
     }
 
-    int tile() const {
+    ALWAYS_INLINE int tile() const {
         return decoder.tile(x, y, frame);
     }
 
-    uint16_t tile77() const {
+    ALWAYS_INLINE uint16_t tile77() const {
         uint16_t t = decoder.tile(x, y, frame);
         return _SYS_TILE77(t);
     }
 
-    uint16_t getWidth() const {
+    ALWAYS_INLINE uint16_t getWidth() const {
         return right - left;
     }
 
-    uint16_t getHeight() const {
+    ALWAYS_INLINE uint16_t getHeight() const {
         return bottom - top;
     }
     
-    uint16_t getImageX() const {
+    ALWAYS_INLINE uint16_t getImageX() const {
         return x;
     }
 
-    uint16_t getImageY() const {
+    ALWAYS_INLINE uint16_t getImageY() const {
         return y;
     }
 
-    uint16_t getRectX() const {
+    ALWAYS_INLINE uint16_t getRectX() const {
         return x - left;
     }
 
-    uint16_t getRectY() const {
+    ALWAYS_INLINE uint16_t getRectY() const {
         return y - top;
     }
 
-    unsigned getAddr(unsigned stride) const {
+    ALWAYS_INLINE unsigned getAddr(unsigned stride) const {
         return getRectX() + getRectY() * stride;
     }
 

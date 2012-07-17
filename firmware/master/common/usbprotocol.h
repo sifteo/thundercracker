@@ -6,32 +6,107 @@
 #ifndef USBPROTOCOL_H
 #define USBPROTOCOL_H
 
+#include "macros.h"
+
 #include <stdint.h>
+#include <string.h>
 
-class USBProtocolHandler {
-public:
-    USBProtocolHandler();
+struct USBProtocolMsg;
 
-    static void init();
-    static void onData(const uint8_t *buf, unsigned len);
+struct USBProtocol {
 
-private:
-    enum State {
-        WaitingForLength,
-        WritingData
+    enum SubSystem {
+        Installer       = 0,
+        FactoryTest     = 1,
+        Profiler        = 2,
+        Debugger        = 3,
+        Logger          = 4,
+        DesktopSync     = 5,
+        RFPassThrough   = 6,
     };
 
-    struct AssetInstallation {
-        uint32_t size;              // size in bytes of this asset
-        uint32_t currentAddress;    // address in external flash to write the next chunk to
-        uint32_t crcword;           // if we need to store bytes of a word across chunks
-        uint8_t crcwordBytes;       // how many buffered bytes of crcword are valid?
-        State state;
+    static void dispatch(const USBProtocolMsg &m);
+
+    typedef void (*SubSystemHandler)(const USBProtocolMsg &m);
+    static const SubSystemHandler subsystemHandlers[];
+
+};
+
+struct USBProtocolMsg {
+
+    static const unsigned MAX_LEN = 64;
+    static const unsigned HEADER_BYTES = sizeof(uint32_t);
+    static const unsigned MAX_PAYLOAD_BYTES = MAX_LEN - HEADER_BYTES;
+
+    unsigned len;
+    union {
+        uint8_t bytes[MAX_LEN];
+        struct {
+            uint32_t header;
+            uint8_t payload[MAX_PAYLOAD_BYTES];
+        };
     };
 
-    static struct AssetInstallation installation;
+    USBProtocolMsg() :
+        len(0) {}
 
-    static void addToCrc(const uint8_t *buf, unsigned len);
+    /*
+     * Highest 4 bits in the header specify the subsystem.
+     */
+    USBProtocolMsg(USBProtocol::SubSystem ss) {
+        init(ss);
+    }
+
+    void init(USBProtocol::SubSystem ss) {
+        len = sizeof(header);
+        header = ss << 28;
+    }
+
+    USBProtocol::SubSystem subsystem() const {
+        return static_cast<USBProtocol::SubSystem>(header >> 28);
+    }
+
+    unsigned bytesFree() const {
+        return sizeof(bytes) - len;
+    }
+
+    unsigned payloadLen() const {
+        return MAX(0, static_cast<int>(len - sizeof(header)));
+    }
+
+    void append(uint8_t b) {
+        ASSERT(len < MAX_LEN);
+        bytes[len++] = b;
+    }
+
+    void append(const uint8_t *src, unsigned count) {
+        // Overflow-safe assertions
+        ASSERT(len <= MAX_LEN);
+        ASSERT(count <= MAX_LEN);
+        ASSERT((len + count) <= MAX_LEN);
+
+        memcpy(bytes + len, src, count);
+        len += count;
+    }
+
+    template <typename T> T* zeroCopyAppend() {
+        // Overflow-safe assertions
+        ASSERT(len <= MAX_LEN);
+        ASSERT(sizeof(T) <= MAX_LEN);
+        ASSERT((len + sizeof(T)) <= MAX_LEN);
+
+        T* result = reinterpret_cast<T*>(bytes + len);
+        len += sizeof(T);
+        return result;
+    }
+
+    template <typename T> T* castPayload() {
+        return reinterpret_cast<T*>(&payload[0]);
+    }
+
+    template <typename T> const T* castPayload() const {
+        return reinterpret_cast<const T*>(&payload[0]);
+    }
 };
 
 #endif

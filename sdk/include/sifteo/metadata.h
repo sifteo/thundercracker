@@ -15,9 +15,10 @@ namespace Sifteo {
 
 
 /**
- * Metadata objects are special compile-time mechanisms for annotating your
- * game's ELF binary with additional data. Metadata can be added inside
- * a function, as follows:
+ * @brief Metadata objects are special compile-time mechanisms for annotating your
+ * game's ELF binary with additional data.
+ *
+ * Metadata can be added inside a function, as follows:
  *
  *     Metadata().title("My game");
  *
@@ -38,8 +39,10 @@ namespace Sifteo {
 class Metadata {
 public:
     /**
-     * Initialize all required system metadata. Other optional metadata can be
-     * added using individual methods on the Metadata class.     
+     * @brief Initialize all required system metadata.
+     *
+     * Other optional metadata can be added using individual methods
+     * on the Metadata class.
      */
     Metadata()
     {
@@ -50,7 +53,7 @@ public:
             unsigned numAGSlots = _SYS_lti_counter("Sifteo.AssetGroupSlot", -1);
             _SYS_lti_metadata(_SYS_METADATA_NUM_ASLOTS, "b", numAGSlots);
 
-            // UUID for this particular build. Used by the system for asset caching.
+            // UUID for this particular build.
             _SYS_lti_metadata(_SYS_METADATA_UUID, "IIII",
                 _SYS_lti_uuid(0, 0), _SYS_lti_uuid(0, 1),
                 _SYS_lti_uuid(0, 2), _SYS_lti_uuid(0, 3));
@@ -58,7 +61,7 @@ public:
     }
 
     /**
-     * Add a human-readable title string to this game's metadata.
+     * @brief Add a human-readable title string to this game's metadata.
      */
     Metadata &title(const char *str)
     {
@@ -71,19 +74,45 @@ public:
     }
 
     /**
-     * Add an icon image to this game's metadata. The image needs to be
-     * 80x80 pixels, and it should reside in a separate AssetGroup.
+     * @brief Add a unique machine-readable identity string to this game's metadata.
+     *
+     * Packages must be reverse DNS style strings. For example, a game named
+     * "Master Widget Crafter" by Sifteo may have the package string
+     * "com.sifteo.masterwidget".
+     *
+     * Version strings may be in a game-specific format. The game installer will
+     * compare version strings by splitting them on any period, and comparing
+     * numeric segments numerically and non-numeric segments lexicographically.
+     */
+    Metadata &package(const char *pkg, const char *version)
+    {
+        _SYS_lti_abort(_SYS_lti_counter("Sifteo.Metadata.Package", 0) != 0,
+            "Duplicate Metadata::package() instance.");
+
+        _SYS_lti_metadata(_SYS_METADATA_PACKAGE_STR, "sB", pkg, 0);
+        _SYS_lti_metadata(_SYS_METADATA_VERSION_STR, "sB", version, 0);
+
+        return *this;
+    }
+
+    /**
+     * @brief Add an icon image to this game's metadata.
+     *
+     * The image needs to be 96x96 pixels, and it should reside
+     * in a separate AssetGroup.
      */
     Metadata &icon(const _SYSAssetImage &i)
     {
         _SYS_lti_abort(_SYS_lti_counter("Sifteo.Metadata.Icon", 0) != 0,
             "Duplicate Metadata::icon() instance.");
+        _SYS_lti_abort(i.width != 96/8 || i.height != 96/8,
+            "Metadata::icon() image must be 96x96 pixels in size.");
 
-        return image(_SYS_METADATA_ICON_80x80, i);
+        return image(_SYS_METADATA_ICON_96x96, i);
     }
 
     /**
-     * Add an arbitrary image, as a _SYSMetadataImage item, with a
+     * @brief Add an arbitrary image, as a _SYSMetadataImage item, with a
      * user-specified key.
      */
     Metadata &image(uint16_t key, const _SYSAssetImage &i)
@@ -100,7 +129,10 @@ public:
     }
 
     /**
-     * Set the minimum and maximum number of supported cubes for this game.
+     * @brief Set the minimum and maximum number of supported cubes for this game.
+     *
+     * The game will be prevented from running or paused until the number
+     * of connected cubes in the system satisfies the given range.
      */
     Metadata &cubeRange(unsigned minCubes, unsigned maxCubes)
     {
@@ -119,8 +151,11 @@ public:
     }
 
     /**
-     * The one-argument version of cubeRange sets up identical minimum and
-     * maximum cube counts. The game requires exactly this many cubes.
+     * @brief The one-argument version of cubeRange sets up identical minimum and
+     * maximum cube counts.
+     *
+     * The game will be prevented from running or paused until at least the
+     * specific count of cubes are connected to the system.
      */
     Metadata &cubeRange(unsigned count)
     {

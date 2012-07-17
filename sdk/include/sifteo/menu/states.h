@@ -71,7 +71,7 @@ inline void Menu::changeState(MenuState newstate)
  */
 inline void Menu::transToStart()
 {
-    handlePrepaint();
+    // Do nothing
 }
 
 inline void Menu::stateStart()
@@ -83,7 +83,7 @@ inline void Menu::stateStart()
 
     // Allocate tiles for the static upper label, and draw it.
     if (kHeaderHeight) {
-        const AssetImage& label = items[0].label ? *items[0].label : *assets->header;
+        const AssetImage& label = items[startingItem].label ? *items[startingItem].label : *assets->header;
         vid.bg1.fillMask(vec(0,0), label.tileSize());
         vid.bg1.image(vec(0,0), label);
     }
@@ -107,7 +107,7 @@ inline void Menu::stateStart()
 inline void Menu::transFromStart()
 {
     if (stateFinished) {
-        position = 0.f;
+        position = stoppingPositionFor(startingItem);
         prev_ut = computeCurrentTile() + kNumTilesX;
         updateBG0();
 
@@ -165,8 +165,8 @@ inline void Menu::transFromStatic()
         changeState(MENU_STATE_TILTING);
 
         currentEvent.type = MENU_ITEM_DEPART;
-        currentEvent.item = computeSelected();
-        
+        currentEvent.direction = accel.x > 0 ? 1 : -1;
+
         // hide header
         if (kHeaderHeight) {
             const AssetImage& label = *assets->header;

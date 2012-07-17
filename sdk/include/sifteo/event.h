@@ -15,18 +15,30 @@ namespace Sifteo {
 
 
 /**
- * Implementation for a single per-cube event vector.
+ * @defgroup event Event
+ *
+ * Event dispatch subsystem. This module allows applications to set up
+ * event callbacks which are automatically invoked at system _yield points_
+ * like System::paint().
+ *
+ * @{
+ */
+
+/**
+ * @brief Implementation for a single event vector.
  *
  * Instances of this template are found in the Events namespace.
  * Typically you should not create instances of this object elsewhere.
  */
 
 template <_SYSVectorID tID>
-struct CubeEventVector {
-    CubeEventVector() {}
+struct EventVector {
+    EventVector() {}
 
     /**
-     * Disable this event vector. This acts like a no-op handler was
+     * @brief Disable this event vector.
+     *
+     * This acts like a no-op handler was
      * registered, but of course it's more efficient than setting an
      * actual no-op handler.
      */
@@ -35,10 +47,16 @@ struct CubeEventVector {
     }
 
     /**
-     * Set this event vector, given a closure consisting of an arbitrary
+     * @brief Set this Vector to a function with context pointer
+     *
+     * Requires a closure consisting of an arbitrary
      * pointer-sized context value, and a function pointer of the form:
      *
-     *   void handler(ContextType c, unsigned cubeID);
+     *   void handler(ContextType c, unsigned parameter);
+     *
+     * For Cube events, the parameter is the Cube ID that originated the
+     * event. For Base events, the parameter has different meanings based
+     * on the event type.
      */
     template <typename tContext>
     void set(void (*handler)(tContext, unsigned), tContext context) const {
@@ -46,17 +64,23 @@ struct CubeEventVector {
     }
 
     /**
+     * @brief Set this Vector to a bare function
+     *
      * Set this event vector to a bare function which requires no context.
      * It must still take a dummy void* placeholder argument:
      *
-     *   void handler(void*, unsigned cubeID);
+     *   void handler(void*, unsigned parameter);
+     *
+     * For Cube events, the parameter is the Cube ID that originated the
+     * event. For Base events, the parameter has different meanings based
+     * on the event type.
      */
     void set(void (*handler)(void*, unsigned)) const {
         _SYS_setVector(tID, (void*) handler, 0);
     }
 
     /**
-     * Set this event vector to an instance method, given a class method
+     * @brief Set this event vector to an instance method, given a class method
      * pointer and an instance of that class.
      */
     template <typename tClass>
@@ -70,14 +94,14 @@ struct CubeEventVector {
     }
 
     /**
-     * Return the currently set handler function, as a void pointer.
+     * @brief Return the currently set handler function, as a void pointer.
      */
     void *handler() const {
         return _SYS_getVectorHandler(tID);
     }
 
     /**
-     * Return the currently set context object, as a void pointer.
+     * @brief Return the currently set context object, as a void pointer.
      */
     void *context() const {
         return _SYS_getVectorContext(tID);
@@ -86,7 +110,7 @@ struct CubeEventVector {
 
 
 /**
- * Implementation for a single neighbor event vector.
+ * @brief Implementation for a single neighbor event vector.
  *
  * Instances of this template are found in the Events namespace.
  * Typically you should not create instances of this object elsewhere.
@@ -97,7 +121,9 @@ struct NeighborEventVector {
     NeighborEventVector() {}
 
     /**
-     * Disable this event vector. This acts like a no-op handler was
+     * @brief Disable this event vector.
+     *
+     * This acts like a no-op handler was
      * registered, but of course it's more efficient than setting an
      * actual no-op handler.
      */
@@ -106,7 +132,9 @@ struct NeighborEventVector {
     }
 
     /**
-     * Set this event vector, given a closure consisting of an arbitrary
+     * @brief Set this Vector to a function with context pointer
+     *
+     * Requires a closure consisting of an arbitrary
      * pointer-sized context value, and a function pointer of the form:
      *
      *   void handler(ContextType c, unsigned firstCube, unsigned firstSide,
@@ -118,6 +146,8 @@ struct NeighborEventVector {
     }
 
     /**
+     * @brief Set this Vector to a bare function
+     *
      * Set this event vector to a bare function which requires no context.
      * It must still take a dummy void* placeholder argument:
      *
@@ -129,7 +159,7 @@ struct NeighborEventVector {
     }
 
     /**
-     * Set this event vector to an instance method, given a class method
+     * @brief Set this event vector to an instance method, given a class method
      * pointer and an instance of that class.
      */
     template <typename tClass>
@@ -143,14 +173,14 @@ struct NeighborEventVector {
     }
 
     /**
-     * Return the currently set handler function, as a void pointer.
+     * @brief Return the currently set handler function, as a void pointer.
      */
     void *handler() const {
         return _SYS_getVectorHandler(tID);
     }
 
     /**
-     * Return the currently set context object, as a void pointer.
+     * @brief Return the currently set context object, as a void pointer.
      */
     void *context() const {
         return _SYS_getVectorContext(tID);
@@ -159,7 +189,7 @@ struct NeighborEventVector {
 
 
 /**
- * Asynchronous events.
+ * @brief Namespace of all available event vectors
  *
  * Specific system calls are defined as 'yielding', i.e. they may wait
  * until an event occurs in the runtime. System::paint() includes an
@@ -178,18 +208,53 @@ struct NeighborEventVector {
 
 namespace Events {
 
-    // Neighboring events
-    static const NeighborEventVector<_SYS_NEIGHBOR_ADD>     neighborAdd;
-    static const NeighborEventVector<_SYS_NEIGHBOR_REMOVE>  neighborRemove;
+    /*
+     * Neighboring events
+     */
 
-    // Cube events
-    static const CubeEventVector<_SYS_CUBE_FOUND>       cubeFound;
-    static const CubeEventVector<_SYS_CUBE_LOST>        cubeLost;
-    static const CubeEventVector<_SYS_CUBE_ASSETDONE>   cubeAssetDone;
-    static const CubeEventVector<_SYS_CUBE_ACCELCHANGE> cubeAccelChange;
-    static const CubeEventVector<_SYS_CUBE_TOUCH>       cubeTouch;
-    static const CubeEventVector<_SYS_CUBE_TILT>        cubeTilt;
-    static const CubeEventVector<_SYS_CUBE_SHAKE>       cubeShake;
+    /// One neighbor connection (cube/side paired with cube/side) has been formed.
+    const NeighborEventVector<_SYS_NEIGHBOR_ADD>     neighborAdd;
+
+    /// One neighbor connection has been dissolved.
+    const NeighborEventVector<_SYS_NEIGHBOR_REMOVE>  neighborRemove;
+
+    /*
+     * Cube events
+     */
+
+    /// A new cube has been added.
+    const EventVector<_SYS_CUBE_FOUND>       cubeFound;
+
+    /// A cube has been lost.
+    const EventVector<_SYS_CUBE_LOST>        cubeLost;
+
+    /// An asynchronous asset download has completed.
+    const EventVector<_SYS_CUBE_ASSETDONE>   cubeAssetDone;
+
+    /// A cube's accelerometer state has changed.
+    const EventVector<_SYS_CUBE_ACCELCHANGE> cubeAccelChange;
+
+    /// A cube's touch state has changed (touch began or ended).
+    const EventVector<_SYS_CUBE_TOUCH>       cubeTouch;
+
+    /// A cube's tilt state has changed.
+    const EventVector<_SYS_CUBE_TILT>        cubeTilt;
+
+    /// A shake gesture was recognized on one cube.
+    const EventVector<_SYS_CUBE_SHAKE>       cubeShake;
+
+    /*
+     * Base events
+     */
+
+    /// An event generated by Sifteo::AudioTracker.
+    const EventVector<_SYS_BASE_TRACKER>     baseTracker;
+
 
 };  // namespace Events
+
+/**
+ * @} endgroup Event
+ */
+
 };  // namespace Sifteo

@@ -18,10 +18,18 @@
 #endif
 
 #include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
 #include "macros.h"
 #include "flash_device.h"
 #include "flash_storage.h"
+#include "flash_volume.h"
+#include "ostime.h"
+#include "lodepng.h"
+
+
+// Compiled launcher ELF binary, installed in new volumes.
+extern const uint8_t launcher[];
 
 
 FlashStorage::FlashStorage()
@@ -29,7 +37,11 @@ FlashStorage::FlashStorage()
     
 FlashStorage::~FlashStorage()
 {
-    ASSERT(isInitialized == false);
+    if (isInitialized) {
+        // Normally exit() is called, but this may happen in case of
+        // unclean termination. We still need to flush and unmap the file.
+        exit();
+    }
 }
 
 bool FlashStorage::init(const char *filename)
@@ -45,13 +57,10 @@ bool FlashStorage::init(const char *filename)
             unmapFile();
             return false;
         }
-        LOG(("FLASH: Using storage file '%s'\n", filename));
-
     } else {
         // Anonymous non-persistent flash memory
         data = new FileRecord();
         initData();
-        LOG(("FLASH: Using non-persistent storage\n"));
     }
 
     isInitialized = true;
@@ -79,13 +88,16 @@ void FlashStorage::initData()
         CubeRecord &cube = data->cubes[i];
 
         // Initialize internal (OTP) storage to its erased state
-        memset(&cube.nvm, 0xFF, sizeof cube.nvm);
+        memset(cube.nvm, 0xFF, sizeof cube.nvm);
     
         // Initialize external storage to all zeroes, so we force
         // the firmware to erase all areas before they're used. It shouldn't
         // be making assumptions about blocks being already-erased unless it
         // knows this for certain.
-        memset(&cube.ext, 0x00, sizeof cube.ext);
+        memset(cube.ext, 0x00, sizeof cube.ext);
+
+        // Zero out the erase counts
+        memset(cube.eraseCounts, 0x00, sizeof cube.eraseCounts);
     }
 
     // Initialize internal flash to all zeroes, also to make sure nobody
@@ -95,6 +107,9 @@ void FlashStorage::initData()
     // Zero unused parts of the header
     memset(data->header.bytes, 0x00, sizeof data->header.bytes);
 
+    // Zero out the erase counts
+    memset(data->master.eraseCounts, 0x00, sizeof data->master.eraseCounts);
+
     // Fill in the header...
     data->header.magic = HeaderRecord::MAGIC;
     data->header.version = HeaderRecord::CURRENT_VERSION;
@@ -102,8 +117,54 @@ void FlashStorage::initData()
     data->header.cube_count = arraysize(data->cubes);
     data->header.cube_nvmSize = sizeof data->cubes[0].nvm;
     data->header.cube_extSize = sizeof data->cubes[0].ext;
+    data->header.cube_sectorSize = Cube::FlashModel::SECTOR_SIZE;
     data->header.mc_pageSize = FlashDevice::PAGE_SIZE;
     data->header.mc_capacity = FlashDevice::CAPACITY;
+    data->header.mc_blockSize = FlashDevice::ERASE_BLOCK_SIZE;
+
+    // Create a unique ID for this storage file
+    data->header.uniqueID = rand() ^ rand() ^ uint32_t(OSTime::clock() * 1e6);
+}
+
+bool FlashStorage::installLauncher(const char *filename)
+{
+    /*
+     * Erase any already-installed LAUNCHER binaries, and install a new
+     * launcher using the specified file, or the built-in binary.
+     */
+
+    // Delete existing launcher(s)
+    FlashVolume vol;
+    FlashVolumeIter vi;
+    vi.begin();
+    while (vi.next(vol))
+        if (vol.getType() == FlashVolume::T_LAUNCHER)
+            vol.deleteTree();
+
+    // Built-in launcher
+    uint32_t launcherSize = *reinterpret_cast<const uint32_t*>(launcher);
+    const uint8_t *launcherData = launcher + 4;
+    
+    std::vector<uint8_t> data;
+    if (filename) {
+        LodePNG::loadFile(data, filename);
+        if (data.empty()) {
+            LOG(("FLASH: Launcher binary '%s' cannot be read\n", filename));
+            return false;
+        }
+        launcherSize = data.size();
+        launcherData = &data[0];
+    }
+
+    FlashVolumeWriter writer;
+    if (!writer.begin(FlashVolume::T_LAUNCHER, launcherSize)) {
+        LOG(("FLASH: Insufficient space for launcher binary\n"));
+        return false;
+    }
+
+    writer.appendPayload(launcherData, launcherSize);
+    writer.commit();
+    return true;
 }
 
 bool FlashStorage::checkData()
@@ -127,8 +188,10 @@ bool FlashStorage::checkData()
         data->header.cube_count != arraysize(data->cubes) ||
         data->header.cube_nvmSize != sizeof data->cubes[0].nvm ||
         data->header.cube_extSize != sizeof data->cubes[0].ext ||
+        data->header.cube_sectorSize != Cube::FlashModel::SECTOR_SIZE ||
         data->header.mc_pageSize != FlashDevice::PAGE_SIZE ||
-        data->header.mc_capacity != FlashDevice::CAPACITY) {
+        data->header.mc_capacity != FlashDevice::CAPACITY ||
+        data->header.mc_blockSize != FlashDevice::ERASE_BLOCK_SIZE) {
         LOG(("FLASH: Storage file has an unsupported memory layout\n"));
         return false;
     }
@@ -172,16 +235,17 @@ bool FlashStorage::mapFile(const char *filename)
 
 #else
 
-    fileHandle = open(filename, O_RDWR | O_CREAT, 0777);
+    int fh = open(filename, O_RDWR | O_CREAT, 0777);
     struct stat st;
 
-    if (fileHandle < 0 || fstat(fileHandle, &st)) {
-        if (fileHandle >= 0)
-            close(fileHandle);
+    if (fh < 0 || fstat(fh, &st)) {
+        if (fh >= 0)
+            close(fh);
         LOG(("FLASH: Can't open backing file '%s' (%s)\n",
             filename, strerror(errno)));
         return false;
     }
+    fileHandle = fh;
 
     bool newFile = (unsigned)st.st_size == (unsigned)0;
     if ((unsigned)st.st_size < (unsigned)sizeof *data && ftruncate(fileHandle, sizeof *data)) {

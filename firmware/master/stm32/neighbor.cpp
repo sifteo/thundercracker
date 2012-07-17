@@ -5,173 +5,274 @@
 
 #include "neighbor.h"
 #include "board.h"
+#include "bits.h"
+
+GPIOPin Neighbor::inPins[] = {
+    NBR_IN1_GPIO,
+    NBR_IN2_GPIO,
+#if (BOARD == BOARD_TEST_JIG)
+    NBR_IN3_GPIO,
+    NBR_IN4_GPIO,
+#endif
+};
+
+GPIOPin Neighbor::outPins[] = {
+    NBR_OUT1_GPIO,
+    NBR_OUT2_GPIO,
+#if (BOARD == BOARD_TEST_JIG)
+    NBR_OUT3_GPIO,
+    NBR_OUT4_GPIO
+#endif
+};
+
+GPIOPin Neighbor::bufferPin = NBR_BUF_GPIO;
 
 void Neighbor::init()
 {
-    txData = 0;
+    bufferPin.setControl(GPIOPin::OUT_2MHZ);
 
-    out1.setControl(GPIOPin::OUT_ALT_50MHZ);
-    out2.setControl(GPIOPin::OUT_ALT_50MHZ);
-    out3.setControl(GPIOPin::OUT_ALT_50MHZ);
-    out4.setControl(GPIOPin::OUT_ALT_50MHZ);
+    txPeriodTimer.init(BIT_PERIOD_TICKS, 0);
+    rxPeriodTimer.init(BIT_PERIOD_TICKS, 0);
 
-    in1.irqInit();
-    in1.irqSetFallingEdge();
-    in1.irqDisable();
+    for (unsigned i = 0; i < NUM_PINS; ++i) {
 
-    // this is currently about 87 us
-    txPeriodTimer.init(625, 4);
+        txPeriodTimer.configureChannelAsOutput(i + 1, HwTimer::ActiveHigh, HwTimer::Pwm1);
+        outPins[i].setControl(GPIOPin::IN_PULL);
+        txPeriodTimer.enableChannel(i + 1);
 
-    rxPeriodTimer.init(900, 0);
-
-    txPeriodTimer.configureChannelAsOutput(1, HwTimer::ActiveHigh, HwTimer::Pwm1);
-    txPeriodTimer.configureChannelAsOutput(2, HwTimer::ActiveHigh, HwTimer::Pwm1);
-    txPeriodTimer.configureChannelAsOutput(3, HwTimer::ActiveHigh, HwTimer::Pwm1);
-    txPeriodTimer.configureChannelAsOutput(4, HwTimer::ActiveHigh, HwTimer::Pwm1);
-}
-
-void Neighbor::enablePwm()
-{
-    out1.setControl(GPIOPin::OUT_ALT_50MHZ);
-    out2.setControl(GPIOPin::OUT_ALT_50MHZ);
-    out3.setControl(GPIOPin::OUT_ALT_50MHZ);
-    out4.setControl(GPIOPin::OUT_ALT_50MHZ);
-
-    txPeriodTimer.enableChannel(1);
-    txPeriodTimer.enableChannel(2);
-    txPeriodTimer.enableChannel(3);
-    txPeriodTimer.enableChannel(4);
-
-    txPeriodTimer.enableUpdateIsr();
+        GPIOPin &in = inPins[i];
+        in.irqInit();
+        in.irqSetFallingEdge();
+        in.irqDisable();
+        in.setControl(GPIOPin::IN_FLOAT);
+    }
 }
 
 void Neighbor::setDuty(uint16_t duty)
 {
-    txPeriodTimer.setDuty(1, duty);
-    txPeriodTimer.setDuty(2, duty);
-    txPeriodTimer.setDuty(3, duty);
-    txPeriodTimer.setDuty(4, duty);
-}
-
-void Neighbor::disablePwm()
-{
-    txPeriodTimer.disableChannel(1);
-    txPeriodTimer.disableChannel(2);
-    txPeriodTimer.disableChannel(3);
-    txPeriodTimer.disableChannel(4);
-
-    out1.setControl(GPIOPin::IN_FLOAT);
-    out2.setControl(GPIOPin::IN_FLOAT);
-    out3.setControl(GPIOPin::IN_FLOAT);
-    out4.setControl(GPIOPin::IN_FLOAT);
+    for (unsigned i = 1; i < NUM_PINS + 1; ++i)
+        txPeriodTimer.setDuty(i, duty);
 }
 
 /*
  * Begin the transmission of 'data'.
+ *
+ * Continue transmitting 'data' on a regular basis, until stopTransmitting()
+ * is invoked. We wait NUM_TX_WAIT_PERIODS bit periods between transmissions.
+ *
+ * In the event that a transmission is ongoing, 'data' is buffered
+ * until the start of the next transmission. sideMask is applied immediately.
  */
-void Neighbor::beginTransmit(uint16_t data)
+void Neighbor::beginTransmitting(uint16_t data, uint8_t sideMask)
 {
-    txData = data;
-    transmitNextBit();  // ensure duty is set before enabling pwm channels
-    enablePwm();
+    txDataBuffer = data;
+
+    // configure pins according to sideMask
+    for (unsigned i = 0; i < NUM_PINS; ++i) {
+        GPIOPin::Control c = (sideMask & (1 << i)) ? GPIOPin::OUT_ALT_50MHZ : GPIOPin::IN_PULL;
+        outPins[i].setControl(c);
+    }
+
+    // starting from idle? reinit state machine
+    if (txState == Idle) {
+        data = txDataBuffer;
+        txState = Transmitting;
+        txPeriodTimer.enableUpdateIsr();
+        // transmission will begin at the next txPeriodISR
+    }
+}
+
+void Neighbor::stopTransmitting()
+{
+    txPeriodTimer.disableUpdateIsr();
+    setDuty(0);
+    for (unsigned i = 0; i < NUM_PINS; ++i)
+        outPins[i].setControl(GPIOPin::IN_PULL);
+    txState = Idle;
 }
 
 /*
  * Called when the PWM timer has reached the end of its counter, ie the end of a
  * bit period.
+ *
+ * The duty value is loaded into the PWM device at the update counter event.
+ *
+ * We might be in the middle of transmitting some data, or we might be in our
+ * waiting period between transmissions. Move along accordingly.
  */
-void Neighbor::transmitNextBit()
+void Neighbor::txPeriodISR()
 {
-    // if there are no more bits to send, we're done
-    if (!isTransmitting()) {
-        disablePwm();
-        return;
-    }
+    uint16_t status = txPeriodTimer.status();
+    txPeriodTimer.clearStatus();
 
-    // set the duty for this bit period
-    setDuty((txData & 1) ? TX_ACTIVE_PULSE_DUTY : 0);
-    txData >>= 1;
+    // update event
+    if (status & 0x1) {
+
+        switch (txState) {
+
+        case Transmitting:
+            // was the previous bit our last one?
+            if (txData == 0) {
+                setDuty(0);
+                txWaitPeriods = NUM_TX_WAIT_PERIODS;
+                txState = BetweenTransmissions;
+            } else {
+                // send data out big endian
+                setDuty((txData & 0x8000) ? PULSE_LEN_TICKS : 0);
+                txData <<= 1;
+            }
+            break;
+
+        case BetweenTransmissions:
+            if (--txWaitPeriods == 0) {
+                // load data from our buffer and update our state
+                txData = txDataBuffer;
+                txState = Transmitting;
+            }
+            break;
+
+        case Idle:
+            // should never be called
+            break;
+        }
+    }
 }
 
-
-void Neighbor::beginReceiving()
+/*
+ * Initialize state, and enable IRQs on input pins.
+ * Bit period timer gets enabled after we receive a start bit.
+ */
+void Neighbor::beginReceiving(uint8_t mask)
 {
-    receiving_side = -1;
-    in1.setControl(GPIOPin::IN_FLOAT);
-    in1.irqEnable();
+    bufferPin.setHigh();
+
+    rxPeriodTimer.disableUpdateIsr();
+    rxState = WaitingForStart;
+    receivingSide = 0;  // just initialize to something safe
+    rxBitCounter = 0;   // incremented at the end of each bit period
+
+    for (unsigned i = 0; i < NUM_PINS; ++i) {
+
+        outPins[i].setControl(GPIOPin::IN_FLOAT);
+
+        GPIOPin &in = inPins[i];
+        if (mask & (1 << i))
+            in.irqEnable();
+        else
+            in.irqDisable();
+    }
+}
+
+/*
+ * Disable IRQs for input pins and rx timer.
+ */
+void Neighbor::stopReceiving()
+{
+    for (unsigned i = 0; i < NUM_PINS; ++i)
+        inPins[i].irqDisable();
+
+    rxPeriodTimer.disableUpdateIsr();
+    bufferPin.setLow();
 }
 
 /*
  * Called from within the EXTI ISR for one of our neighbor RX inputs.
+ * OR a 1 into our rxDataBuffer for this bit period.
+ *
+ * NOTE: rxDataBuffer gets shifted at the bit period boundary (rxPeriodIsr())
  */
 void Neighbor::onRxPulse(uint8_t side)
 {
-    if (side == 0) {
-        in1.irqAcknowledge();
+    inPins[side].irqAcknowledge();
 
-        out1.setControl(GPIOPin::OUT_2MHZ);
-        out1.setLow();
+    GPIOPin &out = outPins[side];
+    out.setControl(GPIOPin::OUT_2MHZ);
+    out.setLow();
 
-        switch (rxState) {
-        case WaitingForStart:
-            received_data_buffer = 1;  //set bit 0 to 1
-            input_bit_counter = 1;
-            rxState = Squelch;
-            break;
+    /*
+     * Start of a new sequence?
+     * Record which side we're listening to and disable the others.
+     */
+    if (rxState == WaitingForStart) {
+        /*
+         * Treat this as though we're at the end of our first bit period,
+         * during which we received a pulse. We're now just starting our
+         * second bit period to listen for the next pulse.
+         */
+        rxBitCounter = 1;
+        rxDataBuf.halfword = 1 << 1;     // init bit 0 to 1 - we're here because we received a pulse after all
 
-        case WaitingForNextBit:
-        case Squelch:
-            received_data_buffer |= (1 << input_bit_counter);
-            input_bit_counter++;
-            rxState = Squelch;
-            break;
+        receivingSide = side;
+        rxState = ReceivingData;
+
+        /*
+         * Sync our counter to this start bit, but wait as long as posible
+         * to reset our counter, such that we're sampling
+         * as far into the bit period as possible
+         */
+        rxPeriodTimer.setCount(0);
+        rxPeriodTimer.enableUpdateIsr();
+
+    } else {
+        // Otherwise, record the new bit that has arrived.
+        if (side == receivingSide) {
+            rxDataBuf.halfword |= 0x1;
         }
-    }
-
-    if (side == 1)  {
-        in2.irqAcknowledge();
-    }
-
-    if (side == 2)  {
-        in3.irqAcknowledge();
-    }
-
-    if (side == 3)  {
-        in4.irqAcknowledge();
     }
 }
 
 /*
  * Our bit period timer has expired during an RX operation.
+ *
+ * Allow our output pin to float, stopping the squelch on the tank.
+ *
+ * If this was the last bit in a transmission, verify that it's valid,
+ * and reset our state. Otherwise, shift the value received during this bit
+ * period along 'rxDataBuffer'
  */
-void Neighbor::rxPeriodIsr()
+bool Neighbor::rxPeriodIsr(uint8_t &side, uint16_t &rxdata)
 {
-    out1.setControl(GPIOPin::IN_FLOAT);
+    uint32_t status = rxPeriodTimer.status();
+    rxPeriodTimer.clearStatus();
 
-    switch (rxState) {
-    case Squelch:
-        rxState = WaitingForNextBit;
-        break;
+    // update event
+    if (status & 0x1) {
+        outPins[receivingSide].setControl(GPIOPin::IN_FLOAT);
 
-    case WaitingForNextBit:
-        // input bit must be a zero
-        input_bit_counter++;
-        rxState = Squelch;
-        if (input_bit_counter >= NUM_RX_BITS) {
-            lastRxData = received_data_buffer;
+        // if we haven't gotten a start bit, nothing to do here
+        if (rxState == WaitingForStart)
+            return false;
+
+        rxBitCounter++;
+
+        if (rxBitCounter < NUM_RX_BITS) {
+            rxDataBuf.halfword <<= 1;
+        } else {
+
+            rxPeriodTimer.disableUpdateIsr();
             rxState = WaitingForStart;
-            received_data_buffer = 0;
+
+            /*
+             * The second byte of a successful message must match the complement
+             * of its first byte, rotated right by 5.
+             * Enforce that here before forwarding the message.
+             */
+            uint8_t checkbyte = ROR8(~rxDataBuf.bytes[1], 5);
+
+            /*
+             * Check the header explicitly - packets with a bogus header would
+             * get rejected on the cubes since they would start listening on
+             * the wrong side and the packet would be dropped.
+             */
+            bool headerOK = (rxDataBuf.bytes[1] & 0xe0) == 0xe0;
+
+            if (headerOK && checkbyte == rxDataBuf.bytes[0]) {
+                side = receivingSide;
+                rxdata = rxDataBuf.halfword;
+                return true;
+            }
         }
-        break;
-
-    default:
-        break;
     }
-}
 
-uint16_t Neighbor::getLastRxData()
-{
-    uint16_t val = lastRxData;
-    lastRxData = 0;
-    return val;
+    return false;
 }

@@ -7,6 +7,7 @@
  */
 
 #include "frontend.h"
+#include "mc_audiovisdata.h"
 
 static const Color msgColor(1, 1, 0.2);
 static const Color helpTextColor(1, 1, 1);
@@ -19,7 +20,11 @@ static const Color inspectorTextColor(1, 1, 1);
 
 
 FrontendOverlay::FrontendOverlay()
-    : helpVisible(false), inspectorVisible(false) {}
+    : helpVisible(false), 
+      inspectorVisible(false),
+      visualizerVisible(false),
+      visualizerAlpha(0)
+{}
 
 void FrontendOverlay::init(GLRenderer *_renderer, System *_sys)
 {
@@ -61,11 +66,14 @@ void FrontendOverlay::draw()
         else
             realTimeColor.set(1, 0.5, 0.5);
 
-        // Calculate cube hardware rates
+        // Calculate cube hardware rates.
+        //
+        // (Note that opt_numCubes is not synchronized with this thread,
+        // but that's okay. This only needs to be an estimated cube count.)
         
         for (unsigned i = 0; i < sys->opt_numCubes; i++) {
             // FPS (LCD writes per second)
-            cubes[i].lcd_wr.update(slowTimer, sys->cubes[i].lcd.getWriteCount());
+            cubes[i].lcd_wr.update(slowTimer, sys->cubes[i].lcd.getFrameCount());
             snprintf(cubes[i].fps, sizeof cubes[i].fps,
                      "#%d - %.1f FPS", i, cubes[i].lcd_wr.getHZ());
         }
@@ -79,6 +87,15 @@ void FrontendOverlay::draw()
     
     moveTo(renderer->getWidth() - margin, margin);
     text(helpHintColor, "Press 'H' for help", 1.0f);
+
+    // Visualizer states: Hidden, mixer idle, active
+    float visTargetAlpha =
+        !visualizerVisible ? 0.0f :
+        !MCAudioVisData::instance.mixerActive ? 0.5f :
+        1.0f;
+    
+    visualizerAlpha += (visTargetAlpha - visualizerAlpha) * 0.2f;
+    renderer->overlayAudioVisualizer(visualizerAlpha);
 
     if (helpVisible) {
         drawHelp();
@@ -101,8 +118,7 @@ void FrontendOverlay::drawCubeStatus(FrontendCube *fe, int x, int y)
 
     moveTo(x, y);
 
-    // Do we need to disambiguate which cube is being debugged?
-    if (sys->cubes[id].isDebugging() && sys->opt_numCubes > 1)
+    if (sys->cubes[id].isDebugging())
         text(debugColor, "Debugging", 0.5);
 
     text(ghostColor, cubes[id].fps, 0.5);
@@ -167,6 +183,13 @@ void FrontendOverlay::toggleHelp()
 void FrontendOverlay::toggleInspector()
 {
     inspectorVisible ^= true;
+    postMessage((inspectorVisible ? "Showing" : "Hiding") + std::string(" inspector panel"));
+}
+
+void FrontendOverlay::toggleAudioVisualizer()
+{
+    visualizerVisible ^= true;
+    postMessage((visualizerVisible ? "Showing" : "Hiding") + std::string(" audio visualizer"));
 }
 
 void FrontendOverlay::drawHelp()
@@ -178,12 +201,12 @@ void FrontendOverlay::drawHelp()
         "While pulling, Right-click or Space to hover, again to rotate.",
         "Shift-drag or Right-drag to tilt a cube.",
         "Mouse wheel resizes the play surface.",
-        "'S' - Screenshot, 'F' - Fullscreen, 'T' - Turbo, 'I' - Inspector",
-        "'Z' - Zoom, '1' - 1:1 view, '2' - 2x view.",
-        "Backspace toggles rotation lock.",
-        "+/- Adds/removes cubes.",
         "",
-        APP_COPYRIGHT,
+        "(S)creenshot, (F)ullscreen, (T)urbo, (I)nspector, (V)isualze Audio, (Z)oom",
+        "(1):1 view, (2)x view, (Backspace) toggle rotation lock, (+)/(-) Add/remove cube",
+        "",
+        "Sifteo Hardware Emulator (" TOSTRING(SDK_VERSION) ")\n",
+        APP_COPYRIGHT_LATIN1,
     };
     
     const unsigned numLines = sizeof lines / sizeof lines[0];

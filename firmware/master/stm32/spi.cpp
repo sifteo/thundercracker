@@ -69,16 +69,6 @@ void SPIMaster::init()
     hw->CR1 |=  (1 << 6);   // SPE - enable the spi device
 }
 
-void SPIMaster::begin()
-{
-    csn.setLow();
-}
-
-void SPIMaster::end()
-{
-    csn.setHigh();
-}
-
 uint8_t SPIMaster::transfer(uint8_t b)
 {
     /*
@@ -168,13 +158,20 @@ void SPIMaster::transferDma(const uint8_t *txbuf, uint8_t *rxbuf, unsigned len)
 
     For now, enable both channels, and provide a dummy mem pointer for RX and
     disable its MINC bit.
+
+    NB: I've been seeing what appear to be highly intermittent DMA failures, but
+        they've been so debugging-resistant that I can't narrow down exactly when
+        or why they happen. So, for added superstition, I'm keeping the priority
+        equal for the TX and RX DMA transfers, even though we don't need the RX
+        data in this case. I think this may be able to trigger some kind of deadlock
+        between the SPI peripheral and DMA controller.
 */
 void SPIMaster::txDma(const uint8_t *txbuf, unsigned len)
 {
     static uint8_t dummy;
     dmaRxChan->CNDTR = len;
     dmaRxChan->CMAR = (uint32_t)&dummy;
-    dmaRxChan->CCR =    (0 << 12)|  // PL - priority level, 0 == LOW
+    dmaRxChan->CCR =    (2 << 12)|  // PL - priority level, 2 == HIGH
                         (0 << 7) |  // MINC - memory pointer increment
                         (0 << 4) |  // DIR - direction, 0 == read from peripheral
                         (1 << 3) |  // TEIE - transfer error ISR enable
@@ -192,27 +189,6 @@ void SPIMaster::txDma(const uint8_t *txbuf, unsigned len)
 
     hw->CR2 |= (1 << 0) |           // RXDMAEN
                (1 << 1);            // TXDMAEN
-}
-
-/*
-    This isn't typically that useful since slaves will not generally spew out
-    data unsolicited, but it's here for completeness' sake.
-    Typically use transferDma() instead,
-    and just reuse the same buffer for both rx & tx.
-*/
-void SPIMaster::rxDma(uint8_t *rxbuf, unsigned len)
-{
-    dmaRxChan->CNDTR = len;
-    dmaRxChan->CMAR = (uint32_t)rxbuf;
-
-    dmaRxChan->CCR =    (2 << 12)|  // PL - priority level, 2 == HIGH
-                        (1 << 7) |  // MINC - memory pointer increment
-                        (0 << 4) |  // DIR - direction, 0 == read from peripheral
-                        (1 << 3) |  // TEIE - transfer error ISR enable
-                        (0 << 2) |  // HTIE - half complete ISR enable
-                        (1 << 1) |  // TCIE - transfer complete ISR enable
-                        (1 << 0);   // EN - enable DMA channel
-    hw->CR2 |= (1 << 0);            // RXDMAEN
 }
 
 bool SPIMaster::dmaInProgress() const
@@ -245,17 +221,7 @@ void SPIMaster::dmaCallback(void *p, uint8_t flags)
     spi->dmaRxChan->CCR = 0;
     spi->hw->CR2 &= ~((1 << 1) | (1 << 0)); // disable DMA RX & TX
 
-#if 0
-    // debugging
-    Usart::Dbg.write("dma cb!\r\n");
-    if (flags & Dma::Error) {
-        Usart::Dbg.write("  error\r\n");
+    if (spi->completionCB) {
+        spi->completionCB(spi->completionParam);
     }
-    if (flags & Dma::Complete) {
-        Usart::Dbg.write("  complete\r\n");
-    }
-    if (flags & Dma::HalfComplete) {
-        Usart::Dbg.write("  half complete\r\n");
-    }
-#endif
 }

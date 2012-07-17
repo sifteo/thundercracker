@@ -1,0 +1,44 @@
+#ifndef SAMPLEPROFILER_H_
+#define SAMPLEPROFILER_H_
+
+#include "hwtimer.h"
+#include "usbprotocol.h"
+
+class SampleProfiler
+{
+public:
+
+    enum SubSystem {
+        None,
+        Reserved_1,
+        AudioPull,
+        SVCISR,
+        RFISR,
+    };
+
+    enum Command {
+        SetProfilingEnabled
+    };
+
+    static void init();
+
+    static void onUSBData(const USBProtocolMsg &m);
+
+    static void processSample(uint32_t pc);
+    static void task(void *p);
+
+    static ALWAYS_INLINE SubSystem subsystem() {
+        return subsys;
+    }
+
+    static ALWAYS_INLINE void setSubsystem(SubSystem s) {
+        subsys = s;
+    }
+
+private:
+    static SubSystem subsys;
+    static uint32_t sampleBuf;  // currently just a single sample
+    static HwTimer timer;
+};
+
+#endif // SAMPLEPROFILER_H_

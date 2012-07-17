@@ -10,6 +10,7 @@
 #include "nrf24l01.h"
 #include "debug.h"
 #include "board.h"
+#include "sampleprofiler.h"
 
 NRF24L01 NRF24L01::instance(RF_CE_GPIO,
                             RF_IRQ_GPIO,
@@ -17,9 +18,14 @@ NRF24L01 NRF24L01::instance(RF_CE_GPIO,
                                       RF_SPI_CSN_GPIO,      //   CSN
                                       RF_SPI_SCK_GPIO,      //   SCK
                                       RF_SPI_MISO_GPIO,     //   MISO
-                                      RF_SPI_MOSI_GPIO));   //   MOSI
+                                      RF_SPI_MOSI_GPIO,     //   MOSI
+                                      staticSpiCompletionHandler));
+bool NRF24L01::rfTestModeEnabled = false;
 
 void NRF24L01::init() {
+
+    STATIC_ASSERT(Radio::DEFAULT_HARD_RETRIES == MAX_HW_RETRIES);
+
     /*
      * Common hardware initialization, regardless of radio usage mode.
      */
@@ -46,7 +52,7 @@ void NRF24L01::init() {
         2, CMD_W_REGISTER | REG_RX_PW_P0,       32,
         
         /* Auto retry delay, 500us, 15 retransmits */
-        2, CMD_W_REGISTER | REG_SETUP_RETR,     0x1f,
+        2, CMD_W_REGISTER | REG_SETUP_RETR,     0x10 | hardRetries,
 
         /* 5-byte address width */
         2, CMD_W_REGISTER | REG_SETUP_AW,       0x03,
@@ -72,19 +78,15 @@ void NRF24L01::init() {
      * trigger spuriously during init.
      */
     irq.irqEnable();
-}
 
-void NRF24L01::ptxMode()
-{
     /*
      * Setup for Primary Transmitter (PTX) mode
      */
-
     const uint8_t ptx_setup[]  = {
         /* Discard any packets queued in hardware */
         1, CMD_FLUSH_RX,
         1, CMD_FLUSH_TX,
-        
+
         /* Clear write-once-to-clear bits */
         2, CMD_W_REGISTER | REG_STATUS,         0x70,
 
@@ -93,32 +95,56 @@ void NRF24L01::ptxMode()
 
         0
     };
-    spi.transferTable(ptx_setup); 
+    spi.transferTable(ptx_setup);
+}
 
-    /*
-     * XXX: Super-Gross hack! Give the radio 100ms right here, to initialize.
-     *
-     * It needs to be fully ready to transmit a packet by the time we
-     * run transmitPacket(), otherwise that first transmit will fail and
-     * we'll never get the IRQ that we would be using to start future
-     * transmissions.
-     *
-     * We can do this asynchronously instead, firing off a timer after a while
-     * which starts the first transmit. But instead, we'll probably just want
-     * to integrate this with some new code that tracks whether we're actively
-     * transmitting or not, since there's a lot of overlap between this bugfix
-     * and some much needed radio throttling / power management.
-     */
-
-    for (unsigned i = 0; i < 100000; i++)
-        spi.transfer(0);  // About 1us
-
+void NRF24L01::beginTransmitting()
+{
     /*
      * Transmit the first packet. Subsequent packets will be sent from
      * within the isr().
      */
 
-    transmitPacket();
+    beginTransmit();
+}
+
+/*
+ * Test mode support for going to PRX-mode.
+ * Mask Rx interrupt to skip any packet handling
+ * Hold CE high
+ */
+void NRF24L01::setPRXMode(bool enabled)
+{
+    if (enabled) {
+        /* Radio in PRX mode with IRQs masked */
+
+        spi.begin();
+        spi.transfer(CMD_W_REGISTER | REG_CONFIG);
+        spi.transfer(0x7f);
+        spi.end();
+
+        ce.setHigh();
+
+    } else {
+
+        /* Radio back to PTX mode */
+        const uint8_t ptx_setup[]  = {
+            /* Discard any packets queued in hardware */
+            1, CMD_FLUSH_RX,
+            1, CMD_FLUSH_TX,
+
+            /* Clear write-once-to-clear bits */
+            2, CMD_W_REGISTER | REG_STATUS,         0x70,
+
+            /* 16-bit CRC, radio enabled, IRQs enabled */
+            2, CMD_W_REGISTER | REG_CONFIG,         0x0e,
+
+            0
+        };
+        spi.transferTable(ptx_setup);
+
+        ce.setLow();
+    }
 }
 
 /*
@@ -160,6 +186,21 @@ void NRF24L01::setConstantCarrier(bool enabled, unsigned channel)
     }
 }
 
+/*
+ * Configure the retry behavior of the radio driver.
+ * Always maintain our auto retry delay of 500us
+ */
+void NRF24L01::applyRetryCount()
+{
+    hardRetries = hardRetriesPending;
+    softRetriesMax = softRetriesMaxPending;
+
+    spi.begin();
+    spi.transfer(CMD_W_REGISTER | REG_SETUP_RETR);
+    spi.transfer(0x10 | hardRetries);
+    spi.end();
+}
+
 void NRF24L01::setTxPower(Radio::TxPower pwr)
 {
     spi.begin();
@@ -180,6 +221,9 @@ Radio::TxPower NRF24L01::txPower()
 
 void NRF24L01::isr()
 {
+    SampleProfiler::SubSystem s = SampleProfiler::subsystem();
+    SampleProfiler::setSubsystem(SampleProfiler::RFISR);
+
     // Acknowledge to the IRQ controller
     irq.irqAcknowledge();
 
@@ -207,22 +251,24 @@ void NRF24L01::isr()
 
     case TX_DS:
         // Successful transmit, no ACK data
-        RadioManager::ackEmpty();
-        transmitPacket();
+        ackEmpty();
+        beginTransmit();
         break;
 
     case TX_DS | RX_DR:
         // Successful transmit, with an ACK
-        receivePacket();
-        transmitPacket();
+        beginReceive();
+        // The next transmission begins once this receive is completed
         break;
 
     default:
         // Other cases are not allowed. Do something non-fatal...
         Debug::log("Unhandled nRF IRQ status");
-        transmitPacket();
+        beginTransmit();
         break;
     }
+
+    SampleProfiler::setSubsystem(s);
 }
 
 void NRF24L01::handleTimeout()
@@ -234,11 +280,11 @@ void NRF24L01::handleTimeout()
      * timeout on to RadioManager so it can take more permanent action.
      */
 
-    if (--softRetriesLeft) {
+    if (softRetriesLeft) {
         /*
          * Retry.. again. The packet is still in our buffer.
          */
-
+        softRetriesLeft--;
         pulseCE();
 
     } else {
@@ -249,13 +295,13 @@ void NRF24L01::handleTimeout()
         spi.begin();
         spi.transfer(CMD_FLUSH_TX);
         spi.end();
-        
-        RadioManager::timeout();
-        transmitPacket();
+
+        timeout();
+        beginTransmit();
     }
 }
 
-void NRF24L01::receivePacket()
+void NRF24L01::beginReceive()
 {
     /*
      * A packet has been received. Dequeue it from the hardware
@@ -264,35 +310,14 @@ void NRF24L01::receivePacket()
      * Called from interrupt context.
      */
 
+    txnState = RXStatus;
     spi.begin();
-    spi.transfer(CMD_R_RX_PL_WID);
-    rxBuffer.len = spi.transfer(0);
-    spi.end();
-
-    if (rxBuffer.len > rxBuffer.MAX_LEN) {
-        /*
-         * Receive error. The data sheet requires that we flush the RX
-         * FIFO.  We'll count this as a timeout.
-         */
-
-        spi.begin();
-        spi.transfer(CMD_FLUSH_RX);
-        spi.end();
-
-        RadioManager::timeout();
-        return;
-    }
-
-    spi.begin();
-    spi.transfer(CMD_R_RX_PAYLOAD);
-    for (unsigned i = 0; i < rxBuffer.len; i++)
-        rxBuffer.bytes[i] = spi.transfer(0);
-    spi.end();
-
-    RadioManager::ackWithPacket(rxBuffer);
+    // NOTE: reusing rxData for these status bytes
+    rxData[0] = CMD_R_RX_PL_WID;
+    spi.transferDma(rxData, rxData, 2);
 }
  
-void NRF24L01::transmitPacket()
+void NRF24L01::beginTransmit()
 {
     /*
      * This is an opportunity to transmit. Ask RadioManager to produce
@@ -303,47 +328,29 @@ void NRF24L01::transmitPacket()
      * ways. We assume that re-entry only occurs after ce.setHigh().
      */
 
+    // Retry update requested?
+    if (hardRetriesPending != hardRetries || softRetriesMaxPending != softRetriesMax) {
+        applyRetryCount();
+    }
+
     txBuffer.noAck = false;
-    RadioManager::produce(txBuffer);
-    softRetriesLeft = SOFT_RETRY_MAX;
+    produce(txBuffer);
+    softRetriesLeft = softRetriesMax;
 
 #ifdef DEBUG_MASTER_TX
     Debug::logToBuffer(txBuffer.packet.bytes, txBuffer.packet.len);
 #endif
 
     /*
-     * Set the tx/rx address and channel
+     * Fire off our transmit process. Subsequent steps are performed in the
+     * SPI completion event.
      */
 
+    txnState = TXChannel;
     spi.begin();
-    spi.transfer(CMD_W_REGISTER | REG_RF_CH);
-    spi.transfer(txBuffer.dest->channel);
-    spi.end();
-
-    spi.begin();
-    spi.transfer(CMD_W_REGISTER | REG_TX_ADDR);
-    for (unsigned i = 0; i < sizeof txBuffer.dest->id; i++)
-        spi.transfer(txBuffer.dest->id[i]);
-    spi.end();
-
-    spi.begin();
-    spi.transfer(CMD_W_REGISTER | REG_RX_ADDR_P0);
-    for (unsigned i = 0; i < sizeof txBuffer.dest->id; i++)
-        spi.transfer(txBuffer.dest->id[i]);
-    spi.end();
-
-    /*
-     * Enqueue the packet
-     */
-
-    spi.begin();
-    spi.transfer(txBuffer.noAck ? CMD_W_TX_PAYLOAD_NO_ACK : CMD_W_TX_PAYLOAD);
-    for (unsigned i = 0; i < txBuffer.packet.len; i++)
-        spi.transfer(txBuffer.packet.bytes[i]);
-    spi.end();
-
-    // Start the transmitter!
-    pulseCE();
+    txAddressBuffer[0] = CMD_W_REGISTER | REG_RF_CH;
+    txAddressBuffer[1] = txBuffer.dest->channel;
+    spi.txDma(txAddressBuffer, 2);
 }
 
 void NRF24L01::pulseCE()
@@ -351,16 +358,108 @@ void NRF24L01::pulseCE()
     /*
      * Pulse CE for at least 10us to start transmitting.
      *
-     * XXX: Big hack. This should be asynchronous, and the timing
-     *      should be based on the system clock. Right now I'm just
-     *      using a dummy SPI transaction for timing purposes. Gross!
-     *      Okay, well, maybe using SPI transactions for timing isn't
-     *      the worst idea ever. But doing this all synchronously
-     *      in the ISR is pretty bad!
+     * This is a little bit sneaky, but use a dummy transaction on the SPI bus
+     * (note, no chip select) to time the pulse. The SPI peripheral consumes
+     * less power than it would take to fire up another timer peripheral,
+     * so it's a bit cheaper this way.
+     *
+     * The pulse ends in the spi completion handler.
      */
 
+    txnState = TXPulseCE;
     ce.setHigh();
-    for (unsigned i = 0; i < 10; i++)
-        spi.transfer(0);
-    ce.setLow();
+    spi.txDma(txData, 10);
+}
+
+void NRF24L01::staticSpiCompletionHandler(void *p)
+{
+    NRF24L01::instance.onSpiComplete();
+}
+
+/*
+ * An SPI transmission has completed.
+ * NRF transmit and receive operations consist of multiple SPI transmissions,
+ * so step to the next state and execute accordingly.
+ *
+ * NOTE: the RX states are only executed in the event that data arrived on one
+ * of the ACK packets that we've received. Otherwise, we start in directly on
+ * the TX states.
+ */
+void NRF24L01::onSpiComplete()
+{
+    SampleProfiler::SubSystem s = SampleProfiler::subsystem();
+    SampleProfiler::setSubsystem(SampleProfiler::RFISR);
+
+    spi.end();
+    switch (txnState) {
+
+    case RXStatus:
+        /*
+         * we've read the number of bytes that have arrived. Check for error,
+         * and proceed to reading the payload data.
+         */
+        rxBuffer.len = rxData[1];
+        if (rxBuffer.len > rxBuffer.MAX_LEN) {
+            /*
+             * Receive error. The data sheet requires that we flush the RX
+             * FIFO.  We'll count this as a timeout.
+             */
+
+            spi.begin();
+            spi.transfer(CMD_FLUSH_RX);
+            spi.end();
+
+            txnState = Idle;
+            timeout();
+            break;
+        }
+
+        txnState = RXPayload;
+        rxData[0] = CMD_R_RX_PAYLOAD;
+        spi.begin();
+        spi.transferDma(rxData, rxData, rxBuffer.len + 1);
+        break;
+
+    case RXPayload:
+        ackWithPacket(rxBuffer);
+        beginTransmit();
+        break;
+
+    case TXChannel:
+        txnState = TXAddressTx;
+        spi.begin();
+        txAddressBuffer[0] = CMD_W_REGISTER | REG_TX_ADDR;
+        memcpy(txAddressBuffer + 1, txBuffer.dest->id, sizeof txBuffer.dest->id);
+        spi.txDma(txAddressBuffer, sizeof(txBuffer.dest->id) + 1);
+        break;
+
+    case TXAddressTx:
+        txnState = TXAddressRx;
+        spi.begin();
+        txAddressBuffer[0] = CMD_W_REGISTER | REG_RX_ADDR_P0;
+        memcpy(txAddressBuffer + 1, txBuffer.dest->id, sizeof txBuffer.dest->id);
+        spi.txDma(txAddressBuffer, sizeof(txBuffer.dest->id) + 1);
+        break;
+
+    case TXAddressRx:
+        txnState = TXPayload;
+        spi.begin();
+        txData[0] = txBuffer.noAck ? CMD_W_TX_PAYLOAD_NO_ACK : CMD_W_TX_PAYLOAD;
+        spi.txDma(txData, txBuffer.packet.len + 1);
+        break;
+
+    case TXPayload:
+        pulseCE();
+        break;
+
+    case TXPulseCE:
+        txnState = Idle;
+        ce.setLow();
+        break;
+
+    case Idle:
+        break;
+    }
+
+    SampleProfiler::setSubsystem(s);
 }

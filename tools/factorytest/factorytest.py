@@ -1,6 +1,6 @@
-import sys, usb.core, usb.util
-import serial
-import mastertests
+import sys, time, inspect
+import usb.core, usb.util, serial
+import mastertests, jigtests
 
 IN_EP = 0x81
 OUT_EP = 0x1
@@ -36,6 +36,9 @@ class SerialDevice(object):
         return TestResponse(payload[0], payload[1:])
 
 class UsbDevice(object):
+
+    MAX_PACKET = 64
+
     def __init__(self, pid):
         self._dev = usb.core.find(idVendor = SIFTEO_VID, idProduct = pid)
         if self._dev is None:
@@ -43,11 +46,11 @@ class UsbDevice(object):
         self._dev.set_configuration()
 
     def txPacket(self, bytes):
-        bytestr = "".join(chr(b) for b in bytes)
-        self._dev.write(OUT_EP, bytestr)
+        self._dev.write(OUT_EP, bytes)
 
-    def rxPacket(self, numbytes, timeout):
-        self._dev.read(IN_EP, numbytes, timeout = timeout)
+    def rxPacket(self, timeout = 250):
+        payload = self._dev.read(IN_EP, UsbDevice.MAX_PACKET, timeout = timeout)
+        return TestResponse(payload[0], payload[1:])
 
 # simple manager to lazily access devices
 class DeviceManager(object):
@@ -82,23 +85,27 @@ class TestRunner(object):
         return self.successCount + self.failCount
 
     def run(self, t):
+        sys.stdout.write("running %s... " % t.func_name)
         success = t(self.mgr)
         if success == False:
-            print "%s... FAIL" % t.func_name
+            print "FAIL"
             self.failCount = self.failCount + 1
         else:
+            print "SUCCESS"
             self.successCount = self.successCount + 1
 
     @staticmethod
     def runAll(devManager):
         runner = TestRunner(devManager)
 
-        # TODO: better way to aggregate tests automatically
-        runner.run(mastertests.NrfComms)
-        runner.run(mastertests.ExternalFlashComms)
-        runner.run(mastertests.ExternalFlashReadWrite)
-        runner.run(mastertests.LedTest)
-        runner.run(mastertests.UniqueIdTest)
+        # find all methods with "Test" in them and run them
+        tests = [o for o in inspect.getmembers(mastertests) if inspect.isfunction(o[1])]
+        for t in tests:
+            if "Test" in t[0]:
+                runner.run(t[1])
+
+        # template if you want to manually run a single test
+        # runner.run(mastertests.VBattCurrentDrawTest)
 
         print "COMPLETE. %d tests run, %d failures" % (runner.numTestsRun(), runner.failCount)
         if runner.failCount == 0:
@@ -112,6 +119,10 @@ if __name__ == '__main__':
         print >> sys.stderr, "usage: python factorytest.py <comport>"
         sys.exit(1)
 
-    comport = sys.argv[1]
+    if sys.argv[1] == "testjig":
+        comport = 0
+    else:
+        comport = sys.argv[1]
+
     result = TestRunner.runAll(DeviceManager(comport))
     sys.exit(result)

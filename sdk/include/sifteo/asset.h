@@ -24,9 +24,10 @@ namespace Sifteo {
  */
 
 /**
- * An asset group. At build time, STIR creates a statically
- * initialized instance of the AssetGroup class for every asset group
- * in the game.
+ * @brief A bundle of compressed tile data, for use by AssetImages
+ *
+ * At build time, STIR creates a statically initialized instance of the
+ * AssetGroup class for every asset group in the game.
  *
  * At runtime, AssetGroup objects track the load state of a particular
  * group across all cubes. AssetGroups must be loaded at runtime using
@@ -44,34 +45,49 @@ struct AssetGroup {
     operator _SYSAssetGroup* () { return &sys; }
 
     /**
-     * Get a pointer to the read-only system data for this asset group.
-     * The resulting value is constant at compile-time.
+     * @brief Get a pointer to the read-only system data for this asset group.
+     *
+     * The resulting value is constant at compile-time, if possible. If
+     * the optional 'requireConst' argument is true, this will result in a
+     * link failure if the header cannot be determined to be constant at
+     * compile time.
      */
-    const _SYSAssetGroupHeader *sysHeader() const {
+    ALWAYS_INLINE const _SYSAssetGroupHeader *sysHeader(bool requireConst=false) const {
         // AssetGroups are typically in RAM, but we want the static
         // initializer data so that our return value is known at compile time.
         _SYSAssetGroup *G = (_SYSAssetGroup*)
-            _SYS_lti_initializer(reinterpret_cast<const void*>(&sys), false);
+            _SYS_lti_initializer(reinterpret_cast<const void*>(&sys), requireConst);
         return reinterpret_cast<const _SYSAssetGroupHeader*>(G->pHdr);
     }
 
     /**
-     * Get the size of this asset group, in tiles.
+     * @brief Get the size of this asset group, in tiles.
      */
     unsigned numTiles() const {
         return sysHeader()->numTiles;
     }
 
     /**
-     * Get the compressed size of this asset group, in bytes
+     * @brief How many tiles will this group use up in its AssetSlot?
+     *
+     * This is numTiles(), rounded up to the nearest AssetSlot allocation unit.
+     */
+    unsigned tileAllocation() const {
+        return roundup<unsigned>(numTiles(), _SYS_ASSET_GROUP_SIZE_UNIT);
+    }
+
+    /**
+     * @brief Get the compressed size of this asset group, in bytes
      */
     unsigned compressedSize() const {
         return sysHeader()->dataSize;
     }
 
     /**
-     * Return the base address of this asset group, as loaded onto the
-     * specified cube. The result is only valid if the asset group is
+     * @brief Return the base address of this asset group, as loaded onto the
+     * specified cube.
+     *
+     * The result is only valid if the asset group is
      * already installed on that cube.
      *
      * It is an error to rely on the value of baseAddress() before
@@ -84,7 +100,8 @@ struct AssetGroup {
     }
 
     /**
-     * Is this AssetGroup installed on all cubes in the given vector?
+     * @brief Is this AssetGroup installed on all cubes in the given vector?
+     *
      * Cube vectors are sets of CubeID::bit() values bitwise-OR'ed together.
      *
      * Assets can be installed either explicitly using an AssetLoader, or
@@ -102,7 +119,7 @@ struct AssetGroup {
     }
 
     /**
-     * Is this AssetGroup installed on a particular cube?
+     * @brief Is this AssetGroup installed on a particular cube?
      *
      * If 'true', we may update the asset's cached base address.
      */
@@ -113,7 +130,7 @@ struct AssetGroup {
 
 
 /**
- * An asset slot. Slots are numbered containers, in a cube's flash
+ * @brief AssetSlots are numbered containers, in a cube's flash
  * memory, which can hold AssetGroups.
  *
  * Slots are allocated statically. Any given game has a fixed number of
@@ -142,10 +159,11 @@ struct AssetGroup {
  */
 
 class AssetSlot {
-    _SYSAssetSlot sys;
-    explicit AssetSlot(_SYSAssetSlot sys) : sys(sys) {}
-
 public:
+    _SYSAssetSlot sys;
+
+    /// Explicit conversion from a system object
+    explicit AssetSlot(_SYSAssetSlot sys) : sys(sys) {}
 
     /// Copy constructor
     AssetSlot(const AssetSlot &other) : sys(other.sys) {}
@@ -155,33 +173,36 @@ public:
     operator const _SYSAssetSlot* () const { return &sys; }
 
     /**
-     * Create a new AssetSlot. This function returns
-     * a unique ID which is constant at link-time.
+     * @brief Statically allocate a new AssetSlot.
+     *
+     * This function returns a unique ID which is constant at link-time.
      */
-    static AssetSlot allocate() {
+    ALWAYS_INLINE static AssetSlot allocate() {
         return AssetSlot(_SYS_lti_counter("Sifteo.AssetGroupSlot", 0));
     }
 
     /**
-     * How much space is remaining in this slot, measured in tiles?
+     * @brief How much space is remaining in this slot, measured in tiles?
      */
     unsigned tilesFree() const {
         return _SYS_asset_slotTilesFree(*this);
     }
 
     /**
-     * Is there room in this slot to load a particular AssetGroup
-     * without erasing the slot? This does not check whether the
-     * specified group has already been installed.
+     * @brief Is there room in this slot to load a particular AssetGroup
+     * without erasing the slot?
+     *
+     * This does not check whether the specified group has already been installed.
      */
     bool hasRoomFor(const AssetGroup &group) const {
-        return tilesFree() >= group.numTiles();
+        return tilesFree() >= group.tileAllocation();
     }
 
     /**
-     * Erase this slot. Any existing AssetGroups loaded into this
-     * slot will no longer be loaded, and the slot will be marked
-     * as fully empty.
+     * @brief Erase this slot
+     *
+     * Any existing AssetGroups loaded into this slot will no longer be
+     * loaded, and the slot will be marked as fully empty.
      *
      * After this call, any AssetGroups that were installed here
      * will now return 'false' from isInstalled(). Any tiles rendered
@@ -192,8 +213,9 @@ public:
     }
 
     /**
-     * Mark a particular AssetGroup as a "bootstrap" asset for this slot.
-     * The loader will ensure that this AssetGroup is installed before the
+     * @brief Mark a particular AssetGroup as a "bootstrap" asset for this slot.
+     *
+     * The launcher will ensure that this AssetGroup is installed before the
      * game starts.
      *
      * This function must be called before the AssetGroup is used for
@@ -203,10 +225,10 @@ public:
      * Returns *this, so that bootstrap() can be chained, especially off
      * of allocate().
      */
-    AssetSlot bootstrap(AssetGroup &group) const {
+    ALWAYS_INLINE AssetSlot bootstrap(AssetGroup &group) const {
         // _SYSMetadataBootAsset
         _SYS_lti_metadata(_SYS_METADATA_BOOT_ASSET, "IBBBB",
-            group.sysHeader(), sys, 0, 0, 0);
+            group.sysHeader(true), sys, 0, 0, 0);
 
         // Update base address from the cache. Make sure it was successful.
         _SYSCubeIDVector vec = _SYS_asset_findInCache(group, -1);
@@ -218,11 +240,11 @@ public:
 
 
 /**
- * An AssetLoader object is responsible for installing an AssetGroup into
- * an AssetSlot on one or more cubes. The AssetLoader is a transient object;
- * it can exist only when an actual asset loading operation is taking
- * place, and be deleted or recycled afterwards. Your game can allocate
- * AssetLoaders on the stack, or as part of a union.
+ * @brief AssetLoaders install an AssetGroup into an AssetSlot on one or more cubes.
+ *
+ * The AssetLoader is a transient object; it can exist only when an actual
+ * asset loading operation is taking place, and be deleted or recycled
+ * afterwards. Your game can allocate AssetLoaders on the stack, or as part of a union.
  *
  * Assets can be installed onto any number of cubes concurrently, and each
  * cube can be loading a different AssetGroup.
@@ -239,9 +261,10 @@ struct AssetLoader {
     operator _SYSAssetLoader* () { return &sys; }
 
     /**
-     * Initialize this object. This is made explicit, rather than using
-     * a constructor, so that games can keep AssetLoader in a union if
-     * necessary to save memory.
+     * @brief Initialize this object.
+     *
+     * This is made explicit, rather than using a constructor, so that games
+     * can keep AssetLoader in a union if necessary to save memory.
      *
      * Must be called once, prior to any calls to start().
      */
@@ -251,20 +274,38 @@ struct AssetLoader {
     }
 
     /**
-     * Ensure that the system is no longer using this AssetLoader object.
-     * If all asset downloads complete successfully, there is no need to
-     * call finish(), but doing so is harmless.
+     * @brief Ensure that the system is no longer using this AssetLoader object.
      *
-     * If any asset downloads are still in progress, this cancels them.
-     * A partially downloaded asset group will use up memory in its
-     * AssetSlot, but the asset group will not be marked as 'installed'.
+     * If any loads are still in progress, this function blocks until they complete.
+     * After finish() returns, the loaded AssetGroup has been finalized, and it will
+     * be ready for use.
+     *
+     * This must be called after an asset load is done, before the AssetLoader
+     * object itself is deallocated or recycled. If the asset loading process
+     * is interrupted between start() and finish(), the state of the remote
+     * flash memory associated with this Asset Slot may be indeterminate,
+     * requiring the entire slot to be erased and reloaded.
+     *
+     * If finish() has already been called, has no effect.
      */
     void finish() {
         _SYS_asset_loadFinish(*this);
     }
 
     /**
-     * Start installing group "group" into slot "slot" on some set of cubes,
+     * @brief End any in-progress asset loading operations without finishing them.
+     *
+     * This function is similar to finish(), except that any in-progress asset loading
+     * operations do not finish. Instead, any asset slots written to since the last
+     * finish() will be in an indeterminate state, and the slot must be erased before
+     * any further loading may be attempted.
+     */
+    void cancel() {
+        _SYS_asset_loadCancel(*this);
+    }
+
+    /**
+     * @brief Start installing group "group" into slot "slot" on some set of cubes,
      * identified by the "cubes" bitvector.
      * 
      * See the single-cube version of start() for a detailed explanation.
@@ -274,19 +315,19 @@ struct AssetLoader {
      * We return 'true' if the asset download started and/or we found a cached
      * asset for every one of the specified cubes. If one or more of the
      * specified cubes has no room in "slot", we return false.
+     *
+     * If another asynchronous asset installation is already in progress,
+     * this call will automatically block until that load has finished.
      */
     bool start(AssetGroup &group, AssetSlot slot, _SYSCubeIDVector cubes) {
         if (!_SYS_asset_loadStart(*this, group, slot, cubes))
             return false;
 
-        // Make sure the download actually started. If the system detected
-        // something was wrong, the cubeVec bit will not be set.
-        ASSERT((sys.cubeVec & cubes) == cubes);
         return true;
     }
 
     /**
-     * Start intalling group "group" into slot "slot" on a single cube.
+     * @brief Start intalling group "group" into slot "slot" on a single cube.
      *
      * The asset group may already be cached in "slot" by the system. If
      * so, this function returns 'true' and the asset will immediately be
@@ -302,17 +343,19 @@ struct AssetLoader {
      * be monitored with this object's other methods.
      *
      * If there is no remaining space in AssetSlot, this function returns
-     * 'false' immediately, without starting an asset download. The game must
-     * decide how to proceed at this point. Depending on the game's asset
-     * management strategy, this may indicate a logic error, or it may be
-     * a cue that the AssetSlot needs to be erased.
+     * 'false' immediately, without starting an asset download.
+     *
+     * This typically would indicate a logic error in the game's asset
+     * management. When start() fails, the Asset Slot data for this cube
+     * will be left in a "loading in progress" state, which can only be cleared
+     * by erasing the asset slot.
      */
     bool start(AssetGroup &group, AssetSlot slot, _SYSCubeID cube) {
         return start(group, slot, _SYSCubeIDVector(0x80000000 >> cube));
     }
 
     /**
-     * Which AssetGroup is being installed on the given cube during
+     * @brief Which AssetGroup is being installed on the given cube during
      * this load session?
      *
      * Requires that start() was called at some point on this AssetLoader
@@ -325,7 +368,9 @@ struct AssetLoader {
     }
 
     /**
-     * How much progress has been made on the indicated cube's asset install?
+     * @brief How much progress has been made on the indicated cube's
+     * asset install, in bytes?
+     *
      * Returns the number of bytes of compressed data that have been sent.
      *
      * Note that this measures the number of compressed bytes sent to the cube.
@@ -341,7 +386,9 @@ struct AssetLoader {
     }
 
     /**
-     * How much progress has been made on the indicated cube's asset install?
+     * @brief How much progress has been made on the indicated cube's
+     * asset install, in arbitrary units?
+     *
      * Returns a value between 0 and 'max'. The default value of 100 for
      * 'max' will have us return percent completion.
      *
@@ -361,7 +408,7 @@ struct AssetLoader {
     }
 
     /**
-     * How much progress has been made? This is a version of progress()
+     * @brief How much progress has been made? This is a version of progress()
      * that returns a value scaled between 'min' and 'max'.
      */
     int progress(_SYSCubeID cubeID, int min, int max) const {
@@ -369,7 +416,8 @@ struct AssetLoader {
     }
 
     /**
-     * Is the asset install finished for all cubes in the specified vector?
+     * @brief Is the asset install finished for all cubes in the specified vector?
+     *
      * This only returns 'true' when the install is completely done on all
      * of these cubes, and the AssetGroup is fully available for use in drawing.
      *
@@ -383,16 +431,17 @@ struct AssetLoader {
     }
     
     /**
-     * Is the asset install for "cubeID" finished? This will return true
-     * only when the install is completely done, and the AssetGroup is fully
-     * available for use in drawing.
+     * @brief Is the asset install for "cubeID" finished?
+     * 
+     * This will return true only when the install is completely done,
+     * and the AssetGroup is fully available for use in drawing.
      */
     bool isComplete(_SYSCubeID cubeID) const {
         return isComplete(_SYSCubeIDVector(0x80000000 >> cubeID));
     }
 
     /**
-     * Are all asset installations from this asset loading session complete?
+     * @brief Are all asset installations from this asset loading session complete?
      */
     bool isComplete() const {
         return isComplete(sys.cubeVec);
@@ -401,7 +450,7 @@ struct AssetLoader {
 
 
 /**
- * This is an AssetLoader subclass which automatically calls init() and
+ * @brief An AssetLoader subclass which automatically calls init() and
  * finish() in the constructor and destructor, respectively.
  *
  * The base AssetLoader class does not do this, so that it can be a POD
@@ -417,7 +466,7 @@ public:
 
 
 /**
- * Any kind of asset image, as defined in your STIR script.
+ * @brief Any kind of asset image, as defined in your `stir` script.
  *
  * AssetImage acts as the base class for all tiled assets. It does not
  * imply any particular data representation: an AssetImage may be pinned,
@@ -438,18 +487,40 @@ public:
 struct AssetImage {
     _SYSAssetImage sys;
 
-    // Common accessors for all AssetImage flavors
+    /// Access the AssetGroup instance associated with this AssetImage
     AssetGroup &assetGroup() const { return *reinterpret_cast<AssetGroup*>(sys.pAssetGroup); }
+
+    /// The width of this image, in tiles
     int tileWidth() const { return sys.width; }
+
+    /// The height of this image, in tiles
     int tileHeight() const { return sys.height; }
+
+    /// The (width, height) vector of this image, in tiles
     Int2 tileSize() const { return vec<int>(sys.width, sys.height); }
+
+    /// Half the size of this image, in tiles
     Int2 tileExtent() const { return tileSize() / 2; }
+
+    /// The width of this image, in pixels
     int pixelWidth() const { return sys.width << 3; }
+
+    /// The height of this image, in pixels
     int pixelHeight() const { return sys.height << 3; }
+
+    /// The (width, height) vector of this image, in pixels
     Int2 pixelSize() const { return vec<int>(sys.width << 3, sys.height << 3); }
+
+    /// Half the size of this image, in pixels
     Int2 pixelExtent() const { return pixelSize() / 2; }
+
+    /// Access the number of 'frames' in this image
     int numFrames() const { return sys.frames; }
+
+    /// Compute the total number of tiles per frame (tileWidth * tileHeight)
     int numTilesPerFrame() const { return tileWidth() * tileHeight(); }
+
+    /// Compute the total number of tiles in the image
     int numTiles() const { return numFrames() * numTilesPerFrame(); }
     
     /// Implicit conversion to system object
@@ -461,7 +532,8 @@ struct AssetImage {
 
 
 /**
- * An asset image in which all tiles are stored sequentially in memory.
+ * @brief An AssetImage in which all tiles are stored sequentially in memory.
+ *
  * This doesn't store any separate tilemap information, just the index for
  * the first tile in the sequence.
  *
@@ -478,18 +550,40 @@ struct AssetImage {
 struct PinnedAssetImage {
     _SYSAssetImage sys;
 
-    // Common accessors for all AssetImage flavors
+    /// Access the AssetGroup instance associated with this AssetImage
     AssetGroup &assetGroup() const { return *reinterpret_cast<AssetGroup*>(sys.pAssetGroup); }
+
+    /// The width of this image, in tiles
     int tileWidth() const { return sys.width; }
+
+    /// The height of this image, in tiles
     int tileHeight() const { return sys.height; }
+
+    /// The (width, height) vector of this image, in tiles
     Int2 tileSize() const { return vec<int>(sys.width, sys.height); }
+
+    /// Half the size of this image, in tiles
     Int2 tileExtent() const { return tileSize() / 2; }
+
+    /// The width of this image, in pixels
     int pixelWidth() const { return sys.width << 3; }
+
+    /// The height of this image, in pixels
     int pixelHeight() const { return sys.height << 3; }
+
+    /// The (width, height) vector of this image, in pixels
     Int2 pixelSize() const { return vec<int>(sys.width << 3, sys.height << 3); }
+
+    /// Half the size of this image, in pixels
     Int2 pixelExtent() const { return pixelSize() / 2; }
+
+    /// Access the number of 'frames' in this image
     int numFrames() const { return sys.frames; }
+
+    /// Compute the total number of tiles per frame (tileWidth * tileHeight)
     int numTilesPerFrame() const { return tileWidth() * tileHeight(); }
+
+    /// Compute the total number of tiles in the image
     int numTiles() const { return numFrames() * numTilesPerFrame(); }
 
     /// Implicit conversion to AssetImage base class
@@ -505,7 +599,7 @@ struct PinnedAssetImage {
     operator _SYSAssetImage* () { return &sys; }
 
     /**
-     * Returns the index of the tile at linear position 'i' in the image.
+     * @brief Returns the index of the tile at linear position 'i' in the image.
      *
      * The returned index is unrelocated; it is relative to the base address
      * of the image's AssetGroup.
@@ -516,8 +610,7 @@ struct PinnedAssetImage {
     }
 
     /**
-     * Return the index of the tile at the specified (x, y) tile coordinates,
-     * and optionally on the specified frame number.
+     * @brief Return the index of the tile at the specified (x, y) tile coordinates.
      *
      * The returned index is unrelocated; it is relative to the base address
      * of the image's AssetGroup.
@@ -528,7 +621,7 @@ struct PinnedAssetImage {
     }
 
     /**
-     * Returns the index of the tile at linear position 'i' in the image.
+     * @brief Returns the index of the tile at linear position 'i' in the image.
      *
      * The returned index is relocated to an absolute address for the
      * specified cube. This image's assets must be installed on that cube.
@@ -539,8 +632,7 @@ struct PinnedAssetImage {
     }
 
     /**
-     * Return the index of the tile at the specified (x, y) tile coordinates,
-     * and optionally on the specified frame number.
+     * @brief Return the index of the tile at the specified (x, y) tile coordinates.
      *
      * The returned index is relocated to an absolute address for the
      * specified cube. This image's assets must be installed on that cube.
@@ -554,10 +646,11 @@ struct PinnedAssetImage {
 
 
 /**
- * An asset image in which all tile indices are stored in a flat array,
- * without any additional compression. Flat assets are usually less efficient
- * than compressed AssetImages, but they allow you to have cheap random
- * access to any tile in the image.
+ * @brief An AssetImage in which all tile indices are stored in a flat array,
+ * without any additional compression.
+ *
+ * Flat assets are usually less efficient than compressed AssetImages,
+ * but they allow you to have cheap random access to any tile in the image.
  *
  * Generate a FlatAssetImage by passing the `flat=1` option to image{}
  * in your STIR script.
@@ -566,18 +659,40 @@ struct PinnedAssetImage {
 struct FlatAssetImage {
     _SYSAssetImage sys;
 
-    // Common accessors for all AssetImage flavors
+    /// Access the AssetGroup instance associated with this AssetImage
     AssetGroup &assetGroup() const { return *reinterpret_cast<AssetGroup*>(sys.pAssetGroup); }
+
+    /// The width of this image, in tiles
     int tileWidth() const { return sys.width; }
+
+    /// The height of this image, in tiles
     int tileHeight() const { return sys.height; }
+
+    /// The (width, height) vector of this image, in tiles
     Int2 tileSize() const { return vec<int>(sys.width, sys.height); }
+
+    /// Half the size of this image, in tiles
     Int2 tileExtent() const { return tileSize() / 2; }
+
+    /// The width of this image, in pixels
     int pixelWidth() const { return sys.width << 3; }
+
+    /// The height of this image, in pixels
     int pixelHeight() const { return sys.height << 3; }
+
+    /// The (width, height) vector of this image, in pixels
     Int2 pixelSize() const { return vec<int>(sys.width << 3, sys.height << 3); }
+
+    /// Half the size of this image, in pixels
     Int2 pixelExtent() const { return pixelSize() / 2; }
+
+    /// Access the number of 'frames' in this image
     int numFrames() const { return sys.frames; }
+
+    /// Compute the total number of tiles per frame (tileWidth * tileHeight)
     int numTilesPerFrame() const { return tileWidth() * tileHeight(); }
+
+    /// Compute the total number of tiles in the image
     int numTiles() const { return numFrames() * numTilesPerFrame(); }
 
     /// Implicit conversion to AssetImage base class
@@ -593,6 +708,8 @@ struct FlatAssetImage {
     operator _SYSAssetImage* () { return &sys; }
 
     /**
+     * @brief Get a pointer to the raw tile data.
+     *
      * Flat asset images represent their tile data as an array of uint16_t
      * un-relocated tile indices. This returns a pointer to that array.
      */
@@ -601,7 +718,7 @@ struct FlatAssetImage {
     }
 
     /**
-     * Returns the index of the tile at linear position 'i' in the image.
+     * @brief Returns the index of the tile at linear position 'i' in the image.
      *
      * The returned index is unrelocated; it is relative to the base address
      * of the image's AssetGroup.
@@ -612,8 +729,7 @@ struct FlatAssetImage {
     }
 
     /**
-     * Return the index of the tile at the specified (x, y) tile coordinates,
-     * and optionally on the specified frame number.
+     * @brief Return the index of the tile at the specified (x, y) tile coordinates.
      *
      * The returned index is unrelocated; it is relative to the base address
      * of the image's AssetGroup.
@@ -624,7 +740,7 @@ struct FlatAssetImage {
     }
 
     /**
-     * Returns the index of the tile at linear position 'i' in the image.
+     * @brief Returns the index of the tile at linear position 'i' in the image.
      *
      * The returned index is relocated to an absolute address for the
      * specified cube. This image's assets must be installed on that cube.
@@ -635,8 +751,7 @@ struct FlatAssetImage {
     }
 
     /**
-     * Return the index of the tile at the specified (x, y) tile coordinates,
-     * and optionally on the specified frame number.
+     * @brief Return the index of the tile at the specified (x, y) tile coordinates.
      *
      * The returned index is relocated to an absolute address for the
      * specified cube. This image's assets must be installed on that cube.
@@ -650,12 +765,58 @@ struct FlatAssetImage {
 
 
 /**
- * An audio asset, using any supported compression codec.
+ * @brief An audio asset, using any supported compression codec.
  */
 
 struct AssetAudio {
     _SYSAudioModule sys;
+
+    /**
+     * @brief Return the default speed for this audio asset, in samples per second.
+     *
+     * This can be used to calculate a new speed for AudioChannel::setSpeed().
+     */
+    unsigned speed() {
+        return sys.sampleRate;
+    }
+
+    /**
+     * @brief Create an AssetAudio object programmatically, from uncompressed PCM data
+     *
+     * This creates an AssetAudio instance which references the specified
+     * buffer of 16-bit uncompressed PCM samples. You can use this to wrap
+     * dynamically synthesized audio data for playback on an AudioChannel.
+     *
+     * This is intended mostly for creating software "instruments" for
+     * real-time audio synthesis, so we default to looping mode, and
+     * there is no default sample rate or volume. These parameters
+     * can all be set via AudioChannel at runtime.
+     */
+    static AssetAudio fromPCM(const int16_t *samples, unsigned numSamples)
+    {
+        const AssetAudio result = {{
+            /* sampleRate  */  0,
+            /* loopStart   */  0,
+            /* loopEnd     */  numSamples,
+            /* loopType    */  _SYS_LOOP_REPEAT,
+            /* type        */  _SYS_PCM,
+            /* volume      */  _SYS_AUDIO_DEFAULT_VOLUME,
+            /* dataSize    */  numSamples * sizeof samples[0],
+            /* pData       */  reinterpret_cast<uint32_t>(samples),
+        }};
+        return result;
+    }
+
+    /// Templatized version of fromPCM(), for fixed-size sample arrays.
+    template <typename T>
+    static AssetAudio fromPCM(const T &samples) {
+        return fromPCM(&samples[0], arraysize(samples));
+    }
 };
+
+/**
+ * @brief A Tracker module, converted from XM format by `stir`
+ */
 
 struct AssetTracker {
     _SYSXMSong song;

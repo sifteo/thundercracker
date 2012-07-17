@@ -11,11 +11,11 @@
 #ifndef SVM_DEBUGPIPE_H
 #define SVM_DEBUGPIPE_H
 
-#include <stdint.h>
-#include <inttypes.h>
-
+#include "macros.h"
 #include "svm.h"
+#include "elfprogram.h"
 #include "flash_blockcache.h"
+#include "flash_map.h"
 
 #ifdef SIFTEO_SIMULATOR
 #   include <string>
@@ -68,6 +68,9 @@ public:
     static const unsigned LOG_BUFFER_WORDS = 7;
     static const unsigned LOG_BUFFER_BYTES = LOG_BUFFER_WORDS * sizeof(uint32_t);
 
+    // Called when a new program is first starting
+    static void init();
+
     /**
      * Log messages are emitted in two steps:
      *
@@ -108,7 +111,7 @@ public:
      */
     static bool fault(FaultCode code);
 
-    static void setSymbolSourceELF(const FlashRange &elf);
+    static void setSymbolSource(const Elf::Program &program);
 
 #ifdef SIFTEO_SIMULATOR
     static std::string formatAddress(uint32_t address);

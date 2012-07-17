@@ -6,23 +6,35 @@
 #ifndef SVM_RUNTIME_H
 #define SVM_RUNTIME_H
 
-#include <stdint.h>
-#include <inttypes.h>
-
+#include "macros.h"
 #include "svm.h"
 #include "svmcpu.h"
 #include "svmmemory.h"
 #include "flash_blockcache.h"
 
 using namespace Svm;
+class PanicMessenger;
 
 class SvmRuntime {
 public:
     SvmRuntime();  // Do not implement
 
-    // Begin execution, with a particular stack region and entry function
-    static void run(uint32_t entryFunc, SvmMemory::VirtAddr stackLimitVA,
-        SvmMemory::VirtAddr stackTopVA);
+    struct StackInfo {
+        SvmMemory::VirtAddr limit;
+        SvmMemory::VirtAddr top;
+    };
+
+    /**
+     * Begin execution, with a particular stack and entry point.
+     * Only called once. Never returns.
+     */
+    static void run(uint32_t entryFunc, const StackInfo &stack);
+
+    /**
+     * Restart execution at a new entry point and with a new stack,
+     * next time we return to user code. To be called from inside svc handlers.
+     */
+    static void exec(uint32_t entryFunc, const StackInfo &stack);
 
     // Hypercall entry point, called by low-level SvmCpu code.
     static void svc(uint8_t imm8);
@@ -34,7 +46,7 @@ public:
     static void branch(reg_t addr);
 
     /**
-     * Call Event::Dispatch() on our way out of the next svc(). Events can't
+     * Call Event::Dispatch() on our way out of the next syscall(). Events can't
      * be dispatched while we're in syscalls, since the internal call() we
      * generate must occur *after* the syscall's return value has been stored.
      */
@@ -49,7 +61,7 @@ public:
     static unsigned reconstructCodeAddr(reg_t pc) {
         return SvmMemory::reconstructCodeAddr(codeBlock, pc);
     }
-    
+
     /**
      * Event dispatch is only possible when the PC is at a bundle boundary,
      * since the resulting return pointer would not be valid coming from
@@ -58,7 +70,7 @@ public:
     static bool canSendEvent() {
         return eventFrame == 0 && (SvmCpu::reg(REG_PC) & 3) == 0;
     }
-    
+
     /**
      * Event dispatch is just a call() which also slips new parameters
      * into the registers after saving our CallFrame. This does not affect
@@ -109,18 +121,13 @@ public:
         SvmCpu::setReg(7, r7);
     }
 
-#ifdef SIFTEO_SIMULATOR
-    static void enableStackMonitoring() {
-        stackMonitorEnabled = true;
-    }
-#endif
-
 private:
     enum ReturnActions {
         RET_BRANCH          = 1 << 0,
         RET_RESTORE_REGS    = 1 << 1,
         RET_POP_FRAME       = 1 << 2,
-        RET_EXIT            = 1 << 3,
+        RET_SET_EXIT_FLAG   = 1 << 3,
+        RET_EXIT            = 1 << 4,
         RET_ALL             = -1,
     };
 
@@ -129,6 +136,9 @@ private:
     static SvmMemory::PhysAddr stackLimit;
     static reg_t eventFrame;
     static bool eventDispatchFlag;
+    static bool pendingExitFlag;
+
+    static void initStack(const StackInfo &stack);
 
     static void call(reg_t addr);
     static void tailcall(reg_t addr);    
@@ -154,19 +164,23 @@ private:
         return getSPAdjustWords(addr) * 4;
     }
 
-    static void validate(reg_t addr);
     static void syscall(unsigned num);
-    static void tailsyscall(unsigned num);
+    static void tailSyscall(unsigned num);
+    static void postSyscallWork();
+
+    static void validate(reg_t addr);
     static void svcIndirectOperation(uint8_t imm8);
     static void addrOp(uint8_t opnum, reg_t addr);
     static void breakpoint();
 
-    static void onStackModification(SvmMemory::PhysAddr sp);
+    static void dumpRegister(PanicMessenger &msg, unsigned reg);
 
 #ifdef SIFTEO_SIMULATOR
-    static bool stackMonitorEnabled;
     static SvmMemory::PhysAddr topOfStackPA;
     static SvmMemory::PhysAddr stackLowWaterMark;
+    static void onStackModification(SvmMemory::PhysAddr sp);
+#else
+    static void onStackModification(SvmMemory::PhysAddr sp) {}
 #endif
 };
 

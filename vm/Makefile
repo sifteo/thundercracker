@@ -17,8 +17,12 @@ FLAGS += -DNOT_USERSPACE
 include Makefile.objs
 DEPFILES := $(OBJS:.o=.d)
 
+# Versioning
+FLAGS += -DSDK_VERSION=$(shell git describe --tags)
+
 # LLVM
-FLAGS += -D__STDC_LIMIT_MACROS -D__STDC_CONSTANT_MACROS -fno-rtti
+FLAGS += -D__STDC_LIMIT_MACROS -D__STDC_CONSTANT_MACROS
+CCFLAGS += -fno-rtti
 INCLUDES += -I$(LLVM_INC)
 LIBS += \
 	$(LLVM_LIB)/libLLVMInstCombine.a \
@@ -41,17 +45,23 @@ LIBS += \
 	$(LLVM_LIB)/libLLVMMC.a \
 	$(LLVM_LIB)/libLLVMCore.a \
 	$(LLVM_LIB)/libLLVMSupport.a
-    
+
 # Platform LLVM deps
 ifeq ($(BUILD_PLATFORM), windows32)
     LIBS += -limagehlp -lpsapi
 endif
-    
+ifeq ($(BUILD_PLATFORM), Linux)
+    LIBS += -ldl
+endif
+
 # Platform UUID deps
 ifeq ($(BUILD_PLATFORM), windows32)
     LIBS += -lrpcrt4 -lws2_32
 endif
-    
+ifeq ($(BUILD_PLATFORM), Linux)
+    LIBS += -luuid
+endif
+
 # The DEBUG-ness of this build must match what LLVM was compiled with.
 # Our libraries in deps are release builds, but if you want to set LLVM_LIB
 # yourself, you can turn debugging back on.
@@ -67,8 +77,9 @@ endif
 # Automatic dependency generation (*.d files)
 FLAGS += -MMD
 
-CCFLAGS := $(FLAGS) $(WARNFLAGS) $(INCLUDES)
-LDFLAGS := $(FLAGS) $(LIBS) $(LIB_STDCPP)
+CFLAGS += $(FLAGS) $(WARNFLAGS) $(INCLUDES)
+CCFLAGS += $(FLAGS) $(WARNFLAGS) $(INCLUDES)
+LDFLAGS += $(FLAGS) $(LIBS) $(LIB_STDCPP)
 
 # Symbol table trimming
 ifeq ($(BUILD_PLATFORM), Darwin)
@@ -79,15 +90,22 @@ endif
 .SUFFIXES:
 
 ifeq ($(BUILD_PLATFORM), windows32)
-# We like having stripped binaries plus a separate file with
-# debug info. Do that on Win32 too.
 $(BIN_DIR)/$(BIN)$(BIN_EXT): $(OBJS)
 	$(CC) -o "src/$(BIN)-d.exe" $(OBJS) $(LDFLAGS)
-	objcopy --only-keep-debug "src/$(BIN)-d$(BIN_EXT)" "$(BIN).dSYM"
 	strip -s "src/$(BIN)-d$(BIN_EXT)" -o "src/$(BIN)-stripped$(BIN_EXT)"
+	rm -f "$(BIN_DIR)/$(BIN)$(BIN_EXT)"
 	$(UPX) -o "$(BIN_DIR)/$(BIN)$(BIN_EXT)" "src/$(BIN)-stripped$(BIN_EXT)"
-else
-# Default link
+endif
+
+ifeq ($(BUILD_PLATFORM), Linux)
+$(BIN_DIR)/$(BIN): $(OBJS)
+	$(CC) -o "src/$(BIN)-d" $(OBJS) $(LDFLAGS)
+	strip -s "src/$(BIN)-d" -o "src/$(BIN)-stripped"
+	rm -f "$(BIN_DIR)/$(BIN)"
+	$(UPX) -o "$(BIN_DIR)/$(BIN)" "src/$(BIN)-stripped"
+endif
+
+ifeq ($(BUILD_PLATFORM), Darwin)
 $(BIN_DIR)/$(BIN): $(OBJS)
 	$(CC) -o src/$(BIN)-d $(OBJS) $(LDFLAGS)
 	strip -o $(BIN_DIR)/$(BIN) src/$(BIN)-d
@@ -95,6 +113,9 @@ endif
 
 %.o: %.cpp $(TABLES)
 	$(CC) -c $(CCFLAGS) $*.cpp -o $*.o
+
+%.o: %.c
+	$(CC) -c $(CFLAGS) $*.c -o $*.o
 
 .PHONY: clean
 

@@ -143,11 +143,14 @@ void Hardware::graphicsTick()
     // 7-bit address in high bits of p1
     uint8_t addr7 = addr_port >> 1;
 
+    // Bit A21 comes from the accelerometer's INT2 pin
+    bool a21 = i2c.accel.intPin(1);
+
     // Is the MCU driving any bit of the shared bus?
     uint8_t mcu_data_drv = cpu.mSFR[BUS_PORT_DIR] != 0xFF;
 
     Flash::Pins flashp = {
-        /* addr    */ addr7 | ((uint32_t)lat1 << 7) | ((uint32_t)lat2 << 14),
+        /* addr    */ addr7 | ((uint32_t)lat1 << 7) | ((uint32_t)lat2 << 14) | ((uint32_t)a21 << 21),
         /* power   */ ctrl_port & CTRL_DS_EN,
         /* oe      */ ctrl_port & CTRL_FLASH_OE,
         /* ce      */ 0,
@@ -164,7 +167,7 @@ void Hardware::graphicsTick()
         /* data_in */ bus,
     };
 
-    flash.cycle(&flashp);
+    flash.cycle(&flashp, &cpu);
     lcd.cycle(&lcdp);
 
     /* Address latch write cycles, triggered by rising edge */
@@ -241,6 +244,90 @@ void Hardware::incExceptionCount()
     exceptionCount++;
 }
 
+void Hardware::logWatchdogReset()
+{
+    /*
+     * The watchdog timer expired. We don't treat this as a normal
+     * CPU exception, since the overall behaviour of reset recovery
+     * after a WDT fault is something that we need to accurately
+     * simulate, both for unit testing and for simulating userspace
+     * code which may happen to cause a watchdog fault due to a bad
+     * flash loadstream.
+     *
+     * This is called by the CPU emulation core, which is about to handle
+     * a reset. We can log a little extra info about the fault, to make
+     * debugging easier.
+     *
+     * If this fault was caused by a flash verify error, the bus address
+     * and data will match what we're seeing on the flash device, and "a"
+     * will have the expected value that isn't matching.
+     */
+
+    printf("CUBE[%d]: Watchdog reset. pc=%02x bus=[%02x.%02x.%02x -> %02x] a=%02x\n",
+        cpu.id, cpu.mPC,
+        lat2, lat1, cpu.mSFR[ADDR_PORT],
+        cpu.mSFR[BUS_PORT], cpu.mSFR[REG_ACC]);
+}
+
+void Hardware::traceExecution()
+{
+    uint8_t bank = (cpu.mSFR[REG_PSW] & (PSWMASK_RS0|PSWMASK_RS1)) >> PSW_RS0;
+
+    char assembly[128];
+    CPU::em8051_decode(&cpu, cpu.mPC, assembly);
+
+    Tracer::logV(&cpu,
+        "@%04X i%d a%02X reg%d[%02X%02X%02X%02X-%02X%02X%02X%02X] "
+        "dptr%d[%04X%04X] port[%02X%02X%02X%02X-%02X%02X%02X%02X] "
+        "lat[%02x.%02x] wdt%d[%06x] tmr[%02X%02X%02X%02X%02X%02X]  %s",
+
+        cpu.mPC, cpu.irq_count,
+        cpu.mSFR[REG_ACC],
+
+        // reg
+        bank,
+        cpu.mData[bank*8 + 0],
+        cpu.mData[bank*8 + 1],
+        cpu.mData[bank*8 + 2],
+        cpu.mData[bank*8 + 3],
+        cpu.mData[bank*8 + 4],
+        cpu.mData[bank*8 + 5],
+        cpu.mData[bank*8 + 6],
+        cpu.mData[bank*8 + 7],
+
+        // dptr
+        cpu.mSFR[REG_DPS] & 1,
+        (cpu.mSFR[REG_DPH] << 8) | cpu.mSFR[REG_DPL],
+        (cpu.mSFR[REG_DPH1] << 8) | cpu.mSFR[REG_DPL1],
+
+        // port
+        cpu.mSFR[REG_P0],
+        cpu.mSFR[REG_P1],
+        cpu.mSFR[REG_P2],
+        cpu.mSFR[REG_P3],
+        cpu.mSFR[REG_P0DIR],
+        cpu.mSFR[REG_P1DIR],
+        cpu.mSFR[REG_P2DIR],
+        cpu.mSFR[REG_P3DIR],
+
+        // lat
+        lat2, lat1,
+
+        // wdt
+        cpu.wdtEnabled,
+        cpu.wdtCounter,
+
+        // tmr
+        cpu.mSFR[REG_TH0],
+        cpu.mSFR[REG_TL0],
+        cpu.mSFR[REG_TH1],
+        cpu.mSFR[REG_TL1],
+        cpu.mSFR[REG_TH2],
+        cpu.mSFR[REG_TL2],
+
+        assembly);
+}
+
 void Hardware::initVCD(VCDWriter &vcd)
 {
     /*
@@ -305,6 +392,8 @@ void Hardware::initVCD(VCDWriter &vcd)
         vcd.define("TH2", &cpu.mSFR[REG_TH2], 8); 
         vcd.define("TCON", &cpu.mSFR[REG_TCON], 8); 
         vcd.define("IRCON", &cpu.mSFR[REG_IRCON], 8); 
+        vcd.define("SP", &cpu.mSFR[REG_SP], 8); 
+        vcd.define("DEBUG", &cpu.mSFR[REG_DEBUG], 8); 
     } vcd.leaveScope();
     
     vcd.enterScope("radio"); {

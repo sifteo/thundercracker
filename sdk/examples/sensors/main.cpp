@@ -1,15 +1,16 @@
-/* -*- mode: C; c-basic-offset: 4; intent-tabs-mode: nil -*-
- *
+/*
  * Sifteo SDK Example.
- * Copyright <c> 2011 Sifteo, Inc. All rights reserved.
  */
 
 #include <sifteo.h>
+#include "assets.gen.h"
 using namespace Sifteo;
 
 static const unsigned gNumCubes = 3;
 static Metadata M = Metadata()
     .title("Sensors SDK Example")
+    .package("com.sifteo.sdk.sensors", "1.0")
+    .icon(Icon)
     .cubeRange(gNumCubes);
 
 
@@ -62,6 +63,13 @@ private:
     }
 };
 
+static void drawSideIndicator(BG0ROMDrawable &draw, Neighborhood &nb,
+    Int2 topLeft, Int2 size, Side s)
+{
+    unsigned nbColor = draw.ORANGE;
+    draw.fill(topLeft, size,
+        nbColor | (nb.hasNeighborAt(s) ? draw.SOLID_FG : draw.SOLID_BG));
+}
 
 void main()
 {
@@ -76,7 +84,7 @@ void main()
 
     while (1) {
         for (CubeID cube = 0; cube < gNumCubes; ++cube) {
-            auto &draw = vid[cube].bg0rom;
+            BG0ROMDrawable &draw = vid[cube].bg0rom;
             String<192> str;
 
             /*
@@ -111,7 +119,8 @@ void main()
             auto tilt = cube.tilt();
             str << "tilt:"
                 << Fixed(tilt.x, 3)
-                << Fixed(tilt.y, 3) << "\n";
+                << Fixed(tilt.y, 3)
+                << Fixed(tilt.z, 3) << "\n";
 
             str << "shake: " << counters.cubes[cube].shake;
 
@@ -121,16 +130,10 @@ void main()
              * Neighboring indicator bars
              */
 
-            unsigned nbColor = draw.ORANGE;
-
-            draw.fill(vec(1, 0), vec(14, 1),
-                nbColor | (nb.hasNeighborAt(TOP) ? draw.SOLID_FG : draw.SOLID_BG));
-            draw.fill(vec(0, 1), vec(1, 14),
-                nbColor | (nb.hasNeighborAt(LEFT) ? draw.SOLID_FG : draw.SOLID_BG));
-            draw.fill(vec(1, 15), vec(14, 1),
-                nbColor | (nb.hasNeighborAt(BOTTOM) ? draw.SOLID_FG : draw.SOLID_BG));
-            draw.fill(vec(15, 1), vec(1, 14),
-                nbColor | (nb.hasNeighborAt(RIGHT) ? draw.SOLID_FG : draw.SOLID_BG));
+            drawSideIndicator(draw, nb, vec( 1,  0), vec(14,  1), TOP);
+            drawSideIndicator(draw, nb, vec( 0,  1), vec( 1, 14), LEFT);
+            drawSideIndicator(draw, nb, vec( 1, 15), vec(14,  1), BOTTOM);
+            drawSideIndicator(draw, nb, vec(15,  1), vec( 1, 14), RIGHT);
         }
 
         System::paint();

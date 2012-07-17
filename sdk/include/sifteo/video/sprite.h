@@ -21,9 +21,10 @@ namespace Sifteo {
  */
 
 /**
- * SpriteRefs refer to a single sprite on a single cube. Typically these
- * are transient objects which let you access one sprite's state inside
- * a VideoBuffer, but if necessary you can store SpriteRefs.
+ * @brief SpriteRefs refer to a single sprite on a single cube
+ *
+ * Typically these are transient objects which let you access one sprite's
+ * state inside a VideoBuffer, but if necessary you can store SpriteRefs.
  *
  * A SpriteRef acts as an accessor for memory which is part of your
  * VideoBuffer. When you change sprite parameters using a SpriteRef, you're
@@ -40,9 +41,11 @@ struct SpriteRef {
     unsigned id;
 
     /**
-     * Set the sprite's image, given the physical address of the first
-     * tile in a pinned asset. This is a lower-level method that
-     * you typically won't use directly. Does not resize the sprite.
+     * @brief Set the sprite's image, given the physical address of the first
+     * tile in a pinned asset.
+     *
+     * This is a lower-level method that  you typically won't use
+     * directly. Does not resize the sprite.
      */
     void setImage(uint16_t tile) const {
         uint16_t word = _SYS_TILE77(tile);
@@ -52,7 +55,7 @@ struct SpriteRef {
     }
 
     /**
-     * Set a sprite's image (and, if necessary, its size) given a
+     * @brief Set a sprite's image and size, given a
      * PinnedAssetImage and optionally a frame number.
      */
     void setImage(const PinnedAssetImage &asset, int frame = 0) const {
@@ -61,7 +64,7 @@ struct SpriteRef {
     }
 
     /**
-     * Get this sprite's current image width, in pixels.
+     * @brief Get this sprite's current image width, in pixels.
      */
     unsigned width() const {
         uint16_t addr = ( offsetof(_SYSVideoRAM, spr[0].mask_x) +
@@ -70,7 +73,7 @@ struct SpriteRef {
     }
 
     /**
-     * Get this sprite's current image height, in pixels.
+     * @brief Get this sprite's current image height, in pixels.
      */
     unsigned height() const {
         uint16_t addr = ( offsetof(_SYSVideoRAM, spr[0].mask_y) +
@@ -79,7 +82,7 @@ struct SpriteRef {
     }
 
     /**
-     * Get this sprite's current image size as a vector, in pixels.
+     * @brief Get this sprite's current image size as a vector, in pixels.
      */
     UByte2 size() const {
         uint16_t addr = ( offsetof(_SYSVideoRAM, spr[0].mask_y)/2 +
@@ -89,7 +92,7 @@ struct SpriteRef {
     }
 
     /**
-     * Set this sprite's width, in pixels.
+     * @brief Set this sprite's width, in pixels.
      */
     void setWidth(unsigned pixels) const {
         uint16_t addr = ( offsetof(_SYSVideoRAM, spr[0].mask_x) +
@@ -98,7 +101,7 @@ struct SpriteRef {
     }
 
     /**
-     * Set this sprite's height, in pixels.
+     * @brief Set this sprite's height, in pixels.
      */
     void setHeight(unsigned pixels) const {
         uint16_t addr = ( offsetof(_SYSVideoRAM, spr[0].mask_y) +
@@ -107,7 +110,7 @@ struct SpriteRef {
     }
 
     /**
-     * Set this sprite's size, in pixels.
+     * @brief Set this sprite's size, in pixels.
      */
     void resize(unsigned x, unsigned y) const {
         // Size must be a power of two in current firmwares.
@@ -117,14 +120,16 @@ struct SpriteRef {
     }
 
     /**
-     * Set this sprite's size, in pixels, from a UInt2.
+     * @brief Set this sprite's size, in pixels, from a UInt2.
      */
     void resize(UInt2 size) const {
         resize(size.x, size.y);
     }
 
     /**
-     * Is this sprite hidden? Returns true if he sprite was hidden by
+     * @brief Is this sprite hidden?
+     *
+     * Returns true if he sprite was hidden by
      * hide(). Note that, internally, sprites are hidden by giving
      * them a height of zero. Resizing a sprite, including resizing
      * via setImage, will show the sprite again.
@@ -134,7 +139,9 @@ struct SpriteRef {
     }
 
     /**
-     * Hide a sprite. This effectively disables the sprite, causing the
+     * @brief Hide a sprite.
+     *
+     * This effectively disables the sprite, causing the
      * cube to skip it when rendering the next frame.
      */
     void hide() const {
@@ -142,7 +149,9 @@ struct SpriteRef {
     }
 
     /**
-     * Move this sprite to a new location, in pixels. This specifies the
+     * @brief Move this sprite to a new location, in pixels.
+     *
+     * This specifies the
      * location of the sprite's top-left corner, measured relative to the
      * top-left corner of the screen. Sprite locations may be negative.
      */
@@ -151,7 +160,7 @@ struct SpriteRef {
     }
 
     /**
-     * Move this sprite to a new location, in pixels, passed as an Int2.
+     * @brief Move this sprite to a new location, in pixels, passed as an Int2.
      *
      * This specifies the location of the sprite's top-left corner,
      * measured relative to the top-left corner of the screen.
@@ -162,7 +171,7 @@ struct SpriteRef {
     }
 
     /**
-     * Move this sprite to a new location, in pixels, passed as a Float2.
+     * @brief Move this sprite to a new location, in pixels, passed as a Float2.
      *
      * This specifies the location of the sprite's top-left corner,
      * measured relative to the top-left corner of the screen.
@@ -175,7 +184,7 @@ struct SpriteRef {
     }
 
     /**
-     * Get this sprite's current X position, in pixels.
+     * @brief Get this sprite's current X position, in pixels.
      */
     unsigned x() const {
         uint16_t addr = ( offsetof(_SYSVideoRAM, spr[0].pos_x) +
@@ -184,7 +193,7 @@ struct SpriteRef {
     }
 
     /**
-     * Get this sprite's current Y position, in pixels.
+     * @brief Get this sprite's current Y position, in pixels.
      */
     unsigned y() const {
         uint16_t addr = ( offsetof(_SYSVideoRAM, spr[0].pos_y) +
@@ -193,7 +202,7 @@ struct SpriteRef {
     }
 
     /**
-     * Get this sprite's current position as a vector, in pixels.
+     * @brief Get this sprite's current position as a vector, in pixels.
      */
     Byte2 position() const {
         uint16_t addr = ( offsetof(_SYSVideoRAM, spr[0].pos_y)/2 +
@@ -202,28 +211,33 @@ struct SpriteRef {
         return vec<int8_t>(-(int8_t)(word >> 8), -(int8_t)word);
     }
 
+    // Next sprite ID
     SpriteRef operator++ () {
         ++id;
         return *this;
     }
 
+    // Next sprite ID
     SpriteRef operator++ (int) {
         SpriteRef result = *this;
         ++id;
         return result;
     }
 
+    // Previous sprite ID
     SpriteRef operator-- () {
         --id;
         return *this;
     }
 
+    // Previous sprite ID
     SpriteRef operator-- (int) {
         SpriteRef result = *this;
         --id;
         return result;
     }
 
+    // Calculate a new SpriteRef with an ID relative to this one
     SpriteRef operator[] (int index) {
         SpriteRef result = *this;
         result.id += index;
@@ -233,8 +247,10 @@ struct SpriteRef {
 
 
 /**
- * A SpriteLayer represents the VRAM attributes for the sprite rendering
- * layer in BG0_SPR_BG1 mode. Normally, you'll access SpriteLayer as the
+ * @brief A SpriteLayer represents the VRAM attributes for the sprite rendering
+ * layer in BG0_SPR_BG1 mode.
+ *
+ * Normally, you'll access SpriteLayer as the
  * 'sprite' member in a VideoBuffer.
  *
  * This class acts as a container for sprites. Individual sprites can
@@ -246,8 +262,10 @@ struct SpriteLayer {
     static const unsigned NUM_SPRITES = _SYS_VRAM_SPRITES;
 
     /**
-     * Return a SpriteRef which references a single sprite on a single
-     * VideoBuffer. You don't need to store this reference typically;
+     * @brief Return a SpriteRef which references a single sprite on a single
+     * VideoBuffer.
+     *
+     * You don't need to store this reference typically;
      * for example:
      *
      *     vbuf.sprites[2].setImage(MyAsset);
@@ -259,7 +277,7 @@ struct SpriteLayer {
     }
 
     /**
-     * Reset all sprites to their default hidden state.
+     * @brief Reset all sprites to their default hidden state.
      */
     void erase() {
         _SYS_vbuf_fill(&sys.vbuf, _SYS_VA_SPR / 2, 0,
@@ -267,14 +285,14 @@ struct SpriteLayer {
     }
     
     /**
-     * Return the VideoBuffer associated with this drawable.
+     * @brief Return the VideoBuffer associated with this drawable.
      */
     _SYSVideoBuffer &videoBuffer() {
         return sys.vbuf;
     }
 
     /**
-     * Return the CubeID associated with this drawable.
+     * @brief Return the CubeID associated with this drawable.
      */
     CubeID cube() const {
         return sys.cube;

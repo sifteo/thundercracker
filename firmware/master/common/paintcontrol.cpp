@@ -9,6 +9,7 @@
 #include "vram.h"
 #include "cube.h"
 #include "systime.h"
+#include "assetslot.h"
 
 #ifdef SIFTEO_SIMULATOR
 #   include "system.h"
@@ -129,8 +130,7 @@ void PaintControl::waitForPaint(CubeSlot *cube)
         if (now > paintTimestamp + fpsHigh && pendingFrames <= fpMax)
             break;
 
-        Tasks::work();
-        Radio::halt();
+        Tasks::idle();
     }
 
     /*
@@ -207,7 +207,7 @@ void PaintControl::triggerPaint(CubeSlot *cube, SysTime::Ticks now)
         if (newPending >= fpMax && allowContinuous(cube)) {
             if (!vf.test(_SYS_VF_CONTINUOUS)) {
                 enterContinuous(cube, vbuf, vf, now);
-                vf.apply(vbuf);
+                vf.apply(vbuf, cube->id());
             }
             newPending = fpMax;
         }
@@ -250,7 +250,7 @@ void PaintControl::beginFinish(CubeSlot *cube)
     // Disable continuous rendering now, if it was on. No effect otherwise.
     VRAMFlags vf(vbuf);
     exitContinuous(cube, vbuf, vf);
-    vf.apply(vbuf);
+    vf.apply(vbuf, cube->id());
 }
 
 bool PaintControl::pollForFinish(CubeSlot *cube, SysTime::Ticks now)
@@ -334,14 +334,14 @@ void PaintControl::ackFrames(CubeSlot *cube, int32_t count)
         // Too few pending frames? Disable continuous mode.
         if (pendingFrames < fpMin) {
             exitContinuous(cube, vbuf, vf);
-            vf.apply(vbuf);
+            vf.apply(vbuf, cube->id());
         }
 
         PAINT_LOG((LOG_PREFIX "ACK(%d)\n", LOG_PARAMS, count));
     }
 }
 
-void PaintControl::vramFlushed(CubeSlot *cube)
+bool PaintControl::vramFlushed(CubeSlot *cube)
 {
     /*
      * Finished flushing VRAM out to the cubes. This is only called when
@@ -353,11 +353,14 @@ void PaintControl::vramFlushed(CubeSlot *cube)
      * that everything in the VRAM dirty bit can now be tracked
      * by the RENDER dirty bit; in other words, all dirty VRAM has been
      * flushed, and we can start a clean frame rendering.
+     *
+     * Returns true if we may have changed VRAM contents in a way which
+     * could benefit from attempting to flush additional bytes.
      */
 
     _SYSVideoBuffer *vbuf = cube->getVBuf();
     if (!vbuf)
-        return;
+        return false;
     VRAMFlags vf(vbuf);
 
     PAINT_LOG((LOG_PREFIX "vramFlushed\n", LOG_PARAMS));
@@ -391,12 +394,16 @@ void PaintControl::vramFlushed(CubeSlot *cube)
                 enterContinuous(cube, vbuf, vf, now);
         }
 
-        vf.apply(vbuf);
+        vf.apply(vbuf, cube->id());
 
         // Propagate the bits...
         Atomic::Or(vbuf->flags, _SYS_VBF_DIRTY_RENDER);
         Atomic::And(vbuf->flags, ~_SYS_VBF_TRIGGER_ON_FLUSH);
+
+        return true;
     }
+
+    return false;
 }
 
 bool PaintControl::allowContinuous(CubeSlot *cube)
@@ -478,4 +485,20 @@ bool PaintControl::canMakeSynchronous(CubeSlot *cube, _SYSVideoBuffer *vbuf,
     return !flags.test(_SYS_VF_CONTINUOUS)
         && !(cube->getLastFrameACK() & FRAME_ACK_CONTINUOUS)
         && timestamp > asyncTimestamp + fpsLow;
+}
+
+void VRAMFlags::apply(_SYSVideoBuffer *vbuf, _SYSCubeID cube)
+{
+    // Update this cube's flash bank, if necessary
+    setTo(_SYS_VF_A21, VirtAssetSlots::getCubeBank(cube));
+
+    // Atomic update via XOR.
+    uint8_t x = vf ^ vfPrev;
+
+    if (x) {
+        // Lock flags = 0, don't mark the "needs paint" flag.
+        VRAM::xorb(*vbuf, offsetof(_SYSVideoRAM, flags), x, 0);
+        VRAM::unlock(*vbuf);
+        vfPrev = vf;
+    }
 }

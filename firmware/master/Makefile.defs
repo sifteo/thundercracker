@@ -8,13 +8,19 @@ MASTER_DIR = $(TC_DIR)/firmware/master
 
 # Only disable this in debugging emergencies!
 #
-# The -O2 flag is important, we use a lot of C++ code that's written
+# Optimization is important, we use a lot of C++ code that's written
 # assuming it will be inlined. The inlined code should end up being
-# smaller due to constant folding.
-#
-# Without optimization, a lot of our code ends up too large and/or slow
-# to run on real hardware!
-CCFLAGS += -O3
+# smaller due to constant folding. Without optimization, a lot of our
+# code ends up too large and/or slow to run on real hardware!
+CCFLAGS += -Os
+
+# Math
+CCFLAGS += -ffast-math
+LDFLAGS += -lm
+
+# Versioning
+VERSION := $(shell git describe --tags)
+CCFLAGS += -DSDK_VERSION=$(VERSION)
 
 # Always build with debug symbols (It can't hurt)
 CCFLAGS += -g3
@@ -38,13 +44,20 @@ endif
 
 # Environment defs
 # NOTE: specify these relative to MASTER_DIR so both normal and testjig builds can share
-CCFLAGS := -I$(MASTER_DIR)/common -I$(MASTER_DIR)/stm32 -I$(MASTER_DIR)/../include -I$(SDK_DIR)/include -DNOT_USERSPACE
+CCFLAGS += \
+	-I$(MASTER_DIR)/common \
+	-I$(MASTER_DIR)/stm32 \
+	-I$(MASTER_DIR)/../include \
+	-I$(SDK_DIR)/include \
+	-DNOT_USERSPACE \
+	-D__STDC_FORMAT_MACROS
 
 # Disable unwanted warnings, but be generally pretty pedantic
 CCFLAGS += -Wall -Werror -Wno-unused -Wno-strict-aliasing
 
-CCFLAGS += -ffunction-sections -fdata-sections -ffast-math
-LDFLAGS += -lm
+# GCC's lame excuse for link-time optimization... saves only a little space
+CCFLAGS += -ffunction-sections -fdata-sections
+LDFLAGS += -Wl,--gc-sections
 
 # Disable unwanted C++ features
 CCFLAGS += -fno-exceptions -fno-threadsafe-statics -fno-rtti
@@ -53,7 +66,26 @@ CCFLAGS += -fno-exceptions -fno-threadsafe-statics -fno-rtti
 # for them - disable this since those dtors will never be called
 CCFLAGS += -fno-use-cxa-atexit
 
+# generate our linker script with the appropriate flash offset.
+# Required since we can't specify this as an option to the linker, and we don't
+# want 2 separate linker scripts
+ifeq ($(BOOTLOADABLE), )
+    LDSCRIPT_GEN := python $(MASTER_DIR)/tools/ldscript-gen.py
+else
+    CCFLAGS += -DBOOTLOADABLE
+    LDSCRIPT_GEN := python $(MASTER_DIR)/tools/ldscript-gen.py --bootloadable
+endif
+
+#adding a flag for the test jig
+#mostly used for compiling the bootloader for the testjig
+ifneq ($(TEST_JIG),)
+	CCFLAGS += -DBOARD=BOARD_TEST_JIG
+endif
+
+# default linker script handling
+ifeq ($(LDSCRIPT), )
 LDSCRIPT := $(MASTER_DIR)/stm32/target.ld
+endif
 
 # Build architecture
 ARCH := -mthumb -mcpu=cortex-m3 -mfix-cortex-m3-ldrd \
@@ -61,11 +93,11 @@ ARCH := -mthumb -mcpu=cortex-m3 -mfix-cortex-m3-ldrd \
 
 CCFLAGS += $(ARCH)
 LDFLAGS += $(ARCH) \
-              -Wl,-Map=master-stm32.map,--cref,--gc-sections,-u,IVT \
+              -Wl,-Map=$(BIN).map,--cref,--gc-sections,-u,IVT \
               -T $(LDSCRIPT) -nostartfiles
 
-#Determines whether the jtagkey2 or the olimex cfg files should be used for programming
-ifneq ($(OLIMEX),)
+# Select JTAG device for programming - default to Olimex
+ifeq ($(JTAGKEY),)
     PROG_CONFIG := olimex.cfg
 else 
     PROG_CONFIG := jtagkey2.cfg

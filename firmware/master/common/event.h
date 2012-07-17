@@ -27,8 +27,20 @@ class Event {
 
     // Only called by SvmRuntime. Do not call directly from syscalls!
     static void dispatch();
+
+    static void clearVectors();
+
+    static void setBasePending(_SYSVectorID vid, uint32_t param) {
+        ASSERT(vid < _SYS_NUM_VECTORS);
+        if (Intrinsic::LZ(vid) & pending) {
+            LOG(("Event: Warning: event %u already registered (param: 0x%08X), overwriting.\n",
+                 vid, Atomic::Load(vectors[vid].param)));
+        }
+        Atomic::SetLZ(pending, vid);
+        Atomic::Store(vectors[vid].param, param);
+    }
     
-    static void setPending(_SYSVectorID vid, _SYSCubeID cid) {
+    static void setCubePending(_SYSVectorID vid, _SYSCubeID cid) {
         ASSERT(vid < _SYS_NUM_VECTORS);
         ASSERT(cid < _SYS_NUM_CUBE_SLOTS);
         Atomic::SetLZ(pending, vid);
@@ -51,6 +63,19 @@ class Event {
         return reinterpret_cast<void*>(vectors[vid].context);
     }
 	
+    static inline bool callBaseEvent(_SYSVectorID vid, uint32_t param) {
+        ASSERT(vid < _SYS_NUM_VECTORS);
+        ASSERT(Intrinsic::LZ(vid) & _SYS_BASE_EVENTS);
+        VectorInfo &vi = vectors[vid];
+
+        if (vi.handler) {
+            SvmRuntime::sendEvent(vi.handler, vi.context, param);
+            return true;
+        }
+
+        return false;
+    }
+
     static inline bool callCubeEvent(_SYSVectorID vid, _SYSCubeID cid) {
         ASSERT(vid < _SYS_NUM_VECTORS);
         ASSERT(cid < _SYS_NUM_CUBE_SLOTS);
@@ -86,6 +111,7 @@ class Event {
         reg_t context;
         union {                                 /// Type-specific state:
             _SYSCubeIDVector cubesPending;      /// CLZ map of pending cubes
+            uint32_t param;
         };
     };
 

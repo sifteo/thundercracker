@@ -10,12 +10,15 @@
 #include <string.h>
 #include <assert.h>
 
+#include <sstream>
+
 #include "sha.h"
 #include "script.h"
 #include "proof.h"
 #include "cppwriter.h"
 #include "audioencoder.h"
 #include "dubencoder.h"
+#include "tracker.h"
 
 namespace Stir {
 
@@ -80,7 +83,8 @@ bool Script::run(const char *filename)
     if (!luaRunFile(filename))
         return false;
 
-    collect();
+    if (!collect())
+        return false;
 
     ProofWriter proof(log, outputProof);
     CPPHeaderWriter header(log, outputHeader);
@@ -93,11 +97,25 @@ bool Script::run(const char *filename)
         log.heading(group->getName().c_str());
 
         pool.optimize(log);
+
+        if (pool.size() > pool.MAX_SIZE) {
+            log.error("Error: Group '%s' with %d tiles is too large (%.02f%% of %d-tile slot)",
+                group->getName().c_str(), pool.size(), pool.size() * (100.0 / pool.MAX_SIZE),
+                pool.MAX_SIZE);
+            return false;
+        }
+
         pool.encode(group->getLoadstream(), &log);
 
         proof.writeGroup(*group);
         header.writeGroup(*group);
         source.writeGroup(*group);
+    }
+
+    for (std::vector<ImageList>::iterator i = imageLists.begin(); i!=imageLists.end(); ++i) {
+        header.writeImageList(*i);
+        source.writeImageList(*i);
+
     }
 
     if (!sounds.empty()) {
@@ -115,17 +133,39 @@ bool Script::run(const char *filename)
 
     if (!trackers.empty()) {
         log.heading("Tracker");
-        log.infoBegin("Module compression");
+
+        log.infoBegin("Parsing modules");
         for (std::set<Tracker*>::iterator i = trackers.begin(); i != trackers.end(); i++) {
             Tracker *tracker = *i;
 
             if(!tracker->loader.load(tracker->getFile().c_str(), log)) {
                 return false;
             }
+
+            const _SYSXMSong &song = tracker->getSong();
+            unsigned compressedSize = tracker->getSize();
+            unsigned uncompressedSize = tracker->getFileSize();
+            double ratio = uncompressedSize ? 100.0 - compressedSize * 100.0 / uncompressedSize : 0;
+
+            log.infoLineWithLabel(tracker->getName().c_str(), "% 3u patterns,% 3u instruments, %5.02f kiB, % 5.01f%% compression (%s)",
+                                   song.nPatterns,
+                                   song.nInstruments,
+                                   compressedSize / 1024.0f,
+                                   ratio,
+                                   tracker->getFile().c_str());
+        }
+        log.infoEnd();
+
+        XmTrackerLoader::deduplicate(trackers, log);
+
+        source.writeTrackerShared(**trackers.begin());
+        for (std::set<Tracker*>::iterator i = trackers.begin(); i != trackers.end(); i++) {
+            Tracker *tracker = *i;
+
             header.writeTracker(*tracker);
             source.writeTracker(*tracker);
         }
-        log.infoEnd();
+
     }
 
     proof.close();
@@ -276,7 +316,17 @@ bool Script::argEnd(lua_State *L)
     return success;
 }
 
-void Script::collect()
+_SYSAudioLoopType Script::toLoopType(lua_State *L, int index)
+{
+    int loopType = lua_tointeger(L, index);
+
+    if (loopType > _SYS_LOOP_REPEAT || loopType < _SYS_LOOP_ONCE)
+        luaL_error(L, "Unknown loop value %d, should be 0 or 1", loopType);
+
+    return _SYSAudioLoopType(loopType);
+}
+
+bool Script::collect()
 {
     /*
      * Scan through the global variables leftover after running a
@@ -287,42 +337,108 @@ void Script::collect()
      * remain in the global namespace.
      */
 
-    lua_pushnil(L);
-    while (lua_next(L, LUA_GLOBALSINDEX)) {
-        lua_pushvalue(L, -2);   // Make a copy of the key object
+    lua_pushnil(L); // -1 key
+
+    while (lua_next(L, LUA_GLOBALSINDEX)) { // -1 value, -2 key
+        lua_pushvalue(L, -2);   // -1 key copy, -2 value, -3 key
         const char *name = lua_tostring(L, -1);
-        Group *group = Lunar<Group>::cast(L, -2);
-        Image *image = Lunar<Image>::cast(L, -2);
-        Sound *sound = Lunar<Sound>::cast(L, -2);
-        Tracker *tracker = Lunar<Tracker>::cast(L, -2);
-
+        
         if (name && name[0] != '_') {
-            if (group || image || sound)
-                log.setMinLabelWidth(strlen(name));
+            if (lua_istable(L, -2)) {
+                if (!collectList(name, -2)) {
+                    lua_pop(L, 3); // stack empty
+                    return false;
+                }
 
-            if (group) {
-                group->setName(name);
-                groups.insert(group);
-            }
-            if (image) {
-                image->setName(name);
-                image->getGroup()->addImage(image);
-            }
-            if (tracker) {
-                tracker->setName(name);
-                trackers.insert(tracker);
-            }
-            if (sound) {
-                sound->setName(name);
-                sounds.insert(sound);
+            } else {
+                Group *group = Lunar<Group>::cast(L, -2);
+                Image *image = Lunar<Image>::cast(L, -2);
+                Sound *sound = Lunar<Sound>::cast(L, -2);
+                Tracker *tracker = Lunar<Tracker>::cast(L, -2);
+
+                if (group || image || sound) {
+                    log.setMinLabelWidth(strlen(name));
+                }
+                
+                if (group) {
+                    group->setName(name);
+                    groups.insert(group);
+                }
+                
+                if (image) {
+                    image->setName(name);
+                    image->getGroup()->addImage(image);
+                }
+                
+                if (tracker) {
+                    tracker->setName(name);
+                    trackers.insert(tracker);
+                }
+                
+                if (sound) {
+                    sound->setName(name);
+                    sounds.insert(sound);
+                }
             }
         }
 
-        lua_pop(L, 2);
+        lua_pop(L, 2); // -1 key
     };
-    lua_pop(L, 1);
+
+    lua_pop(L, 1); // stack empty
+    return true;
 }
 
+bool Script::collectList(const char* name, int tableStackIndex) {
+    /* 
+     * Could this be an image image list?
+     * could be generalized to sound, music, etc, but for now 
+     * I just want to make sure this works :) 
+     */
+    int size = luaL_getn(L, tableStackIndex);
+    if (size > 0) {
+
+        std::vector<Image*> images;
+        for (int i=1; i<=size; ++i) {
+            lua_rawgeti(L, tableStackIndex, i);
+            Image *p = Lunar<Image>::cast(L, -1);
+            lua_pop(L,1);
+            if (p) {
+                if (images.size() > 0) {
+                    if (p->isPinned() != images[0]->isPinned() || p->isFlat() != images[0]->isFlat()) {
+                        log.error("Image list is not homogeneous.  Lists cannot interleave "
+                                  "pinned or flat assets with ordinary types.");
+                        return false;
+                    }
+                }
+                images.push_back(p);
+            } else {
+                /* 
+                 * This list is not strictly images, which is OK
+                 * (it might be an intermediate result), and we essentially
+                 * treat it the same way we treat an image that's not bound
+                 * to a global variable and ignore it.
+                 */
+                return true;
+            }
+        }
+        
+        for (unsigned i=0; i<images.size(); ++i) {
+            std::stringstream sstm;
+            sstm << name << '_' << i;
+            std::string iname = sstm.str();
+            log.setMinLabelWidth(iname.length());
+            images[i]->setName(iname);
+            images[i]->setInList(true);
+            images[i]->getGroup()->addImage(images[i]);
+        }
+
+        imageLists.push_back(ImageList(name, images)); // Can has move constructor?
+
+    }
+
+    return true;
+}
 
 Group::Group(lua_State *L)
 {
@@ -386,7 +502,7 @@ uint64_t Group::getHash() const
     return sig;
 }
 
-Image::Image(lua_State *L)
+Image::Image(lua_State *L) : mInList(false)
 {
     if (!Script::argBegin(L, className))
         return;
@@ -626,12 +742,7 @@ Sound::Sound(lua_State *L)
     }
 
     if (Script::argMatch(L, "loop")) {
-        int16_t loopType = lua_tonumber(L, -1);
-        if (loopType > _SYS_LOOP_REPEAT || loopType < _SYS_LOOP_ONCE) {
-            luaL_error(L, "Unknown loop value %d, should be 0 or 1", loopType);
-            return;
-        }
-        setLoopType((_SYSAudioLoopType)loopType);
+        setLoopType(Script::toLoopType(L, -1));
     } else {
         setLoopType(_SYS_LOOP_ONCE);
     }
@@ -662,6 +773,12 @@ Tracker::Tracker(lua_State *L)
     if (Script::argMatch(L, 1)) {
         const char *filename = lua_tostring(L, -1);
         mFile = filename;
+    }
+
+    if (Script::argMatch(L, "loop")) {
+        loopType = Script::toLoopType(L, -1);
+    } else {
+        loopType = _SYS_LOOP_UNDEF;
     }
 
     Script::argEnd(L);

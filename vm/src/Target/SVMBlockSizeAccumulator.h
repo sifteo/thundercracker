@@ -18,7 +18,7 @@
 #define SVM_BLOCKSIZEACCUMULATOR_H
 
 #include "llvm/ADT/SmallSet.h"
-#include "llvm/support/raw_ostream.h"
+#include "llvm/Support/raw_ostream.h"
 
 namespace llvm {
 

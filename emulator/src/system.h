@@ -15,7 +15,8 @@
 #define _SYSTEM_H
 
 #include <string>
-#include <glfw.h>
+#include <sifteo/abi.h>
+
 #include "vtime.h"
 #include "cube_hardware.h"
 #include "system_cubes.h"
@@ -30,16 +31,22 @@ class System {
     VirtualTime time;
 
     static const unsigned DEFAULT_CUBES = 3;
-    static const unsigned MAX_CUBES = 32;
+    static const unsigned MAX_CUBES = _SYS_NUM_CUBE_SLOTS;
 
     Cube::Hardware cubes[MAX_CUBES];
     Tracer tracer;
     FlashStorage flash;
 
     // Static Options; can be set prior to init only
+    bool opt_headless;
     unsigned opt_numCubes;
     std::string opt_cubeFirmware;
     std::string opt_flashFilename;
+    std::string opt_launcherFilename;
+    std::string opt_waveoutFilename;
+
+    // UI options
+    bool opt_whiteBackground;
 
     // Global debug options
     bool opt_continueOnException;
@@ -77,6 +84,10 @@ class System {
 
     DeadlineSynchronizer &getCubeSync() {
         return sc.deadlineSync;
+    }
+
+    void stopCubesOnly() {
+        sc.stop();
     }
 
  private:

@@ -13,19 +13,25 @@ OBJS = \
         src/graphics_fb64.rel \
         src/graphics_fb128.rel \
         src/graphics_solid.rel \
+        src/graphics_stamp.rel \
+        src/sensors_init.rel \
+        src/sensors_i2c.rel \
+        src/sensors_tf0.rel \
+        src/sensors_tf1.rel \
+        src/sensors_tf2.rel \
         src/overlay.rel \
         src/power.rel \
         src/lcd.rel \
-        src/radio.rel \
-        src/sensors.rel \
+        src/radio_init.rel \
+        src/radio_isr.rel \
         src/battery.rel \
         src/flash_hal.rel \
         src/flash_decoder.rel \
         src/params.rel \
         src/draw.rel \
         src/tilerom.rel \
-        src/demo.rel \
-        
+        src/disconnected.rel
+
 # Funny BG1 segment, to support ACALL alignment. Order matters.
 # bg1_line needs to be at the beginning of the segment; bg0_rom
 # is just the right size to pad the rest of the segment up until
@@ -39,17 +45,26 @@ SDK_DIR = ../../sdk
 
 SDCC = sdcc
 CDEPS = src/*.h $(FIRMWARE_INC)/*.h $(SDK_DIR)/include/sifteo/*.h
-CFLAGS += -I$(FIRMWARE_INC) -I$(SDK_DIR)/include
-CFLAGS += -DNOT_USERSPACE
+override CFLAGS += -I$(FIRMWARE_INC) -I$(SDK_DIR)/include
+override CFLAGS += -DNOT_USERSPACE
 
 # Define our CPU's memory limits
 LDFLAGS += --xram-size 1024 --code-size 16384
 
 # All our fast code is in assmebly; we want the C code to be small.
-CFLAGS +=  --opt-code-size
+override CFLAGS +=  --opt-code-size
 
 # Place the 2Kb ACALL segment for BG1
 LDFLAGS += -Wl-bBG1LINE=0x2000
+
+# Don't use any standard library code! (Size optimization)
+LDFLAGS += --nostdlib
+
+# Simple size profiler, based on the .rst parser used by our emulator's SBT.
+# This is the default build target; this runs static analysis checks which
+# should be performed on every automated build.
+sizeprof: $(BIN)
+	python ../../emulator/resources/firmware-sizeprof.py src/*.rst
 
 $(BIN): $(OBJS)
 	$(SDCC) -o $@ $(LDFLAGS) $(OBJS)
@@ -64,9 +79,5 @@ src/tilerom.c: tilerom/src-palettes.png tilerom/src-tiles.png tilerom/romgen.py
 
 clean:
 	rm -f *.mem src/*.rel src/*.rst src/*.sym *.lnk src/*.lst *.map src/*.asm
-
-# Simple size profiler, based on the .rst parser used by our emulator's SBT
-sizeprof: $(BIN)
-	python ../../emulator/resources/firmware-sizeprof.py src/*.rst
     
 .PHONY: clean sizeprof

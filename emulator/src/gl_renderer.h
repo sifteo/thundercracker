@@ -45,20 +45,24 @@ class GLRenderer {
     void setViewport(int width, int height);
 
     void beginFrame(float viewExtent, b2Vec2 viewCenter, unsigned pixelZoomMode=0);
-    void endFrame();
+    static void endFrame();
 
-    void drawBackground(float extent, float scale);
+    void drawDefaultBackground(float extent, float scale);
+    void drawSolidBackground(const float color[4]);
+
     void drawCube(unsigned id, b2Vec2 center, float angle, float hover,
                   b2Vec2 tilt, const uint16_t *framebuffer, bool framebufferChanged,
                   b2Mat33 &modelMatrix);
     void drawMothership(unsigned id, b2Vec2 center, float angle);
 
     void beginOverlay();
+    void overlayRect(int x, int y, int w, int h, const float color[4], GLhandleARB program = 0);
+    void overlayRect(int x, int y, int w, int h);
     void overlayText(int x, int y, const float color[4], const char *str);
     int measureText(const char *str);
-    void overlayRect(int x, int y, int w, int h, const float color[4]);
     void overlayCubeFlash(unsigned id, int x, int y, int w, int h,
         const uint8_t *data, bool dataChanged);
+    void overlayAudioVisualizer(float alpha);
 
     void takeScreenshot(std::string name) {
         // Screenshots are asynchronous
@@ -139,6 +143,12 @@ class GLRenderer {
     GLhandleARB backgroundProgram;
     GLuint backgroundTexture;
     GLuint bgLightTexture;
+    GLuint logoTexture;
+
+    GLhandleARB scopeProgram;
+    GLint scopeAlphaAttr;
+    GLuint scopeSampleTexture;
+    GLuint scopeBackgroundTexture;
     
     GLuint fontTexture;
     
@@ -164,8 +174,8 @@ class GLRenderer {
         GLuint texAccurate[NUM_LCD_TEXTURES];
         GLuint flashTex;
     } cubes[System::MAX_CUBES];
-	
-	std::string pendingScreenshotName;
+
+    std::string pendingScreenshotName;
 };
 
 #endif

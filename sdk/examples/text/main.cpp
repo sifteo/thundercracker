@@ -1,15 +1,17 @@
 /* -*- mode: C; c-basic-offset: 4; intent-tabs-mode: nil -*-
  *
  * Sifteo SDK Example.
- * Copyright <c> 2011 Sifteo, Inc. All rights reserved.
  */
 
 #include <sifteo.h>
 #include "fontdata.h"
+#include "assets.gen.h"
 using namespace Sifteo;
 
 static Metadata M = Metadata()
     .title("Text SDK Example")
+    .package("com.sifteo.sdk.text", "1.0")
+    .icon(Icon)
     .cubeRange(1);
 
 

@@ -31,9 +31,6 @@ class SystemCubes {
     DeadlineSynchronizer deadlineSync;
 
  private: 
-    void startThread();
-    void stopThread();
-
     static void threadFn(void *param);
     bool initCube(unsigned id, bool wakeFromSleep=false);
 
@@ -41,9 +38,11 @@ class SystemCubes {
     NEVER_INLINE void tickLoopDebug();
     NEVER_INLINE void tickLoopGeneral();
     NEVER_INLINE void tickLoopFastSBT();
+    NEVER_INLINE void tickLoopEmpty();
 
     System *sys;
     tthread::thread *mThread;
+    tthread::mutex mBigCubeLock;
     bool mThreadRunning;
 };
 

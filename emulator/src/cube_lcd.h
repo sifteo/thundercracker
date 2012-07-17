@@ -64,7 +64,7 @@ class LCD {
         mode_te = 0;
         mode_power_on = 1;
         
-        write_count = 0;
+        frame_count = 0;
         pixel_count = 0;
     }
 
@@ -100,9 +100,9 @@ class LCD {
         prev_wrx = pins->wrx;
     }
 
-    uint32_t getWriteCount() {
-        // Number of write operations (usually frames)
-        return write_count;
+    uint32_t getFrameCount() {
+        // Estimated number of frames.
+        return frame_count;
     }
     
     uint32_t getPixelCount() {
@@ -241,7 +241,6 @@ class LCD {
 
         case CMD_RAMWR:
             firstPixel();
-            write_count++;
             break;
 
         case CMD_SWRESET:
@@ -262,6 +261,15 @@ class LCD {
 
         case CMD_DISPON:
             mode_display_on = 1;
+
+            /*
+             * Current firmware issues this command at the bottom of every
+             * frame, so use it as a probe to count frames. Note that RAMWR
+             * is a perfectly good count in most video modes, but not in
+             * modes that re-address the LCD multiple times per frame,
+             * like STAMP mode.
+             */
+            frame_count++;
             break;
 
         case CMD_TEOFF:
@@ -354,12 +362,12 @@ class LCD {
 
     // Vendor-specific commands that we use to detect an LCD model
     static const uint8_t CMD_MAGIC_TRULY            = 0xC4;
-    static const uint8_t CMD_MAGIC_TIANMA_HX8353    = 0xE3;
+    static const uint8_t CMD_MAGIC_TIANMA_HX8353    = 0xB9;
 
     // Width of emulated TE pulses
     static const unsigned TE_WIDTH_US = 1000;
 
-    uint32_t write_count;
+    uint32_t frame_count;
     uint32_t pixel_count;
     uint64_t te_timestamp;
 

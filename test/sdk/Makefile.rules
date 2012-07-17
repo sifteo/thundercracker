@@ -1,0 +1,13 @@
+# Common makefile rules for SDK unit tests.
+
+SIFTULATOR_FLAGS = --headless
+GENERATED_FILES += tests.stamp
+
+all: tests.stamp
+
+tests.stamp: $(BIN) $(TEST_DEPS)
+	@echo "\n================= Running SDK Test:" $(APP) "\n"
+	siftulator $(SIFTULATOR_FLAGS) -l $(BIN)
+	echo > $@
+
+.PHONY: all

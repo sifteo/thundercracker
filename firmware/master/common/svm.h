@@ -48,33 +48,121 @@ enum InstructionSize {
 
 
 /***************************************************************************
- * Debugger Support
+ * SVM Faults
  ***************************************************************************/
 
 enum FaultCode {
     F_UNKNOWN = 0,
-    F_STACK_OVERFLOW,       // Stack allocation failure
-    F_BAD_STACK,            // Validation-time stack address error
-    F_BAD_CODE_ADDRESS,     // Branch-time code address error
-    F_BAD_SYSCALL,          // Unsupported syscall number
-    F_LOAD_ADDRESS,         // Runtime load address error
-    F_STORE_ADDRESS,        // Runtime store address error
-    F_LOAD_ALIGNMENT,       // Runtime load alignment error
-    F_STORE_ALIGNMENT,      // Runtime store alignment error
-    F_CODE_FETCH,           // Runtime code fetch error
-    F_CODE_ALIGNMENT,       // Runtime code alignment error
-    F_CPU_SIM,              // Unhandled ARM instruction in sim (validator bug)
-    F_RESERVED_SVC,         // Reserved SVC encoding
-    F_RESERVED_ADDROP,      // Reserved ADDROP encoding
-    F_ABORT,                // User call to _SYS_abort()
-    F_LONG_STACK_LOAD,      // Bad address in long stack LDR addrop
-    F_LONG_STACK_STORE,     // Bad address in long stack STR addrop
-    F_PRELOAD_ADDRESS,      // Bad address for async preload
-    F_RETURN_FRAME,         // Bad saved FP value detected during ret()
-    F_LOG_FETCH,            // Memory fault while fetching _SYS_log() data
-    F_SYSCALL_ADDRESS,      // Bad address in system call
-    F_SYSCALL_PARAM,        // Other bad parameter in system call
+    F_STACK_OVERFLOW,       // (0x1)  Stack allocation failure
+    F_BAD_STACK,            // (0x2)  Validation-time stack address error
+    F_BAD_CODE_ADDRESS,     // (0x3)  Branch-time code address error
+    F_BAD_SYSCALL,          // (0x4)  Unsupported syscall number
+    F_LOAD_ADDRESS,         // (0x5)  Runtime load address error
+    F_STORE_ADDRESS,        // (0x6)  Runtime store address error
+    F_LOAD_ALIGNMENT,       // (0x7)  Runtime load alignment error
+    F_STORE_ALIGNMENT,      // (0x8)  Runtime store alignment error
+    F_CODE_FETCH,           // (0x9)  Runtime code fetch error
+    F_CODE_ALIGNMENT,       // (0xA)  Runtime code alignment error
+    F_CPU_SIM,              // (0xB)  Unhandled ARM instruction in sim (validator bug)
+    F_RESERVED_SVC,         // (0xC)  Reserved SVC encoding
+    F_RESERVED_ADDROP,      // (0xD)  Reserved ADDROP encoding
+    F_ABORT,                // (0xE)  User call to _SYS_abort()
+    F_LONG_STACK_LOAD,      // (0xF)  Bad address in long stack LDR addrop
+    F_LONG_STACK_STORE,     // (0x10) Bad address in long stack STR addrop
+    F_PRELOAD_ADDRESS,      // (0x11) Bad address for async preload
+    F_RETURN_FRAME,         // (0x12) Bad saved FP value detected during ret()
+    F_LOG_FETCH,            // (0x13) Memory fault while fetching _SYS_log() data
+    F_SYSCALL_ADDRESS,      // (0x14) Bad address in system call
+    F_SYSCALL_PARAM,        // (0x15) Other bad parameter in system call
+    F_SCRIPT_EXCEPTION,     // (0x16) Exception during script execution
+    F_BAD_VOLUME_HANDLE,    // (0x17) Bad filesystem volume handle
+    F_BAD_ELF_HEADER,       // (0x18) Bad ELF binary header
+    F_BAD_ASSET_IMAGE,      // (0x19) Bad AssetImage
+    F_NO_LAUNCHER,          // (0x1A) Launcher program not found
+    F_SYSCALL_ADDR_ALIGN,   // (0x1B) Address in system call has insufficient alignment
+    F_BAD_ASSETSLOT,        // (0x1C) Invalid or unbound AssetSlot
+    F_RWDATA_SEG,           // (0x1D) Failed to initialize read-write data segment
 };
+
+inline const char* faultString(FaultCode code)
+{
+    // Full-size fault strings, used by debugger
+    switch (code) {
+    case F_STACK_OVERFLOW:      return "Stack allocation failure";
+    case F_BAD_STACK:           return "Validation-time stack address error";
+    case F_BAD_CODE_ADDRESS:    return "Branch-time code address error";
+    case F_BAD_SYSCALL:         return "Unsupported syscall number";
+    case F_LOAD_ADDRESS:        return "Runtime load address error";
+    case F_STORE_ADDRESS:       return "Runtime store address error";
+    case F_LOAD_ALIGNMENT:      return "Runtime load alignment error";
+    case F_STORE_ALIGNMENT:     return "Runtime store alignment error";
+    case F_CODE_FETCH:          return "Runtime code fetch error";
+    case F_CODE_ALIGNMENT:      return "Runtime code alignment error";
+    case F_CPU_SIM:             return "Unhandled ARM instruction in sim";
+    case F_RESERVED_SVC:        return "Reserved SVC encoding";
+    case F_RESERVED_ADDROP:     return "Reserved ADDROP encoding";
+    case F_ABORT:               return "User call to _SYS_abort";
+    case F_LONG_STACK_LOAD:     return "Bad address in long stack LDR addrop";
+    case F_LONG_STACK_STORE:    return "Bad address in long stack STR addrop";
+    case F_PRELOAD_ADDRESS:     return "Bad address for async preload";
+    case F_RETURN_FRAME:        return "Bad saved FP value detected during return";
+    case F_LOG_FETCH:           return "Memory fault while fetching _SYS_log data";
+    case F_SYSCALL_ADDRESS:     return "Bad address in system call";
+    case F_SYSCALL_PARAM:       return "Other bad parameter in system call";
+    case F_SCRIPT_EXCEPTION:    return "Exception during script execution";
+    case F_BAD_VOLUME_HANDLE:   return "Bad filesystem volume handle";
+    case F_BAD_ELF_HEADER:      return "Bad ELF binary header";
+    case F_BAD_ASSET_IMAGE:     return "Bad AssetImage";
+    case F_NO_LAUNCHER:         return "Launcher program not found";
+    case F_SYSCALL_ADDR_ALIGN:  return "Address in system call has insufficient alignment";
+    case F_BAD_ASSETSLOT:       return "Invalid or unbound AssetSlot";
+    case F_RWDATA_SEG:          return "Failed to initialize read-write data segment";
+    default:                    return "Unknown error";
+    }
+}
+
+inline const char* faultString14(FaultCode code)
+{
+    // Short fault strings, 14 characters or less
+    switch (code) {
+    //                                  123456789ABCDE
+    case F_STACK_OVERFLOW:      return "Stack overflow";
+    case F_BAD_STACK:           return "Bad stack";
+    case F_BAD_CODE_ADDRESS:    return "Bad code addr";
+    case F_BAD_SYSCALL:         return "Bad syscall #";
+    case F_LOAD_ADDRESS:        return "Load addr err";
+    case F_STORE_ADDRESS:       return "Store addr err";
+    case F_LOAD_ALIGNMENT:      return "Load align err";
+    case F_STORE_ALIGNMENT:     return "Store align";
+    case F_CODE_FETCH:          return "Code fetch err";
+    case F_CODE_ALIGNMENT:      return "Code align err";
+    case F_CPU_SIM:             return "CPU sim fault";
+    case F_RESERVED_SVC:        return "Reserved SVC";
+    case F_RESERVED_ADDROP:     return "Reserved aop";
+    case F_ABORT:               return "Usermode abort";
+    case F_LONG_STACK_LOAD:     return "Stack load err";
+    case F_LONG_STACK_STORE:    return "Stack store";
+    case F_PRELOAD_ADDRESS:     return "Bad preload";
+    case F_RETURN_FRAME:        return "Return FP err";
+    case F_LOG_FETCH:           return "LOG addr err";
+    case F_SYSCALL_ADDRESS:     return "Syscall addr";
+    case F_SYSCALL_PARAM:       return "Syscall param";
+    case F_SCRIPT_EXCEPTION:    return "Script error";
+    case F_BAD_VOLUME_HANDLE:   return "Bad FS volume";
+    case F_BAD_ELF_HEADER:      return "Bad ELF header";
+    case F_BAD_ASSET_IMAGE:     return "Bad AssetImage";
+    case F_NO_LAUNCHER:         return "No launcher";
+    case F_SYSCALL_ADDR_ALIGN:  return "Syscall align";
+    case F_BAD_ASSETSLOT:       return "Bad AssetSlot";    
+    case F_RWDATA_SEG:          return "RWDATA error";
+    default:                    return "Unknown";
+    }
+}
+
+
+/***************************************************************************
+ * Debugger Support
+ ***************************************************************************/
 
 /**
  * Debugger messages are command/response pairs which are sent from a
@@ -344,6 +432,9 @@ static const uint32_t MovWtTest = 0x1e4800 << 11;   // 0b11110x10 x100xxxx, 0xxx
 
 static const uint32_t DivMask   = 0xffd8f8f8;       // 0b11111111 11011000, 11111000 11111000
 static const uint32_t DivTest   = 0xfb90f0f0;       // 0b11111011 10x10xxx, 11110xxx 11110xxx
+
+static const uint32_t ClzMask   = 0xfffff8ff;       // 0b11111111 11111111, 11111000 11111111
+static const uint32_t ClzTest   = 0xfab7f087;       // 0b11111010 10110111, 11110xxx 10000111
 
 ////////////////////////////
 // indirect operation masks

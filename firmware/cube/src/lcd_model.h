@@ -32,12 +32,7 @@
        defined(LCD_MODEL_TIANMA_ST7715)      || \
        defined(LCD_MODEL_TIANMA_HX8353)      )
 
-#if HWREV >= 2
-#   define LCD_MODEL_TIANMA_HX8353
-#else
-#   define LCD_MODEL_GIANTPLUS_ILI9163C
-#endif
-
+#define LCD_MODEL_TIANMA_HX8353
 #endif
 
 /********************************************************************/
@@ -302,7 +297,19 @@ static const __code uint8_t lcd_setup_table[] =
 
     LONG_DELAY,
 
+    // Magic command to enable HX8353 "extended" commands.
+    // We also use this for model detection in siftulator.
     4, 0xb9, 0xff, 0x83, 0x53,          // SETEXC
+
+    /*
+     * Gamma, power, and oscillator init.
+     *
+     * XXX: This is the magic init sequence we got from Tianma, but it
+     *      seems to exhibit some annoying flickering/interlacing
+     *      artifacts. It's a little better than the default config
+     *      in terms of color quality, though, so we're still using
+     *      this... though I suspect we can optimize it.
+     */
     2, 0xc6, 0x31,                      // UADJ   (60Hz frame rate)
     3, 0xb1, 0x00, 0x00,                // SETPWCTR
     3, 0xbf, 0x04, 0x38,                // SETPTBA
@@ -315,7 +322,7 @@ static const __code uint8_t lcd_setup_table[] =
     0x00, 0x74, 0x71, 0x0a, 0xff, 0x01, 0x07, 0x0f,
     0x06, 0x01, 0x60, 0x30, 0x77, 0x0d, 0xf0, 0x0e,
     0x0a, 0x08, 0x0f,
-    
+
 #endif // LCD_MODEL_TIANMA_HX8353
 
     /**************************************************************
@@ -324,9 +331,6 @@ static const __code uint8_t lcd_setup_table[] =
 
     2, LCD_CMD_TEON, 0x00,
     2, LCD_CMD_NORMAL, 0x00,
-
-    // RASET happens at every frame, but CASET should happen once
-    5, LCD_CMD_CASET, 0, LCD_COL_ADDR(0), 0, LCD_COL_ADDR(127),
 
     // Use 16-bit color mode
     2, LCD_CMD_COLMOD, LCD_COLMOD_16,

@@ -6,19 +6,24 @@
 #ifndef SVM_MEMORY_H
 #define SVM_MEMORY_H
 
-#include <stdint.h>
-#include <inttypes.h>
-#include <string.h>
-
+#include "macros.h"
 #include "svm.h"
 #include "flash_blockcache.h"
+#include "flash_map.h"
+
+#include <string.h>
 
 
 class SvmMemory {
 public:
-    static const unsigned VIRTUAL_FLASH_BASE = 0x80000000;
-    static const unsigned VIRTUAL_RAM_BASE = 0x10000;
+    // Flash
+    static const unsigned SEGMENT_0_VA = 0x80000000;
+    static const unsigned SEGMENT_1_VA = 0xc0000000;
+    static const unsigned NUM_FLASH_SEGMENTS = 2;
+
+    // RAM
     static const unsigned RAM_SIZE_IN_BYTES = 32 * 1024;
+    static const unsigned VIRTUAL_RAM_BASE = 0x10000;
     static const unsigned VIRTUAL_RAM_TOP = VIRTUAL_RAM_BASE + RAM_SIZE_IN_BYTES;
 
     typedef uint8_t* PhysAddr;
@@ -64,20 +69,6 @@ public:
     }
     
     /**
-     * Overflow-safe array size calculation. Saturates instead of overflowing.
-     */
-    static inline uint32_t arraySize(uint32_t itemSize, uint32_t count)
-    {
-        // In 16x16-bit multiply, 32-bit overflow cannot occur.
-        STATIC_ASSERT(RAM_SIZE_IN_BYTES <= 0x10000);
-
-        if (itemSize < RAM_SIZE_IN_BYTES && count < RAM_SIZE_IN_BYTES)
-            return itemSize * count;
-        else
-            return 0xFFFFFFFFU;
-    }
-    
-    /**
      * Read-only data memory validator. Handles RAM or Flash addresses.
      *
      * Even if the entire region is valid, it is not guaranteed to all be
@@ -115,7 +106,7 @@ public:
      * Read-only code memory validator. Ensures that the supplied va is a
      * legal jump target, and maps it to a physical address.
      *
-     * Assumes 'va' is a flash address. The VIRTUAL_FLASH_BASE bit is ignored.
+     * Assumes 'va' is a flash address in segment 0. High bits are ignored.
      */
     static bool mapROCode(FlashBlockRef &ref, VirtAddr va, PhysAddr &pa);
 
@@ -127,10 +118,17 @@ public:
     static bool copyROData(FlashBlockRef &ref, PhysAddr dest, VirtAddr src, uint32_t length);
 
     /**
-     * Initialize a FlashStream with read-only data from a flash pointer.
-     * Does NOT support RAM addresses, unlike all the *ROData functions.
+     * Perform a 32-bit CRC over read-only data in virtual memory.
+     * The address does not need to be aligned at all, and the length
+     * can be any arbitrary number of bytes.
+     *
+     * The CRC is padded with 0xFF bytes until its total length
+     * is a multiple of 'alignment', which must be >= 4 and a power of two.
+     *
+     * Returns true on success.
      */
-    static bool initFlashStream(VirtAddr va, uint32_t length, FlashStream &out);
+    static bool crcROData(FlashBlockRef &ref, VirtAddr src, uint32_t length,
+        uint32_t &crc, unsigned alignment = 4);
 
     /**
      * Asynchronously preload the given VirtAddr. If it's a flash address, this
@@ -143,7 +141,7 @@ public:
      * Convenient type-safe wrapper around copyROData.
      */
     template <typename T>
-    static inline bool copyROData(T &dest, const T *src)
+    static ALWAYS_INLINE bool copyROData(T &dest, const T *src)
     {
         FlashBlockRef ref;
         return copyROData(ref, reinterpret_cast<PhysAddr>(&dest),
@@ -155,7 +153,7 @@ public:
      * with a caller-supplied FlashBlockRef.
      */
     template <typename T>
-    static inline bool copyROData(FlashBlockRef &ref, T &dest, const T *src)
+    static ALWAYS_INLINE bool copyROData(FlashBlockRef &ref, T &dest, const T *src)
     {
         return copyROData(ref, reinterpret_cast<PhysAddr>(&dest),
                           reinterpret_cast<VirtAddr>(src), sizeof(T));
@@ -166,7 +164,7 @@ public:
      * is an untyped VirtAddr.
      */
     template <typename T>
-    static inline bool copyROData(T &dest, VirtAddr src)
+    static ALWAYS_INLINE bool copyROData(T &dest, VirtAddr src)
     {
         FlashBlockRef ref;
         return copyROData(ref, reinterpret_cast<PhysAddr>(&dest),
@@ -178,7 +176,7 @@ public:
      * is an untyped VirtAddr and with a caller-supplied FlashBlockRef.
      */
     template <typename T>
-    static inline bool copyROData(FlashBlockRef &ref, T &dest, VirtAddr src)
+    static ALWAYS_INLINE bool copyROData(FlashBlockRef &ref, T &dest, VirtAddr src)
     {
         return copyROData(ref, reinterpret_cast<PhysAddr>(&dest),
                           src, sizeof(T));
@@ -205,62 +203,80 @@ public:
      * This is initialized to the current binary's RODATA segment by our ELF
      * loader.
      */
-    static void setFlashSegment(const FlashRange &segment) {
-        ASSERT(segment.isAligned());
-        flashSeg = segment;
+    static ALWAYS_INLINE void setFlashSegment(unsigned index, const FlashMapSpan &span) {
+        ASSERT(index < NUM_FLASH_SEGMENTS);
+        flashSeg[index] = span;
     }
 
     /**
-     * Clear all user RAM. Should happen before launching a new game.
+     * Clear all user RAM and unmap all Flash segments.
+     * Should happen before launching a new game.
      */
     static void erase() {
         memset(userRAM, 0, RAM_SIZE_IN_BYTES);
+        for (unsigned i = 0; i < arraysize(flashSeg); i++)
+            setFlashSegment(i, FlashMapSpan::empty());
     }
 
     /**
      * Reconstruct a code address, given a FlashBlock and low-level PC.
-     * Used for debugging, as well as function calls.
+     * Used for debugging, as well as function calls. Assumes 'pc' is in
+     * the default flash segment.
      */
-    static unsigned reconstructCodeAddr(const FlashBlockRef &ref, uint32_t pc) {
-        if (ref.isHeld())
-            return ref->getAddress() + (pc & FlashBlock::BLOCK_MASK)
-                - flashSeg.getAddress() + VIRTUAL_FLASH_BASE;
-        return 0;
-    }
+    static unsigned reconstructCodeAddr(const FlashBlockRef &ref, uint32_t pc);
 
     /**
      * Reconstruct a RAM address, doing a Physical to Virtual translation.
      * Used for debugging only.
      */
-    static VirtAddr physToVirtRAM(PhysAddr pa) {
+    static ALWAYS_INLINE VirtAddr physToVirtRAM(PhysAddr pa) {
         uintptr_t offset = pa - userRAM; 
         return (VirtAddr)offset + VIRTUAL_RAM_BASE;
     }
-    static VirtAddr physToVirtRAM(Svm::reg_t pa) {
+    static ALWAYS_INLINE VirtAddr physToVirtRAM(Svm::reg_t pa) {
         return physToVirtRAM(reinterpret_cast<PhysAddr>(pa));
     }
     
     /**
-     * Convert a flash block address to a VA in the current segment.
-     * If the block address is not in the current segment at all, returns zero.
+     * Convert a flash block address to a VA in any valid segment.
+     * If the block address is not in any segment at all, returns zero.
      */
     static VirtAddr flashToVirtAddr(uint32_t addr) {
-        uint32_t offset = addr - flashSeg.getAddress();
-        if (offset < flashSeg.getSize())
-            return offset + VIRTUAL_FLASH_BASE;
+        STATIC_ASSERT(arraysize(flashSeg) == 2);
+        FlashMapSpan::ByteOffset offset;
+        if (flashSeg[0].flashAddrToOffset(addr, offset))
+            return offset + SEGMENT_0_VA;
+        if (flashSeg[1].flashAddrToOffset(addr, offset))
+            return offset + SEGMENT_1_VA;
         return 0;
     }
 
     /**
-     * Convert a VA to a flash block address, using the current segment.
+     * Convert a VA to a flash block address in any valid segment.
      * If the VA is not a valid flash address, returns zero.
      */
     static uint32_t virtToFlashAddr(VirtAddr va) {
-        uint32_t offset = va - VIRTUAL_FLASH_BASE;
-        if (offset < flashSeg.getSize())
-            return flashSeg.getAddress() + offset;
+        STATIC_ASSERT(arraysize(flashSeg) == 2);
+        FlashMapSpan::FlashAddr addr;
+        if (flashSeg[0].offsetToFlashAddr(va - SEGMENT_0_VA, addr))
+            return addr;
+        if (flashSeg[1].offsetToFlashAddr(va - SEGMENT_1_VA, addr))
+            return addr;
         return 0;
     }     
+
+    /**
+     * Convert the VA to a segment number, or an invalid segment number
+     * if the VA is not a valid flash address.
+     */
+    static unsigned virtToFlashSegment(VirtAddr va) {
+        STATIC_ASSERT(arraysize(flashSeg) == 2);
+        if (flashSeg[0].offsetIsValid(va - SEGMENT_0_VA))
+            return 0;
+        if (flashSeg[1].offsetIsValid(va - SEGMENT_1_VA))
+            return 1;
+        return unsigned(-1);
+    }
 
     /**
      * Quick predicates to check a physical address. Used only in simulation.
@@ -301,11 +317,21 @@ public:
                 r = offset + VIRTUAL_RAM_BASE;
         }
 #endif
-    }   
+    }
+
+    /*
+     * ALERT! You should probably not be using this function.
+     * Its main purpose in life is to allow factory test code to
+     * place audio data into valid virtual memory. This should NEVER
+     * be used during actual application runtime.
+     */
+    static void* copyToUserRAM(size_t destOffset, const void *src, size_t sz) {
+        return memcpy(userRAM + destOffset, src, sz);
+    }
 
 private:
     static uint8_t userRAM[RAM_SIZE_IN_BYTES] SECTION(".userram");
-    static FlashRange flashSeg;
+    static FlashMapSpan flashSeg[NUM_FLASH_SEGMENTS];
 };
 
 

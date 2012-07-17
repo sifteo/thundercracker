@@ -10,6 +10,7 @@
 #include "board.h"
 #include "gpio.h"
 #include "powermanager.h"
+#include "bootloader.h"
 
 #include <string.h>
 
@@ -25,10 +26,16 @@ extern unsigned     __data_src;
 extern initFunc_t   __init_array_start;
 extern initFunc_t   __init_array_end;
 
-extern int main() __attribute__((noreturn));
+extern void bootloadMain(bool)  __attribute__((noreturn));
+extern int  main()              __attribute__((noreturn));
 
 extern "C" void _start()
 {
+    /*
+     * Don't need to run clock start up in application FW if the bootloader
+     * has already run it.
+     */
+#ifndef BOOTLOADABLE
     /*
      * Set up clocks:
      *   - 8 MHz HSE (xtal) osc
@@ -78,6 +85,7 @@ extern "C" void _start()
                 (7 << 18)                 | // PLLMUL - x9
                 (RCC_CFGR_PLLXTPRE << 17) | // PLL XTPRE
                 (1 << 16)                 | // PLLSRC - HSE
+                (2 << 14)                 | // ADCPRE - div6, ADCCLK is 14Mhz max
                 (4 << 11)                 | // PPRE2 - APB2 prescaler, divide by 2
                 (5 << 8)                  | // PPRE1 - APB1 prescaler, divide by 4
                 (0 << 4);                   // HPRE - AHB prescaler, no divisor
@@ -96,9 +104,7 @@ extern "C" void _start()
     RCC.APB2RSTR = 0;
 
     // Enable peripheral clocks
-    RCC.APB1ENR = 0x00004000;    // SPI2
     RCC.APB2ENR = 0x0000003d;    // GPIO/AFIO
-    RCC.AHBENR  = 0x00001040;    // USB OTG, CRC
 
 #if 0
     // debug the clock output - MCO
@@ -110,6 +116,19 @@ extern "C" void _start()
      * Enable VCC SYS asap.
      */
     PowerManager::earlyInit();
+
+#endif // BOOTLOADABLE
+
+    /*
+     * Application firmware can request that the bootloader try to update by
+     * writing BOOTLOAD_UPDATE_REQUEST_KEY to __data_start and
+     * doing a system reset.
+     *
+     * Must check for this value before we overwrite it during normal init below.
+     */
+#ifdef BOOTLOADER
+    bool updateRequested = (__data_start == Bootloader::UPDATE_REQUEST_KEY);
+#endif
 
     /*
      * Initialize data segments (In parallel with oscillator startup)
@@ -128,25 +147,14 @@ extern "C" void _start()
      * programmatically unpack data from flash to RAM, just like we
      * did above with the .data segment.
      */
-    
+
     for (initFunc_t *p = &__init_array_start; p != &__init_array_end; p++)
         p[0]();
 
     // application specific entry point
+#ifdef BOOTLOADER
+    bootloadMain(updateRequested);
+#else
     main();
-}
-
-extern "C" void *_sbrk(intptr_t increment)
-{
-    /*
-     * We intentionally don't want to support dynamic allocation yet.
-     * If anyone tries a malloc(), we'll just trap here infinitely.
-     *
-     * XXX: Either implement this for reals (after figuring out what
-     *      limitations to put in place) or direct it at a proper fault
-     *      handler once we have those.
-     */
-
-    while (1);
-    return NULL;
+#endif
 }

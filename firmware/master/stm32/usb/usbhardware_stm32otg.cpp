@@ -18,6 +18,9 @@ namespace UsbHardware {
 
 void init()
 {
+    // turn on the peripheral clock
+    RCC.AHBENR |= (1 << 12);
+
     // Enable VBUS sensing in device mode and power down the PHY
     OTG.global.GCCFG |= (1 << 19) |     // VBUSBSEN
                         (1 << 16);      // PWRDWN
@@ -58,6 +61,14 @@ void init()
 
     OTG.global.GINTSTS = 0xffffffff;    // clear any pending IRQs
     OTG.global.GAHBCFG |= 0x1;          // global interrupt enable
+}
+
+void deinit()
+{
+    // turn on the peripheral clock
+    RCC.AHBENR &= ~(1 << 12);
+
+    OTG.global.GCCFG = 0;
 }
 
 /*
@@ -118,127 +129,85 @@ void setAddress(uint8_t addr)
 }
 
 // Configure endpoint address and type & allocate FIFO memory for endpoint
-void epSetup(uint8_t addr, uint8_t type, uint16_t maxsize)
+void epINSetup(uint8_t addr, uint8_t type, uint16_t maxsize)
 {
-    // EP0 gets handled during reset
-    if ((addr & 0x7f) == 0)
-        return;
+    addr &= 0x7f;
 
-    if (isInEp(addr)) {
+    uint16_t fifoDepthInWords = maxsize / 4;
+    OTG.global.DIEPTXF[addr - 1] = (fifoDepthInWords << 16) | fifoMemTop;
+    fifoMemTop += fifoDepthInWords;
 
-        addr &= 0x7f;
+    volatile USBOTG_IN_EP_t & ep = OTG.device.inEps[addr];
+    ep.DIEPTSIZ = maxsize;
+    ep.DIEPCTL  = ((1 << 31) |     // EPENA
+                   (1 << 28) |     // SD0PID
+                   (1 << 27) |     // SNAK
+                   (addr << 22) |
+                   (type << 18) |
+                   (1 << 15) |     // USBEAP
+                   maxsize);
 
-        uint16_t fifoDepthInWords = maxsize / 4;
-        OTG.global.DIEPTXF[addr - 1] = (fifoDepthInWords << 16) | fifoMemTop;
-        fifoMemTop += fifoDepthInWords;
-
-        volatile USBOTG_IN_EP_t & ep = OTG.device.inEps[addr];
-        ep.DIEPTSIZ = maxsize;
-        ep.DIEPCTL  = ((1 << 31) |     // EPENA
-                       (1 << 28) |     // SD0PID
-                       (1 << 27) |     // SNAK
-                       (addr << 22) |
-                       (type << 18) |
-                       (1 << 15) |     // USBEAP
-                       maxsize);
-
-        // clear pending interrupts & enable ISRs for this ep
-        ep.DIEPINT = 0xff;
-        OTG.device.DAINTMSK |= (1 << addr);
-    }
-    else {
-
-        doeptsiz[addr] = (1 << 19) | (maxsize & 0x7f);
-
-        volatile USBOTG_OUT_EP_t & ep = OTG.device.outEps[addr];
-        ep.DOEPTSIZ = doeptsiz[addr];
-        ep.DOEPCTL |= ((1 << 31) |     // EPENA
-                       (1 << 28) |     // SD0PID
-                       (1 << 26) |     // CNAK
-                       (type << 18) |
-                       (1 << 15) |     // USBEAP
-                       maxsize);
-
-        // clear pending interrupts & enable ISRs for this ep
-        ep.DOEPINT = 0xff;
-        OTG.device.DAINTMSK |= (1 << (addr + 16));
-    }
+    // clear pending interrupts & enable ISRs for this ep
+    ep.DIEPINT = 0xff;
+    OTG.device.DAINTMSK |= (1 << addr);
 }
 
-void epSetStalled(uint8_t addr, bool stall)
+void epOUTSetup(uint8_t addr, uint8_t type, uint16_t maxsize)
+{
+    doeptsiz[addr] = (1 << 19) | (maxsize & 0x7f);
+
+    volatile USBOTG_OUT_EP_t & ep = OTG.device.outEps[addr];
+    ep.DOEPTSIZ = doeptsiz[addr];
+    ep.DOEPCTL |= ((1 << 31) |     // EPENA
+                   (1 << 28) |     // SD0PID
+                   (1 << 26) |     // CNAK
+                   (type << 18) |
+                   (1 << 15) |     // USBEAP
+                   maxsize);
+
+    // clear pending interrupts & enable ISRs for this ep
+    ep.DOEPINT = 0xff;
+    OTG.device.DAINTMSK |= (1 << (addr + 16));
+}
+
+void epStall(uint8_t addr)
 {
     const uint32_t stallbit = (1 << 21);
+    if (isInEp(addr))
+        OTG.device.inEps[addr & 0x7f].DIEPCTL |= stallbit;
+    else
+        OTG.device.outEps[addr].DOEPCTL |= stallbit;
+}
 
-    if (addr == 0) {
-        if (stall)
-            OTG.device.inEps[addr].DIEPCTL |= stallbit;
-        else
-            OTG.device.inEps[addr].DIEPCTL &= ~stallbit;
-    }
-
+void epClearStall(uint8_t addr)
+{
+    const uint32_t stallbit = (1 << 21);
     if (isInEp(addr)) {
-
         addr &= 0x7F;
-
-        if (stall) {
-            OTG.device.inEps[addr].DIEPCTL |= stallbit;
-        }
-        else {
-            OTG.device.inEps[addr].DIEPCTL &= ~stallbit;
-            OTG.device.inEps[addr].DIEPCTL |= (1 << 28);   // SD0PID
-        }
-    }
-    else {
-        if (stall) {
-            OTG.device.outEps[addr].DOEPCTL |= stallbit;
-        }
-        else {
-            OTG.device.outEps[addr].DOEPCTL &= ~stallbit;
-            OTG.device.outEps[addr].DOEPCTL |= (1 << 28);   // SD0PID
-        }
+        OTG.device.inEps[addr].DIEPCTL &= ~stallbit;
+        OTG.device.inEps[addr].DIEPCTL |= (1 << 28);   // SD0PID
+    } else {
+        OTG.device.outEps[addr].DOEPCTL &= ~stallbit;
+        OTG.device.outEps[addr].DOEPCTL |= (1 << 28);   // SD0PID
     }
 }
 
 bool epIsStalled(uint8_t addr)
 {
     const uint32_t stallbit = (1 << 21);
-
     if (isInEp(addr))
         return (OTG.device.inEps[addr & 0x7f].DIEPCTL & stallbit) != 0;
     else
         return (OTG.device.outEps[addr].DOEPCTL & stallbit) != 0;
 }
 
-void epSetNak(uint8_t addr, bool nak)
-{
-    // n/a for IN endpoints
-    if (isInEp(addr))
-        return;
-
-    // set or clear nak accordingly
-    OTG.device.outEps[addr].DOEPCTL |= (nak ? (1 << 27) : (1 << 26));
-}
-
-uint16_t epTxWordsAvailable(uint8_t addr)
-{
-    // n/a for OUT endpoints
-    if (!isInEp(addr))
-        return 0;
-
-    return OTG.device.inEps[addr & 0x7f].DTXFSTS & 0xffff;
-}
-
-bool epTxInProgress(uint8_t addr)
-{
-    // check the packet count in the IN endpoint
-    uint16_t pktcnt = (OTG.device.inEps[addr & 0x7f].DIEPTSIZ >> 19) & 0x3ff;
-    return pktcnt > 0;
-}
-
 uint16_t epWritePacket(uint8_t addr, const void *buf, uint16_t len)
 {
     addr &= 0x7F;
     volatile USBOTG_IN_EP_t & ep = OTG.device.inEps[addr];
+
+    inEndpointStates[addr].buf = static_cast<const uint8_t*>(buf);
+    inEndpointStates[addr].len = len;
 
     /*
      * As long as the data is in a contiguous buffer and there's room in the fifo,
@@ -251,16 +220,12 @@ uint16_t epWritePacket(uint8_t addr, const void *buf, uint16_t len)
         ep.DIEPTSIZ = (1 << 19);
     }
     else {
-        uint8_t pktcnt = (len - 1 + MAX_PACKET) / MAX_PACKET;
+        uint8_t pktcnt = (len + MAX_PACKET - 1) / MAX_PACKET;
         ep.DIEPTSIZ = (pktcnt << 19) | len;
     }
     ep.DIEPCTL |= (1 << 31) | (1 << 26);     // EPENA & CNAK
+    OTG.device.DIEPEMPMSK |= (1 << addr);
 
-    // Copy buffer to endpoint FIFO
-    const uint32_t* buf32 = static_cast<const uint32_t*>(buf);
-    volatile uint32_t* fifo = OTG.epFifos[addr];
-    for (int i = len; i > 0; i -= 4)
-        *fifo = *buf32++;
     return len;
 }
 
@@ -305,14 +270,9 @@ uint16_t epReadPacket(uint8_t addr, void *buf, uint16_t len)
     return len;
 }
 
-void setDisconnected(bool disconnected)
+void disconnect()
 {
-    const uint32_t sdis = (1 << 1);
-
-    if (disconnected)
-        OTG.device.DCTL |= sdis;
-    else
-        OTG.device.DCTL &= ~sdis;
+    OTG.device.DCTL |= (1 << 1);    // SDIS
 }
 
 } // namespace UsbHardware
@@ -371,17 +331,36 @@ IRQ_HANDLER ISR_UsbOtg_FS()
      */
     const uint32_t IEPINT = 1 << 18;    // this bit is read-only
     if (status & IEPINT) {
+
         uint16_t inEpInts = OTG.device.DAINT & 0xffff;
-        // TODO: could micro optimize here with CLZ and friends
         for (unsigned i = 0; inEpInts != 0; ++i, inEpInts >>= 1) {
-            volatile USBOTG_IN_EP_t & ep = OTG.device.inEps[i];
-            // only really interested in XFRC to indicate TX complete
-            if (ep.DIEPINT & 0x1) {
+
+            uint32_t inEpInt = OTG.device.inEps[i].DIEPINT;
+            OTG.device.inEps[i].DIEPINT = 0xff;
+
+            /*
+             * TXFE: transmit FIFO has room to write a packet.
+             */
+            if (inEpInt & (1 << 7)) {
+
+                InEndpointState &eps = inEndpointStates[i];
+                const uint32_t* buf32 = reinterpret_cast<const uint32_t*>(eps.buf);
+                volatile uint32_t* fifo = OTG.epFifos[i];
+                for (int b = eps.len; b > 0; b -= 4)
+                    *fifo = *buf32++;
+
+                eps.len = 0;
+                OTG.device.DIEPEMPMSK &= ~(1 << i);
+            }
+
+            /*
+             * XFRC: transmission complete
+             */
+            if (inEpInt & 0x1) {
                 if (i == 0)
                     UsbControl::controlRequest(0, TransactionIn);
                 else
                     UsbDevice::inEndpointCallback(i);
-                ep.DIEPINT = 0x1;
             }
         }
     }
@@ -394,21 +373,20 @@ IRQ_HANDLER ISR_UsbOtg_FS()
         uint16_t outEpInts = (OTG.device.DAINT >> 16) & 0xffff;
         for (unsigned i = 0; outEpInts != 0; ++i, outEpInts >>= 1) {
 
-            volatile USBOTG_OUT_EP_t & ep = OTG.device.outEps[i];
+            uint32_t outEpInt = OTG.device.outEps[i].DOEPINT;
+            OTG.device.outEps[i].DOEPINT = 0xff;
 
-            if (ep.DOEPINT & (1 << 3)) {    // setup complete
+            if (outEpInt & (1 << 3)) {      // setup complete
                 UsbControl::controlRequest(0, TransactionSetup);
-                ep.DOEPINT = (1 << 3);
             }
 
-            if (ep.DOEPINT & 0x1) {         // OUT transfer complete
+            if (outEpInt & 0x1) {           // OUT transfer complete
                 // TODO: update UsbControl handler to determine in/out stage
                 // based on previous state
                 if (i == 0)
                     UsbControl::controlRequest(0, TransactionIn);
                 else
                     UsbDevice::outEndpointCallback(i);
-                ep.DOEPINT = 0x1;
             }
         }
     }

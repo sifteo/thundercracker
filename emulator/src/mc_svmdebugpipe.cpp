@@ -4,6 +4,7 @@
  */
 
 #include <string.h>
+#include "lua_script.h"
 #include "svm.h"
 #include "svmdebugpipe.h"
 #include "svmmemory.h"
@@ -17,6 +18,9 @@
 using namespace Svm;
 
 static ELFDebugInfo gELFDebugInfo;
+static LogDecoder gLogDecoder;
+static LuaScript *gLuaScript;
+
 
 static struct DebuggerMailbox {
     tthread::mutex m;
@@ -29,34 +33,6 @@ static struct DebuggerMailbox {
 } gDebuggerMailbox;
 
 
-static const char* faultStr(FaultCode code)
-{
-    switch (code) {
-    case F_STACK_OVERFLOW:      return "Stack allocation failure";
-    case F_BAD_STACK:           return "Validation-time stack address error";
-    case F_BAD_CODE_ADDRESS:    return "Branch-time code address error";
-    case F_BAD_SYSCALL:         return "Unsupported syscall number";
-    case F_LOAD_ADDRESS:        return "Runtime load address error";
-    case F_STORE_ADDRESS:       return "Runtime store address error";
-    case F_LOAD_ALIGNMENT:      return "Runtime load alignment error";
-    case F_STORE_ALIGNMENT:     return "Runtime store alignment error";
-    case F_CODE_FETCH:          return "Runtime code fetch error";
-    case F_CODE_ALIGNMENT:      return "Runtime code alignment error";
-    case F_CPU_SIM:             return "Unhandled ARM instruction in sim";
-    case F_RESERVED_SVC:        return "Reserved SVC encoding";
-    case F_RESERVED_ADDROP:     return "Reserved ADDROP encoding";
-    case F_ABORT:               return "User call to _SYS_abort";
-    case F_LONG_STACK_LOAD:     return "Bad address in long stack LDR addrop";
-    case F_LONG_STACK_STORE:    return "Bad address in long stack STR addrop";
-    case F_PRELOAD_ADDRESS:     return "Bad address for async preload";
-    case F_RETURN_FRAME:        return "Bad saved FP value detected during return";
-    case F_LOG_FETCH:           return "Memory fault while fetching _SYS_log data";
-    case F_SYSCALL_ADDRESS:     return "Bad address in system call";
-    case F_SYSCALL_PARAM:       return "Other bad parameter in system call";
-    default:                    return "unknown error";
-    }
-}
-
 bool SvmDebugPipe::fault(FaultCode code)
 {
     uint32_t pcVA = SvmRuntime::reconstructCodeAddr(SvmCpu::reg(REG_PC));
@@ -65,7 +41,7 @@ bool SvmDebugPipe::fault(FaultCode code)
     LOG(("***\n"
          "*** (>\")> --[ Uh oh!  A VM Fault! ]\n"
          "***\n"
-         "***   Code %d (%s)\n"
+         "***   Code %x (%s)\n"
          "***\n"
          "***   PC: va=%08x pa=%p%s at %s\n"
          "***   SP: va=%08x pa=%p%s\n"
@@ -74,7 +50,7 @@ bool SvmDebugPipe::fault(FaultCode code)
          "***\n"
          "*** Stack Backtrace:\n"
          "***\n",
-         code, faultStr(code),
+         code, faultString(code),
  
          pcVA,
          reinterpret_cast<void*>(SvmCpu::reg(REG_PC)),
@@ -130,7 +106,7 @@ void SvmDebugPipe::logCommit(SvmLogTag tag, uint32_t *buffer, uint32_t bytes)
     // interface instead of going through the cache, since we don't want
     // debug log decoding to affect caching behavior.
 
-    uint32_t decodedSize = LogDecoder::decode(gELFDebugInfo, tag, buffer);
+    uint32_t decodedSize = gLogDecoder.decode(gELFDebugInfo, tag, buffer);
     ASSERT(decodedSize == bytes);
 }
 
@@ -227,9 +203,26 @@ static uint32_t debuggerMsgCallback(const uint32_t *cmd,
     return replyWords;
 }
 
-void SvmDebugPipe::setSymbolSourceELF(const FlashRange &elf)
+void SvmDebugPipe::setSymbolSource(const Elf::Program &program)
 {
-    gELFDebugInfo.init(elf);
+    gELFDebugInfo.init(program);
     GDBServer::setDebugInfo(&gELFDebugInfo);
     GDBServer::setMessageCallback(debuggerMsgCallback);
+}
+
+static void luaHandler(const char *str, void*)
+{
+    ASSERT(gLuaScript);
+    if (gLuaScript->runString(str))
+        SvmRuntime::fault(F_SCRIPT_EXCEPTION);
+}
+
+void SvmDebugPipe::init()
+{
+    delete gLuaScript;
+    gLuaScript = new LuaScript(*SystemMC::getSystem());
+
+    LogDecoder::ScriptHandler lua = { luaHandler };
+    gLogDecoder.init();
+    gLogDecoder.setScriptHandler(_SYS_SCRIPT_LUA, lua);
 }

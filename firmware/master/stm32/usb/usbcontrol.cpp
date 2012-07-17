@@ -34,7 +34,7 @@ int UsbControl::receiveChunk()
     uint16_t size = UsbHardware::epReadPacket(0, controlState.pdata + controlState.len, packetsize);
 
     if (size != packetsize) {
-        UsbHardware::epSetStalled(0, true);
+        UsbHardware::epStall(0);
         return -1;
     }
 
@@ -70,14 +70,14 @@ void UsbControl::setupRead(SetupData *req)
         }
     }
     else {
-        UsbHardware::epSetStalled(0, true);    // stall on failure
+        UsbHardware::epStall(0);    // stall on failure
     }
 }
 
 void UsbControl::setupWrite(SetupData *req)
 {
     if (req->wLength > controlState.len) {
-        UsbHardware::epSetStalled(0, true);
+        UsbHardware::epStall(0);
         return;
     }
 
@@ -115,7 +115,7 @@ void UsbControl::setup()
     SetupData *req = &controlState.req;
 
     if (UsbHardware::epReadPacket(0, req, 8) != 8) {
-        UsbHardware::epSetStalled(0, true);
+        UsbHardware::epStall(0);
         return;
     }
 
@@ -149,7 +149,7 @@ void UsbControl::out(uint8_t ea)
             controlState.status = StatusIn;
         }
         else {
-            UsbHardware::epSetStalled(0, true);
+            UsbHardware::epStall(0);
         }
         break;
 
@@ -159,7 +159,7 @@ void UsbControl::out(uint8_t ea)
         break;
 
     default:
-        UsbHardware::epSetStalled(0, true);
+        UsbHardware::epStall(0);
     }
 }
 
@@ -185,6 +185,6 @@ void UsbControl::in(uint8_t ea)
         break;
 
     default:
-        UsbHardware::epSetStalled(0, true);
+        UsbHardware::epStall(0);
     }
 }

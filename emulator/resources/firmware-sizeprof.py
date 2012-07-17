@@ -60,12 +60,76 @@ def profileSymbolSizes(p):
 
     print "\nSymbols:"
     showSizes(labelSizes, 50)
-    
-        
+
+def visualMap(p):
+    numRows = 32
+    numCols = 64
+    bytesPerChar = 8
+
+    print "\nVisual ROM map:\n(%d bytes per character)\n" % bytesPerChar
+
+    moduleCodes = {}
+    numAssignedCodes = 0
+
+    for row in range(numRows):
+        addr = row * (numCols * bytesPerChar)
+        print "%04x: " % addr,
+        for col in range(numCols):
+
+            # Is there a consensus about which module owns this block?
+            # Ignore single unallocated bytes.
+            modules = []
+            for byte in range(bytesPerChar):
+                module = p.byteModule.get(addr)
+                addr += 1
+                if module:
+                    modules.append(module)
+
+            if not modules:
+                module = 'None'
+                code = '.'
+            elif modules == [modules[0]] * len(modules):
+                module = modules[0]
+                code = moduleCodes.get(module, None)
+                if not code:
+                    code = chr(ord('A') + numAssignedCodes)
+                    numAssignedCodes += 1
+            else:
+                module = 'Various'
+                code = '-'
+
+            moduleCodes[module] = code
+            sys.stdout.write(code)
+        print
+    print
+
+    kv = [(v,k) for k,v in moduleCodes.items()]
+    for code, module in sorted(kv):
+        print "%10s = %s" % (code, module)
+
+def stackAnalysis(p):
+    print "\nStatic RAM analysis:"
+
+    cg = FirmwareLib.CallGraph(p)
+    total = 0
+
+    for group, (path, sp) in cg.findDeepest().iteritems():
+        total = total + sp
+        print "\n  Group %s, 0x%02x bytes with path:" % (group, sp)
+        for node in path:
+            print "    %s" % p.lines[node].strip().expandtabs()
+
+    print "\n  Total RAM: 0x%02x bytes\n" % total
+    if total >= 0x100:
+        raise ValueError("Oh no, stack overflow is possible!")
+
+
 if __name__ == '__main__':
     p = FirmwareLib.RSTParser()
     for f in sys.argv[1:]:
         p.parseFile(f)
-    
+
+    visualMap(p)
     profileModuleSizes(p)
     profileSymbolSizes(p)
+    stackAnalysis(p)

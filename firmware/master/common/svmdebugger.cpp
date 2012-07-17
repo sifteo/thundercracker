@@ -23,6 +23,7 @@ SvmDebugger SvmDebugger::instance;
 
 void SvmDebugger::messageLoop(void *param)
 {
+    Tasks::clearPending(Tasks::Debugger);
     /*
      * Re-entrancy guard. Normally this isn't something we have to worry
      * about, but an emulated syscall during single-step can call Tasks::work()
@@ -47,10 +48,10 @@ void SvmDebugger::messageLoopWork()
         
         while (!SvmDebugPipe::debuggerMsgAccept(msg)) {
             // No command is waiting. If we're halted, block
-            // until we get a command. If not, return immediately.            
+            // until we get a command. If not, return immediately.
             if (!stopped)
                 return;
-            Radio::halt();
+            Tasks::idle();
         }
 
         handleMessage(msg);

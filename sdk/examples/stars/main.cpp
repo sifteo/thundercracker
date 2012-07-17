@@ -1,7 +1,5 @@
-/* -*- mode: C; c-basic-offset: 4; intent-tabs-mode: nil -*-
- *
+/*
  * Sifteo SDK Example.
- * Copyright <c> 2011 Sifteo, Inc. All rights reserved.
  */
 
 #include <sifteo.h>
@@ -16,6 +14,8 @@ static AssetSlot MainSlot = AssetSlot::allocate()
 
 static Metadata M = Metadata()
     .title("Stars SDK Example")
+    .package("com.sifteo.sdk.stars", "1.0")
+    .icon(Icon)
     .cubeRange(gNumCubes);
 
 
@@ -195,6 +195,8 @@ private:
 void main()
 {
     static StarDemo instances[gNumCubes];
+
+    AudioTracker::play(Music);
 
     for (unsigned i = 0; i < arraysize(instances); i++)
         instances[i].init(i);

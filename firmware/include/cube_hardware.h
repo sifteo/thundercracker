@@ -17,12 +17,21 @@
  *    0 - Early prototype dev board
  *    1 - Rev 1 PCB
  *    2 - Rev 2 PCB (March 2012)
+ *    3 - Rev 3 PCB
+ *    4 - Rev 4 PCB (New accelerometer address)
+ *    5 - Rev 5 PCB (Shake to wake)
  */
 
-#define HWREV_LATEST    2
-#define HWREV_DEFAULT   2
+#define HWREV_MINIMUM   2
+#define HWREV_LATEST    5
+#define HWREV_DEFAULT   5
+
 #ifndef HWREV
 #  define HWREV HWREV_DEFAULT
+#endif
+
+#if HWREV < HWREV_MINIMUM
+#  error Hardware revision is too old; no longer supported by this codebase!
 #endif
 
 // Combined hardware and firmware revision.
@@ -59,26 +68,20 @@
 
 #define MISC_I2C_SCL    (1 << 2)
 #define MISC_I2C_SDA    (1 << 3)
-#if HWREV >= 1
-#   define MISC_TOUCH   (1 << 7)
-#else
-#   define MISC_TOUCH   (1 << 4)
-#endif
+#define MISC_TOUCH      (1 << 7)
 #define MISC_NB_IN      (1 << 6)   // T1 input
 
 // Touch is on a wakeup-capable pin
-#define TOUCH_WUPOC     WUOPC1
 #define TOUCH_WUOPC_BIT (1 << 7)
+
+// Shake as a wakeup source
+#define SHAKE_WUOPC_BIT (1 << 1)
 
 // Numbered according to the standard side enum.
 // Both the number and name are represented here; due to the binary masking, both are critical.
 #define MISC_NB_0_TOP          (1 << 4)
 #define MISC_NB_1_LEFT         (1 << 5)
-#if HWREV >= 1
-#   define MISC_NB_2_BOTTOM    (1 << 0)
-#else
-#   define MISC_NB_2_BOTTOM    (1 << 7)
-#endif
+#define MISC_NB_2_BOTTOM       (1 << 0)
 #define MISC_NB_3_RIGHT        (1 << 1)
 
 #define BATTERY_ADC_CH  0
@@ -94,25 +97,15 @@
 #define MISC_DIR_VALUE  (~(MISC_I2C_SCL | MISC_I2C_SDA))
 #define MISC_IDLE       (MISC_I2C_SCL | MISC_I2C_SDA)
 
-#if HWREV >= 2
-#   define CTRL_FLASH_LAT1  (1 << 1)    // AMID_LE
-#   define CTRL_FLASH_LAT2  (1 << 2)    // AHIGH_LE
-#   define CTRL_DS_EN       (1 << 4)    // Downstream 2.0v load switch
-#else
-#   define CTRL_FLASH_LAT1  (1 << 2)
-#   define CTRL_FLASH_LAT2  (1 << 1)
-#   define CTRL_BACKLIGHT   (1 << 4)
-#endif
+#define CTRL_FLASH_LAT1     (1 << 1)    // AMID_LE
+#define CTRL_FLASH_LAT2     (1 << 2)    // AHIGH_LE
+#define CTRL_DS_EN          (1 << 4)    // Downstream 2.0v load switch
 #define CTRL_LCD_DCX        (1 << 0)
 #define CTRL_3V3_EN         (1 << 3)
 #define CTRL_FLASH_WE       (1 << 5)
 #define CTRL_FLASH_OE       (1 << 6)
 
-#if HWREV >= 2
-#   define CTRL_IDLE    (CTRL_FLASH_WE | CTRL_FLASH_OE | CTRL_DS_EN | CTRL_3V3_EN | CTRL_LCD_DCX)
-#else
-#   define CTRL_IDLE    (CTRL_FLASH_WE | CTRL_FLASH_OE | CTRL_BACKLIGHT | CTRL_3V3_EN | CTRL_LCD_DCX)
-#endif
+#define CTRL_IDLE       (CTRL_FLASH_WE | CTRL_FLASH_OE | CTRL_DS_EN | CTRL_3V3_EN | CTRL_LCD_DCX)
 #define CTRL_FLASH_CMD  (CTRL_IDLE ^ CTRL_FLASH_WE)
 #define CTRL_LCD_CMD    (CTRL_IDLE ^ CTRL_LCD_DCX)
 #define CTRL_FLASH_OUT  (CTRL_IDLE ^ CTRL_FLASH_OE)
@@ -437,11 +430,14 @@ __sbit __at 0xEA RF_CKEN;
 #define W2CON1_READY    0x01
 
 // OPMCON bits
-#define OPMCON_WDT_ENABLE       0x01
+#define OPMCON_WDT_RESET_ENABLE 0x01
 #define OPMCON_LATCH_LOCKED     0x02
 #define OPMCON_WUP_ACTIVE_LOW   0x04
 
 // CLKLFCTRL bits
+#define CLKLFCTRL_SRC_RC        0x01
+#define CLKLFCTRL_SRC_SYNTH     0x02
+#define CLKLFCTRL_SRC_NONE      0x07
 #define CLKLFCTRL_XOSC16M       0x08
 #define CLKLFCTRL_READY         0x40
 #define CLKLFCTRL_PHASE         0x80

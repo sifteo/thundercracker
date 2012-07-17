@@ -13,7 +13,7 @@
  * Copy vram.color to the LCD bus, and repeat for every pixel.
  */
 
-void vm_solid(void)
+void vm_solid(void) __naked
 {
     lcd_begin_frame();
     LCD_WRITE_BEGIN();
@@ -38,6 +38,6 @@ void vm_solid(void)
         djnz    r1, 1$
     __endasm ;
 
-    LCD_WRITE_END();
     lcd_end_frame();
+    GRAPHICS_RET();
 }

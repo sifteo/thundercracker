@@ -31,13 +31,7 @@ public:
 
     void read(uint32_t address, uint8_t *buf, unsigned len);
     void write(uint32_t address, const uint8_t *buf, unsigned len);
-    void eraseSector(uint32_t address);
     void eraseBlock(uint32_t address);
-    void chipErase();
-
-    inline bool writeInProgress() {
-        return readReg(ReadStatusReg) & WriteInProgress;
-    }
 
     void readId(FlashDevice::JedecID *id);
 
@@ -88,8 +82,12 @@ private:
     };
 
     SPIMaster spi;
+    bool mightBeBusy;
 
     void ensureWriteEnabled();
+    void waitWhileBusy();
+    void waitForDma();
+
     uint8_t readReg(Command cmd);
 };
 

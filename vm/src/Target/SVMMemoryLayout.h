@@ -49,11 +49,16 @@ namespace llvm {
 
     // Section numbers for the program header
     enum SVMProgramSection {
+        // Non-debug sections
         SPS_META = 0,
         SPS_RO,
-        SPS_RW,
+        SPS_RW_Z,               // Compressed RWDATA section
         SPS_BSS,
-        SPS_DEBUG,
+
+        // Debug sections
+        SPS_DEBUG,              // Default and first debug section class
+        SPS_RW_PLAIN,           // Plaintext debug-only RWDATA section
+
         SPS_NUM_SECTIONS,       // Total number of section types
         SPS_END,                // End of all sections
     };
@@ -64,6 +69,7 @@ namespace llvm {
         // Program header types
         enum PT {
             PT_METADATA = 0x7000f001,
+            PT_LOAD_FASTLZ = 0x7000f002,
         };
 
         // Program header layout
@@ -103,11 +109,15 @@ namespace llvm {
 
         uint32_t getSectionDiskOffset(const MCSectionData *SD) const;
         uint32_t getSectionMemAddress(const MCSectionData *SD) const;
+        uint32_t getSectionMemSize(const MCSectionData *SD, const MCAsmLayout &Layout) const;
+        void setSectionMemSize(const MCSectionData *SD, uint32_t size);
 
         SVMProgramSection getSectionKind(const MCSectionData *SD) const;
+        void setSectionKind(const MCSectionData *SD, SVMProgramSection kind);
 
     private:
-        uint32_t spsSize[SPS_NUM_SECTIONS];
+        uint32_t spsMemSize[SPS_NUM_SECTIONS];
+        uint32_t spsDiskSize[SPS_NUM_SECTIONS];
         uint32_t bssAlign;
 
         struct SVMLateFixup {
@@ -124,10 +134,14 @@ namespace llvm {
         typedef std::vector<SVMLateFixup> LateFixupList_t;
         typedef std::map<const MCSectionData*, uint32_t> SectionOffsetMap_t;
         typedef std::map<std::pair<const MCSectionData *, uint32_t>, int> FNStackMap_t;
+        typedef std::map<const MCSectionData*, SVMProgramSection> SectionKindOverrides_t;
+        typedef std::map<const MCSectionData*, int32_t> SectionMemSizeOverrides_t;
 
         LateFixupList_t LateFixupList;
         FNStackMap_t FNStackMap;
         SectionOffsetMap_t SectionOffsetMap;
+        SectionKindOverrides_t SectionKindOverrides;
+        SectionMemSizeOverrides_t SectionMemSizeOverrides;
     };
 
 }  // end namespace

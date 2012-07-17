@@ -7,7 +7,11 @@
 *.app
 trace.*
 siftulator-*.png
-tc-siftulator
-tc-siftulator.exe
-src/tc-siftulator-*
+siftulator
+siftulator.exe
+src/siftulator-*
+src/Siftulator-*
 stderr.txt
+resources/data.cpp
+resources/firmware-sbt.cpp
+

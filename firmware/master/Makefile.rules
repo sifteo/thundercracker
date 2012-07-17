@@ -1,0 +1,79 @@
+
+# Override default CDEPS
+CDEPS := $(MASTER_DIR)/common/syscall-table.def
+
+all: $(BIN).elf $(BIN).bin $(BIN).hex
+
+encrypted: $(BIN).sft
+
+$(BIN).elf: $(OBJS_STM32)
+	$(CC) -o $@ $^ $(LDFLAGS)
+
+$(BIN).bin: $(BIN).elf
+	arm-none-eabi-objcopy -O binary $< $@
+
+$(BIN).hex: $(BIN).elf
+	arm-none-eabi-objcopy -O ihex $< $@
+
+$(BIN).sft: $(BIN).bin
+	$(TC_DIR)/tools/fwdeploy/fwdeploy $(BIN).bin $(BIN).sft
+
+%.stm32.o: %.cpp $(CDEPS) $(LDSCRIPT)
+	$(CC) -c $(CCFLAGS) $(DEPFLAGS) $< -o $@
+
+$(MASTER_DIR)/common/syscall-table.def: $(TC_DIR)/sdk/include/sifteo/abi/syscall.h $(MASTER_DIR)/tools/firmware-syscall-table.py
+	python $(MASTER_DIR)/tools/firmware-syscall-table.py < $< > $@
+
+$(MASTER_DIR)/stm32/target.ld:
+	$(LDSCRIPT_GEN)
+
+ocd:
+	openocd -f $(MASTER_DIR)/stm32/$(PROG_CONFIG) \
+		-c init \
+		-c "reset halt"
+
+unlock:
+	openocd -f $(MASTER_DIR)/stm32/$(PROG_CONFIG) \
+		-c init \
+		-c "reset halt" \
+		-c "stm32f1x unlock 0" \
+		-c reset \
+		-c exit
+
+erase:
+	openocd -f $(MASTER_DIR)/stm32/$(PROG_CONFIG) \
+	-c init \
+	-c "reset halt" \
+	-c "stm32f1x mass_erase 0" \
+	-c reset \
+	-c exit
+
+program: $(BIN).elf
+	openocd -f $(MASTER_DIR)/stm32/$(PROG_CONFIG) \
+		-c init \
+		-c "reset halt" \
+		-c "flash write_image erase $<" \
+		-c "verify_image $<" \
+		-c "reset run" \
+		-c exit
+
+update: encrypted
+	$(SDK_DIR)/bin/swiss update $(BIN).sft
+
+objdump: $(BIN).elf
+	arm-none-eabi-objdump -d $< | arm-none-eabi-c++filt | less
+
+readelf: $(BIN).elf
+	arm-none-eabi-readelf -a $< | less
+
+.PHONY: all clean syscall-table ocd unlock program encrypted fwload objdump
+
+# Several steps, to work around Win32 command line length limits
+clean:
+	rm -f $(BIN).bin $(BIN).elf $(BIN).sft $(BIN).hex
+	rm -f $(OBJS_STM32)
+	rm -f $(MASTER_DIR)/stm32/target.ld
+	rm -rf .dep
+
+# include the dep files, and make a folder for them if necessary
+include $(shell mkdir .dep 2>/dev/null) $(wildcard .dep/*)

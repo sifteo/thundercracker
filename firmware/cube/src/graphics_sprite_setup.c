@@ -7,11 +7,13 @@
  */
 
 #include "graphics_sprite.h"
+#include "sensors.h"
 
 
-void vm_bg0_spr_bg1(void)
+void vm_bg0_spr_bg1(void) __naked
 {
     lcd_begin_frame();
+    i2c_a21_wait();
     vm_bg0_setup();
     vm_bg1_setup();
     vm_spr_setup();
@@ -36,6 +38,7 @@ void vm_bg0_spr_bg1(void)
     } while (y_spr_line != y_spr_line_limit);
     
     lcd_end_frame();
+    GRAPHICS_RET();
 }
 
 void vm_spr_setup()
@@ -157,32 +160,32 @@ void vm_spr_next()
         rl      a           
         anl     a, #0x1F
 
-        mov	    b, r5	    ; Use the mask to calculate a tile width, rounded up
-        jnb	    b.6, 24$    ;   <= 128 px
-        jnb	    b.5, 23$    ;   <= 64px
-        jnb	    b.4, 22$    ;   <= 32px
-        jnb	    b.3, 21$    ;   <= 16px
-        sjmp	20$         ;   <= 8px
+        mov     b, r5       ; Use the mask to calculate a tile width, rounded up
+        jnb     b.6, 24$    ;   <= 128 px
+        jnb     b.5, 23$    ;   <= 64px
+        jnb     b.4, 22$    ;   <= 32px
+        jnb     b.3, 21$    ;   <= 16px
+        sjmp    20$         ;   <= 8px
 
-24$:	rl	a
-23$:	rl	a
-22$:	rl	a
-21$:	rl	a
+24$:    rl  a
+23$:    rl  a
+22$:    rl  a
+21$:    rl  a
 20$:    mov     r1, a
 
         ; If the sprite overlaps the left side of the screen, we need to adjust
         ; r1 to account for the horizontal sprite position too.
 
-        mov  	a, r7	    ; X test
-        anl	a, r5
-        jnz	7$
-	
+        mov     a, r7       ; X test
+        anl a, r5
+        jnz 7$
+    
         mov     a, r7       ; X offset
         swap    a           ; Pixels to tiles (>> 3)
         rl      a           
         anl     a, #0x1F
-        add	a, r1       ; Add Y contribution from above
-        mov	r1, a
+        add a, r1       ; Add Y contribution from above
+        mov r1, a
 7$:
 
         ; Store lat2:lat1, as the original tile index plus our 8-bit adjustment.

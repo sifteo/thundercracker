@@ -46,7 +46,9 @@ bool CubeCodec::encodeVRAM(PacketBuffer &buf, _SYSVideoBuffer *vb)
      * we fill up the output packet. We assume that this function
      * begins with space available in the packet buffer.
      *
-     * Returns true iff all VRAM has been flushed.
+     * Returns true iff all VRAM has been flushed. The caller should try
+     * to send this additional data, if there's still room in the TX
+     * buffer.
      */
 
     bool flushed = false;
@@ -450,9 +452,17 @@ bool CubeCodec::flashSend(PacketBuffer &buf, _SYSAssetLoaderCube *lc, _SYSCubeID
     if (!txBits.hasRoomForFlush(buf, escapeSizeInBits + dataSizeInBits))
         return false;
 
-    // The cube also must have enough buffer space to receive our minimum data
-    if (loadBufferAvail < dataSizeInBytes)
+    /*
+     * The cube also must have enough buffer space to receive our minimum data.
+     * If the cube appears to have too little buffer space left, this may mean
+     * the cube is actually out of buffer (flow control) or it may just be that
+     * we dropped ACK packets. If we get into this state, try to restart the
+     * pipeline by requesting an explicit ACK from the cube.
+     */
+    if (loadBufferAvail < dataSizeInBytes) {
+        explicitAckRequest(buf);
         return false;
+    }
 
     /*
      * Read 'progress' from untrusted memory only once. See if we're done.
@@ -468,6 +478,9 @@ bool CubeCodec::flashSend(PacketBuffer &buf, _SYSAssetLoaderCube *lc, _SYSCubeID
     if (progress >= dataSize && fifoCount == 0) {
         if (loadBufferAvail == FLS_FIFO_USABLE)
             done = true;
+
+        // Poll for dropped ACKs here too
+        explicitAckRequest(buf);
         return false;
     }
 
@@ -502,10 +515,11 @@ bool CubeCodec::flashSend(PacketBuffer &buf, _SYSAssetLoaderCube *lc, _SYSCubeID
     if (flashAddrPending) {
         ASSERT(buf.bytesFree() >= 3);
 
-        // Opcode, lat1, lat2
+        // Opcode, lat1, lat2:a21
+        ASSERT(baseAddr < 0x8000);
         buf.append(0xe1);
         buf.append(baseAddr << 1);
-        buf.append((baseAddr >> 6) & 0xfe);
+        buf.append(((baseAddr >> 6) & 0xfe) | ((baseAddr >> 14) & 1));
 
         Atomic::And(CubeSlots::flashAddrPending, ~cubeBit);
         ASSERT(count >= 3);

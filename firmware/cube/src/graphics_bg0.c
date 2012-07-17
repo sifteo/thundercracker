@@ -110,11 +110,12 @@ void vm_bg0_next(void)
     }
 }
 
-static void vm_bg0(void)
+static void vm_bg0(void) __naked
 {
     uint8_t y = vram.num_lines;
 
     lcd_begin_frame();
+    i2c_a21_wait();
     vm_bg0_setup();
 
     do {
@@ -123,4 +124,5 @@ static void vm_bg0(void)
     } while (--y);    
 
     lcd_end_frame();
+    GRAPHICS_RET();
 }

@@ -7,7 +7,15 @@ SDK_DIR = ../../../sdk
 SDCC = sdcc
 CDEPS = $(FIRMWARE_INC)/*.h $(SDK_DIR)/include/sifteo/*.h
 CFLAGS += -I$(FIRMWARE_INC) -I$(SDK_DIR)/include
-CFLAGS += -DNOT_USERSPACE
+CFLAGS += -DNOT_USERSPACE 
+
+ifeq ($(PTX_CHAN),)
+# PRX mode
+CFLAGS += -DPRX_MODE=1
+else
+# Constant-Carrier Mode
+CFLAGS += -DPTX_CHAN=${PTX_CHAN}
+endif
 
 # Define our CPU's memory limits
 LDFLAGS += --xram-size 1024 --code-size 16384

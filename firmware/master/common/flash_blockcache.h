@@ -12,6 +12,7 @@
 #ifndef FLASH_BLOCKCACHE_H_
 #define FLASH_BLOCKCACHE_H_
 
+#include "flash_device.h"
 #include "svmvalidator.h"
 #include "systime.h"
 #include "machine.h"
@@ -26,20 +27,7 @@
 #endif
 
 class FlashBlockRef;
-
-struct FlashStats {
-    unsigned blockHitSame;
-    unsigned blockHitOther;
-    unsigned blockMiss;
-    unsigned blockTotal;
-    unsigned streamBytes;
-    unsigned globalRefcount;
-    SysTime::Ticks timestamp;
-    bool enabled;
-};
-
-extern FlashStats gFlashStats;
-
+class FlashBlockWriter;
 
 /**
  * A single flash block, fetched via a globally shared cache.
@@ -49,118 +37,144 @@ extern FlashStats gFlashStats;
 class FlashBlock
 {
 public:
-    static const unsigned NUM_CACHE_BLOCKS = 16;
-    static const unsigned BLOCK_SIZE = 256;     // Power of two
-    static const unsigned BLOCK_MASK = BLOCK_SIZE - 1;
+    // Cache layout (Preferably a power of two)
+    static const unsigned NUM_CACHE_BLOCKS = 64;    // 16 kB of cache
     static const unsigned MAX_REFCOUNT = NUM_CACHE_BLOCKS;
-    static const uint32_t INVALID_ADDRESS = (uint32_t)-1;
+
+    // Block size (Must be a power of two)
+    static const unsigned BLOCK_SIZE_LOG2 = 8;
+    static const unsigned BLOCK_SIZE = 1 << BLOCK_SIZE_LOG2;
+    static const unsigned BLOCK_MASK = BLOCK_SIZE - 1;
     #define BLOCK_ALIGN __attribute__((aligned(256)))
+
+    // Special address for anonymous blocks
+    static const uint32_t INVALID_ADDRESS = (uint32_t)-1;
+
+    /// Flags
+    enum {
+        F_KNOWN_ERASED = (1 << 0),      // Contents known to be erased
+    };
 
 private:
     friend class FlashBlockRef;
+    friend class FlashBlockWriter;
 
-    uint32_t stamp;
+    // Keep this packed and power-of-two length
     uint32_t address;
-    uint16_t validCodeBytes;
+    uint16_t stamp;
     uint8_t refCount;
+    uint8_t idByte;
+
+    struct FlashStats {
+        unsigned globalRefcount;
+        SysTime::Ticks timestamp;
+
+        // These counters are reset on every interval
+        struct {
+            unsigned blockHitSame;
+            unsigned blockHitOther;
+            unsigned blockMiss;
+            unsigned blockTotal;
+
+            // Should be last, for efficiency. This is large!
+            uint32_t blockMissCounts[FlashDevice::CAPACITY / BLOCK_SIZE];
+        } periodic;
+    };
+
+    FLASHLAYER_STATS_ONLY(static FlashStats stats;)
 
     static uint8_t mem[NUM_CACHE_BLOCKS][BLOCK_SIZE] SECTION(".blockcache");
     static FlashBlock instances[NUM_CACHE_BLOCKS];
-    static uint32_t referencedBlocksMap;
-    static uint32_t latestStamp;
+    static unsigned latestStamp;
+
+    // Stored out-of-line, to keep the main FlashBlock length a power-of-two
+    static uint16_t validCodeBytes[NUM_CACHE_BLOCKS];
 
 public:
-    inline unsigned id() {
-        return (unsigned)(this - instances);
-    }
-    
-    inline unsigned bit() {
-        return Intrinsic::LZ(id());
+    ALWAYS_INLINE unsigned id() const {
+        return idByte;
     }
 
-    inline uint32_t getAddress() {
+    ALWAYS_INLINE uint32_t getAddress() const {
         return address;
     }
-    
-    inline uint8_t *getData() {
+
+    ALWAYS_INLINE bool isAnonymous() const {
+        return address == INVALID_ADDRESS;
+    }
+
+    ALWAYS_INLINE uint8_t *getData() const {
         return &mem[id()][0];
     }
 
-    inline bool isCodeOffsetValid(unsigned offset) {
+    ALWAYS_INLINE bool isCodeOffsetValid(unsigned offset) {
         // Misaligned offsets are never valid
         if (offset & 3)
             return false;
         
         // Lazily validate
-        if (validCodeBytes == 0)
-            validCodeBytes = SvmValidator::validBytes(getData(), BLOCK_SIZE);
+        uint16_t &pcb = validCodeBytes[id()];
+        unsigned cb = pcb;
 
-        return offset < validCodeBytes;
+        if (cb == 0)
+            pcb = cb = SvmValidator::validBytes(getData(), BLOCK_SIZE);
+
+        return offset < cb;
     }
-    
-    /**
-     * Quick predicate to check a physical address. Used only in simulation.
-     */
+
 #ifdef SIFTEO_SIMULATOR
-    static bool isAddrValid(uintptr_t pa) {
-        uintptr_t offset = reinterpret_cast<uint8_t*>(pa) - &mem[0][0];
-        return offset < sizeof mem;
-    }
-
-    static void enableStats() {
-        gFlashStats.enabled = true;
-    }
+    static bool isAddrValid(uintptr_t pa);
+    static void resetStats();
+    static void dumpStats();
+    static bool hotBlockSort(unsigned i, unsigned j);
+    static void countBlockMiss(uint32_t blockAddr);
+    void verify();
 #endif
 
+    // Global operations
     static void init();
-    static void preload(uint32_t blockAddr);
     static void invalidate();
-    static void get(FlashBlockRef &ref, uint32_t blockAddr);
-    static uint8_t *getByte(FlashBlockRef &ref, uint32_t address);
-    static uint8_t *getBytes(FlashBlockRef &ref, uint32_t address, uint32_t &length);
+    static void invalidate(uint32_t addrBegin, uint32_t addrEnd, unsigned flags = 0);
 
-    template <typename T>
-    static inline T* getValue(FlashBlockRef &ref, uint32_t address) {
-        uint32_t length = sizeof(T);
-        uint8_t *p = getBytes(ref, address, length);
-        if (length == sizeof(T))
-            return reinterpret_cast<T*>(p);
-        else
-            return 0;
-    }
+    // Cached block accessors
+    static void preload(uint32_t blockAddr);
+    static void get(FlashBlockRef &ref, uint32_t blockAddr, unsigned flags = 0);
+
+    // Support for anonymous memory
+    static void anonymous(FlashBlockRef &ref);
+    static void anonymous(FlashBlockRef &ref, uint8_t fillByte);
 
 private:
-    inline void incRef() {
+    ALWAYS_INLINE void incRef() {
         ASSERT(refCount <= MAX_REFCOUNT);
-        ASSERT(refCount == 0 || (referencedBlocksMap & bit()));
-        ASSERT(refCount != 0 || !(referencedBlocksMap & bit()));
 
-        if (!refCount++)
-            referencedBlocksMap |= bit();
+        refCount++;
 
         FLASHLAYER_STATS_ONLY({
-            gFlashStats.globalRefcount++;
-            ASSERT(gFlashStats.globalRefcount <= MAX_REFCOUNT);
+            stats.globalRefcount++;
+            ASSERT(stats.globalRefcount <= MAX_REFCOUNT);
         })
     }
 
-    inline void decRef() {
+    ALWAYS_INLINE void decRef() {
         ASSERT(refCount <= MAX_REFCOUNT);
         ASSERT(refCount != 0);
-        ASSERT(referencedBlocksMap & bit());
 
-        if (!--refCount)
-            referencedBlocksMap &= ~bit();
+        refCount--;
 
         FLASHLAYER_STATS_ONLY({
-            ASSERT(gFlashStats.globalRefcount > 0);
-            gFlashStats.globalRefcount--;
+            ASSERT(stats.globalRefcount > 0);
+            stats.globalRefcount--;
         })
     }
     
+    ALWAYS_INLINE unsigned getAge(unsigned latest) {
+        return uint16_t(latest - stamp);
+    }
+
     static FlashBlock *lookupBlock(uint32_t blockAddr);
-    static FlashBlock *recycleBlock();
-    void load(uint32_t blockAddr);
+    static FlashBlock *recycleBlock(uint32_t blockAddr);
+    void load(uint32_t blockAddr, unsigned flags = 0);
 };
 
 
@@ -173,17 +187,23 @@ private:
 class FlashBlockRef
 {
 public:
-    FlashBlockRef() : block(0) {}
+    ALWAYS_INLINE FlashBlockRef() : block(0) {}
 
-    FlashBlockRef(FlashBlock *block) : block(block) {
+    ALWAYS_INLINE FlashBlockRef(FlashBlock *block) : block(block) {
+        ASSERT(block);
         block->incRef();
     }
 
-    FlashBlockRef(const FlashBlockRef &r) : block(&*r) {
-        block->incRef();
+    ALWAYS_INLINE FlashBlockRef(const FlashBlockRef &r) : block(r.block) {
+        if (block)
+            block->incRef();
     }
-    
-    inline bool isHeld() const {
+
+    ALWAYS_INLINE ~FlashBlockRef() {
+        release();
+    }
+
+    bool ALWAYS_INLINE isHeld() const {
         if (block) {
             ASSERT(block->refCount != 0);
             ASSERT(block->refCount <= block->MAX_REFCOUNT);
@@ -192,7 +212,7 @@ public:
         return false;
     }
 
-    inline void set(FlashBlock *b) {
+    void ALWAYS_INLINE set(FlashBlock *b) {
         if (isHeld())
             block->decRef();
         block = b;
@@ -200,21 +220,25 @@ public:
             b->incRef();
     }
     
-    inline void release() {
+    void ALWAYS_INLINE release() {
         set(0);
+        ASSERT(!isHeld());
     }
 
-    ~FlashBlockRef() {
-        release();
-    }
-
-    inline FlashBlock& operator*() const {
+    ALWAYS_INLINE FlashBlock& operator*() const {
         return *block;
     }
 
-    inline FlashBlock* operator->() const {
+    ALWAYS_INLINE FlashBlock* operator->() const {
         ASSERT(isHeld());
         return block;
+    }
+
+    ALWAYS_INLINE FlashBlockRef& operator=(const FlashBlockRef &r) {
+        block = r.block;
+        if (block)
+            block->incRef();
+        return *this;
     }
 
 private:
@@ -223,107 +247,56 @@ private:
 
 
 /**
- * A contiguous range of bytes in Flash. Has a beginning and an end.
+ * A utility class to represent writes-in-progress to a single flash block.
+ *
+ * The FlashBlockWriter instance can be in either the 'clean' state, where
+ * no writes are pending, or the 'dirty' state, in which we have a single
+ * page in the cache which needs to be written to the device.
+ *
+ * Before the write starts,  we perform some invalidation and checking.
+ * Then we can complete the write by actually flushing a dirty cache block
+ * to the device.
+ *
+ * The writer automatically commits on destruction *unless* the block in
+ * question is anonymous. If an anonymous write is cancelled, the data is
+ * discarded. Writes with a specific address (not anonymous) cannot be
+ * cancelled, since the cache block has already been modified.
  */
-class FlashRange {
+
+class FlashBlockWriter
+{
 public:
-    FlashRange() {}
+    ALWAYS_INLINE FlashBlockWriter() {}
 
-    FlashRange(uint32_t address, uint32_t size)
-        : address(address), size(size) {}
-
-    inline void init(uint32_t address, uint32_t size) {
-        this->address = address;
-        this->size = size;
+    ALWAYS_INLINE FlashBlockWriter(const FlashBlockRef &r) {
+        beginBlock(r);
     }
 
-    inline void clear() {
-        this->size = 0;
+    ALWAYS_INLINE ~FlashBlockWriter() {
+        if (ref.isHeld() && !ref->isAnonymous())
+            commitBlock();
     }
 
-    inline uint32_t getAddress() const {
-        return address;
+    // Dirty iff ref.isHeld()
+    FlashBlockRef ref;
+
+    void beginBlock();
+    void beginBlock(uint32_t blockAddr);
+    void beginBlock(const FlashBlockRef &r);
+
+    void relocate(uint32_t blockAddr);
+
+    void commitBlock();
+
+    template <typename T>
+    T *getData(uint32_t address) {
+        unsigned blockPart = address & ~FlashBlock::BLOCK_MASK;
+        unsigned bytePart = address & FlashBlock::BLOCK_MASK;
+        ASSERT(bytePart + sizeof(T) <= FlashBlock::BLOCK_SIZE);
+
+        beginBlock(blockPart);
+        return reinterpret_cast<T*>(ref->getData() + bytePart);
     }
-
-    inline uint32_t getSize() const {
-        return size;
-    }
-    
-    inline bool isEmpty() const {
-        return size == 0;
-    }
-    
-    inline bool isAligned() const {
-        return (address & FlashBlock::BLOCK_MASK) == 0;
-    }
-
-    inline bool isAligned(unsigned alignment) const {
-        return (address & (alignment - 1)) == 0;
-    }
-
-    FlashRange split(uint32_t sliceOffset, uint32_t sliceSize) const;
-
-private:
-    uint32_t address;
-    uint32_t size;
-};
-
-
-/**
- * A contiguous region of flash, not necessarily block-aligned, used as a
- * source for streaming data. This does not use the cache layer, since it's
- * assumed that we'll be reading a large object in mostly linear order
- * and we'd rather not pollute the cache with all of these blocks that will
- * not be reused.
- */
-class FlashStream : public FlashRange {
-public:
-    FlashStream() {}
-
-    FlashStream(const FlashRange &r)
-        : FlashRange(r), offset(0) {}
-
-    FlashStream(uint32_t address, uint32_t size)
-        : FlashRange(address, size), offset(0) {}
-
-    inline void init(uint32_t address, uint32_t size) {
-        FlashRange::init(address, size);
-        this->offset = 0;
-    }
-
-    inline void clear() {
-        FlashRange::clear();
-        this->offset = 0;
-    }
-
-    inline bool eof() const {
-        ASSERT(offset <= getSize());
-        return offset >= getSize();
-    }
-
-    inline uint32_t tell() const {
-        return offset;
-    }
-
-    inline void seek(uint32_t o) {
-        ASSERT(o <= getSize());
-        offset = o;
-    }
-
-    inline uint32_t remaining() const {
-        ASSERT(offset <= getSize());
-        return getSize() - offset;
-    }
-
-    inline void advance(uint32_t bytes) {
-        seek(bytes + tell());
-    }
-
-    // Reads at the current offset, does *not* auto-advance.
-    uint32_t read(uint8_t *dest, uint32_t maxLength);
-
-private:
-    uint32_t offset;
 };
 
 

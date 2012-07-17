@@ -44,45 +44,9 @@ namespace Cube {
 namespace CPU {
 
 
-NEVER_INLINE void trace_execution(em8051 *mCPU)
+NEVER_INLINE void trace_execution(em8051 *aCPU)
 {
-    char assembly[128];
-    uint8_t bank = (mCPU->mSFR[REG_PSW] & (PSWMASK_RS0|PSWMASK_RS1)) >> PSW_RS0;
-
-    em8051_decode(mCPU, mCPU->mPC, assembly);
-
-    Tracer::logV(mCPU, "@%04X i%d a%02X r%d[%02X%02X%02X%02X-%02X%02X%02X%02X] "
-                 "d%d[%04X%04X] p[%02X%02X%02X%02X-%02X%02X%02X%02X] "
-                 "t[%02X%02X%02X%02X%02X%02X]  %s",
-                 mCPU->mPC, mCPU->irq_count,
-                 mCPU->mSFR[REG_ACC],
-                 bank,
-                 mCPU->mData[bank*8 + 0],
-                 mCPU->mData[bank*8 + 1],
-                 mCPU->mData[bank*8 + 2],
-                 mCPU->mData[bank*8 + 3],
-                 mCPU->mData[bank*8 + 4],
-                 mCPU->mData[bank*8 + 5],
-                 mCPU->mData[bank*8 + 6],
-                 mCPU->mData[bank*8 + 7],
-                 mCPU->mSFR[REG_DPS] & 1,
-                 (mCPU->mSFR[REG_DPH] << 8) | mCPU->mSFR[REG_DPL],
-                 (mCPU->mSFR[REG_DPH1] << 8) | mCPU->mSFR[REG_DPL1],
-                 mCPU->mSFR[REG_P0],
-                 mCPU->mSFR[REG_P1],
-                 mCPU->mSFR[REG_P2],
-                 mCPU->mSFR[REG_P3],
-                 mCPU->mSFR[REG_P0DIR],
-                 mCPU->mSFR[REG_P1DIR],
-                 mCPU->mSFR[REG_P2DIR],
-                 mCPU->mSFR[REG_P3DIR],
-                 mCPU->mSFR[REG_TH0],
-                 mCPU->mSFR[REG_TL0],
-                 mCPU->mSFR[REG_TH1],
-                 mCPU->mSFR[REG_TL1],
-                 mCPU->mSFR[REG_TH2],
-                 mCPU->mSFR[REG_TL2],
-                 assembly);
+    ((Cube::Hardware*) aCPU->callbackData)->traceExecution();
 }
 
 NEVER_INLINE void profile_tick(em8051 *aCPU)
@@ -119,6 +83,13 @@ void em8051_reset(em8051 *aCPU, int aWipe)
     aCPU->mTickDelay = 1;
     aCPU->prescaler12 = 12;
 
+    aCPU->wdtEnabled = false;
+    aCPU->wdtCounter = 0;
+
+    aCPU->wdsvLow = 0;
+    aCPU->wdsvHigh = 0;
+    aCPU->wdsvState = WDSV_LOW;
+
     aCPU->mSFR[REG_SP] = 7;
     aCPU->mSFR[REG_P0] = 0xff;
     aCPU->mSFR[REG_P1] = 0xff;
@@ -135,7 +106,9 @@ void em8051_reset(em8051 *aCPU, int aWipe)
     aCPU->mSFR[REG_SPIRSTAT] = 0x03;
     aCPU->mSFR[REG_SPIRDAT] = 0x00;
     aCPU->mSFR[REG_RFCON] = RFCON_RFCSN;
-    
+
+    aCPU->mSFR[REG_CLKLFCTRL] = 0x07;
+
     // build function pointer lists
 
     disasm_setptrs(aCPU);
@@ -246,7 +219,12 @@ const char *em8051_exc_name(int aCode)
         "MDU error",
         "RNG error",
         "Nonvolatile memory write error",
+        "Unsupported or invalid LF clock configuration",
+        "Badly formatted flash memory command",
+        "Operation attempted while flash is busy",
     };
+
+    STATIC_ASSERT(NUM_EXCEPTIONS == arraysize(exc_names));
 
     if (aCode < (int)(sizeof exc_names / sizeof exc_names[0]))
         return exc_names[aCode];
@@ -254,6 +232,22 @@ const char *em8051_exc_name(int aCode)
         return "Unknown exception";
 }
 
+NEVER_INLINE void timer_clklf_tick(em8051 *aCPU)
+{
+    /*
+     * Tick at approximately 32 kHz.
+     */
+
+    if (aCPU->wdtEnabled) {
+        // Update the 24-bit watchdog counter
+        unsigned wdt = (aCPU->wdtCounter - 1) & 0xFFFFFF;
+        aCPU->wdtCounter = wdt;
+        if (!wdt) {
+            ((Cube::Hardware*) aCPU->callbackData)->logWatchdogReset();
+            em8051_reset(aCPU, true);
+        }
+    }
+}
 
 NEVER_INLINE void timer_tick_work(em8051 *aCPU, bool tick12)
 {
@@ -273,8 +267,57 @@ NEVER_INLINE void timer_tick_work(em8051 *aCPU, bool tick12)
      */
  
     Neighbors::clearNeighborInput(*aCPU);
-    
-    
+
+    /*
+     * Synthesize CLKLF edges.
+     *
+     * The actual synthesis method or expected accuracy isn't documented.
+     * We use a divide-by-40 prescaler after the normal tick12 prescaler:
+     *
+     *    16MHZ / 12 / 40 = 33.333 kHz
+     *    (1.7% faster than nominal)
+     *
+     * It's better for us to be faster than real hardware rather than slower,
+     * so that if the WDT timing is borderline we'll see spurious resets
+     * in our unit testing.
+     */
+
+    if (tick12) {
+        uint8_t clklf = aCPU->mSFR[REG_CLKLFCTRL];
+        switch (clklf & CLKLFMASK_SOURCE) {
+
+        default:
+            // Unsupported
+            except(aCPU, EXCEPTION_CLKLF);
+            break;
+
+        case CLKLFSRC_NONE:
+            // Clock stopped. This is an error if our WDT is enabled.
+            if (aCPU->wdtEnabled)
+                except(aCPU, EXCEPTION_CLKLF);
+            break;
+
+        case CLKLFSRC_SYNTH:
+            // Synthesized
+
+            if (aCPU->prescalerLF) {
+                aCPU->prescalerLF--;
+                break;
+            }
+            aCPU->prescalerLF = 20;
+
+            clklf |= CLKLFMASK_XOSC16M;
+            clklf |= CLKLFMASK_READY;
+            clklf ^= CLKLFMASK_PHASE;
+            aCPU->mSFR[REG_CLKLFCTRL] = clklf;
+
+            if (clklf & CLKLFMASK_PHASE) {
+                timer_clklf_tick(aCPU);
+            }
+            break;
+        }
+    }
+
     /*
      * Timer 0 / Timer 1
      */

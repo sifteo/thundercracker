@@ -62,6 +62,11 @@ class I2CAccelerometer {
             state = S_DATA;
             break;
 
+        case S_DATA:
+            if (regAddress < sizeof regs)
+                regs.bytes[regAddress++] = byte;
+            break;
+
         default:
             break;
         }
@@ -87,8 +92,17 @@ class I2CAccelerometer {
         return result;
     }
 
+    bool intPin(unsigned index)
+    {
+        // No interrupt sources are currently implemented
+        bool source = false;
+        
+        // Both interrupts share the same active-high/active-low control pin
+        return source ^ ((regs.ctrl_reg[5] >> 1) & 1);
+    }
+
  private:
-    static const uint8_t deviceAddress = 0x30;
+    static const uint8_t deviceAddress = 0x32;
     uint8_t regAddress;
 
     // Matches device register layout. Assumes little-endian.

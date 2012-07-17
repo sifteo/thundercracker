@@ -14,6 +14,7 @@
 #include "frontend_cube.h"
 #include "frontend_mothership.h"
 #include "frontend_overlay.h"
+#include "tinythread.h"
 
 #include <Box2D/Box2D.h>
 #include <string>
@@ -23,7 +24,8 @@
 class FrameRateController {
 public:
     FrameRateController();
-    void endFrame();
+
+    double getEndFrameSleepTime();
 
     void setTargetFPS(double target) {
         targetFPS = target;
@@ -41,15 +43,12 @@ class Frontend {
     Frontend();
 
     bool init(System *sys);
-    bool runFrame();
-    void exit();
 
-    void numCubesChanged();
+    static bool runFrame();
+    static void exit();
 
-    void postMessage(std::string msg) {
-        overlay.postMessage(msg);
-    }
-    
+    static void postMessage(std::string msg);
+
  private:
     /*
      * Number of real frames per virtual LCD frame (Assume 60Hz
@@ -79,6 +78,7 @@ class Frontend {
 
     void animate();
     void draw();
+    void updateCubeCount();
 
     bool openWindow(int width, int height, bool fullscreen=false);
     void toggleFullscreen();
@@ -99,6 +99,8 @@ class Frontend {
     void moveWalls(bool immediate=false);
     void pushBodyTowards(b2Body *b, b2Vec2 target, float gain);
 
+    static float viewExtentForCubeCount(unsigned num);
+    static b2Vec2 getCubeGridLoc(unsigned index, unsigned total);
     b2Body *newKBox(float x, float y, float hw, float hh);
     unsigned cubeID(FrontendCube *cube);
 
@@ -112,9 +114,6 @@ class Frontend {
     b2Vec2 worldToScreen(b2Vec2 world);
     float worldToScreen(float x);
 
-    void addCube();
-    void removeCube();
-
     std::string createScreenshotName();
     void drawOverlay();
 
@@ -124,19 +123,21 @@ class Frontend {
     unsigned frameCount;
     unsigned idleFrames;
 
-    unsigned mothershipCount; // this belongs in System methinks...
-    FrontendMothership motherships[1];
+    // Object counts, local to the Frontend. (May lag the simulation thread)
+    unsigned mothershipCount;
+    unsigned cubeCount;
 
+    FrontendMothership motherships[1];
     FrontendCube cubes[System::MAX_CUBES];
 
     bool toggleZoom;
     bool isFullscreen;
     bool isRunning;
     bool isRotationFixed;
+    bool isAnimatingNewCubeLayout;
 
     int mouseX, mouseY;
     int mouseWheelPos;
-    unsigned gridW, gridH;
     unsigned lastWindowW, lastWindowH;
 
     float viewExtent;
@@ -163,6 +164,7 @@ class Frontend {
     FrontendOverlay overlay;
 
     static Frontend *instance;
+    static tthread::mutex instanceLock;
 };
 
 #endif

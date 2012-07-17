@@ -91,12 +91,19 @@ struct em8051
     bool needHardwareTick;
     bool needTimerEdgeCheck;
     bool deepSleep;
-    
+    bool wdtEnabled;            // Watchdog enabled (Only cleared at reset)
+
     uint8_t irq_count;          // Number of currently active IRQ handlers
     uint8_t ifp;                // Last IFP state
     uint8_t t012;               // Last T0/1/2 state
     uint8_t prescaler12;        // 1/12 prescaler
     uint8_t prescaler24;        // 1/24 prescaler
+    uint8_t prescalerLF;        // CLKLF synthesis prescaler
+    uint8_t wdsvLow;            // Low half of start value for WDT
+    uint8_t wdsvHigh;           // High half of start value for WDT
+    uint8_t wdsvState;          // WDT register state machine
+
+    unsigned wdtCounter;        // 24-bit watchdog counter
 
     void *callbackData;
 
@@ -182,6 +189,18 @@ enum EM8051_EXCEPTION
     EXCEPTION_MDU,               // Multiply Divide Unit error
     EXCEPTION_RNG,               // Random Number Generator error
     EXCEPTION_NVM,               // NVM write error (Write while read-only)
+    EXCEPTION_CLKLF,             // Unsupported or invalid LF clock configuration
+    EXCEPTION_FLASH_CMD,         // Badly formatted flash memory command
+    EXCEPTION_FLASH_BUSY,        // Operation attempted while flash is busy
+
+    NUM_EXCEPTIONS,              // Must be last
+};
+
+enum WDSV_STATE
+{
+    WDSV_LOW = 0,
+    WDSV_WRITE_HIGH,
+    WDSV_READ_HIGH,
 };
 
 

@@ -4,7 +4,6 @@
  */
 
 #include "svmruntime.h"
-#include "elfutil.h"
 #include "flash_blockcache.h"
 #include "svm.h"
 #include "svmmemory.h"
@@ -14,8 +13,22 @@
 #include "event.h"
 #include "tasks.h"
 #include "panic.h"
+#include "cubeslots.h"
 
+#include <math.h>
 #include <sifteo/abi.h>
+
+typedef uint64_t (*SvmSyscall)(reg_t p0, reg_t p1, reg_t p2, reg_t p3,
+                               reg_t p4, reg_t p5, reg_t p6, reg_t p7);
+
+// Library function aliases, used by syscall-table on hardware only.
+#ifdef SIFTEO_SIMULATOR
+#   define SYS_ALIAS(_sysName, _libName)   _sysName
+#else
+#   define SYS_ALIAS(_sysName, _libName)   _libName
+#endif
+
+#include "syscall-table.def"
 
 using namespace Svm;
 
@@ -24,29 +37,58 @@ FlashBlockRef SvmRuntime::dataBlock;
 SvmMemory::PhysAddr SvmRuntime::stackLimit;
 reg_t SvmRuntime::eventFrame;
 bool SvmRuntime::eventDispatchFlag;
+bool SvmRuntime::pendingExitFlag;
 
-#ifdef SIFTEO_SIMULATOR
-bool SvmRuntime::stackMonitorEnabled = false;
-SvmMemory::PhysAddr SvmRuntime::topOfStackPA;
-SvmMemory::PhysAddr SvmRuntime::stackLowWaterMark;
-#endif
 
-void SvmRuntime::run(uint32_t entryFunc, SvmMemory::VirtAddr stackLimitVA,
-        SvmMemory::VirtAddr stackTopVA)
+void SvmRuntime::run(uint32_t entryFunc, const StackInfo &stack)
 {
-    if (!SvmMemory::mapRAM(stackLimitVA, 0, stackLimit))
-        SvmRuntime::fault(F_BAD_STACK);
-
-#ifdef SIFTEO_SIMULATOR
-    SvmMemory::VirtAddr topOfStackVA = SvmMemory::VIRTUAL_RAM_TOP;
-    ASSERT(SvmMemory::mapRAM(topOfStackVA, (uint32_t)0, topOfStackPA));
-    stackLowWaterMark = topOfStackPA;
-#endif
-
-    SvmCpu::run(mapSP(stackTopVA - getSPAdjustBytes(entryFunc)),
+    UART(("Entering SVM.\r\n"));
+    initStack(stack);
+    SvmCpu::run(mapSP(stack.top - getSPAdjustBytes(entryFunc)),
                 mapBranchTarget(entryFunc));
 }
 
+void SvmRuntime::exec(uint32_t entryFunc, const StackInfo &stack)
+{
+    // Unset base pointers
+    validate(0);
+
+    // Escape from any active events
+    eventFrame = 0;
+    eventDispatchFlag = false;
+    pendingExitFlag = false;
+
+    // Reset stack limits
+    initStack(stack);
+
+    // Zero all GPRs
+    for (unsigned i = 0; i < 8; ++i)
+        SvmCpu::setReg07(i, 0);
+
+    // We're back in main() now, so set FP accordingly
+    SvmCpu::setReg(REG_FP, 0);
+
+    setSP(stack.top - getSPAdjustBytes(entryFunc));
+    branch(entryFunc);
+}
+
+void SvmRuntime::initStack(const StackInfo &stack)
+{
+    if (!SvmMemory::mapRAM(stack.limit, 0, stackLimit))
+        SvmRuntime::fault(F_BAD_STACK);
+
+#ifdef SIFTEO_SIMULATOR
+    ASSERT(SvmMemory::mapRAM(stack.top, (uint32_t)0, topOfStackPA));
+    stackLowWaterMark = topOfStackPA;
+#endif
+}
+
+ALWAYS_INLINE void SvmRuntime::dumpRegister(PanicMessenger &msg, unsigned reg)
+{
+    reg_t value = SvmCpu::reg(reg);
+    SvmMemory::squashPhysicalAddr(value);
+    msg << uint32_t(value);
+}
 
 void SvmRuntime::fault(FaultCode code)
 {
@@ -63,24 +105,37 @@ void SvmRuntime::fault(FaultCode code)
 
     /* 
      * Unhandled fault; panic!
-     * Draw a message to cube #0 and exit.
+     *
+     * Draw a message to one enabled cube, and exit after a home-button press.
      */
 
-    uint32_t pcVA = SvmRuntime::reconstructCodeAddr(SvmCpu::reg(REG_PC));
     PanicMessenger msg;
     msg.init(0x10000);
 
-    msg.at(1,1) << "Oh noes!";
-    msg.at(1,3) << "Fault code " << uint8_t(code);
-    msg.at(1,5) << "PC: " << pcVA;
-    for (unsigned r = 0; r < 8; r++) {
-        reg_t value = SvmCpu::reg(r);
-        SvmMemory::squashPhysicalAddr(value);
-        msg.at(1,6+r) << 'r' << char('0' + r) << ": " << uint32_t(value);
-    }
+    // User-facing description
+    msg.at(1,1) << "Oh no!";
+    msg.at(1,2) << "Press button";
+    msg.at(1,3) << "to continue.";
 
-    msg.paint(0);
-    SvmLoader::exit();
+    // Getting more developer-oriented now... fault description
+    msg.at(1,5) << "In Volume<" << uint8_t(SvmLoader::getRunningVolume().block.code) << ">";
+    msg.at(1,6) << "Fault 0x" << uint8_t(code) << ":";
+    msg.at(1,7) << faultString14(code);
+
+    // Begin the "Wall of text" register dump, after one blank line
+    uint32_t pcVA = SvmRuntime::reconstructCodeAddr(SvmCpu::reg(REG_PC));
+    msg.at(1,9) << "PC: " << pcVA;
+
+    dumpRegister(msg.at(1,10) << "SP: ", REG_SP);
+
+    // Only room for first 4 GPRs
+    for (unsigned r = 0; r < 4; r++)
+        dumpRegister(msg.at(1,11+r) << 'r' << char('0' + r) << ": ", r);
+
+    msg.paintAndWait();
+
+    // Exit with an error (Back to the launcher)
+    SvmLoader::exit(true);
 }
 
 void SvmRuntime::call(reg_t addr)
@@ -129,7 +184,7 @@ void SvmRuntime::call(reg_t addr)
     enterFunction(addr);
 }
 
-void SvmRuntime::tailcall(reg_t addr)
+ALWAYS_INLINE void SvmRuntime::tailcall(reg_t addr)
 {
     // Equivalent to a call() followed by a ret(), but without
     // allocating a new CallFrame on the stack.
@@ -153,9 +208,8 @@ void SvmRuntime::tailcall(reg_t addr)
     enterFunction(addr);
 }
 
-void SvmRuntime::enterFunction(reg_t addr)
+ALWAYS_INLINE void SvmRuntime::enterFunction(reg_t addr)
 {
-
     // Allocate stack space for this function, and enter it
     adjustSP(-(int)getSPAdjustWords(addr));
     branch(addr);
@@ -167,9 +221,23 @@ void SvmRuntime::ret(unsigned actions)
     CallFrame *fp = reinterpret_cast<CallFrame*>(regFP);
 
     if (!fp) {
-        // No more functions on the stack. Return from main() is exit().
-        if (actions & RET_EXIT)
+        /*
+         * No more functions on the stack. Return from main() is exit().
+         *
+         * In order to properly handle tail syscalls, even when the syscall
+         * might cause the current binary to change (either via an explict
+         * exec(), or via a fault) we need to calculate whether we're exiting
+         * before the syscall, but we need to actually do the exit after.
+         */
+
+        if (actions & RET_SET_EXIT_FLAG)
+            pendingExitFlag = true;
+
+        if (pendingExitFlag && (actions & RET_EXIT)) {
+            pendingExitFlag = false;
             SvmLoader::exit();
+        }
+
         return;
     }
 
@@ -223,8 +291,17 @@ void SvmRuntime::ret(unsigned actions)
     }
 }
 
+#ifndef SIFTEO_SIMULATOR
+    #include "sampleprofiler.h"
+#endif
+
 void SvmRuntime::svc(uint8_t imm8)
 {
+    #ifndef SIFTEO_SIMULATOR
+        SampleProfiler::SubSystem s = SampleProfiler::subsystem();
+        SampleProfiler::setSubsystem(SampleProfiler::SVCISR);
+    #endif
+
     if ((imm8 & (1 << 7)) == 0) {
         if (imm8 == 0)
             ret();
@@ -234,6 +311,7 @@ void SvmRuntime::svc(uint8_t imm8)
     } else if ((imm8 & (0x3 << 6)) == (0x2 << 6)) {
         uint8_t syscallNum = imm8 & 0x3f;
         syscall(syscallNum);
+        postSyscallWork();
 
     } else if ((imm8 & (0x7 << 5)) == (0x6 << 5)) {
         int imm5 = imm8 & 0x1f;
@@ -245,33 +323,36 @@ void SvmRuntime::svc(uint8_t imm8)
 
         switch (sub) {
         case 0x1c:  // 0b11100
-            validate(SvmCpu::reg(r));
+            validate(SvmCpu::reg07(r));
             break;
+
         case 0x1d:  // 0b11101
             if (r)
                 fault(F_RESERVED_SVC);
             else
                 breakpoint();
             break;
+
         case 0x1e:  // 0b11110
-            call(SvmCpu::reg(r));
+            call(SvmCpu::reg07(r));
             break;
+
         case 0x1f:  // 0b11111
-            tailcall(SvmCpu::reg(r));
+            tailcall(SvmCpu::reg07(r));
             break;
+
         default:
             fault(F_RESERVED_SVC);
             break;
         }
     }
 
-    if (eventDispatchFlag) {
-        eventDispatchFlag = 0;
-        Event::dispatch();
-    }
+    #ifndef SIFTEO_SIMULATOR
+        SampleProfiler::setSubsystem(s);
+    #endif
 }
 
-void SvmRuntime::svcIndirectOperation(uint8_t imm8)
+ALWAYS_INLINE void SvmRuntime::svcIndirectOperation(uint8_t imm8)
 {
     // Should be checked by the validator
     ASSERT(imm8 < FlashBlock::BLOCK_SIZE / sizeof(uint32_t));
@@ -288,10 +369,12 @@ void SvmRuntime::svcIndirectOperation(uint8_t imm8)
     else if ((literal & IndirectSyscallMask) == IndirectSyscallTest) {
         unsigned imm15 = (literal >> 16) & 0x3ff;
         syscall(imm15);
+        postSyscallWork();
     }
     else if ((literal & TailSyscallMask) == TailSyscallTest) {
         unsigned imm15 = (literal >> 16) & 0x3ff;
-        tailsyscall(imm15);
+        tailSyscall(imm15);
+        postSyscallWork();
     }
     else if ((literal & AddropMask) == AddropTest) {
         unsigned opnum = (literal >> 24) & 0x1f;
@@ -299,7 +382,7 @@ void SvmRuntime::svcIndirectOperation(uint8_t imm8)
     }
     else if ((literal & AddropFlashMask) == AddropFlashTest) {
         unsigned opnum = (literal >> 24) & 0x1f;
-        addrOp(opnum, SvmMemory::VIRTUAL_FLASH_BASE + (literal & 0xffffff));
+        addrOp(opnum, SvmMemory::SEGMENT_0_VA + (literal & 0xffffff));
     }
     else {
         SvmRuntime::fault(F_RESERVED_SVC);
@@ -312,34 +395,43 @@ void SvmRuntime::addrOp(uint8_t opnum, reg_t address)
     case 0:
         branch(address);
         break;
+
     case 1:
         if (!SvmMemory::preload(address))
             SvmRuntime::fault(F_PRELOAD_ADDRESS);
         break;
+
     case 2:
         validate(address);
         break;
+
     case 3:
         adjustSP(-(int)address);
         break;
+
     case 4:
         longSTRSP((address >> 21) & 7, address & 0x1FFFFF);
         break;
+
     case 5:
         longLDRSP((address >> 21) & 7, address & 0x1FFFFF);
         break;
+
     default:
         SvmRuntime::fault(F_RESERVED_ADDROP);
         break;
     }
 }
 
-void SvmRuntime::validate(reg_t address)
+ALWAYS_INLINE void SvmRuntime::validate(reg_t address)
 {
     /*
      * Map 'address' as either a flash or RAM address, and set the
      * base pointer registers r8-9 appropriately.
      */
+
+    // Mask off high bits, for 64-bit Siftulator builds
+    address = (uint32_t) address;
 
     SvmMemory::PhysAddr bro, brw;
     SvmMemory::validateBase(dataBlock, address, bro, brw);
@@ -354,13 +446,6 @@ void SvmRuntime::syscall(unsigned num)
     // and return up to 64 bits in r0-r1. Note that the return value is never
     // a system pointer, so for that purpose we treat return values as 32-bit
     // registers.
-
-    typedef uint64_t (*SvmSyscall)(reg_t p0, reg_t p1, reg_t p2, reg_t p3,
-                                   reg_t p4, reg_t p5, reg_t p6, reg_t p7);
-
-    static const SvmSyscall SyscallTable[] = {
-        #include "syscall-table.def"
-    };
 
     if (num >= sizeof SyscallTable / sizeof SyscallTable[0]) {
         SvmRuntime::fault(F_BAD_SYSCALL);
@@ -400,13 +485,9 @@ void SvmRuntime::syscall(unsigned num)
 
     SvmCpu::setReg(0, result0);
     SvmCpu::setReg(1, result1);
-
-    // Poll for pending userspace tasks on our way up. This is akin to a
-    // deferred procedure call (DPC) in Win32.
-    Tasks::work();
 }
 
-void SvmRuntime::tailsyscall(unsigned num)
+ALWAYS_INLINE void SvmRuntime::tailSyscall(unsigned num)
 {
     /*
      * Tail syscalls incorporate a normal system call plus a return.
@@ -428,22 +509,47 @@ void SvmRuntime::tailsyscall(unsigned num)
      * everything else after.
      */
 
-    ret(RET_BRANCH);
+    const unsigned preActions = RET_BRANCH | RET_SET_EXIT_FLAG;
+
+    ret(preActions);
+    TRACING_ONLY(LOG(("TAIL-")););
     syscall(num);
-    ret(RET_ALL ^ RET_BRANCH);
+    ret(RET_ALL ^ preActions);
 }
 
-void SvmRuntime::resetSP()
+ALWAYS_INLINE void SvmRuntime::postSyscallWork()
+{
+    /*
+     * Deferred work items that must be handled after a syscall is fully
+     * done, the return values have been stored, and we're ready to return.
+     *
+     * This is work that could happen at the end of every svc(), but
+     * for performance reasons we only do it after syscalls.
+     */
+
+    // Poll for pending userspace tasks on our way up. This is akin to a
+    // deferred procedure call (DPC) in Win32.
+    Tasks::work();
+    
+    // Event dispatch is requested by certain syscalls, but must wait
+    // until after return values are stored.
+    if (eventDispatchFlag) {
+        eventDispatchFlag = 0;
+        Event::dispatch();
+    }
+}
+
+ALWAYS_INLINE void SvmRuntime::resetSP()
 {
     setSP(SvmMemory::VIRTUAL_RAM_TOP);
 }
 
-void SvmRuntime::adjustSP(int words)
+ALWAYS_INLINE void SvmRuntime::adjustSP(int words)
 {
     setSP(SvmCpu::reg(REG_SP) + 4*words);
 }
 
-void SvmRuntime::setSP(reg_t addr)
+ALWAYS_INLINE void SvmRuntime::setSP(reg_t addr)
 {
     SvmCpu::setReg(REG_SP, mapSP(addr));
 }
@@ -463,27 +569,12 @@ reg_t SvmRuntime::mapSP(reg_t addr)
     return reinterpret_cast<reg_t>(pa);
 }
 
-/*
- * If enabled, monitor stack usage and print when we have a new low water mark.
- * Simulator only.
- */
-void SvmRuntime::onStackModification(SvmMemory::PhysAddr sp)
-{
-#ifdef SIFTEO_SIMULATOR
-    if (stackMonitorEnabled && sp < stackLowWaterMark) {
-        stackLowWaterMark = sp;
-        LOG(("SVM: New stack low water mark, 0x%p (%d bytes)\n",
-             reinterpret_cast<void*>(stackLowWaterMark), int(topOfStackPA - stackLowWaterMark)));
-    }
-#endif
-}
-
 void SvmRuntime::branch(reg_t addr)
 {
     SvmCpu::setReg(REG_PC, mapBranchTarget(addr));
 }
 
-reg_t SvmRuntime::mapBranchTarget(reg_t addr)
+ALWAYS_INLINE reg_t SvmRuntime::mapBranchTarget(reg_t addr)
 {
     SvmMemory::PhysAddr pa;
 
@@ -493,7 +584,7 @@ reg_t SvmRuntime::mapBranchTarget(reg_t addr)
     return reinterpret_cast<reg_t>(pa);
 }
 
-void SvmRuntime::longLDRSP(unsigned reg, unsigned offset)
+ALWAYS_INLINE void SvmRuntime::longLDRSP(unsigned reg, unsigned offset)
 {
     SvmMemory::VirtAddr va = SvmCpu::reg(REG_SP) + (offset << 2);
     SvmMemory::PhysAddr pa;
@@ -502,12 +593,12 @@ void SvmRuntime::longLDRSP(unsigned reg, unsigned offset)
     ASSERT(reg < 8);
 
     if (SvmMemory::mapRAM(va, sizeof(uint32_t), pa))
-        SvmCpu::setReg(reg, *reinterpret_cast<uint32_t*>(pa));
+        SvmCpu::setReg07(reg, *reinterpret_cast<uint32_t*>(pa));
     else
         SvmRuntime::fault(F_LONG_STACK_LOAD);
 }
 
-void SvmRuntime::longSTRSP(unsigned reg, unsigned offset)
+ALWAYS_INLINE void SvmRuntime::longSTRSP(unsigned reg, unsigned offset)
 {
     SvmMemory::VirtAddr va = SvmCpu::reg(REG_SP) + (offset << 2);
     SvmMemory::PhysAddr pa;
@@ -516,7 +607,7 @@ void SvmRuntime::longSTRSP(unsigned reg, unsigned offset)
     ASSERT(reg < 8);
 
     if (SvmMemory::mapRAM(va, sizeof(uint32_t), pa))
-        *reinterpret_cast<uint32_t*>(pa) = SvmCpu::reg(reg);
+        *reinterpret_cast<uint32_t*>(pa) = SvmCpu::reg07(reg);
     else
         SvmRuntime::fault(F_LONG_STACK_STORE);
 }

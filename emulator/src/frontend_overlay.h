@@ -46,9 +46,14 @@ public:
 
     void toggleHelp();
     void toggleInspector();
+    void toggleAudioVisualizer();
 
     void postMessage(std::string msg);
-    
+
+    bool allowIdling() {
+        return !visualizerVisible;
+    }
+
 private:
     static const unsigned margin = 5;
     static const unsigned lineSpacing = 20;
@@ -69,6 +74,7 @@ private:
     unsigned messageTimer;
     bool helpVisible;
     bool inspectorVisible;
+    bool visualizerVisible;
     
     ElapsedTime slowTimer;
     ElapsedTime fastTimer;
@@ -77,11 +83,12 @@ private:
     char realTimeMessage[64];
     Color realTimeColor;
     float filteredTimeRatio;
-    
+    float visualizerAlpha;
+
     int x, y;
     
     struct {
-        char fps[16];
+        char fps[64];
         EventRateProbe lcd_wr;
         uint32_t flashModifyCount;
     } cubes[System::MAX_CUBES];

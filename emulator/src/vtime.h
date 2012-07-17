@@ -13,7 +13,7 @@
 
 #include <stdint.h>
 #include <string.h>
-#include <glfw.h>
+#include "ostime.h"
 #include "tinythread.h"
 
 
@@ -107,7 +107,7 @@ class ElapsedTime {
     }
     
     void capture() {
-        currentRealS = glfwGetTime();
+        currentRealS = OSTime::clock();
     }
 
     void capture(const ElapsedTime &source) {
@@ -194,7 +194,7 @@ class TimeGovernor {
             secondsAhead = 0;
 
         if (secondsAhead > minSleep)
-            glfwSleep(secondsAhead);
+            OSTime::sleep(secondsAhead);
        
         et.start();
     }
@@ -218,6 +218,11 @@ class TickDeadline {
     void init(const VirtualTime *_vtime) {
         vtime = _vtime;
         reset();
+    }
+
+    void initTo(const VirtualTime *_vtime, uint64_t latest) {
+        vtime = _vtime;
+        resetTo(latest);
     }
 
     void reset() {

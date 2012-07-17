@@ -1,41 +1,52 @@
-MASTER_DIR = $(TC_DIR)/firmware/master
+MASTER_DIR := $(TC_DIR)/firmware/master
 
 # Sources common to both host and stm32 builds
 OBJS_COMMON = \
     $(MASTER_DIR)/common/syscall_asset.o \
     $(MASTER_DIR)/common/syscall_audio.o \
     $(MASTER_DIR)/common/syscall_cube.o \
-    $(MASTER_DIR)/common/syscall_float.o \
-    $(MASTER_DIR)/common/syscall_integer.o \
+    $(MASTER_DIR)/common/syscall_filesystem.o \
+    $(MASTER_DIR)/common/syscall_prng.o \
+    $(MASTER_DIR)/common/syscall_atomic.o \
     $(MASTER_DIR)/common/syscall_image.o \
     $(MASTER_DIR)/common/syscall_runtime.o \
     $(MASTER_DIR)/common/syscall_string.o \
     $(MASTER_DIR)/common/syscall_video.o \
     $(MASTER_DIR)/common/event.o \
     $(MASTER_DIR)/common/radio.o \
+    $(MASTER_DIR)/common/assetslot.o \
     $(MASTER_DIR)/common/cubeslots.o \
     $(MASTER_DIR)/common/cube.o \
     $(MASTER_DIR)/common/cubecodec.o \
     $(MASTER_DIR)/common/audiomixer.o \
     $(MASTER_DIR)/common/adpcmdecoder.o \
     $(MASTER_DIR)/common/audiosampledata.o \
-    $(MASTER_DIR)/common/audiobuffer.o \
     $(MASTER_DIR)/common/audiochannel.o \
+    $(MASTER_DIR)/common/xmtrackerpattern.o \
+    $(MASTER_DIR)/common/xmtrackerplayer.o \
     $(MASTER_DIR)/common/accel.o \
     $(MASTER_DIR)/common/neighbors.o \
     $(MASTER_DIR)/common/tasks.o \
     $(MASTER_DIR)/common/prng.o \
+    $(MASTER_DIR)/common/crc.o \
     $(MASTER_DIR)/common/flash_blockcache.o \
+    $(MASTER_DIR)/common/flash_map.o \
+    $(MASTER_DIR)/common/flash_volume.o \
+    $(MASTER_DIR)/common/flash_lfs.o \
+    $(MASTER_DIR)/common/flash_syslfs.o \
+    $(MASTER_DIR)/common/flash_stack.o \
     $(MASTER_DIR)/common/svmloader.o \
     $(MASTER_DIR)/common/svmruntime.o \
     $(MASTER_DIR)/common/svmvalidator.o \
     $(MASTER_DIR)/common/svmmemory.o \
     $(MASTER_DIR)/common/svmdebugger.o \
+    $(MASTER_DIR)/common/svmfastlz.o \
     $(MASTER_DIR)/common/usbprotocol.o \
-    $(MASTER_DIR)/common/elfutil.o \
+    $(MASTER_DIR)/common/elfprogram.o \
     $(MASTER_DIR)/common/panic.o \
     $(MASTER_DIR)/common/imagedecoder.o \
-    $(MASTER_DIR)/common/paintcontrol.o
+    $(MASTER_DIR)/common/paintcontrol.o \
+    $(MASTER_DIR)/common/usbvolumemanager.o
 
 # Sources common to all stm32 builds (currently master & testjig)
 OBJS_STM32 = \
@@ -45,7 +56,7 @@ OBJS_STM32 = \
     $(MASTER_DIR)/stm32/setup.stm32.o \
     $(MASTER_DIR)/stm32/radio.stm32.o \
     $(MASTER_DIR)/stm32/gpio.stm32.o \
-    $(MASTER_DIR)/stm32/button.stm32.o \
+    $(MASTER_DIR)/stm32/homebutton.stm32.o \
     $(MASTER_DIR)/stm32/spi.stm32.o \
     $(MASTER_DIR)/stm32/flash_device.stm32.o \
     $(MASTER_DIR)/stm32/nrf24l01.stm32.o \
@@ -54,11 +65,10 @@ OBJS_STM32 = \
     $(MASTER_DIR)/stm32/dma.stm32.o \
     $(MASTER_DIR)/stm32/hwtimer.stm32.o \
     $(MASTER_DIR)/stm32/pwmaudioout.stm32.o \
-    $(MASTER_DIR)/stm32/dacaudioout.stm32.o \
-    $(MASTER_DIR)/stm32/audiooutdevice.stm32.o \
+    $(MASTER_DIR)/stm32/volume.stm32.o \
     $(MASTER_DIR)/stm32/macronixmx25.stm32.o \
     $(MASTER_DIR)/stm32/dac.stm32.o \
-    $(MASTER_DIR)/stm32/rctimer.stm32.o \
+    $(MASTER_DIR)/stm32/crc.stm32.o \
     $(MASTER_DIR)/stm32/usb/usbdevice.stm32.o \
     $(MASTER_DIR)/stm32/usb/usbcore.stm32.o \
     $(MASTER_DIR)/stm32/usb/usbcontrol.stm32.o \
@@ -66,18 +76,10 @@ OBJS_STM32 = \
     $(MASTER_DIR)/stm32/svmcpu.stm32.o \
     $(MASTER_DIR)/stm32/svmdebugpipe.stm32.o \
     $(MASTER_DIR)/stm32/powermanager.stm32.o \
-    $(MASTER_DIR)/stm32/exti.stm32.o
+    $(MASTER_DIR)/stm32/factorytest.stm32.o \
+    $(MASTER_DIR)/stm32/exti.stm32.o \
+    $(MASTER_DIR)/stm32/led.stm32.o \
+    $(MASTER_DIR)/stm32/syscall_math.stm32.o
 
-# Sources for normal master firmware
-OBJS_STM32_MASTER = \
-    $(OBJS_STM32) \
-    $(MASTER_DIR)/stm32/main.stm32.o \
-    $(MASTER_DIR)/stm32/factorytest.stm32.o
-
-# Sources for stm32-based test jig firmware
-OBJS_STM32_TESTJIG = \
-    $(OBJS_STM32)                                       \
-    $(MASTER_DIR)/testjig/main.stm32.o                  \
-    $(MASTER_DIR)/testjig/testjig.stm32.o               \
-    $(MASTER_DIR)/stm32/neighbor.stm32.o                \
-    $(MASTER_DIR)/stm32/i2c.stm32.o
+# Other target specific sources should be appended to OBJS_STM32
+# in their project specific Makefiles

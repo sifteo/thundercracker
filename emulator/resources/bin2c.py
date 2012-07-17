@@ -10,20 +10,33 @@
 # Copyright (c) 2011 Sifteo, Inc.
 #
 
+import struct
+
+def nulTerm(data):
+    return data + [0]
+
+def sizePrefix(data):
+    return map(ord, struct.pack("I", len(data))) + data
+
 INPUTS = [
-    ('rb', "resources/img_cube_face.png"),
-    ('rb', "resources/img_cube_face_hilight.png"),
-    ('rb', "resources/img_cube_face_hilight_mask.png"),
-    ('rb', "resources/img_wood.png"),
-    ('rb', "resources/img_bg_light.png"),
-    ('r',  "resources/cube_face_fp.glsl"),
-    ('r',  "resources/cube_face_vp.glsl"),
-    ('r',  "resources/cube_side_fp.glsl"),
-    ('r',  "resources/cube_side_vp.glsl"),
-    ('r',  "resources/background_fp.glsl"),
-    ('r',  "resources/background_vp.glsl"),
-    ('rb', "resources/ui_font_data.fnt"),
-    ('rb', "resources/ui_font_data_0.png"),
+    ('rb', sizePrefix,  "../launcher/launcher.elf"),
+    ('rb', None,        "resources/img_cube_face.png"),
+    ('rb', None,        "resources/img_cube_face_hilight.png"),
+    ('rb', None,        "resources/img_cube_face_hilight_mask.png"),
+    ('rb', None,        "resources/img_wood.png"),
+    ('rb', None,        "resources/img_bg_light.png"),
+    ('rb', None,        "resources/img_scope_bg.png"),
+    ('rb', None,        "resources/img_logo.png"),
+    ('r',  nulTerm,     "resources/cube_face_fp.glsl"),
+    ('r',  nulTerm,     "resources/cube_face_vp.glsl"),
+    ('r',  nulTerm,     "resources/cube_side_fp.glsl"),
+    ('r',  nulTerm,     "resources/cube_side_vp.glsl"),
+    ('r',  nulTerm,     "resources/background_fp.glsl"),
+    ('r',  nulTerm,     "resources/background_vp.glsl"),
+    ('r',  nulTerm,     "resources/scope_fp.glsl"),
+    ('r',  nulTerm,     "resources/scope_vp.glsl"),
+    ('rb', None,        "resources/ui_font_data.fnt"),
+    ('rb', None,        "resources/ui_font_data_0.png"),
     ]
 
 OUTPUT = "resources/data.cpp"
@@ -52,7 +65,7 @@ def saveCodeArrays(filename, arrays):
         writeArray(f, name, data)
 
 def writeArray(f, name, data):
-    f.write("\nextern const uint8_t %s[] = {\n%s};\n"
+    f.write("\nextern const uint8_t %s[] __attribute__ ((aligned (4))) = {\n%s};\n"
             % (name, cByteArray(data)))
 
 def cByteArray(bytes, width=16, indent="    "):
@@ -71,12 +84,12 @@ def cByteArray(bytes, width=16, indent="    "):
 if __name__ == "__main__":
     arrays = []
 
-    for mode, filename in INPUTS:
+    for mode, fn, filename in INPUTS:
         name = os.path.splitext(os.path.split(filename)[-1])[0]
         data = map(ord, open(filename, mode).read())
 
-        # NUL-terminate strings. (Harmless on images)
-        data.append(0)
+        if fn:
+            data = fn(data)
 
         arrays.append((name, data)) 
 

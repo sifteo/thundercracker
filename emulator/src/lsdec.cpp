@@ -23,7 +23,7 @@
 LoadstreamDecoder::LoadstreamDecoder(uint8_t *buffer, uint32_t bufferSize)
     : buffer(buffer), bufferSize(bufferSize)
 {
-    ASSERT((bufferSize % Cube::FlashModel::BLOCK_SIZE) == 0);
+    ASSERT((bufferSize % Cube::FlashModel::SECTOR_SIZE) == 0);
     reset();
 }
 
@@ -61,8 +61,8 @@ void LoadstreamDecoder::write8(uint8_t value)
     ASSERT(flashAddr < bufferSize);
 
     // Auto-erase
-    if ((flashAddr % Cube::FlashModel::BLOCK_SIZE) == 0)
-        memset(buffer + flashAddr, 0xFF, Cube::FlashModel::BLOCK_SIZE);
+    if ((flashAddr % Cube::FlashModel::SECTOR_SIZE) == 0)
+        memset(buffer + flashAddr, 0xFF, Cube::FlashModel::SECTOR_SIZE);
 
     // Endian swap
     buffer[flashAddr ^ 1] &= value;
@@ -119,6 +119,9 @@ void LoadstreamDecoder::handleByte(uint8_t byte)
         case OP_SPECIAL:
             switch (opcode) {
 
+            case OP_NOP:
+                return;
+
             case OP_ADDRESS:
                 state = S_ADDR_LOW;
                 return;
@@ -137,7 +140,10 @@ void LoadstreamDecoder::handleByte(uint8_t byte)
     }
 
     case S_ADDR_HIGH: {
-        setAddress(((byte >> 1) << 7) | ((partial >> 1) << 14));
+        uint32_t lat1_part = (byte >> 1) << 7;
+        uint32_t lat2_part = (partial >> 1) << 14;
+        uint32_t a21_part = (partial & 1) << 21;
+        setAddress(lat1_part | lat2_part | a21_part);
         state = S_OPCODE;
         return;
     }
@@ -271,7 +277,7 @@ void LoadstreamDecoder::handleByte(uint8_t byte)
                 state = S_TILE_P16_LOW;
                 return;
             }
-            write16(p16run);
+            write16(lut[15]);
             rle1 = (rle1 >> 1) | (rle1 << 7);
         } while (--rle2);
 
@@ -297,7 +303,7 @@ void LoadstreamDecoder::handleByte(uint8_t byte)
     }
 
     case S_TILE_P16_HIGH: {
-        p16run = partial | (byte << 8);
+        lut[15] = partial | (byte << 8);
         write8(byte);
 
         if (--rle2) {

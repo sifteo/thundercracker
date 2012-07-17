@@ -1,0 +1,40 @@
+all: $(BIN_DIR)/$(BIN)$(BIN_EXT)
+
+# Disable implicit rules. Speeds up make, especially on Windows.
+.SUFFIXES:
+
+ifeq ($(BUILD_PLATFORM),windows32)
+$(BIN_DIR)/$(BIN)$(BIN_EXT): $(OBJS)
+	$(CC) -o "src/$(BIN).exe" $(OBJS) $(LDFLAGS)
+	$(STRIP) -s "src/$(BIN)$(BIN_EXT)" -o "src/$(BIN)-stripped$(BIN_EXT)"
+	rm -f "$(BIN_DIR)/$(BIN)$(BIN_EXT)"
+	$(UPX) -o "$(BIN_DIR)/$(BIN)$(BIN_EXT)" "src/$(BIN)-stripped$(BIN_EXT)"
+endif
+
+ifeq ($(BUILD_PLATFORM),Darwin)
+$(BIN_DIR)/$(BIN): $(OBJS)
+	$(CC) -o "src/$(BIN)" $(OBJS) $(LDFLAGS)
+	$(STRIP) -Sx "src/$(BIN)" -o "$(BIN_DIR)/$(BIN)"
+	touch "$@"
+endif
+
+ifeq ($(BUILD_PLATFORM),Linux)
+$(BIN_DIR)/$(BIN): $(OBJS)
+	$(CC) -o "src/$(BIN)" $(OBJS) $(LDFLAGS)
+	$(STRIP) -s "src/$(BIN)" -o "src/$(BIN)-stripped"
+	rm -f "$(BIN_DIR)/$(BIN)"
+	$(UPX) -o "$(BIN_DIR)/$(BIN)" "src/$(BIN)-stripped"
+endif
+
+%.o: %.cpp
+	$(CC) -c $(INCLUDES) $(CCFLAGS) $(FLAGS) $*.cpp -o $*.o
+
+%.o: %.c
+	$(CC) -c $(CFLAGS) $*.c -o $*.o
+
+.PHONY: clean
+
+clean:
+	rm -Rf $(BIN_DIR)/$(BIN)$(BIN_EXT)
+	rm -Rf src/$(BIN)$(BIN_EXT) src/$(BIN)-stripped$(BIN_EXT)
+	rm -Rf $(OBJS) $(DEPFILES) $(BIN).dSYM

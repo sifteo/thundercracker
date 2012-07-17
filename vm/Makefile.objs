@@ -1,5 +1,6 @@
 OBJS = \
 	src/slinky.o \
+	src/fastlz.o \
 	src/Transforms/InlineGlobalCtors.o \
 	src/Transforms/EarlyLTI.o \
 	src/Transforms/LateLTI.o \
@@ -73,7 +74,7 @@ src/Target/SVMGenCallingConv.inc: src/Target/SVM.td $(TABLEDEPS)
 src/Target/SVMGenMCCodeEmitter.inc: src/Target/SVM.td $(TABLEDEPS)
 	$(TABLEGEN) -mc-emitter -gen-emitter
 
-src/Target/SVMRuntime.inc: $(SDK_INCLUDE)/sifteo/abi.h
+src/Target/SVMRuntime.inc: $(SDK_INCLUDE)/sifteo/abi/syscall.h
 	python tools/svm-syscall-table.py < $< > $@
 
 

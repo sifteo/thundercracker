@@ -17,6 +17,109 @@
 
 /**************************************************************************
  *
+ * Radio Connection Management
+ *
+ *   Background
+ *  ------------
+ *
+ * To communicate with a cube, our base needs to know the address
+ * and channel. We also want both endpoints to know when a connection
+ * is established or broken. We want to initiate connection quickly with
+ * cubes whose HWID we already know. We want to discover new cubes to
+ * pair with by sending them a neighbor packet.
+ *
+ * This HWID needs to be the only token required to connect to a known
+ * cube, since it is the only piece of unique information known to the
+ * cube firmware.
+ *
+ *   Cube States
+ *  -------------
+ *
+ * The cube can be in one of three radio states. These states can also
+ * be thought of as two major states, one of which has two minor states:
+ *
+ *    +-----------+
+ *    | Connected |
+ *    +-----------+
+ *
+ *    +------------------------------+
+ *    |        Disconnected          |
+ *    | +--------+     +-----------+ |
+ *    | |  Idle  |     |  Pairing  | |
+ *    | +--------+     +-----------+ |
+ *    +------------------------------+
+ *
+ * "Idle" is the default state upon powerup or wake from sleep.
+ *
+ * State transitions:
+ *
+ *    Disconnected -> Connected     Received first "radio hop" packet
+ *    Idle -> Pairing               Pairing packet received over neighbor RX
+ *    Connected -> Idle             Time limit since last received packet has expired
+ *    Pairing -> Idle               Timeout since neighbor packet was received
+ *
+ * Detailed description of the states:
+ *
+ * 1. Idle
+ *
+ *    The cube is not expecting to receive commands other than a "radio hop"
+ *    or the pairing packet. It starts listening on an address and an initial
+ *    channel which are both derived from its HWID. The channel automatically
+ *    hops slowly, in a fixed pattern, but it always starts up on the same
+ *    channel. This same initial channel and address are also used to wake
+ *    up sleeping cubes.
+ *
+ * 2. Pairing
+ *
+ *    The pairing state is entered by a packet received over the neighbor
+ *    RX which includes a small number of bits which select a pairing channel.
+ *    The pairing address is fixed. These radio settings are used for the
+ *    duration of the pairing state.
+ *
+ *    There is no user-visible difference between Idle and Pairing states;
+ *    they only affect the cube's radio address and channel.
+ *
+ * 3. Connected
+ *
+ *    In this state, our radio settings are fully under remote control by
+ *    the base. Connected state is entered via a Hop command which switches
+ *    channel and address. Additional Hop commands can be used to change
+ *    channel or address dynamically. Additionally, this same Hop sets up
+ *    a session ID which is used for neighbor TX. (No neighbor TX occurs
+ *    when disconnected)
+ *
+ *   Idle Channel / Address
+ *  ------------------------
+ *
+ * In the idle state, we use a simple algorithm to generate the 5-byte
+ * address and channel from the entropy in our 64-bit HWID. Note that
+ * the HWID is not completely random. Currently we use the first byte
+ * as a version number, and the rest are random. To future-proof our
+ * scheme a bit, we assume later bytes in the HWID have more entropy.
+ *
+ * This is based on the Galois Field CRC we use for flash CRCs:
+ *
+ *   1. Start by CRC'ing the first three bytes of the HWID
+ *   2. Next, for each of the remaining five bytes:
+ *      a. CRC this byte of the HWID
+ *      b. If the result is one of the disallowed values (00, FF, AA, 55)
+ *         repeatedly CRC a zero byte until the value is no longer disallowed.
+ *         With a proper generator polynomial this loop is guaranteed to
+ *         terminate.
+ *      c. Store the current 8-bit CRC state as an address byte
+ *   3. CRC a single zero byte
+ *   4. If the low 7 bits of the result are greater than 125, repeatedly
+ *      CRC additional zero bytes until it is <= 125.
+ *   5. Take the low 7 bits of the current CRC state as our channel number.
+ *
+ * This scheme is designed to preserve the entropy in our HWID, to be
+ * very simple to implement in the cube firmware, and to produce addresses
+ * and channels which meet the nRF's constraints.
+ */
+
+
+/**************************************************************************
+ *
  * Master -> Cube (RF) packet format
  *
  *   Background
@@ -145,8 +248,8 @@
  * redundant encodings for the 4-bit 'copy' code:
  *
  *   1000 0111             Sensor timer sync escape
+ *   1001 0111             Explicit full ACK request
  *
- *   1001 0111             Reserved for future use
  *   1010 0111             Reserved for future use
  *   1011 0111             Reserved for future use
  *
@@ -250,6 +353,7 @@
 #define FRAME_ACK_CONTINUOUS    0x40
 #define FRAME_ACK_COUNT         0x3F
 #define FRAME_ACK_TOGGLE        0x01
+#define QUERY_ACK_BIT           0x80
 
 typedef union {
     uint8_t bytes[RF_ACK_LEN_MAX];
@@ -262,7 +366,13 @@ typedef union {
          *
          * The various bits in here are multi-purpose...
          *
-         *   [7]    Reserved. Always zero.
+         *   [7]    Query response bit. Normally zero. If set, this
+         *          is NOT a normal ACK packet, it's a response to
+         *          a particular kind of query command. Bits [6:0] are
+         *          then used for an ID which corresponds to the
+         *          query this response is paired with. The rest of the
+         *          packet's contents are interpreted in a query-specific
+         *          way.
          *
          *   [6]    Continuous rendering bit, captured synchronously
          *          with the firmware's read of this bit at the top of
@@ -339,9 +449,8 @@ typedef struct {
 
 #define FLS_BLOCK_SIZE          (64*1024)   // Size of flash erase blocks
 
-#define FLS_FIFO_SIZE           64      // Size of buffer between radio and flash decoder
-#define FLS_FIFO_USABLE         63      // Usable size of FIFO (One byte for full/empty disambiguation)
-#define FLS_FIFO_RESET          0xFF    // Reserved FIFO index used to signal RF_OP_FLASH_RESET
+#define FLS_FIFO_SIZE           73      // Size of buffer between radio and flash decoder
+#define FLS_FIFO_USABLE         72      // Usable space in FIFO (SIZE-1)
 
 #define FLS_LUT_SIZE            16      // Size of persistent color LUT used by RLE encodings
 
@@ -357,8 +466,24 @@ typedef struct {
 #define FLS_OP_TILE_P16         0xc0    // Tile with 16-bit pixels and 8-bit repetition mask (arg = count-1)
 #define FLS_OP_SPECIAL          0xe0    // Special symbols (below)
 
-#define FLS_OP_ADDRESS          0xe1    // Followed by a 2-byte (lat1:lat2) tile address
+#define FLS_OP_NOP              0xe0    // Permanently reserved as a no-op
+#define FLS_OP_ADDRESS          0xe1    // Followed by a 2-byte (lat1:lat2) tile address. A21 in LSB of lat2.
+#define FLS_OP_QUERY_CRC        0xe2    // Args: (queryID, numBlocks)
+#define FLS_OP_CHECK_QUERY      0xe3    // Args: (numBytes, bytes...)
 
-#define FLS_OP_RESERVED_0       0xe2    // From here until 0xFF are all reserved codes currently
+// From 0xe3 to 0xff are all reserved codes currently
+
+/*
+ * Minimum operand sizes for various opcodes:
+ *
+ * In order to support buffered flash programming, we need a quick way
+ * to check whether enough data is buffered in order to send an entire
+ * decompressed block of 16 pixels to the flash chip at once. So, the
+ * nontrivial tile opcodes have a minimum number of buffered bytes requred,
+ * corresponding to the worst-case data size of 16 pixels.
+ */
+
+#define FLS_MIN_TILE_R4        12       // 4-bpp RLE with worst-case run count overhead
+#define FLS_MIN_TILE_P16       34       // 16 pixels, plus bitmap overhead
 
 #endif

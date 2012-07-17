@@ -18,13 +18,21 @@
  * during debugging.
  */
 
-struct PanicMessenger {
+class PanicMessenger {
+public:
     _SYSAttachedVideoBuffer *avb;
     uint16_t addr;
 
     void init(SvmMemory::VirtAddr vbufVA);
     void erase();
     void paint(_SYSCubeID cube);
+    void paintAndWait();
+
+    /// This is a standard way to halt execution indefinitely, in case of fatal error.
+    static void haltForever();
+
+    /// Like haltForever(), but allow resuming on home button press/release
+    static void haltUntilButton();
 
     PanicMessenger &at(int x, int y) {
         addr = x + _SYS_VRAM_BG0_WIDTH * y;
@@ -35,6 +43,10 @@ struct PanicMessenger {
     PanicMessenger &operator<< (const char *str);
     PanicMessenger &operator<< (uint8_t byte);
     PanicMessenger &operator<< (uint32_t word);
+
+private:
+    void dumpScreenToUART();
+    static void animateLED();
 };
 
 

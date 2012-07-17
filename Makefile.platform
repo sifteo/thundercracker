@@ -6,16 +6,22 @@ ifeq ($(findstring MINGW32_NT,$(BUILD_PLATFORM)),MINGW32_NT)
     BUILD_PLATFORM := windows32
 endif
 
-# Windows-isms
-
 ifeq ($(BUILD_PLATFORM), windows32)
-    LIB_STDCPP := -static -lstdc++
-    BIN_EXT := .exe
-    CC := mingw32-gcc
+	# Windows-isms
+	LIB_STDCPP := -static -lstdc++
+	BIN_EXT := .exe
+	CC := mingw32-gcc
 else
-    LIB_STDCPP := -lstdc++
-    BUILD_ARCH := $(shell arch)
-    BIN_EXT :=
+	# Note: Must use "uname -m" instead of arch. Arch lies on 64-bit Mac OS.
+	LIB_STDCPP := -lstdc++
+	BUILD_ARCH := $(shell uname -m)
+	BIN_EXT :=
+endif
+
+# Alias i686 -> i386
+
+ifeq ($(BUILD_ARCH), i686)
+	BUILD_ARCH := i386
 endif
 
 # Pick a DEPS_DIR, set up target-specific tools
@@ -27,11 +33,12 @@ ifeq ($(BUILD_PLATFORM), windows32)
 endif
 
 ifeq ($(BUILD_PLATFORM), Darwin)
-	ifeq ( $(BUILD_ARCH),i386 )
-		DEPS_DIR := $(TC_DIR)/deps/osx/i386
-	else
-		DEPS_DIR := $(TC_DIR)/deps/osx/x86_64
-	endif
+	DEPS_DIR := $(TC_DIR)/deps/osx/$(BUILD_ARCH)
+endif
+
+ifeq ($(BUILD_PLATFORM), Linux)
+	DEPS_DIR := $(TC_DIR)/deps/linux/$(BUILD_ARCH)
+	UPX := upx
 endif
 
 # Tools that aren't (yet) target-specific

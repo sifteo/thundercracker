@@ -7,28 +7,43 @@
 #include "svmruntime.h"
 #include "macros.h"
 #include "machine.h"
+#include "mc_timing.h"
+#include "system.h"
+#include "system_mc.h"
 
 #include <string.h>
-#include <inttypes.h>
 
 namespace SvmCpu {
 
 static reg_t regs[NUM_REGS];
-static bool svmTrace;
+UserRegs userRegs;
+
+
+/***************************************************************************
+ * Timing
+ ***************************************************************************/
 
 /*
- * We copy all user regs to trusted memory to operate on them during exception
- * handling. In an alternative universe, we might try to simply stack them beyond
- * the user stack, but that provides a potential security risk since those addresses
- * would be within reach of buggy/malicious user code during svc handling, and
- * then popped back into trusted registers.
+ * First-level cycle counter. During instruction emulation, we increment this
+ * as appropriate. Periodically (on every taken branch or SVC, currently)
+ * we forward any whole clock ticks to SystemMC::elapseTicks() via
+ * calculateElapsedTicks().
  *
- * We imagine this strategy will be optimized per platform in the future.
+ * Values in here are pre-multiplied by the CPU_RATE_DENOMINATOR. To convert
+ * to system ticks, we just need to divide by CPU_RATE_NUMERATOR and save
+ * the remainder.
  */
-static struct  {
-    IrqContext irq;
-    HwContext hw;
-} userRegs;
+static unsigned svmCyclesElapsed;
+
+static void calculateElapsedTicks()
+{
+    unsigned elapsed = svmCyclesElapsed;
+    if (elapsed >= MCTiming::CPU_THRESHOLD) {
+        unsigned ticks = elapsed / MCTiming::CPU_RATE_NUMERATOR;
+        svmCyclesElapsed = elapsed % MCTiming::CPU_RATE_NUMERATOR;
+        SystemMC::elapseTicks(ticks);
+    }
+}
 
 
 /***************************************************************************
@@ -81,22 +96,25 @@ static inline void setNZ(int32_t result) {
 }
 
 static inline reg_t opLSL(reg_t a, reg_t b) {
+    // Note: Intentionally truncates to 32-bit
     setCarry(b ? ((0x80000000 >> (b - 1)) & a) != 0 : 0);
-    reg_t result = b < 32 ? a << b : 0;
+    uint32_t result = b < 32 ? a << b : 0;
     setNZ(result);
     return result;
 }
 
 static inline reg_t opLSR(reg_t a, reg_t b) {
+    // Note: Intentionally truncates to 32-bit
     setCarry(b ? ((1 << (b - 1)) & a) != 0 : 0);
-    reg_t result = b < 32 ? a >> b : 0;
+    uint32_t result = b < 32 ? a >> b : 0;
     setNZ(result);
     return result;
 }
 
 static inline reg_t opASR(reg_t a, reg_t b) {
+    // Note: Intentionally truncates to 32-bit
     setCarry(b ? ((1 << (b - 1)) & a) != 0 : 0);
-    reg_t result = b < 32 ? (int32_t)a >> b : 0;
+    uint32_t result = b < 32 ? (int32_t)a >> b : 0;
     setNZ(result);
     return result;
 }
@@ -154,6 +172,8 @@ static void emulateEnterException(reg_t returnAddr)
     ASSERT((ctx->returnAddr & 1) == 0 && "ReturnAddress from exception must be halfword aligned");
 
     regs[REG_LR] = 0xfffffffd;  // indicate that we're coming from User mode, using User stack
+
+    userRegs.sp = regs[REG_SP];
 }
 
 /*
@@ -161,6 +181,8 @@ static void emulateEnterException(reg_t returnAddr)
  */
 static void emulateExitException()
 {
+    regs[REG_SP] = userRegs.sp;
+
     HwContext *ctx = reinterpret_cast<HwContext*>(regs[REG_SP]);
     regs[0]         = ctx->r0;
     regs[1]         = ctx->r1;
@@ -177,7 +199,7 @@ static void emulateExitException()
 
 static void saveUserRegs()
 {
-    HwContext *ctx = reinterpret_cast<HwContext*>(regs[REG_SP]);
+    HwContext *ctx = reinterpret_cast<HwContext*>(userRegs.sp);
     memcpy(&userRegs.hw, ctx, sizeof *ctx);
 
     userRegs.irq.r4 = regs[4];
@@ -192,7 +214,7 @@ static void saveUserRegs()
 
 static void restoreUserRegs()
 {
-    HwContext *ctx = reinterpret_cast<HwContext*>(regs[REG_SP]);
+    HwContext *ctx = reinterpret_cast<HwContext*>(userRegs.sp);
     memcpy(ctx, &userRegs.hw, sizeof *ctx);
 
     regs[4] = userRegs.irq.r4;
@@ -216,6 +238,9 @@ static void emulateSVC(uint16_t instr)
 
     restoreUserRegs();
     emulateExitException();
+    calculateElapsedTicks();
+
+    SystemMC::elapseTicks(MCTiming::TICKS_PER_SVC);
 }
 
 static void emulateFault(FaultCode code)
@@ -544,19 +569,40 @@ static void emulateMOV(uint16_t instr)
 
 static void emulateB(uint16_t instr)
 {
-    regs[REG_PC] = branchTargetB(instr, regs[REG_PC]);
+    reg_t oldPC = regs[REG_PC];
+    reg_t newPC = branchTargetB(instr, oldPC);
+
+    if (newPC != oldPC) {
+        regs[REG_PC] = newPC;
+        svmCyclesElapsed += MCTiming::CPU_PIPELINE_RELOAD;
+        calculateElapsedTicks();
+    }
 }
 
 
 static void emulateCondB(uint16_t instr)
 {
-    regs[REG_PC] = branchTargetCondB(instr, regs[REG_PC], regs[REG_CPSR]);
+    reg_t oldPC = regs[REG_PC];
+    reg_t newPC = branchTargetCondB(instr, oldPC, regs[REG_CPSR]);
+
+    if (newPC != oldPC) {
+        regs[REG_PC] = newPC;
+        svmCyclesElapsed += MCTiming::CPU_PIPELINE_RELOAD;
+        calculateElapsedTicks();
+    }
 }
 
 static void emulateCBZ_CBNZ(uint16_t instr)
 {
     unsigned Rn = instr & 0x7;
-    regs[REG_PC] = branchTargetCBZ_CBNZ(instr, regs[REG_PC], regs[REG_CPSR], regs[Rn]);
+    reg_t oldPC = regs[REG_PC];
+    reg_t newPC = branchTargetCBZ_CBNZ(instr, oldPC, regs[REG_CPSR], regs[Rn]);
+
+    if (newPC != oldPC) {
+        regs[REG_PC] = newPC;
+        svmCyclesElapsed += MCTiming::CPU_PIPELINE_RELOAD;
+        calculateElapsedTicks();
+    }
 }
 
 
@@ -578,6 +624,8 @@ static void emulateSTRSPImm(uint16_t instr)
 
     SvmMemory::squashPhysicalAddr(regs[Rt]);
     *reinterpret_cast<uint32_t*>(addr) = regs[Rt];
+
+    svmCyclesElapsed += MCTiming::CPU_LOAD_STORE;
 }
 
 static void emulateLDRSPImm(uint16_t instr)
@@ -593,6 +641,8 @@ static void emulateLDRSPImm(uint16_t instr)
         return emulateFault(F_LOAD_ALIGNMENT);
 
     regs[Rt] = *reinterpret_cast<uint32_t*>(addr);
+
+    svmCyclesElapsed += MCTiming::CPU_LOAD_STORE;
 }
 
 static void emulateADDSpImm(uint16_t instr)
@@ -643,6 +693,8 @@ static void emulateLDRLitPool(uint16_t instr)
         return emulateFault(F_LOAD_ALIGNMENT);
 
     regs[Rt] = *reinterpret_cast<uint32_t*>(addr);
+
+    svmCyclesElapsed += MCTiming::CPU_LOAD_STORE;
 }
 
 
@@ -664,6 +716,8 @@ static void emulateSTR(uint32_t instr)
 
     SvmMemory::squashPhysicalAddr(regs[Rt]);
     *reinterpret_cast<uint32_t*>(addr) = regs[Rt];
+
+    svmCyclesElapsed += MCTiming::CPU_LOAD_STORE;
 }
 
 static void emulateLDR(uint32_t instr)
@@ -679,6 +733,8 @@ static void emulateLDR(uint32_t instr)
         return emulateFault(F_LOAD_ALIGNMENT);
 
     regs[Rt] = *reinterpret_cast<uint32_t*>(addr);
+
+    svmCyclesElapsed += MCTiming::CPU_LOAD_STORE;
 }
 
 static void emulateSTRBH(uint32_t instr)
@@ -700,6 +756,8 @@ static void emulateSTRBH(uint32_t instr)
     } else {
         *reinterpret_cast<uint8_t*>(addr) = regs[Rt];
     }
+
+    svmCyclesElapsed += MCTiming::CPU_LOAD_STORE;
 }
 
 static void emulateLDRBH(uint32_t instr)
@@ -733,6 +791,8 @@ static void emulateLDRBH(uint32_t instr)
         regs[Rt] = (uint32_t)signExtend(*reinterpret_cast<uint16_t*>(addr), 16);
         break;
     }
+
+    svmCyclesElapsed += MCTiming::CPU_LOAD_STORE;
 }
 
 static void emulateMOVWT(uint32_t instr)
@@ -771,12 +831,57 @@ static void emulateDIV(uint32_t instr)
     } else {
         regs[Rd] = (int32_t)regs[Rn] / (int32_t)m32;
     }
+
+    svmCyclesElapsed += MCTiming::CPU_DIVIDE;
+}
+
+static void emulateCLZ(uint32_t instr)
+{
+    unsigned Rm1 = (instr >> 16) & 0xF;
+    unsigned Rd  = (instr >> 8) & 0xF;
+    unsigned Rm2 = instr & 0xF;
+
+    // ARM ARM states that the two Rm fields must be consistent
+    if (Rm1 != Rm2)
+        return emulateFault(F_CPU_SIM);
+    uint32_t m32 = (uint32_t) regs[Rm1];
+
+    // Note that GCC leaves __builtin_clz(0) undefined, whereas for ARM it's 32.
+    if (m32 == 0)
+        regs[Rd] = 32;
+    else
+        regs[Rd] = __builtin_clz(m32);
 }
 
 
 /***************************************************************************
  * Instruction Dispatch
  ***************************************************************************/
+
+static void traceFetch(uint16_t *pc)
+{
+    unsigned va = SvmRuntime::reconstructCodeAddr(regs[REG_PC]);
+    unsigned fa = SvmMemory::virtToFlashAddr(va);
+
+    LOG(("[va=%08x fa=%08x pa=%p i=%04x]", va, fa, pc, *pc));
+
+    for (unsigned r = 0; r < 8; r++) {
+        // Display as a fixed-width low word and a variable-width high word.
+        // The high word will usually be zero, and it helps to demarcate the
+        // word boundary. On 32-bit hosts, the top word is *always* zero.
+        uint64_t val = regs[r];
+        LOG((" r%d=%x:%08x", r, (unsigned)(val >> 32), (unsigned)val));
+    }
+    LOG((" (%c%c%c%c) | r8=%p r9=%p sp=%p fp=%p\n",
+        getNeg() ? 'N' : ' ',
+        getZero() ? 'Z' : ' ',
+        getCarry() ? 'C' : ' ',
+        getOverflow() ? 'V' : ' ',
+        reinterpret_cast<void*>(regs[8]),
+        reinterpret_cast<void*>(regs[9]),
+        reinterpret_cast<void*>(regs[REG_SP]),
+        reinterpret_cast<void*>(regs[REG_FP])));
+}
 
 static uint16_t fetch()
 {
@@ -786,6 +891,8 @@ static uint16_t fetch()
      * and the first nibble of a 32-bit instruction must be checked regardless
      * in order to determine its bitness.
      */
+
+    svmCyclesElapsed += MCTiming::CPU_FETCH;
 
     if (!SvmMemory::isAddrValid(regs[REG_PC])) {
         emulateFault(F_CODE_FETCH);
@@ -797,27 +904,7 @@ static uint16_t fetch()
     }
 
     uint16_t *pc = reinterpret_cast<uint16_t*>(regs[REG_PC]);
-
-    if (tracing()) {
-        LOG(("[va=%08x pa=%p i=%04x]",
-            SvmRuntime::reconstructCodeAddr(regs[REG_PC]), pc, *pc));
-        for (unsigned r = 0; r < 8; r++) {
-            // Display as a fixed-width low word and a variable-width high word.
-            // The high word will usually be zero, and it helps to demarcate the
-            // word boundary. On 32-bit hosts, the top word is *always* zero.
-            uint64_t val = regs[r];
-            LOG((" r%d=%x:%08x", r, (unsigned)(val >> 32), (unsigned)val));
-        }
-        LOG((" (%c%c%c%c) | r8=%p r9=%p sp=%p fp=%p\n",
-            getNeg() ? 'N' : ' ',
-            getZero() ? 'Z' : ' ',
-            getCarry() ? 'C' : ' ',
-            getOverflow() ? 'V' : ' ',
-            reinterpret_cast<void*>(regs[8]),
-            reinterpret_cast<void*>(regs[9]),
-            reinterpret_cast<void*>(regs[REG_SP]),
-            reinterpret_cast<void*>(regs[REG_FP])));
-    }
+    TRACING_ONLY(traceFetch(pc));
 
     regs[REG_PC] += sizeof(uint16_t);
     return *pc;
@@ -975,6 +1062,10 @@ static void execute32(uint32_t instr)
         emulateDIV(instr);
         return;
     }
+    if ((instr & ClzMask) == ClzTest) {
+        emulateCLZ(instr);
+        return;
+    }
 
     // should never get here since we should only be executing validated instructions
     LOG(("SVMCPU: invalid 32bit instruction: 0x%x\n", instr));
@@ -985,11 +1076,6 @@ static void execute32(uint32_t instr)
 /***************************************************************************
  * Public Functions
  ***************************************************************************/
-
-void init()
-{
-    memset(regs, 0, sizeof(regs));
-}
 
 void run(reg_t sp, reg_t pc)
 {
@@ -1008,73 +1094,5 @@ void run(reg_t sp, reg_t pc)
     }
 }
 
-/*
- * During SVC handling, the runtime wants to operate on user space's registers,
- * which have been pushed to the stack, which we provide access to here.
- *
- * SP is special - since ARM provides a user and main SP, we operate only on
- * user SP, meaning we don't have to store it separately. However, since HW
- * automatically stacks some registers to the user SP, adjust our reporting
- * of SP's value to represent what user code will see once we have returned from
- * exception handling and HW regs have been unstacked.
- *
- * Register accessors really want to be inline, but putting that off for now, as
- * it will require a bit more code re-org to access platform specific members
- * in the common header file, etc.
- */
-
-reg_t reg(uint8_t r)
-{
-    switch (r) {
-    case 0:         return userRegs.hw.r0;
-    case 1:         return userRegs.hw.r1;
-    case 2:         return userRegs.hw.r2;
-    case 3:         return userRegs.hw.r3;
-    case 4:         return userRegs.irq.r4;
-    case 5:         return userRegs.irq.r5;
-    case 6:         return userRegs.irq.r6;
-    case 7:         return userRegs.irq.r7;
-    case 8:         return userRegs.irq.r8;
-    case 9:         return userRegs.irq.r9;
-    case 10:        return userRegs.irq.r10;
-    case 11:        return userRegs.irq.r11;
-    case 12:        return userRegs.hw.r12;
-    case REG_SP:    return regs[REG_SP] + sizeof(HwContext);
-    case REG_PC:    return userRegs.hw.returnAddr;
-    case REG_CPSR:  return userRegs.hw.xpsr;
-    default:        ASSERT(0 && "invalid register"); break;
-    }
-}
-
-void setReg(uint8_t r, reg_t val)
-{
-    switch (r) {
-    case 0:         userRegs.hw.r0 = val; break;
-    case 1:         userRegs.hw.r1 = val; break;
-    case 2:         userRegs.hw.r2 = val; break;
-    case 3:         userRegs.hw.r3 = val; break;
-    case 4:         userRegs.irq.r4 = val; break;
-    case 5:         userRegs.irq.r5 = val; break;
-    case 6:         userRegs.irq.r6 = val; break;
-    case 7:         userRegs.irq.r7 = val; break;
-    case 8:         userRegs.irq.r8 = val; break;
-    case 9:         userRegs.irq.r9 = val; break;
-    case 10:        userRegs.irq.r10 = val; break;
-    case 11:        userRegs.irq.r11 = val; break;
-    case 12:        userRegs.hw.r12 = val; break;
-    case REG_SP:    regs[REG_SP] = val - sizeof(HwContext); break;
-    case REG_PC:    userRegs.hw.returnAddr = val; break;
-    case REG_CPSR:  userRegs.hw.xpsr = val; break;
-    default:        ASSERT(0 && "invalid register"); break;
-    }
-}
-
-bool tracing() {
-    return svmTrace;
-}
-
-void enableTracing() {
-    svmTrace = true;
-}
 
 }  // namespace SvmCpu

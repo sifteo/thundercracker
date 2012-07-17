@@ -6,9 +6,11 @@
  * Copyright <c> 2011 Sifteo, Inc. All rights reserved.
  */
 
+#include "mc_audiovisdata.h"
 #include "gl_renderer.h"
 #include "frontend.h"
 #include "lodepng.h"
+#include "cube_flash_model.h"
 
 
 bool GLRenderer::init()
@@ -45,10 +47,20 @@ bool GLRenderer::init()
     GLhandleARB backgroundFP = loadShader(GL_FRAGMENT_SHADER, background_fp);
     GLhandleARB backgroundVP = loadShader(GL_VERTEX_SHADER, background_vp);
     backgroundProgram = linkProgram(backgroundFP, backgroundVP);
-
     glUseProgramObjectARB(backgroundProgram);
     glUniform1iARB(glGetUniformLocationARB(backgroundProgram, "texture"), 0);
     glUniform1iARB(glGetUniformLocationARB(backgroundProgram, "lightmap"), 1);
+    glUniform1iARB(glGetUniformLocationARB(backgroundProgram, "logo"), 2);
+
+    extern const uint8_t scope_fp[];
+    extern const uint8_t scope_vp[];
+    GLhandleARB scopeFP = loadShader(GL_FRAGMENT_SHADER, scope_fp);
+    GLhandleARB scopeVP = loadShader(GL_VERTEX_SHADER, scope_vp);
+    scopeProgram = linkProgram(scopeFP, scopeVP);
+    glUseProgramObjectARB(scopeProgram);
+    glUniform1iARB(glGetUniformLocationARB(scopeProgram, "sampleBuffer"), 0);
+    glUniform1iARB(glGetUniformLocationARB(scopeProgram, "background"), 1);
+    scopeAlphaAttr = glGetUniformLocationARB(scopeProgram, "alphaAttr");
 
     /*
      * Load textures
@@ -59,6 +71,8 @@ bool GLRenderer::init()
     extern const uint8_t img_cube_face_hilight_mask[];
     extern const uint8_t img_wood[];
     extern const uint8_t img_bg_light[];
+    extern const uint8_t img_scope_bg[];
+    extern const uint8_t img_logo[];
     extern const uint8_t ui_font_data_0[];
 
     cubeFaceTexture = loadTexture(img_cube_face);
@@ -67,7 +81,13 @@ bool GLRenderer::init()
     backgroundTexture = loadTexture(img_wood, GL_REPEAT);
     bgLightTexture = loadTexture(img_bg_light);
     fontTexture = loadTexture(ui_font_data_0, GL_CLAMP, GL_NEAREST);
-    
+    scopeSampleTexture = 0;
+    scopeBackgroundTexture = loadTexture(img_scope_bg, GL_REPEAT, GL_LINEAR_MIPMAP_LINEAR);
+
+    logoTexture = loadTexture(img_logo, GL_CLAMP, GL_LINEAR_MIPMAP_LINEAR);
+    GLfloat logoBorder[4] = { 0.5f, 0.0f, 0.0f, 1.0f };
+    glTexParameterfv(GL_TEXTURE_2D, GL_TEXTURE_BORDER_COLOR, logoBorder);
+
     /*
      * Procedural models
      */
@@ -275,7 +295,7 @@ int GLRenderer::measureText(const char *str)
     int x = 0, w = 0;
     uint32_t id;
     
-    while ((id = *(str++))) {
+    while ((id = (uint8_t) *(str++))) {
         const Glyph *g = findGlyph(id);
         if (g) {
             w = MAX(w, x + g->xOffset + g->width);
@@ -294,7 +314,7 @@ void GLRenderer::overlayText(int x, int y, const float color[4], const char *str
     overlayVA.clear();
 
     uint32_t id;
-    while ((id = *(str++))) {
+    while ((id = (uint8_t) *(str++))) {
         const Glyph *g = findGlyph(id);
         if (g) {
             VertexT a, b, c, d;
@@ -339,8 +359,15 @@ void GLRenderer::overlayText(int x, int y, const float color[4], const char *str
     glDisable(GL_TEXTURE_2D);
 }         
 
-void GLRenderer::overlayRect(int x, int y,
-                             int w, int h, const float color[4])
+void GLRenderer::overlayRect(int x, int y, int w, int h,
+    const float color[4], GLhandleARB program)
+{
+    glUseProgramObjectARB(program);
+    glColor4fv(color);
+    overlayRect(x, y, w, h);
+}
+
+void GLRenderer::overlayRect(int x, int y, int w, int h)
 {
     overlayVA.clear();
     VertexT a, b, c, d;
@@ -370,14 +397,12 @@ void GLRenderer::overlayRect(int x, int y,
     overlayVA.push_back(a);
     overlayVA.push_back(c);
     overlayVA.push_back(d);
-        
-    glUseProgramObjectARB(0);
-    glColor4fv(color);
+
     glInterleavedArrays(GL_T2F_V3F, 0, &overlayVA[0]);
     glDrawArrays(GL_TRIANGLES, 0, (GLsizei) overlayVA.size());
 }
-                    
-void GLRenderer::drawBackground(float extent, float scale)
+
+void GLRenderer::drawDefaultBackground(float extent, float scale)
 {
     float tc = scale * extent;
     VertexTN bg[] = {
@@ -401,6 +426,10 @@ void GLRenderer::drawBackground(float extent, float scale)
     glEnable(GL_TEXTURE_2D);
     glBindTexture(GL_TEXTURE_2D, bgLightTexture);
 
+    glActiveTexture(GL_TEXTURE2);
+    glEnable(GL_TEXTURE_2D);
+    glBindTexture(GL_TEXTURE_2D, logoTexture);
+
     glInterleavedArrays(GL_T2F_N3F_V3F, 0, bg);
     glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
     
@@ -408,12 +437,20 @@ void GLRenderer::drawBackground(float extent, float scale)
      * Clean up GL state.
      */
 
-    glActiveTexture(GL_TEXTURE0);
+    glActiveTexture(GL_TEXTURE2);
     glDisable(GL_TEXTURE_2D);
     glActiveTexture(GL_TEXTURE1);
     glDisable(GL_TEXTURE_2D);
+    glActiveTexture(GL_TEXTURE0);
+    glDisable(GL_TEXTURE_2D);
     glEnable(GL_DEPTH_TEST);
-}    
+}
+
+void GLRenderer::drawSolidBackground(const float color[4])
+{
+    glClearColor(color[0], color[1], color[2], color[3]);
+    glClear(GL_COLOR_BUFFER_BIT);
+}
 
 void GLRenderer::initCubeFB(unsigned id)
 {
@@ -625,7 +662,8 @@ void GLRenderer::drawCube(unsigned id, b2Vec2 center, float angle, float hover,
     drawCubeFace(id, framebufferChanged ? framebuffer : NULL);
 }
 
-void GLRenderer::drawMothership(unsigned id, b2Vec2 center, float angle) {
+void GLRenderer::drawMothership(unsigned id, b2Vec2 center, float angle)
+{
     // TEMP just draw a blank cuuuuube
     CubeTransformState tState;
     b2Mat33 mat;
@@ -740,18 +778,23 @@ GLuint GLRenderer::loadTexture(const uint8_t *pngData, GLenum wrap, GLenum filte
     glGenTextures(1, &texture);
     glBindTexture(GL_TEXTURE_2D, texture);
 
+    if (filter == GL_LINEAR_MIPMAP_LINEAR) {
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+        glTexParameteri(GL_TEXTURE_2D, GL_GENERATE_MIPMAP, GL_TRUE);
+    } else {
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, filter);
+    }
+
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, filter);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, wrap);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, wrap);
+
     glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA,
                  decoder.getWidth(),
                  decoder.getHeight(),
                  0, GL_RGBA, GL_UNSIGNED_BYTE,
                  &pixels[0]);
 
-    // Sane defaults
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, filter);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, filter);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, wrap);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, wrap);
-    
     return texture;
 }
 
@@ -822,11 +865,6 @@ void GLRenderer::extrudePolygon(const std::vector<GLRenderer::VertexTN> &inPolyg
         prev = current;
     }
 }
-
-//------------------------------------------------------------------------
-//------------------------------------------------------------------------
-//------------------------------------------------------------------------
-
 
 void GLRenderer::saveTexturePNG(std::string name, unsigned width, unsigned height)
 {
@@ -919,14 +957,18 @@ void GLRenderer::overlayCubeFlash(unsigned id, int x, int y, int w, int h,
          * Convert linear flash memory into a grid of tile images.
          */
 
-        const unsigned tilesWide = 64;
-        const unsigned tilesHigh = 128;
+        const unsigned tilesWide = 128;
+        const unsigned tilesHigh = 256;
         const unsigned tileSize = 8;
         const unsigned pixelsWide = tilesWide * tileSize;
         const unsigned pixelsHigh = tilesHigh * tileSize;
+        const unsigned pixelCount = pixelsWide * pixelsHigh;
+        const unsigned byteCount = pixelCount * sizeof(uint16_t);
+
+        STATIC_ASSERT(Cube::FlashModel::SIZE == byteCount);
 
         const uint16_t *src = reinterpret_cast<const uint16_t*>(data);
-        static uint16_t dest[pixelsWide * pixelsHigh];
+        static uint16_t dest[pixelCount];
 
         for (unsigned tileY = 0; tileY != tilesHigh; ++tileY)
             for (unsigned tileX = 0; tileX != tilesWide; ++tileX)
@@ -953,3 +995,78 @@ void GLRenderer::overlayCubeFlash(unsigned id, int x, int y, int w, int h,
     overlayRect(x, y, w, h, color);
     glDisable(GL_TEXTURE_2D);
 }
+
+void GLRenderer::overlayAudioVisualizer(float alpha)
+{
+    /*
+     * Draw an oscilloscope audio visualizer, using a fragment shader.
+     * Our input to the shader is a texture containing audio samples.
+     *
+     * We use a single 2D texture, with sample index on the X axis
+     * and channel number on the Y axis. Filtering is disabled.
+     */
+
+    if (alpha < 0.001)
+        return;
+
+    bool initializing = !scopeSampleTexture;
+    if (initializing)
+        glGenTextures(1, &scopeSampleTexture);
+
+    glActiveTexture(GL_TEXTURE1);
+    glEnable(GL_TEXTURE_2D);
+    glBindTexture(GL_TEXTURE_2D, scopeBackgroundTexture);
+
+    glActiveTexture(GL_TEXTURE0);
+    glEnable(GL_TEXTURE_2D);
+    glBindTexture(GL_TEXTURE_2D, scopeSampleTexture);
+
+    if (initializing) {
+        /*
+         * Allocate an empty texture
+         *
+         * Note that we really want linear on the X axis (sample) to avoid
+         * jaggies when the scopes are large, but we ideally would want
+         * NEAREST filtering on the Y axis, since that's used to pick a
+         * channel. Instead we make do with bilinear, and we're careful
+         * to sample exactly at the vertical texel center.
+         *
+         * If we fail to sample exactly at the center, we'll see "crosstalk"
+         * between adjacent scope channels.
+         */
+
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+
+        glTexImage2D(GL_TEXTURE_2D, 0, GL_LUMINANCE16,
+            MCAudioVisScope::SWEEP_LEN, MCAudioVisData::NUM_CHANNELS,
+            0, GL_LUMINANCE, GL_UNSIGNED_SHORT, 0);
+    }
+
+    // Upload texture, one channel / row at a time
+    for (unsigned channel = 0; channel < MCAudioVisData::NUM_CHANNELS; ++channel) {
+        glTexSubImage2D(GL_TEXTURE_2D, 0, 0, channel,
+            MCAudioVisScope::SWEEP_LEN, 1, GL_LUMINANCE, GL_UNSIGNED_SHORT,
+            MCAudioVisData::instance.channels[channel].scope.getSweep());
+    }
+
+    // Make each channel's scope a square
+    const unsigned height = viewportWidth / MCAudioVisData::NUM_CHANNELS;
+    
+    if (alpha > 0.999)
+        glDisable(GL_BLEND);
+
+    glUseProgramObjectARB(scopeProgram);
+    glUniform1fARB(scopeAlphaAttr, alpha);
+    overlayRect(0, viewportHeight - height, viewportWidth, height);
+
+    glEnable(GL_BLEND);
+    glActiveTexture(GL_TEXTURE1);
+    glDisable(GL_TEXTURE_2D);
+    glActiveTexture(GL_TEXTURE0);
+    glDisable(GL_TEXTURE_2D);
+}
+
+

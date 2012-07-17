@@ -18,8 +18,7 @@ namespace Sifteo {
  * @{
  */
 
-inline Menu::Menu(VideoBuffer &vid, struct MenuAssets *aAssets,
-    struct MenuItem *aItems)
+inline Menu::Menu(VideoBuffer &vid, const MenuAssets *aAssets, MenuItem *aItems)
     : vid(vid)
 {
     currentEvent.type = MENU_UNEVENTFUL;
@@ -34,14 +33,12 @@ inline Menu::Menu(VideoBuffer &vid, struct MenuAssets *aAssets,
 
     // calculate the number of items
     uint8_t i = 0;
-    while(items[i].icon != NULL) {
+    while (items[i].icon != NULL) {
         if (kIconTileWidth == 0) {
             kIconTileWidth = items[i].icon->tileWidth();
             kIconTileHeight = items[i].icon->tileHeight();
             kEndCapPadding = (kNumVisibleTilesX - kIconTileWidth) * (TILE / 2.f);
             ASSERT((kItemPixelWidth() - kIconPixelWidth()) % TILE == 0);
-            // icons should leave at least one tile on both sides for the next/prev items
-            ASSERT(kIconTileWidth <= kNumVisibleTilesX - (kPeekTiles * 2));
         } else {
             ASSERT(items[i].icon->tileWidth() == kIconTileWidth);
             ASSERT(items[i].icon->tileHeight() == kIconTileHeight);
@@ -69,7 +66,7 @@ inline Menu::Menu(VideoBuffer &vid, struct MenuAssets *aAssets,
 
     // calculate the number of tips
     i = 0;
-    while(assets->tips[i] != NULL) {
+    while (assets->tips[i] != NULL) {
         ASSERT(assets->tips[i]->tileWidth() == kNumVisibleTilesX);
         if (kFooterHeight == 0) {
             kFooterHeight = assets->tips[i]->tileHeight();
@@ -101,15 +98,21 @@ inline Menu::Menu(VideoBuffer &vid, struct MenuAssets *aAssets,
         }
     }
 
+    prev_ut = 0;
+    startingItem = 0;
+
+    position = 0.0f;
+
     setIconYOffset(kDefaultIconYOffset);
+    setPeekTiles(kDefaultPeekTiles);
 }
 
 inline bool Menu::pollEvent(struct MenuEvent *ev)
 {
-    // handle/clear pending events
-    if (currentEvent.type != MENU_UNEVENTFUL) {
-        performDefault();
-    }
+    // Events not handled at this point are discarded
+    ASSERT(currentEvent.type != MENU_PREPAINT);
+    clearEvent();
+    
     /* state changes can happen in the default event handler which may dispatch
      * events (like MENU_STATE_STATIC -> MENU_STATE_FINISH dispatches a
      * MENU_PREPAINT).
@@ -134,7 +137,7 @@ inline bool Menu::pollEvent(struct MenuEvent *ev)
     accel = kAccelScalingFactor * vid.virtualAccel().xy();
 
     // state changes
-    switch(currentState) {
+    switch (currentState) {
         case MENU_STATE_START:
             transFromStart();
             break;
@@ -156,7 +159,7 @@ inline bool Menu::pollEvent(struct MenuEvent *ev)
     }
 
     // run loop
-    switch(currentState) {
+    switch (currentState) {
         case MENU_STATE_START:
             stateStart();
             break;
@@ -184,41 +187,40 @@ inline bool Menu::pollEvent(struct MenuEvent *ev)
     return true;
 }
 
-inline void Menu::preventDefault()
-{
-    /* paints shouldn't be prevented because:
-     * the caller shouldn't be painting while the menu owns the context.
-     */
-    ASSERT(currentEvent.type != MENU_PREPAINT);
-    /* exit shouldn't be prevented because:
-     * the default handler is responsible for resetting the menu if the event
-     * pump is restarted.
-     */
-    ASSERT(currentEvent.type != MENU_EXIT);
-
-    clearEvent();
-}
-
 inline void Menu::reset()
 {
     changeState(MENU_STATE_START);
 }
 
-inline void Menu::replaceIcon(uint8_t item, const AssetImage *icon)
+inline void Menu::replaceIcon(uint8_t item, const AssetImage *icon, const AssetImage *label)
 {
     ASSERT(item < numItems);
-    items[item].icon = icon;
 
-    for(int i = prev_ut; i < prev_ut + kNumTilesX; i++)
+    items[item].icon = icon;
+    for (int i = prev_ut; i < prev_ut + kNumTilesX; i++)
         if (itemVisibleAtCol(item, i))
             drawColumn(i);
+
+    if (label) {
+        uint8_t currentItem = computeSelected();
+        items[item].label = label;
+        
+        if (kHeaderHeight && currentState == MENU_STATE_STATIC &&
+            currentItem == item)
+        {
+            const AssetImage& label = items[currentItem].label
+                                    ? *items[currentItem].label
+                                    : *assets->header;
+            vid.bg1.image(vec(0,0), label);
+        }
+    }
 }
 
 inline bool Menu::itemVisible(uint8_t item)
 {
     ASSERT(item >= 0 && item < numItems);
 
-    for(int i = MAX(0, prev_ut); i < prev_ut + kNumTilesX; i++) {
+    for (int i = MAX(0, prev_ut); i < prev_ut + kNumTilesX; i++) {
         if (itemVisibleAtCol(item, i)) return true;
     }
     return false;
@@ -229,6 +231,27 @@ inline void Menu::setIconYOffset(uint8_t px)
     ASSERT(px >= 0 || px < kNumTilesX * 8);
     kIconYOffset = -px;
     updateBG0();
+}
+
+inline void Menu::setPeekTiles(uint8_t numTiles)
+{
+    ASSERT(numTiles >= 1 || numTiles * 2 < kNumTilesX);
+    kPeekTiles = numTiles;
+    updateBG0();
+}
+
+/**
+ * Set the menu anchor.
+ *
+ * The anchor item is the active item in the menu when the menu starts. If the
+ * menu has already started, calling this method affects the future invocations
+ * of the same menu since running the event pump after an item is pressed
+ * restarts the menu.
+ */
+inline void Menu::anchor(uint8_t item)
+{
+    ASSERT(item < numItems);
+    startingItem = item;
 }
 
 /**

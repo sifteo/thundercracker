@@ -14,7 +14,9 @@
 
 
 System::System()
-        : opt_numCubes(DEFAULT_CUBES),
+        : opt_headless(false),
+        opt_numCubes(DEFAULT_CUBES),
+        opt_whiteBackground(false),
         opt_continueOnException(false),
         opt_turbo(false),
         opt_lockRotationByDefault(false),

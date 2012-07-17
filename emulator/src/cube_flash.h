@@ -15,6 +15,7 @@
 #include "cube_cpu.h"
 #include "cube_flash_model.h"
 #include "flash_storage.h"
+#include "tracer.h"
 
 namespace Cube {
 
@@ -22,12 +23,14 @@ namespace Cube {
 class Flash {
  public:
     enum busy_flag {
-        BF_IDLE          = 0,
-        BF_PROGRAM       = (1 << 0),
-        BF_ERASE_BLOCK   = (1 << 1),
-        BF_ERASE_SECTOR  = (1 << 2),
-        BF_ERASE_CHIP    = (1 << 3),
-        BF_ERASE         = (BF_ERASE_BLOCK | BF_ERASE_SECTOR | BF_ERASE_CHIP),
+        BF_IDLE             = 0,
+        BF_PROGRAM_BYTE     = (1 << 0),
+        BF_PROGRAM_BUFFER   = (1 << 1),
+        BF_ERASE_SECTOR     = (1 << 2),
+        BF_ERASE_CHIP       = (1 << 3),
+
+        BF_PROGRAM          = (BF_PROGRAM_BYTE | BF_PROGRAM_BUFFER),
+        BF_ERASE            = (BF_ERASE_SECTOR | BF_ERASE_CHIP),
     };
 
     struct Pins {
@@ -58,6 +61,7 @@ class Flash {
         prev_oe = 0;
         status_byte = 0;
         previous_clocks = 0;
+        buffer_counter = 0;
     }
 
     FlashStorage::CubeRecord *getStorage() const {
@@ -117,14 +121,14 @@ class Flash {
                 cpu->needHardwareTick = true;
                 
                 switch (busy) {
-                case BF_PROGRAM:
-                    busy_timer = deadline.setRelative(VirtualTime::usec(FlashModel::PROGRAM_TIME_US));
+                case BF_PROGRAM_BYTE:
+                    busy_timer = deadline.setRelative(VirtualTime::usec(FlashModel::PROGRAM_BYTE_TIME_US));
+                    break;
+                case BF_PROGRAM_BUFFER:
+                    busy_timer = deadline.setRelative(VirtualTime::usec(FlashModel::PROGRAM_BUFFER_TIME_US));
                     break;
                 case BF_ERASE_SECTOR:
                     busy_timer = deadline.setRelative(VirtualTime::usec(FlashModel::ERASE_SECTOR_TIME_US));
-                    break;
-                case BF_ERASE_BLOCK:
-                    busy_timer = deadline.setRelative(VirtualTime::usec(FlashModel::ERASE_BLOCK_TIME_US));
                     break;
                 case BF_ERASE_CHIP:
                     busy_timer = deadline.setRelative(VirtualTime::usec(FlashModel::ERASE_CHIP_TIME_US));
@@ -137,6 +141,8 @@ class Flash {
                 /*
                  * Just finished our operation
                  */
+
+                Tracer::log(cpu, "FLASH: no longer busy");
 
                 busy = BF_IDLE;
                 busy_timer = 0;
@@ -168,7 +174,7 @@ class Flash {
         }
     }
 
-    ALWAYS_INLINE void cycle(Pins *pins) {
+    ALWAYS_INLINE void cycle(Pins *pins, CPU::em8051 *cpu) {
         if (pins->ce || !pins->power) {
             // Chip disabled
             pins->data_drv = 0;
@@ -188,7 +194,7 @@ class Flash {
 
                 cmd_fifo[cmd_fifo_head].addr = addr;
                 cmd_fifo[cmd_fifo_head].data = pins->data_in;
-                matchCommands();
+                matchCommands(cpu);
                 cmd_fifo_head = CMD_FIFO_MASK & (cmd_fifo_head + 1);
             }
 
@@ -207,6 +213,10 @@ class Flash {
                 pins->data_drv = 0;
             } else {
 
+                // It's a mistake to try reading during a buffer write command
+                if (buffer_counter)
+                    CPU::except(cpu, CPU::EXCEPTION_FLASH_BUSY);
+
                 // Toggle bits only change on an OE edge.
                 if (prev_oe)
                     updateStatusByte();
@@ -215,6 +225,9 @@ class Flash {
                 if (addr != latched_addr || prev_oe) {
                     cycle_count++;
                     latched_addr = addr;
+
+                    Tracer::log(cpu, "FLASH: read addr [%06x] -> %02x (busy=%d)",
+                        addr, dataOut(), busy);
                 }
             }
             
@@ -223,7 +236,7 @@ class Flash {
         }
     }
 
-    uint8_t dataOut() {
+    ALWAYS_INLINE uint8_t dataOut() {
         /*
          * On every flash_cycle() we may compute a new value for
          * data_drv. But the data port itself may change values in-between
@@ -231,7 +244,11 @@ class Flash {
          * invoked more frequently (every tick) by hardware.c, in order to
          * update the flash data when data_drv is asserted.
          */
-        return busy ? status_byte : storage->ext[latched_addr];
+
+        if (UNLIKELY(busy | buffer_counter))
+            return status_byte;
+
+        return storage->ext[latched_addr];
     }
 
  private:
@@ -255,30 +272,146 @@ class Flash {
         addr &= ~(size - 1);
         ASSERT(addr + size <= sizeof storage->ext);
         memset(storage->ext + addr, 0xFF, size);
+
+        unsigned sBegin = addr / FlashModel::SECTOR_SIZE;
+        unsigned sEnd = (addr + size) / FlashModel::SECTOR_SIZE;
+        for (unsigned s = sBegin; s != sEnd; ++s)
+            storage->eraseCounts[s]++;
     }
 
-    void matchCommands() {
-        struct cmd_state *st = &cmd_fifo[cmd_fifo_head];
+    void handleBufferWrite(CPU::em8051 *cpu) {
+        /*
+         * Validate the contents of the command buffer, and start the write if it's okay.
+         *
+         * We've already checked the first four cycles (command & sector addresses),
+         * as well as the sector address for the confirm. We still need to check:
+         *
+         *   - The confirm byte itself
+         *   - All buffer addresses
+         *
+         * First, dump out the entire buffer for tracing.
+         */
 
-        if (busy != BF_IDLE)
+        Tracer::log(cpu, "FLASH: Last cycle of %d-byte buffer write. Buffer contents:", buffer_bytes);
+
+        for (unsigned i = 0; i <= buffer_bytes; i++) {
+            struct cmd_state *st = &cmd_fifo[(cmd_fifo_head - buffer_bytes + i) & CMD_FIFO_MASK];
+            Tracer::log(cpu, "FLASH: Buffer[%d] addr=%06x data=%02x", i, st->addr, st->data);
+        }
+
+        // Check confirmation byte
+        if (cmd_fifo[cmd_fifo_head].data != 0x29) {
+            Tracer::log(cpu, "FLASH: bad confirmation byte");
+            CPU::except(cpu, CPU::EXCEPTION_FLASH_CMD);
             return;
+        }
 
-        if (matchCommand(FlashModel::cmd_byte_program)) {
+        /*
+         * Strict validation for addresses.
+         * (The real chip doesn't actually care that addresses are
+         * sequential, but we always will want them to be.)
+         */
+        for (unsigned i = 0; i <= buffer_bytes; i++) {
+            struct cmd_state *st = &cmd_fifo[(cmd_fifo_head - buffer_bytes + i) & CMD_FIFO_MASK];
+            
+            if (i < buffer_bytes && bufOffsetAddr(st->addr) != i) {
+                Tracer::log(cpu, "FLASH: addresses in [%d] not sequential as expected", i);
+                CPU::except(cpu, CPU::EXCEPTION_FLASH_CMD);
+                return;
+            }
+
+            if (sectorAddr(st->addr) != buffer_sa) {
+                Tracer::log(cpu, "FLASH: sector mismatch in [%d], sa=%06x", i, buffer_sa);
+                CPU::except(cpu, CPU::EXCEPTION_FLASH_CMD);
+                return;
+            }
+
+            if (bufPageAddr(st->addr) != bufPageAddr(cmd_fifo[cmd_fifo_head].addr)) {
+                Tracer::log(cpu, "FLASH: page mismatch in [%d] (%06x != %06x)",
+                    i, bufPageAddr(st->addr), bufPageAddr((cmd_fifo[cmd_fifo_head].addr)));
+                CPU::except(cpu, CPU::EXCEPTION_FLASH_CMD);
+                return;
+            }
+        }
+
+        /*
+         * Now do the program, all at once.
+         */
+        for (unsigned i = 0; i < buffer_bytes; i++) {
+            struct cmd_state *st = &cmd_fifo[(cmd_fifo_head - buffer_bytes + i) & CMD_FIFO_MASK];
             storage->ext[st->addr] &= st->data;
             status_byte = FlashModel::STATUS_DATA_INV & ~st->data;
-            busy = BF_PROGRAM;
+        }
+
+        write_count += buffer_bytes;
+        busy = BF_PROGRAM_BUFFER;
+    }
+
+    void matchCommands(CPU::em8051 *cpu) {
+        struct cmd_state *st = &cmd_fifo[cmd_fifo_head];
+
+        // Busy? (In a self-timed program/erase operation)
+        if (busy != BF_IDLE) {
+            ASSERT(buffer_counter == 0);
+            CPU::except(cpu, CPU::EXCEPTION_FLASH_BUSY);
+            return;
+        }
+
+        // Counting down to the end of a buffer-write command?
+        if (buffer_counter) {
+            Tracer::log(cpu, "FLASH: buffer countdown, %d", buffer_counter);
+            if (buffer_sa == sectorAddr(st->addr)) {
+                if (!--buffer_counter) {
+                    // Finished buffer.
+                    handleBufferWrite(cpu);
+                }
+                return;
+            } else {
+                Tracer::log(cpu, "FLASH: sector addr mismatch during buffer write sa=%06x addr=%06x",
+                    buffer_sa, st->addr);
+                CPU::except(cpu, CPU::EXCEPTION_FLASH_CMD);
+                buffer_counter = 0;
+            }
+        }
+
+        if (matchCommand(FlashModel::cmd_buffer_begin)) {
+            struct cmd_state *stPrev = &cmd_fifo[(cmd_fifo_head - 1) & CMD_FIFO_MASK];
+
+            Tracer::log(cpu, "FLASH: begin buffer program, addr [%06x, %06x] count %d",
+                stPrev->addr, st->addr, st->data);
+
+            buffer_bytes = st->data + 1;            // Parameter is byte count - 1
+            buffer_counter = buffer_bytes + 1;      // One extra clock cycle for confirm cmd
+            buffer_sa = sectorAddr(st->addr);
+
+            // Make sure the buffer size is in range, and the sector addresses match.
+            if (buffer_bytes > FlashModel::BUFFER_SIZE
+                || buffer_sa != sectorAddr(stPrev->addr)) {
+                // Buffer is too large
+                CPU::except(cpu, CPU::EXCEPTION_FLASH_CMD);
+                buffer_counter = 0;
+            }
+
+        } else if (matchCommand(FlashModel::cmd_byte_program)) {
+            Tracer::log(cpu, "FLASH: programming addr [%06x], %02x -> %02x",
+                st->addr, storage->ext[st->addr], st->data);
+
+            storage->ext[st->addr] &= st->data;
+            status_byte = FlashModel::STATUS_DATA_INV & ~st->data;
+            busy = BF_PROGRAM_BYTE;
             write_count++;
+
         } else if (matchCommand(FlashModel::cmd_sector_erase)) {
+            Tracer::log(cpu, "FLASH: sector erase [%06x]", st->addr);
+
             erase(st->addr, FlashModel::SECTOR_SIZE);
             status_byte = 0;
             busy = BF_ERASE_SECTOR;
             erase_count++;
-        } else if (matchCommand(FlashModel::cmd_block_erase)) {
-            erase(st->addr, FlashModel::BLOCK_SIZE);
-            status_byte = 0;
-            busy = BF_ERASE_BLOCK;
-            erase_count++;
+
         } else if (matchCommand(FlashModel::cmd_chip_erase)) {
+            Tracer::log(cpu, "FLASH: chip erase [%06x]", st->addr);
+
             erase(st->addr, FlashModel::SIZE);
             status_byte = 0;
             busy = BF_ERASE_CHIP;
@@ -292,8 +425,21 @@ class Flash {
         if (busy == BF_ERASE)
             status_byte ^= FlashModel::STATUS_ERASE_TOGGLE;
     }
+    
+    static ALWAYS_INLINE uint32_t sectorAddr(uint32_t fullAddr) {
+        return fullAddr & ~(FlashModel::SECTOR_SIZE - 1);
+    }
 
-    static const uint8_t CMD_FIFO_MASK = 0xF;
+    static ALWAYS_INLINE uint32_t bufPageAddr(uint32_t fullAddr) {
+        return fullAddr & ~(FlashModel::BUFFER_SIZE - 1);
+    }
+
+    static ALWAYS_INLINE uint32_t bufOffsetAddr(uint32_t fullAddr) {
+        return fullAddr & (FlashModel::BUFFER_SIZE - 1);
+    }
+
+    // Power of two, and large enough to hold the longest possible buffer-program op
+    static const uint8_t CMD_FIFO_MASK = 0x3F;
  
     struct cmd_state {
         uint32_t addr;
@@ -316,9 +462,12 @@ class Flash {
     uint64_t busy_timer;
     enum busy_flag busy;
     uint8_t cmd_fifo_head;
+    uint8_t buffer_counter;
+    uint8_t buffer_bytes;
     uint8_t prev_we;
     uint8_t prev_oe;
     uint8_t status_byte;
+    uint32_t buffer_sa;
     struct cmd_state cmd_fifo[CMD_FIFO_MASK + 1];
 };
 

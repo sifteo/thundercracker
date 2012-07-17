@@ -59,22 +59,24 @@ void vm_fb64_line(uint16_t ptr)
     __endasm ;
 }
 
-void vm_fb64(void)
+void vm_fb64(void) __naked
 {
-    uint8_t y = vram.num_lines;
-    uint16_t src = 0;
-
     lcd_begin_frame();
     LCD_WRITE_BEGIN();
 
-    do {
-        vm_fb64_line(src);
-        if (!--y) break;
-        vm_fb64_line(src);
-        src += 8;
-        src &= 0x1F8;
-    } while (--y);    
+    {
+        uint8_t y = vram.num_lines;
+        uint16_t src = 0;
 
-    LCD_WRITE_END();
+        do {
+            vm_fb64_line(src);
+            if (!--y) break;
+            vm_fb64_line(src);
+            src += 8;
+            src &= 0x1F8;
+        } while (--y);    
+    }
+
     lcd_end_frame();
+    GRAPHICS_RET();
 }

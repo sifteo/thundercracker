@@ -40,7 +40,7 @@ void _SYS_exit(void)
 
 void _SYS_yield(void)
 {
-    Radio::halt();
+    Tasks::idle();
     SvmRuntime::dispatchEventsOnReturn();
 }
 
@@ -50,10 +50,16 @@ void _SYS_paint(void)
     SvmRuntime::dispatchEventsOnReturn();
 }
 
+void _SYS_paintUnlimited(void)
+{
+    CubeSlots::paintCubes(CubeSlots::vecEnabled, false);
+    SvmRuntime::dispatchEventsOnReturn();
+}
+
 void _SYS_finish(void)
 {
     CubeSlots::finishCubes(CubeSlots::vecEnabled);
-    SvmRuntime::dispatchEventsOnReturn();
+    // Intentionally does _not_ dispatch events!
 }
 
 int64_t _SYS_ticks_ns(void)
@@ -169,6 +175,12 @@ void _SYS_log(uint32_t t, uintptr_t v1, uintptr_t v2, uintptr_t v3,
                 remaining -= chunkSize;
                 v1 += chunkSize;
             }
+            return;
+        }
+
+        // Tags that take no parameters
+        case _SYS_LOGTYPE_SCRIPT: {
+            SvmDebugPipe::logCommit(tag, SvmDebugPipe::logReserve(tag), 0);
             return;
         }
 

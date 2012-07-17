@@ -23,23 +23,17 @@ void FlashDevice::init() {
 }
 
 void FlashDevice::read(uint32_t address, uint8_t *buf, unsigned len) {
-    flash.read(address, buf, len);
+    if (len)
+        flash.read(address, buf, len);
 }
 
 void FlashDevice::write(uint32_t address, const uint8_t *buf, unsigned len) {
-    flash.write(address, buf, len);
+    if (len)
+        flash.write(address, buf, len);
 }
 
-void FlashDevice::eraseSector(uint32_t address) {
-    flash.eraseSector(address);
-}
-
-void FlashDevice::chipErase() {
-    flash.chipErase();
-}
-
-bool FlashDevice::writeInProgress() {
-    return flash.writeInProgress();
+void FlashDevice::eraseBlock(uint32_t address) {
+    flash.eraseBlock(address);
 }
 
 void FlashDevice::readId(JedecID *id)

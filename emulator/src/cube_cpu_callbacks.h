@@ -107,7 +107,7 @@ struct SFR {
         case REG_ARCON:
             self->mdu.write(*self->time, *cpu, reg - REG_MD0);
             break;
-        
+
         case REG_RNGCTL:
             self->rng.controlWrite(*self->time, *cpu);
             break;
@@ -117,7 +117,22 @@ struct SFR {
             if (cpu->mSFR[reg] == 0x01)
                 cpu->deepSleep = true;
             break;
-        
+
+        case REG_WDSV:
+            switch (cpu->wdsvState) {
+            default:
+                cpu->wdsvLow = cpu->mSFR[reg];
+                cpu->wdsvState = WDSV_WRITE_HIGH;
+                break;
+            case WDSV_WRITE_HIGH:
+                cpu->wdsvHigh = cpu->mSFR[reg];
+                cpu->wdsvState = WDSV_LOW;
+                cpu->wdtEnabled = true;
+                cpu->wdtCounter = (cpu->wdsvHigh << 16) | (cpu->wdsvLow << 8);
+                break;
+            }
+            break;
+
         }
     }
 
@@ -151,6 +166,9 @@ struct SFR {
         case REG_ARCON:
             return self->mdu.read(*self->time, *cpu, reg - REG_MD0);
 
+        case REG_CCPDATO:
+            return self->ccp.read(*cpu);
+
         case REG_RNGCTL:
             return self->rng.controlRead(*self->time, *cpu);
         case REG_RNGDAT:
@@ -159,6 +177,17 @@ struct SFR {
         case BUS_PORT:
             cpu->needHardwareTick = true;
             return self->readFlashBus();
+
+        case REG_WDSV:
+            switch (cpu->wdsvState) {
+            default:
+                cpu->wdsvState = WDSV_READ_HIGH;
+                return cpu->wdsvLow;
+            case WDSV_READ_HIGH:
+                cpu->wdsvState = WDSV_LOW;
+                return cpu->wdsvHigh;
+            }
+            break;
 
         }
         

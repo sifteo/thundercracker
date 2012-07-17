@@ -13,7 +13,6 @@ uint8_t RadioManager::epHead;
 uint8_t RadioManager::epTail;
 _SYSCubeID RadioManager::schedNext;
 
-
 void RadioManager::produce(PacketTransmission &tx)
 {
     /*

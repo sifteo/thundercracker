@@ -33,10 +33,18 @@
 #define FLASH_REG_EN_GPIO   GPIOPin(&GPIOC, 4)
 
 // N E I G H B O R
-#define NBR_OUT3_GPIO       GPIOPin(&GPIOB, 8)
-#define NBR_OUT4_GPIO       GPIOPin(&GPIOB, 9)
-#define NBR_OUT1_GPIO       GPIOPin(&GPIOB, 1)  //this kills the green LED, but good for testing
-#define NBR_OUT2_GPIO       GPIOPin(&GPIOB, 1)
+#define NBR_OUT1_GPIO       GPIOPin(&GPIOA, 0)
+#define NBR_OUT2_GPIO       GPIOPin(&GPIOA, 2)
+#define NBR_OUT3_GPIO       GPIOPin(&GPIOA, 1)
+#define NBR_OUT4_GPIO       GPIOPin(&GPIOA, 3)
+
+#define NBR_IN1_GPIO        GPIOPin(&GPIOA, 6)
+#define NBR_IN2_GPIO        GPIOPin(&GPIOA, 7)
+#define NBR_IN3_GPIO        GPIOPin(&GPIOB, 0)
+#define NBR_IN4_GPIO        GPIOPin(&GPIOB, 1)
+
+// XXX: these are not currently broken out separately per channel
+#define NBR_BUF_GPIO        GPIOPin(&GPIOC, 8)
 
 // U A R T
 #define UART_DBG            USART3
@@ -52,17 +60,21 @@
 #define VCC33_ENABLE_GPIO   GPIOPin(&GPIOC, 14)
 
 // A U D I O
-#define AUDIO_DAC_GPIO      GPIOPin(&GPIOA, 4)
-#define AUDIO_DAC_CHAN      1
-
-#define AUDIO_PWMA_GPIO     GPIOPin(&GPIOA, 7)
-#define AUDIO_PWMB_GPIO     GPIOPin(&GPIOA, 8)
+#define AUDIO_PWMA_PORT     GPIOA
+#define AUDIO_PWMA_PIN      7
+#define AUDIO_PWMB_PORT     GPIOA
+#define AUDIO_PWMB_PIN      8
 #define AUDIO_PWM_CHAN      1
 
+#define VOLUME_TIM          TIM5
+#define VOLUME_CHAN         2
+#define VOLUME_GPIO         GPIOPin(&GPIOA, 1)
+
 // M I S C
-#define BTN_HOME_GPIO       GPIOPin(&GPIOC, 0)
+#define BTN_HOME_GPIO       GPIOPin(&GPIOA, 0)
 #define BTN_HOME_EXTI_VEC   EXTI2
 
+#define PROFILER_TIM        TIM2
 
 // T E S T  J I G
 
@@ -75,17 +87,16 @@
 #define JIG_SCL_GPIO        GPIOPin(&GPIOB, 6)
 #define JIG_SDA_GPIO        GPIOPin(&GPIOB, 7)
 
-#define JIG_NBR_IN1_GPIO    GPIOPin(&GPIOA, 0)
-#define JIG_NBR_IN2_GPIO    GPIOPin(&GPIOA, 1)
-#define JIG_NBR_IN3_GPIO    GPIOPin(&GPIOA, 2)
-#define JIG_NBR_IN4_GPIO    GPIOPin(&GPIOA, 3)
-
-#define JIG_NBR_OUT1_GPIO   GPIOPin(&GPIOA, 6)
-#define JIG_NBR_OUT2_GPIO   GPIOPin(&GPIOA, 7)
-#define JIG_NBR_OUT3_GPIO   GPIOPin(&GPIOB, 0)
-#define JIG_NBR_OUT4_GPIO   GPIOPin(&GPIOB, 1)
-
+#define PWR_MEASURE_ADC     ADC1
 #define USB_PWR_GPIO        GPIOPin(&GPIOB, 15)
+
+#define USB_CURRENT_GPIO    GPIOPin(&GPIOA, 4)
+#define USB_CURRENT_DIR_GPIO GPIOPin(&GPIOC, 5)
+#define USB_CURRENT_ADC_CH  4
+
+#define V3_CURRENT_GPIO     GPIOPin(&GPIOC, 4)
+#define V3_CURRENT_DIR_GPIO GPIOPin(&GPIOB, 2)
+#define V3_CURRENT_ADC_CH   14
 
 #define BATTERY_SIM_GPIO    GPIOPin(&GPIOA, 5)
 #define BATTERY_SIM_DAC_CH  2

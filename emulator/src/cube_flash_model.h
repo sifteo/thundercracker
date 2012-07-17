@@ -12,12 +12,9 @@
  * possible, so it's easier to switch to other NOR parts in the
  * future.
  *
- * Currently this is based on the SST39VF1681, but this likely isn't
- * what we'll actually be using in the final design.
- *
  * Our current requirements:
  *
- *  - NOR flash, 2Mx8 (16 megabits)
+ *  - NOR flash, 4Mx8 (32 megabits)
  *
  *  - Low power (Many memories have an automatic standby feature, which gives them
  *    fairly low power usage when we're clocking them slowly. Our actual clock rate
@@ -31,6 +28,9 @@
  *    erase finishes. This is clearly very bad for interactivity, so flashes with
  *    erase times in the tens of milliseconds are much better than flashes that
  *    take half a second or longer to erase.
+ *
+ * Our current design is based on the Winbond W29GL032C, which is what we emulate.
+ * It supports a 32-byte (1/4 tile) write buffer, to speed up programming operations.
  */
 
 #include <stdint.h>
@@ -46,9 +46,9 @@ struct FlashModel {
      * Flash geometry
      */
 
-    static const unsigned SIZE         = 2 * 1024 * 1024;
-    static const unsigned BLOCK_SIZE   = 64 * 1024;
-    static const unsigned SECTOR_SIZE  = 4 * 1024;
+    static const unsigned SIZE         = 4 * 1024 * 1024;
+    static const unsigned SECTOR_SIZE  = 64 * 1024;
+    static const unsigned BUFFER_SIZE  = 32;
 
     /*
      * Structure of the status byte, returned while the flash is busy.
@@ -65,10 +65,10 @@ struct FlashModel {
      * want to test with maximum allowed values too.
      */
 
-    static const unsigned PROGRAM_TIME_US       = 7;
-    static const unsigned ERASE_SECTOR_TIME_US  = 18000;
-    static const unsigned ERASE_BLOCK_TIME_US   = 18000;
-    static const unsigned ERASE_CHIP_TIME_US    = 40000;
+    static const unsigned PROGRAM_BYTE_TIME_US    = 6;
+    static const unsigned PROGRAM_BUFFER_TIME_US  = 96;
+    static const unsigned ERASE_SECTOR_TIME_US    = 18000;
+    static const unsigned ERASE_CHIP_TIME_US      = 40000;
     
     /*
      * The subset of commands we emulate.
@@ -88,8 +88,8 @@ struct FlashModel {
     
     static const command_sequence cmd_byte_program[CMD_LENGTH];
     static const command_sequence cmd_sector_erase[CMD_LENGTH];
-    static const command_sequence cmd_block_erase[CMD_LENGTH];
     static const command_sequence cmd_chip_erase[CMD_LENGTH];
+    static const command_sequence cmd_buffer_begin[CMD_LENGTH];
 };
 
 

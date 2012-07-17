@@ -1,9 +1,15 @@
 LOCAL_OBJS = \
+    src/ostime.o \
     src/frontend.o \
     src/frontend_cube.o \
     src/frontend_mothership.o \
     src/frontend_overlay.o \
     src/lua_script.o \
+    src/lua_system.o \
+    src/lua_frontend.o \
+    src/lua_cube.o \
+    src/lua_runtime.o \
+    src/lua_filesystem.o \
     src/gl_renderer.o \
     src/main.o \
     src/system.o \
@@ -25,14 +31,32 @@ LOCAL_OBJS = \
     src/cube_neighbors.o \
     src/lsdec.o \
     src/tinythread.o \
+    src/wavefile.o \
     src/mc_crc.o \
     src/mc_audiooutdevice.o \
+    src/mc_audiovisdata.o \
     src/mc_portaudiooutdevice.o \
+    src/mc_volume.o \
+    src/mc_homebutton.o \
     src/mc_flash_device.o \
+    src/mc_flash_blockcache.o \
     src/mc_svmcpu.o \
+    src/mc_svmruntime.o \
     src/mc_svmdebugpipe.o \
     src/mc_elfdebuginfo.o \
     src/mc_logdecoder.o \
     src/mc_gdbserver.o \
+    src/mc_led.o \
+    src/mc_syscall_math.o \
     resources/data.o \
     resources/firmware-sbt.o
+
+GENERATED_FILES = \
+    resources/data.cpp \
+    resources/firmware-sbt.cpp
+
+DATADEPS = \
+    resources/*.png \
+    resources/*.glsl \
+    resources/*.fnt \
+    ../launcher/*.elf

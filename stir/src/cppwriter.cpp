@@ -149,18 +149,28 @@ void CPPSourceWriter::writeGroup(const Group &group)
 
     mLog.infoBegin("Encoding images");
     for (std::set<Image*>::iterator i = group.getImages().begin();
-         i != group.getImages().end(); i++)
-        writeImage(**i);
+         i != group.getImages().end(); i++) {
+        Image* image = *i;
+        if (!image->inList()) {
+            writeImage(*image);
+        }
+    }
     mLog.infoEnd();
 }
 
 void CPPSourceWriter::writeSound(const Sound &sound)
 {
-    std::vector<uint8_t> data;
     AudioEncoder *enc = AudioEncoder::create(sound.getEncode());
     assert(enc != 0);
 
-    enc->encodeFile(sound.getFile(), data);
+    std::vector<uint8_t> raw;
+    std::vector<uint8_t> data;
+
+    LodePNG::loadFile(raw, sound.getFile());
+    uint32_t numSamples = raw.size() / sizeof(int16_t);
+
+    enc->encode(raw, data);
+
     mLog.infoLineWithLabel(sound.getName().c_str(),
         "%7.02f kiB, %s (%s)",
         data.size() / 1024.0f, enc->getName(), sound.getFile().c_str());
@@ -180,34 +190,22 @@ void CPPSourceWriter::writeSound(const Sound &sound)
     if (sound.getLoopLength() == 0)
         loopType = _SYS_LOOP_ONCE;
 
-    // Precompute the number of samples in the clip
-    uint32_t numSamples = data.size();
-    switch (enc->getType()) {
-        case _SYS_PCM:
-            if (numSamples & 1) {
-                mLog.error("File '%s' does not contain an integral number of samples.",
-                           sound.getFile().c_str());
-            }
-            numSamples /= sizeof(int16_t);
-            break;
-        case _SYS_ADPCM:
-            numSamples *= 2;
-            break;
-    }
+    // Compute loop length and check sanity.
 
-    // Compute loop length and check sanity
+    // Note that we compute the loop using our original number of samples;
+    // the CODEC may pad our sample data, but loopEnd will cause the extra
+    // samples to be truncated.
+
     uint32_t loopEnd;
     if (sound.getLoopLength() == 0) {
         loopEnd = numSamples;
     } else {
         loopEnd = sound.getLoopLength() + sound.getLoopStart();
     }
-    // loopEnd is zero-indexed
-    loopEnd -= 1;
 
     // Loop end bounds checking
-    assert(loopEnd < numSamples);
-    assert(sound.getLoopStart() < loopEnd);
+    assert(loopEnd <= numSamples);
+    assert(sound.getLoopStart() <= loopEnd);
 
     mStream <<
         "extern const Sifteo::AssetAudio " << sound.getName() << " = {{\n" <<
@@ -224,7 +222,33 @@ void CPPSourceWriter::writeSound(const Sound &sound)
     delete enc;
 }
 
-void CPPSourceWriter::writeImage(const Image &image)
+void CPPSourceWriter::writeImageList(const ImageList& images)
+{
+    /* 
+     * First we'll write the decls, then the list itself, and
+     * finally, all the data.
+     */
+     
+     for (ImageList::const_iterator i=images.begin(); i!=images.end(); ++i) {
+        writeImage(**i, true, false, false);
+        mStream << "\n";
+     }
+
+     mStream << "extern const Sifteo::" << images.getImageClassName() <<
+         " " << images.getName() << "[" << images.size() << "] = {\n";
+
+     for (ImageList::const_iterator i=images.begin(); i!=images.end(); ++i) {
+        writeImage(**i, false, true, false);
+     }
+
+     mStream << "};\n\n";
+     
+     for (ImageList::const_iterator i=images.begin(); i!=images.end(); ++i) {
+        writeImage(**i, false, false, true);
+     }
+}
+
+void CPPSourceWriter::writeImage(const Image &image, bool writeDecl, bool writeAsset, bool writeData)
 {
     const std::vector<TileGrid> &grids = image.getGrids();
     unsigned width = grids.empty() ? 0 : grids[0].width();
@@ -232,26 +256,46 @@ void CPPSourceWriter::writeImage(const Image &image)
 
     // Declare the data so we can do a forward reference,
     // to keep the header ordered first in memory when we can.
-    mStream << "extern const uint16_t " << image.getName() << "_data[];\n";
+    if (writeDecl) {
+        mStream << "extern const uint16_t " << image.getName() << "_data[];\n";
+    }
 
     // This header can often be optimized out by slinky, unless its address is taken.
     // Here we output just the common non-format-specific header.
-    mStream <<
-        "\n"
-        "extern const Sifteo::" << image.getClassName() << " " << image.getName() << " = {{\n" <<
-        indent << "/* group    */ reinterpret_cast<uint32_t>(&" << image.getGroup()->getName() << "),\n" <<
-        indent << "/* width    */ " << width << ",\n" <<
-        indent << "/* height   */ " << height << ",\n" <<
-        indent << "/* frames   */ " << grids.size() << ",\n";
+    if (writeAsset) {
+        if (image.inList()) {
+            mStream << "{{\n";
+        } else {
+            mStream << 
+                "\n"
+                "extern const Sifteo::" << image.getClassName() << " " << image.getName() << " = {{\n";
+        }
+
+        mStream <<
+            indent << "/* group    */ reinterpret_cast<uint32_t>(&" << image.getGroup()->getName() << "),\n" <<
+            indent << "/* width    */ " << width << ",\n" <<
+            indent << "/* height   */ " << height << ",\n" <<
+            indent << "/* frames   */ " << grids.size() << ",\n";
+    }
+
 
     bool autoFormat = !(image.isPinned() || image.isFlat());
     bool isSingleTile = width == 1 && height == 1 && grids.size() == 1;
 
     if (image.isPinned() || (autoFormat && isSingleTile)) {
-        mStream <<
-            indent << "/* format   */ _SYS_AIF_PINNED,\n" <<
-            indent << "/* reserved */ 0,\n" <<
-            indent << "/* pData    */ " << image.encodePinned() << "\n}};\n\n";
+        if (writeAsset) {
+            mStream <<
+                indent << "/* format   */ _SYS_AIF_PINNED,\n" <<
+                indent << "/* reserved */ 0,\n" <<
+                indent << "/* pData    */ " << image.encodePinned() << "\n}}";
+            
+            if (image.inList()) {
+                mStream << ",\n";
+            } else {
+                mStream << ";\n\n";
+            }
+        }
+        
         return;
     }
     
@@ -260,13 +304,25 @@ void CPPSourceWriter::writeImage(const Image &image)
         std::vector<uint16_t> data;
         std::string format;
         if (image.encodeDUB(data, mLog, format)) {
-            mStream <<
-                indent << "/* format   */ " << format << ",\n" <<
-                indent << "/* reserved */ 0,\n" <<
-                indent << "/* pData    */ reinterpret_cast<uint32_t>(" << image.getName() << "_data)\n}};\n\n" <<
-                "const uint16_t " << image.getName() << "_data[] = {\n";
-            writeArray(data);
-            mStream << "};\n\n";
+            if (writeAsset) {
+                mStream <<
+                    indent << "/* format   */ " << format << ",\n" <<
+                    indent << "/* reserved */ 0,\n" <<
+                    indent << "/* pData    */ reinterpret_cast<uint32_t>(" << image.getName() << "_data)\n}}";
+            
+                if (image.inList()) {
+                    mStream << ",\n";
+                } else {
+                    mStream << ";\n\n";
+                }                
+            }
+
+            if (writeData) {
+                mStream << "const uint16_t " << image.getName() << "_data[] = {\n";
+                writeArray(data);
+                mStream << "};\n\n";
+            }
+
             return;
         }
     }
@@ -277,33 +333,48 @@ void CPPSourceWriter::writeImage(const Image &image)
     // it will still be in an AssetImage class, but the compression format will
     // be _SYS_AIF_FLAT.
 
-    mStream <<
-        indent << "/* format   */ _SYS_AIF_FLAT,\n" <<
-        indent << "/* reserved */ 0,\n" <<
-        indent << "/* pData    */ reinterpret_cast<uint32_t>(" << image.getName() << "_data)\n}};\n\n" <<
-        "const uint16_t " << image.getName() << "_data[] = {\n";
-    std::vector<uint16_t> data;
-    image.encodeFlat(data);
-    writeArray(data);
-    mStream << "};\n\n";
+    if (writeAsset) {
+        mStream <<
+            indent << "/* format   */ _SYS_AIF_FLAT,\n" <<
+            indent << "/* reserved */ 0,\n" <<
+            indent << "/* pData    */ reinterpret_cast<uint32_t>(" << image.getName() << "_data)\n}}";
+
+        if (image.inList()) {
+            mStream << ",\n";
+        } else {
+            mStream << ";\n\n";
+        }
+    }
+    
+    if (writeData) {
+        mStream <<
+            "const uint16_t " << image.getName() << "_data[] = {\n";
+        std::vector<uint16_t> data;
+        image.encodeFlat(data);
+        writeArray(data);
+        mStream << "};\n\n";
+    }
+}
+
+void CPPSourceWriter::writeTrackerShared(const Tracker &tracker)
+{
+    // Samples:
+    for (unsigned i = 0; i < tracker.numSamples(); i++) {
+        const std::vector<uint8_t> &buf = tracker.getSample(i);
+        if (!buf.size()) continue;
+        
+        mStream << "static const char _Tracker_sample" << i << "_data[] = " <<
+                   "// " << buf.size() << " bytes\n";
+        writeString(buf);
+        mStream << ";\n\n";
+        
+    }
+
 }
 
 void CPPSourceWriter::writeTracker(const Tracker &tracker)
 {
     const _SYSXMSong &song = tracker.getSong();
-
-    // Samples:
-    for (unsigned i = 0; i < song.nInstruments; i++) {
-        const _SYSXMInstrument &instrument = tracker.getInstrument(i);
-
-        if (instrument.sample.pData < song.nInstruments) {
-            const std::vector<uint8_t> &buf = tracker.getSample(instrument.sample.pData);
-            mStream << "static const char " << tracker.getName() << "_instrument" << i << "_sampleData[] = " <<
-                       "// " << buf.size() << " bytes\n";
-            writeString(buf);
-            mStream << ";\n\n";
-        }
-    }
 
     // Envelopes:
     for (unsigned i = 0; i < song.nInstruments; i++) {
@@ -330,15 +401,60 @@ void CPPSourceWriter::writeTracker(const Tracker &tracker)
         indent << indent << "/* sampleRate */ " << instrument.sample.sampleRate << ",\n" <<
         indent << indent << "/* loopStart  */ " << instrument.sample.loopStart << ",\n" <<
         indent << indent << "/* loopEnd    */ " << instrument.sample.loopEnd << ",\n" <<
-        indent << indent << "/* loopType   */ " << (instrument.sample.loopType == _SYS_LOOP_ONCE ? "_SYS_LOOP_ONCE" : "_SYS_LOOP_REPEAT") << ",\n" <<
-        indent << indent << "/* type       */ " << (uint32_t)instrument.sample.type << ",\n" <<
+        indent << indent << "/* loopType   */ ";
+        switch (instrument.sample.loopType) {
+            case _SYS_LOOP_ONCE:
+                mStream << "_SYS_LOOP_ONCE";
+                break;
+            case _SYS_LOOP_REPEAT:
+                mStream << "_SYS_LOOP_REPEAT";
+                break;
+            case _SYS_LOOP_EMULATED_PING_PONG:
+                mStream << "_SYS_LOOP_EMULATED_PING_PONG";
+                break;
+            default:
+                if (instrument.sample.dataSize)
+                    mLog.error("Unknown loop type: %d", instrument.sample.loopType);
+                mStream << "(_SYSAudioType)" << (int32_t)instrument.sample.loopType;
+                break;
+        }
+        mStream << ",\n" <<
+        indent << indent << "/* type       */ ";
+        switch (instrument.sample.type) {
+            case _SYS_ADPCM:
+                mStream << "_SYS_ADPCM";
+                break;
+            case _SYS_PCM:
+                mStream << "_SYS_PCM";
+                break;
+            default:
+                if (instrument.sample.dataSize)
+                    mLog.error("Unknown sample type: %d", instrument.sample.type);
+                mStream << "(_SYSAudioType)" << (uint32_t)instrument.sample.type;
+                break;
+        }
+        mStream << ",\n" <<
         indent << indent << "/* volume     */ " << instrument.sample.volume << ",\n" <<
         indent << indent << "/* dataSize   */ " << instrument.sample.dataSize << ",\n" <<
-        indent << indent << "/* pData      */ reinterpret_cast<uint32_t>(" << tracker.getName() << "_instrument" << i << "_sampleData),\n" <<
+        indent << indent << "/* pData      */ ";
+        if (instrument.sample.pData < tracker.numSamples()) {
+            mStream << "reinterpret_cast<uint32_t>(_Tracker_sample" << instrument.sample.pData << "_data),\n";
+        } else {
+            mStream << "0,\n";
+        }
+        mStream <<
         indent << "},\n" <<
-        indent << "/* finetune              */ " << (uint32_t)instrument.finetune << ",\n" <<
-        indent << "/* relativeNoteNumber    */ " << (uint32_t)instrument.relativeNoteNumber << ",\n" <<
-        indent << "/* volumeEnvelopePoints  */ reinterpret_cast<uint32_t>(" << tracker.getName() << "_instrument" << i << "_envelope),\n" <<
+        indent << "/* finetune              */ " << (int32_t)instrument.finetune << ",\n" <<
+        indent << "/* relativeNoteNumber    */ " << (int32_t)instrument.relativeNoteNumber << ",\n" <<
+        indent << "/* compression           */ " << (int32_t)instrument.compression << ",\n" <<
+        indent << "/* volumeEnvelopePoints  */ ";
+        if (instrument.volumeEnvelopePoints < song.nInstruments) {
+            mStream << "reinterpret_cast<uint32_t>(" << tracker.getName() << "_instrument" << i << "_envelope),\n";
+        } else {
+            mStream << "0,\n";
+        }
+
+        mStream <<
         indent << "/* nVolumeEnvelopePoints */ " << (uint32_t)instrument.nVolumeEnvelopePoints << ",\n" <<
         indent << "/* volumeSustainPoint    */ " << (uint32_t)instrument.volumeSustainPoint << ",\n" <<
         indent << "/* volumeLoopStartPoint  */ " << (uint32_t)instrument.volumeLoopStartPoint << ",\n" <<
@@ -390,7 +506,7 @@ void CPPSourceWriter::writeTracker(const Tracker &tracker)
     "extern const Sifteo::AssetTracker " << tracker.getName() << " = {{\n" <<
     indent << "/* patternOrderTable     */ reinterpret_cast<uint32_t>(" << tracker.getName() << "_patternOrderTable),\n" <<
     indent << "/* patternOrderTableSize */ " << song.patternOrderTableSize << ",\n" <<
-    indent << "/* restartPosition       */ " << (uint32_t)song.restartPosition << ",\n" <<
+    indent << "/* restartPosition       */ " << tracker.getRestartPosition() << ",\n" <<
     indent << "/* nChannels             */ " << (uint32_t)song.nChannels << ",\n" <<
     indent << "/* nPatterns             */ " << song.nPatterns << ",\n" <<
     indent << "/* patterns              */ reinterpret_cast<uint32_t>(" << tracker.getName() << "_patterns),\n" <<
@@ -400,70 +516,21 @@ void CPPSourceWriter::writeTracker(const Tracker &tracker)
     indent << "/* tempo                 */ " << song.tempo << ",\n" <<
     indent << "/* bpm                   */ " << song.bpm << ",\n" <<
     "}};\n\n";
-
-    unsigned compressedSize = tracker.getSize();
-    unsigned uncompressedSize = tracker.getFileSize();
-    double ratio = uncompressedSize ? 100.0 - compressedSize * 100.0 / uncompressedSize : 0;
-
-    mLog.infoLineWithLabel(tracker.getName().c_str(), "% 3u patterns,% 3u instruments, %5.02f kiB, % 5.01f%% compression (%s)",
-                 song.nPatterns,
-                 song.nInstruments,
-                 compressedSize / 1024.0f,
-                 ratio,
-                 tracker.getFile().c_str());
 }
 
 CPPHeaderWriter::CPPHeaderWriter(Logger &log, const char *filename)
     : CPPWriter(log, filename)
 {
-    if (filename)
-        createGuardName(filename);
-
     if (mStream.is_open())
         head();
-}
-
-void CPPHeaderWriter::createGuardName(const char *filename)
-{
-    /*
-     * Make a name for the include guard, based on the filename
-     */
-
-    char c;
-    char prev = '_';
-    guardName = prev;
-
-    while ((c = *filename)) {
-        c = toupper(c);
-
-        if (isalpha(c)) {
-            prev = c;
-            guardName += prev;
-        } else if (prev != '_') {
-            prev = '_';
-            guardName += prev;
-        }
-
-        filename++;
-    }
 }
 
 void CPPHeaderWriter::head()
 {
     mStream <<
         "\n"
-        "#ifndef " << guardName << "\n"
-        "#define " << guardName << "\n"
+        "#pragma once\n"
         "\n";
-}
-
-void CPPHeaderWriter::foot()
-{
-    mStream <<
-        "\n"
-        "#endif  // " << guardName << "\n";
-
-    CPPWriter::foot();
 }
 
 void CPPHeaderWriter::writeGroup(const Group &group)
@@ -473,7 +540,9 @@ void CPPHeaderWriter::writeGroup(const Group &group)
     for (std::set<Image*>::iterator i = group.getImages().begin();
          i != group.getImages().end(); i++) {
         Image *image = *i;
-        mStream << "extern const Sifteo::" << image->getClassName() << " " << image->getName() << ";\n";
+        if (!image->inList()) {
+            mStream << "extern const Sifteo::" << image->getClassName() << " " << image->getName() << ";\n";
+        }
     }
 }
 
@@ -485,6 +554,12 @@ void CPPHeaderWriter::writeSound(const Sound &sound)
 void CPPHeaderWriter::writeTracker(const Tracker &tracker)
 {
     mStream << "extern const Sifteo::AssetTracker " << tracker.getName() << ";\n";
+}
+
+void CPPHeaderWriter::writeImageList(const ImageList &list)
+{
+    mStream << "extern const Sifteo::" << list.getImageClassName() << " " <<
+        list.getName() << "[" << list.size() <<"];\n";
 }
 
 };  // namespace Stir

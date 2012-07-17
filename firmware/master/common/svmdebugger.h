@@ -10,8 +10,7 @@
 #ifndef SVM_DEBUGGER_H
 #define SVM_DEBUGGER_H
 
-#include <stdint.h>
-#include <inttypes.h>
+#include "macros.h"
 #include "svm.h"
 #include "svmdebugpipe.h"
 #include "svmmemory.h"

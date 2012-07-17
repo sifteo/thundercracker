@@ -10,9 +10,15 @@
 
 /*
  * Functions referenced in the vector table.
+ *
+ * From the ARM ARM: "The AAPCS requires that the stack-pointer
+ * is 8-byte aligned on entry to a conforming function".
+ *
+ * The GCC __attribute__ ((interrupt ("IRQ"))) allows GCC to word-align the
+ * stack, so we avoid that and use the standard 8-byte alignment.
  */
 
-#define IRQ_HANDLER     extern "C" void __attribute__ ((interrupt ("IRQ")))
+#define IRQ_HANDLER     extern "C" void
 #define NAKED_HANDLER   extern "C" void __attribute__ ((naked))
 
 extern "C" void _start();
@@ -54,7 +60,7 @@ IRQ_HANDLER ISR_TIM1_BRK();
 IRQ_HANDLER ISR_TIM1_UP();
 IRQ_HANDLER ISR_TIM1_TRG_COM();
 IRQ_HANDLER ISR_TIM1_CC();
-IRQ_HANDLER ISR_TIM2();
+NAKED_HANDLER ISR_TIM2();
 IRQ_HANDLER ISR_TIM3();
 IRQ_HANDLER ISR_TIM4();
 IRQ_HANDLER ISR_I2C1_EV();

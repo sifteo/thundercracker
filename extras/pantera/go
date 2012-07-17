@@ -1,0 +1,2 @@
+../../../emulator/siftulator.app/Contents/MacOS/siftulator -n 4 &
+../../../firmware/master/master-sim pantera.elf

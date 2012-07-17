@@ -5,244 +5,220 @@
 
 #include "svmruntime.h"
 #include "svmloader.h"
-#include "elfutil.h"
+#include "elfprogram.h"
 #include "flash_blockcache.h"
+#include "flash_volume.h"
 #include "svm.h"
 #include "svmmemory.h"
+#include "svmfastlz.h"
 #include "svmdebugpipe.h"
 #include "radio.h"
 #include "tasks.h"
 #include "panic.h"
 #include "cubeslots.h"
+#include "cube.h"
+#include "panic.h"
+#include "audiomixer.h"
+#include "event.h"
 
-#include <sifteo/abi.h>
-#include <string.h>
+#ifdef SIFTEO_SIMULATOR
+#   include "system_mc.h"
+#endif
+
 #include <stdlib.h>
+#include <sifteo/abi.h>
 
 using namespace Svm;
 
+FlashBlockRef SvmLoader::mapRefs[SvmMemory::NUM_FLASH_SEGMENTS];
+FlashVolume SvmLoader::mapVols[SvmMemory::NUM_FLASH_SEGMENTS];
+uint8_t SvmLoader::runLevel;
 
-static void logTitleInfo(Elf::ProgramInfo &pInfo)
-{
-#ifdef SIFTEO_SIMULATOR
-    FlashBlockRef ref;
 
-    const char *title = pInfo.meta.getString(ref, _SYS_METADATA_TITLE_STR);
-    LOG(("SVM: Preparing to run title \"%s\"\n", title ? title : "(untitled)"));
-
-    const _SYSUUID *uuid = pInfo.meta.getValue<_SYSUUID>(ref, _SYS_METADATA_UUID);
-    if (uuid) {
-        LOG(("SVM: Title UUID is {"));
-        for (unsigned i = 0; i < 16; i++)
-            LOG(("%02x%s", uuid->bytes[i], (i == 3 || i == 5 || i == 7 || i == 9) ? "-" : ""));
-        LOG(("}\n"));
-    }
-#endif
-}
-
-static _SYSCubeIDVector getCubeVector(Elf::ProgramInfo &pInfo)
+bool SvmLoader::loadRWData(const Elf::Program &program)
 {
     /*
-     * XXX: BIG HACK.
+     * The RWDATA segment is the only one wa actually *load*,
+     * instead of just mapping or zero'ing. As such, we support
+     * unpacking the data in a segment-type-specific way.
      *
-     * Temporary code to initialize cubes, using the CubeRange from
-     * a game's metadata.
+     * Returns true on success, false on failure. Does not fault.
      */
 
-    // Look up CubeRange
     FlashBlockRef ref;
-    const _SYSMetadataCubeRange *range =
-        pInfo.meta.getValue<_SYSMetadataCubeRange>(ref, _SYS_METADATA_CUBE_RANGE);
-    unsigned minCubes = range ? range->minCubes : 0;
-
-    if (!minCubes) {
-        LOG(("SVM: No CubeRange found, not initializing any cubes.\n"));
-        return 0;
+    const Elf::ProgramHeader *ph = program.getRWDataSegment(ref);
+    if (!ph) {
+        // It's legal to have no RWDATA segment
+        return true;
     }
 
-    _SYSCubeIDVector cubes = 0xFFFFFFFF << (32 - minCubes);
-
-    return cubes;
-}
-
-static void xxxBootstrapAssets(Elf::ProgramInfo &pInfo, _SYSCubeIDVector cubes)
-{
     /*
-     * XXX: BIG HACK.
-     *
-     * Temporary code to load the bootstrap assets specified
-     * in a game's metadata. Normally this would be handled by
-     * the system menu.
-     *
-     * In a real loader scenario, bootstrap assets would be loaded
-     * onto a set of cubes determined by the loader: likely calculated
-     * by looking at the game's supported cube range and the number of
-     * connected cubes.
-     *
-     * In this hack, we just load the bootstrap assets onto the
-     * first N cubes, where N is the minimum number required by the game.
-     * If no cube range was specified, we don't load assets at all.
+     * Temporarily use segment 0 to do the copy, so we can use
+     * SvmMemory infrastructure to do this.
      */
 
-    // Look up BootAsset array
-    uint32_t actualSize;
-    FlashBlockRef ref;
-    _SYSMetadataBootAsset *vec = (_SYSMetadataBootAsset*)
-        pInfo.meta.get(ref, _SYS_METADATA_BOOT_ASSET, sizeof *vec, actualSize);
-    if (!vec) {
-        LOG(("SVM: No bootstrap assets found\n"));
-        return;
+    SvmMemory::setFlashSegment(0, program.getProgramSpan());
+    SvmMemory::VirtAddr srcVA = ph->p_offset + SvmMemory::SEGMENT_0_VA;
+    SvmMemory::VirtAddr destVA = ph->p_vaddr;
+    SvmMemory::PhysAddr destPA;
+
+    uint32_t destLen = ph->p_memsz;
+    uint32_t srcLen = ph->p_filesz;
+    if (!SvmMemory::mapRAM(destVA, destLen, destPA))
+        return false;
+
+    /*
+     * Type-specific loading operation.
+     */
+    
+    switch (ph->p_type) {
+
+        // Uncompressed
+        case Elf::PT_LOAD:
+            return SvmMemory::copyROData(ref, destPA, srcVA, destLen);
+
+        // Compressed with FastLZ level 1
+        case _SYS_ELF_PT_LOAD_FASTLZ:
+            return SvmFastLZ::decompressL1(ref, destPA, destLen, srcVA, srcLen);
+
+        default:
+            return false;
     }
-    unsigned count = actualSize / sizeof *vec;
-
-    if (!cubes) {
-        LOG(("SVM: Not loading bootstrap assets, no CubeRange found\n"));
-        return;
-    }
-
-#if defined(SIFTEO_SIMULATOR) && !defined(ASSET_BOOTSTRAP_SLOW_AND_STEADY)
-    CubeSlots::simAssetLoaderBypass = true;
-#endif
-
-    for (unsigned i = 0; i < count; i++) {
-        _SYSMetadataBootAsset &BA = vec[i];
-        PanicMessenger msg;
-
-        // Allocate some things in user RAM.
-        const SvmMemory::VirtAddr loaderVA = 0x10000;
-        const SvmMemory::VirtAddr groupVA = 0x11000;
-        msg.init(0x12000);
-
-        SvmMemory::PhysAddr loaderPA;
-        SvmMemory::PhysAddr groupPA;
-        SvmMemory::mapRAM(loaderVA, 1, loaderPA);
-        SvmMemory::mapRAM(groupVA, 1, groupPA);
-
-        _SYSAssetLoader *loader = reinterpret_cast<_SYSAssetLoader*>(loaderPA);
-        _SYSAssetGroup *group = reinterpret_cast<_SYSAssetGroup*>(groupPA);
-        _SYSAssetLoaderCube *lc = reinterpret_cast<_SYSAssetLoaderCube*>(loader + 1);
-
-        loader->cubeVec = 0;
-        group->pHdr = BA.pHdr;
-
-        if (_SYS_asset_findInCache(group, cubes) == cubes) {
-            LOG(("SVM: Bootstrap asset group %s already installed\n",
-                SvmDebugPipe::formatAddress(BA.pHdr).c_str()));
-            continue;
-        }
-
-        LOG(("SVM: Installing bootstrap asset group %s in slot %d\n",
-            SvmDebugPipe::formatAddress(BA.pHdr).c_str(), BA.slot));
-
-        if (!_SYS_asset_loadStart(loader, group, BA.slot, cubes)) {
-            // Out of space. Erase the slot first.
-            LOG(("SVM: Erasing asset slot\n"));
-            _SYS_asset_slotErase(BA.slot);
-            _SYS_asset_loadStart(loader, group, BA.slot, cubes);
-        }
-
-        if ((loader->complete & cubes) != cubes)
-            for (;;) {
-
-                // Draw status to each cube
-                _SYSCubeIDVector statusCV = cubes;
-                while (statusCV) {
-                    _SYSCubeID c = Intrinsic::CLZ(statusCV);
-                    statusCV ^= Intrinsic::LZ(c);
-
-                    msg.at(1,1) << "Bootstrapping";
-                    msg.at(1,2) << "game assets...";
-                    msg.at(4,5) << lc[c].progress;
-                    msg.at(7,7) << "of";
-                    msg.at(4,9) << lc[c].dataSize;
-
-                    msg.paint(c);
-                }
-            
-                // Are we done? Leave with the final status on-screen
-                if ((loader->complete & cubes) == cubes)
-                    break;
-
-                // Load for a while, with the display idle. The PanicMessenger
-                // is really wasteful with the cube's CPU time, so we need to
-                // paint pretty infrequently in order to load assets full-speed.
-
-                uint32_t milestone = lc[0].progress + 2000;
-                while (lc[0].progress < milestone 
-                       && (loader->complete & cubes) != cubes) {
-                    Tasks::work();
-                    Radio::halt();
-                }
-            }
-
-        _SYS_asset_loadFinish(loader);
-
-        LOG(("SVM: Finished instaling bootstrap asset group %s\n",
-            SvmDebugPipe::formatAddress(BA.pHdr).c_str()));
-    }
-
-#ifdef SIFTEO_SIMULATOR
-    CubeSlots::simAssetLoaderBypass = false;
-#endif
 }
 
-
-void SvmLoader::run(uint16_t appId)
+bool SvmLoader::prepareToExec(const Elf::Program &program, SvmRuntime::StackInfo &stack)
 {
-    // TODO: look this up via appId
-    FlashRange elf(0, 0xFFFF0000);
+    // Reset all event vectors
+    Event::clearVectors();
 
-    Elf::ProgramInfo pInfo;
-    if (!pInfo.init(elf))
-        return;
+    // Detach any existing video buffers.
+    for (unsigned i = 0; i < _SYS_NUM_CUBE_SLOTS; i++) {
+        CubeSlots::instances[i].setVideoBuffer(0);
+    }
 
-    // On simulator builds, log some info about the program we're running
-    logTitleInfo(pInfo);
+    // Reset any audio left playing by the previous tenant
+    AudioMixer::instance.init();
+
+    // Reset the debugging and logging subsystem
+    SvmDebugPipe::init();
 
     // On simulation, with the built-in debugger, point SvmDebug to
     // the proper ELF binary to load debug symbols from.
-    SvmDebugPipe::setSymbolSourceELF(elf);
+    SvmDebugPipe::setSymbolSource(program);
 
-    // Initialize rodata segment
-    SvmMemory::setFlashSegment(pInfo.rodata.data);
-
-    // Setup that the loader will eventually be responsible for...
-    {
-        // Enable the game's minimum set of cubes
-        _SYSCubeIDVector cv = getCubeVector(pInfo);
-        _SYS_enableCubes(cv);
-
-        // Temporary asset bootstrapper
-        xxxBootstrapAssets(pInfo, cv);
-
-        // PanicMessenger leaves CubeSlot out of sync with the cube's paint state.
-        // Reset all CubeSlot state before running the game.
-        _SYS_disableCubes(cv);
-        _SYS_enableCubes(cv);
-    }
-
-    // Clear RAM (including implied BSS)
+    // Initialize memory
     SvmMemory::erase();
-    SvmCpu::init();
+    secondaryUnmap();
 
     // Load RWDATA into RAM
-    SvmMemory::PhysAddr rwdataPA;
-    if (!pInfo.rwdata.data.isEmpty() &&
-        SvmMemory::mapRAM(SvmMemory::VirtAddr(pInfo.rwdata.vaddr),
-            pInfo.rwdata.size, rwdataPA)) {
-        FlashStream rwDataStream(pInfo.rwdata.data);
-        rwDataStream.read(rwdataPA, pInfo.rwdata.size);
+    if (!loadRWData(program)) {
+        SvmRuntime::fault(F_RWDATA_SEG);
+        return false;
     }
 
-    SvmRuntime::run(pInfo.entry,
-                    pInfo.bss.vaddr + pInfo.bss.size,
-                    SvmMemory::VIRTUAL_RAM_TOP);
+    // Set up default flash segment
+    SvmMemory::setFlashSegment(0, program.getRODataSpan());
+
+    // Init stack
+    stack.limit = program.getTopOfRAM();
+    stack.top = SvmMemory::VIRTUAL_RAM_TOP;
+
+    return true;
 }
 
-void SvmLoader::exit()
+FlashVolume SvmLoader::findLauncher()
 {
-#ifdef SIFTEO_SIMULATOR
-    ::exit(0);
-#endif
-    while (1);
+    FlashVolumeIter vi;
+    FlashVolume vol;
+
+    vi.begin();
+    do {
+        if (!vi.next(vol))
+            SvmRuntime::fault(F_NO_LAUNCHER);
+    } while (vol.getType() != FlashVolume::T_LAUNCHER);
+
+    return vol;
+}
+
+void SvmLoader::runLauncher()
+{
+    FlashVolume vol = findLauncher();
+    Elf::Program program;
+    if (!program.init(vol.getPayload(mapRefs[0]))) {
+        SvmRuntime::fault(F_BAD_ELF_HEADER);
+        return;
+    }
+
+    runLevel = RUNLEVEL_LAUNCHER;
+    mapVols[0] = vol;
+
+    SvmRuntime::StackInfo stack;
+    if (prepareToExec(program, stack))
+        SvmRuntime::run(program.getEntry(), stack);
+}
+
+void SvmLoader::exec(FlashVolume vol, RunLevel level)
+{
+    Elf::Program program;
+    if (!program.init(vol.getPayload(mapRefs[0]))) {
+        SvmRuntime::fault(F_BAD_ELF_HEADER);
+        return;
+    }
+
+    runLevel = level;
+    mapVols[0] = vol;
+
+    SvmRuntime::StackInfo stack;
+    if (prepareToExec(program, stack))
+        SvmRuntime::exec(program.getEntry(), stack);
+}
+
+FlashMapSpan SvmLoader::secondaryMap(FlashVolume vol)
+{
+    mapVols[1] = vol;
+    FlashMapSpan span = vol.getPayload(mapRefs[1]);
+    SvmMemory::setFlashSegment(1, span);
+    return span;
+}
+
+void SvmLoader::secondaryUnmap()
+{
+    SvmMemory::setFlashSegment(1, FlashMapSpan::empty());
+    mapRefs[1].release();
+    mapVols[1].block.setInvalid();
+}
+
+FlashVolume SvmLoader::volumeForVA(SvmMemory::VirtAddr va)
+{
+    unsigned seg = SvmMemory::virtToFlashSegment(va);
+    if (seg < arraysize(mapVols))
+        return mapVols[seg];
+    else
+        return FlashMapBlock::invalid();
+}
+
+void SvmLoader::exit(bool fault)
+{
+    switch (runLevel) {
+
+    default:
+    case RUNLEVEL_EXEC:
+        // Back to the launcher
+        exec(findLauncher(), RUNLEVEL_LAUNCHER);
+        break;
+
+    case RUNLEVEL_LAUNCHER:
+        /*
+         * Launcher exited! Normally this doesn't happen. In a production
+         * version of the launcher this would be a fatal error. In
+         * simulation, however, we use this to exit the simulator.
+         */
+
+        #ifdef SIFTEO_SIMULATOR
+        // Must preserve the error code here, so that unit tests and other scripts work.
+        SystemMC::exit(fault);
+        #endif
+
+        PanicMessenger::haltForever();
+    }
 }

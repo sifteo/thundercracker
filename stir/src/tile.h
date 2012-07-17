@@ -212,10 +212,16 @@ class TileStack {
     TileStack();
 
     void add(TileRef t);
+    void replace(TileRef t);
+
     TileRef median();
 
     bool isPinned() const {
         return mPinned;
+    }
+
+    bool isLossless() const {
+        return mLossless;
     }
 
  private:
@@ -228,6 +234,7 @@ class TileStack {
     TileRef cache;
     unsigned index;
     bool mPinned;
+    bool mLossless;
 };
 
 
@@ -241,6 +248,9 @@ class TilePool {
  public:
     typedef uint32_t Serial;
     typedef uint16_t Index;
+
+    // Current value of SysLFS::TILES_PER_ASSET_SLOT from firmware
+    static const unsigned MAX_SIZE = 4096;
 
     void optimize(Logger &log);
     void encode(std::vector<uint8_t>& out, Logger *log = NULL);
@@ -275,6 +285,7 @@ class TilePool {
     void optimizePalette(Logger &log);
     void optimizeOrder(Logger &log);
     void optimizeTiles(Logger &log);
+    void optimizeTrueColorTiles(Logger &log);
     void optimizeTilesPass(Logger &log,
                            std::tr1::unordered_set<TileStack *> &activeStacks,
                            bool gather, bool pinned);

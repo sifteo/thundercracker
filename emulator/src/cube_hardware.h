@@ -17,6 +17,7 @@
 #include "cube_spi.h"
 #include "cube_i2c.h"
 #include "cube_mdu.h"
+#include "cube_ccp.h"
 #include "cube_rng.h"
 #include "cube_lcd.h"
 #include "cube_flash.h"
@@ -70,6 +71,7 @@ class Hardware {
     I2CBus i2c;
     ADC adc;
     MDU mdu;
+    CCP ccp;
     Flash flash;
     Neighbors neighbors;
     RNG rng;
@@ -117,7 +119,8 @@ class Hardware {
     }
 
     void lcdPulseTE() {
-        lcd.pulseTE(hwDeadline);
+        if (time != NULL)
+            lcd.pulseTE(hwDeadline);
     }
 
     void setAcceleration(float xG, float yG, float zG);
@@ -135,10 +138,12 @@ class Hardware {
     ALWAYS_INLINE void setRadioClockEnable(bool e) {
         rfcken = e;
     }
-    
+
     uint32_t getExceptionCount();
     void incExceptionCount();
-    
+    void logWatchdogReset();
+    void traceExecution();
+
     ALWAYS_INLINE uint8_t readFlashBus() {
         if (LIKELY(flash_drv))
             cpu.mSFR[BUS_PORT] = flash.dataOut();

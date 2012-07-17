@@ -32,6 +32,148 @@ struct RCC_t {
 
 extern volatile RCC_t RCC;
 
+
+/*
+ * Power Control
+ */
+
+struct PWR_t {
+    uint32_t CR;
+    uint32_t CSR;
+};
+
+extern volatile PWR_t PWR;
+
+/*
+ * Backup Domain
+ */
+
+struct BKP_t {
+    uint32_t  _res0;
+    uint16_t DR1;
+    uint16_t  _res1;
+    uint16_t DR2;
+    uint16_t  _res2;
+    uint16_t DR3;
+    uint16_t  _res3;
+    uint16_t DR4;
+    uint16_t  _res4;
+    uint16_t DR5;
+    uint16_t  _res5;
+    uint16_t DR6;
+    uint16_t  _res6;
+    uint16_t DR7;
+    uint16_t  _res7;
+    uint16_t DR8;
+    uint16_t  _res8;
+    uint16_t DR9;
+    uint16_t  _res9;
+    uint16_t DR10;
+    uint16_t  _res10;
+    uint16_t RTCCR;
+    uint16_t  _res11;
+    uint16_t CR;
+    uint16_t  _res12;
+    uint16_t CSR;
+    uint16_t  _res13[5];
+    uint16_t DR11;
+    uint16_t  _res14;
+    uint16_t DR12;
+    uint16_t  _res15;
+    uint16_t DR13;
+    uint16_t  _res16;
+    uint16_t DR14;
+    uint16_t  _res17;
+    uint16_t DR15;
+    uint16_t  _res18;
+    uint16_t DR16;
+    uint16_t  _res19;
+    uint16_t DR17;
+    uint16_t  _res20;
+    uint16_t DR18;
+    uint16_t  _res21;
+    uint16_t DR19;
+    uint16_t  _res22;
+    uint16_t DR20;
+    uint16_t  _res23;
+    uint16_t DR21;
+    uint16_t  _res24;
+    uint16_t DR22;
+    uint16_t  _res25;
+    uint16_t DR23;
+    uint16_t  _res26;
+    uint16_t DR24;
+    uint16_t  _res27;
+    uint16_t DR25;
+    uint16_t  _res28;
+    uint16_t DR26;
+    uint16_t  _res29;
+    uint16_t DR27;
+    uint16_t  _res30;
+    uint16_t DR28;
+    uint16_t  _res31;
+    uint16_t DR29;
+    uint16_t  _res32;
+    uint16_t DR30;
+    uint16_t  _res33;
+    uint16_t DR31;
+    uint16_t  _res34;
+    uint16_t DR32;
+    uint16_t  _res35;
+    uint16_t DR33;
+    uint16_t  _res36;
+    uint16_t DR34;
+    uint16_t  _res37;
+    uint16_t DR35;
+    uint16_t  _res38;
+    uint16_t DR36;
+    uint16_t  _res39;
+    uint16_t DR37;
+    uint16_t  _res40;
+    uint16_t DR38;
+    uint16_t  _res41;
+    uint16_t DR39;
+    uint16_t  _res42;
+    uint16_t DR40;
+    uint16_t  _res43;
+    uint16_t DR41;
+    uint16_t  _res44;
+    uint16_t DR42;
+    uint16_t  _res45;
+};
+
+extern volatile BKP_t BKP;
+
+
+/*
+ * Real Time Clock
+ */
+struct RTC_t {
+    uint16_t CRH;
+    uint16_t  _res0;
+    uint16_t CRL;
+    uint16_t  _res1;
+    uint16_t PRLH;
+    uint16_t  _res2;
+    uint16_t PRLL;
+    uint16_t  _res3;
+    uint16_t DIVH;
+    uint16_t  _res4;
+    uint16_t DIVL;
+    uint16_t  _res5;
+    uint16_t CNTH;
+    uint16_t  _res6;
+    uint16_t CNTL;
+    uint16_t _res7;
+    uint16_t ALRH;
+    uint16_t  _res8;
+    uint16_t ALRL;
+    uint16_t  _res9;
+};
+
+extern volatile RTC_t RTC;
+
+
 struct CRC_t {
   uint32_t DR;
   uint32_t IDR;
@@ -75,15 +217,24 @@ extern volatile AFIO_t AFIO;
  */
 
 struct SPI_t {
-    uint32_t CR1;
-    uint32_t CR2;
-    uint32_t SR;
-    uint32_t DR;
-    uint32_t CRCPR;
-    uint32_t RXCRCR;
-    uint32_t TXCRCR;
-    uint32_t I2SCFGR;
-    uint32_t I2SPR;
+    uint16_t CR1;
+    uint16_t _res0;
+    uint16_t CR2;
+    uint16_t _res1;
+    uint16_t SR;
+    uint16_t _res2;
+    uint16_t DR;
+    uint16_t _res3;
+    uint16_t CRCPR;
+    uint16_t _res4;
+    uint16_t RXCRCR;
+    uint16_t _res5;
+    uint16_t TXCRCR;
+    uint16_t _res6;
+    uint16_t I2SCFGR;
+    uint16_t _res7;
+    uint16_t I2SPR;
+    uint16_t _res8;
 };
 
 extern volatile SPI_t SPI1;
@@ -95,16 +246,24 @@ extern volatile SPI_t SPI3;
  */
 
 struct I2C_t {
-    uint32_t CR1;
-    uint32_t CR2;
-    uint32_t OAR1;
-    uint32_t OAR2;
-    uint32_t DR;
-    uint32_t SR1;
-    uint32_t SR2;
-    uint32_t CCR;
-    uint32_t TRISE;
-
+    uint16_t CR1;
+    uint16_t _res0;
+    uint16_t CR2;
+    uint16_t _res1;
+    uint16_t OAR1;
+    uint16_t _res2;
+    uint16_t OAR2;
+    uint16_t _res3;
+    uint16_t DR;
+    uint16_t _res4;
+    uint16_t SR1;
+    uint16_t _res5;
+    uint16_t SR2;
+    uint16_t _res6;
+    uint16_t CCR;
+    uint16_t _res7;
+    uint16_t TRISE;
+    uint16_t _res8;
 };
 
 extern volatile I2C_t I2C1;
@@ -115,13 +274,20 @@ extern volatile I2C_t I2C2;
  */
 
 struct USART_t {
-    uint32_t SR;
-    uint32_t DR;
-    uint32_t BRR;
-    uint32_t CR1;
-    uint32_t CR2;
-    uint32_t CR3;
-    uint32_t GTPR;
+    uint16_t SR;
+    uint16_t _res0;
+    uint16_t DR;
+    uint16_t _res1;
+    uint16_t BRR;
+    uint16_t _res2;
+    uint16_t CR1;
+    uint16_t _res3;
+    uint16_t CR2;
+    uint16_t _res4;
+    uint16_t CR3;
+    uint16_t _res5;
+    uint16_t GTPR;
+    uint16_t _res6;
 };
 
 extern volatile USART_t USART1;
@@ -130,27 +296,48 @@ extern volatile USART_t USART3;
 extern volatile USART_t UART4;
 extern volatile USART_t UART5;
 
+struct TIM_CCR_t {
+    uint16_t CCR;
+    uint16_t _res;
+};
+
 /*
  * Timers 1-5 & 8
  */
 struct TIM_t {
-    uint32_t CR1;
-    uint32_t CR2;
-    uint32_t SMCR;
-    uint32_t DIER;
-    uint32_t SR;
-    uint32_t EGR;
-    uint32_t CCMR1;
-    uint32_t CCMR2;
-    uint32_t CCER;
-    uint32_t CNT;
-    uint32_t PSC;
-    uint32_t ARR;
-    uint32_t RCR;       // only valid for TIM1 & TIM8
-    uint32_t CCR[4];
-    uint32_t BDTR;      // only valid for TIM1 & TIM8
-    uint32_t DCR;
-    uint32_t DMAR;
+    uint16_t CR1;
+    uint16_t _res0;
+    uint16_t CR2;
+    uint16_t _res1;
+    uint16_t SMCR;
+    uint16_t _res2;
+    uint16_t DIER;
+    uint16_t _res3;
+    uint16_t SR;
+    uint16_t _res4;
+    uint16_t EGR;
+    uint16_t _res5;
+    uint16_t CCMR1;
+    uint16_t _res6;
+    uint16_t CCMR2;
+    uint16_t _res7;
+    uint16_t CCER;
+    uint16_t _res8;
+    uint16_t CNT;
+    uint16_t _res9;
+    uint16_t PSC;
+    uint16_t _res10;
+    uint16_t ARR;
+    uint16_t _res11;
+    uint16_t RCR;
+    uint16_t _res12;
+    TIM_CCR_t compareCapRegs[4];
+    uint16_t BDTR;
+    uint16_t _res17;
+    uint16_t DCR;
+    uint16_t _res18;
+    uint16_t DMAR;
+    uint16_t _res19;
 };
 
 extern volatile TIM_t TIM1;
@@ -270,6 +457,19 @@ struct FLASH_t {
 };
 
 extern volatile FLASH_t FLASH;
+
+struct FLASH_OB_t {
+    uint16_t RDP;
+    uint16_t USER;
+    uint16_t Data0;
+    uint16_t Data1;
+    uint16_t WRP0;
+    uint16_t WRP1;
+    uint16_t WRP2;
+    uint16_t WRP3;
+};
+
+extern volatile FLASH_OB_t FLASH_OB;
 
 /*
  * USB on-the-go - connectivity line devices
@@ -447,6 +647,18 @@ struct NVIC_t {
     uint32_t CID1;
     uint32_t CID2;
     uint32_t CID3;
+
+    enum VectorTable {
+        VectorTableRam      = 0x20000000,
+        VectorTableFlash    = 0x08000000
+    };
+
+    /*
+     * NB: offset must be a multiple of 0x100.
+     */
+    void setVectorTable(VectorTable vtab, uint32_t offset) volatile {
+        vectorTableOffset = vtab | (offset & 0x1FFFFF80U);
+    }
 
     void irqEnable(const ISR_t &vector) volatile {
         unsigned id = ((uintptr_t)&vector - (uintptr_t)&IVT.WWDG) >> 2;

@@ -14,8 +14,12 @@
 #include "usbprotocol.h"
 #include "macros.h"
 
-#if (BOARD == BOARD_TEST_JIG)
+#if ((BOARD == BOARD_TEST_JIG) && !defined(BOOTLOADER))
 #include "testjig.h"
+#endif
+
+#ifdef BOOTLOADER
+#include "bootloader.h"
 #endif
 
 static const Usb::DeviceDescriptor dev = {
@@ -57,7 +61,11 @@ static const struct {
         1,                                  // bConfigurationValue
         0,                                  // iConfiguration
         0x80,                               // bmAttributes
-        0x32                                // bMaxPower
+#if (BOARD == BOARD_TEST_JIG)
+        0xfa                                // bMaxPower: 500 mA
+#else
+        0x96                                // bMaxPower: 300 mA
+#endif
     },
     // interfaceDescriptor
     {
@@ -97,7 +105,7 @@ static const char *descriptorStrings[] = {
 #if (BOARD == BOARD_TEST_JIG)
     "Sifteo TestJig",
 #else
-    "Thundercracker",
+    "Sifteo Base",
 #endif
 };
 
@@ -128,21 +136,27 @@ static const struct {
     }
 };
 
+bool UsbDevice::configured;
+volatile bool UsbDevice::txInProgress;
+uint8_t UsbDevice::epINBuf[UsbHardware::MAX_PACKET];
+
 /*
     Called from within Tasks::work() to process usb OUT data on the
     main thread.
 */
 void UsbDevice::handleOUTData(void *p)
 {
-    uint8_t buf[OutEpMaxPacket];
-    int numBytes = UsbHardware::epReadPacket(OutEpAddr, buf, sizeof(buf));
-    if (numBytes > 0) {
-    // XXX: going to need to figure out what dispatch looks like here once
-    // we get some actual protocol support in place
-#if (BOARD == BOARD_TEST_JIG)
-        TestJig::onTestDataReceived(buf, numBytes);
+    Tasks::clearPending(Tasks::UsbOUT);
+
+    USBProtocolMsg m;
+    m.len = UsbHardware::epReadPacket(OutEpAddr, m.bytes, m.bytesFree());
+    if (m.len > 0) {
+#if ((BOARD == BOARD_TEST_JIG) && !defined(BOOTLOADER))
+        TestJig::onTestDataReceived(m.bytes, m.len);
+#elif defined(BOOTLOADER)
+        Bootloader::onUsbData(m.bytes, m.len);
 #else
-        USBProtocolHandler::onData(buf, numBytes);
+        USBProtocol::dispatch(m);
 #endif
     }
 }
@@ -156,7 +170,15 @@ void UsbDevice::handleINData(void *p) {
 }
 
 void UsbDevice::init() {
+    configured = false;
+    txInProgress = false;
     UsbCore::init(&dev, (Usb::ConfigDescriptor*)&configurationBlock, descriptorStrings);
+}
+
+void UsbDevice::deinit()
+{
+    UsbHardware::disconnect();
+    UsbHardware::deinit();
 }
 
 /*
@@ -165,13 +187,14 @@ void UsbDevice::init() {
  */
 void UsbDevice::onConfigComplete(uint16_t wValue)
 {
-    UsbHardware::epSetup(InEpAddr, Usb::EpAttrBulk, 64);
-    UsbHardware::epSetup(OutEpAddr, Usb::EpAttrBulk, 64);
+    UsbHardware::epINSetup(InEpAddr, Usb::EpAttrBulk, 64);
+    UsbHardware::epOUTSetup(OutEpAddr, Usb::EpAttrBulk, 64);
+    configured = true;
 }
 
 void UsbDevice::handleReset()
 {
-
+    configured = false;
 }
 
 void UsbDevice::handleSuspend()
@@ -194,7 +217,7 @@ void UsbDevice::handleStartOfFrame()
  */
 void UsbDevice::inEndpointCallback(uint8_t ep)
 {
-
+    txInProgress = false;
 }
 
 /*
@@ -204,7 +227,7 @@ void UsbDevice::inEndpointCallback(uint8_t ep)
  */
 void UsbDevice::outEndpointCallback(uint8_t ep)
 {
-    Tasks::setPending(Tasks::UsbOUT, 0);
+    Tasks::setPending(Tasks::UsbOUT);
 }
 
 /*
@@ -213,17 +236,24 @@ void UsbDevice::outEndpointCallback(uint8_t ep)
  */
 int UsbDevice::controlRequest(Usb::SetupData *req, uint8_t **buf, uint16_t *len)
 {
-    if ((req->bmRequestType & Usb::ReqTypeVendor) == Usb::ReqTypeVendor) {
-        if (req->bRequest == WINUSB_COMPATIBLE_ID) {
-
-            if (req->wIndex == 0x04) {
-                *len = MIN(*len, sizeof compatId);
-                *buf = (uint8_t*)&compatId;
-                return 1;
-            }
-        }
+    if (req->bmRequestType == WCID_VENDOR_REQUEST && req->wIndex == 0x04) {
+        *len = MIN(*len, sizeof compatId);
+        *buf = (uint8_t*)&compatId;
+        return 1;
     }
+
     return 0;
+}
+
+/*
+ * Block until any writes in progress have completed.
+ * Also, break if we've gotten disconnected while waiting.
+ */
+bool UsbDevice::waitForPreviousWrite()
+{
+    while (configured && txInProgress)
+        ;
+    return configured;
 }
 
 /*
@@ -233,9 +263,12 @@ int UsbDevice::controlRequest(Usb::SetupData *req, uint8_t **buf, uint16_t *len)
  */
 int UsbDevice::write(const uint8_t *buf, unsigned len)
 {
-    while (UsbHardware::epTxInProgress(InEpAddr))
-        ;
-    return UsbHardware::epWritePacket(InEpAddr, buf, len);
+    if (!waitForPreviousWrite())
+        return 0;
+
+    memcpy(epINBuf, buf, len);
+    txInProgress = true;
+    return UsbHardware::epWritePacket(InEpAddr, epINBuf, len);
 }
 
 int UsbDevice::read(uint8_t *buf, unsigned len)

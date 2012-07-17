@@ -19,15 +19,24 @@
 #include "audiomixer.h"
 #include "flash_device.h"
 #include "flash_blockcache.h"
-#include "usbprotocol.h"
+#include "flash_stack.h"
+#include "flash_volume.h"
+#include "flash_syslfs.h"
 #include "svmloader.h"
 #include "svmcpu.h"
 #include "svmruntime.h"
 #include "cube.h"
 #include "protocol.h"
 #include "tasks.h"
+#include "mc_timing.h"
+#include "lodepng.h"
+#include "crc.h"
+#include "volume.h"
+#include "homebutton.h"
 
 SystemMC *SystemMC::instance;
+std::vector< std::vector<uint8_t> > SystemMC::pendingGameInstalls;
+tthread::mutex SystemMC::pendingGameInstallLock;
 
 
 bool SystemMC::init(System *sys)
@@ -35,16 +44,21 @@ bool SystemMC::init(System *sys)
     this->sys = sys;
     instance = this;
 
-    FlashDevice::init();
-    FlashBlock::init();
-    USBProtocolHandler::init();
+    if (!sys->opt_waveoutFilename.empty() &&
+        !waveOut.open(sys->opt_waveoutFilename.c_str(), AudioMixer::SAMPLE_HZ)) {
+        LOG(("AUDIO: Can't open waveout file '%s'\n",
+            sys->opt_waveoutFilename.c_str()));
+    }
 
-    if (sys->opt_svmTrace)
-        SvmCpu::enableTracing();
-    if (sys->opt_svmFlashStats)
-        FlashBlock::enableStats();
-    if (sys->opt_svmStackMonitor)
-        SvmRuntime::enableStackMonitoring();
+    FlashStack::init();
+    Crc32::init();
+
+    if (!instance->sys->opt_headless) {
+        AudioOutDevice::init(&AudioMixer::instance);
+        AudioOutDevice::start();
+    } else {
+        AudioOutDevice::initStub();
+    }
 
     return true;
 }
@@ -68,7 +82,43 @@ void SystemMC::stop()
 
 void SystemMC::exit()
 {
-    // Nothing to do yet
+    if (!instance->sys->opt_headless)
+        AudioOutDevice::stop();
+
+    waveOut.close();
+}
+
+void SystemMC::autoInstall()
+{
+    // Use stealth flash I/O, for speed
+    FlashDevice::setStealthIO(1);
+
+    do {
+
+        // Create an initial SysLFS volume
+        SysLFS::write(SysLFS::kDummy, 0, 0);
+
+        // Install a launcher
+        const char *launcher = sys->opt_launcherFilename.empty() ? NULL : sys->opt_launcherFilename.c_str();
+        if (!sys->flash.installLauncher(launcher))
+            break;
+
+        // Install any ELF data that we've previously queued
+
+        tthread::lock_guard<tthread::mutex> guard(pendingGameInstallLock);
+
+        while (!pendingGameInstalls.empty()) {
+            std::vector<uint8_t> &data = pendingGameInstalls.back();
+            FlashVolumeWriter writer;
+            writer.begin(FlashVolume::T_GAME, data.size());
+            writer.appendPayload(&data[0], data.size());
+            writer.commit();
+            pendingGameInstalls.pop_back();
+        }
+
+    } while (0);
+
+    FlashDevice::setStealthIO(-1);
 }
 
 void SystemMC::threadFn(void *param)
@@ -79,19 +129,16 @@ void SystemMC::threadFn(void *param)
     }
 
     // Start the master at some point shortly after the cubes come up
-    instance->ticks = instance->sys->time.clocks + STARTUP_DELAY;
+    instance->ticks = instance->sys->time.clocks + MCTiming::STARTUP_DELAY;
+    instance->radioPacketDeadline = instance->ticks + MCTiming::TICKS_PER_PACKET;
 
-    AudioOutDevice::init(AudioOutDevice::kHz16000, &AudioMixer::instance);
-    AudioOutDevice::start();
-    Radio::open();
+    HomeButton::init();
+    Volume::init();
+    Radio::init();
 
-    SvmLoader::run(111);
+    instance->autoInstall();
 
-    for (;;) {
-        // If SVM exits, at least let the cube simulation run...
-        Tasks::work();
-        Radio::halt();
-    }
+    SvmLoader::runLauncher();
 }
 
 SysTime::Ticks SysTime::ticks()
@@ -103,23 +150,29 @@ SysTime::Ticks SysTime::ticks()
      * This does it in 64-bit math, with 60.4 fixed-point.
      */
 
-    return ((SystemMC::instance->ticks * hzTicks(SystemMC::TICK_HZ / 16)) >> 4);
+    return ((SystemMC::instance->ticks * hzTicks(MCTiming::TICK_HZ / 16)) >> 4);
 }
 
-void Radio::open()
+void Radio::init()
 {
     // Nothing to do in simulation
 }
 
-void Radio::halt()
+void Radio::begin()
 {
-    SystemMC *smc = SystemMC::instance;
+    // Nothing to do in simulation - hardware requires a delay between init
+    // and the beginning of transmissions.
+}
 
-    // Are we trying to stop() the MC thread?
-    if (!smc->mThreadRunning)
-        longjmp(smc->mThreadExitJmp, 1);
+void Tasks::waitForInterrupt()
+{
+    // Elapse time until the next radio packet.
+    // Note that we must actually call elapseTicks() here, since it's
+    // important to run all async events (including exit) from halt().
 
-    smc->doRadioPacket();
+    SystemMC *self = SystemMC::instance;
+    self->ticks = self->radioPacketDeadline;
+    self->elapseTicks(0);
 }
 
 void SystemMC::doRadioPacket()
@@ -141,18 +194,30 @@ void SystemMC::doRadioPacket()
     ASSERT(buf.ptx.dest != NULL);
     buf.packet.len = buf.ptx.packet.len;
 
+    // Simulates (hardware * software) retries
+    static const uint32_t MAX_RETRIES = 150;
+
     for (unsigned retry = 0; retry < MAX_RETRIES; ++retry) {
 
         /*
          * Deliver it to the proper cube.
          *
          * Interaction with the cube simulation must take place
-         * between beginPacket() and endPacket() only.
+         * between beginEvent() and endEvent() only.
+         *
+         * Note that this causes us to sync the Cube thread's clock with
+         * radioPacketDeadline, which slightly lags our 'ticks' counter,
+         * which slightly lags the internal SvmCpu cycle count.
+         *
+         * The timestamp we give to endEvent() is the farthest we allow
+         * the Cube thread to run asynchronously before waiting for us again.
          */
-        beginPacket();
+
+        sys->getCubeSync().beginEventAt(radioPacketDeadline, mThreadRunning);
         Cube::Hardware *cube = getCubeForAddress(buf.ptx.dest);
         buf.ack = cube && cube->spi.radio.handlePacket(buf.packet, buf.reply);
-        endPacket();
+        radioPacketDeadline += MCTiming::TICKS_PER_PACKET;
+        sys->getCubeSync().endEvent(radioPacketDeadline);
 
         // Log this transaction
         if (sys->opt_radioTrace) {
@@ -184,13 +249,22 @@ void SystemMC::doRadioPacket()
                 LOG((" -- Cube %d: ACK[%2d] ", cube->id(), buf.reply.len));
                 for (unsigned i = 0; i < buf.reply.len; i++) {
                     switch (i) {
+
+                        // First byte ('frame' et al) is always special
                         case RF_ACK_LEN_FRAME:
+                            LOG(("-"));
+                            break;
+
+                        // ACK packet delimiters (omit for query responses)
                         case RF_ACK_LEN_ACCEL:
                         case RF_ACK_LEN_NEIGHBOR:
                         case RF_ACK_LEN_FLASH_FIFO:
                         case RF_ACK_LEN_BATTERY_V:
                         case RF_ACK_LEN_HWID:
-                            LOG(("-"));
+                            if (!(buf.reply.payload[0] & QUERY_ACK_BIT)) {
+                                LOG(("-"));
+                            }
+                            break;
                     }
                     LOG(("%02x", buf.reply.payload[i]));
                 }
@@ -216,21 +290,6 @@ void SystemMC::doRadioPacket()
     RadioManager::timeout();
 }
 
-void SystemMC::beginPacket()
-{
-    // Advance time, and rally with the cube thread at the proper timestamp.
-    // Between beginEvent() and endEvent(), both simulation threads are synchronized.
-
-    ticks += SystemMC::TICKS_PER_PACKET;
-    sys->getCubeSync().beginEventAt(ticks, mThreadRunning);
-}
-
-void SystemMC::endPacket()
-{
-    // Let the cube keep running, but no farther than our next transmit opportunity
-    sys->getCubeSync().endEvent(ticks + SystemMC::TICKS_PER_PACKET);
-}
-
 Cube::Hardware *SystemMC::getCubeForSlot(CubeSlot *slot)
 {
     return instance->getCubeForAddress(slot->getRadioAddress());
@@ -252,6 +311,8 @@ Cube::Hardware *SystemMC::getCubeForAddress(const RadioAddress *addr)
 void SystemMC::checkQuiescentVRAM(CubeSlot *slot)
 {
     /*
+     * For debugging only.
+     *
      * This function can be called at points where we know there are no
      * packets in-flight and no data that still needs to be encoded from
      * the cube's vbuf. At these quiescent points, we should be able to
@@ -297,43 +358,79 @@ void SystemMC::checkQuiescentVRAM(CubeSlot *slot)
     DEBUG_LOG(("VRAM[%d]: okay!\n", slot->id()));
 }
 
-bool SystemMC::installELF(const char *path)
+bool SystemMC::installGame(const char *path)
 {
     bool success = true;
-    bool restartThread = instance->mThreadRunning;
+    bool restartThread = instance && instance->mThreadRunning;
 
     if (restartThread)
         instance->stop();
 
-    LOG(("FLASH: Installing ELF binary '%s'\n", path));
+    tthread::lock_guard<tthread::mutex> guard(pendingGameInstallLock);
 
-    FILE *elfFile = fopen(path, "rb");
-
-    if (elfFile == NULL) {
+    pendingGameInstalls.push_back(std::vector<uint8_t>());
+    LodePNG::loadFile(pendingGameInstalls.back(), path);
+    
+    if (pendingGameInstalls.back().empty()) {
+        pendingGameInstalls.pop_back();
+        success = false;
         LOG(("FLASH: Error, couldn't open ELF file '%s' (%s)\n",
             path, strerror(errno)));
-        success = false;
-
-    } else {
-        uint8_t buf[512];
-        FlashDevice::chipErase();
-
-        unsigned addr = 0;
-        while (!feof(elfFile)) {
-            unsigned rxed = fread(buf, 1, sizeof(buf), elfFile);
-            if (rxed > 0) {
-                FlashDevice::write(addr, buf, rxed);
-                addr += rxed;
-            }
-        }
-        fclose(elfFile);
     }
-
-    // Blow away our flash block cache
-    FlashBlock::invalidate();
 
     if (restartThread)
         instance->start();
 
     return success;
+}
+
+void SystemMC::elapseTicks(unsigned n)
+{
+    SystemMC *self = instance;
+
+    self->ticks += n;
+
+    // Asynchronous exit
+    if (!self->mThreadRunning)
+        longjmp(self->mThreadExitJmp, 1);
+
+    // Asynchronous radio packets
+    while (self->ticks >= self->radioPacketDeadline)
+        self->doRadioPacket();
+}
+
+unsigned SystemMC::suggestAudioSamplesToMix()
+{
+    /*
+     * SysTime-based clock for audio logging in --headless mode.
+     */
+
+    if (instance->waveOut.isOpen()) {
+        unsigned currentSample = SysTime::ticks() / SysTime::hzTicks(AudioMixer::SAMPLE_HZ);
+        unsigned prevSamples = instance->waveOut.getSampleCount();
+        if (currentSample > prevSamples)
+            return currentSample - prevSamples;
+    }
+    return 0;
+}
+
+void SystemMC::exit(int result)
+{
+    /*
+     * Stop the whole simulation, from inside the MC thread.
+     *
+     * We do need to stop the cube thread first, or it may deadlock
+     * in a deadline sync. The exact mechanisms for this can vary
+     * depending on platform and luck, but for example we could 
+     * deadlock due to exit() calling ~System(), which would
+     * destroy the underlying synchronization objects used by
+     * the deadline sync.
+     *
+     * We do *not* want to just ask System to stop everything,
+     * since trying to stop the MC simulation from inside the
+     * simulation itself would cause a deadlock.
+     */
+
+    getSystem()->stopCubesOnly();
+    ::exit(result);
 }

@@ -1,24 +1,13 @@
-# Default build is determined by environment vars
-ifneq ($(BUILD_STM32),)
-	TARGETS := master
-endif
-ifneq ($(BUILD_8051),)
-	TARGETS += cube
-endif
+SUBDIRS = \
+	master \
+	cube
 
-default: $(TARGETS)
+.PHONY: clean subdirs $(SUBDIRS)
 
-# Explicitly build everything
-all: master cube
+subdirs: $(SUBDIRS)
 
-.PHONY: default all clean cube master
-
-cube:
-	@make -C cube
-
-master:
-	@make -C master
+$(SUBDIRS):
+	@$(MAKE) -C $@
 
 clean:
-	@make -C cube clean
-	@make -C master clean
+	@for dir in $(SUBDIRS); do $(MAKE) -C $$dir clean; done

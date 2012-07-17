@@ -10,12 +10,14 @@
 #define _SYSTEM_MC_H
 
 #include <setjmp.h>
+#include <vector>
 #include "tinythread.h"
+#include "wavefile.h"
 
 class System;
 class Radio;
-class SysTime;
-class RadioAddress;
+struct SysTime;
+struct RadioAddress;
 class CubeSlot;
 
 namespace Cube {
@@ -34,33 +36,60 @@ class SystemMC {
     static Cube::Hardware *getCubeForSlot(CubeSlot *slot);
     static void checkQuiescentVRAM(CubeSlot *slot);
 
-    static bool installELF(const char *name);
+    /// Queue a game for asynchronous installation. Can be called at any time.
+    static bool installGame(const char *name);
 
-    static const System *getSystem() {
+    static System *getSystem() {
         return instance->sys;
     }
 
- private: 
-    static const uint32_t TICK_HZ = 16000000;
-    static const uint32_t TICKS_PER_PACKET = 7200;       // 450us, minimum packet period
-    static const uint32_t MAX_RETRIES = 150;             // Simulates (hardware * software) retries
-    static const uint32_t STARTUP_DELAY = TICK_HZ / 4;   // 1/4 second from cube to MC startup
+    // Exit from Siftulator entirely, from within the System simulation thread.
+    static void exit(int result);
 
+    /**
+     * Cause some time to pass in the MC simulation, and service any
+     * asynchronous events that occurred during this elapsed time.
+     *
+     * Must only be called from the MC thread.
+     */
+    static void elapseTicks(unsigned n);
+
+    /**
+     * Log some audio data. Has no effect unless --waveout was
+     * specified on the command line, and the file opened successfully.
+     */
+    static void logAudioSamples(const int16_t *samples, unsigned count) {
+        instance->waveOut.write(samples, count);
+    }
+
+    /**
+     * How many audio samples should we mix?
+     * Used in headless mode, where we have no natural timebase to use.
+     * This fabricates an audio clock based on SysTime.
+     */
+    static unsigned suggestAudioSamplesToMix();
+
+ private:
     static void threadFn(void *);
-
     void doRadioPacket();
-    void beginPacket();
-    void endPacket();
+    void autoInstall();
 
     Cube::Hardware *getCubeForAddress(const RadioAddress *addr);
 
     friend class Radio;
-    friend class SysTime;
+    friend struct SysTime;
+    friend class Tasks;
 
     static SystemMC *instance;
+    static std::vector< std::vector<uint8_t> > pendingGameInstalls;
+    static tthread::mutex pendingGameInstallLock;
+
     uint64_t ticks;
+    uint64_t radioPacketDeadline;
 
     System *sys;
+    WaveWriter waveOut;
+    
     tthread::thread *mThread;
     bool mThreadRunning;
     jmp_buf mThreadExitJmp;

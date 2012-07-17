@@ -1,5 +1,6 @@
 # We expect $(SDK_DIR)/Makefile.defs has already been included.
 
+
 ######## Normal target rules
 
 all: $(BIN)
@@ -7,30 +8,21 @@ all: $(BIN)
 # Disable implicit rules. Speeds up make, especially on Windows.
 .SUFFIXES:
 
-# On Win32, it's necessary to munge the paths in our dependency file.
-# This makefile, being unixy in nature, likes forward slashes. But
-# the Win32 build of clang, quite understandably, likes backslashes.
-# We use a quick perl script to normalize the slashes on windows.
-# (We could use sed for this, but perl comes with MSYS too, and its
-# in-place editing is more reliable.)
-#
-# Note that this needs to avoid backslashes that are escaping things
-# like newlines or spaces. The (\w) below tries to do this.
-
 %.o: %.cpp $(CDEPS)
-	$(CC) -c -o $@ $< $(CCFLAGS)
-ifeq ($(NO_PATH_MUNGE),)
-	@perl -pi.bak -e 's/\\(\w)/\/\1/g' $(subst .o,.d,$@)
-endif
+	@echo Compiling $<
+	@$(CC) -c -o $@ $< $(CCFLAGS)
 
+%.o: %.cc $(CDEPS)
+	@echo Compiling $<
+	@$(CC) -c -o $@ $< $(CCFLAGS)
+    
 %.o: %.c $(CDEPS)
-	$(CC) -c -o $@ $< $(CFLAGS)
-ifeq ($(NO_PATH_MUNGE),)
-	@perl -pi.bak -e 's/\\(\w)/\/\1/g' $(subst .o,.d,$@)
-endif
+	@echo Compiling $<
+	@$(CC) -c -o $@ $< $(CFLAGS)
 
 $(BIN): $(OBJS)
-	$(LD) -o $@ $(OBJS) $(LDFLAGS)
+	@echo Linking $@ "$(LINK_MESSAGE)"
+	@$(LD) -o $@ $(OBJS) $(LDFLAGS)
 
 ASSET_GEN_FILES := -o $(ASSETS).gen.cpp -o $(ASSETS).gen.h
 ifneq ($(ASSETS_BUILD_PROOF),)
@@ -41,11 +33,23 @@ $(ASSETS).gen.cpp: $(ASSETDEPS)
 	$(STIR) $(ASSETS).lua $(ASSET_GEN_FILES) -v
 
 clean:
-	rm -f $(BIN) *.o *.d $(GENERATED_FILES)
+	rm -f $(BIN) $(OBJS) $(OBJS:%.o=%.d) $(GENERATED_FILES)
 
 .PHONY: clean all
 
 -include $(OBJS:%.o=%.d)
+
+
+######## Convenience rules
+
+run: $(BIN)
+	siftulator $(SIFTULATOR_FLAGS) $<
+
+install: $(BIN)
+	swiss install $<
+
+.PHONY: run install
+
 
 ######## Development utility rules
 
@@ -61,7 +65,7 @@ objdump: $(BIN)
 asm: program.s
 	less $^
 
-program.s: $(OBJS) $(LD)
+program.s: $(OBJS)
 	$(LD) -asm -o $@ $(OBJS) $(LDFLAGS)
 
 readelf: $(BIN)

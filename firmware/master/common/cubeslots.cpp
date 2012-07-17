@@ -76,7 +76,7 @@ void CubeSlots::disconnectCubes(_SYSCubeIDVector cv)
     Atomic::And(CubeSlots::vecConnected, ~cv);
 }
 
-void CubeSlots::paintCubes(_SYSCubeIDVector cv)
+void CubeSlots::paintCubes(_SYSCubeIDVector cv, bool wait)
 {
     /*
      * If a previous repaint is still in progress, wait for it to
@@ -93,11 +93,13 @@ void CubeSlots::paintCubes(_SYSCubeIDVector cv)
      * cubes.
      */
 
-    _SYSCubeIDVector waitVec = cv;
-    while (waitVec) {
-        _SYSCubeID id = Intrinsic::CLZ(waitVec);
-        CubeSlots::instances[id].waitForPaint();
-        waitVec ^= Intrinsic::LZ(id);
+    if (wait) {
+        _SYSCubeIDVector waitVec = cv;
+        while (waitVec) {
+            _SYSCubeID id = Intrinsic::CLZ(waitVec);
+            CubeSlots::instances[id].waitForPaint();
+            waitVec ^= Intrinsic::LZ(id);
+        }
     }
 
     SysTime::Ticks timestamp = SysTime::ticks();
@@ -144,9 +146,7 @@ void CubeSlots::finishCubes(_SYSCubeIDVector cv)
         if (finished)
             break;
 
-        // Wait...
-        Tasks::work();
-        Radio::halt();
+        Tasks::idle();
     }
 }
 
@@ -157,6 +157,8 @@ void CubeSlots::assetLoaderTask(void *)
      * This lets us install assets from ISR context without accessing flash
      * directly. The _SYSAssetLoader includes a tiny FIFO buffer for each cube.
      */
+
+    Tasks::clearPending(Tasks::AssetLoader);
 
     _SYSAssetLoader *L = assetLoader;
     _SYSAssetLoaderCube *cubeArray = reinterpret_cast<_SYSAssetLoaderCube*>(L + 1);

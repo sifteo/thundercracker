@@ -1,4 +1,6 @@
-/* Copyright <c> 2011 Sifteo, Inc. All rights reserved. */
+/*
+ * Sifteo SDK Example.
+ */
 
 #ifndef _GAME_H
 #define _GAME_H

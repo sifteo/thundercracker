@@ -77,6 +77,8 @@ void CubeSlot::startAssetLoad(SvmMemory::VirtAddr groupVA, uint16_t baseAddr)
         if (simCube) {
             FlashStorage::CubeRecord *storage = simCube->flash.getStorage();
             LoadstreamDecoder lsdec(storage->ext, sizeof storage->ext);
+
+            lsdec.setAddress(baseAddr << 7);
             lsdec.handleSVM(G->pHdr + sizeof header, header.dataSize);
 
             LOG(("FLASH[%d]: Installed asset group %s at base address "
@@ -150,7 +152,8 @@ bool CubeSlot::radioProduce(PacketTransmission &tx)
     // First priority: Send video buffer updates
 
     if (codec.encodeVRAM(tx.packet, vbuf))
-        paintControl.vramFlushed(this);
+        if (paintControl.vramFlushed(this))
+            codec.encodeVRAM(tx.packet, vbuf);
 
     // Second priority: Download assets to flash
 
@@ -201,7 +204,7 @@ bool CubeSlot::radioProduce(PacketTransmission &tx)
                 if (done) {
                     /* Finished sending the group, and the cube finished writing it. */
                     Atomic::SetLZ(L->complete, id());
-                    Event::setPending(_SYS_CUBE_ASSETDONE, id());
+                    Event::setCubePending(_SYS_CUBE_ASSETDONE, id());
 
                     DEBUG_ONLY({
                         // In debug builds only, we log the asset download time
@@ -240,16 +243,6 @@ bool CubeSlot::radioProduce(PacketTransmission &tx)
     // Finalize this packet. Must be last.
     bool hasContent = codec.endPacket(tx.packet);
 
-    // Debugging: Scrub the VRAM if we have no video data in-flight
-    DEBUG_ONLY({
-        _SYSVideoBuffer *vb = vbuf;
-        if (hasContent)
-            consecutiveEmptyPackets = 0;
-        else if (++consecutiveEmptyPackets == 3 && vbuf
-            && vbuf->lock == 0 && vbuf->cm16 == 0)
-            SystemMC::checkQuiescentVRAM(this);
-    });
-
     /*
      * XXX: We don't have to always return true... we can return false if
      *      we have no useful work to do, so long as we still occasionally
@@ -261,24 +254,36 @@ bool CubeSlot::radioProduce(PacketTransmission &tx)
 void CubeSlot::radioAcknowledge(const PacketBuffer &packet)
 {
     if (!connected()) {
-        Event::setPending(_SYS_CUBE_FOUND, id());
+        Event::setCubePending(_SYS_CUBE_FOUND, id());
         setConnected();
 
         LOG(("%u cubes connected\n",
             Intrinsic::POPCOUNT(CubeSlots::vecConnected)));
     }
-    
+
+    RF_ACKType *ack = (RF_ACKType *) packet.bytes;
+
+    // ACKs are always at least one byte.
+    if (packet.len < 1) {
+        ASSERT(0 && "Empty ACK packet. Radio bug?");
+        return;
+    }
+
+    // If this is a query response, it doesn't follow the usual ACK format.
+    // (Queries include an ID, so this isn't subject to the 'stale ACK' test below)
+    if (ack->frame_count & QUERY_ACK_BIT) {
+        queryResponse(packet);
+        return;
+    }
+
     // If we're expecting a stale packet, completely ignore its contents.
     if (CubeSlots::expectStaleACK & bit()) {
         Atomic::ClearLZ(CubeSlots::expectStaleACK, id());
         return;
     }
 
-    RF_ACKType *ack = (RF_ACKType *) packet.bytes;
-
-    if (packet.len >= offsetof(RF_ACKType, frame_count) + sizeof ack->frame_count) {
-        // This ACK includes a valid frame_count counter
-
+    // All ACKs have a header byte with frame rate control info
+    {
         uint8_t delta = ack->frame_count - framePrevACK;
         delta &= FRAME_ACK_COUNT;
         framePrevACK = ack->frame_count;
@@ -309,26 +314,15 @@ void CubeSlot::radioAcknowledge(const PacketBuffer &packet)
                 if (loadACK)
                     Atomic::ClearLZ(CubeSlots::flashResetWait, id());
             } else {
-                // Acknowledge FIFO bytes
-
                 /*
-                 * XXX: Since we can always lose ACK packets without
-                 *      warning, we could theoretically deadlock here,
-                 *      where we perpetually wait on an ACK that the
-                 *      cube has already sent. Since flash writes are
-                 *      somewhat pipelined, in practice we'd actually
-                 *      have to lose several ACKs in a row. But it
-                 *      could indeed happen. We should have a watchdog
-                 *      here, to assume FIFO has been drained (or
-                 *      explicitly request another flash ACK) if we've
-                 *      been waiting for more than some safe amount of
-                 *      time.
+                 * Acknowledge FIFO bytes
                  *
-                 *      Alternatively, we could solve this on the cube
-                 *      end by having it send a longer-than-strictly-
-                 *      necessary ACK packet every so often.
+                 * Note that these ACKs may get lost; CubeCodec will explicitly request
+                 * a resend if it's out of buffer space! (Normally dropped ACKs aren't
+                 * an issue, since we'll have other ACKs in the pipeline. But if we hit
+                 * a pipeline bubble and/or multiple ACKs drop in a row, we need to
+                 * intervene)
                  */
-
                 codec.flashAckBytes(loadACK);
             }
 
@@ -355,7 +349,7 @@ void CubeSlot::radioAcknowledge(const PacketBuffer &packet)
             accelState.x = x;
             accelState.y = y;
             accelState.z = z;
-            Event::setPending(_SYS_CUBE_ACCELCHANGE, id());
+            Event::setCubePending(_SYS_CUBE_ACCELCHANGE, id());
         }
     }
 
@@ -366,11 +360,11 @@ void CubeSlot::radioAcknowledge(const PacketBuffer &packet)
             // Look for valid touches, signified by any edge on the touch toggle bit
 
             if ((neighbors[0] ^ ack->neighbors[0]) & NB0_FLAG_TOUCH) {
-                Event::setPending(_SYS_CUBE_TOUCH, id());
+                Event::setCubePending(_SYS_CUBE_TOUCH, id());
             }
 
             // Trigger a rescan of all neighbors, during event dispatch
-            Event::setPending(_SYS_NEIGHBOR_ADD, id());
+            Event::setCubePending(_SYS_NEIGHBOR_ADD, id());
 
         } else {
             Atomic::SetLZ(CubeSlots::neighborACKValid, id());
@@ -410,7 +404,7 @@ void CubeSlot::radioTimeout()
     /* XXX: Disconnect this cube */
     
     if (connected()) {
-        Event::setPending(_SYS_CUBE_LOST, id());
+        Event::setCubePending(_SYS_CUBE_LOST, id());
         setDisconnected();
 		
         uint32_t count = Intrinsic::POPCOUNT(CubeSlots::vecConnected);
@@ -438,8 +432,7 @@ uint64_t CubeSlot::getHWID()
             requestFlashReset();
 
         do {
-            Tasks::work();
-            Radio::halt();
+            Tasks::idle();
         } while (!(CubeSlots::hwidValid & bit()));
     }
     
@@ -474,20 +467,27 @@ uint16_t CubeSlot::calculateTimeSync()
      * An easy way to do this is to reverse the bits in our cube ID number,
      * then scale the resulting number by the nominal size of a slot. This
      * way, the slots appear to subdivide every time log2(N) of the number of
-     * cubes increases.
+     * cubes increases. Note that our slot width is 1/32nd of the period, as
+     * that's the smallest power of two >= _SYS_NUM_CUBE_SLOTS.
      */
 
     // 5-bit lookup table for bit reversal
     static const uint8_t rev5[] = {
-        0x00, 0x10, 0x08, 0x18, 0x04, 0x14, 0x0c, 0x1c,
-        0x02, 0x12, 0x0a, 0x1a, 0x06, 0x16, 0x0e, 0x1e,
-        0x01, 0x11, 0x09, 0x19, 0x05, 0x15, 0x0d, 0x1d,
-        0x03, 0x13, 0x0b, 0x1b, 0x07, 0x17, 0x0f, 0x1f,
+        0x00, 0x10, 0x08, 0x18, 0x04, 0x14, 0x0c, 0x1c,  // 8
+        0x02, 0x12, 0x0a, 0x1a, 0x06, 0x16, 0x0e, 0x1e,  // 16
+        0x01, 0x11, 0x09, 0x19, 0x05, 0x15, 0x0d, 0x1d,  // 24
+     /* 0x03, 0x13, 0x0b, 0x1b, 0x07, 0x17, 0x0f, 0x1f,     32 (unused) */
     };
 
+    STATIC_ASSERT(_SYS_NUM_CUBE_SLOTS <= 32);
     STATIC_ASSERT(arraysize(rev5) == _SYS_NUM_CUBE_SLOTS);
-    const unsigned slotWidth = timerPeriod / _SYS_NUM_CUBE_SLOTS;
+    const unsigned slotWidth = timerPeriod / 32;
     unsigned slotID = rev5[id()];
 
     return (cubeTicks + slotID * slotWidth) & timerMask;
+}
+
+void CubeSlot::queryResponse(const PacketBuffer &packet)
+{
+    /// XXX implement me
 }

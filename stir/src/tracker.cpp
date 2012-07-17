@@ -10,12 +10,14 @@
 #include "audioencoder.h"
 #include <stdlib.h>
 #include <string.h>
-#include <set>
+#include "script.h"
 
 namespace Stir {
 
 // For logger output
-const char * XmTrackerLoader::encodings[3] = {"", "Uncompressed PCM", "IMA 4-bit ADPCM"};
+const char * XmTrackerLoader::encodings[3] = {"", "Uncompressed PCM", "ADPCM"};
+
+std::vector<std::vector<uint8_t> > XmTrackerLoader::globalSampleDatas;
 
 /*
  * Load and process an entire XM file.
@@ -33,7 +35,10 @@ bool XmTrackerLoader::load(const char *pFilename, Logger &pLog)
     if (patterns.size()) init();
 
     f = fopen(filename, "rb");
-    if (f == 0) return false;
+    if (f == 0) {
+        log->error("Could not open %s", filename);
+        return false;
+    }
 
     if (!readSong()) return init();
 
@@ -43,6 +48,42 @@ bool XmTrackerLoader::load(const char *pFilename, Logger &pLog)
     f = 0;
 
     return true;
+}
+
+/*
+ */
+void XmTrackerLoader::deduplicate(std::set<Tracker*> trackers, Logger &log)
+{
+    log.taskBegin("Deduplicating samples");
+    unsigned dups = 0, savings = 0;
+    log.taskProgress("%u duplicates found", dups);
+    for (unsigned i = 0; i < globalSampleDatas.size() - 1; i++) {
+        const std::vector<uint8_t> &a = globalSampleDatas[i];
+
+        // We already deduped this sample. Good job.
+        if (!a.size()) continue;
+
+        for (unsigned j = i + 1; j < globalSampleDatas.size(); j++) {
+            std::vector<uint8_t> &b = globalSampleDatas[j];
+            if (a.size() == b.size() && !memcmp(&a[0], &b[0], a.size())) {
+                savings += a.size();
+                log.taskProgress("%u duplicates found (saved %5.02f kiB)", ++dups, savings / 1024.0f);
+
+                // Find the module->instrument using this sample and redirect it from j to i
+                for (std::set<Tracker*>::iterator t = trackers.begin(); t != trackers.end(); t++) {
+                    Tracker *tracker = *t;
+                    for (unsigned k = 0; k < tracker->loader.instruments.size(); k++) {
+                        _SYSXMInstrument &instrument = tracker->loader.instruments[k];
+                        if (instrument.sample.pData == j) instrument.sample.pData = i;
+                    }
+                }
+
+                // Wipe out the sample, but do not remove it from the sample data list.
+                b.clear();
+            }
+        }
+    }
+    log.taskEnd();
 }
 
 /*
@@ -60,6 +101,12 @@ bool XmTrackerLoader::readSong()
     song.patternOrderTableSize = get16();
     song.restartPosition = get16();
     song.nChannels = get16();
+    if (song.nChannels > _SYS_AUDIO_MAX_CHANNELS) {
+        log->error("%s: Song contains %u channels, max %u supported",
+                   filename, song.nChannels, _SYS_AUDIO_MAX_CHANNELS);
+        return false;
+    }
+
     song.nPatterns = get16();
     song.nInstruments = get16();
     song.frequencyTable = get16();
@@ -74,12 +121,8 @@ bool XmTrackerLoader::readSong()
     aseek(17 + 20 + 1 + 20 + 2 + headerSize); // This format is kinda stupid!
 
     // Load patterns
-    for (unsigned i = 0; i < song.nPatterns; i++) {
+    for (unsigned i = 0; i < song.nPatterns; i++)
         if (!readNextPattern()) return false;
-
-        compressPattern(i);
-        if (patternDatas[i].size() == 0) return false;
-    }
 
     /* We compress both envelopes and samples in readNextInstrument and its
      * callees, but they only print envelope compression statistics.
@@ -128,113 +171,6 @@ bool XmTrackerLoader::readNextPattern()
 }
 
 /*
- * (Re)compress a pattern.
- *
- * The XM pattern format supports two different methods of storing notes. The
- * first is as five bytes: the note, instrument, volume, effect type, and
- * effect parameter. Notes are within the range of (0..97), so the first byte
- * of this note format always has it's MSB = 0.
- *
- * The second format begins with a code byte, with it's MSB set, the bottom
- * 5 bits of which stand for, in order:
- *      0: Note byte follows
- *      1: Instrument byte follows
- *      2: Volume byte follows
- *      3: Effect type byte follows
- *      4: Effect parameter byte follows
- * Thus a new note using the channel's existing instrument with a new volume
- * and no effects could be described with uint8_t[3] = {0x83, <note>, <volume>}
- */
-unsigned XmTrackerLoader::compressPattern(uint16_t pattern)
-{
-    unsigned ops = 0;
-    uint32_t w = 0;
-    uint32_t r = 0;
-    std::vector<uint8_t> &data = patternDatas[pattern];
-
-    while(r < data.size()) {
-        // decode note
-        uint8_t code = data[r++];
-        uint8_t note = 0;
-        uint8_t instrument = 0;
-        uint8_t volume = 0;
-        uint8_t effectType = 0;
-        uint8_t effectParam = 0;
-        bool wasEncoded = !!(code & 0x80);
-
-        if (code & 0x80) {
-            if (code & (1 << 0)) {
-                assert(r < data.size());
-                note = data[r++];
-            }
-            if (code & (1 << 1)) {
-                assert(r < data.size());
-                instrument = data[r++];
-            }
-            if (code & (1 << 2)) {
-                assert(r < data.size());
-                volume = data[r++];
-            }
-            if (code & (1 << 3)) {
-                assert(r < data.size());
-                effectType = data[r++];
-            }
-            if (code & (1 << 4)) {
-                assert(r < data.size());
-                effectParam = data[r++];
-            }
-        } else {
-            assert(r < data.size() - 4);
-            note = code;
-            instrument = data[r++];
-            volume = data[r++];
-            effectType = data[r++];
-            effectParam = data[r++];
-        }
-
-        // value consistency checking here
-        code = 0x80;
-        code |= note == 0 ? 0 : 1 << 0;
-        code |= instrument == 0 ? 0 : 1 << 1;
-        code |= volume == 0 ? 0 : 1 << 2;
-        code |= effectType == 0 ? 0 : 1 << 3;
-        code |= effectParam == 0 ? 0 : 1 << 4;
-
-        // store uncompressed if it saves space, or if it doesn't make a difference and it wasn't encoded before.
-        if (__builtin_popcount(code & 0x1F) > 4 || (__builtin_popcount(code & 0x1F) > 3 && !wasEncoded)) {
-            if (wasEncoded) ops++;
-            data[w++] = note;
-            data[w++] = instrument;
-            data[w++] = volume;
-            data[w++] = effectType;
-            data[w++] = effectParam;
-        } else {
-            if (!wasEncoded) ops++;
-            
-            data[w++] = code;
-            if (code & (1 << 0)) {
-                data[w++] = note;
-            }
-            if (code & (1 << 1)) {
-                data[w++] = instrument;
-            }
-            if (code & (1 << 2)) {
-                data[w++] = volume;
-            }
-            if (code & (1 << 3)) {
-                data[w++] = effectType;
-            }
-            if (code & (1 << 4)) {
-                data[w++] = effectParam;
-            }
-        }
-    }
-
-    while (w < data.size()) data.pop_back();
-    return ops;
-}
-
-/*
  * Read an instrument's data from the module.
  *
  * In the process, this function also computes loop start and end positions in
@@ -255,8 +191,9 @@ bool XmTrackerLoader::readNextInstrument()
     // FILE: Number of samples
     uint16_t nSamples = get16();
     if (nSamples == 0) {
-        log->error("%s, instrument %u: Instruments with no samples have not been tested",
-                   filename, instruments.size());
+        // Instruments with no samples have no envelopes to read.
+        instrument.volumeEnvelopePoints = -1;
+
         /* There is nothing more to read, padding aside, the next thing in the
          * file is the next instrument.
          */
@@ -266,28 +203,50 @@ bool XmTrackerLoader::readNextInstrument()
         return true;
     }
     if (nSamples > 1) {
-        log->error("%s, instrument %u: found %u samples, expected 1", filename, instruments.size(), nSamples);
-        return false;
+        log->error("%s, instrument %u has %u samples, discarding all but sample 0.", filename, instruments.size(), nSamples);
+        log->error("Warning: playback of %s may differ significantly from reference!", filename);
     }
+    nSamples--;
 
     // FILE: Sample header size (redundant), keymap assignments (redundant if only one sample)
     seek(4 + 96);
 
-    // FILE: Volume envelope (48 bytes — 12 * sizeof(uint16_t) * 2)
+    /* XXX: XM format has envelope size *after* the points themselves.
+     * Fast-forward to get the table size so we're not emitting spurious
+     * warnings.
+     */
+    uint32_t vEnvelopePos = pos();
+    seek(48 + 48); // volume envelope & panning envelope
+    // FILE: Number of points in volume envelope
+    instrument.nVolumeEnvelopePoints = get8();
+    // And seek back to the volume envelope.
+    aseek(vEnvelopePos);
+
+    // FILE: Volume envelope (48 bytes(read from file) — 12(points) * sizeof(uint16_t)(compression) * 2(offset and value))
     uint16_t vEnvelope[12];
     for (int i = 0; i < 12; i++) {
         uint16_t eOffset = get16();
         uint16_t eValue = get16();
-        assert(eOffset == (eOffset & 0x01FF)); // 9 bits
-        assert(eValue == (eValue & 0x7F)); // 7 bits
-        vEnvelope[i] = eValue << 9 | (eOffset & 0x01FF);
+
+        if (i < instrument.nVolumeEnvelopePoints) {
+            if (eOffset != (eOffset & 0x01FF)) { // 9 bits
+                log->error("%s, instrument %u, envelope point %d: clamping offset: 0x%hu to 0x%hu\n",
+                           filename, instruments.size(), i, eOffset, 0x1FF);
+                eOffset = 0x1FF;
+            }
+            if (eValue != (eValue & 0x7F)) { // 7 bits
+                log->error("%s, instrument %u, envelope point %d: clamping value: 0x%hu to 0x%hu\n",
+                           filename, instruments.size(), i, eValue, 0x7F + 1);
+                eValue = 0x7F;
+            }
+            vEnvelope[i] = eValue << 9 | (eOffset & 0x01FF);
+        } else {
+            vEnvelope[i] = 0xFFFF;
+        }
     }
 
-    // FILE: Panning envelope
-    seek(48);
-
-    // FILE: Number of points in volume envelope
-    instrument.nVolumeEnvelopePoints = get8();
+    // FILE: Panning envelope, number of points in volume envelope, and number of points in panning envelope.
+    seek(48 + 1 + 1);
 
     // Now that we have all the volume envelope data, alloc and save to instrument
     size_t envelopeSize = instrument.nVolumeEnvelopePoints * sizeof(*vEnvelope);
@@ -300,9 +259,6 @@ bool XmTrackerLoader::readNextInstrument()
         size += envelopeSize;
         envelopes.push_back(envelope);
     }
-
-    // FILE: Number of points in panning envelope
-    seek(1);
 
     // FILE: Instrument data
     instrument.volumeSustainPoint = get8();
@@ -331,6 +287,7 @@ bool XmTrackerLoader::readNextInstrument()
 
     // FILE: Sample format and loopType share a byte
     sample.loopType = get8();
+    uint8_t format = (sample.loopType >> 3) & 0x3;
 
     // FILE: Default panning
     seek(1);
@@ -350,46 +307,41 @@ bool XmTrackerLoader::readNextInstrument()
     // FILE: Sample name
     seek(22);
 
+    // Parse loop boundaries into sensible units
+    if (sample.loopEnd == 0) {
+        // If loop length is 0, no looping.
+        // Preserve the format information, it's used by readSample().
+        sample.loopStart = 0;
+        sample.loopEnd = bytesToSamples(format, sample.dataSize);
+        sample.loopType &= 0xF8;
+    } else {
+        // Compute offsets in samples, convert to half-open interval
+        sample.loopStart = bytesToSamples(format, sample.loopStart);
+        sample.loopEnd = sample.loopStart + bytesToSamples(format, sample.loopEnd);
+    }
+
+    // Fast-forward through the extra sample headers, if any.
+    uint32_t skipData = 0;
+    while (nSamples--) {
+        skipData += get32();
+        seek(4 + 4 + 1 + 1 + 1 + 1 + 1 + 1 + 22);
+    }
+
     // Read and process sample
     if (!readSample(instrument)) return false;
+
+    // Fast-forward through the superfluous sample data, if any.
+    if (skipData) seek(skipData);
 
     /*
      * That's it for instrument/sample data.
      * Sanity check parameters and convert to expected units/ranges.
      */
 
-    // Sifteo volume range is (0..256), XM is (0..64)
-    sample.volume *= 4;
-
-    // Loop type should store only the loop type
-    uint8_t format = (sample.loopType >> 3) & 0x3;
-    sample.loopType &= 0x3;
-
-    // If loop length is 0, no looping
-    if (sample.loopEnd == 0) {
-        sample.loopStart = 0;
-        sample.loopType = 0;
-    } else {
-        // Ping-pong loops are not supported
-        if (sample.loopType > 1) {
-            assert(sample.loopType == 2);
-            log->error("%s, instrument %u: Ping-pong loops are not supported, falling back to normal looping",
-                       filename, instruments.size());
-            sample.loopType = 1;
-        }
-    
-        // Compute offsets in samples
-        if (format == kSampleFormatPCM16) {
-            sample.loopStart /= sizeof(int16_t);
-            sample.loopEnd /= sizeof(int16_t);
-        } else if (format == kSampleFormatADPCM) {
-            sample.loopStart *= 2;
-            sample.loopEnd *= 2;
-        }
-
-        // convert loopLength to loopEnd (zero-indexed)
-        // TODO: double check loop end!
-        sample.loopEnd += sample.loopStart - 1;
+    if (sample.volume > 64) {
+        log->error("%s, instrument %u: Sample volume is %u, clamped to %u",
+                   filename, instruments.size(), sample.volume, 64);
+        sample.volume = 64;
     }
 
     // Save instrument
@@ -410,57 +362,143 @@ bool XmTrackerLoader::readNextInstrument()
  */
 bool XmTrackerLoader::readSample(_SYSXMInstrument &instrument)
 {
+    std::vector<uint8_t> sampleData;
     _SYSAudioModule &sample = instrument.sample;
+
     sample.pData = -1;
     sample.sampleRate = 8363;
-    uint8_t format = (sample.loopType >> 3) & 0x3;
 
-    if (sample.dataSize == 0) return true;
-    
-    bool pcm8 = false;
+    // Loop type should store only the loop type
+    uint8_t format = (sample.loopType >> 3) & 0x3;
+    sample.loopType &= 0x3;
+
+    if (sample.dataSize == 0)
+        return true;
+
     switch (format) {
+
+        /*
+         * If ADPCM, read directly into memory and done.
+         *
+         * This isn't quite right, though! Our own variant of ADPCM doesn't
+         * quite match XM's variant. For now, we'll just copy it directly
+         * anyway (This may be less lossy than decoding and reencoding?) and
+         * issue a warning.
+         */
         case kSampleFormatADPCM: {
-            // if adpcm, read directly into memory and done
-            std::vector<uint8_t> sampleData(sample.dataSize);
-            getbuf(&sampleData[0], sample.dataSize);
-            sample.pData = sampleDatas.size();
-            size += sample.dataSize;
-            sampleDatas.push_back(sampleData);
+            log->error("%s, instrument %u: ADPCM samples cannot be accurately re-encoded. "
+                "For correct decoding, use uncompressed samples in your XM file and let stir "
+                "compress them!", filename, instruments.size());
+
+            // Prefix with three zero bytes (default codec initial conditions)
+            sampleData.resize(sample.dataSize + ADPCMEncoder::HEADER_SIZE);
+            memset(&sampleData[0], 0, ADPCMEncoder::HEADER_SIZE);
+            getbuf(&sampleData[ADPCMEncoder::HEADER_SIZE], sample.dataSize);
+
             sample.type = _SYS_ADPCM;
+            instrument.compression = 1;
             break;
         }
-        case kSampleFormatPCM8:
-            pcm8 = true;
-            // intentional fall-through
-        case kSampleFormatPCM16: {
-            uint32_t numSamples = sample.dataSize / (pcm8 ? 1 : 2);
-            int16_t *buf = (int16_t*)malloc(numSamples * 2);
-            if (!buf) return false;
-            for (unsigned i = 0; i < numSamples; i++) {
-                buf[i] = pcm8
-                       ? (int16_t)((int8_t)get8() << 8)
-                       : (int16_t)get16();
+
+        /*
+         * 8-bit delta modulated PCM.
+         *
+         * Demodulate the 8-bit data, upconvert to 16-bit, emulate ping-pong
+         * loops, then recompress to the default sample format.
+         */
+        case kSampleFormatPCM8: {
+            uint32_t numSamples = sample.dataSize;
+            std::vector<uint8_t> pcmData;
+            int8_t state = 0;
+
+            for (unsigned i = 0; i != numSamples; ++i) {
+                state += int8_t(get8());
+                int16_t sample16 = std::min(0x7FFF, std::max(-0x8000, int(state) * 0x7FFF / 0x7F));
+                pcmData.push_back(sample16);
+                pcmData.push_back(sample16 >> 8);
             }
 
-            // Encode to today's default format
-            AudioEncoder *enc = AudioEncoder::create("");
-            sample.dataSize = enc->encodeBuffer(buf, numSamples * sizeof(int16_t));
+            emulatePingPongLoops(sample, pcmData);
 
-            std::vector<uint8_t> sampleData(sample.dataSize);
-            memcpy(&sampleData[0], buf, sample.dataSize);
-            free(buf);
-            sample.pData = sampleDatas.size();
-            size += sample.dataSize;
-            sampleDatas.push_back(sampleData);
+            AudioEncoder *enc = AudioEncoder::create("");
+            enc->encode(pcmData, sampleData);
             sample.type = enc->getType();
+            instrument.compression = 2;
+            delete enc;
             break;
         }
-        default: {
+
+        /*
+         * 16-bit delta modulated PCM.
+         *
+         * Demodulate the 16-bit data, emulate ping-pong
+         * loops, then recompress to the default sample format.
+         */
+        case kSampleFormatPCM16: {
+            uint32_t numSamples = sample.dataSize / sizeof(int16_t);
+            std::vector<uint8_t> pcmData;
+            int16_t state = 0;
+
+            for (unsigned i = 0; i != numSamples; ++i) {
+                state += int16_t(get16());
+                pcmData.push_back(state);
+                pcmData.push_back(state >> 8);
+            }
+
+            emulatePingPongLoops(sample, pcmData);
+
+            AudioEncoder *enc = AudioEncoder::create("");
+            enc->encode(pcmData, sampleData);
+            sample.type = enc->getType();
+            instrument.compression = 4;
+            delete enc;
+            break;
+        }
+
+        default:
             log->error("%s, instrument %u: Unknown sample encoding", filename, instruments.size());
             return false;
-        }
     }
+
+    // Remember sample data
+
+    sample.pData = globalSampleDatas.size();
+    sample.dataSize = sampleData.size();
+    size += sample.dataSize;
+    globalSampleDatas.push_back(sampleData);
+
     return true;
+}
+
+void XmTrackerLoader::emulatePingPongLoops(_SYSAudioModule &sample, std::vector<uint8_t> &pcmData)
+{
+    if (sample.loopType != 2)
+        return;
+
+    /*
+     * Convert a ping-pong sample from:
+     *   [start][0123456789][end] (loop length: 10)
+     * to:
+     *   [start][012345678987654321][end] (loop length: 18)
+     *
+     * In other words, all samples in the loop *except* the first
+     * and last are duplicated, reversed, and inserted before loopEnd.
+     */
+
+    std::vector<uint8_t>::iterator loopStart = pcmData.begin() + sample.loopStart * sizeof(int16_t);
+    std::vector<uint8_t>::iterator loopEnd = pcmData.begin() + sample.loopEnd * sizeof(int16_t);
+
+    loopStart = std::min(loopStart, pcmData.end());
+    loopEnd = std::min(loopEnd, pcmData.end());
+
+    std::vector<uint8_t> reversed;
+    
+    for (std::vector<uint8_t>::iterator src = loopEnd - sizeof(int16_t)*2; src > loopStart; src -= sizeof(int16_t)) {
+        reversed.insert(reversed.end(), src, src + sizeof(int16_t));
+        sample.loopEnd++;
+    }
+
+    pcmData.insert(loopEnd, reversed.begin(), reversed.end());
 }
 
 /*
@@ -471,7 +509,6 @@ bool XmTrackerLoader::init()
 {
     size = 0;
     instruments.clear();
-    sampleDatas.clear();
 
     patterns.clear();
     patternDatas.clear();

@@ -1,18 +1,13 @@
 SUBDIRS = \
-	buddies \
-	chroma \
-	drawtest \
-	hello \
+	assetslot \
+	mandelbrot \
 	membrane \
 	menudemo \
-	monster \
-	nyan \
-	pantera \
 	sensors \
-	sprites \
+	stampy \
 	stars \
-	text \
-	word
+	synth \
+	text
 
 .PHONY: clean subdirs $(SUBDIRS)
 

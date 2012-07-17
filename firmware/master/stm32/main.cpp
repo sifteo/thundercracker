@@ -3,8 +3,9 @@
  * Copyright <c> 2012 Sifteo, Inc. All rights reserved.
  */
 
+#include "macros.h"
 #include "usart.h"
-#include "flash_device.h"
+#include "flash_stack.h"
 #include "hardware.h"
 #include "board.h"
 #include "gpio.h"
@@ -13,10 +14,14 @@
 #include "tasks.h"
 #include "audiomixer.h"
 #include "audiooutdevice.h"
+#include "volume.h"
 #include "usb/usbdevice.h"
-#include "button.h"
+#include "homebutton.h"
 #include "svmloader.h"
 #include "powermanager.h"
+#include "crc.h"
+#include "sampleprofiler.h"
+#include "bootloader.h"
 
 /*
  * Application specific entry point.
@@ -24,12 +29,68 @@
  */
 int main()
 {
+    /*
+     * Nested Vectored Interrupt Controller setup.
+     *
+     * This won't actually enable any peripheral interrupts yet, since
+     * those need to be unmasked by the peripheral's driver code.
+     *
+     * If we've gotten bootloaded, relocate the vector table to account
+     * for offset at which we're placed into MCU flash.
+     */
+
+#ifdef BOOTLOADABLE
+    NVIC.setVectorTable(NVIC.VectorTableFlash, Bootloader::SIZE);
+#endif
+
+    NVIC.irqEnable(IVT.EXTI9_5);                    // Radio interrupt
+    NVIC.irqPrioritize(IVT.EXTI9_5, 0x80);          //  Reduced priority
+
+    NVIC.irqEnable(IVT.DMA2_Channel1);              // Radio SPI DMA2 channels 1 & 2
+    NVIC.irqPrioritize(IVT.DMA1_Channel1, 0x75);    //  higher than radio
+    NVIC.irqEnable(IVT.DMA2_Channel2);
+    NVIC.irqPrioritize(IVT.DMA1_Channel2, 0x75);
+
+    NVIC.irqEnable(IVT.DMA1_Channel2);              // Flash SPI DMA1 channels 2 & 3
+    NVIC.irqPrioritize(IVT.DMA1_Channel2, 0x75);    //  higher than radio
+    NVIC.irqEnable(IVT.DMA1_Channel3);
+    NVIC.irqPrioritize(IVT.DMA1_Channel3, 0x75);
+
+    NVIC.irqEnable(IVT.UsbOtg_FS);
+    NVIC.irqPrioritize(IVT.UsbOtg_FS, 0x70);        //  Lower prio than radio
+
+    NVIC.irqEnable(IVT.BTN_HOME_EXTI_VEC);          //  home button
+
+    NVIC.irqEnable(IVT.TIM4);                       // sample rate timer
+    NVIC.irqPrioritize(IVT.TIM4, 0x50);             //  pretty high priority! (would cause audio jitter)
+
+    NVIC.irqEnable(IVT.USART3);                     // factory test uart
+    NVIC.irqPrioritize(IVT.USART3, 0x99);           //  loooooowest prio
+
+    NVIC.sysHandlerPrioritize(IVT.SVCall, 0x96);
+
+    NVIC.irqEnable(IVT.VOLUME_TIM);                 // volume timer
+    NVIC.irqPrioritize(IVT.VOLUME_TIM, 0x60);       //  just below sample rate timer
+
+    NVIC.irqEnable(IVT.PROFILER_TIM);               // sample profiler timer
+    NVIC.irqPrioritize(IVT.PROFILER_TIM, 0x0);      //  highest possible priority
+
+    /*
+     * High-level hardware initialization
+     *
+     * Avoid reinitializing periphs that the bootloader has already init'd.
+     */
+#ifndef BOOTLOADER
+    SysTime::init();
+    PowerManager::init();
+    Crc32::init();
+#endif
+
     // This is the earliest point at which it's safe to use Usart::Dbg.
     Usart::Dbg.init(UART_RX_GPIO, UART_TX_GPIO, 115200);
+    UART(("Firmware " TOSTRING(SDK_VERSION) "\r\n"));
 
-#ifndef DEBUG
-    FlashDevice::init();
-#else
+#ifdef DEBUG
     DBGMCU_CR |= (1 << 30) |        // TIM14 stopped when core is halted
                  (1 << 29) |        // TIM13 ""
                  (1 << 28) |        // TIM12 ""
@@ -47,71 +108,42 @@ int main()
 #endif
 
     /*
-     * Nested Vectored Interrupt Controller setup.
+     * NOTE: the radio has 2 100ms delays on a power on reset: one before
+     * we can talk to it at all, and one before we can start transmitting.
      *
-     * This won't actually enable any peripheral interrupts yet, since
-     * those need to be unmasked by the peripheral's driver code.
+     * TODO: make the delays async, such that runtime init can progress
+     * in parallel.
+     *
+     * For now, allow other initializations to run while we wait for the 2nd delay.
      */
+    while (SysTime::ticks() < SysTime::msTicks(110));
+    Radio::init();
 
-    NVIC.irqEnable(IVT.EXTI9_5);                // Radio interrupt
-    NVIC.irqPrioritize(IVT.EXTI9_5, 0x80);      //  Reduced priority
-
-    NVIC.irqEnable(IVT.UsbOtg_FS);
-    NVIC.irqPrioritize(IVT.UsbOtg_FS, 0x90);    //  Lower prio than radio
-
-    NVIC.irqEnable(IVT.BTN_HOME_EXTI_VEC);      //  home button
-
-    NVIC.irqEnable(IVT.TIM4);                   // sample rate timer
-    NVIC.irqPrioritize(IVT.TIM4, 0x60);         //  Higher prio than radio
-
-    NVIC.irqEnable(IVT.USART3);                 // factory test uart
-    NVIC.irqPrioritize(IVT.USART3, 0x99);       //  loooooowest prio
-
-    NVIC.sysHandlerPrioritize(IVT.SVCall, 0x96);
-
-    /*
-     * High-level hardware initialization
-     */
-
-    SysTime::init();
-    Radio::open();
     Tasks::init();
-    FlashBlock::init();
-    Button::init();
+    FlashStack::init();
+    HomeButton::init();
 
-    AudioOutDevice::init(AudioOutDevice::kHz16000, &AudioMixer::instance);
+    Volume::init();
+    AudioOutDevice::init(&AudioMixer::instance);
     AudioOutDevice::start();
 
-    PowerManager::init();
-    UsbDevice::init();
+    PowerManager::beginVbusMonitor();
+    SampleProfiler::init();
 
     /*
-     * Temporary until we have a proper context to install new games in.
-     * If button is held on startup, wait for asset installation.
-     *
-     * Kind of crappy, but just power cycle to start again and run the game.
+     * Ensure we've been powered up long enough before beginning radio
+     * transmissions. This may change as we integrate some new code that
+     * tracks whether we're actively transmitting or not, since there's
+     * a lot of overlap between this issue and some much needed
+     * radio throttling / power management.
      */
-    if (Button::isPressed()) {
 
-        // indicate we're waiting
-        GPIOPin green = LED_GREEN_GPIO;
-        green.setControl(GPIOPin::OUT_10MHZ);
-        green.setLow();
-
-        for (;;)
-            Tasks::work();
-    }
+    while (SysTime::ticks() < SysTime::msTicks(210));
+    Radio::begin();
 
     /*
-     * Launch our game runtime!
+     * Start the game runtime, and execute the Launcher app.
      */
 
-    SvmLoader::run(111);
-
-    // for now, in the event that we don't have a valid game installed at address 0,
-    // SvmLoader::run() should return (assuming it fails to parse the non-existent
-    // ELF binary, and we'll just sit here so we can at least install things over USB, etc
-    for (;;) {
-        Tasks::work();
-    }
+    SvmLoader::runLauncher();
 }

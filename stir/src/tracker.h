@@ -13,15 +13,19 @@
 #include <stdio.h>
 #include <assert.h>
 #include <vector>
+#include <set>
 #include "logger.h"
 #include "sifteo/abi.h"
 
 namespace Stir {
 
+class Tracker;
+
 class XmTrackerLoader {
 public:
     XmTrackerLoader() : log(0), size(0) {}
     bool load(const char *filename, Logger &pLog);
+    static void deduplicate(std::set<Tracker*> trackers, Logger &log);
 
 private:
     friend class Tracker;
@@ -33,8 +37,9 @@ private:
     // bool saveInstruments();
 
     bool readNextPattern();
-    unsigned compressPattern(uint16_t pattern);
     bool savePatterns();
+
+    void emulatePingPongLoops(_SYSAudioModule &sample, std::vector<uint8_t> &pcmData);
 
     bool init();
 
@@ -55,7 +60,7 @@ private:
     void processName(std::string &name);
 
     // constants
-    enum {
+    enum SampleFormat {
         kSampleFormatPCM8 = 0,
         kSampleFormatADPCM,
         kSampleFormatPCM16,
@@ -63,20 +68,30 @@ private:
     };
     static const char *encodings[3];
 
+    static unsigned bytesToSamples(unsigned fmt, unsigned bytes)
+    {
+        switch (fmt) {
+        case kSampleFormatPCM16:    return bytes / sizeof(int16_t);
+        case kSampleFormatPCM8:     return bytes;
+        case kSampleFormatADPCM:    return bytes * 2;
+        default:                    return 0;
+        }
+    }
+
     const char *filename;
     FILE *f;
     Logger *log;
     _SYSXMSong song;
     uint32_t size;
     uint32_t fileSize;
-
+    
     std::vector<std::vector<uint8_t> > patternDatas;
     std::vector<_SYSXMPattern> patterns;
     std::vector<uint8_t> patternTable;
 
     std::vector<_SYSXMInstrument> instruments;
     std::vector<std::vector<uint8_t> > envelopes;
-    std::vector<std::vector<uint8_t> > sampleDatas;
+    static std::vector<std::vector<uint8_t> > globalSampleDatas;
 };
 
 }

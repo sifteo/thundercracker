@@ -186,7 +186,7 @@ private:
  * ColorReducer --
  *
  *    Maintains a pool of color values, reduces those values using a
- *    particular maximum particular number of colors, and performs
+ *    particular maximum number of colors, and performs
  *    lookups in this color pool to find the nearest color to any
  *    given value.
  *
@@ -205,10 +205,14 @@ class ColorReducer {
  public:
     ColorReducer();
 
-    void reduce(Logger &log);
+    void reduce(Logger *log = 0, unsigned minColors = 0);
+
+    void add(RGB565 color) {
+        colors.push_back(color.value);
+    }
 
     void add(RGB565 color, double maxMSE) {
-        colors.push_back(color.value);
+        add(color);
         colorMSE[color.value] = std::min(maxMSE, colorMSE[color.value]);
     }
 

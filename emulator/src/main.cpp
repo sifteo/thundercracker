@@ -11,10 +11,12 @@
  */
 
 #ifdef _WIN32
-#define _WIN32_WINNT 0x0501
-#define WIN32_LEAN_AND_MEAN
-#include <windows.h>
-static bool hasConsole = true;
+    #define _WIN32_WINNT 0x0501
+    #define WIN32_LEAN_AND_MEAN
+    #include <windows.h>
+    static bool hasConsole = true;
+#else
+    #include <unistd.h>
 #endif
  
 #include <stdio.h>
@@ -23,6 +25,7 @@ static bool hasConsole = true;
 
 #include "frontend.h"
 #include "system.h"
+#include "ostime.h"
 #include "lua_script.h"
 
 
@@ -36,7 +39,6 @@ static void usage()
      * names, so that the long names don't show up in our binary's strings.
      *
      *  -f FIRMWARE.hex   Specify firmware image for cubes
-     *  -e SCRIPT.lua     Execute a Lua script, instead of running the GUI
      *  -p PROFILE.txt    Profile firmware execution (first cube only) to a text file
      *  -d                Launch firmware debugger (first cube only)
      *  -c                Continue executing on exception, rather than stopping the debugger.
@@ -44,25 +46,37 @@ static void usage()
      */
 
     message("\n"
-            "usage: tc-siftulator [OPTIONS] [program.elf]\n"
+            "usage: siftulator [OPTIONS] [GAME.elf ...]\n"
             "\n"
-            "Sifteo Thundercracker simulator\n"
+            "Sifteo Hardware Emulator (" TOSTRING(SDK_VERSION) ")\n"
             "\n"
             "Options:\n"
             "  -h                  Show this help message, and exit\n"
             "  -n NUM              Set initial number of cubes\n"
             "  -T                  Turbo mode; run faster than real-time if we can\n"
             "  -F FLASH.bin        Persistently keep all flash memory in a file on disk\n"
-            "  -P port             Run a GDB debug server on the specified TCP port number\n"
+            "  -P PORT             Run a GDB debug server on the specified TCP port number\n"
+            "  -e SCRIPT.lua       Execute a Lua script instead of the default frontend\n"
+            "  -l LAUNCHER.elf     Start the supplied binary as the system launcher\n"
+            "\n"
+            "  --headless          Run without graphics or sound output\n"
             "  --lock-rotation     Lock rotation by default\n"
             "  --svm-trace         Trace SVM instruction execution\n"
             "  --svm-stack         Monitor SVM stack usage\n"
             "  --svm-flash-stats   Dump statistics about flash memory usage\n"
             "  --radio-trace       Trace all radio packet contents\n"
             "  --paint-trace       Trace the state of the repaint controller\n"
+            "  --white-bg          Force the UI to use a plain white background\n"
             "  --stdout FILENAME   Redirect output to FILENAME\n"
+            "  --waveout FILE.wav  Log all audio output to LOG.wav\n"
             "\n"
-            APP_COPYRIGHT "\n");
+            "Games:\n"
+            "  Any games specified on the command line will be installed to\n"
+            "  flash prior to starting the simulation. By default, a built-in\n"
+            "  version of the system Launcher is used. This can be overridden\n"
+            "  with the -l option.\n"
+            "\n"
+            APP_COPYRIGHT_ASCII "\n");
 }
 
 static void getConsole()
@@ -72,59 +86,92 @@ static void getConsole()
      * Try to reattach them if the parent process has a console.
      */
 
-#ifdef _WIN32
-    if (AttachConsole(ATTACH_PARENT_PROCESS)) {
-        hasConsole = true;
-        freopen("CONOUT$", "wb", stdout);
-        freopen("CONOUT$", "wb", stderr);
-    } else {
-        hasConsole = false;
-    }
-#endif
+    #ifdef _WIN32
+        if (AttachConsole(ATTACH_PARENT_PROCESS)) {
+            hasConsole = true;
+            freopen("CONOUT$", "wb", stdout);
+            freopen("CONOUT$", "wb", stderr);
+        } else {
+            hasConsole = false;
+        }
+    #endif
 }
 
 static void message(const char *fmt, ...)
 {
-    char buf[1024];
+    char buf[16*1024];
 
     va_list a;
     va_start(a, fmt);
     vsnprintf(buf, sizeof buf, fmt, a);
     va_end(a);
     
-#ifdef _WIN32
-    if (!hasConsole) {
-        // No console.. resort to a messagebox
-        MessageBox(NULL, buf, APP_TITLE, MB_OK);
-        return;
-    }
-#endif
+    #ifdef _WIN32
+        if (!hasConsole) {
+            // No console.. resort to a messagebox
+            MessageBox(NULL, buf, APP_TITLE, MB_OK);
+            return;
+        }
+    #endif
 
     fprintf(stderr, "%s\n", buf);
 }
 
-static int runFrontend(System &sys, const char *elfFile)
+static void setWorkingDir()
 {
-    static Frontend fe;
-        
+    /*
+     * Normally we respect the working directory that we were run with.
+     * Some GUI environments, like Mac OS X, will leave this set to a pretty
+     * useless value, however, like "/". Detect that, and set a platform-specific
+     * default instead. Note that this has no effect if the user is already
+     * running siftulator on the command line from a more meaningful directory.
+     *
+     * Right now, this is most important for saving files such as screenshots
+     * and trace logs, or any output files left by Lua scripts.
+     */
+
+    #ifdef __APPLE__
+        char path[1024];
+        char *home = getenv("HOME");
+        if (home && getcwd(path, sizeof path) && path[1] == '\0') {
+            chdir(home);
+            chdir("Desktop");
+        }
+    #endif
+}
+
+static int run(System &sys)
+{
+    /*
+     * NB: The Frontend is dynamically allocated to fix a bad ordering dependency
+     *     during shutdown via exit(). Static C++ destructors will start getting
+     *     called before we're guaranteed to be out of the Frontend main loop,
+     *     and these destructors will start tearing down Box2D state too soon.
+     */
+    Frontend *fe = new Frontend;
+
     if (!sys.init()) {
         message("Emulator failed to initialize");
         return 1;
     }
-    if (!fe.init(&sys)) {
+
+    if (!sys.opt_headless && !fe->init(&sys)) {
         message("Graphical frontend failed to initialize");
         return 1;
     }    
 
-    if (elfFile && !SystemMC::installELF(elfFile)) {
-        message("Failed to load ELF file");
-        return 1;
+    sys.start();
+
+    if (sys.opt_headless) {
+        while (sys.isRunning())
+            OSTime::sleep(0.1);
+    } else {
+        while (fe->runFrame());
+        fe->exit();
     }
 
-    sys.start();
-    while (fe.runFrame());
-    fe.exit();
     sys.exit();
+    delete fe;
 
     return 0;
 }
@@ -132,7 +179,7 @@ static int runFrontend(System &sys, const char *elfFile)
 static int runScript(System &sys, const char *file)
 {
     LuaScript lua(sys);
-    int result = lua.run(file);
+    int result = lua.runFile(file);
     sys.exit();
     return result;
 }
@@ -141,10 +188,12 @@ int main(int argc, char **argv)
 {
     static System sys;
     const char *scriptFile = NULL;
-    const char *elfFile = NULL;
 
     // Attach an existing console, if it's already handy
-    getConsole();	
+    getConsole();
+
+    // Set the current directory to something more useful
+    setWorkingDir();
 
     /*
      * Parse command line options
@@ -208,11 +257,27 @@ int main(int argc, char **argv)
             continue;
         }
         
+        if (!strcmp(arg, "--headless")) {
+            sys.opt_headless = true;
+            continue;
+        }
+
+        if (!strcmp(arg, "--white-bg")) {
+            sys.opt_whiteBackground = true;
+            continue;
+        }
+        
         if (!strcmp(arg, "--stdout") && argv[c+1]) {
             if(!freopen(argv[c+1], "w", stdout)) {
                 message("Error: opening file %s for write", argv[c+1]);
                 return 1;
             }
+            c++;
+            continue;
+        }
+
+        if (!strcmp(arg, "--waveout") && argv[c+1]) {
+            sys.opt_waveoutFilename = argv[c+1];
             c++;
             continue;
         }
@@ -231,6 +296,12 @@ int main(int argc, char **argv)
 
         if (!strcmp(arg, "-F") && argv[c+1]) {
             sys.opt_flashFilename = argv[c+1];
+            c++;
+            continue;
+        }
+
+        if (!strcmp(arg, "-l") && argv[c+1]) {
+            sys.opt_launcherFilename = argv[c+1];
             c++;
             continue;
         }
@@ -268,25 +339,15 @@ int main(int argc, char **argv)
             return 1;
         }
 
-        if (!elfFile) {
-            // First positional argument is interpreted as an ELF file name
-            elfFile = arg;
-            continue;
-        }
-
-        message("Unrecognized argument: '%s'", arg);
-        usage();
-        return 1;
+        // Other arguments are game binaries
+        SystemMC::installGame(arg);
     }
 
-    // Necessary even when running windowless, since we use GLFW for time
-    glfwInit();
-
-    return scriptFile ? runScript(sys, scriptFile) : runFrontend(sys, elfFile);
+    return scriptFile ? runScript(sys, scriptFile) : run(sys);
 }
 
 extern "C" bool glfwSifteoOpenFile(const char *filename)
 {
     // Entry point for platform-specific drag and drop in GLFW.
-    return SystemMC::installELF(filename);
+    return SystemMC::installGame(filename);
 }

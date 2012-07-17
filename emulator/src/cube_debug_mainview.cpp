@@ -38,8 +38,8 @@
 #include <stdint.h>
 #include <math.h>
 #include <curses.h>
-#include <glfw.h>
 
+#include "ostime.h"
 #include "cube_debug.h"
 
 namespace Cube {
@@ -610,9 +610,9 @@ void mainview_update(Cube::Hardware *cube)
         unsigned int update_interval = VirtualTime::HZ;
         static uint64_t update_prev_clocks = 0;
         static double update_prev_time = 0;
-        static uint32_t prev_lcd_wr;
+        static uint32_t prev_lcd_fr;
         
-        static float lcd_wrs = 0;
+        static float lcd_fps = 0;
         static float clock_ratio = 0;
         static float radio_b = 0;
         static float radio_rx = 0;
@@ -627,15 +627,15 @@ void mainview_update(Cube::Hardware *cube)
         /* Periodically update most of the stats */
         if (cube->time->clocks < update_prev_clocks ||
             (cube->time->clocks - update_prev_clocks) > update_interval) {
-            double now = glfwGetTime();
+            double now = OSTime::clock();
 
             if (cube->time->clocks > update_prev_clocks && now > update_prev_time) {                
                 float virtual_elapsed = VirtualTime::toSeconds(cube->time->clocks - update_prev_clocks);
                 float real_elapsed = now - update_prev_time;
 
-                uint32_t lcd_wr = cube->lcd.getWriteCount();
-                lcd_wrs = (lcd_wr - prev_lcd_wr) / virtual_elapsed;
-                prev_lcd_wr = lcd_wr;
+                uint32_t lcd_fr = cube->lcd.getFrameCount();
+                lcd_fps = (lcd_fr - prev_lcd_fr) / virtual_elapsed;
+                prev_lcd_fr = lcd_fr;
                 
                 radio_b = cube->spi.radio.getByteCount() / virtual_elapsed;
                 radio_rx = cube->spi.radio.getRXCount() / virtual_elapsed;
@@ -643,7 +643,7 @@ void mainview_update(Cube::Hardware *cube)
                 clock_ratio = virtual_elapsed / real_elapsed;
                 flash_percent = cube->flash.getBusyPercent();
             } else {
-                lcd_wrs = 0;
+                lcd_fps = 0;
                 radio_b = 0;
                 radio_rx = 0;
                 clock_ratio = 0;
@@ -658,7 +658,7 @@ void mainview_update(Cube::Hardware *cube)
         werase(miscview);
         wprintw(miscview, "LCD    : ");
         wattron(miscview, A_REVERSE);
-        wprintw(miscview, "% 8.3f FPS \n", lcd_wrs);
+        wprintw(miscview, "% 8.3f FPS \n", lcd_fps);
         wattroff(miscview, A_REVERSE);
 
         wprintw(miscview, "Flash  :% 7.3f MHz %c%c % 3u%%\n", flash_hz / 1000000.0,

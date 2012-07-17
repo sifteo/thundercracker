@@ -11,6 +11,8 @@
 #include "sensors.h"
 #include "radio.h"
 
+__bit battery_counter_toggle;
+
 
 static void adc_busy_wait()
 {
@@ -45,16 +47,15 @@ void battery_poll()
      * The polarity here is inverted such that we'll poll immediately
      * after reset, instead of waiting for a whole period to elapse first.
      */
-     
-    static __bit counter_toggle;
+
     if (sensor_tick_counter_high & (1<<2)) {
-        if (!counter_toggle)
+        if (!battery_counter_toggle)
             return;
-        counter_toggle = 0;
+        battery_counter_toggle = 0;
     } else {
-        if (counter_toggle)
+        if (battery_counter_toggle)
             return;
-        counter_toggle = 1;
+        battery_counter_toggle = 1;
     }
     
     /*

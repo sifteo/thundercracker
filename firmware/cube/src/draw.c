@@ -20,12 +20,6 @@ void draw_clear()
 
         movx    @dptr, a
         inc     dptr
-        movx    @dptr, a
-        inc     dptr
-        movx    @dptr, a
-        inc     dptr
-        movx    @dptr, a
-        inc     dptr
 
         mov     a, #(1024 >> 8)
         cjne    a, dph, 1$
@@ -33,27 +27,11 @@ void draw_clear()
 
     vram.num_lines = 128;
     vram.mode = _SYS_VM_BG0_ROM;
-    
-    /*
-     * We don't actually render continuously, when we're idle, but this flag
-     * instructs graphics_render() to actually render a frame every time it's
-     * called. This is what we want during idle mode, since we only call
-     * graphics_render() when it's actually necessary.
-     */
-    vram.flags = _SYS_VF_CONTINUOUS;
+    vram.flags = _SYS_VF_TOGGLE;
 
     // Reset state
     draw_xy = XY(0, 0);
     draw_attr = ATTR_NONE;
-}
-
-void draw_exit(void)
-{
-    /*
-     * We're about to enter our main loop for taking orders from the master.
-     * Turn off continuous rendering until the master gives us something to do.
-     */
-    vram.flags = 0;
 }
 
 void draw_image(const __code uint8_t *image)

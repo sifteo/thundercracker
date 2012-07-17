@@ -30,18 +30,22 @@ namespace Sifteo {
  * @{
  */
 
-static const unsigned LCD_width = 128;   /// Height of the LCD screen, in pixels
-static const unsigned LCD_height = 128;  /// Width of the LCD screen, in pixels
-static const unsigned TILE = 8;          /// Size of one tile, in pixels
+static const unsigned LCD_width = 128;   ///< Height of the LCD screen, in pixels
+static const unsigned LCD_height = 128;  ///< Width of the LCD screen, in pixels
+static const unsigned TILE = 8;          ///< Size of one tile, in pixels
 
+/// Size of the LCD screen, in pixels, as a vector
 static const Int2 LCD_size = { LCD_width, LCD_height };
+
+/// Center of the LCD screen, in pixels, as a vector
 static const Int2 LCD_center = { LCD_width / 2, LCD_height / 2 };
 
 
 /**
- * Supported video modes. Each "video mode" is a separate way of
- * interpreting the VideoBuffer memory in order to compose a frame
- * of graphics.
+ * @brief Supported video modes.
+ *
+ * Each "video mode" is a separate way of interpreting the VideoBuffer
+ * memory in order to compose a frame of graphics.
  *
  * Most of the video modes map directly to a collection of one or more
  * drawables, which may be accessed via this VideoBuffer class.
@@ -53,21 +57,22 @@ static const Int2 LCD_center = { LCD_width / 2, LCD_height / 2 };
  * same memory for different purposes.
  */
 enum VideoMode {
-    POWERDOWN_MODE = _SYS_VM_POWERDOWN,   // Power saving mode, LCD is off
-    BG0_ROM        = _SYS_VM_BG0_ROM,     // BG0, with tile data from internal ROM
-    SOLID_MODE     = _SYS_VM_SOLID,       // Solid color, from colormap[0]
-    FB32           = _SYS_VM_FB32,        // 32x32 pixel 16-color framebuffer
-    FB64           = _SYS_VM_FB64,        // 64x64 pixel 2-color framebuffer
-    FB128          = _SYS_VM_FB128,       // 128x48 pixel 2-color framebuffer
-    BG0            = _SYS_VM_BG0,         // BG0 background layer
-    BG0_BG1        = _SYS_VM_BG0_BG1,     // BG0 background plus BG1 overlay
-    BG0_SPR_BG1    = _SYS_VM_BG0_SPR_BG1, // BG0 background, 8 sprites, BG1 overlay
-    BG2            = _SYS_VM_BG2,         // 16x16 tiled mode with affine transform
+    POWERDOWN_MODE = _SYS_VM_POWERDOWN,   ///< Power saving mode, LCD is off
+    BG0_ROM        = _SYS_VM_BG0_ROM,     ///< BG0, with tile data from internal ROM
+    SOLID_MODE     = _SYS_VM_SOLID,       ///< Solid color, from colormap[0]
+    FB32           = _SYS_VM_FB32,        ///< 32x32 pixel 16-color framebuffer
+    FB64           = _SYS_VM_FB64,        ///< 64x64 pixel 2-color framebuffer
+    FB128          = _SYS_VM_FB128,       ///< 128x48 pixel 2-color framebuffer
+    BG0            = _SYS_VM_BG0,         ///< BG0 background layer
+    BG0_BG1        = _SYS_VM_BG0_BG1,     ///< BG0 background plus BG1 overlay
+    BG0_SPR_BG1    = _SYS_VM_BG0_SPR_BG1, ///< BG0 background, 8 sprites, BG1 overlay
+    BG2            = _SYS_VM_BG2,         ///< 16x16 tiled mode with affine transform
+    STAMP          = _SYS_VM_STAMP,       ///< Reconfigurable 16-color framebuffer with transparency
 };
 
 
 /**
- * Rotation and mirroring modes, for setRotation().
+ * @brief Rotation and mirroring modes, for setRotation().
  *
  * In every video mode, the hardware can perform orthogonal rotation and
  * mirroring cheaply. This happens at render-time, not continuously. For
@@ -88,10 +93,11 @@ enum Rotation {
 
 
 /**
- * A memory buffer which holds graphics data. This is a mirror of the
- * remote graphics memory in each cube's hardware. By writing to this
- * buffer, changes are enqueued for later transmission to the physical
- * video buffer.
+ * @brief A memory buffer which holds graphics data.
+ *
+ * This is a mirror of the remote graphics memory in each cube's hardware.
+ * By writing to this buffer, changes are enqueued for later transmission
+ * to the physical video buffer.
  *
  * Cubes have a few basic video features that are always available:
  * rotation, windowing, and selecting a video mode. This class provides
@@ -117,17 +123,19 @@ enum Rotation {
  * and your application.  See abi.h for details on this protocol.
  */
 struct VideoBuffer {
+    /// Anonymous union of various ways to interpret the VideoBuffer memory
     union {
         _SYSAttachedVideoBuffer sys;
-        SpriteLayer             sprites;
-        Colormap                colormap;
-        FB32Drawable            fb32;
-        FB64Drawable            fb64;
-        FB128Drawable           fb128;
-        BG0ROMDrawable          bg0rom;
-        BG0Drawable             bg0;
-        BG1Drawable             bg1;
-        BG2Drawable             bg2;
+        SpriteLayer             sprites;    ///< Drawable for the sprite layer in BG0_SPR_BG1 mode
+        Colormap                colormap;   ///< Colormap accessor, for framebuffer modes
+        FB32Drawable            fb32;       ///< Drawable for the FB32 framebuffer mode
+        FB64Drawable            fb64;       ///< Drawable for the FB64 framebuffer mode
+        FB128Drawable           fb128;      ///< Drawable for the FB128 framebuffer mode
+        BG0ROMDrawable          bg0rom;     ///< Drawable for the BG0_ROM tiled mode
+        BG0Drawable             bg0;        ///< Drawable for the BG0 layer, as used in BG0, BG0_BG1, and BG0_SPR_BG1 modes
+        BG1Drawable             bg1;        ///< Drawable for the BG1 layer, as used in BG0_BG1 and BG0_SPR_BG1 modes
+        BG2Drawable             bg2;        ///< Drawable for the BG2 tiled mode
+        StampDrawable           stamp;      ///< Drawable for the STAMP framebuffer mode
     };
 
     // Implicit conversions
@@ -137,7 +145,9 @@ struct VideoBuffer {
     operator const _SYSAttachedVideoBuffer* () const { return &sys; }
 
     /**
-     * Implicit conversion to _SYSCubeID. This lets you pass a VideoBuffer
+     * @brief Implicit conversion to _SYSCubeID.
+     *
+     * This lets you pass a VideoBuffer
      * to the CubeID constructor, to easily get a CubeID instance for the
      * current cube that this buffer is attached to.
      */
@@ -146,14 +156,14 @@ struct VideoBuffer {
     }
 
     /**
-     * Get the CubeID that this buffer is currently attached to.
+     * @brief Get the CubeID that this buffer is currently attached to.
      */
     CubeID cube() const {
         return sys.cube;
     }
 
     /**
-     * Change the current drawing window.
+     * @brief Change the current drawing window.
      *
      * The graphics processor generates one scanline at a time.
      * Windowed drawing allows the graphics processor to emit fewer scanlines
@@ -173,28 +183,28 @@ struct VideoBuffer {
     }
 
     /**
-     * Restore the default full-screen drawing window.
+     * @brief Restore the default full-screen drawing window.
      */
     void setDefaultWindow() {
         setWindow(0, LCD_height);
     }
 
     /**
-     * Like setWindow(), but change only the first line.
+     * @brief Like setWindow(), but change only the first line.
      */
     void setWindowFirstLine(uint8_t firstLine) {
         pokeb(offsetof(_SYSVideoRAM, first_line), firstLine);
     }
 
     /**
-     * Like setWindow(), but change only the number of lines.
+     * @brief Like setWindow(), but change only the number of lines.
      */
     void setWindowNumLines(uint8_t numLines) {
         pokeb(offsetof(_SYSVideoRAM, num_lines), numLines);
     }
     
     /**
-     * Retrieve the most recent 'firstLine' value, set with setWindow()
+     * @brief Retrieve the most recent 'firstLine' value, set with setWindow()
      * or setWindowFirstLine()
      */
     uint8_t windowFirstLine() const {
@@ -202,7 +212,7 @@ struct VideoBuffer {
     }
 
     /**
-     * Retrieve the most recent 'numLines' value, set with setWindow()
+     * @brief Retrieve the most recent 'numLines' value, set with setWindow()
      * or setWindowNumLines()
      */
     uint8_t windowNumLines() const {
@@ -210,7 +220,7 @@ struct VideoBuffer {
     }
 
     /**
-     * Set the display rotation to use in subsequent rendering.
+     * @brief Set the display rotation to use in subsequent rendering.
      */
     void setRotation(Rotation r) {
         const uint8_t mask = _SYS_VF_XY_SWAP | _SYS_VF_X_FLIP | _SYS_VF_Y_FLIP;
@@ -222,7 +232,7 @@ struct VideoBuffer {
     }
 
     /**
-     * Look up the last display rotation set by setRotation().
+     * @brief Look up the last display rotation set by setRotation().
      */
     Rotation rotation() const {
         const uint8_t mask = _SYS_VF_XY_SWAP | _SYS_VF_X_FLIP | _SYS_VF_Y_FLIP;
@@ -231,7 +241,7 @@ struct VideoBuffer {
     }
 
     /**
-     * Map the LCD rotation mask to screen orientation.  This is the side
+     * @brief Map the LCD rotation mask to screen orientation.  This is the side
      * which maps to the physical "top" of the screen.
      */    
     Side orientation() const {
@@ -245,9 +255,10 @@ struct VideoBuffer {
     }
 
     /**
-     * Set the LCD rotation such that the top of the framebuffer is at
-     * the physical side 'topSide'. This is the counterpart to the
-     * orientation() getter.
+     * @brief Set the LCD rotation such that the top of the framebuffer is at
+     * the physical side 'topSide'.
+     *
+     * This is the counterpart to the orientation() getter.
      */
     void setOrientation(Side topSide) {
         // Tiny lookup table in a uint32
@@ -263,8 +274,8 @@ struct VideoBuffer {
     }
 
     /**
-     * Set this VideoBuffer's cube orientation to be consistent with the
-     * orientation of another "source" VideoBuffer whose cube is
+     * @brief Set this VideoBuffer's cube orientation to be consistent
+     * with the orientation of another "source" VideoBuffer whose cube is
      * neighbored to this one.
      *
      * This version requires the caller to supply Neighborhood instances
@@ -285,9 +296,9 @@ struct VideoBuffer {
     }
 
     /**
-     * Set this VideoBuffer's cube orientation to be consistent with the
-     * orientation of another "source" VideoBuffer whose cube is
-     * neighbored to this one.
+     * @brief Variant of orientTo() without explicitly specified Neighborhoods
+     *
+     * Uses the current system neighbor state for each of the two cubes.
      *
      * Note that the caller is responsible for ensuring that this cube and
      * the source cube are actually neighbored. The set of neighbored cubes
@@ -298,7 +309,7 @@ struct VideoBuffer {
     }
 
     /**
-     * Convert a physical side (relative to the hardware itself) to a virtual
+     * @brief Convert a physical side (relative to the hardware itself) to a virtual
      * side (relative to the specified screen orientation).
      */
     static Side physicalToVirtual(Side side, Side rot) {
@@ -308,7 +319,7 @@ struct VideoBuffer {
     }
 
     /**
-     * Convert a virtual side (relative to the specified screen orientation)
+     * @brief Convert a virtual side (relative to the specified screen orientation)
      * to a physical side (relative to the hardware itself).
      */
     static Side virtualToPhysical(Side side, Side rot) {
@@ -318,7 +329,7 @@ struct VideoBuffer {
     }
 
     /**
-     * Convert a physical side (relative to the hardware itself) to a virtual
+     * @brief Convert a physical side (relative to the hardware itself) to a virtual
      * side (relative to the current screen orientation).
      */
     Side physicalToVirtual(Side side) const {
@@ -326,7 +337,7 @@ struct VideoBuffer {
     }
 
     /**
-     * Convert a virtual side (relative to the current screen orientation)
+     * @brief Convert a virtual side (relative to the current screen orientation)
      * to a physical side (relative to the hardware itself).
      */
     Side virtualToPhysical(Side side) const {
@@ -334,11 +345,12 @@ struct VideoBuffer {
     }
 
     /**
-     * Convert a Neighborhood from physical to virtual orientation.
+     * @brief Convert a Neighborhood from physical to virtual orientation.
+     *
      * These two expressions produce the same result:
      *
-     *   vbuf.physicalToVirtual(N).neighborAt(S)
-     *   N.neighborAt(vbuf.physicalToVirtual(S))
+     *     vbuf.physicalToVirtual(N).neighborAt(S)
+     *     N.neighborAt(vbuf.physicalToVirtual(S))
      *
      * This version uses the specified cube orientation.
      */
@@ -352,11 +364,12 @@ struct VideoBuffer {
     }
 
     /**
-     * Convert a Neighborhood from virtual to physical orientation.
+     * @brief Convert a Neighborhood from virtual to physical orientation.
+     *
      * These two expressions produce the same result:
      *
-     *   vbuf.virtualToPhysical(N).neighborAt(S)
-     *   N.neighborAt(vbuf.virtualToPhysical(S))
+     *     vbuf.virtualToPhysical(N).neighborAt(S)
+     *     N.neighborAt(vbuf.virtualToPhysical(S))
      *
      * This version uses the specified cube orientation.
      */
@@ -370,11 +383,12 @@ struct VideoBuffer {
     }
 
     /**
-     * Convert a Neighborhood from physical to virtual orientation.
+     * @brief Convert a Neighborhood from physical to virtual orientation.
+     *
      * These two expressions produce the same result:
      *
-     *   vbuf.physicalToVirtual(N).neighborAt(S)
-     *   N.neighborAt(vbuf.physicalToVirtual(S))
+     *     vbuf.physicalToVirtual(N).neighborAt(S)
+     *     N.neighborAt(vbuf.physicalToVirtual(S))
      *
      * Uses the current orientation of this VideoBuffer.
      */
@@ -383,11 +397,12 @@ struct VideoBuffer {
     }
 
     /**
-     * Convert a Neighborhood from virtual to physical orientation.
+     * @brief Convert a Neighborhood from virtual to physical orientation.
+     *
      * These two expressions produce the same result:
      *
-     *   vbuf.virtualToPhysical(N).neighborAt(S)
-     *   N.neighborAt(vbuf.virtualToPhysical(S))
+     *     vbuf.virtualToPhysical(N).neighborAt(S)
+     *     N.neighborAt(vbuf.virtualToPhysical(S))
      *
      * Uses the current orientation of this VideoBuffer.
      */
@@ -396,8 +411,10 @@ struct VideoBuffer {
     }
 
     /**
-     * Return the current physical neighbors for the cube attached to
-     * this VideoBuffer. This is equivalent to creating a new Neighborhood
+     * @brief Return the current physical neighbors for the cube attached to
+     * this VideoBuffer.
+     *
+     * This is equivalent to creating a new Neighborhood
      * instance from cube(), but it's provided by analogy with
      * virtualNeighbors().
      */
@@ -406,8 +423,10 @@ struct VideoBuffer {
     }
 
     /**
-     * Return the current virtual neighbors for the cube attached to
-     * this VideoBuffer. This is equivalent to creating a new Neighborhood
+     * @brief Return the current virtual neighbors for the cube attached to
+     * this VideoBuffer.
+     *
+     * This is equivalent to creating a new Neighborhood
      * instance from cube(), and transforming it with physicalToVirtual().
      */
     Neighborhood virtualNeighbors() const {
@@ -415,7 +434,8 @@ struct VideoBuffer {
     }
 
     /**
-     * Return the physical accelerometer reading for this cube.
+     * @brief Return the physical accelerometer reading for this cube.
+     *
      * The resulting vector is oriented with respect to the cube hardware.
      *
      * This is equivalent to calling accel() on the cube() object.
@@ -425,7 +445,8 @@ struct VideoBuffer {
     }
 
     /**
-     * Return the virtual accelerometer reading for this cube.
+     * @brief Return the virtual accelerometer reading for this cube.
+     *
      * The resulting vector is oriented with respect to the current
      * LCD rotation.
      */
@@ -434,26 +455,30 @@ struct VideoBuffer {
     }
 
     /**
-     * Return the physical tilt reading for this cube.
+     * @brief Return the physical tilt reading for this cube.
+     *
      * The resulting vector is oriented with respect to the cube hardware.
      *
      * This is equivalent to calling tilt() on the cube() object.
      */
-    Byte2 physicalTilt() const {
+    Byte3 physicalTilt() const {
         return cube().tilt();
     }
 
     /**
-     * Return the virtual tilt reading for this cube.
+     * @brief Return the virtual tilt reading for this cube.
+     *
      * The resulting vector is oriented with respect to the current
      * LCD rotation.
      */
-    Byte2 virtualTilt() const {
-        return cube().tilt().rotateI(orientation());
+    Byte3 virtualTilt() const {
+        return cube().tilt().zRotateI(orientation());
     }
 
     /**
-     * Change the video mode. This affects subsequent rendering only.
+     * @brief Change the video mode.
+     *
+     8 This affects subsequent rendering only.
      * Note that this may change the way hardware interprets the contents
      * of video memory, so it's important to synchronize any mode changes
      * such that you know the hardware has finished rendering with the old
@@ -464,24 +489,25 @@ struct VideoBuffer {
     }
 
     /**
-     * Retrieve the last video mode set by setMode()
+     * @brief Retrieve the last video mode set by setMode()
      */
     VideoMode mode() const {
         return VideoMode(peekb(offsetof(_SYSVideoRAM, mode)));
     }
     
     /**
-     * Zero all mode-specific video memory. This is typically part of
-     * initMode(), but it may be necessary to do this at other times. For
-     * example, when doing a multi-mode scene, you may need to ensure that
-     * unused portions of VRAM are in a known blank state.
+     * @brief Zero all mode-specific video memory.
+     *
+     * This is typically part of initMode(), but it may be necessary to do
+     * this at other times. For example, when doing a multi-mode scene,
+     * you may need to ensure that unused portions of VRAM are in a known blank state.
      */
     void erase() {
         _SYS_vbuf_fill(*this, 0, 0, _SYS_VA_FIRST_LINE / 2);
     }
 
     /**
-     * Initialize the video buffer and change modes.
+     * @brief Initialize the video buffer and change modes.
      *
      * This is a shorthand for calling System::finish() to finish existing
      * rendering before changing the mode, actually changing the mode,
@@ -508,12 +534,13 @@ struct VideoBuffer {
     }
 
     /**
-     * Attach this VideoBuffer to a cube. When this cube
-     * is enabled and connected, the system will asynchronously
+     * @brief Attach this VideoBuffer to a cube.
+     *
+     * When this cube is enabled and connected, the system will asynchronously
      * stream video data from this VideoBuffer to that cube.
      *
      * This call automatically reinitializes the change bitmap in this
-     * buffer, so that we'll resend its contents to the ube on next paint.
+     * buffer, so that we'll resend its contents to the cube on next paint.
      *
      * If this VideoBuffer was previously attached to a different cube,
      * you must manually attach() a different video buffer to the old
@@ -535,26 +562,35 @@ struct VideoBuffer {
     }
 
     /**
-     * Prepare to modify a particular address. Addresses must be
-     * locked prior to the buffer memory being modified. Multiple
-     * calls to lock may be made in a row, without an intervening
+     * @brief Prepare to modify a particular address
+     *
+     * Addresses must be locked prior to the buffer memory being modified.
+     * Multiple calls to lock may be made in a row, without an intervening
      * unlock().
+     *
+     * Typically this operation is performed automatically as part of any
+     * other write operation, like a poke().
      */
     void lock(uint16_t addr) {
         _SYS_vbuf_lock(*this, addr);
     }
 
     /**
-     * End a sequence of modifications to VRAM. If the system is not
-     * already busy flushing updates to the cube, this allows it to begin.
+     * @brief End a sequence of modifications to VRAM
+     *
+     * If the system is not already busy flushing updates to the cube,
+     * this allows it to begin. This operation is performed implicitly
+     * during a System::paint().
      */
     void unlock() {
         _SYS_vbuf_unlock(*this);
     }
 
     /**
-     * Mark the VideoBuffer as having changed, without actually modifying
-     * any memory. This will force the next System::paint() to actually
+     * @brief Mark the VideoBuffer as having changed, without actually modifying
+     * any memory.
+     *
+     * This will force the next System::paint() to actually
      * redraw this cube, even if it seems like nothing has changed.
      */
     void touch() {
@@ -562,17 +598,18 @@ struct VideoBuffer {
     }
 
     /**
-     * Modify a word of VRAM, automatically locking it and marking the
-     * change only if that word has actually been modified. After a
-     * sequence of poke() calls, the caller is responsible for issuing
-     * one unlock().
+     * @brief Modify a word of VRAM, automatically locking it and marking the
+     * change only if that word has actually been modified.
+     *
+     * After a sequence of poke() calls, the caller is responsible for issuing
+     * one unlock(). This happens automatically at the next System::paint().
      */
     void poke(uint16_t addr, uint16_t word) {
         _SYS_vbuf_poke(*this, addr, word);
     }
 
     /**
-     * Like poke(), but modifies a single byte. Less efficient, but
+     * @brief Like poke(), but modifies a single byte. Less efficient, but
      * sometimes you really do just want to modify one byte.
      */
     void pokeb(uint16_t addr, uint8_t byte) {
@@ -580,14 +617,14 @@ struct VideoBuffer {
     }
 
     /**
-     * Poke a 14-bit tile index into a particular VRAM word.
+     * @brief Poke a 14-bit tile index into a particular VRAM word.
      */
     void pokei(uint16_t addr, uint16_t index) {
         _SYS_vbuf_poke(*this, addr, _SYS_TILE77(index));
     }
 
     /**
-     * Like pokeb(), but atomically XORs a value with the byte.
+     * @brief Like pokeb(), but atomically XORs a value with the byte.
      * This is a no-op if and only if byte==0.
      */
     void xorb(uint16_t addr, uint8_t byte) {
@@ -595,14 +632,14 @@ struct VideoBuffer {
     }
 
     /**
-     * Read one word of VRAM
+     * @brief Read one word of VRAM
      */
     uint16_t peek(uint16_t addr) const {
         return _SYS_vbuf_peek(*this, addr);
     }
 
     /**
-     * Read one byte of VRAM
+     * @brief Read one byte of VRAM
      */
     uint8_t peekb(uint16_t addr) const {
         return _SYS_vbuf_peekb(*this, addr);

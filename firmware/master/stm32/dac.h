@@ -11,8 +11,6 @@
 class Dac
 {
 public:
-    static Dac instance;
-
     enum BufferMode {
         BufferEnabled,
         BufferDisabled
@@ -42,13 +40,13 @@ public:
         TrigNone
     };
 
-    void init();
-    void configureChannel(int ch, Waveform waveform = WaveNone, uint8_t mask_amp = 0, Trigger trig = TrigNone, BufferMode buffmode = BufferEnabled);
-    void enableChannel(int ch);
-    void disableChannel(int ch);
+    static void init();
+    static void configureChannel(int ch, Waveform waveform = WaveNone, uint8_t mask_amp = 0, Trigger trig = TrigNone, BufferMode buffmode = BufferEnabled);
+    static void enableChannel(int ch);
+    static void disableChannel(int ch);
 
-    void writeDual(uint16_t data);
-    void write(int ch, uint16_t data, DataFormat format = RightAlign12Bit);
+    static void writeDual(uint16_t data);
+    static void write(int ch, uint16_t data, DataFormat format = RightAlign12Bit);
 };
 
 #endif // DAC_H_

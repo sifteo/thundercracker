@@ -25,12 +25,16 @@ extern "C" {
 #include "sifteo/abi.h"
 #include "tracker.h"
 
+#include <iostream>
+
 namespace Stir {
 
 class Group;
 class Image;
+class ImageList;
 class Sound;
 class Tracker;
+
 
 /*
  * Script --
@@ -62,6 +66,8 @@ public:
     std::set<Group*> groups;
     std::set<Tracker*> trackers;
     std::set<Sound*> sounds;
+    std::vector<ImageList> imageLists;
+
 
     friend class Group;
     friend class Image;
@@ -69,7 +75,8 @@ public:
     friend class Tracker;
 
     bool luaRunFile(const char *filename);
-    void collect();
+    bool collect();
+    bool collectList(const char* name, int tableStackIndex);
 
     static bool matchExtension(const char *filename, const char *ext);
 
@@ -78,6 +85,8 @@ public:
     static bool argMatch(lua_State *L, const char *arg);
     static bool argMatch(lua_State *L, lua_Integer arg);
     static bool argEnd(lua_State *L);
+
+    static _SYSAudioLoopType toLoopType(lua_State *L, int index);
 };
 
 
@@ -161,7 +170,7 @@ public:
 
     Image(lua_State *L);
 
-    void setName(const char *s) {
+    void setName(std::string s) {
         mName = s;
     }
 
@@ -185,6 +194,14 @@ public:
         return mIsFlat;
     }
 
+    bool inList() const {
+        return mInList;
+    }
+
+    void setInList(bool flag) {
+        mInList = flag;
+    }
+
     const char *getClassName() const;
 
     uint16_t encodePinned() const;
@@ -198,6 +215,7 @@ public:
     std::vector<TileGrid> mGrids;
     std::string mName;
     bool mIsFlat;
+    bool mInList;
 
     void createGrids();
 
@@ -207,6 +225,50 @@ public:
     int quality(lua_State *L);
     int group(lua_State *L);
 };
+
+
+/*
+ * ImageList --
+ * 
+ *      A wrapper for a list of images.  ImagesLists are created
+ *      from global variables bound to homogeneous tables of image
+ *      instances (that is, it contains no non-image elements, and each
+ *      element has the same C++ result type).
+ */
+
+class ImageList {
+public:
+    typedef std::vector<Image*>::const_iterator const_iterator;
+
+public:
+    ImageList(std::string name, std::vector<Image*> images) : 
+        mName(name), mImages(images) {}
+
+    const std::string &getName() const {
+        return mName;
+    }
+
+    const_iterator begin() const {
+        return mImages.begin();
+    }
+
+    const_iterator end() const {
+        return mImages.end();
+    }
+
+    unsigned size() const {
+        return mImages.size();
+    }
+
+    const char* getImageClassName() const {
+        return mImages[0]->getClassName();
+    }
+
+private:
+    std::string mName;
+    std::vector<Image*> mImages;
+};
+
 
 class Sound {
 public:
@@ -320,9 +382,13 @@ public:
         return loader.patterns[i];
     }
     const std::vector<uint8_t> &getPatternData(uint8_t i) const {
-        assert(i < loader.song.nPatterns);
+        assert(i < loader.patternDatas.size());
         return loader.patternDatas[i];
     }
+    // const uint32_t numPatternDatas() const {
+    //     return loader.globalSampleDatas.size();
+    // }
+
     const std::vector<uint8_t> &getPatternTable() const {
         return loader.patternTable;
     }
@@ -330,13 +396,22 @@ public:
         assert(i < loader.song.nInstruments);
         return loader.instruments[i];
     }
+    const size_t numInstruments() const {
+        return loader.song.nInstruments;
+    }
     const std::vector<uint8_t> &getEnvelope(uint8_t i) const {
         assert(i < loader.envelopes.size());
         return loader.envelopes[i];
     }
+    // const uint32_t numEnvelopes() const {
+    //     return loader.globalEnvelopes.size();
+    // }
     const std::vector<uint8_t> &getSample(uint8_t i) const {
-        assert(i < loader.sampleDatas.size());
-        return loader.sampleDatas[i];
+        assert(i < loader.globalSampleDatas.size());
+        return loader.globalSampleDatas[i];
+    }
+    const uint32_t numSamples() const {
+        return loader.globalSampleDatas.size();
     }
 
     const uint32_t getFileSize() const {
@@ -346,11 +421,28 @@ public:
         return loader.size;
     }
 
+    // Returns the type of looping, as a _SYS_LOOP_* constant
+    _SYSAudioLoopType getLoopType() const {
+        return loopType;
+    }
+    
+    // Get the song's restartPosition, modified by our current loopType.
+    int getRestartPosition() const {
+        if (getLoopType() == _SYS_LOOP_ONCE)
+            return -1;
+        else
+            return (unsigned) loader.song.restartPosition;
+    }
+
 private:
     friend class Script;
+    friend class XmTrackerLoader;
+
     std::string mName;
     std::string mFile;
     XmTrackerLoader loader;
+
+    _SYSAudioLoopType loopType;
 };
 
 };  // namespace Stir

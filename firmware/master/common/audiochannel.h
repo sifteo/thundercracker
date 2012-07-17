@@ -17,25 +17,21 @@
 
 class AudioChannelSlot {
 public:
-    AudioChannelSlot() { init(); }
-
-    void init();
+    AudioChannelSlot() :
+        state(STATE_STOPPED)
+    {}
 
     void play(const struct _SYSAudioModule *module, _SYSAudioLoopType loopMode);
 
-    _SYSAudioType channelType() const {
-        return (_SYSAudioType)mod.type;
-    }
-
-    void pause() {
+    ALWAYS_INLINE void pause() {
         state |= STATE_PAUSED;
     }
 
-    bool isPaused() const {
+    ALWAYS_INLINE bool isPaused() const {
         return (state & STATE_PAUSED) != 0;
     }
 
-    bool isStopped() const {
+    ALWAYS_INLINE bool isStopped() const {
         return (state & STATE_STOPPED) != 0;
     }
 
@@ -51,11 +47,21 @@ public:
 
     void setVolume(uint16_t newVolume) {
         ASSERT(newVolume <= _SYS_AUDIO_MAX_VOLUME);
-        volume = newVolume;
+        volume = clamp((int)newVolume, 0, _SYS_AUDIO_MAX_VOLUME);
     }
 
+    void setLoop(_SYSAudioLoopType loopMode) {
+        ASSERT(loopMode != _SYS_LOOP_UNDEF);
+        if (loopMode == _SYS_LOOP_ONCE)
+            state &= ~STATE_LOOP;
+        else
+            state |= STATE_LOOP;
+    }
+
+    void setPos(uint32_t ofs);
+
 protected:
-    uint32_t mixAudio(int16_t *buffer, uint32_t len);
+    bool mixAudio(int *buffer, uint32_t numFrames);
     friend class AudioMixer;    // mixer can tell us to mixAudio()
 
 private:
@@ -63,13 +69,13 @@ private:
     static const int STATE_LOOP     = (1 << 1);
     static const int STATE_STOPPED  = (1 << 2);
 
-    uint8_t state;
+    uint64_t offset;
+    int32_t increment;
     int16_t volume;
+    uint8_t state;
 
     struct _SYSAudioModule mod;
     AudioSampleData samples;
-    uint64_t offset;
-    int32_t increment;
 };
 
 #endif /* AUDIOCHANNEL_H_ */

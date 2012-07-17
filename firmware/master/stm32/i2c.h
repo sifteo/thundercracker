@@ -12,22 +12,30 @@
 
 class I2CSlave {
 public:
-    I2CSlave (volatile I2C_t *_hw)
-        : hw(_hw) {}
+    I2CSlave (volatile I2C_t *_hw) :
+        hw(_hw) {}
 
-    void init(GPIOPin scl, GPIOPin sda);
+    enum StatusFlags {
+        OverUnderRun    = (1 << 11),
+        Nack            = (1 << 10),
+        TxEmpty         = (1 << 7),
+        RxNotEmpty      = (1 << 6),
+        StopBit         = (1 << 4),
+        AddressMatch    = (1 << 1)
+    };
 
-    void isr_EV();
-    void isr_ER();
+    void init(GPIOPin scl, GPIOPin sda, uint8_t address);
 
-    void setNextTest(uint8_t test);
+    // return a StatusFlags compatible mask
+    uint16_t irqEvStatus() const {
+        return hw->SR1;
+    }
+
+    void isrEV(uint16_t sr1, uint8_t *byte);
+    void isrER();
 
 private:
     volatile I2C_t *hw;
-
-    uint8_t nextTest;
-    uint8_t Address;
-    uint32_t I2CDirection;
 };
 
 #endif

@@ -50,15 +50,20 @@
 #define VCC33_ENABLE_GPIO   GPIOPin(&GPIOC, 1)
 
 // A U D I O
-#define AUDIO_DAC_GPIO      GPIOPin(&GPIOA, 4)
-#define AUDIO_DAC_CHAN      1
-
-#define AUDIO_PWMA_GPIO     GPIOPin(&GPIOA, 7)
-#define AUDIO_PWMB_GPIO     GPIOPin(&GPIOA, 8)
+#define AUDIO_PWMA_PORT     GPIOA
+#define AUDIO_PWMA_PIN      7
+#define AUDIO_PWMB_PORT     GPIOA
+#define AUDIO_PWMB_PIN      8
 #define AUDIO_PWM_CHAN      1
+
+#define VOLUME_TIM          TIM5
+#define VOLUME_CHAN         2
+#define VOLUME_GPIO         GPIOPin(&GPIOA, 1)
 
 // M I S C
 #define BTN_HOME_GPIO       GPIOPin(&GPIOD, 2)
 #define BTN_HOME_EXTI_VEC   EXTI2
+
+#define PROFILER_TIM        TIM2
 
 #endif // _BOARD_REV2_H

@@ -6,7 +6,7 @@
 #ifndef AUDIOMIXER_H_
 #define AUDIOMIXER_H_
 
-#include "audiobuffer.h"
+#include "ringbuffer.h"
 #include "audiochannel.h"
 #include <stdint.h>
 #include <stdio.h>
@@ -15,7 +15,12 @@
 class AudioMixer
 {
 public:
+    // Global sample rate for mixing and audio output
+    static const unsigned SAMPLE_HZ = 16000;
+
     AudioMixer();
+
+    void init();
 
     static AudioMixer instance;
 
@@ -32,19 +37,21 @@ public:
     void setVolume(_SYSAudioChannelID ch, uint16_t volume);
     int volume(_SYSAudioChannelID ch);
 
+    void setSpeed(_SYSAudioChannelID ch, uint32_t samplerate);
+
+    void setPos(_SYSAudioChannelID ch, uint32_t ofs);
     uint32_t pos(_SYSAudioChannelID ch);
 
-    bool active() const {
+    void setLoop(_SYSAudioChannelID ch, _SYSAudioLoopType loopMode);
+
+    ALWAYS_INLINE bool active() const {
         return playingChannelMask != 0;
     }
 
     static void pullAudio(void *p);
 
-    void setSampleRate(uint32_t samplerate) {
-        curSampleRate = samplerate;
-    }
-    uint32_t sampleRate() {
-        return curSampleRate;
+    ALWAYS_INLINE unsigned channelID(AudioChannelSlot *slot) {
+        return slot - &channelSlots[0];
     }
 
 protected:
@@ -54,13 +61,12 @@ protected:
 private:
     uint32_t playingChannelMask;    // channels that are actively playing
     AudioChannelSlot channelSlots[_SYS_AUDIO_MAX_CHANNELS];
-    uint32_t curSampleRate;
 
     // Tracker callback timer
     uint32_t trackerCallbackInterval;
     uint32_t trackerCallbackCountdown;
 
-    int mixAudio(int16_t *buffer, uint32_t numsamples);
+    bool mixAudio(int *buffer, uint32_t numFrames);
 };
 
 #endif /* AUDIOMIXER_H_ */

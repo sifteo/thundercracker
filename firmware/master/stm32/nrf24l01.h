@@ -13,7 +13,7 @@
 #include "spi.h"
 #include "gpio.h"
 #include "radio.h"
-
+#include "factorytest.h"
 
 class NRF24L01 {
 public:
@@ -21,18 +21,34 @@ public:
              GPIOPin _irq,
              SPIMaster _spi)
         : irq(_irq), ce(_ce), spi(_spi),
-          txBuffer(NULL, txData), rxBuffer(rxData)
+          txBuffer(NULL, txData + 1), rxBuffer(rxData + 1), txnState(Idle),
+          softRetriesMax(       Radio::DEFAULT_SOFT_RETRIES),
+          hardRetries(          Radio::DEFAULT_HARD_RETRIES),
+          hardRetriesPending(   Radio::DEFAULT_HARD_RETRIES),
+          softRetriesMaxPending(Radio::DEFAULT_SOFT_RETRIES)
           {}
 
     static NRF24L01 instance;
 
+    static const unsigned MAX_HW_RETRIES = 15;
+
     void init();
-    void ptxMode();
+    void beginTransmitting();
+
+    void setRetryCount(uint8_t hard, uint8_t soft) {
+        hardRetriesPending = hard & MAX_HW_RETRIES;
+        softRetriesMaxPending = soft;
+    }
 
     void setTxPower(Radio::TxPower pwr);
     Radio::TxPower txPower();
 
-    void setConstantCarrier(bool enabled, unsigned channel);
+    void setConstantCarrier(bool enabled, unsigned channel = 0);
+    void setPRXMode(bool enabled);
+
+    static void setRfTestEnabled(bool enabled) {
+        rfTestModeEnabled = enabled;
+    }
 
     void isr();
     GPIOPin irq;
@@ -87,23 +103,99 @@ public:
         MAX_RT                  = 1 << 4,
     };
 
-    static const unsigned SOFT_RETRY_MAX = 32;
-
     GPIOPin ce;
     SPIMaster spi;
 
     PacketTransmission txBuffer;
     PacketBuffer rxBuffer;
-    unsigned softRetriesLeft;
 
-    /* XXX: Make these DMA-able */
-    uint8_t txData[PacketBuffer::MAX_LEN];
-    uint8_t rxData[PacketBuffer::MAX_LEN];   
+    enum TransactionState {
+        Idle,
+        RXStatus,
+        RXPayload,
+        TXChannel,
+        TXAddressTx,
+        TXAddressRx,
+        TXPayload,
+        TXPulseCE
+    };
+
+    TransactionState txnState;
+
+    /*
+     * Current retry counts.
+     */
+    uint8_t softRetriesMax;
+    uint8_t softRetriesLeft;
+    // only requirement to maintain hard retry count is so we can detect when
+    // a new count has been requested, without querying the device
+    uint8_t hardRetries;
+
+    /*
+     * Buffered retry counts.
+     * Can only be applied when a transmission is not in progress.
+     */
+    uint8_t hardRetriesPending;
+    uint8_t softRetriesMaxPending;
+
+    /*
+     * The extra byte here is required for the SPI command byte that must
+     * precede the payload data.
+     */
+    uint8_t txData[PacketBuffer::MAX_LEN + 1];
+    uint8_t rxData[PacketBuffer::MAX_LEN + 1];
+    /*
+     * NOTE: This exists because the RadioAddress struct does not provide room
+     * for the extra byte we need to efficiently transmit these details via DMA.
+     *
+     * It's cheaper RAM-wise to maintain this single buffer than to extend
+     * RadioAddress, which is stored in each Cube object, at the cost of a bit
+     * of CPU to copy the data.
+     */
+    uint8_t txAddressBuffer[sizeof(RadioAddress::id) + 1];
 
     void handleTimeout();
-    void receivePacket();
-    void transmitPacket();
+    void beginReceive();
+    void beginTransmit();
     void pulseCE();
+    void applyRetryCount();
+
+    /*
+     * Helpers to forward RF events to the appropriate destination.
+     */
+
+    static bool rfTestModeEnabled;
+
+    static void ALWAYS_INLINE timeout() {
+        if (rfTestModeEnabled)
+            FactoryTest::timeout();
+        else
+            RadioManager::timeout();
+    }
+
+    static void ALWAYS_INLINE ackEmpty() {
+        if (rfTestModeEnabled)
+            FactoryTest::ackEmpty();
+        else
+            RadioManager::ackEmpty();
+    }
+
+    static void ALWAYS_INLINE ackWithPacket(const PacketBuffer &packet) {
+        if (rfTestModeEnabled)
+            FactoryTest::ackWithPacket(packet);
+        else
+            RadioManager::ackWithPacket(packet);
+    }
+
+    static void ALWAYS_INLINE produce(PacketTransmission &tx) {
+        if (rfTestModeEnabled)
+            FactoryTest::produce(tx);
+        else
+            RadioManager::produce(tx);
+    }
+
+    static void staticSpiCompletionHandler(void *p);
+    void onSpiComplete();
 };
 
 #endif

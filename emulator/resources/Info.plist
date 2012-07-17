@@ -5,13 +5,13 @@
 	<key>CFBundleDevelopmentRegion</key>
 	<string>English</string>
 	<key>CFBundleExecutable</key>
-	<string>tc-siftulator</string>
+	<string>Siftulator</string>
 	<key>CFBundleGetInfoString</key>
 	<string>Thundercracker Simulator</string>
 	<key>CFBundleIconFile</key>
-	<string>tc-siftulator.icns</string>
+	<string>Siftulator.icns</string>
 	<key>CFBundleIdentifier</key>
-	<string>com.sifteo.tc-siftulator</string>
+	<string>com.sifteo.siftulator</string>
 	<key>CFBundleInfoDictionaryVersion</key>
 	<string>6.0</string>
 	<key>CFBundlePackageType</key>
@@ -32,7 +32,7 @@
 			<key>CFBundleTypeRole</key>
 			<string>Shell</string>
 			<key>CFBundleTypeIconFile</key>
-			<string>tc-siftulator.icns</string>
+			<string>Siftulator.icns</string>
 			<key>CFBundleTypeName</key>
 			<string>Sifteo VM Application</string>
 			<key>LSHandlerRank</key>

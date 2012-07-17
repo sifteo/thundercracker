@@ -1,3 +1,10 @@
+-- Metadata
+
+IconAssets = group{quality=9.95}
+Icon = image{"icon.png"}
+
+-- Menu Assets
+
 BetterflowAssets = group{quality=10}
 
 BgTile = image{ "bg.png", pinned=1 }

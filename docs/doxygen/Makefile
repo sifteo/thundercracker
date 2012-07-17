@@ -9,6 +9,10 @@ DEPS := \
 	$(SDK_DIR)/include/sifteo/*.h \
 	$(SDK_DIR)/include/sifteo/video/*.h \
 	$(SDK_DIR)/include/sifteo/menu/*.h \
+	resources/*.css \
+	resources/*.html \
+	resources/*.png \
+	images/*.png \
 	src/*.md
 
 # Run doxygen, and fail the build on any warnings.

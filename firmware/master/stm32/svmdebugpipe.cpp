@@ -9,11 +9,15 @@
 using namespace Svm;
 
 
-void SvmDebugPipe::setSymbolSourceELF(const FlashRange &elf)
+void SvmDebugPipe::init()
 {
     // Do nothing (Only used in simulation)
 }
 
+void SvmDebugPipe::setSymbolSource(const Elf::Program &program)
+{
+    // Do nothing (Only used in simulation)
+}
 
 bool SvmDebugPipe::fault(FaultCode code)
 {
@@ -24,7 +28,7 @@ bool SvmDebugPipe::fault(FaultCode code)
 uint32_t *SvmDebugPipe::logReserve(SvmLogTag tag)
 {
     // XXX: Stub
-    static uint32_t buffer[7];
+    static uint32_t buffer[LOG_BUFFER_WORDS];
     return buffer;
 }
 

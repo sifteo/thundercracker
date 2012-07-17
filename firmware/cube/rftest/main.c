@@ -41,10 +41,23 @@ static void radio_init()
     spi_byte(0x07);
     spi_end();
 
-    /* 2 Mbit, max transmit power, continuous wave mode */
+#ifdef PRX_MODE
+    /* 2 Mbit, max transmit power */
     spi_begin();
     spi_byte(RF_CMD_W_REGISTER | RF_REG_RF_SETUP);
-    spi_byte(0x8e);
+    spi_byte(0x0e);
+    spi_end();
+
+    /* Power up, PRX mode, Mask interrupts */
+    spi_begin();
+    spi_byte(RF_CMD_W_REGISTER | RF_REG_CONFIG);
+    spi_byte(0x7f);
+    spi_end();
+#else
+    /* 2 Mbit, max transmit power, continuous wave mode, pll lock */
+    spi_begin();
+    spi_byte(RF_CMD_W_REGISTER | RF_REG_RF_SETUP);
+    spi_byte(0x9e);
     spi_end();
 
     /* Power up, PTX mode */
@@ -52,6 +65,12 @@ static void radio_init()
     spi_byte(RF_CMD_W_REGISTER | RF_REG_CONFIG);
     spi_byte(0x0e);
     spi_end();
+#endif
+}
+
+static void radio_receive()
+{
+	while(1);
 }
 
 static void radio_transmit(uint8_t channel)
@@ -78,7 +97,6 @@ static void power_init(void)
     CTRL_DIR = CTRL_DIR_VALUE;
     ADDR_DIR = 0;
 
-#if HWREV >= 2      // Sequence 3.3v boost, followed by 2.0v downstream
     // Turn on 3.3V boost
     CTRL_PORT = CTRL_3V3_EN;
 
@@ -90,7 +108,6 @@ static void power_init(void)
 
     // Give load-switch time to turn-on (Datasheet unclear so >1ms should suffice)
     delay();
-#endif
 
     // Now turn-on other control lines.
     // (On Rev 1, we just turn everything on at once.)
@@ -102,5 +119,11 @@ void main(void)
 {
     power_init();
     radio_init();
-    radio_transmit(2);
+#ifdef PRX_MODE
+    /* Radio in PRX mode */
+    radio_receive();
+#else
+    /* Radio in PTX mode */
+    radio_transmit(PTX_CHAN);
+#endif
 }

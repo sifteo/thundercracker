@@ -3,10 +3,14 @@
  * Copyright <c> 2012 Sifteo, Inc. All rights reserved.
  */
 
-#include "macros.h"
 #include "adpcmdecoder.h"
 
-const uint16_t AdPcmDecoder::stepSizeTable[89] = {
+
+/**
+ * We use the standard IMA ADPCM step sizes, even though our
+ * codec isn't quite identical to IMA ADPCM.
+ */
+const uint16_t ADPCMDecoder::stepSizeTable[89] = {
     7, 8, 9, 10, 11, 12, 13, 14, 16, 17, 19, 21, 23, 25, 28, 31,
     34, 37, 41, 45, 50, 55, 60, 66, 73, 80, 88, 97, 107, 118, 130,
     143, 157, 173, 190, 209, 230, 253, 279, 307, 337, 371, 408, 449,
@@ -16,65 +20,31 @@ const uint16_t AdPcmDecoder::stepSizeTable[89] = {
     12635, 13899, 15289, 16818, 18500, 20350, 22385, 24623, 27086, 29794, 32767
 };
 
-const int8_t AdPcmDecoder::indexTable[16] = {
-    0xff, 0xff, 0xff, 0xff, 2, 4, 6, 8,
-    0xff, 0xff, 0xff, 0xff, 2, 4, 6, 8
+
+/**
+ * Packed LUT for decoded nybble. Bits [7:0] are a signed coefficient for
+ * the current step size, and bits [31:24] are the amount by which we update
+ * the index. This split makes it easy to extract either half, as a signed
+ * integer, using common ARM instructions. (Arithmetic shift, or 8-bit
+ * sign extend).
+ *
+ * Multiply is cheap, table lookups are cheap!
+ */
+const int ADPCMDecoder::codeTable[16] = {
+    0xFFFFFF01,
+    0xFFFFFF03,
+    0xFFFFFF05,
+    0xFFFFFF07,
+    0x00000209,
+    0x0000040B,
+    0x0000060D,
+    0x0000080F,
+    0xFFFFFFFF,
+    0xFFFFFFFD,
+    0xFFFFFFFB,
+    0xFFFFFFF9,
+    0x000002F7,
+    0x000004F5,
+    0x000006F3,
+    0x000008F1,
 };
-
-int16_t AdPcmDecoder::decodeSample(uint8_t **paPtr)
-{
-    ASSERT(paPtr);
-
-    uint8_t *pa = *paPtr;
-    ASSERT(pa);
-
-    if (hasExtraSample) {
-        hasExtraSample = false;
-        (*paPtr) += 1;
-        return extraSample;
-    }
-
-    const uint8_t code = *pa;
-    int16_t sample = decode4to16bits(code & 0xf);
-    extraSample = decode4to16bits(code >> 4);
-    hasExtraSample = true;
-
-    return sample;
-}
-
-int16_t AdPcmDecoder::decode4to16bits(uint8_t code)
-{
-    uint16_t step = stepSizeTable[index];
-
-    // inverse code into diff
-    int32_t diffq = step >> 3;
-    if (code & 4)
-        diffq += step;
-
-    if (code & 2)
-        diffq += step >> 1;
-
-    if (code & 1)
-        diffq += step >> 2;
-
-    // add diff to predicted sample
-    if (code & 8)
-        predictedSample -= diffq;
-    else
-        predictedSample += diffq;
-
-    // check for overflow
-    if (predictedSample > 32767)
-        predictedSample = 32767;
-    else if (predictedSample < -32768)
-        predictedSample = -32768;
-
-    // find new quantizer step size
-    index += indexTable[code];
-    if (index < 0)
-        index = 0;
-    else if (index > 88)
-        index = 88;
-
-    return (int16_t)predictedSample;
-}

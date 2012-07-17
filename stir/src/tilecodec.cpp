@@ -164,8 +164,9 @@ void RLECodec4::encodeRun(std::vector<uint8_t>& out, bool terminal)
 
 TileCodec::TileCodec(std::vector<uint8_t>& buffer)
     : out(buffer), opIsBuffered(false), 
-      tileCount(0), p16run(0xFFFFFFFF),
-      currentAddress(0), statBucket(TilePalette::CM_INVALID)
+      tileCount(0),
+      paddedOutputMin(0), currentAddress(0),
+      statBucket(TilePalette::CM_INVALID)
 {
     memset(&stats, 0, sizeof stats);
 }
@@ -243,6 +244,16 @@ void TileCodec::newStatsTile(unsigned bucket)
 
 void TileCodec::flush()
 {
+    // Flush any final opcode(s)
+    flushOp();
+
+    // Respect any minimum padding requirements from previous opcodes
+    while (out.size() < paddedOutputMin)
+        out.push_back(FLS_OP_NOP);
+}
+
+void TileCodec::flushOp()
+{
     if (opIsBuffered) {
         if (statBucket != TilePalette::CM_INVALID) {
             stats[statBucket].opcodes++;
@@ -262,8 +273,7 @@ void TileCodec::flush()
 
 void TileCodec::encodeOp(uint8_t op)
 {
-    flush();
-
+    flushOp();
     opIsBuffered = true;
     opcodeBuf = op;
 }
@@ -302,6 +312,28 @@ void TileCodec::encodeWord(uint16_t w)
     dataBuf.push_back((uint8_t) (w >> 8));
 }
 
+void TileCodec::reservePadding(unsigned bytes)
+{
+    /*
+     * Ensure that the output will always have at least 'bytes'
+     * bytes of data after this point in the stream, including
+     * all buffered opcode data.
+     */
+
+    // Calculate current length (worst case)
+    unsigned len = out.size();
+
+    if (opIsBuffered) {
+        // Opcode size, plus worst-case RLE buffer size
+        len += 2;
+
+        // Buffered opcode argument data
+        len += dataBuf.size();
+    }
+
+    paddedOutputMin = std::max(paddedOutputMin, len + bytes);
+}
+
 void TileCodec::encodeTileRLE4(const TileRef tile, unsigned bits)
 {
     /*
@@ -311,8 +343,15 @@ void TileCodec::encodeTileRLE4(const TileRef tile, unsigned bits)
     uint8_t nybble = 0;
     unsigned pixelIndex = 0;
     unsigned bitIndex = 0;
- 
+
+    reservePadding(FLS_MIN_TILE_R4);
+
     while (pixelIndex < Tile::PIXELS) {
+
+        // Reserve padding before every 16 pixel block
+        if (!(pixelIndex & 15))
+            reservePadding(FLS_MIN_TILE_P16);
+
         uint8_t color = lut.findColor(tile->pixel(pixelIndex));
         assert(color < (1 << bits));
         nybble |= color << bitIndex;
@@ -338,16 +377,22 @@ void TileCodec::encodeTileMasked16(const TileRef tile)
      * We emit rows which begin with an 8-bit mask, containing between
      * 0 and 8 pixel values. A '1' bit in the mask corresponds to a
      * new pixel value, and a '0' is copied from the previous
-     * value. Color runs may persist across the entire load stream.
+     * value.
+     *
+     * The "current" color for P16 is stored in entry [15] in the LUT.
      */
 
     for (unsigned y = 0; y < Tile::SIZE; y++) {
         uint8_t mask = 0;
 
+        // Reserve padding before every 16 pixel block
+        if (!(y & 3))
+            reservePadding(FLS_MIN_TILE_P16);
+
         for (unsigned x = 0; x < Tile::SIZE; x++)
-            if (tile->pixel(x, y).value != p16run) {
+            if (tile->pixel(x, y) != lut.colors[15]) {
                 mask |= 1 << x;
-                p16run = tile->pixel(x, y).value;
+                lut.colors[15] = tile->pixel(x, y);
             }
 
         dataBuf.push_back(mask);

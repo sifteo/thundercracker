@@ -12,12 +12,13 @@
 #define FLASH_DEVICE_H
 
 #include <stdint.h>
+#include "macros.h"
 
 class FlashDevice {
 public:
-    static const unsigned PAGE_SIZE = 256;              // programming granularity
-    static const unsigned SECTOR_SIZE = 1024 * 4;       // smallest erase granularity
-    static const unsigned CAPACITY = 1024 * 1024 * 16;  // total storage capacity
+    static const unsigned PAGE_SIZE = 256;                  // programming granularity
+    static const unsigned ERASE_BLOCK_SIZE = 1024 * 64;     // coarse erase granularity
+    static const unsigned CAPACITY = 1024 * 1024 * 16;      // total storage capacity
 
     static const uint8_t MACRONIX_MFGR_ID = 0xC2;
 
@@ -25,10 +26,11 @@ public:
 
     static void read(uint32_t address, uint8_t *buf, unsigned len);
     static void write(uint32_t address, const uint8_t *buf, unsigned len);
-    static bool writeInProgress();
 
-    static void eraseSector(uint32_t address);
-    static void chipErase();
+    DEBUG_ONLY(static void setStealthIO(int counter);)
+    DEBUG_ONLY(static void verify(uint32_t address, const uint8_t *buf, unsigned len);)
+
+    static void eraseBlock(uint32_t address);
 
     struct JedecID {
         uint8_t manufacturerID;
@@ -38,6 +40,24 @@ public:
 
     static void readId(JedecID *id);
 };
+
+
+/**
+ * A utility class that enables "stealth" flash I/O in simulation
+ * as long as it's in scope. No effect on hardware.
+ */
+
+class FlashScopedStealthIO {
+public:
+    FlashScopedStealthIO() {
+        DEBUG_ONLY(FlashDevice::setStealthIO(1);)
+    }
+
+    ~FlashScopedStealthIO() {
+        DEBUG_ONLY(FlashDevice::setStealthIO(-1);)
+    }
+};
+
 
 #endif
 
