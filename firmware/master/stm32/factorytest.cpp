@@ -13,11 +13,16 @@
 #include "audiomixer.h"
 #include "svmmemory.h"
 #include "bootloader.h"
+#include "cube.h"
+#include "tasks.h"
 
 extern unsigned     __data_start;
 
 uint8_t FactoryTest::commandBuf[FactoryTest::UART_MAX_COMMAND_LEN];
 uint8_t FactoryTest::commandLen;
+
+uint16_t FactoryTest::rfSuccessCount;
+volatile uint16_t FactoryTest::rfTransmissionsRemaining;
 
 FactoryTest::TestHandler const FactoryTest::handlers[] = {
     nrfCommsHandler,            // 0
@@ -31,6 +36,7 @@ FactoryTest::TestHandler const FactoryTest::handlers[] = {
     shutdownHandler,            // 8
     audioTestHandler,           // 9
     bootloadRequestHandler,     // 10
+    rfPacketTestHandler,        // 11
 };
 
 void FactoryTest::init()
@@ -84,6 +90,28 @@ void FactoryTest::usbHandler(const USBProtocolMsg &m)
         // arg[0] is always the 'command type' byte
         handler(m.payloadLen(), m.payload);
     }
+}
+
+/*
+ * Produce a packet of RF test data.
+ *
+ * Send any length packet made up of only "0x11" bytes. This does nothing more
+ * than cycle the decompressor's write pointer around in a circle.
+ * It's a two-nybble code for "seek forwards by 2 words".
+ */
+void FactoryTest::produce(PacketTransmission &tx)
+{
+    /*
+     * XXX: since pairing/connection handling is not yet available, assume
+     *      that all cubes being tested are hardcoded with ID 0.
+     */
+    CubeSlot &slot = CubeSlot::getInstance(0);
+    tx.dest = slot.getRadioAddress();
+    tx.packet.len = 0;
+
+    uint8_t packetLen = MAX(1, rfTransmissionsRemaining % PacketBuffer::MAX_LEN);
+    for (unsigned i = 0; i < packetLen; ++i)
+        tx.packet.append(RF_TEST_BYTE);
 }
 
 /**************************************************************************
@@ -286,6 +314,31 @@ void FactoryTest::bootloadRequestHandler(uint8_t argc, const uint8_t *args)
     NVIC.deinit();
     NVIC.systemReset();
 #endif
+}
+
+/*
+ * args[1:2] -- uint16 transmission count
+ */
+void FactoryTest::rfPacketTestHandler(uint8_t argc, const uint8_t *args)
+{
+    rfSuccessCount = 0;
+    rfTransmissionsRemaining = *reinterpret_cast<const uint16_t*>(&args[1]);
+
+    Radio::setRetryCount(0, 0);
+    Radio::setRfTestEnabled(true);
+
+    while (rfTransmissionsRemaining)
+        Tasks::waitForInterrupt();
+
+    Radio::setRetryCount(Radio::DEFAULT_HARD_RETRIES, Radio::DEFAULT_SOFT_RETRIES);
+    Radio::setRfTestEnabled(false);
+
+    /*
+     * Respond with the number of packets sent, and the number of successful transmissions
+     */
+    const uint8_t report[] = { args[0], args[1], args[2],
+                               rfSuccessCount & 0xff, (rfSuccessCount >> 8) & 0xff };
+    UsbDevice::write(report, sizeof report);
 }
 
 IRQ_HANDLER ISR_USART3()

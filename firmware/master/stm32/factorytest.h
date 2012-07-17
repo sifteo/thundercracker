@@ -3,6 +3,7 @@
 
 #include <stdint.h>
 #include "usbprotocol.h"
+#include "radio.h"
 
 class FactoryTest
 {
@@ -15,9 +16,34 @@ public:
     static void onUartIsr();
     static void usbHandler(const USBProtocolMsg &m);
 
+    /*
+     * RF test handlers.
+     *
+     * Since we're not sending meaningful protocol data, we treat any ACK,
+     * with payload or not, as a success.
+     */
+    static void produce(PacketTransmission &tx);
+    static void ALWAYS_INLINE ackWithPacket(const PacketBuffer &packet) {
+        rfSuccessCount++;
+        rfTransmissionsRemaining--;
+    }
+    static void ALWAYS_INLINE timeout() {
+        rfTransmissionsRemaining--;
+    }
+    static void ALWAYS_INLINE ackEmpty() {
+        rfSuccessCount++;
+        rfTransmissionsRemaining--;
+    }
+
 private:
     static uint8_t commandBuf[UART_MAX_COMMAND_LEN];
     static uint8_t commandLen;
+
+    static volatile uint16_t rfTransmissionsRemaining;
+    static uint16_t rfSuccessCount;
+    static const uint8_t RF_TEST_BYTE = 0x11;
+
+    static void handleRfPacketComplete();
 
     typedef void(*TestHandler)(uint8_t argc, const uint8_t *args);
     static const TestHandler handlers[];
@@ -33,6 +59,7 @@ private:
     static void shutdownHandler(uint8_t argc, const uint8_t *args);
     static void audioTestHandler(uint8_t argc, const uint8_t *args);
     static void bootloadRequestHandler(uint8_t argc, const uint8_t *args);
+    static void rfPacketTestHandler(uint8_t argc, const uint8_t *args);
 };
 
 #endif // FACTORYTEST_H

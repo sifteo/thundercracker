@@ -68,10 +68,6 @@ private:
 
     void setDuty(uint16_t duty);
 
-    static ALWAYS_INLINE uint8_t ror8(uint8_t a, uint8_t b) {
-        return (a >> b) | (a << (8 - b));
-    }
-
     volatile uint16_t txData;    // data in the process of being transmitted. if 0, we're done.
     uint16_t txDataBuffer;
 

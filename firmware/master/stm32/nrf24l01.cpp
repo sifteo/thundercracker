@@ -20,8 +20,11 @@ NRF24L01 NRF24L01::instance(RF_CE_GPIO,
                                       RF_SPI_MISO_GPIO,     //   MISO
                                       RF_SPI_MOSI_GPIO,     //   MOSI
                                       staticSpiCompletionHandler));
+bool NRF24L01::rfTestModeEnabled = false;
 
 void NRF24L01::init() {
+
+    STATIC_ASSERT(Radio::DEFAULT_HARD_RETRIES == MAX_HW_RETRIES);
 
     /*
      * Common hardware initialization, regardless of radio usage mode.
@@ -49,7 +52,7 @@ void NRF24L01::init() {
         2, CMD_W_REGISTER | REG_RX_PW_P0,       32,
         
         /* Auto retry delay, 500us, 15 retransmits */
-        2, CMD_W_REGISTER | REG_SETUP_RETR,     0x1f,
+        2, CMD_W_REGISTER | REG_SETUP_RETR,     0x10 | hardRetries,
 
         /* 5-byte address width */
         2, CMD_W_REGISTER | REG_SETUP_AW,       0x03,
@@ -183,6 +186,21 @@ void NRF24L01::setConstantCarrier(bool enabled, unsigned channel)
     }
 }
 
+/*
+ * Configure the retry behavior of the radio driver.
+ * Always maintain our auto retry delay of 500us
+ */
+void NRF24L01::applyRetryCount()
+{
+    hardRetries = hardRetriesPending;
+    softRetriesMax = softRetriesMaxPending;
+
+    spi.begin();
+    spi.transfer(CMD_W_REGISTER | REG_SETUP_RETR);
+    spi.transfer(0x10 | hardRetries);
+    spi.end();
+}
+
 void NRF24L01::setTxPower(Radio::TxPower pwr)
 {
     spi.begin();
@@ -233,7 +251,7 @@ void NRF24L01::isr()
 
     case TX_DS:
         // Successful transmit, no ACK data
-        RadioManager::ackEmpty();
+        ackEmpty();
         beginTransmit();
         break;
 
@@ -262,11 +280,11 @@ void NRF24L01::handleTimeout()
      * timeout on to RadioManager so it can take more permanent action.
      */
 
-    if (--softRetriesLeft) {
+    if (softRetriesLeft) {
         /*
          * Retry.. again. The packet is still in our buffer.
          */
-
+        softRetriesLeft--;
         pulseCE();
 
     } else {
@@ -278,7 +296,7 @@ void NRF24L01::handleTimeout()
         spi.transfer(CMD_FLUSH_TX);
         spi.end();
 
-        RadioManager::timeout();
+        timeout();
         beginTransmit();
     }
 }
@@ -310,9 +328,14 @@ void NRF24L01::beginTransmit()
      * ways. We assume that re-entry only occurs after ce.setHigh().
      */
 
+    // Retry update requested?
+    if (hardRetriesPending != hardRetries || softRetriesMaxPending != softRetriesMax) {
+        applyRetryCount();
+    }
+
     txBuffer.noAck = false;
-    RadioManager::produce(txBuffer);
-    softRetriesLeft = SOFT_RETRY_MAX;
+    produce(txBuffer);
+    softRetriesLeft = softRetriesMax;
 
 #ifdef DEBUG_MASTER_TX
     Debug::logToBuffer(txBuffer.packet.bytes, txBuffer.packet.len);
@@ -387,7 +410,7 @@ void NRF24L01::onSpiComplete()
             spi.end();
 
             txnState = Idle;
-            RadioManager::timeout();
+            timeout();
             break;
         }
 
@@ -398,7 +421,7 @@ void NRF24L01::onSpiComplete()
         break;
 
     case RXPayload:
-        RadioManager::ackWithPacket(rxBuffer);
+        ackWithPacket(rxBuffer);
         beginTransmit();
         break;
 
