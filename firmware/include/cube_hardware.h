@@ -39,6 +39,18 @@
 #define HWID_REVISION_CODE  0x01
 
 /*
+ * Battery thresholds
+ *
+ * These three thresholds are the boundaries between
+ * the four bars on our idle screen's battery meter.
+ */
+
+#define BATTERY_THRESHOLD_1     0x05
+#define BATTERY_THRESHOLD_2     0x40
+#define BATTERY_THRESHOLD_3     0x80
+
+
+/*
  * GPIO Ports
  */
 

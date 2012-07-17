@@ -483,6 +483,11 @@ void i2c_battery_store_results() __naked
 
         djnz    _i2c_battery_count, 1$
 
+        ; Skip hysteresis test if we have never updated the battery voltage
+
+        mov     a, (_ack_data + RF_ACK_BATTERY_V)
+        jz      4$
+
         ; Apply hysteresis. The reading must change by more than one LSB
         ; before we actually update it.
 
@@ -494,6 +499,7 @@ void i2c_battery_store_results() __naked
         jz      3$                                      ; Skip if delta +1
         add     a, #2
         jz      3$                                      ; Skip if delta -1
+4$:
 
         ; Force the battery voltage to be nonzero. We reserve zero to
         ; mean we have not yet finished integrating.
