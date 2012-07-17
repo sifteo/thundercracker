@@ -283,14 +283,6 @@ void disconnected_init(void)
 
 void disconnected_poll(void)
 {
-    /*
-     * Check sleep timer
-     */
-
-    if (disc_sleep_timer == sensor_tick_counter_high)
-        power_sleep();
-
-
     if (disc_battery_draw) {
         /*
          * Update battery indicator (and the scoreboard, if it's visible)
@@ -496,5 +488,12 @@ _fp_bounce_axis_ret:
         lcall   _fp_integrate_axis
 
     __endasm ;
+    
+    /*
+     * Check sleep timer
+     */
+
+    if (disc_sleep_timer == sensor_tick_counter_high)
+        vram.mode = _SYS_VM_SLEEP;
 }
 

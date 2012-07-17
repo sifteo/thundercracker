@@ -69,7 +69,8 @@ extern "C" {
 #define _SYS_VM_BG0_SPR_BG1     0x20    // BG0, multiple linear sprites, then BG1
 #define _SYS_VM_BG2             0x24    // Background BG2: 16x16 grid with affine transform
 #define _SYS_VM_STAMP           0x28    // Reconfigurable 16-color framebuffer with transparency
-
+#define _SYS_VM_SLEEP           0x3c    // Puts cube to sleep after fading out display
+    
 // Important VRAM addresses
 
 #define _SYS_VA_BG0_TILES       0x000

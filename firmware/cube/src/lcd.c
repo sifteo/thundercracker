@@ -149,7 +149,44 @@ void lcd_sleep()
         CTRL_PORT = (CTRL_IDLE & ~CTRL_LCD_DCX) | CTRL_FLASH_LAT2;  // Enter reset
     }   
 }
+
+void lcd_pwm_fade()
+{
+    /*
+     * Fade out the LCD backlight quickly with PWM.
+     * Does not reset the LCD controller. Assumes the backlight is already on.
+     *
+     * This has a PWM frequency of about 144us (7 kHz).
+     * The whole fade lasts about a second.
+     */
+
+    uint8_t i, j, k;
+
+    i = 0xFE;
+    do {
+        k = 30;
+        do {
     
+            j = i;
+            do {
+                // Backlight on
+                CTRL_PORT = CTRL_IDLE;
+                CTRL_PORT = CTRL_IDLE | CTRL_FLASH_LAT1;
+            } while (--j);
+
+            j = ~i;
+            do {
+                // Backlight off
+                CTRL_PORT = CTRL_IDLE & ~CTRL_LCD_DCX;
+                CTRL_PORT = (CTRL_IDLE & ~CTRL_LCD_DCX) | CTRL_FLASH_LAT1;
+            } while (--j);
+
+        } while (--k);
+    } while (--i);
+    
+    DEBUG_REG = 0xFF;
+}
+
 void lcd_begin_frame()
 {
     uint8_t flags = vram.flags;

@@ -121,7 +121,7 @@ gd_n14: ljmp    _vm_powerdown   ; 0x34 (unused)
         .ds 1
 gd_n15: ljmp    _vm_powerdown   ; 0x38 (unused)
         .ds 1
-gd_n16: ljmp    _vm_powerdown   ; 0x3c (unused)
+gd_n16: ljmp    _vm_sleep       ; 0x3c
 
     __endasm ;
 }
@@ -130,6 +130,12 @@ void vm_powerdown() __naked
 {
     lcd_sleep();
     GRAPHICS_RET();
+}
+
+void vm_sleep() __naked
+{
+    lcd_pwm_fade();
+    power_sleep();
 }
 
 void graphics_ack(void) __naked
