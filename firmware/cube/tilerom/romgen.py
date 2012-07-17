@@ -327,6 +327,7 @@ if __name__ == "__main__":
 
     for img in (
         "tilerom/img-logo.png",
+        "tilerom/img-trophy.png",
         "tilerom/img-battery.png",
         "tilerom/img-battery-bars-1.png",
         "tilerom/img-battery-bars-2.png",

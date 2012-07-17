@@ -54,9 +54,11 @@ extern int16_t disc_logo_dy;
 // Score for our bouncing logo minigame, in BCD
 extern uint8_t disc_score;
 extern __bit disc_bounce_type;
+extern __bit disc_has_trophy;
 extern uint8_t disc_sleep_timer;
 
 extern const __code uint8_t img_logo[];
+extern const __code uint8_t img_trophy[];
 extern const __code uint8_t img_battery[];
 extern const __code uint8_t img_battery_bars_1[];
 extern const __code uint8_t img_battery_bars_2[];
@@ -78,7 +80,7 @@ static void draw_digit(void) __naked
 {
     /*
      * Assembly-callable function to draw one BCD digit, from 'a',
-     * at the VRAM address pointed to by dptr. Advances dptr to the
+     * at the VRAM address pointed to by DPTR. Advances DPTR to the
      * next tile.
      */
     __asm
@@ -206,12 +208,16 @@ static void fp_bounce_axis(void) __naked
         anl     a, #0xF0                    ; If the score is at least 10, reset sleep timer
         jz      3$
         lcall   _disc_reset_sleep_timer
+3$:
 
-3$:     mov     a, _disc_score              ; BCD increment
+        jb      _disc_has_trophy, 1$        ; No score increment if we already have trophy
+
+        mov     a, _disc_score              ; BCD increment
         inc     a
         clr     c                           ; (DA relies on both C and AC flags)
         clr     ac
         da      a
+        mov     _disc_has_trophy, c         ; Acquire trophy after rollover from 99
 
 2$:     mov     _disc_score, a
 1$:
@@ -260,6 +266,7 @@ void disconnected_init(void)
      */
 
     disc_battery_draw = 0;
+    disc_has_trophy = 0;
 
     disc_logo_x = 0;
     disc_logo_y = BATTERY_HEIGHT << FP_BITS;
@@ -328,15 +335,28 @@ void disconnected_poll(void)
         __endasm ;
 
         /*
-         * Score counter (two-digit BCD)
+         * Score counter (two-digit BCD) or trophy image
          */
 
         __asm
+
+            jnb     _disc_has_trophy, 4$
+
+            ; Draw trophy
+
+            DRAW_XY (1, 0)
+            mov     dptr, #_img_trophy
+            lcall   _draw_image
+            sjmp    3$
+        4$:
+
+            ; Draw two-digit score counter
+
+            mov     dptr, #XY(1,1)
             mov     a, _disc_score                      ; First, look at tens digit
             swap    a
             anl     a, #0x0F
             jz      3$                                  ; Hide if score < 10
-            mov     dptr, #XY(1,1)                      ; Draw location
             lcall   _draw_digit
             mov     a, _disc_score
             lcall   _draw_digit

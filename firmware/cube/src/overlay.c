@@ -104,6 +104,7 @@ _x_bg1_offset_bit0::
 _disc_bounce_type::
 _x_bg1_offset_bit1::
     .ds 1
+_disc_has_trophy::
 _x_bg1_offset_bit2::
     .ds 1
 _y_bg1_empty::
