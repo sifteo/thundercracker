@@ -493,6 +493,11 @@ void vm_bg0_rom(void) __naked
         vm_bg0_next();
     } while (--y);    
 
+    // Our prologue code is reused by vm_solid
+    __asm
+lcd_end_frame_and_graphics_ret::
+    __endasm ;
+
     lcd_end_frame();
     GRAPHICS_RET();
 }

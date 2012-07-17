@@ -12,7 +12,6 @@ OBJS = \
         src/graphics_fb32.rel \
         src/graphics_fb64.rel \
         src/graphics_fb128.rel \
-        src/graphics_solid.rel \
         src/graphics_stamp.rel \
         src/sensors_init.rel \
         src/sensors_i2c.rel \
@@ -33,11 +32,12 @@ OBJS = \
 
 # Funny BG1 segment, to support ACALL alignment. Order matters.
 # bg1_line needs to be at the beginning of the segment; bg0_rom
-# is just the right size to pad the rest of the segment up until
-# the tilerom data begins.
+# and solid together are just the right size to pad the rest of
+# the segment up until the tilerom data begins.
 OBJS += \
         src/graphics_bg1_line.rel \
         src/graphics_bg0_rom.rel \
+        src/graphics_solid.rel
 
 TC_DIR = ../..
 FIRMWARE_INC = ../include
