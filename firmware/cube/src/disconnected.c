@@ -6,6 +6,11 @@
  * Copyright <c> 2011 Sifteo, Inc. All rights reserved.
  */
 
+/*
+ * Implements the cube's behavior while disconnected from the base. Includes
+ * an interactive idle screen, battery meter, and power-down timer.
+ */
+
 #include <stdint.h>
 #include <sifteo/abi/vram.h>
 #include "graphics.h"
@@ -26,6 +31,14 @@ extern __bit disc_battery_draw;     // 0 = drawing logo, 1 = drawing battery
 #define Y_MIN           (BATTERY_HEIGHT - 48)
 #define Y_MAX           (BATTERY_HEIGHT + 23)
 
+// The cube's idle timeout, measured in units of 1.57 seconds (sensor_tick_counter overflow rate).
+// Reset when entering idle mode, or when the score is incremented.
+// Current timeout: 1 minute
+#define IDLE_TIMEOUT    38
+
+// Threshold for detecting score-affecting bounces
+#define BOUNCE_THR      0x40
+
 #define X_MIN_FP        (X_MIN << FP_BITS)
 #define X_MAX_FP        (X_MAX << FP_BITS)
 #define Y_MIN_FP        (Y_MIN << FP_BITS)
@@ -37,6 +50,11 @@ extern int16_t disc_logo_x;
 extern int16_t disc_logo_y;
 extern int16_t disc_logo_dx;
 extern int16_t disc_logo_dy;
+
+// Score for our bouncing logo minigame, in BCD
+extern uint8_t disc_score;
+extern __bit disc_bounce_type;
+extern uint8_t disc_sleep_timer;
 
 extern const __code uint8_t img_logo[];
 extern const __code uint8_t img_battery[];
@@ -53,6 +71,24 @@ static void draw_logo(void) __naked
         DRAW_XY (1,5)
         mov     dptr, #_img_logo
         ljmp    _draw_image
+    __endasm ;
+}
+
+static void draw_digit(void) __naked
+{
+    /*
+     * Assembly-callable function to draw one BCD digit, from 'a',
+     * at the VRAM address pointed to by dptr. Advances dptr to the
+     * next tile.
+     */
+    __asm
+        anl     a, #0x0F            ; Mask off digit
+        add     a, #0x10            ; Convert digit to font index
+        rl      a                   ; Convert to 7:7 format
+        movx    @dptr, a
+        inc     dptr                ; Skip LSB
+        inc     dptr                ; Skip MSB (not written)
+        ret
     __endasm ;
 }
 
@@ -131,7 +167,18 @@ static void fp_bounce_axis(void) __naked
      * Assembly-callable utility to invert the velocity of one 16-bit axis.
      * Called with r0 pointed to either disc_logo_dx or disc_logo_dy.
      *
-     * Clobbers r0, r2, r3, a.
+     * Also handles scoring for our mini-game. Bounces are classified as "large" or
+     * "small" bounces. Small bounces never affect your score. Large bounces are good
+     * (increase score) if disc_bounce_type=1. They are bad (clear score) if
+     * disc_bounce_type=0.
+     *
+     * To detect how 'big' the bounce is, ideally we'd be looking at the 16-bit
+     * absolute value of the velocity we just inverted. To save space, though, we
+     * take advantage of the fact that velocities are usually smaller than 0x100,
+     * and we just XOR the high and low byte. This gives us an approximate absolute
+     * value that works fine in the range we care about.
+     *
+     * Clobbers r0, r1, a.
      *
      * Returns by jumping to fp_bounce_axis_ret.
      */
@@ -139,13 +186,35 @@ static void fp_bounce_axis(void) __naked
     __asm
         clr     c
         clr     a
-        subb    a, @r0              ; DX/DY low
+        subb    a, @r0                      ; DX/DY low
         mov     @r0, a
+        mov     r1, a                       ; Save low byte
+
         clr     a
         inc     r0
-        subb    a, @r0              ; DX/DY high
+        subb    a, @r0                      ; DX/DY high
         mov     @r0, a
+        xrl     a, r1                       ; XOR high and low bytes
 
+        add     a, #(256 - BOUNCE_THR)
+        jnc     1$                          ; Ignore small bounces
+
+        clr     a                           ; Increment or clear score?
+        jnb     _disc_bounce_type, 2$
+
+        mov     a, _disc_score
+        anl     a, #0xF0                    ; If the score is at least 10, reset sleep timer
+        jz      3$
+        lcall   _disc_reset_sleep_timer
+
+3$:     mov     a, _disc_score              ; BCD increment
+        inc     a
+        clr     c                           ; (DA relies on both C and AC flags)
+        clr     ac
+        da      a
+
+2$:     mov     _disc_score, a
+1$:
         ljmp    _fp_bounce_axis_ret
     __endasm ;
 }
@@ -178,6 +247,11 @@ static void add_s8_to_s16(void) __naked
     __endasm ;
 }
 
+static void disc_reset_sleep_timer(void)
+{
+    disc_sleep_timer = sensor_tick_counter_high + IDLE_TIMEOUT;
+}
+
 
 void disconnected_init(void)
 {
@@ -191,6 +265,9 @@ void disconnected_init(void)
     disc_logo_y = BATTERY_HEIGHT << FP_BITS;
     disc_logo_dx = 0;
     disc_logo_dy = 0;
+    disc_score = 0;
+
+    disc_reset_sleep_timer();
 
     /*
      * First frame: Update the whole screen, but draw only the
@@ -207,14 +284,16 @@ void disconnected_init(void)
 void disconnected_poll(void)
 {
     /*
-     * Update sleep timer
+     * Check sleep timer
      */
 
-    power_idle_poll();
+    if (disc_sleep_timer == sensor_tick_counter_high)
+        power_sleep();
+
 
     if (disc_battery_draw) {
         /*
-         * Update battery indicator.
+         * Update battery indicator (and the scoreboard, if it's visible)
          *
          * We don't draw the battery indicator at all until we've finished
          * sampling (battery_v is nonzero).
@@ -224,6 +303,10 @@ void disconnected_poll(void)
 
         draw_clear();
         vram.num_lines = BATTERY_HEIGHT;
+
+        /*
+         * Battery indicator image
+         */
 
         __asm
             mov     a, (_ack_data + RF_ACK_BATTERY_V)   ; Skip if we have no samples yet
@@ -251,6 +334,23 @@ void disconnected_poll(void)
 
         2$:
         __endasm ;
+
+        /*
+         * Score counter (two-digit BCD)
+         */
+
+        __asm
+            mov     a, _disc_score                      ; First, look at tens digit
+            swap    a
+            anl     a, #0x0F
+            jz      3$                                  ; Hide if score < 10
+            mov     dptr, #XY(1,1)                      ; Draw location
+            lcall   _draw_digit
+            mov     a, _disc_score
+            lcall   _draw_digit
+        3$:
+        __endasm ;
+
         return;
     }
 
@@ -315,6 +415,8 @@ _fp_bounce_axis_ret:
         ; We can test the integer version of our X/Y coordinates. If they
         ; are out of range, clamp the underlying FP value and invert the velocity.
 
+        clr     _disc_bounce_type
+
         ; ---- X axis
 
         mov     a, r6                               ; Examine X axis
@@ -353,6 +455,8 @@ _fp_bounce_axis_ret:
 
         mov     _disc_logo_y+0, #(Y_MIN_FP >> 0)    ; Clamp to Y_MIN
         mov     _disc_logo_y+1, #(Y_MIN_FP >> 8)
+        setb    _disc_bounce_type                   ; Bounces off of Y_MIN are good for score
+        
 10$:    mov     r0, #_disc_logo_dy                  ; Y bounce
         ljmp    _fp_bounce_axis
 9$:

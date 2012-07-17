@@ -78,7 +78,11 @@ _disc_logo_dx::     ;     2 bytes
     .ds 2           ; +8
 _disc_logo_dy::     ;     2 bytes
     .ds 2           ; +10
-    .ds 20-12       ; +12
+_disc_score::       ;     1 byte
+    .ds 1           ; +12
+_disc_sleep_timer:: ;     1 byte
+    .ds 1           ; +13
+    .ds 20-14       ; +14
 
 ; ----------------------------------
 
@@ -97,6 +101,7 @@ _x_bg1_lshift::
 _disc_battery_draw::
 _x_bg1_offset_bit0::
     .ds 1
+_disc_bounce_type::
 _x_bg1_offset_bit1::
     .ds 1
 _x_bg1_offset_bit2::

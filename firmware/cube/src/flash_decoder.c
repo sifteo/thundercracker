@@ -39,7 +39,6 @@
 #include "cube_hardware.h"
 #include "radio.h"
 #include "sensors.h"
-#include "main.h"
 #include "lcd.h"
 #include <protocol.h>
 

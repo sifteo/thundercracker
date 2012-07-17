@@ -816,10 +816,6 @@ rx_complete_1:
         SPI_WAIT                                                ; RX STATUS byte
         mov     a, _SPIRDAT
 
-        ; Reset powerdown timer
-        
-        POWER_IDLE_RESET_ASM()
-
         ; We may have had multiple packets queued. Typically we can handle incoming
         ; packets at line rate, but if there is a particularly long VRAM write that
         ; still compresses into one packet, it could take us longer. We do not have
