@@ -187,26 +187,13 @@ nb_filter:
 
         mov     a, _MISC_PORT
         anl     a, #MISC_TOUCH
-        cjne    a, #MISC_TOUCH, 6$
-        
+        jz      6$
+
         jb      _touch, 8$
-#ifdef TOUCH_DEBOUNCE
-        mov     _touch_off, #(TOUCH_DEBOUNCE_OFF)
-        djnz    _touch_on, 8$
-#endif
-#ifdef DEBUG_TOUCH
-        mov     a, _touch_count
-        inc     a
-        mov     _touch_count, a
-#endif
         setb    _touch
         sjmp    7$
 6$:
         jnb     _touch, 8$
-#ifdef TOUCH_DEBOUNCE
-        mov     _touch_on, #(TOUCH_DEBOUNCE_ON)
-        djnz    _touch_off, 8$
-#endif
         clr     _touch
 7$: 
 

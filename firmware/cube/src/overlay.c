@@ -69,9 +69,16 @@ _lcd_window_x::     ;     1 byte
 _lcd_window_y::     ;     1 byte
     .ds 1           ; +1
 _bg2_state::        ;     14 bytes
-_draw_xy::          ;     2 bytes
     .ds 2           ; +2
-    .ds 20-4        ; +4
+_disc_logo_x::      ;     2 bytes
+    .ds 2           ; +4
+_disc_logo_y::      ;     2 bytes
+    .ds 2           ; +6
+_disc_logo_dx::     ;     2 bytes
+    .ds 2           ; +8
+_disc_logo_dy::     ;     2 bytes
+    .ds 2           ; +10
+    .ds 20-12       ; +12
 
 ; ----------------------------------
 
@@ -87,6 +94,7 @@ _x_bg1_rshift::
     .ds 1
 _x_bg1_lshift::
     .ds 1
+_disc_battery_draw::
 _x_bg1_offset_bit0::
     .ds 1
 _x_bg1_offset_bit1::

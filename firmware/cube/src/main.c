@@ -108,7 +108,7 @@ v_002b: ljmp    _tf2_isr
 
 init_3:
         lcall   _disconnected_init              ; Set up disconnected-mode idle screen
-        ; Fall through...
+        sjmp    _graphics_render                ; Draw first frame
 
         ;---------------------------------
         ; Graphics return (Main Loop)
@@ -125,7 +125,7 @@ _graphics_render_ret::
 
         ;---------------------------------
 
-        .ds 4
+        .ds 2
         .db 0
         .ascii "@scanlime"
         .db 0

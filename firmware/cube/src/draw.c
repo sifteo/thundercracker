@@ -25,17 +25,16 @@ void draw_clear()
         cjne    a, dph, 1$
     __endasm ;
 
-    vram.num_lines = 128;
     vram.mode = _SYS_VM_BG0_ROM;
     vram.flags = _SYS_VF_CONTINUOUS;
 }
 
 void draw_image(const __code uint8_t *image)
 {
+    // Image in DPTR, Dest address in DPTR1.
     image = image;
+ 
     __asm
-        mov     _DPL1, _draw_xy
-        mov     _DPH1, (_draw_xy + 1)
 
         ; Read header
 
@@ -115,9 +114,6 @@ void draw_image(const __code uint8_t *image)
         mov    _DPH1, a
 
         djnz    r2, 1$
-
-        mov     _draw_xy, _DPL1
-        mov     (_draw_xy + 1), _DPH1
 
     __endasm ;  
 }

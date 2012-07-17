@@ -21,13 +21,17 @@ void draw_clear();
 // Done with ROM drawing, get ready to take commands from the master
 void draw_exit();
 
-// Draw a ROM image at the current position
+// Draw a ROM image at the current position. XY coord in DPTR1
 void draw_image(const __code uint8_t *image);
-
-// Current drawing state. Not preserved across graphics_render().
-extern uint16_t draw_xy;
 
 // Pre-compute address of an XY coordinate. (tiles -> bytes)
 #define XY(_x, _y)      (((_x)<<1) + (_y) * (_SYS_VRAM_BG0_WIDTH * 2))
 
+// Macro to set XY
+#pragma sdcc_hash +
+#define DRAW_XY(_x, _y)                     __endasm ;\
+    __asm mov   _DPL1, #(XY(_x,_y) >> 0)    __endasm ;\
+    __asm mov   _DPH1, #(XY(_x,_y) >> 8)    __endasm ;\
+    __asm
+            
 #endif
