@@ -41,7 +41,6 @@
 #include "sensors.h"
 #include "main.h"
 #include "lcd.h"
-#include "draw.h"
 #include <protocol.h>
 
 /*
@@ -259,14 +258,6 @@ void flash_init(void)
 
 void flash_handle_fifo() __naked
 {
-    #ifdef DEBUG_FLASH_DECODER
-        vram.flags = _SYS_VF_CONTINUOUS;
-        draw_xy = XY(0,0); draw_hex(++B);
-        draw_xy = XY(0,1); draw_hex(flash_fifo_head);
-        draw_xy = XY(0,2); draw_hex(fls_tail);
-        draw_xy = XY(0,3); draw_hex(fls_state);
-    #endif
-
     __asm
 
         ; Handle reset requests with a tailcall to init

@@ -27,10 +27,7 @@ void draw_clear()
 
     vram.num_lines = 128;
     vram.mode = _SYS_VM_BG0_ROM;
-    vram.flags = _SYS_VF_TOGGLE;
-
-    // Reset state
-    draw_xy = XY(0, 0);
+    vram.flags = _SYS_VF_CONTINUOUS;
 }
 
 void draw_image(const __code uint8_t *image)

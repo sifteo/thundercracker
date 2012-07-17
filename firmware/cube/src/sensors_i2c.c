@@ -19,6 +19,10 @@ uint8_t i2c_state;
 uint8_t i2c_temp_1;
 uint8_t i2c_temp_2;
 
+// 16-bit accumulator, for integrating battery voltage
+uint16_t i2c_battery_total;
+uint8_t i2c_battery_count;
+
 __bit i2c_a21_current;  // Set by main thread only. What do we want A21 to be?
 __bit i2c_a21_target;   // Set by ISR only. What was A21 last updated to?
 __bit i2c_a21_lock;     // Set by ISR only. Is an A21 update in progress?
@@ -208,10 +212,10 @@ bs_3:
 bs_4:
         NEXT    (bs_5)
 
-        ; 5. Read low byte.
+        ; 5. Read and ignore low byte.
         ; This is the second-to-last byte, so we queue a Stop condition.
 bs_5:
-        mov     _i2c_temp_1, _W2DAT
+        mov     a, _W2DAT
         orl     _W2CON0, #W2CON0_STOP
         NEXT    (bs_6)
 
@@ -442,6 +446,63 @@ void i2c_a21_wait(void) __naked
     __endasm ;
 }
 
+void i2c_battery_store_results() __naked
+{
+    /*
+     * Store a battery voltage measurement.
+     *
+     * The high byte is in W2DAT. The low byte is ignored. The ADC is only 10-bit,
+     * and even the high 8 bits are pretty noisy. For battery voltage, we'd much
+     * prefer a slower but higher resolution result, so we integrate this noisy
+     * data over time in order to get a higher-resolution and more stable 16-bit
+     * battery voltage reading.
+     *
+     * The voltage we sample from the accelerometer is formatted as a signed
+     * 16-bit value, where 0 is the middle of the range, and polarity is inverted.
+     * To convert it back to an unsigned number with the proper polarity, we subtract
+     * the high byte from 0x7F.
+     */
+
+    __asm
+
+        ; Convert to unsigned
+
+        mov     a, #0x7F
+        clr     c
+        subb    a, _W2DAT
+
+        ; Add to the 16-bit accumulator
+
+        add     a, _i2c_battery_total+0
+        mov     _i2c_battery_total+0, a
+
+        mov     a, _i2c_battery_total+1
+        addc    a, #0
+        mov     _i2c_battery_total+1, a
+
+        ; Roll over after 256 measurements
+
+        djnz    _i2c_battery_count, 1$
+
+        ; Always set the LSB, to differentiate a very low battery from
+        ; the uknown state we power up in, before the first sample integrates.
+
+        mov     a, _i2c_battery_total+0
+        orl     a, #1
+        mov     (_ack_data + RF_ACK_BATTERY_V + 0), a
+        mov     (_ack_data + RF_ACK_BATTERY_V + 1), _i2c_battery_total+1
+        orl     _ack_bits, #RF_ACK_BIT_BATTERY_V
+
+        clr     a
+        mov     _i2c_battery_total+0, a
+        mov     _i2c_battery_total+1, a
+
+1$:
+        ljmp    _i2c_battery_store_results_ret
+
+    __endasm ;
+}
+
 void i2c_accel_store_results() __naked
 {
     /*
@@ -478,20 +539,5 @@ void i2c_accel_store_results() __naked
 3$:
 
         ljmp    _i2c_accel_store_results_ret
-    __endasm ;
-}
-
-void i2c_battery_store_results() __naked
-{
-    /*
-     * Store a battery voltage measurement. Low byte in i2c_temp_1, high byte in W2DAT.
-     * Returns by jumping to i2c_battery_store_results_ret.
-     */
-
-    __asm
-
-        mov     a, _W2DAT
-
-        ljmp    _i2c_battery_store_results_ret
     __endasm ;
 }

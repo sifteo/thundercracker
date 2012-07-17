@@ -59,7 +59,7 @@ bool Hardware::init(VirtualTime *masterTimer, const char *firmwareFile,
     setTouch(false);
     
     // XXX: Simulated battery level
-    adc.setInput(0, 0x8760);
+    i2c.accel.setADC1(0x8760);
     
     return true;
 }

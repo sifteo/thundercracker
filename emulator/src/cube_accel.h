@@ -30,6 +30,10 @@ class I2CAccelerometer {
         regs.out_z = z;
     }
 
+    void setADC1(uint16_t value16) {
+        regs.out_adc1 = value16;
+    }
+
     void i2cStart() {
         state = S_I2C_ADDRESS;
     }
