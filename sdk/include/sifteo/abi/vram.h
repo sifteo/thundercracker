@@ -80,6 +80,8 @@ extern "C" {
 #define _SYS_VA_COLORMAP        0x300
 #define _SYS_VA_BG1_BITMAP      0x3a8
 #define _SYS_VA_SPR             0x3c8
+#define _SYS_VA_BG1_XY          0x3f8
+#define _SYS_VA_BG0_XY          0x3fa
 #define _SYS_VA_FIRST_LINE      0x3fc
 #define _SYS_VA_NUM_LINES       0x3fd
 #define _SYS_VA_MODE            0x3fe
