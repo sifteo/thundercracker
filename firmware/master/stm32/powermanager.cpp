@@ -44,6 +44,9 @@ void PowerManager::init()
 /*
  * Enable interrupts that monitor vbus, which in turn manage the USB device.
  * USB and GPIO interrupts must be enabled.
+ *
+ * It's helpful to separate this from init() so we can keep the USB device
+ * disabled in the bootloader if an update is not required.
  */
 void PowerManager::beginVbusMonitor()
 {
@@ -77,7 +80,7 @@ void PowerManager::vbusDebounce(void* p)
 
     Tasks::clearPending(Tasks::PowerManager);
 
-    State s = static_cast<State>(vbus.isHigh());
+    State s = state();
     if (s != lastState) {
 
 #if (BOARD >= BOARD_TC_MASTER_REV2)
