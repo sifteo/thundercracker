@@ -34,11 +34,11 @@ void PowerManager::init()
 
     GPIOPin vcc3v3 = VCC33_ENABLE_GPIO;
     vcc3v3.setControl(GPIOPin::OUT_2MHZ);
+    vcc3v3.setLow();
 
     // set initial state
     _state = PowerManager::Uninitialized;
     vbus.setControl(GPIOPin::IN_FLOAT);
-    onVBusEdge();
 
     // and start listening for edges
     vbus.irqInit();
@@ -75,13 +75,13 @@ void PowerManager::railTransition(void* p)
 
         switch (s) {
         case BatteryPwr:
-            UsbDevice::handleSuspend();
+            UsbDevice::deinit();
             vcc3v3.setLow();
             break;
 
         case UsbPwr:
             vcc3v3.setHigh();
-            UsbDevice::handleResume();
+            UsbDevice::init();
             break;
 
         default:

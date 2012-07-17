@@ -23,6 +23,7 @@ Tasks::Task Tasks::TaskList[] = {
     #ifdef SIFTEO_SIMULATOR
     { 0 },
     #else
+    { PowerManager::railTransition, 0 },
     { UsbDevice::handleOUTData, 0},
     #endif
 
@@ -36,11 +37,6 @@ Tasks::Task Tasks::TaskList[] = {
     #if !defined(SIFTEO_SIMULATOR) && !defined(BOOTLOADER)
     { SampleProfiler::task, 0 },
     #endif
-
-    #ifndef SIFTEO_SIMULATOR
-    { PowerManager::railTransition, 0 },
-    #endif
-
 };
 
 void Tasks::init()

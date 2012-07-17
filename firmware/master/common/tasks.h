@@ -12,12 +12,12 @@ class Tasks
 {
 public:
     enum TaskID {
+        PowerManager,
         UsbOUT,
         AudioPull,
         Debugger,
         AssetLoader,
         HomeButton,
-        PowerManager,
         Profiler
     };
 
