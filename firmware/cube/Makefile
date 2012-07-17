@@ -86,7 +86,14 @@ tests: $(BIN)
 cube.bin: cube.hex
 	makebin -p $< $@
 
+cube.png: cube.bin
+	(echo "P4 256 512"; cat $<) | convert - $@
+
+visualize: cube.png
+	open $<
+
 clean:
 	rm -f *.mem src/*.rel src/*.rst src/*.sym *.lnk src/*.lst *.map src/*.asm
+	rm -f cube.bin cube.png cube.hex
     
-.PHONY: clean sizeprof debug tests
+.PHONY: clean sizeprof debug tests visualize
