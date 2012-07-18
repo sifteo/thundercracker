@@ -368,7 +368,7 @@ void disconnected_poll(void)
 
             DRAW_XY (11, 0)                             ; Draw battery outline
             mov     dptr, #_img_battery
-            lcall   _draw_image
+            acall   _draw_image
 
             mov     dptr, #_img_battery_bars_4          ; Pick a bars image based on the battery voltage
             mov     a, (_ack_data + RF_ACK_BATTERY_V)
@@ -401,7 +401,7 @@ void disconnected_poll(void)
 
             DRAW_XY (1, 0)
             mov     dptr, #_img_trophy
-            lcall   _draw_image
+            acall   _draw_image
             sjmp    3$
         4$:
 
@@ -412,9 +412,9 @@ void disconnected_poll(void)
             swap    a
             anl     a, #0x0F
             jz      3$                                  ; Hide if score < 10
-            lcall   _draw_digit
+            acall   _draw_digit
             mov     a, _disc_score
-            lcall   _draw_digit
+            acall   _draw_digit
         3$:
         __endasm ;
 
@@ -454,13 +454,13 @@ void disconnected_poll(void)
 _fp_bounce_axis_ret:
 
         mov     r0, #_disc_logo_x
-        lcall   _fp_integer
+        acall   _fp_integer
         mov     r6, a
-        lcall   _fp_integer
+        acall   _fp_integer
         mov     r7, a
-        lcall   _fp_integer
+        acall   _fp_integer
         mov     r4, a
-        lcall   _fp_integer
+        acall   _fp_integer
         mov     r5, a
 
         ; Convert these signed integer coordinates into unsigned BG0 panning amounts,
@@ -502,7 +502,7 @@ _fp_bounce_axis_ret:
         mov     _disc_logo_x+0, #(X_MIN_FP >> 0)    ; Clamp to X_MIN
         mov     _disc_logo_x+1, #(X_MIN_FP >> 8)
 7$:     mov     r0, #_disc_logo_dx                  ; X bounce
-        ljmp    _fp_bounce_axis
+        ajmp    _fp_bounce_axis
 6$:
 
         ; ---- Y axis
@@ -525,7 +525,7 @@ _fp_bounce_axis_ret:
         setb    _disc_bounce_type                   ; Bounces off of Y_MIN are good for score
         
 10$:    mov     r0, #_disc_logo_dy                  ; Y bounce
-        ljmp    _fp_bounce_axis
+        ajmp    _fp_bounce_axis
 9$:
 
         ; Motion equations. This includes a spring force returning
@@ -541,26 +541,26 @@ _fp_bounce_axis_ret:
         mov     r2, a
         mov     r3, a
         mov     a, r6                               ; Spring return force
-        lcall   _add_s8_to_s16
+        acall   _add_s8_to_s16
         mov     a, r4                               ; Damping force
-        lcall   _add_s8_to_s16
+        acall   _add_s8_to_s16
         mov     a, (_ack_data + RF_ACK_ACCEL + 0)   ; Tilt force
-        lcall   _add_s8_to_s16
+        acall   _add_s8_to_s16
         mov     r0, #_disc_logo_dx                  ; Integrate velocity and position
-        lcall   _fp_integrate_axis
+        acall   _fp_integrate_axis
 
         ; ---- Y axis
 
         mov     r2, #(256 - BATTERY_HEIGHT)         ; Compensate for BATTERY_HEIGHT
         mov     r3, #0xFF
         mov     a, r7                               ; Spring return force
-        lcall   _add_s8_to_s16
+        acall   _add_s8_to_s16
         mov     a, r5                               ; Damping force
-        lcall   _add_s8_to_s16
+        acall   _add_s8_to_s16
         mov     a, (_ack_data + RF_ACK_ACCEL + 1)   ; Tilt force
-        lcall   _add_s8_to_s16
+        acall   _add_s8_to_s16
         mov     r0, #_disc_logo_dy                  ; Integrate velocity and position
-        lcall   _fp_integrate_axis
+        acall   _fp_integrate_axis
 
     __endasm ;
     

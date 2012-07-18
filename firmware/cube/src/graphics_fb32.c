@@ -60,15 +60,15 @@ static void vm_fb32_line(uint16_t src)
 
         ; Low nybble
 
-        lcall   _vm_fb32_pixel
-        lcall   _vm_fb32_pixel3
+        acall   _vm_fb32_pixel
+        acall   _vm_fb32_pixel3
 
         ; High nybble
 
         mov     a, r5
         swap    a
-        lcall   _vm_fb32_pixel
-        lcall   _vm_fb32_pixel3
+        acall   _vm_fb32_pixel
+        acall   _vm_fb32_pixel3
 
         djnz    r4, 4$          ; Next byte
 

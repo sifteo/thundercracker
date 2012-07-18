@@ -105,12 +105,12 @@ __bit fls_bit2;
 // Return to a label on the next loop iteration
 #define NEXT(_label)                                            __endasm; \
     __asm mov   _fls_state, STATE(_label)                       __endasm; \
-    __asm ljmp  flash_loop                                      __endasm; \
+    __asm ajmp  flash_loop                                      __endasm; \
     __asm
 
 // Return to the current state on the next loop iteration
 #define AGAIN()                                                 __endasm; \
-    __asm ljmp  flash_loop                                      __endasm; \
+    __asm ajmp  flash_loop                                      __endasm; \
     __asm
 
 
