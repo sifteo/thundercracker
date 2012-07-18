@@ -493,7 +493,7 @@ static void vm_bg0_bg1_tiles_fast_p6(void) __naked
         BG1_JB(14$)
     
 10$:    BG1_NEXT_BIT()
-        acall   _addr_inc24
+        lcall   _addr_inc24
         BG1_UPDATE_BIT() BG1_JB_L(1$)
 12$:    lcall   _addr_inc8
         ASM_BG0_NEXT(9$) BG1_LOOP(10$)

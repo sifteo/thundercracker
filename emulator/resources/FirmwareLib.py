@@ -289,6 +289,13 @@ class CallGraph:
 
             #print "%04x %-20s -- sp=%02x path=%s" % (addr, mnemonic, sp, ', '.join("%04x" % a for a in path))
 
+            # Take this opportunity to check ACALL/AJMP instructions.
+            # There's an SDCC bug which causes them to be encoded incorrectly
+            # if they're at the very end of a 2kB page!
+            if mnemonic in ('ajmp_offset', 'acall_offset') and (addr & 0x7FF) >= 0x7FE:
+                raise ValueError("Found %s instruction at address 0x%04x, which will provoke an SDCC bug!"
+                    % (mnemonic, addr))
+
             # Dynamic branch
             if mnemonic == 'jmp_indir_a_dptr':
                 if addr not in self.dynBranchInfo:
