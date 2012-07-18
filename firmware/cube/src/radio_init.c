@@ -50,7 +50,7 @@ static void radio_transfer_table(const __code uint8_t *ptr)
 2$:     clr     a               ; Transfer one byte from buffer
         movc    a, @a+dptr
         inc     dptr
-        lcall   _radio_tx_sync
+        acall   _radio_tx_sync
 
         djnz    r0, 2$          ; Loop until done
         setb    _RF_CSN
@@ -192,7 +192,7 @@ void radio_set_idle_addr(void)
 
         clr     _RF_CSN
         mov     a, #(RF_CMD_W_REGISTER | RF_REG_RX_ADDR_P0)
-        lcall   _radio_tx_sync
+        acall   _radio_tx_sync
 
         ; Step (2), use remaining 5 bytes to generate RX address
 
@@ -213,7 +213,7 @@ void radio_set_idle_addr(void)
         jz      3$                  ; Disallowed value 0x55
         xrl     a, #0x55            ; Its okay! Get the original byte back.
 
-        lcall   _radio_tx_sync
+        acall   _radio_tx_sync
         djnz    r0, 2$              ; Next byte
         setb    _RF_CSN             ; End SPI transfer
 
@@ -221,7 +221,7 @@ void radio_set_idle_addr(void)
 
         clr     _RF_CSN
         mov     a, #(RF_CMD_W_REGISTER | RF_REG_RF_CH)
-        lcall   _radio_tx_sync
+        acall   _radio_tx_sync
 
         ; Step (3), prepare channel byte
 
@@ -245,7 +245,7 @@ void radio_set_idle_addr(void)
         mov     r0, a               ; Yes, it overflowed. Use the version we subtracted 126 from
 
 6$:     mov     a, r0
-        lcall   _radio_tx_sync      ; Write channel
+        acall   _radio_tx_sync      ; Write channel
         setb    _RF_CSN             ; End SPI transfer
 
     __endasm ;

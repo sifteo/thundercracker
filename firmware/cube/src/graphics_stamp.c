@@ -52,7 +52,7 @@ static void vm_stamp_pixel() __naked __using(GFX_BANK)
         lcall   _lcd_address_and_write
         inc     r5
 
-        ljmp    _vm_fb32_pixel
+        ajmp    _vm_fb32_pixel
 
     __endasm ;
 }
@@ -74,7 +74,7 @@ static void vm_stamp_line(uint16_t src) __naked __using(GFX_BANK)
         inc     dptr
         mov     r2, a
 
-        lcall   _vm_stamp_pixel
+        acall   _vm_stamp_pixel
 
         djnz    r3, 4$          ; Pitch wrap?
         mov     r3, _gfxbank_height
@@ -95,7 +95,7 @@ static void vm_stamp_line(uint16_t src) __naked __using(GFX_BANK)
         mov     a, r2
         swap    a
 
-        lcall   _vm_stamp_pixel
+        acall   _vm_stamp_pixel
 
         djnz    r6, 1$          ; Next pixel
 

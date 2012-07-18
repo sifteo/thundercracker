@@ -35,7 +35,7 @@ uint8_t __near ack_bits;
 
 #define RX_NEXT_NYBBLE                                  __endasm; \
         __asm   djnz    R_NYBBLE_COUNT, rx_loop         __endasm; \
-        __asm   ljmp    rx_complete                     __endasm; \
+        __asm   ajmp    rx_complete                     __endasm; \
         __asm
 
 // Negative sampling delta. MUST wrap at 1kB (both for correctness and security)
@@ -175,11 +175,11 @@ bsE:
         ; From RLE state? Go to rxs_default
         cjne    R_STATE, #(rxs_rle - rxs_default), 6$
         mov     R_STATE, a
-        ljmp    rxs_default
+        ajmp    rxs_default
 
         ; Otherwise, next nybble.
 6$:     mov     R_STATE, a
-        ljmp    rx_next_sjmp
+        ajmp    rx_next_sjmp
 
         ; ---- Loop for negative diffs
 
@@ -323,7 +323,7 @@ rx_flush:
         mov     _SPIRDAT, #RF_CMD_FLUSH_RX      ; RX_FLUSH command
         SPI_WAIT                                ; Wait for command byte
         mov     a, _SPIRDAT                     ; Ignore dummy STATUS byte
-        ljmp    #rx_complete_0                  ; Skip the RX loop (and end SPI transaction)
+        ajmp    #rx_complete_0                  ; Skip the RX loop (and end SPI transaction)
 
 no_rx_flush:
         inc     a                               ; Is packet not max-length?
@@ -386,7 +386,7 @@ rx_j:   jmp     @a+dptr
 rxs_diff_2:
         mov     R_DIFF, a
         mov     R_LOW, #0
-        ljmp    _rx_write_deltas
+        ajmp    _rx_write_deltas
 
         ;-------------------------------------------
         ; Default state (initial nybble)
@@ -410,7 +410,7 @@ rxs_default:
         mov     AR_SAMPLE, R_INPUT
         mov     R_DIFF, #RF_VRAM_DIFF_BASE
         mov     R_LOW, #0
-        ljmp    _rx_write_deltas
+        ajmp    _rx_write_deltas
 11$:
 
         ; ------------ Nybble 10ss -- Diff
@@ -445,7 +445,7 @@ rxs_diff_1:
         mov     a, R_INPUT
         anl     a, #0xF
         cjne    a, #7, rxs_diff_2
-        ljmp    rx_special              ; Redundant copy encoding, special meaning
+        ajmp    rx_special              ; Redundant copy encoding, special meaning
 
         ;-------------------------------------------
         ; Literal 14-bit index
@@ -510,7 +510,7 @@ rxs_rle:
         jz      13$
 
         anl     AR_LOW, #0xF            ; Only the low nybble is part of the valid run length
-        ljmp    _rx_write_deltas
+        ajmp    _rx_write_deltas
 
 13$:
         mov     a, R_LOW        ; Check low two bits of the _first_ RLE nybble
@@ -678,7 +678,7 @@ rxs_wrdelta_1_fragment:
         add     a, #4           ; n+5  (rx_write_deltas already adds 1)
         mov     R_LOW, a
 
-        ljmp    _rx_write_deltas
+        ajmp    _rx_write_deltas
 
         ;--------------------------------------------------------------------
         ; Special escape codes (8-bit copy encoding)
@@ -847,7 +847,7 @@ rx_complete_1:
         SPI_WAIT                ; End SPI transaction, then go to rx_begin_packet
         mov     a, _SPIRDAT
         setb    _RF_CSN
-        ljmp    rx_begin_packet
+        ajmp    rx_begin_packet
 1$:     SPI_WAIT                ; End SPI transaction, then send ACK
         mov     a, _SPIRDAT
         setb    _RF_CSN

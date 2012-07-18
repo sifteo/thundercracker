@@ -39,7 +39,7 @@
 // If we're done with the active sprites, jump ahead
 #define SPR_SKIP(id, l1, end)                                       __endasm; \
     __asm   cjne    R_SPR_ACTIVE, #(id), l1                         __endasm; \
-    __asm   ljmp    end                                             __endasm; \
+    __asm   ajmp    end                                             __endasm; \
     __asm   l1:                                                     __endasm; \
     __asm
 
@@ -129,7 +129,7 @@ void vm_bg0_spr_pixels() __naked
         mov     a, R_BG0_ADDR
         anl     a, #0x1F
         jnz     1$               ; No
-        ljmp    38$              ; Yes
+        ajmp    38$              ; Yes
         
 1$:     ; Test all active sprites
         
@@ -138,14 +138,14 @@ void vm_bg0_spr_pixels() __naked
         SPR_TEST(2, 12$) 16$: SPR_SKIP(3, 22$, 2$)
         SPR_TEST(3, 13$) sjmp 2$
 
-10$:    lcall   _spr_address_next_0  CHROMA_LONG(23$, 40$, 14$)
-11$:    lcall   _spr_address_next_1  CHROMA_LONG(24$, 41$, 15$)
-12$:    lcall   _spr_address_next_2  CHROMA_LONG(25$, 42$, 16$)
-13$:    lcall   _spr_address_next_3  CHROMA_LONG(26$, 4$, 2$)
+10$:    acall   _spr_address_next_0  CHROMA_LONG(23$, 40$, 14$)
+11$:    acall   _spr_address_next_1  CHROMA_LONG(24$, 41$, 15$)
+12$:    acall   _spr_address_next_2  CHROMA_LONG(25$, 42$, 16$)
+13$:    acall   _spr_address_next_3  CHROMA_LONG(26$, 4$, 2$)
 
-40$:    SPR_SKIP(1, 27$, 4$)  lcall   _spr_occluded_next_1
-41$:    SPR_SKIP(2, 28$, 4$)  lcall   _spr_occluded_next_2
-42$:    SPR_SKIP(3, 29$, 4$)  lcall   _spr_occluded_next_3
+40$:    SPR_SKIP(1, 27$, 4$)  acall   _spr_occluded_next_1
+41$:    SPR_SKIP(2, 28$, 4$)  acall   _spr_occluded_next_2
+42$:    SPR_SKIP(3, 29$, 4$)  acall   _spr_occluded_next_3
         sjmp 4$
 
 2$:     ; Background BG0        
@@ -169,7 +169,7 @@ void vm_bg0_spr_pixels() __naked
         
 7$:     inc     dptr                    ; Next BG0 tile
         inc     dptr
-        ASM_X_WRAP_CHECK(8$)
+        ASM_X_WRAP_CHECK_A(8$)
 
         ; Make sure all sprites are out of the way of this potential burst
 38$:    SPR_BG_BURST_TEST(0, 5$) SPR_SKIP(1, 30$, 36$)
@@ -186,7 +186,7 @@ void vm_bg0_spr_pixels() __naked
 5$:        
         cjne    R_LOOP_COUNT, #0, 3$
 37$:    ret
-3$:     ljmp    1$
+3$:     ajmp    1$
         
         ; --- BG0 Tile Burst
 
@@ -204,7 +204,7 @@ void vm_bg0_spr_pixels() __naked
         
         mov     a, R_LOOP_COUNT
         jz      37$
-        ljmp    7$
+        ajmp    7$
         
     __endasm ;
 }
@@ -251,7 +251,7 @@ void vm_bg0_spr1_fast() __naked
         mov     R_SPR_ADDR, a
         
         mov     R_RIGHT, #0x80
-        ljmp    12$
+        ajmp    12$
         
         ; Not already in the sprite. Calculate distance.
         
@@ -298,7 +298,7 @@ void vm_bg0_spr1_fast() __naked
         mov     R_BG0_ADDR, _y_bg0_addr_l
 8$:     inc     dptr
         inc     dptr
-        ASM_X_WRAP_CHECK(41$)
+        ASM_X_WRAP_CHECK_A(41$)
         ADDR_FROM_DPTR(_DPL);
         mov     ADDR_PORT, R_BG0_ADDR     
         mov     a, R_LEFT
@@ -448,7 +448,7 @@ void vm_bg0_spr_bg1_pixels() __naked
         mov     a, R_BG0_ADDR
         anl     a, #0x1F
         jnz     1$               ; No
-        ljmp    38$              ; Yes
+        ajmp    38$              ; Yes
         
 1$:
         ; Overlay BG1        
@@ -461,7 +461,7 @@ void vm_bg0_spr_bg1_pixels() __naked
         SPR_TEST(0, 10$) 14$: SPR_SKIP(1, 20$, 2$)
         SPR_TEST(1, 11$) 15$: SPR_SKIP(2, 21$, 2$)
         SPR_TEST(2, 12$) 16$: SPR_SKIP(3, 22$, 2$)
-        SPR_TEST(3, 13$) ljmp 2$
+        SPR_TEST(3, 13$) ajmp 2$
 
 10$:    lcall   _spr_address_next_0  CHROMA_LONG(23$, 41$, 14$)
 11$:    lcall   _spr_address_next_1  CHROMA_LONG(24$, 42$, 15$)
@@ -516,7 +516,7 @@ void vm_bg0_spr_bg1_pixels() __naked
         cjne    R_LOOP_COUNT, #0, 3$
 37$:    mov     _DPS, #0
         ret
-3$:     ljmp    1$
+3$:     ajmp    1$
         
         ; --- BG0 Tile Burst
 
@@ -541,7 +541,7 @@ void vm_bg0_spr_bg1_pixels() __naked
         
         mov     a, R_LOOP_COUNT
         jz      37$
-        ljmp    38$        
+        ajmp    38$        
         
     __endasm ;
 }

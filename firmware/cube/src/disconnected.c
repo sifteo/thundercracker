@@ -78,7 +78,7 @@ static void draw_logo(void) __naked
     __asm
         DRAW_XY (1,5)
         mov     dptr, #_img_logo
-        ljmp    _draw_image
+        ajmp    _draw_image
     __endasm ;
 }
 
@@ -213,7 +213,7 @@ static void fp_bounce_axis(void) __naked
         mov     a, _disc_score
         anl     a, #0xF0                    ; If the score is at least 10, reset sleep timer
         jz      3$
-        lcall   _disc_reset_sleep_timer
+        acall   _disc_reset_sleep_timer
 3$:
 
         jb      _disc_has_trophy, 1$        ; No score increment if we already have trophy
@@ -227,7 +227,7 @@ static void fp_bounce_axis(void) __naked
 
 2$:     mov     _disc_score, a
 1$:
-        ljmp    _fp_bounce_axis_ret
+        ajmp    _fp_bounce_axis_ret
     __endasm ;
 }
 
@@ -384,7 +384,7 @@ void disconnected_poll(void)
         1$:
 
             DRAW_XY (12, 1)                             ; Draw the correct battery bars image
-            lcall   _draw_image
+            acall   _draw_image
 
         2$:
         __endasm ;

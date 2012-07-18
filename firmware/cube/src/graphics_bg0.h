@@ -65,10 +65,16 @@ void vm_bg0_x_wrap_adjust(void) __naked;
         if (!--bg0_wrap)                                \
             DPTR -= _SYS_VRAM_BG0_WIDTH *2;             \
     }
-        
+
 #define ASM_X_WRAP_CHECK(lbl)                                   __endasm; \
     __asm djnz  r1, lbl                                         __endasm; \
     __asm lcall _vm_bg0_x_wrap_adjust                           __endasm; \
+    __asm lbl:                                                  __endasm; \
+    __asm
+
+#define ASM_X_WRAP_CHECK_A(lbl)                                 __endasm; \
+    __asm djnz  r1, lbl                                         __endasm; \
+    __asm acall _vm_bg0_x_wrap_adjust                           __endasm; \
     __asm lbl:                                                  __endasm; \
     __asm
 

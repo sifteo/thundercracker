@@ -69,7 +69,7 @@ static void i2c_accel_tx(const __code uint8_t *buf)
         ; Start transaction, read address
 
         mov     r0, #ACCEL_ADDR_TX
-        lcall   _i2c_tx_byte
+        acall   _i2c_tx_byte
         jb      W2CON1_NACK_ABIT, 1$
 
         ; Send two bytes from list
@@ -81,7 +81,7 @@ static void i2c_accel_tx(const __code uint8_t *buf)
         mov     r0, a
         inc     dptr
 
-        lcall   _i2c_tx_byte 
+        acall   _i2c_tx_byte 
         jb      W2CON1_NACK_ABIT, 1$
         djnz    r1, 2$
 
