@@ -30,6 +30,29 @@ __bit i2c_a21_lock;     // Set by ISR only. Is an A21 update in progress?
 __bit i2c_saved_dps;    // Store DPS in a bit variable, to save space
 
 
+void read_factory_packet_header() __naked
+{
+    /*
+     * Read the first byte of our factory test packet.
+     *
+     * Also, at this point, exit the disconnected state. A testjig
+     * that writes commands to us counts as a connection, and resets
+     * the packet deadline to the max possible (over 5 minutes)
+     */
+    __asm
+        setb    _radio_connected
+
+        mov     a, _sensor_tick_counter_high
+        dec     a
+        mov     _radio_packet_deadline, a
+
+        mov     a, _W2DAT
+
+        ajmp    read_factory_packet_header_ret
+    __endasm ;
+}
+
+
 /*
  * I2C ISR --
  *
@@ -355,17 +378,9 @@ fs_6n:
         NEXT    (fs_6)
 
         ; 6. Read first byte of factory test packet. Check for one-byte ops.
-        ;
-        ;    Also, at this point, exit the disconnected state. A testjig
-        ;    that writes commands to us counts as a connection, and resets
-        ;    the packet deadline to the max possible (over 5 minutes)
 fs_6:
-        setb    _radio_connected
-        mov     a, _sensor_tick_counter_high
-        dec     a
-        mov     _radio_packet_deadline, a
-
-        mov     a, _W2DAT
+        ajmp    _read_factory_packet_header
+read_factory_packet_header_ret:
 
         cjne    a, #0xfd, #fs_skip_fd   ; Check for flash data [fd] packet
         NEXT    (fs_9)

@@ -277,9 +277,9 @@ void radio_set_pairing_addr()
         clr     _RF_CSN
         mov     a, #(RF_CMD_W_REGISTER | RF_REG_RF_CH)
         mov     _CCPDATIB, #0x1C
-        lcall   _radio_tx_sync
+        acall   _radio_tx_sync
         mov     a, _CCPDATO
-        lcall   _radio_tx_sync
+        acall   _radio_tx_sync
         setb    _RF_CSN
     __endasm ;
 
