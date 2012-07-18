@@ -123,6 +123,26 @@ def stackAnalysis(p):
     if total >= 0x100:
         raise ValueError("Oh no, stack overflow is possible!")
 
+def jumpShorteningList(p):
+    print "\nLong jumps which may be shortened:"
+
+    for addr, instrs in p.instructions.iteritems():
+        for bytes in instrs:
+
+            if len(bytes) == 3:
+                target = (bytes[1] << 8) | bytes[2]
+                diff = target - (addr + len(bytes))
+
+            if bytes[0] == 0x12 and (target & 0x0700) == (addr & 0x0700):
+                print "\tlcall -> acall    %s" % p.lines[addr].strip()
+
+            if bytes[0] == 0x02:
+                # Prefer ajmp to sjmp, since it's less brittle overall
+                if (target & 0x0700) == (addr & 0x0700):
+                    print "\tljmp  -> ajmp     %s" % p.lines[addr].strip()
+                elif bytes[0] == 0x02 and diff >= -128 and diff <= 127:
+                    print "\tljmp  -> sjmp     %s" % p.lines[addr].strip()
+
 
 if __name__ == '__main__':
     p = FirmwareLib.RSTParser()
@@ -132,4 +152,6 @@ if __name__ == '__main__':
     visualMap(p)
     profileModuleSizes(p)
     profileSymbolSizes(p)
+    jumpShorteningList(p)
     stackAnalysis(p)
+
