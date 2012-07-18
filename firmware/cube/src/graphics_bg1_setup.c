@@ -307,7 +307,7 @@ static void vm_bg1_next(void)
             __asm
                 mov     dpl, _MD0
                 mov     dph, _MD1
-                lcall   _bitcount16_x2
+                acall   _bitcount16_x2
 
                 add     a, _DPL1
                 mov     _y_bg1_map, a
