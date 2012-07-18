@@ -18,4 +18,9 @@ ASSETDEPS += images/*.png sounds/*.xm $(ASSETS).lua
 CDEPS += src/*.h
 CCFLAGS += -Isrc
 
+# support standalone launcher build
+ifeq ($(SDK_VERSION), )
+CCFLAGS += -DSDK_VERSION=$(shell git describe --tags)
+endif
+
 include $(SDK_DIR)/Makefile.rules
