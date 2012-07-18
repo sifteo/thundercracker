@@ -27,8 +27,6 @@ void graphics_render_ret() __naked;
 #define GRAPHICS_RET()      __asm ljmp _graphics_ack __endasm;
 #define GRAPHICS_ARET()     __asm ajmp _graphics_ack __endasm;
 
-#define ACALL_FN(fn)        __asm acall _ ## fn __endasm;
-
 /*
  * Video mode entry points
  */
