@@ -12,7 +12,6 @@
 #include "radio.h"
 #include "sensors_i2c.h"
 
-uint8_t power_sleep_timer;
 
 void power_delay()
 {

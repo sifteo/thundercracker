@@ -80,6 +80,7 @@ uint8_t __near ack_bits;
 #define AR_NYBBLE_COUNT         (RF_BANK*8 + 7)
 
 uint16_t vram_dptr;                      // Current VRAM write pointer
+uint8_t radio_packet_deadline;           // Time at which we'll enter disconnected mode
 __bit radio_state_reset_not_pending;     // Next packet should start with a clean slate
 __bit radio_saved_dps;                   // Store DPS in a bit variable, to save space
 
@@ -807,6 +808,14 @@ rx_complete:
 rx_complete_0:
         setb    _RF_CSN         ; End SPI transaction
 rx_complete_1:
+
+        ; Push back our disconnection deadline. We disconnect if there have not been
+        ; any radio packets in 2 to 3 TF0 ticks. (There is an uncertainty of one tick)
+        ; This is just barely longer than the longest possible nap duration of 2 seconds.
+
+        ;mov     a, _sensor_tick_counter_high
+        ;add     a, #3
+        ;mov     _radio_packet_deadline, a
 
         ; nRF Interrupt acknowledge
 

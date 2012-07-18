@@ -409,8 +409,8 @@
 
 #define NB_ID_MASK              0x1F    // ID portion of neighbor bytes
 #define NB_FLAG_SIDE_ACTIVE     0x80    // There's a cube neighbored on this side
-#define NB0_FLAG_TOUCH          0x40    // In neighbors[0], toggles when touch is detected
 #define NB_BASE_MASK            0x98    // Combination of SIDE_ACTIVE and an ID between 24 and 31
+#define NB0_FLAG_TOUCH          0x40    // In neighbors[0], toggles when touch is detected
 
 #define FRAME_ACK_CONTINUOUS    0x40
 #define FRAME_ACK_COUNT         0x3F
@@ -511,8 +511,8 @@ typedef struct {
 
 #define FLS_BLOCK_SIZE          (64*1024)   // Size of flash erase blocks
 
-#define FLS_FIFO_SIZE           73      // Size of buffer between radio and flash decoder
-#define FLS_FIFO_USABLE         72      // Usable space in FIFO (SIZE-1)
+#define FLS_FIFO_SIZE           87      // Size of buffer between radio and flash decoder
+#define FLS_FIFO_USABLE         86      // Usable space in FIFO (SIZE-1)
 
 #define FLS_LUT_SIZE            16      // Size of persistent color LUT used by RLE encodings
 
