@@ -2,7 +2,7 @@ BIN = cube.hex
 
 # Main segment
 OBJS = \
-        src/main.rel \
+        src/vectors.rel \
         src/graphics_dispatch.rel \
         src/graphics_bg0.rel \
         src/graphics_bg1_setup.rel \

@@ -49,7 +49,6 @@ __start__stack:
         .ds     1
 
         ; Emit code at the beginning of code space, in the IVT area.
-        ; The NOTE lines below are handled specially by the static analyzer.
 
         .area   HOME (CODE)
 
