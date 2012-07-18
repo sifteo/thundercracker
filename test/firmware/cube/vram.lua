@@ -94,36 +94,43 @@ gx = {}
             gx.fe:init()
         end
         
-        -- If we had a trace file (-t command line option), enable tracing
-        -- before we start the simulated CPU.
-        gx.sys:setTraceMode(true)
-
         -- Starts the simulation thread
         gx.sys:start()
-        
-        -- Must be enough time for the cube to boot, worst-case
-        gx.sys:vsleep(0.3)
-        
-        -- Make sure the cube has rendered its idle frame
-        pixelCount = gx.cube:lcdPixelCount()
-        assertEquals(pixelCount >= LCD_PIXELS, true)
-        
-        -- Make sure the cube has stopped drawing
-        gx.sys:vsleep(0.1)
-        assertEquals(gx.cube:lcdPixelCount(), pixelCount)
-        gx:drawFrame()
     end
     
     function gx:setUp()
         -- Setup to be done before each test.
+
+        -- Must be enough time for the cube to boot, worst-case
+        gx.cube:reset()
+        gx.sys:vsleep(0.3)
+        
+        -- Send a radio hop, to enter connected mode, then reset the video flags
+        radio:tx("7af4123456789a")
+        radio:txn("31ffc000")
+        gx.sys:vsleep(0.1)
+
+        -- Make sure the cube has rendered its idle frame
+        pixelCount = gx.cube:lcdPixelCount()
+        assertEquals(pixelCount >= LCD_PIXELS, true)
+
+        -- Make sure the cube has stopped drawing
+        gx.sys:vsleep(0.1)
+        assertEquals(gx.cube:lcdPixelCount(), pixelCount)
+
         -- Seed the PRNG, and wipe VRAM. Reset the exception counter.
         
         gx:wipe()
         gx:setWindow(0, LCD_HEIGHT)
         gx:setRotation(0)
-        
+
+        gx.cube:xbPoke(VA_MODE, VM_BG0_ROM)
         gx.cube:xbPoke(VA_FLAGS, 0)
         gx.sys:vsleep(0.1)
+
+        -- Make sure we can draw a frame successfully
+
+        gx:drawFrame()
     end
     
     function gx:yield()
@@ -174,8 +181,8 @@ gx = {}
         local pixelsWritten
         repeat
             gx:yield()
-            
-            -- Did the cube hit any exceptions?        
+
+            -- Did the cube hit any exceptions?
             local newExceptionCount = gx.cube:exceptionCount()
             local exceptions = bit.band(newExceptionCount - gx.lastExceptionCount, 0xFFFFFFFF)
             if exceptions > 0 then
@@ -186,7 +193,7 @@ gx = {}
             -- Send a radio ping, keep the cube from sleeping.
             radio:txn("ff")
 
-            -- Wait for the frame to end, with a timeout            
+            -- Wait for the frame to end, with a timeout
             if gx.sys:vclock() - timestamp > 10.0 then
                 error("Timed out waiting for a frame to render")
             end
