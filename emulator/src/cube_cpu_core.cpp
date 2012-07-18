@@ -202,7 +202,7 @@ const char *em8051_exc_name(int aCode)
 {
     static const char *exc_names[] = {
         "Breakpoint reached",
-        "SP exception: stack address > 127",
+        "Stack overflow",
         "Invalid operation: acc-to-a move",
         "PSW not preserved over interrupt call",
         "SP not preserved over interrupt call",
