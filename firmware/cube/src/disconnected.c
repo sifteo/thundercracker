@@ -227,7 +227,7 @@ static void fp_bounce_axis(void) __naked
 
 2$:     mov     _disc_score, a
 1$:
-        ajmp    _fp_bounce_axis_ret
+        ajmp    fp_bounce_axis_ret
     __endasm ;
 }
 
@@ -459,7 +459,7 @@ void disconnected_poll(void)
         ; Also, extract the integer portion of the velocity as (r4, r5).
         ; That will be used below in the damping calculations.
 
-_fp_bounce_axis_ret:
+fp_bounce_axis_ret:
 
         mov     r0, #_disc_logo_x
         acall   _fp_integer

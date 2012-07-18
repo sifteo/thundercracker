@@ -207,7 +207,7 @@ as_8:
         ; 9. Read Z axis high byte, and store results
 as_9:
         ljmp    _i2c_accel_store_results
-_i2c_accel_store_results_ret:
+i2c_accel_store_results_ret:
 
         ; Fall through...
 
@@ -245,7 +245,7 @@ bs_5:
         ; 6. Read high byte, and store results
 bs_6:
         ljmp    _i2c_battery_store_results
-_i2c_battery_store_results_ret:
+i2c_battery_store_results_ret:
 
         ; Fall through...
 
@@ -545,7 +545,7 @@ void i2c_battery_store_results() __naked
         mov     _i2c_battery_total+1, a
 
 1$:
-        ljmp    _i2c_battery_store_results_ret
+        ljmp    i2c_battery_store_results_ret
 
     __endasm ;
 }
@@ -585,6 +585,6 @@ void i2c_accel_store_results() __naked
         orl     _ack_bits, #RF_ACK_BIT_ACCEL
 3$:
 
-        ljmp    _i2c_accel_store_results_ret
+        ljmp    i2c_accel_store_results_ret
     __endasm ;
 }
