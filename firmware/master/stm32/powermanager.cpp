@@ -6,9 +6,9 @@
 
 #include "macros.h"
 
-PowerManager::State PowerManager::_state;
+PowerManager::State PowerManager::lastState;
 GPIOPin PowerManager::vbus = USB_VBUS_GPIO;
-static SysTime::Ticks railTransitionDeadline;
+SysTime::Ticks PowerManager::debounceDeadline;
 
 /*
  * Early initialization that can (and must) run before global ctors have been run.
@@ -37,8 +37,17 @@ void PowerManager::init()
     vcc3v3.setLow();
 
     // set initial state
-    _state = PowerManager::Uninitialized;
+    lastState = PowerManager::Uninitialized;
     vbus.setControl(GPIOPin::IN_FLOAT);
+}
+
+/*
+ * Enable interrupts that monitor vbus, which in turn manage the USB device.
+ * USB and GPIO interrupts must be enabled.
+ */
+void PowerManager::beginVbusMonitor()
+{
+    onVBusEdge();
 
     // and start listening for edges
     vbus.irqInit();
@@ -49,10 +58,11 @@ void PowerManager::init()
 
 /*
  * Called from ISR context when an edge on vbus is detected.
+ * We wait for DEBOUNCE_MILLIS and then apply the current state at that point.
  */
 void PowerManager::onVBusEdge()
 {
-    railTransitionDeadline = SysTime::ticks() + SysTime::msTicks(10); //10ms debounce time
+    debounceDeadline = SysTime::ticks() + SysTime::msTicks(DEBOUNCE_MILLIS);
     Tasks::setPending(Tasks::PowerManager);
 }
 
@@ -60,15 +70,15 @@ void PowerManager::onVBusEdge()
  * Provides for a little settling time from the last edge
  * on vbus before initiating the actual rail transition
  */
-void PowerManager::railTransition(void* p)
+void PowerManager::vbusDebounce(void* p)
 {
-    if (SysTime::ticks() < railTransitionDeadline)
+    if (SysTime::ticks() < debounceDeadline)
         return;
 
     Tasks::clearPending(Tasks::PowerManager);
 
     State s = static_cast<State>(vbus.isHigh());
-    if (s != _state) {
+    if (s != lastState) {
 
 #if (BOARD >= BOARD_TC_MASTER_REV2)
         GPIOPin vcc3v3 = VCC33_ENABLE_GPIO;
@@ -89,7 +99,7 @@ void PowerManager::railTransition(void* p)
         }
 #endif
 
-        _state = s;
+        lastState = s;
     }
 }
 
@@ -100,4 +110,3 @@ void PowerManager::shutdown()
     vcc20.setControl(GPIOPin::OUT_2MHZ);
     vcc20.setLow();
 }
-

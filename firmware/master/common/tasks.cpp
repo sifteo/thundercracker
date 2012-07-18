@@ -23,7 +23,7 @@ Tasks::Task Tasks::TaskList[] = {
     #ifdef SIFTEO_SIMULATOR
     { 0 },
     #else
-    { PowerManager::railTransition, 0 },
+    { PowerManager::vbusDebounce, 0 },
     { UsbDevice::handleOUTData, 0},
     #endif
 

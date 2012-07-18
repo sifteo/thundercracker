@@ -44,7 +44,6 @@ void Bootloader::exec(bool userRequestedUpdate)
     // never comes back
 }
 
-
 /*
  * Provide a manual override of the standard startup process to account for the
  * scenario in which faulty firmware has been (successfully) loaded to a device.
@@ -86,7 +85,7 @@ void Bootloader::load()
 
         Tasks::init();
         NVIC.irqEnable(IVT.UsbOtg_FS);
-        UsbDevice::init();
+        PowerManager::beginVbusMonitor();
         Stm32Flash::unlock();
 
         // Indicate we're loading

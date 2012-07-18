@@ -2,6 +2,7 @@
 #define POWERMANAGER_H
 
 #include "gpio.h"
+#include "systime.h"
 
 class PowerManager
 {
@@ -14,21 +15,23 @@ public:
 
     static void earlyInit();
     static void init();
+    static void beginVbusMonitor();
 
     static ALWAYS_INLINE State state() {
-        return _state;
+        return static_cast<State>(vbus.isHigh());
     }
 
-    static void onVBusEdge();
-
-    static void railTransition(void* p);
-
+    static void vbusDebounce(void* p);
     static void shutdown();
 
+    // only exposed for use via exti
     static GPIOPin vbus;
+    static void onVBusEdge();
 
 private:
-    static State _state;
+    static const unsigned DEBOUNCE_MILLIS = 10;
+    static SysTime::Ticks debounceDeadline;
+    static State lastState;
 };
 
 #endif // POWERMANAGER_H

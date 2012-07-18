@@ -30,28 +30,18 @@
 int main()
 {
     /*
-     * If we've gotten bootloaded, relocate the vector table to account
-     * for offset at which we're placed into MCU flash.
-     *
-     * Avoid reinitializing periphs that the bootloader has already init'd:
-     * - PowerManager
-     * - SysTime
-     * - Crc
-     */
-#ifdef BOOTLOADABLE
-    NVIC.setVectorTable(NVIC.VectorTableFlash, Bootloader::SIZE);
-#else
-    PowerManager::init();
-    SysTime::init();
-    Crc32::init();
-#endif
-
-    /*
      * Nested Vectored Interrupt Controller setup.
      *
      * This won't actually enable any peripheral interrupts yet, since
      * those need to be unmasked by the peripheral's driver code.
+     *
+     * If we've gotten bootloaded, relocate the vector table to account
+     * for offset at which we're placed into MCU flash.
      */
+
+#ifdef BOOTLOADABLE
+    NVIC.setVectorTable(NVIC.VectorTableFlash, Bootloader::SIZE);
+#endif
 
     NVIC.irqEnable(IVT.EXTI9_5);                    // Radio interrupt
     NVIC.irqPrioritize(IVT.EXTI9_5, 0x80);          //  Reduced priority
@@ -87,7 +77,14 @@ int main()
 
     /*
      * High-level hardware initialization
+     *
+     * Avoid reinitializing periphs that the bootloader has already init'd.
      */
+#ifndef BOOTLOADER
+    SysTime::init();
+    PowerManager::init();
+    Crc32::init();
+#endif
 
     // This is the earliest point at which it's safe to use Usart::Dbg.
     Usart::Dbg.init(UART_RX_GPIO, UART_TX_GPIO, 115200);
@@ -130,7 +127,7 @@ int main()
     AudioOutDevice::init(&AudioMixer::instance);
     AudioOutDevice::start();
 
-    PowerManager::onVBusEdge();                     // force detect vbus on startup
+    PowerManager::beginVbusMonitor();
     SampleProfiler::init();
 
     /*
