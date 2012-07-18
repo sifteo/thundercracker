@@ -92,6 +92,12 @@ class Tiler:
 
         if pixels not in self.memo:
             self.memo[pixels] = True
+            
+            # 4-color tiles can't cross a 128-tile boundary
+            if (len(self.tiles) & 0x7F) == 0x7F:
+                print "Inserting dummy tile #%d" % len(self.tiles)
+                self.tiles.append([0] * 64)
+
             for plane in (tuple([x & 1 for x in pixels]),
                           tuple([x >> 1 for x in pixels])):
                 self.tiles.append(plane)
