@@ -101,21 +101,21 @@ gx = {}
     function gx:setUp()
         -- Setup to be done before each test.
 
+        -- Enable the testjig to put the cube into "connected" mode
         -- Must be enough time for the cube to boot, worst-case
+
         gx.cube:reset()
-        gx.sys:vsleep(0.3)
-        
-        -- Send a radio hop, to enter connected mode, then reset the video flags
-        radio:tx("7af4123456789a")
-        radio:txn("31ffc000")
-        gx.sys:vsleep(0.1)
+        gx.cube:testSetEnabled(true)
+        gx.sys:vsleep(0.2)
+        gx.cube:xbPoke(VA_FLAGS, 0)
 
         -- Make sure the cube has rendered its idle frame
+        -- Make sure the cube has stopped drawing
+
+        gx.sys:vsleep(0.2)
         pixelCount = gx.cube:lcdPixelCount()
         assertEquals(pixelCount >= LCD_PIXELS, true)
-
-        -- Make sure the cube has stopped drawing
-        gx.sys:vsleep(0.1)
+        gx.sys:vsleep(0.2)
         assertEquals(gx.cube:lcdPixelCount(), pixelCount)
 
         -- Seed the PRNG, and wipe VRAM. Reset the exception counter.
@@ -123,10 +123,8 @@ gx = {}
         gx:wipe()
         gx:setWindow(0, LCD_HEIGHT)
         gx:setRotation(0)
-
         gx.cube:xbPoke(VA_MODE, VM_BG0_ROM)
         gx.cube:xbPoke(VA_FLAGS, 0)
-        gx.sys:vsleep(0.1)
 
         -- Make sure we can draw a frame successfully
 
