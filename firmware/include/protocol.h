@@ -410,7 +410,9 @@
 #define NB_ID_MASK              0x1F    // ID portion of neighbor bytes
 #define NB_FLAG_SIDE_ACTIVE     0x80    // There's a cube neighbored on this side
 #define NB_BASE_MASK            0x98    // Combination of SIDE_ACTIVE and an ID between 24 and 31
-#define NB0_FLAG_TOUCH          0x40    // In neighbors[0], toggles when touch is detected
+
+#define NB0_FLAG_TOUCH          0x40    // In neighbors[0], indicates touch state
+#define NB1_FLAG_FLS_RESET      0x40    // In neighbors[1], toggles at any flash state machine reset
 
 #define FRAME_ACK_CONTINUOUS    0x40
 #define FRAME_ACK_COUNT         0x3F
@@ -456,7 +458,7 @@ typedef union {
         /*
          * Number of bytes processed by the flash decoder so
          * far. Increments and wraps around, never decrements or
-         * resets. Also increments once on a flash reset completion.
+         * resets.
          */
         uint8_t flash_fifo_bytes;
 

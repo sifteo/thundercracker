@@ -239,9 +239,9 @@ void flash_init(void)
         mov     _flash_fifo_head, a
 
         ; Flash reset must send back a full packet, including the HWID.
-        ; We acknowledge a reset as if it were one data byte.
+        ; We acknowledge a reset by toggling NB1_FLAG_FLS_RESET.
 
-        inc     (_ack_data + RF_ACK_FLASH_FIFO)
+        xrl     (_ack_data + RF_ACK_NEIGHBOR + 1), #(NB1_FLAG_FLS_RESET)
         orl     _ack_bits, #RF_ACK_BIT_HWID
 
     __endasm ;
