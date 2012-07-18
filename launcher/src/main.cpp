@@ -8,6 +8,7 @@
 #include "elfmainmenuitem.h"
 #include "assets.gen.h"
 #include "applet/getgames.h"
+#include "applet/status.h"
 
 using namespace Sifteo;
 
@@ -34,6 +35,7 @@ void main()
         // Populate the menu
         ELFMainMenuItem::findGames(menu);
         GetGamesApplet::add(menu);
+        StatusApplet::add(menu);
 
         menu.run();
     }

@@ -21,3 +21,5 @@ NineBlock_Shapes = image{ "images/nineblock-shapes.png", width=32, height=32 }
 -- Applet icons
 
 Icon_GetGames = image{ "images/icon-getgames.png" }
+Icon_Status = image{ "images/icon-status.png" }
+Icon_StatusMaster = image{ "images/icon-statusmaster.png" }
