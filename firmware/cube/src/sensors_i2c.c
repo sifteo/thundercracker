@@ -355,11 +355,17 @@ fs_6n:
         NEXT    (fs_6)
 
         ; 6. Read first byte of factory test packet. Check for one-byte ops.
+        ;
         ;    Also, at this point, exit the disconnected state. A testjig
-        ;    that writes commands to us counts as a connection.
+        ;    that writes commands to us counts as a connection, and resets
+        ;    the packet deadline to the max possible (over 5 minutes)
 fs_6:
-        mov     a, _W2DAT
         setb    _radio_connected
+        mov     a, _sensor_tick_counter_high
+        dec     a
+        mov     _radio_packet_deadline, a
+
+        mov     a, _W2DAT
 
         cjne    a, #0xfd, #fs_skip_fd   ; Check for flash data [fd] packet
         NEXT    (fs_9)

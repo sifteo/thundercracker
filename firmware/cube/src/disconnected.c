@@ -308,11 +308,12 @@ static uint8_t disc_find_neighbored_base(void) __naked
 void disconnected_init(void)
 {
     /*
-     * Reset system state
+     * Reset system state.
+     * Returns by tailcall to graphics_render().
      */
 
-    // xxx
-    nb_tx_id = 0xff;
+    radio_connected = 0;
+    nb_tx_id = 0;
 
     /*
      * Initialize disconnected-mode state
@@ -340,11 +341,18 @@ void disconnected_init(void)
     draw_clear();
     draw_logo();
     vram.num_lines = 128;
+
+    return graphics_render();
 }
 
 
 void disconnected_poll(void)
 {
+    /*
+     * Handle one main loop cycle, in disconnected mode.
+     * Returns by tailcall to graphics_render().
+     */
+
     if (disc_battery_draw) {
         /*
          * Update battery indicator (and the scoreboard, if it's visible)
@@ -418,7 +426,7 @@ void disconnected_poll(void)
         3$:
         __endasm ;
 
-        return;
+        return graphics_render();
     }
 
     /*
@@ -604,5 +612,7 @@ _fp_bounce_axis_ret:
             }
         }
     }
+
+    return graphics_render();
 }
 

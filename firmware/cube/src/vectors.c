@@ -74,7 +74,7 @@ v_000b: ljmp    _tf0_isr
         ;---------------------------------
 
 init_1:
-        lcall   _power_init         ; Start subsystem init sequence
+        lcall   _power_init                     ; Start subsystem init sequence
         lcall   _params_init
         lcall   _flash_init
         sjmp    init_2
@@ -90,12 +90,12 @@ v_001b: ljmp    _tf1_isr
         ;---------------------------------
 
 init_2:
-        lcall   _radio_init         ; Subsystem init, continued
+        lcall   _radio_init                     ; Subsystem init, continued
         lcall   _sensors_init
-        setb    _IEN_EN             ; Global interrupt enable (subsystem init done)
-        sjmp    init_3
+        setb    _IEN_EN                         ; Global interrupt enable (subsystem init done)
+        ljmp    _disconnected_init              ; Init disconnected mode and enter graphics loop
 
-        .ds     3
+        .ds     2
 
         ;---------------------------------
         ; TF2 Vector
@@ -103,26 +103,24 @@ init_2:
 
 v_002b: ljmp    _tf2_isr
 
-init_3:
-        lcall   _disconnected_init              ; Set up disconnected-mode idle screen
-        sjmp    _graphics_render                ; Draw first frame
-
         ;---------------------------------
-        ; Graphics return (Main Loop)
+        ; Graphics Return Vector
         ;---------------------------------
 
 _graphics_render_ret::
 
-        jb      _radio_connected, 2$            ; Skip disconnected tasks if connected
-        lcall   _disconnected_poll
+        jb      _radio_connected, 1$            ; Skip disconnected tasks if connected
+3$:     ljmp    _disconnected_poll              ; One frame in disconnected-mode main loop
+1$:
+        mov     a, _sensor_tick_counter_high    ; Check connection timeout
+        cjne    a, _radio_packet_deadline, 2$
+        sjmp    3$                              ; Disconnect if we reach the deadline
 2$:
-
-        lcall   _flash_handle_fifo              ; Flash polling task
-        sjmp    _graphics_render                ; Branch to graphics mode handler
+        lcall   _flash_handle_fifo              ; Pump flash FIFO
+        sjmp    _graphics_render                ; Poll for graphics rendering
 
         ;---------------------------------
 
-        .ds 2
         .db 0
         .ascii "@scanlime"
         .db 0

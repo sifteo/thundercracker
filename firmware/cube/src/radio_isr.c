@@ -813,9 +813,9 @@ rx_complete_1:
         ; any radio packets in 2 to 3 TF0 ticks. (There is an uncertainty of one tick)
         ; This is just barely longer than the longest possible nap duration of 2 seconds.
 
-        ;mov     a, _sensor_tick_counter_high
-        ;add     a, #3
-        ;mov     _radio_packet_deadline, a
+        mov     a, _sensor_tick_counter_high
+        add     a, #3
+        mov     _radio_packet_deadline, a
 
         ; nRF Interrupt acknowledge
 
