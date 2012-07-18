@@ -8,7 +8,8 @@
 
 /*
  * Implements the cube's behavior while disconnected from the base. Includes
- * an interactive idle screen, battery meter, and power-down timer.
+ * an interactive idle screen, battery meter, and power-down timer, as well
+ * as the default radio behavior (idle hopping, pairing).
  */
 
 #include <stdint.h>
@@ -16,6 +17,7 @@
 #include "graphics.h"
 #include "draw.h"
 #include "sensors.h"
+#include "sensors_nb.h"
 #include "power.h"
 
 extern __bit disc_battery_draw;     // 0 = drawing logo, 1 = drawing battery
@@ -56,6 +58,10 @@ extern uint8_t disc_score;
 extern __bit disc_bounce_type;
 extern __bit disc_has_trophy;
 extern uint8_t disc_sleep_timer;
+
+// Idle radio state
+extern uint8_t disc_hop_timer;
+extern uint8_t disc_nb_base;
 
 extern const __code uint8_t img_logo[];
 extern const __code uint8_t img_trophy[];
@@ -258,9 +264,56 @@ static void disc_reset_sleep_timer(void)
     disc_sleep_timer = sensor_tick_counter_high + IDLE_TIMEOUT;
 }
 
+static void disc_reset_radio_state(void)
+{
+    /*
+     * Put the radio on a predictable channel and address, based
+     * on our hardware ID. Use the default idle address first. 
+     *
+     * Schedule the first hop to occur between 1 and 2 TF0 ticks
+     * from now. There's a one-tick uncertainty in our timer, and
+     * we never want to hop too soon after powerup.
+     */
+
+    radio_idle_hop = 0;
+    disc_hop_timer = sensor_tick_counter_high + 2;
+    radio_set_idle_addr();
+}
+
+static uint8_t disc_find_neighbored_base(void) __naked
+{
+    /*
+     * Look for a base among the filtered neighbor results. If we find one,
+     * returns its neighbor packet byte. If not, returns zero.
+     */
+
+    __asm
+        mov     r0, #(_ack_data + RF_ACK_NEIGHBOR)
+1$:
+        mov     a, @r0
+        mov     dpl, a
+        anl     a, #NB_BASE_MASK        ; Tests presence bit plus ID >= 24
+        cjne    a, #NB_BASE_MASK, 2$
+        ret
+2$:
+        inc     r0
+        cjne    r0, #(_ack_data + RF_ACK_NEIGHBOR + 4), 1$
+
+        mov     dpl, #0                 ; Found nothing
+        ret
+    __endasm ;
+}
+
 
 void disconnected_init(void)
 {
+    /*
+     * Reset system state
+     */
+
+    // xxx
+    nb_tx_id = 0xff;
+
     /*
      * Initialize disconnected-mode state
      */
@@ -273,8 +326,10 @@ void disconnected_init(void)
     disc_logo_dx = 0;
     disc_logo_dy = 0;
     disc_score = 0;
+    disc_nb_base = 0;
 
     disc_reset_sleep_timer();
+    disc_reset_radio_state();
 
     /*
      * First frame: Update the whole screen, but draw only the
@@ -515,5 +570,39 @@ _fp_bounce_axis_ret:
 
     if (disc_sleep_timer == sensor_tick_counter_high)
         vram.mode = _SYS_VM_SLEEP;
+
+    /*
+     * Radio:
+     *
+     *   1. Check whether we're neighbored to a base. If so, we're pairing.
+     *      Set a fixed address, and a channel derived from the neighbor ID.
+     *
+     *   2. If not, implement idle hopping. Once per TF0 period, hop to our
+     *      alternate channel or back. This prevents us from getting stuck
+     *      on a channel with lots of interference.
+     */
+
+    {
+        uint8_t nb_base = disc_find_neighbored_base();
+
+        if (nb_base == disc_nb_base) {
+            // No change in neighbored base
+            if (disc_hop_timer == sensor_tick_counter_high) {
+                // Idle for 1+ seconds. Hop to/from the alternate channel.
+                ++disc_hop_timer;
+                radio_idle_hop ^= 1;
+                radio_set_idle_addr();
+            }
+        } else {
+            disc_nb_base = nb_base;
+            if (nb_base) {
+                // New neighbored base
+                
+            } else {
+                // We no longer have a neighbored base
+                disc_reset_radio_state();
+            }
+        }
+    }
 }
 

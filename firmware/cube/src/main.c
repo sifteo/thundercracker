@@ -95,10 +95,9 @@ init_2:
         lcall   _radio_init         ; Subsystem init, continued
         lcall   _sensors_init
         setb    _IEN_EN             ; Global interrupt enable (subsystem init done)
-        setb    _RF_CE              ; Radio enable
         sjmp    init_3
 
-        .ds     1
+        .ds     3
 
         ;---------------------------------
         ; TF2 Vector

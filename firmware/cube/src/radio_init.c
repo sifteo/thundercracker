@@ -60,6 +60,15 @@ static void radio_transfer_table(const __code uint8_t *ptr)
 
 void radio_init(void)
 {
+    /*
+     * Initialize the radio, but don't yet turn it on.
+     *
+     * Before using the radio, it still needs a channel and address
+     * assigned, then you must call radio_rx_enable().
+     *
+     * This is normally done for the first time when disconnected_init()
+     * invokes radio_set_idle_addr().
+     */
     static const __code uint8_t table[] = {
 
         /* Enable nRF24L01 features */
@@ -100,7 +109,6 @@ void radio_init(void)
     radio_rx_disable();                 // Receiver starts out disabled
     RF_CKEN = 1;                        // Radio clock running
     radio_transfer_table(table);        // Send initialization commands
-    radio_set_idle_addr();              // Default address and channel
     radio_irq_enable();
 }
 
@@ -138,7 +146,8 @@ void radio_set_idle_addr(void)
      * for use when we're idle. If the radio_idle_hop bit is set, we use
      * the alternate channel rather than the default one.
      *
-     * Must be called while the radio receiver is disabled.
+     * This function disables the radio receiver if it's enabled, and enables
+     * it again before leaving.
      *
      * Algorithm:
      *
@@ -160,6 +169,8 @@ void radio_set_idle_addr(void)
      *   1. Add 62 to the address
      *   2. If it's greater than 125, subtract 126
      */
+
+    radio_rx_disable();
 
     __asm
 
@@ -237,4 +248,6 @@ void radio_set_idle_addr(void)
         setb    _RF_CSN             ; End SPI transfer
 
     __endasm ;
+
+    radio_rx_enable();
 }

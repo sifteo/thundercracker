@@ -158,14 +158,14 @@
  *
  *   ec 4f a9 52 18
  *
- * The channel is derived from the first byte of the neighbor packet (0xE0 - 0xFF)
- * via Galois Field multiplication by the constant 0x1C, using the 8-bit AES Galois
- * Field. This is efficient to implement on the nRF using its GF multiplication
+ * The channel is derived from the neighbor ID (24-31) via Galois Field
+ * multiplication by the constant 0x1C, using the 8-bit AES Galois Field.
+ * This is efficient to implement on the nRF using its GF multiplication
  * accelerator. Elsewhere, we can use a simple lookup table.
  *
  * IDs 24 through 31 correspond with channels:
  *
- *   [85, 73, 109, 113, 37, 57, 29, 1]
+ *   [59, 39, 3, 31, 75, 87, 115, 111]
  *
  */
 
@@ -410,6 +410,7 @@
 #define NB_ID_MASK              0x1F    // ID portion of neighbor bytes
 #define NB_FLAG_SIDE_ACTIVE     0x80    // There's a cube neighbored on this side
 #define NB0_FLAG_TOUCH          0x40    // In neighbors[0], toggles when touch is detected
+#define NB_BASE_MASK            0x98    // Combination of SIDE_ACTIVE and an ID between 24 and 31
 
 #define FRAME_ACK_CONTINUOUS    0x40
 #define FRAME_ACK_COUNT         0x3F

@@ -82,7 +82,11 @@ _disc_score::       ;     1 byte
     .ds 1           ; +12
 _disc_sleep_timer:: ;     1 byte
     .ds 1           ; +13
-    .ds 20-14       ; +14
+_disc_hop_timer::   ;     1 byte
+    .ds 1           ; +14
+_disc_nb_base::     ;     1 byte
+    .ds 1           ; +15
+    .ds 20-16       ; +16
 
 ; ----------------------------------
 
