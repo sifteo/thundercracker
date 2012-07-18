@@ -8,7 +8,6 @@ class PowerManager
 {
 public:
     enum State {
-        Uninitialized   = -1,
         BatteryPwr      = 0,
         UsbPwr          = 1
     };
@@ -32,6 +31,8 @@ private:
     static const unsigned DEBOUNCE_MILLIS = 10;
     static SysTime::Ticks debounceDeadline;
     static State lastState;
+
+    static void setState(State s);
 };
 
 #endif // POWERMANAGER_H
