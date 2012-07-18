@@ -313,7 +313,7 @@ void disconnected_init(void)
      */
 
     radio_connected = 0;
-    nb_tx_id = 0xff;
+    nb_tx_id = 0;
 
     /*
      * Initialize disconnected-mode state
