@@ -57,13 +57,10 @@ __start__stack:
 
 v_0000:
         mov     sp, #(__start__stack - 1)       ; Init stack
-        clr     a                               ; IRAM clear loop
-        mov     r0, a
-1$:     mov     @r0, a
-        djnz    r0, 1$
-        sjmp    init_1
+        lcall   _radio_init                     ; Turn on radio, and program it with static settings
+        lcall   _power_init                     ; Check wakeup reason, handle wake-on-RF, turn on power rails
 
-        .ds     1
+        sjmp    init_1                          ; Continue init below...
 
         ;---------------------------------
         ; TF0 Vector
@@ -74,12 +71,15 @@ v_000b: ljmp    _tf0_isr
         ;---------------------------------
 
 init_1:
-        lcall   _power_init                     ; Start subsystem init sequence
-        lcall   _params_init
-        lcall   _flash_init
-        sjmp    init_2
+        clr     a                               ; IRAM clear loop
+        mov     r0, a
+1$:     mov     @r0, a
+        djnz    r0, 1$
 
-        .ds     2
+        lcall   _params_init                    ; Initialize HWID in NVM
+        sjmp    init_2                          ; Continue init below...
+
+        .ds     3
 
         ;---------------------------------
         ; TF1 Vector
@@ -90,8 +90,8 @@ v_001b: ljmp    _tf1_isr
         ;---------------------------------
 
 init_2:
-        lcall   _radio_init                     ; Subsystem init, continued
-        lcall   _sensors_init
+        lcall   _flash_init                     ; Init flash state machine
+        lcall   _sensors_init                   ; Init sensor IRQs
         setb    _IEN_EN                         ; Global interrupt enable (subsystem init done)
         ljmp    _disconnected_init              ; Init disconnected mode and enter graphics loop
 

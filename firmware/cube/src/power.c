@@ -41,6 +41,8 @@ void power_init(void)
      *
      * We don't care why we were sleeping. If we did, though, we could do
      * something useful with the value read back from PWRDWN.
+     *
+     * Runs before clearing RAM, but after initializing the radio.
      */
 
     PWRDWN;

@@ -65,11 +65,18 @@ void radio_init(void)
      * Initialize the radio, but don't yet turn it on.
      *
      * Before using the radio, it still needs a channel and address
-     * assigned, then you must call radio_rx_enable().
+     * assigned, then you must call radio_rx_enable(). This is normally
+     * done for the first time when disconnected_init() invokes
+     * radio_set_idle_addr(), or when we do the same when setting
+     * up wake-on-RF.
      *
-     * This is normally done for the first time when disconnected_init()
-     * invokes radio_set_idle_addr().
+     * This is the very first initialization step we run, before any
+     * peripherals are powered on. This needs to stay short, since
+     * it runs even while we're asleep and polling for wake-on-RF.
+     *
+     * Runs before clearing RAM!
      */
+
     static const __code uint8_t table[] = {
 
         /* Enable nRF24L01 features */
