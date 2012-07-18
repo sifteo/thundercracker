@@ -32,6 +32,9 @@ void graphics_render(void) __naked
      * i2c_a21_target, but we don't require it.)
      */
 
+    // Reset watchdog ONLY in main loop!
+    power_wdt_set();
+
     __asm
 
         orl     _next_ack, #FRAME_ACK_CONTINUOUS
@@ -67,9 +70,6 @@ void graphics_render(void) __naked
 
     // Set up colormap (Used by FB32, STAMP)
     DPH1 = _SYS_VA_COLORMAP >> 8;
-
-    // Reset watchdog ONLY in main loop!
-    power_wdt_set();
 
     /*
      * Video mode jump table.
