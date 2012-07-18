@@ -133,12 +133,12 @@ def jumpShorteningList(p):
                 target = (bytes[1] << 8) | bytes[2]
                 diff = target - (addr + len(bytes))
 
-            if bytes[0] == 0x12 and (target & 0x0700) == (addr & 0x0700):
+            if bytes[0] == 0x12 and (target & 0xF800) == (addr & 0xF800):
                 print "\tlcall -> acall    %s" % p.lines[addr].strip()
 
             if bytes[0] == 0x02:
                 # Prefer ajmp to sjmp, since it's less brittle overall
-                if (target & 0x0700) == (addr & 0x0700):
+                if (target & 0xF800) == (addr & 0xF800):
                     print "\tljmp  -> ajmp     %s" % p.lines[addr].strip()
                 elif bytes[0] == 0x02 and diff >= -128 and diff <= 127:
                     print "\tljmp  -> sjmp     %s" % p.lines[addr].strip()

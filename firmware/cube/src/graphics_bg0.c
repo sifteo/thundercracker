@@ -116,13 +116,13 @@ static void vm_bg0(void) __naked
 
     lcd_begin_frame();
     i2c_a21_wait();
-    vm_bg0_setup();
+    ACALL_FN(vm_bg0_setup);
 
     do {
-        vm_bg0_line();
-        vm_bg0_next();
-    } while (--y);    
+        ACALL_FN(vm_bg0_line);
+        ACALL_FN(vm_bg0_next);
+    } while (--y);
 
     lcd_end_frame();
-    GRAPHICS_RET();
+    GRAPHICS_ARET();
 }
