@@ -36,6 +36,7 @@ static void radio_transfer_table(const __code uint8_t *ptr)
      * isn't intended to be efficient.
      */
 
+    ptr = ptr;
     __asm
 
 3$:     clr     a               ; Read length prefix

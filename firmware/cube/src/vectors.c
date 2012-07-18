@@ -13,7 +13,6 @@
 #include "cube_hardware.h"
 #include "flash.h"
 #include "params.h"
-#include "battery.h"
 #include "disconnected.h"
 
 __bit global_busy_flag;

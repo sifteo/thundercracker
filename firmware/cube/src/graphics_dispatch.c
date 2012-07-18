@@ -7,7 +7,6 @@
  */
 
 #include "graphics.h"
-#include "main.h"
 #include "sensors.h"
 #include "power.h"
 
