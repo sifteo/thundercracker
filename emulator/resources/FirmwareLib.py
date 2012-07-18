@@ -161,16 +161,13 @@ class RSTParser:
                 # Current address, used in some busy-loops
                 self.branchTargets[address] = True
 
-            elif source == '(.-2)':
-                # Used in SPI_WAIT
-                self.branchTargets[address-2] = True
-
-            elif source == '(.+6)':
-                # Used in BG1
-                self.branchTargets[address+6] = True
-
             else:
-                raise Exception("Unimplemented relative label '%s'" % source)
+                # Of the form (.+N) or (.-N)?
+                m = re.match(r'\(\.([-+][0-9]+)\)', source)
+                if m:
+                    self.branchTargets[address + int(m.group(1))] = True
+                else:
+                    raise Exception("Unimplemented relative label '%s'" % source)
 
         # Module size accounting, per-byte rather than per-instruction
         for byte in data:
@@ -277,6 +274,9 @@ class CallGraph:
             # Remember which instructions we've hit
             if addr in self.unvisited:
                 del self.unvisited[addr]
+
+            if addr not in self.p.instructions:
+                raise ValueError("Analyzer error, hit unknown address 0x%04x on path %r" % (addr, path))
 
             # Decode the instruction
             bytes = self.p.instructions[addr][0]
