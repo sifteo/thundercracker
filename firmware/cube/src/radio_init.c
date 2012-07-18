@@ -252,3 +252,36 @@ void radio_set_idle_addr(void)
 
     radio_rx_enable();
 }
+
+void radio_set_pairing_addr()
+{
+    /*
+     * Program the radio with a channel and address appropriate for pairing.
+     * The neighbor ID (24-31) should already be loaded into CCPDATIA.
+     *
+     * This function disables the radio receiver if it's enabled, and enables
+     * it again before leaving.
+     */
+
+    // Address
+    static const __code uint8_t table[] = {
+        6, RF_CMD_W_REGISTER | RF_REG_RX_ADDR_P0, 0xec, 0x4f, 0xa9, 0x52, 0x18,
+        0,
+    };
+
+    radio_rx_disable();
+    radio_transfer_table(table);
+
+    // Set channel
+    __asm
+        clr     _RF_CSN
+        mov     a, #(RF_CMD_W_REGISTER | RF_REG_RF_CH)
+        mov     _CCPDATIB, #0x1C
+        lcall   _radio_tx_sync
+        mov     a, _CCPDATO
+        lcall   _radio_tx_sync
+        setb    _RF_CSN
+    __endasm ;
+
+    radio_rx_enable();
+}

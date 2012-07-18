@@ -23,6 +23,7 @@
 void radio_isr(void) __interrupt(VECTOR_RF) __naked __using(RF_BANK);
 void radio_init(void);
 void radio_set_idle_addr(void);
+void radio_set_pairing_addr(void);
 void radio_ack_query() __naked;
 
 extern RF_MemACKType __near ack_data;

@@ -277,7 +277,7 @@ static void disc_reset_radio_state(void)
 
     radio_idle_hop = 0;
     disc_hop_timer = sensor_tick_counter_high + 2;
-    radio_set_idle_addr();
+    return radio_set_idle_addr();
 }
 
 static uint8_t disc_find_neighbored_base(void) __naked
@@ -313,7 +313,7 @@ void disconnected_init(void)
      */
 
     radio_connected = 0;
-    nb_tx_id = 0;
+    nb_tx_id = 0xff;
 
     /*
      * Initialize disconnected-mode state
@@ -595,7 +595,7 @@ _fp_bounce_axis_ret:
 
         if (nb_base == disc_nb_base) {
             // No change in neighbored base
-            if (disc_hop_timer == sensor_tick_counter_high) {
+            if (nb_base == 0 && disc_hop_timer == sensor_tick_counter_high) {
                 // Idle for 1+ seconds. Hop to/from the alternate channel.
                 ++disc_hop_timer;
                 radio_idle_hop ^= 1;
@@ -605,7 +605,8 @@ _fp_bounce_axis_ret:
             disc_nb_base = nb_base;
             if (nb_base) {
                 // New neighbored base
-                
+                CCPDATIA = nb_base & 0x1F;
+                radio_set_pairing_addr();
             } else {
                 // We no longer have a neighbored base
                 disc_reset_radio_state();

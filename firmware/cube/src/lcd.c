@@ -183,8 +183,6 @@ void lcd_pwm_fade()
 
         } while (--k);
     } while (--i);
-    
-    DEBUG_REG = 0xFF;
 }
 
 void lcd_begin_frame()
