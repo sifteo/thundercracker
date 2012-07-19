@@ -235,13 +235,7 @@ nb_tx_handoff:
 
 nb_packet_done:
 
-        mov     TL1, #0xFF                      ; RX mode: Interrupt on the next incoming edge
-        mov     TH1, #0xFF
-        clr     _nb_tx_mode
-        setb    _TCON_TR1
-#if defined(NBR_TX) || defined(NBR_RX)
-        orl     _MISC_DIR, #MISC_NB_OUT         ; Let the LC tanks float
-#endif
+        NB_BEGIN_RX()
 
 nb_irq_ret:
 

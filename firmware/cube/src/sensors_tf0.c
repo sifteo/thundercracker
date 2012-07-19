@@ -63,13 +63,13 @@ void tf0_isr(void) __interrupt(VECTOR_TF0) __naked
         ; end up here infrequently.
 
         mov     a, TH0
-        jnz     1$
+        jnz     nb_skip_tx
         mov     a, TL0
         addc    a, #(0x100 - NB_DEADLINE)
-        jc      1$                              ; Not enough time left, skip transmit
+        jc      nb_skip_tx                          ; Not enough time left, skip transmit
 
         mov     a, _nb_tx_id
-        jz      1$                              ; Neighbor transmit disabled
+        jz      nb_skip_tx                          ; Neighbor transmit disabled
 
         ; The first byte of the packet is identical to nb_tx_id,
         ; which is already in A. The second is complemented and shifted left by 3.
@@ -84,17 +84,16 @@ void tf0_isr(void) __interrupt(VECTOR_TF0) __naked
 
         ; Start transmitting.
 
-        setb    _nb_tx_mode
-        mov     _nb_bits_remaining, #NB_TX_BITS
-        mov     _TL2, #(0x100 - NB_BIT_TICKS)
-        setb    _T2CON_T2I0
+        NB_BEGIN_TX()
+
         sjmp    nb_filter
 
-1$:
+nb_skip_tx:
     
-        ; Skip transmitting, go right to I2C.
+        ; Skip transmitting, go right to I2C and neighbor RX.
 
         I2C_INITIATE()
+        NB_BEGIN_RX()
 
         ;--------------------------------------------------------------------
         ; Neighbor Filtering

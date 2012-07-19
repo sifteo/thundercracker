@@ -480,7 +480,7 @@ static void vm_bg0_bg1_tiles_fast_p5(void) __naked
         ajmp    12$
 16$:    acall   _state_bg1_3
         ajmp    17$
-6$:     acall   _state_bg1_0
+6$:     lcall   _state_bg1_0
         sjmp 18$
 
     __endasm ;
