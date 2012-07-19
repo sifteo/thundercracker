@@ -25,7 +25,6 @@ OBJS = \
         src/radio_isr.rel \
         src/flash_hal.rel \
         src/flash_decoder.rel \
-        src/params.rel \
         src/draw.rel \
         src/tilerom.rel \
         src/disconnected.rel
@@ -37,6 +36,7 @@ OBJS = \
 OBJS += \
         src/graphics_bg1_line.rel \
         src/graphics_bg0_rom.rel \
+        src/params.rel \
         src/graphics_solid.rel
 
 TC_DIR = ../..
