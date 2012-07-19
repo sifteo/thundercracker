@@ -456,5 +456,15 @@ __sbit __at 0xEA RF_CKEN;
 #define CLKLFCTRL_READY         0x40
 #define CLKLFCTRL_PHASE         0x80
 
+// PWRDWN modes
+#define PWRDWN_OFF              0x00
+#define PWRDWN_DEEP_SLEEP       0x01
+#define PWRDWN_MEMRET           0x02
+#define PWRDWN_MEMRET_TIMERS    0x03
+#define PWRDWN_REGRET           0x04
+#define PWRDWN_STANDBY          0x07
+#define PWRDWN_WAKE_FROM_CMP    0x20
+#define PWRDWN_WAKE_FROM_TICK   0x40
+#define PWRDWN_WAKE_FROM_PIN    0x80
 
 #endif // __HARDWARE_H

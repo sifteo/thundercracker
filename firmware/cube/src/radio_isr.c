@@ -38,6 +38,11 @@ uint8_t __near ack_bits;
         __asm   ajmp    rx_complete                     __endasm; \
         __asm
 
+#define RX_NEXT_NYBBLE_L                                __endasm; \
+        __asm   djnz    R_NYBBLE_COUNT, rx_loop         __endasm; \
+        __asm   ljmp    rx_complete                     __endasm; \
+        __asm
+
 // Negative sampling delta. MUST wrap at 1kB (both for correctness and security)
 #pragma sdcc_hash +
 #define DPTR_DELTA(v)                                   __endasm; \
@@ -323,7 +328,7 @@ rx_flush:
         mov     _SPIRDAT, #RF_CMD_FLUSH_RX      ; RX_FLUSH command
         SPI_WAIT                                ; Wait for command byte
         mov     a, _SPIRDAT                     ; Ignore dummy STATUS byte
-        ajmp    #rx_complete_0                  ; Skip the RX loop (and end SPI transaction)
+        ljmp    #rx_complete_0                  ; Skip the RX loop (and end SPI transaction)
 
 no_rx_flush:
         inc     a                               ; Is packet not max-length?
@@ -401,7 +406,7 @@ rxs_default:
         jnz     27$
         mov     AR_LOW, R_INPUT
         mov     R_STATE, #(rxs_rle - rxs_default)
-        RX_NEXT_NYBBLE
+        RX_NEXT_NYBBLE_L
 
         ; ------------ Nybble 01ss -- Copy
 
@@ -418,7 +423,7 @@ rxs_default:
         cjne    a, #0x8, 12$
         mov     AR_SAMPLE, R_INPUT
         mov     R_STATE, #(rxs_diff_1 - rxs_default)
-        RX_NEXT_NYBBLE
+        RX_NEXT_NYBBLE_L
 12$:
 
         ; ------------ Nybble 11xx -- Literal Index
@@ -435,7 +440,7 @@ rxs_default:
         mov     R_STATE, #(rxs_literal - rxs_default)
 
 rx_next_sjmp:
-        RX_NEXT_NYBBLE
+        RX_NEXT_NYBBLE_L
 
         ;-------------------------------------------
         ; 4-bit diff
@@ -847,7 +852,7 @@ rx_complete_1:
         SPI_WAIT                ; End SPI transaction, then go to rx_begin_packet
         mov     a, _SPIRDAT
         setb    _RF_CSN
-        ajmp    rx_begin_packet
+        ljmp    rx_begin_packet
 1$:     SPI_WAIT                ; End SPI transaction, then send ACK
         mov     a, _SPIRDAT
         setb    _RF_CSN

@@ -13,7 +13,24 @@
 #include "sensors_i2c.h"
 
 
-void power_delay()
+/*
+ * We maintain a state variable in data-retentive SRAM
+ * to determine whether we are waking up on battery insertion
+ * or just waking up from sleep.
+ *
+ * (This location overlaps vram space. After power init,
+ * it will be cleared during disconnected_init)
+ *
+ * Our magic value here is just any word that seems very unlikely
+ * to find by chance in uninitialized SRAM.
+ */
+
+#define POWERDOWN_MAGIC     0x55AA
+
+static __xdata __at 0x0000 uint16_t powerdown_state;
+
+
+static void power_delay()
 {
     /*
      * Arbitrary delay, currently about 2 ms.
@@ -32,6 +49,58 @@ void power_delay()
 }
 
 
+static void power_wake_on_rf_poll(void)
+{
+    /*
+     * Poll for incoming radio packets, for a short time. Operates during very
+     * early init, when waking up from our wake-on-rf timer.
+     *
+     * If we detect a packet within the allotted time, this function returns
+     * and we continue initialization as normal. If not, we go right back to sleep.
+     * The powerdown sequence is much simplified, since almost nothing is on yet.
+     */
+
+    // Make sure the RF interrupt flag starts out cleared.
+    // (The radio's own interrupt flag should also have been cleared, during radio_init)
+    IR_RF = 0;
+
+    // Set up the default idle radio address, and turn on the receiver
+    radio_idle_hop = 0;
+    radio_set_idle_addr();
+
+    /*
+     * Poll the RF interrupt flag, for a fixed duration.
+     */
+
+    {
+        uint8_t i = 2;
+        do {
+            uint8_t j = 0;
+            do {
+                if (IR_RF)
+                    return;
+            } while (--j);
+        } while (--i);
+    }
+
+    /*
+     * Back to sleep! Use the watchdog to wake up for the next poll.
+     */
+
+    radio_rx_disable();
+    RF_CKEN = 0;
+
+    CLKLFCTRL = CLKLFCTRL_SRC_RC;
+    WDSV;
+    WDSV = 0x80;
+    WDSV = 0x00;
+
+    while (1) {
+        PWRDWN = PWRDWN_MEMRET_TIMERS;
+    }
+}
+
+
 void power_init(void)
 {
     /*
@@ -45,19 +114,28 @@ void power_init(void)
      * Runs before clearing RAM, but after initializing the radio.
      */
 
-    PWRDWN;
+    uint8_t pwrdwn_value = PWRDWN;
     OPMCON = 0;
     WUOPC1 = 0;
     PWRDWN = 0;
 
     /*
-     * Basic poweron.
+     * Normally we wake up via shake or by battery insertion. Wake-on-pin
+     * will be reported in the saved PWRDWN value. We differentiate
+     * battery insertion vs. watchdog wakeup by examining a flag in the
+     * data-retentive region of SRAM.
      *
+     * If we woke up by shake or battery insertion, continue initializing
+     * as usual. If we woke up by timer, do a quick poll to see if a base
+     * is trying to wake us over-the-air. If so, we continue to power on,
+     * but if not we'll go back to sleep ASAP.
+     */
+    if (!(pwrdwn_value & PWRDWN_WAKE_FROM_PIN) && powerdown_state == POWERDOWN_MAGIC)
+        power_wake_on_rf_poll();
+
+    /*
      * Safe defaults, everything off.
-     * all control lines must be low before supply rails are turned on.
-     *
-     * We need to sequence this carefully, so that we can bring up
-     * the 3.3v and 2.0v rails without causing any contention.
+     * All control lines must be low before supply rails are turned on.
      */
 
     MISC_PORT = 0;
@@ -68,17 +146,16 @@ void power_init(void)
     CTRL_DIR = CTRL_DIR_VALUE;
     ADDR_DIR = 0;
 
-    // Turn on 3.3V boost
-    CTRL_PORT = CTRL_3V3_EN;
-
-    // Give 3.3V boost >1ms to turn-on
-    power_delay();
-
-    // Turn on 2V ds load switch
-    CTRL_PORT = CTRL_3V3_EN | CTRL_DS_EN;
-
-    // Give load-switch time to turn-on (Datasheet unclear so >1ms should suffice)
-    power_delay();
+    /*
+     * Bring up the power supplies.
+     *
+     * We need to sequence this carefully, so that we can bring up
+     * the 3.3v and 2.0v rails without causing any contention.
+     */
+    CTRL_PORT = CTRL_3V3_EN;                // Turn on 3.3V boost
+    power_delay();                          // Give 3.3V boost >1ms to turn-on
+    CTRL_PORT = CTRL_3V3_EN | CTRL_DS_EN;   // Turn on 2V ds load switch
+    power_delay();                          // Give load-switch time to turn-on
 
     /*
      * Now turn-on other control lines. Sequence them so that we're sure to latch
@@ -154,21 +231,20 @@ void power_sleep(void)
     ADDR_PORT = 0;              // Address bus must be all zero
     MISC_PORT = 0;              // Neighbor/I2C set to idle-mode as well
 
-    // Sequencing is important. First, bring flash control lines low
-    CTRL_PORT = CTRL_3V3_EN | CTRL_DS_EN;
-
-    // Turn off the 2V DS rail
-    CTRL_PORT = CTRL_3V3_EN;
-
-    // Turn off the 3.3V rail
-    CTRL_PORT = 0;
-
-#if HWREV >= 5
     /*
-     * Wakeup on shake
+     * Power supply shutdown. Sequencing is important!
      */
 
+    CTRL_PORT = CTRL_3V3_EN | CTRL_DS_EN;       // First, bring flash control lines low
+    CTRL_PORT = CTRL_3V3_EN;                    // Turn off the 2V DS rail
+    CTRL_PORT = 0;                              // Turn off the 3.3V rail
+
     {
+    #if HWREV >= 5
+        /*
+         * Wakeup on shake
+         */
+
         static const __code uint8_t init[] = {
             // ADC turned off
             ACCEL_TEMP_CFG_REG, 0,
@@ -184,31 +260,38 @@ void power_sleep(void)
         };
 
         i2c_accel_tx(init);
-    
+
         // I2C controller off
         W2CON0 = 0;
         __asm I2C_PULSE() __endasm;
+
+        ADDR_DIR = 0xff;            // Set addr pins to inputs
+        CTRL_DIR = 0xff;            // Set ctrl pins to inputs
+        MISC_DIR = 0xff;            // Set bus pins to inputs
+        WUOPC1 = SHAKE_WUOPC_BIT;
+
+    #else
+        /*
+         * Wakeup on touch
+         */
+
+        WUOPC1 = TOUCH_WUOPC_BIT;
+    #endif
     }
-
-    ADDR_DIR = 0xff;            // Set addr pins to inputs
-    CTRL_DIR = 0xff;            // Set ctrl pins to inputs
-    MISC_DIR = 0xff;             // Set bus pins to inputs
-    WUOPC1 = SHAKE_WUOPC_BIT;
-
-#else
-    /*
-     * Wakeup on touch
-     */
-
-    WUOPC1 = TOUCH_WUOPC_BIT;
-#endif
 
     // We must latch these port states, to preserve them during sleep.
     // This latch stays locked until early wakeup, in power_init().
     OPMCON = OPMCON_LATCH_LOCKED;
 
+    // Remember that we're sleeping deliberately
+    powerdown_state = POWERDOWN_MAGIC;
+
+    // While we're asleep, the watchdog will keep running off the low-power RC oscillator.
+    CLKLFCTRL = CLKLFCTRL_SRC_RC;
+
     while (1) {
-        PWRDWN = 1;
+        // Memory retention, timers on.
+        PWRDWN = PWRDWN_MEMRET_TIMERS;
 
         /*
          * We loop purely out of paranoia. This point should never be reached.
