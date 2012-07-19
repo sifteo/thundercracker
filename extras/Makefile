@@ -8,7 +8,8 @@ SUBDIRS = \
 	thrasher \
 	trackycat \
 	tinytracker \
-	lfsmunch
+	lfsmunch \
+	numbers
 
 .PHONY: clean subdirs $(SUBDIRS)
 
