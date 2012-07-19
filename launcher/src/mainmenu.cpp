@@ -114,14 +114,14 @@ void MainMenu::arriveItem(unsigned index)
 {
     ASSERT(index < arraysize(items));
     MainMenuItem *item = items[index];
-    item->arrive(cubes);
+    item->arrive(cubes, mainCube);
 }
 
 void MainMenu::departItem(unsigned index)
 {
     ASSERT(index < arraysize(items));
     MainMenuItem *item = items[index];
-    item->depart(cubes);
+    item->depart(cubes, mainCube);
 }
 
 void MainMenu::loadAssets()
