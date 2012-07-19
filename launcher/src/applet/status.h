@@ -20,4 +20,7 @@ public:
     virtual void prepaint(Sifteo::CubeSet cubes, Sifteo::CubeID mainCube);
 
     static void add(MainMenu &menu);
+
+private:
+    unsigned levelCounter;
 };

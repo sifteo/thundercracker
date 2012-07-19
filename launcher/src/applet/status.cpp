@@ -24,6 +24,8 @@ void StatusApplet::exec()
 
 void StatusApplet::arrive(CubeSet cubes, CubeID mainCube)
 {
+    levelCounter = 0;
+
     for (CubeID cube : cubes)
         if (cube != mainCube) {
             auto &vid = Shared::video[cube];
@@ -45,12 +47,20 @@ void StatusApplet::depart(CubeSet cubes, CubeID mainCube)
 
 void StatusApplet::prepaint(CubeSet cubes, CubeID mainCube)
 {
+    ASSERT(arraysize(BuddyBatteries) == arraysize(MasterBatteries));
+    if (levelCounter < arraysize(BuddyBatteries))
+    {
+        ++levelCounter;
+    }
+
     for (CubeID cube : cubes)
         if (cube != mainCube) {
             float batteryLevelBuddy = float(cube.batteryLevel()) / float(kMaxBatteryLevel);
             //batteryLevelBuddy = 0.4f;
             
             unsigned batteryIconIndex = unsigned(batteryLevelBuddy * float(arraysize(BuddyBatteries) - 1));
+            batteryIconIndex = MIN(batteryIconIndex, levelCounter);
+
             ASSERT(batteryIconIndex < arraysize(BuddyBatteries));
 
             auto &vid = Shared::video[cube];
@@ -64,6 +74,8 @@ void StatusApplet::prepaint(CubeSet cubes, CubeID mainCube)
             //batteryLevelBuddy = 0.4f;
             
             unsigned batteryIndexBuddy = unsigned(batteryLevelBuddy * float(arraysize(BuddyBatteries) - 1));
+            batteryIndexBuddy = MIN(batteryIndexBuddy, levelCounter);
+
             ASSERT(batteryIndexBuddy < arraysize(BuddyBatteries));
             vid.sprites[0].setImage(BuddyBatteries[batteryIndexBuddy]);
             vid.sprites[0].move(vec(32, 32));
@@ -72,6 +84,8 @@ void StatusApplet::prepaint(CubeSet cubes, CubeID mainCube)
             //batteryLevelMaster = 0.8f;
 
             unsigned batteryIndexMaster = unsigned(batteryLevelMaster * float(arraysize(MasterBatteries) - 1));
+            batteryIndexMaster = MIN(batteryIndexMaster, levelCounter);
+
             ASSERT(batteryIndexMaster < arraysize(MasterBatteries));
             vid.sprites[1].setImage(MasterBatteries[batteryIndexMaster]);
             vid.sprites[1].move(vec(32, 64));
