@@ -21,5 +21,17 @@ NineBlock_Shapes = image{ "images/nineblock-shapes.png", width=32, height=32 }
 -- Applet icons
 
 Icon_GetGames = image{ "images/icon-getgames.png" }
-Icon_Status = image{ "images/icon-status.png" }
-Icon_StatusMaster = image{ "images/icon-statusmaster.png" }
+
+local BATTERY_RESOLUTION = 4
+
+Icons_Battery = {}
+for i = 0, BATTERY_RESOLUTION, 1 do
+    table.insert(Icons_Battery, image{ "images/icon-battery-"..i..".png" })
+end
+
+Icons_BatteryMaster = {}
+for i = 0, BATTERY_RESOLUTION, 1 do
+	for j = 0, BATTERY_RESOLUTION, 1 do
+    	table.insert(Icons_Battery, image{ "images/icon-battery-master-"..i.."-"..j..".png" })
+    end
+end
