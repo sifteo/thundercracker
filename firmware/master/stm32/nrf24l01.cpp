@@ -241,7 +241,7 @@ void NRF24L01::isr()
 
     case 0:
         // Shouldn't happen, but.. electrical noise maybe?
-        Debug::log("Spurious nRF IRQ!");
+        UART("Spurious nRF IRQ!");
         break;
 
     case MAX_RT:
@@ -263,7 +263,7 @@ void NRF24L01::isr()
 
     default:
         // Other cases are not allowed. Do something non-fatal...
-        Debug::log("Unhandled nRF IRQ status");
+        UART("Unhandled nRF IRQ status");
         beginTransmit();
         break;
     }
@@ -411,6 +411,7 @@ void NRF24L01::onSpiComplete()
 
             txnState = Idle;
             timeout();
+            beginTransmit();
             break;
         }
 

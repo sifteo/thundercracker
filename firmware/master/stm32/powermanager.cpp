@@ -32,18 +32,28 @@ void PowerManager::init()
     flashRegEnable.setControl(GPIOPin::OUT_2MHZ);
     flashRegEnable.setHigh();
 
+    vbus.setControl(GPIOPin::IN_FLOAT);
+
     GPIOPin vcc3v3 = VCC33_ENABLE_GPIO;
     vcc3v3.setControl(GPIOPin::OUT_2MHZ);
-    vcc3v3.setLow();
 
-    // set initial state
-    lastState = PowerManager::Uninitialized;
-    vbus.setControl(GPIOPin::IN_FLOAT);
+
+    /*
+     * Set initial state.
+     *
+     * Do this based on a poll of vbus, since our debounce process won't
+     * start up until tasks are running, and we need to init things before that:
+     * particularly the nRF, which has some specific power on timing requirements.
+     */
+    setState(state());
 }
 
 /*
  * Enable interrupts that monitor vbus, which in turn manage the USB device.
  * USB and GPIO interrupts must be enabled.
+ *
+ * It's helpful to separate this from init() so we can keep the USB device
+ * disabled in the bootloader if an update is not required.
  */
 void PowerManager::beginVbusMonitor()
 {
@@ -77,30 +87,32 @@ void PowerManager::vbusDebounce(void* p)
 
     Tasks::clearPending(Tasks::PowerManager);
 
-    State s = static_cast<State>(vbus.isHigh());
-    if (s != lastState) {
+    State s = state();
+    if (s != lastState)
+        setState(s);
+}
 
+void PowerManager::setState(State s)
+{
 #if (BOARD >= BOARD_TC_MASTER_REV2)
-        GPIOPin vcc3v3 = VCC33_ENABLE_GPIO;
+    GPIOPin vcc3v3 = VCC33_ENABLE_GPIO;
 
-        switch (s) {
-        case BatteryPwr:
-            UsbDevice::deinit();
-            vcc3v3.setLow();
-            break;
+    switch (s) {
+    case BatteryPwr:
+        UsbDevice::deinit();
+        vcc3v3.setLow();
+        break;
 
-        case UsbPwr:
-            vcc3v3.setHigh();
-            UsbDevice::init();
-            break;
+    case UsbPwr:
+        vcc3v3.setHigh();
+        UsbDevice::init();
+        break;
 
-        default:
-            break;
-        }
-#endif
-
-        lastState = s;
+    default:
+        break;
     }
+#endif
+    lastState = s;
 }
 
 void PowerManager::shutdown()

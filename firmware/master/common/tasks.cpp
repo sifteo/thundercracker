@@ -22,6 +22,7 @@ uint32_t Tasks::pendingMask;
 Tasks::Task Tasks::TaskList[] = {
     #ifdef SIFTEO_SIMULATOR
     { 0 },
+    { 0 },
     #else
     { PowerManager::vbusDebounce, 0 },
     { UsbDevice::handleOUTData, 0},
