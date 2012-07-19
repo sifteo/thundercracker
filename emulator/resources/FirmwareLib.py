@@ -86,7 +86,9 @@ class RSTParser:
 
         # Does this have an address?
         if bytes and address:
-            assert int(address,16) < 16384
+            if int(address,16) >= 16384:
+                raise ValueError("Argh, found address overflow in %r:\n%s"
+                    % (module, line.strip()))
             self.lines[int(address,16)] = line
 
         # Notes in the comments?
