@@ -25,14 +25,17 @@ public:
     static void produce(PacketTransmission &tx);
     static void ALWAYS_INLINE ackWithPacket(const PacketBuffer &packet) {
         rfSuccessCount++;
-        rfTransmissionsRemaining--;
+        if (rfTransmissionsRemaining)
+            rfTransmissionsRemaining--;
     }
     static void ALWAYS_INLINE timeout() {
-        rfTransmissionsRemaining--;
+        if (rfTransmissionsRemaining)
+            rfTransmissionsRemaining--;
     }
     static void ALWAYS_INLINE ackEmpty() {
         rfSuccessCount++;
-        rfTransmissionsRemaining--;
+        if (rfTransmissionsRemaining)
+            rfTransmissionsRemaining--;
     }
 
 private:
