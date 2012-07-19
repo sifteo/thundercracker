@@ -133,7 +133,7 @@ void sensors_init()
      *       is what keeps us inside the timeslot that we were
      *       assigned.
      *
-     *       XXX: This isn't possible with Timer 0, since it shares a
+     *       This isn't possible with Timer 0, since it shares a
      *       priority level with the radio! We could pick a different
      *       timebase for the master clock, but it's probably easier to
      *       thunk the RF IRQ onto a different IRQ that has a lower

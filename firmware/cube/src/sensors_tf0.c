@@ -56,11 +56,11 @@ void tf0_isr(void) __interrupt(VECTOR_TF0) __naked
         ; Start transmitting the next neighbor packet, assuming we
         ; have not already missed our chance due to interrupt latency.
         ;
-        ; XXX: This is mostly only necessary because we currently run at
-        ;      the same prio as RFIRQ. Suck. See the priority discussion
-        ;      below, there may be a way to work around this by using a
-        ;      different time source. It actually isnt that bad at the moment,
-        ;      and we end up here infrequently.
+        ; This is mostly only necessary because we currently run at
+        ; the same prio as RFIRQ. Suck. See the priority discussion
+        ; below, there may be a way to work around this by using a
+        ; different time source. It is not so bad though, and we
+        ; end up here infrequently.
 
         mov     a, TH0
         jnz     1$
