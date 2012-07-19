@@ -32,6 +32,6 @@ end
 Icons_BatteryMaster = {}
 for i = 0, BATTERY_RESOLUTION, 1 do
 	for j = 0, BATTERY_RESOLUTION, 1 do
-    	table.insert(Icons_Battery, image{ "images/icon-battery-master-"..i.."-"..j..".png" })
+    	table.insert(Icons_BatteryMaster, image{ "images/icon-battery-master-"..i.."-"..j..".png" })
     end
 end
