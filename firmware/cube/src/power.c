@@ -74,15 +74,17 @@ static void power_wake_on_rf_poll(void)
      * is much higher than the nRF's usual RX threshold.
      */
 
-     __asm
-        mov     r0, #0
-1$:     mov     r1, #0
-2$: 
-        lcall   _radio_fifo_status
-        jnb     acc.0, 3$               ; RX_EMPTY bit
-        djnz    r1, 2$
-        djnz    r0, 1$
-    __endasm;
+    {
+        uint8_t i = 0, j = 2;
+        do {
+            do {
+                __asm
+                    lcall   _radio_fifo_status
+                    jnb     acc.0, 1$              ; RX_EMPTY bit
+                __endasm ;
+            } while (--i);
+        } while (--j);
+    }
 
     /*
      * Back to sleep! Use the watchdog to wake up for the next poll.
@@ -99,7 +101,7 @@ static void power_wake_on_rf_poll(void)
     PWRDWN = PWRDWN_MEMRET_TIMERS;
 
     __asm
-3$:
+1$:
     __endasm ;
 }
 
