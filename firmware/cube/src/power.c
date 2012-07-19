@@ -60,28 +60,29 @@ static void power_wake_on_rf_poll(void)
      * The powerdown sequence is much simplified, since almost nothing is on yet.
      */
 
-    // Make sure the RF interrupt flag starts out cleared.
-    // (The radio's own interrupt flag should also have been cleared, during radio_init)
-    IR_RF = 0;
-
     // Set up the default idle radio address, and turn on the receiver
     radio_idle_hop = 0;
     radio_set_idle_addr();
 
     /*
-     * Poll the RF interrupt flag, for a fixed duration.
+     * Poll for a received packet.
+     *
+     * This is a little sucky, because (a) we need an entire packet, and (b) we
+     * have to poll over SPI. We can't use the RF interrupt flag here easily,
+     * since the flag is auto-clear and we don't actually want to execute our
+     * ISR yet. And we can't use the RPD register really, since its power threshold
+     * is much higher than the nRF's usual RX threshold.
      */
 
-    {
-        uint8_t i = 2;
-        do {
-            uint8_t j = 0;
-            do {
-                if (IR_RF)
-                    return;
-            } while (--j);
-        } while (--i);
-    }
+     __asm
+        mov     r0, #0
+1$:     mov     r1, #0
+2$: 
+        lcall   _radio_fifo_status
+        jnb     acc.0, 3$               ; RX_EMPTY bit
+        djnz    r1, 2$
+        djnz    r0, 1$
+    __endasm;
 
     /*
      * Back to sleep! Use the watchdog to wake up for the next poll.
@@ -95,9 +96,11 @@ static void power_wake_on_rf_poll(void)
     WDSV = 0x80;
     WDSV = 0x00;
 
-    while (1) {
-        PWRDWN = PWRDWN_MEMRET_TIMERS;
-    }
+    PWRDWN = PWRDWN_MEMRET_TIMERS;
+
+    __asm
+3$:
+    __endasm ;
 }
 
 
@@ -120,6 +123,19 @@ void power_init(void)
     PWRDWN = 0;
 
     /*
+     * Safe defaults, everything off.
+     * All control lines must be low before supply rails are turned on.
+     */
+
+    MISC_PORT = 0;
+    CTRL_PORT = 0;
+    ADDR_PORT = 0;
+    BUS_DIR = 0xFF;
+    MISC_DIR = MISC_DIR_VALUE;
+    CTRL_DIR = CTRL_DIR_VALUE;
+    ADDR_DIR = 0;
+
+    /*
      * Normally we wake up via shake or by battery insertion. Wake-on-pin
      * will be reported in the saved PWRDWN value. We differentiate
      * battery insertion vs. watchdog wakeup by examining a flag in the
@@ -132,19 +148,6 @@ void power_init(void)
      */
     if (!(pwrdwn_value & PWRDWN_WAKE_FROM_PIN) && powerdown_state == POWERDOWN_MAGIC)
         power_wake_on_rf_poll();
-
-    /*
-     * Safe defaults, everything off.
-     * All control lines must be low before supply rails are turned on.
-     */
-
-    MISC_PORT = 0;
-    CTRL_PORT = 0;
-    ADDR_PORT = 0;
-    BUS_DIR = 0xFF;
-    MISC_DIR = MISC_DIR_VALUE;
-    CTRL_DIR = CTRL_DIR_VALUE;
-    ADDR_DIR = 0;
 
     /*
      * Bring up the power supplies.

@@ -109,12 +109,8 @@ void radio_init(void)
         0,
     };
 
-    // RTC2 external capture on (timestamp all incoming radio packets)
-    // Interrupt on, but compare disabled until we begin a nap.
-    RTC2CON = 0x09;
-    IEN_TICK = 1;
-
     radio_rx_disable();                 // Receiver starts out disabled
+    RF_CSN = 1;                         // Set proper idle SPI chip-select state
     RF_CKEN = 1;                        // Radio clock running
     radio_transfer_table(table);        // Send initialization commands
     radio_irq_enable();
@@ -291,4 +287,40 @@ void radio_set_pairing_addr()
     __endasm ;
 
     radio_rx_enable();
+}
+
+void radio_fifo_status() __naked
+{
+    /*
+     * This is an assembly-callable routine used to check whether any pending RX packets
+     * are buffered in the nRF's FIFO. Intended only for use when the RF ISR is
+     * disabled.
+     *
+     * Notes: We can't use RPD for this purpose, because its power threshold is
+     * much higher than the normal RX sensitivity. And we can't use the RX_P_NO
+     * field in STATUS for this, because that field is only updated *after* a packet
+     * is dequeued.
+     *
+     * Instead, the most reliable way to determine this state is to read the
+     * FIFO_STATUS register, and directly examine the RX_EMPTY bit.
+     *
+     * Returns the FIFO_STATUS register. Bit 0 is the RX_EMPTY flag.
+     */
+     
+    __asm
+        clr     _RF_CSN
+
+        ; Put both TX bytes in the FIFO
+        mov     _SPIRDAT, #(RF_CMD_R_REGISTER | RF_REG_FIFO_STATUS)
+        mov     _SPIRDAT, #0
+
+        SPI_WAIT                    ; Dequeue and ignore STATUS
+        mov     a, _SPIRDAT
+
+        SPI_WAIT                    ; Dequeue and keep FIFO_STATUS
+        mov     a, _SPIRDAT
+        
+        setb    _RF_CSN
+        ret
+    __endasm ;
 }

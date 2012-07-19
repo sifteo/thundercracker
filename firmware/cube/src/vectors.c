@@ -56,11 +56,14 @@ __start__stack:
         ;---------------------------------
 
 v_0000:
+        clr     _IEN_EN                         ; Make sure interrupts are off during init
         mov     sp, #(__start__stack - 1)       ; Init stack
+
         lcall   _radio_init                     ; Turn on radio, and program it with static settings
-        lcall   _power_init                     ; Check wakeup reason, handle wake-on-RF, turn on power rails
 
         sjmp    init_1                          ; Continue init below...
+
+        .ds     1
 
         ;---------------------------------
         ; TF0 Vector
@@ -71,6 +74,8 @@ v_000b: ljmp    _tf0_isr
         ;---------------------------------
 
 init_1:
+        lcall   _power_init                     ; Check wakeup reason, handle wake-on-RF, turn on power rails
+
         clr     a                               ; IRAM clear loop
         mov     r0, a
 1$:     mov     @r0, a
@@ -78,8 +83,6 @@ init_1:
 
         lcall   _params_init                    ; Initialize HWID in NVM
         sjmp    init_2                          ; Continue init below...
-
-        .ds     3
 
         ;---------------------------------
         ; TF1 Vector

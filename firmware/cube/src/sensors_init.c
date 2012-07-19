@@ -263,4 +263,19 @@ void sensors_init()
     IP0 |= 0x20;                // Highest priority for TF2 interrupt
     IP1 |= 0x20;
     IEN_TF2_EXF2 = 1;           // Enable TF2 interrupt
+
+    /*
+     * RTC2: radio packet timestamping
+     *
+     * We want to initialize this along with the other timer IRQs rather
+     * than in radio_init, since it isn't necessary during wake-on-RF.
+     *
+     * Set up RTC2 in 'external capture' mode, which timestamps all
+     * incoming radio packets. Also turn on the TICK interrupt, which
+     * will be dormant until we begin a Radio Nap but will then be used
+     * to wake up the radio.
+     */
+
+    RTC2CON = 0x09;
+    IEN_TICK = 1;
 }

@@ -25,6 +25,7 @@ void radio_init(void);
 void radio_set_idle_addr(void);
 void radio_set_pairing_addr(void);
 void radio_ack_query() __naked;
+void radio_fifo_status() __naked;
 
 extern RF_MemACKType __near ack_data;
 extern uint8_t __near ack_bits;
