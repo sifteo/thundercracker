@@ -15,6 +15,8 @@ class StatusApplet : public MainMenuItem
 public:
     virtual MainMenuItem::Flags getAssets(Sifteo::MenuItem &assets, Sifteo::MappedVolume&);
     virtual void exec();
+    virtual void arrive(Sifteo::CubeSet cubes);
+    virtual void depart(Sifteo::CubeSet cubes);
 
     static void add(MainMenu &menu);
 };

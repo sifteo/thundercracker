@@ -62,4 +62,8 @@ public:
      * this performs some action and eventually returns.
      */
     virtual void exec() = 0;
+
+    // TODO: docs
+    virtual void arrive(Sifteo::CubeSet cubes) {}
+    virtual void depart(Sifteo::CubeSet cubes) {}
 };

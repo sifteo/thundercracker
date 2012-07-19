@@ -43,9 +43,11 @@ public:
 
 private:
     Sifteo::CubeSet cubes;
+    Sifteo::CubeID mainCube;
 
     Sifteo::Array<MainMenuItem*, MAX_ITEMS> items;
     Sifteo::MenuItem menuItems[MAX_ITEMS + 1];
+    int itemIndexCurrent;
     static const Sifteo::MenuAssets menuAssets;
 
     void updateMusic();
@@ -54,4 +56,6 @@ private:
     NOINLINE void loadAssets();
     NOINLINE void eventLoop(Sifteo::Menu &m);
     NOINLINE void execItem(unsigned index);
+    NOINLINE void arriveItem(unsigned index);
+    NOINLINE void departItem(unsigned index);
 };

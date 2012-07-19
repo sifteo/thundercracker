@@ -21,6 +21,7 @@ const MenuAssets MainMenu::menuAssets = {
 void MainMenu::init()
 {
     items.clear();
+    itemIndexCurrent = 0;
 
     // XXX: Fake cubeset initialization, until we have real cube connect/disconnect
     cubes = CubeSet(0,3);
@@ -33,7 +34,7 @@ void MainMenu::run()
     loadAssets();
 
     // Pick one cube to be the 'main' cube, where we show the menu
-    Sifteo::CubeID mainCube = *cubes.begin();
+    mainCube = *cubes.begin();
 
     // Display a background on all other cubes
     for (CubeID cube : cubes)
@@ -62,7 +63,18 @@ void MainMenu::eventLoop(Menu &m)
             case MENU_ITEM_PRESS:
                 execItem(e.item);
                 return;
-
+            case MENU_ITEM_ARRIVE:
+                itemIndexCurrent = e.item;
+                if (itemIndexCurrent >= 0) {
+                    arriveItem(itemIndexCurrent);
+                }
+                break;
+            case MENU_ITEM_DEPART:
+                if (itemIndexCurrent >= 0) {
+                    departItem(itemIndexCurrent);
+                }
+                itemIndexCurrent = -1;
+                break;
             default:
                 break;
 
@@ -96,6 +108,20 @@ void MainMenu::execItem(unsigned index)
     CubeSet itemCubes = item->getCubeRange().initMinimum();
     item->bootstrap(itemCubes, anim);
     item->exec();
+}
+
+void MainMenu::arriveItem(unsigned index)
+{
+    ASSERT(index < arraysize(items));
+    MainMenuItem *item = items[index];
+    item->arrive(cubes);
+}
+
+void MainMenu::departItem(unsigned index)
+{
+    ASSERT(index < arraysize(items));
+    MainMenuItem *item = items[index];
+    item->depart(cubes);
 }
 
 void MainMenu::loadAssets()

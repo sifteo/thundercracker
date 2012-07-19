@@ -5,6 +5,7 @@
 
 #include "applet/status.h"
 #include "mainmenu.h"
+#include "shared.h"
 #include "assets.gen.h"
 #include <sifteo.h>
 using namespace Sifteo;
@@ -32,6 +33,27 @@ MainMenuItem::Flags StatusApplet::getAssets(Sifteo::MenuItem &assets, Sifteo::Ma
 
 void StatusApplet::exec()
 {
+}
+
+void StatusApplet::arrive(Sifteo::CubeSet cubes)
+{
+	for (CubeID cube : cubes)
+        if (cube != 0) {
+            auto& vid = Shared::video[cube];
+            vid.bg0.image(vec(2, 2), Icons_Battery[0]);
+        }
+}
+
+void StatusApplet::depart(Sifteo::CubeSet cubes)
+{
+	// Display a background on all other cubes
+    for (CubeID cube : cubes)
+        if (cube != 0) {
+            auto& vid = Shared::video[cube];
+            vid.initMode(BG0);
+            vid.attach(cube);
+            vid.bg0.erase(Menu_StripeTile);
+        }
 }
 
 void StatusApplet::add(MainMenu &menu)
