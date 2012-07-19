@@ -86,6 +86,7 @@ class RSTParser:
 
         # Does this have an address?
         if bytes and address:
+            assert int(address,16) < 16384
             self.lines[int(address,16)] = line
 
         # Notes in the comments?
