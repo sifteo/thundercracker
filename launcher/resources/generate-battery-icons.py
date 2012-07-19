@@ -5,9 +5,9 @@ import re
 import sys
 
 batteryResolution = 4
-batteryBuddyXY = (8, 24)
+batteryBuddyXY = (16, 24)
 batteryBuddySize = (24, 24)
-batteryMasterXY = (8, 56)
+batteryMasterXY = (16, 56)
 batteryMasterSize = (48, 24)
 
 def DestPath():
