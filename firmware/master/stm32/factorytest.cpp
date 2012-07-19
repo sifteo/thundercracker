@@ -321,17 +321,17 @@ void FactoryTest::bootloadRequestHandler(uint8_t argc, const uint8_t *args)
  */
 void FactoryTest::rfPacketTestHandler(uint8_t argc, const uint8_t *args)
 {
-    rfSuccessCount = 0;
-    rfTransmissionsRemaining = *reinterpret_cast<const uint16_t*>(&args[1]);
-
     Radio::setRetryCount(0, 0);
     Radio::setRfTestEnabled(true);
+
+    rfSuccessCount = 0;
+    rfTransmissionsRemaining = *reinterpret_cast<const uint16_t*>(&args[1]);
 
     while (rfTransmissionsRemaining)
         Tasks::waitForInterrupt();
 
-    Radio::setRetryCount(Radio::DEFAULT_HARD_RETRIES, Radio::DEFAULT_SOFT_RETRIES);
     Radio::setRfTestEnabled(false);
+    Radio::setRetryCount(Radio::DEFAULT_HARD_RETRIES, Radio::DEFAULT_SOFT_RETRIES);
 
     /*
      * Respond with the number of packets sent, and the number of successful transmissions
