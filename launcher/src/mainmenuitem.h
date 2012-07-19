@@ -66,4 +66,5 @@ public:
     // TODO: docs
     virtual void arrive(Sifteo::CubeSet cubes, Sifteo::CubeID mainCube) {}
     virtual void depart(Sifteo::CubeSet cubes, Sifteo::CubeID mainCube) {}
+    virtual void prepaint(Sifteo::CubeSet cubes, Sifteo::CubeID mainCube) {}
 };

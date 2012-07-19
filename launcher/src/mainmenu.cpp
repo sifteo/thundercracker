@@ -40,7 +40,7 @@ void MainMenu::run()
     for (CubeID cube : cubes)
         if (cube != mainCube) {
             auto& vid = Shared::video[cube];
-            vid.initMode(BG0);
+            vid.initMode(BG0_SPR_BG1);
             vid.attach(cube);
             vid.bg0.erase(Menu_StripeTile);
         }
@@ -74,6 +74,11 @@ void MainMenu::eventLoop(Menu &m)
                     departItem(itemIndexCurrent);
                 }
                 itemIndexCurrent = -1;
+                break;
+            case MENU_PREPAINT:
+                if (itemIndexCurrent >= 0) {
+                    prepaintItem(itemIndexCurrent);
+                }
                 break;
             default:
                 break;
@@ -122,6 +127,13 @@ void MainMenu::departItem(unsigned index)
     ASSERT(index < arraysize(items));
     MainMenuItem *item = items[index];
     item->depart(cubes, mainCube);
+}
+
+void MainMenu::prepaintItem(unsigned index)
+{
+    ASSERT(index < arraysize(items));
+    MainMenuItem *item = items[index];
+    item->prepaint(cubes, mainCube);
 }
 
 void MainMenu::loadAssets()

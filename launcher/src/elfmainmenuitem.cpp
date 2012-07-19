@@ -369,6 +369,11 @@ void ELFMainMenuItem::bootstrap(Sifteo::CubeSet cubes, ProgressDelegate &progres
     progress.end(cubes);
 }
 
+void ELFMainMenuItem::prepaint(Sifteo::CubeSet cubes, Sifteo::CubeID mainCube)
+{
+    // TODO: draw over menu icon with status message
+}
+
 unsigned ELFMainMenuItem::averageProgressBytes(const Sifteo::AssetLoader &loader, Sifteo::CubeSet cubes)
 {
     unsigned totalBytes = 0;

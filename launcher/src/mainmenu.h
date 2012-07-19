@@ -58,4 +58,5 @@ private:
     NOINLINE void execItem(unsigned index);
     NOINLINE void arriveItem(unsigned index);
     NOINLINE void departItem(unsigned index);
+    NOINLINE void prepaintItem(unsigned index);
 };

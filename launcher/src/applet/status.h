@@ -17,6 +17,7 @@ public:
     virtual void exec();
     virtual void arrive(Sifteo::CubeSet cubes, Sifteo::CubeID mainCube);
     virtual void depart(Sifteo::CubeSet cubes, Sifteo::CubeID mainCube);
+    virtual void prepaint(Sifteo::CubeSet cubes, Sifteo::CubeID mainCube);
 
     static void add(MainMenu &menu);
 };

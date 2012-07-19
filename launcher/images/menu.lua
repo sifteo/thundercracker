@@ -22,16 +22,17 @@ NineBlock_Shapes = image{ "images/nineblock-shapes.png", width=32, height=32 }
 
 Icon_GetGames = image{ "images/icon-getgames.png" }
 
-local BATTERY_RESOLUTION = 4
+local BATTERY_RESOLUTION = 8
 
-Icons_Battery = {}
+Icon_Battery = image{ "images/icon-battery.png" }
+Icon_BatteryMaster = image{ "images/icon-battery-master.png" }
+
+BuddyBatteries = {}
 for i = 0, BATTERY_RESOLUTION, 1 do
-    table.insert(Icons_Battery, image{ "images/icon-battery-"..i..".png" })
+    table.insert(BuddyBatteries, image{ "images/icon-battery-"..i..".png", pinned = 1 })
 end
 
-Icons_BatteryMaster = {}
+MasterBatteries = {}
 for i = 0, BATTERY_RESOLUTION, 1 do
-	for j = 0, BATTERY_RESOLUTION, 1 do
-    	table.insert(Icons_BatteryMaster, image{ "images/icon-battery-master-"..i.."-"..j..".png" })
-    end
+    table.insert(MasterBatteries, image{ "images/icon-battery-master-"..i..".png", pinned = 1 })
 end
