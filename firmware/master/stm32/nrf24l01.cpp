@@ -411,6 +411,7 @@ void NRF24L01::onSpiComplete()
 
             txnState = Idle;
             timeout();
+            beginTransmit();
             break;
         }
 
