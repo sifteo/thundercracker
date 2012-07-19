@@ -159,17 +159,6 @@ nb_filter:
         mov     @r0, a
         orl     _ack_bits, #RF_ACK_BIT_NEIGHBOR
 
-#ifdef DEBUG_NBR
-        mov     _nbr_temp, a
-        mov     a, r0
-        clr     c
-        add     a, #(_nbr_data - RF_ACK_NEIGHBOR)
-        subb    a, #_ack_data
-        mov     r1, a
-        mov     a, _nbr_temp
-        mov     @r1, a
-#endif
-
 5$:     ; Loop to the next side
 
         mov     a, r0

@@ -193,17 +193,6 @@ nb_bit_done:
         swap    a                               ; match second byte format
         rr      a
         xrl     a, (_nb_buffer+1)               ; Check byte
-#ifdef DEBUG_NBR
-        jz      dbg_skip
-        mov     a, _nb_buffer
-        mov     _nbr_data_invalid, a
-        mov     a, (_nb_buffer+1)
-        swap    a
-        rl      a
-        mov     (_nbr_data_invalid+1), a
-        sjmp    nb_packet_done
-dbg_skip:
-#endif
         jnz     nb_packet_done                  ;   Invalid, ignore the packet.
 
         ; We store good packets in nb_instant_state here. The Timer 0 ISR
@@ -224,15 +213,6 @@ dbg_skip:
         anl     a, #NB_ID_MASK
         orl     a, #NB_FLAG_SIDE_ACTIVE
         mov     @r0, a
-
-#ifdef DEBUG_NBR
-        mov     a, _nb_buffer
-        mov     _nbr_data_valid, a
-        mov     a, (_nb_buffer+1)
-        swap    a
-        rl      a
-        mov     (_nbr_data_valid+1), a
-#endif
 
         pop     0
         sjmp    nb_packet_done                  ; Done receiving
