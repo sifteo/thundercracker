@@ -9,6 +9,8 @@
 #include <string.h>
 #include <sifteo/abi.h>
 #include "macros.h"
+#include "bits.h"
+#include "ringbuffer.h"
 
 class RadioManager;
 
@@ -29,6 +31,7 @@ struct RadioAddress {
         return addr | ((uint64_t)channel << 56);
     }
 };
+ 
  
 /**
  * Container for data that we eventually want to send to, or that we
@@ -73,6 +76,7 @@ struct PacketBuffer {
     }
 };
 
+
 /**
  * When transmitting a packet, we provide both a RadioAddress and
  * a PacketBuffer.  We use a pointer to the RadioAddress here, on
@@ -90,6 +94,7 @@ struct PacketTransmission {
     PacketTransmission(const RadioAddress *_dest, uint8_t *_bytes, unsigned _len=0)
         : packet(PacketBuffer(_bytes, _len)), dest(_dest), noAck(false) {}
 };
+
 
 /**
  * Abstraction for low-level radio communications, and
@@ -111,17 +116,6 @@ struct PacketTransmission {
  * We abstract this as a set of radio callbacks which are invoked
  * asynchronously, and possibly in an interrupt context. See
  * RadioManager for these callbacks.
- *
- * The overall Radio device only has a few operations it does
- * synchronously, accessible via members of this class
- * itself. Initialization, of course. And when we have nothing
- * better to do, we can halt() to enter a low-power state until an
- * interrupt arrives. This is similar to the x86 HLT instruction.
- *
- * XXX: This class should also include power management features,
- *      especially transmit power control and transmit frequency
- *      control. For now, we're assuming that every transmit
- *      opportunity will be taken.
  */
 
 class Radio {
@@ -131,7 +125,6 @@ class Radio {
 
     /*
      * Values for the L01's tx power register.
-     * Should these be abstracted?
      */
     enum TxPower {
         dBmMinus18              = 0,
@@ -162,10 +155,12 @@ class Radio {
      * a 'soft' retry count, that acts as a multiplier of the hard retry value.
      */
     static void setRetryCount(uint8_t hard, uint8_t soft);
-#ifndef SIFTEO_SIMULATOR
+
+    #ifndef SIFTEO_SIMULATOR
     static void setRfTestEnabled(bool enabled);
-#endif
+    #endif
 };
+
 
 /**
  * Multiplexes radio communications to and from multiple cubes.
@@ -193,35 +188,32 @@ class RadioManager {
      * This lets us match up ACKs with endpoints. Accessed ONLY in
      * interrupt context.
      *
-     * The FIFO_SIZE must be deep enough to cover the worst-case
+     * The size must be deep enough to cover the worst-case
      * queueing depth of the Radio implementation. On real hardware
      * this will be quite small. This is also independent of the
-     * number of cubes in use.
-     *
-     * Must be a power of two.
+     * number of cubes in use. Must be a power of two.
      */
+    typedef RingBuffer<8, uint8_t, uint8_t> fifo_t;
+    static fifo_t fifo;
 
-    static const unsigned FIFO_SIZE = 8;
+    // ID for the CubeConnector. Must not collide with any CubeSlot ID.
+    static const unsigned CONNECTOR_ID = _SYS_NUM_CUBE_SLOTS;
 
-    static _SYSCubeID epFifo[FIFO_SIZE];
-    static uint8_t epHead;              // Oldest ACK slot ID
-    static uint8_t epTail;              // Location for next packet's slot ID
-    static _SYSCubeID schedNext;        // Next cube in the schedule rotation
+    // Total number of producers in the system, including CONNECTOR_ID
+    static const unsigned NUM_PRODUCERS = CONNECTOR_ID + 1;
 
-    static void fifoPush(_SYSCubeID id) {
-        ASSERT(epTail < FIFO_SIZE);
-        epFifo[epTail] = id;
-        epTail = (epTail + 1) & (FIFO_SIZE - 1);
-        ASSERT(epTail != epHead);
-    }
+    // Tracking packet IDs, for explicitly avoiding ID collisions
+    static const unsigned PID_MASK = 3;
+    static uint8_t nextPID;
+    static uint8_t lastPID[NUM_PRODUCERS];
 
-    static _SYSCubeID fifoPop() {
-        ASSERT(epTail != epHead);
-        ASSERT(epHead < FIFO_SIZE);
-        _SYSCubeID id = epFifo[epHead];
-        epHead = (epHead + 1) & (FIFO_SIZE - 1);
-        return id;
-    }
+    // Remaining producers in the current round-robin rotation
+    static BitVector<NUM_PRODUCERS> schedule;
+
+    // Dispatch to a paritcular producer, by ID
+    static bool dispatchProduce(unsigned id, PacketTransmission &tx);
+    static void dispatchAcknowledge(unsigned id, const PacketBuffer &packet);
+    static void dispatchTimeout(unsigned id);
 };
 
 #endif

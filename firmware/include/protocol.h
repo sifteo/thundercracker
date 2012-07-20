@@ -155,19 +155,21 @@
  * address is fixed, as the base doesn't yet know our HWID.
  *
  * The address during pairing is an arbitrary random pattern:
- *
- *   ec 4f a9 52 18
- *
+ */
+ 
+#define RF_PAIRING_ADDRESS      { 0xec, 0x4f, 0xa9, 0x52, 0x18 }
+
+/*
  * The channel is derived from the neighbor ID (24-31) via Galois Field
  * multiplication by the constant 0x1C, using the 8-bit AES Galois Field.
  * This is efficient to implement on the nRF using its GF multiplication
  * accelerator. Elsewhere, we can use a simple lookup table.
  *
  * IDs 24 through 31 correspond with channels:
- *
- *   [59, 39, 3, 31, 75, 87, 115, 111]
- *
  */
+
+#define RF_PAIRING_CHANNELS     { 59, 39, 3, 31, 75, 87, 115, 111 }
+
 
 /**************************************************************************
  *

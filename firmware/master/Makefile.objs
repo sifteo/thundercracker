@@ -17,6 +17,7 @@ OBJS_COMMON = \
     $(MASTER_DIR)/common/assetslot.o \
     $(MASTER_DIR)/common/cubeslots.o \
     $(MASTER_DIR)/common/cube.o \
+    $(MASTER_DIR)/common/cubeconnector.o \
     $(MASTER_DIR)/common/cubecodec.o \
     $(MASTER_DIR)/common/audiomixer.o \
     $(MASTER_DIR)/common/adpcmdecoder.o \
