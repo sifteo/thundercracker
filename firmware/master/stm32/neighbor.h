@@ -57,8 +57,10 @@ private:
     // number of bits to wait for during an rx sequence
     static const unsigned NUM_RX_BITS = 16;
 
-    // number of bit periods to wait between transmissions
-    static const unsigned NUM_TX_WAIT_PERIODS = 50;
+    // Number of bit periods to wait between transmissions.
+    // We need at least one successful transmit per 162 Hz sensor polling interval.
+    // So, currently we target a transmit rate of about twice that. 
+    static const unsigned NUM_TX_WAIT_PERIODS = 192;
 
 #if (BOARD == BOARD_TEST_JIG)
     static const unsigned NUM_PINS = 4;
