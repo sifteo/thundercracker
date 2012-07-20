@@ -12,7 +12,9 @@
 #include <sifteo/menu.h>
 using namespace Sifteo;
 
-static unsigned getNumCubes(CubeSet cubes) {
+
+static unsigned getNumCubes(CubeSet cubes)
+{
     unsigned count = 0;
     for (int i = 0; i < cubes.size(); ++i) {
         if (cubes.test(i))
@@ -67,6 +69,7 @@ void MainMenu::eventLoop(Menu &m)
 
         updateMusic();
         updateIcons(m);
+        checkForAlertDismiss(m);
 
         bool performDefault = true;
 
@@ -166,6 +169,15 @@ void MainMenu::toggleCubeRangeAlert(unsigned index, Sifteo::Menu &menu)
     } else {
         menu.replaceIcon(index, cubeRangeSavedIcon);
         cubeRangeSavedIcon = NULL;
+    }
+}
+
+void MainMenu::checkForAlertDismiss(Sifteo::Menu &menu)
+{
+    if (cubeRangeSavedIcon != NULL && itemIndexCurrent != -1) {
+        if (mainCube.isShaking() || mainCube.tilt().x != 0 || mainCube.tilt().y != 0) {
+            toggleCubeRangeAlert(itemIndexCurrent, menu);
+        }
     }
 }
 

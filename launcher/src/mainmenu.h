@@ -62,6 +62,7 @@ private:
 
     bool canLaunchItem(unsigned index);
     void toggleCubeRangeAlert(unsigned index, Sifteo::Menu &menu);
+    void checkForAlertDismiss(Sifteo::Menu &menu);
 
     // Note: these functions are marked NOINLINE as a cache usage optimization.
     NOINLINE void loadAssets();
