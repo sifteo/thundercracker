@@ -22,9 +22,6 @@ public:
     static void floatSide(unsigned side);
     static void squelchSide(unsigned side);
 
-    // Hardware glue
-    static void timerISR();
-
 };
 
 #endif

@@ -361,16 +361,6 @@ void TestJig::stopNeighborTxHandler(uint8_t argc, uint8_t *args)
  * I N T E R R U P T  H A N D L E R S
  ******************************************/
 
-IRQ_HANDLER ISR_TIM3()
-{
-    NeighborRX::timerISR();
-}
-
-IRQ_HANDLER ISR_TIM5()
-{
-    NeighborTX::timerISR();
-}
-
 /*
  * Neighbor Ins 2 and 3 are on EXTI lines 0 and 1 respectively.
  */

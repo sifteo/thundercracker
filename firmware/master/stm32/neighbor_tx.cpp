@@ -98,7 +98,7 @@ void NeighborTX::stop()
     txState = Idle;
 }
 
-void NeighborTX::timerISR()
+IRQ_HANDLER ISR_FN(NBR_TX_TIM)()
 {
     /*
      * Called when the PWM timer has reached the end of its counter, ie the end of a

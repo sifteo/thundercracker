@@ -160,7 +160,7 @@ void NeighborRX::pulseISR(unsigned side)
     }
 }
 
-void NeighborRX::timerISR()
+IRQ_HANDLER ISR_FN(NBR_RX_TIM)()
 {
     /*
      * Our bit period timer has expired during an RX operation.
@@ -208,7 +208,7 @@ void NeighborRX::timerISR()
             bool headerOK = (rxDataBuf.bytes[1] & 0xe0) == 0xe0;
 
             if (headerOK && checkbyte == rxDataBuf.bytes[0])
-                callback(receivingSide, rxDataBuf.halfword);
+                NeighborRX::callback(receivingSide, rxDataBuf.halfword);
         }
     }
 }
