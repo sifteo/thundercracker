@@ -11,7 +11,6 @@ CCFLAGS += -I. -I../bootloader -DBOARD=BOARD_TEST_JIG
 OBJS_STM32 += \
     $(MASTER_DIR)/testjig/main.stm32.o                  \
     $(MASTER_DIR)/testjig/testjig.stm32.o               \
-    $(MASTER_DIR)/stm32/neighbor.stm32.o                \
     $(MASTER_DIR)/stm32/i2c.stm32.o                     \
     $(MASTER_DIR)/stm32/adc.stm32.o                     \
     $(MASTER_DIR)/stm32/sampleprofiler.stm32.o

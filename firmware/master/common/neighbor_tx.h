@@ -15,8 +15,15 @@ public:
     static void init();
 
     // Transmit a particular 16-bit packet repeatedly
-    static void start(unsigned sideMask, unsigned data);
+    static void start(unsigned data, unsigned sideMask);
     static void stop();
+
+    // Change TX pin state
+    static void floatSide(unsigned side);
+    static void squelchSide(unsigned side);
+
+    // Hardware glue
+    static void timerISR();
 
 };
 

@@ -21,6 +21,10 @@ public:
     // Callback for received data.
     static void callback(unsigned side, unsigned data);
 
+    // Hardware glue
+    static void timerISR();
+    static void pulseISR(unsigned side);
+
 };
 
 #endif

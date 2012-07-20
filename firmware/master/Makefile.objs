@@ -79,6 +79,8 @@ OBJS_STM32 = \
     $(MASTER_DIR)/stm32/factorytest.stm32.o \
     $(MASTER_DIR)/stm32/exti.stm32.o \
     $(MASTER_DIR)/stm32/led.stm32.o \
+    $(MASTER_DIR)/stm32/neighbor_rx.stm32.o \
+    $(MASTER_DIR)/stm32/neighbor_tx.stm32.o \
     $(MASTER_DIR)/stm32/syscall_math.stm32.o
 
 # Other target specific sources should be appended to OBJS_STM32
