@@ -10,6 +10,7 @@
 #include "bits.h"
 #include "gpio.h"
 #include "hwtimer.h"
+#include "vectors.h"
 
 
 namespace {

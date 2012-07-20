@@ -34,6 +34,10 @@
 // N E I G H B O R
 #define NBR_OUT1_GPIO       GPIOPin(&GPIOB, 8)
 #define NBR_OUT2_GPIO       GPIOPin(&GPIOB, 9)
+#define NBR_IN1_GPIO        GPIOPin(&GPIOA, 2)
+#define NBR_IN2_GPIO        GPIOPin(&GPIOA, 3)
+#define NBR_TX_TIM          TIM4
+#define NBR_TX_TIM_CH       3
 
 // U A R T
 #define UART_DBG            USART3
@@ -55,14 +59,11 @@
 #define AUDIO_PWMB_PIN      8
 #define AUDIO_PWM_CHAN      1
 #define AUDIO_PWM_TIM       TIM1
-#define AUDIO_SAMPLE_TIM    TIM4
+#define AUDIO_SAMPLE_TIM    TIM3
 
 // M I S C
 #define BTN_HOME_GPIO       GPIOPin(&GPIOC, 0)
 #define BTN_HOME_EXTI_VEC   EXTI0
 
-// N E I G H B O R S
-#define NEIGHBOR_TX_TIM     TIM5
-#define NEIGHBOR_RX_TIM     TIM3
 
 #endif // _BOARD_REV1_H

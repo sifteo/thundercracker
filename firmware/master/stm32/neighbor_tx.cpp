@@ -9,6 +9,7 @@
 #include "bits.h"
 #include "gpio.h"
 #include "hwtimer.h"
+#include "vectors.h"
 
 
 namespace {
@@ -25,8 +26,8 @@ namespace {
     static void setDuty(unsigned duty)
     {
         HwTimer txPeriodTimer(&NBR_TX_TIM);
-        for (unsigned i = 1; i <= arraysize(pins); ++i)
-            txPeriodTimer.setDuty(i, duty);
+        for (unsigned i = 0; i < arraysize(pins); ++i)
+            txPeriodTimer.setDuty(NBR_TX_TIM_CH + i, duty);
     }
 
     static volatile uint16_t txData;    // data in the process of being transmitted. if 0, we're done.
@@ -47,9 +48,10 @@ void NeighborTX::init()
     txPeriodTimer.init(Neighbor::BIT_PERIOD_TICKS, 0);
 
     for (unsigned i = 0; i < arraysize(pins); ++i) {
-        txPeriodTimer.configureChannelAsOutput(i + 1, HwTimer::ActiveHigh, HwTimer::Pwm1);
+        unsigned channel = NBR_TX_TIM_CH + i;
+        txPeriodTimer.configureChannelAsOutput(channel, HwTimer::ActiveHigh, HwTimer::Pwm1);
         pins[i].setControl(GPIOPin::IN_PULL);
-        txPeriodTimer.enableChannel(i + 1);
+        txPeriodTimer.enableChannel(channel);
     }
 }
 
@@ -75,7 +77,7 @@ void NeighborTX::start(unsigned data, unsigned sideMask)
 
     // starting from idle? reinit state machine
     if (txState == Idle) {
-        data = txDataBuffer;
+        txData = txDataBuffer;
         txState = Transmitting;
 
         HwTimer txPeriodTimer(&NBR_TX_TIM);

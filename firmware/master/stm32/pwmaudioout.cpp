@@ -132,7 +132,7 @@ void AudioOutDevice::stop()
 }
 
 
-IRQ_HANDLER ISR_TIM4()
+IRQ_HANDLER ISR_FN(AUDIO_SAMPLE_TIM)()
 {
     /*
      * This is the sampleTimer (TIM4) ISR, called regularly at our
@@ -152,7 +152,7 @@ IRQ_HANDLER ISR_TIM4()
      */
 
     // Acknowledge IRQ by clearing timer status
-    TIM4.SR = 0; 
+    AUDIO_SAMPLE_TIM.SR = 0; 
 
     // Default state, zero volts across speaker.
     GPIOPin::Control ctrlA = GPIOPin::OUT_2MHZ;
