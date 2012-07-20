@@ -25,7 +25,7 @@ OBJS_COMMON = \
     $(MASTER_DIR)/common/xmtrackerpattern.o \
     $(MASTER_DIR)/common/xmtrackerplayer.o \
     $(MASTER_DIR)/common/accel.o \
-    $(MASTER_DIR)/common/neighbors.o \
+    $(MASTER_DIR)/common/neighborslot.o \
     $(MASTER_DIR)/common/tasks.o \
     $(MASTER_DIR)/common/prng.o \
     $(MASTER_DIR)/common/crc.o \

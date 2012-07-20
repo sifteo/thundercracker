@@ -13,7 +13,7 @@
 #include "flash_blockcache.h"
 #include "svmdebugpipe.h"
 #include "tasks.h"
-#include "neighbors.h"
+#include "neighborslot.h"
 #include "paintcontrol.h"
 #include "cubeslots.h"
 

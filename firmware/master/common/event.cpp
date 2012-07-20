@@ -6,7 +6,7 @@
 #include <sifteo/abi.h>
 #include "event.h"
 #include "cube.h"
-#include "neighbors.h"
+#include "neighborslot.h"
 
 uint32_t Event::pending;
 Event::VectorInfo Event::vectors[_SYS_NUM_VECTORS];

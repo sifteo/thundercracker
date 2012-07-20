@@ -5,7 +5,7 @@
 
 #include "cubeslots.h"
 #include "cube.h"
-#include "neighbors.h"
+#include "neighborslot.h"
 #include "machine.h"
 #include "tasks.h"
 #include "radio.h"

@@ -5,7 +5,7 @@
 
 #include <protocol.h>
 #include "machine.h"
-#include "neighbors.h"
+#include "neighborslot.h"
 #include "vram.h"
 #include "event.h"
 

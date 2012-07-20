@@ -12,7 +12,7 @@
 #include "svmruntime.h"
 #include "cubeslots.h"
 #include "cube.h"
-#include "neighbors.h"
+#include "neighborslot.h"
 #include "accel.h"
 
 extern "C" {

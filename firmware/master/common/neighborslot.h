@@ -3,8 +3,8 @@
  * Copyright <c> 2012 Sifteo, Inc. All rights reserved.
  */
 
-#ifndef _NEIGHBORS_H__
-#define _NEIGHBORS_H__
+#ifndef _NEIGHBORSLOT_H__
+#define _NEIGHBORSLOT_H__
 
 #include "cube.h"
 
