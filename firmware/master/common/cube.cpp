@@ -128,13 +128,7 @@ const RadioAddress *CubeSlot::getRadioAddress()
      *      the emulator will come up with.
      */
 
-    // always want to run on channel 0x2 in the sim, but allow the channel to
-    // be configured when building for hardware
-#if defined(MASTER_RF_CHAN) && !defined(SIFTEO_SIMULATOR)
-    address.channel = MASTER_RF_CHAN;
-#else
     address.channel = 0x2;
-#endif
     address.id[0] = id();
     address.id[1] = 0xe7;
     address.id[2] = 0xe7;

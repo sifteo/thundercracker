@@ -37,11 +37,6 @@ ifneq ($(DEBUG),)
     CCFLAGS += -DDEBUG
 endif
 
-# Configurable radio channel
-ifneq ($(MASTER_RF_CHAN),)
-    CCFLAGS += -DMASTER_RF_CHAN=$(MASTER_RF_CHAN)
-endif
-
 # Environment defs
 # NOTE: specify these relative to MASTER_DIR so both normal and testjig builds can share
 CCFLAGS += \
