@@ -37,6 +37,8 @@ public:
      */
     virtual Flags getAssets(Sifteo::MenuItem &assets, Sifteo::MappedVolume &map) = 0;
 
+    virtual bool autoRefreshIcon() { return false; }
+
     /**
      * How many cubes are required by this menu item, if any?
      */

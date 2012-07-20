@@ -22,6 +22,7 @@ void MainMenu::init()
 {
     items.clear();
     itemIndexCurrent = 0;
+    cubeRangeSavedIcon = NULL;
 
     // XXX: Fake cubeset initialization, until we have real cube connect/disconnect
     cubes = CubeSet(0,3);
@@ -40,7 +41,7 @@ void MainMenu::run()
     for (CubeID cube : cubes)
         if (cube != mainCube) {
             auto& vid = Shared::video[cube];
-            vid.initMode(BG0_SPR_BG1);
+            vid.initMode(BG0);
             vid.attach(cube);
             vid.bg0.erase(Menu_StripeTile);
         }
@@ -59,11 +60,16 @@ void MainMenu::eventLoop(Menu &m)
         updateMusic();
         updateIcons(m);
 
+        bool performDefault = true;
+
         switch(e.type) {
 
             case MENU_ITEM_PRESS:
-                execItem(e.item);
-                return;
+                if (execItem(e.item, m))
+                    return;
+                else
+                    performDefault = false;
+                    break;
             case MENU_ITEM_ARRIVE:
                 itemIndexCurrent = e.item;
                 if (itemIndexCurrent >= 0) {
@@ -72,6 +78,10 @@ void MainMenu::eventLoop(Menu &m)
                 break;
             case MENU_ITEM_DEPART:
                 if (itemIndexCurrent >= 0) {
+                    if (cubeRangeSavedIcon != NULL) {
+                        m.replaceIcon(itemIndexCurrent, cubeRangeSavedIcon);
+                        cubeRangeSavedIcon = NULL;
+                    }
                     departItem(itemIndexCurrent);
                 }
                 itemIndexCurrent = -1;
@@ -86,7 +96,9 @@ void MainMenu::eventLoop(Menu &m)
 
         }
 
-        m.performDefault();
+        if (performDefault) {
+            m.performDefault();
+        }
     }
 }
 
@@ -104,28 +116,50 @@ void MainMenu::updateMusic()
 void MainMenu::updateIcons(Menu &menu)
 {
     for (unsigned i = 0, e = items.count(); i != e; ++i) {
-        MenuItem &mi = menuItems[i];
-        
-        MappedVolume map;
-        auto flags = items[i]->getAssets(mi, map);
-        
-        menu.replaceIcon(i, mi.icon);
+        if (items[i]->autoRefreshIcon()) {
+            MenuItem &mi = menuItems[i];
+            
+            MappedVolume map;
+            auto flags = items[i]->getAssets(mi, map);
+            
+            menu.replaceIcon(i, mi.icon);
+        }
     }
 }
 
-void MainMenu::execItem(unsigned index)
+bool MainMenu::execItem(unsigned index, Sifteo::Menu &menu)
 {
-    /// XXX: Instead of a separate animation, integrate this animation with the menu itself
-    /// XXX: Cube range init here is temporary.
-
-    DefaultLoadingAnimation anim;
-
     ASSERT(index < arraysize(items));
     MainMenuItem *item = items[index];
 
-    CubeSet itemCubes = item->getCubeRange().initMinimum();
-    item->bootstrap(itemCubes, anim);
-    item->exec();
+    unsigned numCubes = cubes.size();
+    unsigned minCubes = item->getCubeRange().sys.minCubes;
+    unsigned maxCubes = item->getCubeRange().sys.maxCubes;
+
+    if (numCubes >= minCubes && numCubes <= maxCubes) {
+        /// XXX: Instead of a separate animation, integrate this animation with the menu itself
+        /// XXX: Cube range init here is temporary.
+
+        DefaultLoadingAnimation anim;
+
+        CubeSet itemCubes = item->getCubeRange().initMinimum();
+        item->bootstrap(itemCubes, anim);
+        item->exec();
+        return true;
+    } else {
+        if (cubeRangeSavedIcon == NULL) {
+            cubeRangeSavedIcon = menuItems[index].icon;
+            cubeRangeAlertIcon.init();
+            cubeRangeAlertIcon.image(vec(0,0), Icon_CubeRange);
+            cubeRangeAlertIcon.image(vec(2,4), Numbers, minCubes);
+            cubeRangeAlertIcon.image(vec(7,4), Numbers, maxCubes);
+            menu.replaceIcon(index, cubeRangeAlertIcon);
+        } else {
+            menu.replaceIcon(index, cubeRangeSavedIcon);
+            cubeRangeSavedIcon = NULL;
+        }
+        return false;
+    }
 }
 
 void MainMenu::arriveItem(unsigned index)

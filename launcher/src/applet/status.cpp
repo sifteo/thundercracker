@@ -71,7 +71,7 @@ void StatusApplet::depart(CubeSet cubes, CubeID mainCube)
     for (CubeID cube : cubes)
         if (cube != mainCube) {
             auto &vid = Shared::video[cube];
-            vid.initMode(BG0_SPR_BG1);
+            vid.initMode(BG0);
             vid.attach(cube);
             vid.bg0.erase(Menu_StripeTile);
         }

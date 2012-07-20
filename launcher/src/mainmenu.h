@@ -50,13 +50,20 @@ private:
     int itemIndexCurrent;
     static const Sifteo::MenuAssets menuAssets;
 
+    /**
+     * A icon that we swap in if the user tries to launch a game that requires
+     * an incompatible number of cubes
+     */
+    Sifteo::RelocatableTileBuffer<12,12> cubeRangeAlertIcon;
+    const Sifteo::AssetImage *cubeRangeSavedIcon;
+
     void updateMusic();
     void updateIcons(Sifteo::Menu &menu);
 
     // Note: these functions are marked NOINLINE as a cache usage optimization.
     NOINLINE void loadAssets();
     NOINLINE void eventLoop(Sifteo::Menu &m);
-    NOINLINE void execItem(unsigned index);
+    NOINLINE bool execItem(unsigned index, Sifteo::Menu &menu);
     NOINLINE void arriveItem(unsigned index);
     NOINLINE void departItem(unsigned index);
     NOINLINE void prepaintItem(unsigned index);
