@@ -73,10 +73,14 @@ void StatusApplet::depart(CubeSet cubes, CubeID mainCube)
 
 void StatusApplet::prepaint(CubeSet cubes, CubeID mainCube)
 {
-    if (levelCounter < kNumBatteryLevels)
-    {
-        ++levelCounter;
+    static bool frame = true;
+    if (frame) {
+        if (levelCounter < kNumBatteryLevels)
+        {
+            ++levelCounter;
+        }
     }
+    frame = !frame;
 
     for (CubeID cube : cubes) {
         if (cube != mainCube) {
