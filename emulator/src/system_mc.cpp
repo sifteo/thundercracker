@@ -221,7 +221,7 @@ void SystemMC::doRadioPacket()
 
         // Log this transaction
         if (sys->opt_radioTrace) {
-            LOG(("RADIO: %6dms %02d/%02x%02x%02x%02x%02x -- TX[%2d] ",
+            LOG(("RADIO: %6dms %02x/%02x%02x%02x%02x%02x -- TX[%2d] ",
                 int(SysTime::ticks() / SysTime::msTicks(1)),
                 buf.ptx.dest->channel,
                 buf.ptx.dest->id[4],
