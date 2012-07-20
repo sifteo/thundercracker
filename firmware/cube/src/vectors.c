@@ -115,7 +115,7 @@ v_002b: ljmp    _tf2_isr
 _graphics_render_ret::
 
         jb      _radio_connected, 1$            ; Skip disconnected tasks if connected
-3$:     ljmp    _disconnected_poll              ; One frame in disconnected-mode main loop
+        ljmp    _disconnected_poll              ; One frame in disconnected-mode main loop
 1$:
         mov     a, _sensor_tick_counter_high    ; Check connection timeout
         cjne    a, _radio_packet_deadline, 2$
