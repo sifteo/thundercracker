@@ -126,7 +126,7 @@ inline float Menu::velocityMultiplier()
 
 inline float Menu::maxVelocity()
 {
-    const float kMaxNormalSpeed = 40.f;
+    const float kMaxNormalSpeed = abs(accel.x) > 11.5f ? 70.f : 40.f;
     return kMaxNormalSpeed *
            // x-axis linear limit
            (abs(accel.x) / kOneG()) *
