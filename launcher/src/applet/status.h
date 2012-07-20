@@ -22,5 +22,6 @@ public:
     static void add(MainMenu &menu);
 
 private:
+    Sifteo::RelocatableTileBuffer<12,12> icon;
     unsigned levelCounter;
 };

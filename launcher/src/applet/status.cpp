@@ -10,11 +10,37 @@
 #include <sifteo.h>
 using namespace Sifteo;
 
+static const unsigned kNumBatteryLevels = 4;
 static const unsigned kMaxBatteryLevel = 256;
 
 MainMenuItem::Flags StatusApplet::getAssets(MenuItem &assets, MappedVolume&)
 {
-    assets.icon = &Icon_BatteryMaster;
+    icon.init();
+    icon.image(vec(0,0), Icon_BatteryMaster);
+
+    float batteryLevelBuddy = float(CubeID(0).batteryLevel()) / float(kMaxBatteryLevel); // TODO: Find out which CubeId we are dealing with in the menu
+    batteryLevelBuddy = 1.0f;
+
+    unsigned numBatteryLevelsBuddy = batteryLevelBuddy * float(kNumBatteryLevels);
+    numBatteryLevelsBuddy = MIN(numBatteryLevelsBuddy, levelCounter);
+
+    for (int i = 0; i < numBatteryLevelsBuddy; ++i)
+    {
+        icon.image(vec(Battery_Black.tileWidth() * i + 2, 3), Battery_Black);
+    }
+
+    float batteryLevelMaster = float(CubeID(0).batteryLevel()) / float(kMaxBatteryLevel); // TODO: use API for master battery
+    batteryLevelMaster = 1.0f;
+
+    unsigned numBatteryLevelsMaster = batteryLevelMaster * float(kNumBatteryLevels);
+    numBatteryLevelsMaster = MIN(numBatteryLevelsMaster, levelCounter);
+
+    for (int i = 0; i < numBatteryLevelsMaster; ++i)
+    {
+        icon.image(vec(Battery_Red.tileWidth() * i + 2, 7), Battery_Red);
+    }
+    
+    assets.icon = icon;
     return NONE;
 }
 
@@ -47,49 +73,30 @@ void StatusApplet::depart(CubeSet cubes, CubeID mainCube)
 
 void StatusApplet::prepaint(CubeSet cubes, CubeID mainCube)
 {
-    ASSERT(arraysize(BuddyBatteries) == arraysize(MasterBatteries));
-    if (levelCounter < arraysize(BuddyBatteries))
+    if (levelCounter < kNumBatteryLevels)
     {
         ++levelCounter;
     }
 
-    for (CubeID cube : cubes)
+    for (CubeID cube : cubes) {
         if (cube != mainCube) {
-            float batteryLevelBuddy = float(cube.batteryLevel()) / float(kMaxBatteryLevel);
-            //batteryLevelBuddy = 0.4f;
-            
-            unsigned batteryIconIndex = unsigned(batteryLevelBuddy * float(arraysize(BuddyBatteries) - 1));
-            batteryIconIndex = MIN(batteryIconIndex, levelCounter);
-
-            ASSERT(batteryIconIndex < arraysize(BuddyBatteries));
-
             auto &vid = Shared::video[cube];
-            vid.sprites[0].setImage(BuddyBatteries[batteryIconIndex]);
-            vid.sprites[0].move(vec(32, 40));
-        } else {
-            
-            auto &vid = Shared::video[cube];
-            
-            float batteryLevelBuddy = float(CubeID(0).batteryLevel()) / float(kMaxBatteryLevel); // TODO: Find out which CubeId we are dealing with in the menu
-            //batteryLevelBuddy = 0.4f;
-            
-            unsigned batteryIndexBuddy = unsigned(batteryLevelBuddy * float(arraysize(BuddyBatteries) - 1));
-            batteryIndexBuddy = MIN(batteryIndexBuddy, levelCounter);
 
-            ASSERT(batteryIndexBuddy < arraysize(BuddyBatteries));
-            vid.sprites[0].setImage(BuddyBatteries[batteryIndexBuddy]);
-            vid.sprites[0].move(vec(32, 32));
+            vid.bg0.image(vec(2,2), Icon_Battery);
 
-            float batteryLevelMaster = float(CubeID(0).batteryLevel()) / float(kMaxBatteryLevel); // TODO: use API for master battery
-            //batteryLevelMaster = 0.8f;
+            float batteryLevelBuddy = float(cube.batteryLevel()) / float(kMaxBatteryLevel); // TODO: Find out which CubeId we are dealing with in the menu
+            batteryLevelBuddy = 1.0f;
 
-            unsigned batteryIndexMaster = unsigned(batteryLevelMaster * float(arraysize(MasterBatteries) - 1));
-            batteryIndexMaster = MIN(batteryIndexMaster, levelCounter);
+            unsigned numBatteryLevelsBuddy = batteryLevelBuddy * float(kNumBatteryLevels);
+            numBatteryLevelsBuddy = MIN(numBatteryLevelsBuddy, levelCounter);
 
-            ASSERT(batteryIndexMaster < arraysize(MasterBatteries));
-            vid.sprites[1].setImage(MasterBatteries[batteryIndexMaster]);
-            vid.sprites[1].move(vec(32, 64));
+            for (int i = 0; i < numBatteryLevelsBuddy; ++i)
+            {
+                vid.bg0.image(vec(Battery_Black.tileWidth() * i + 4, 5), Battery_Black);
+            }
+
         }
+    }
 }
 
 void StatusApplet::add(MainMenu &menu)

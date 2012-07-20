@@ -57,6 +57,7 @@ void MainMenu::eventLoop(Menu &m)
     while (m.pollEvent(&e)) {
 
         updateMusic();
+        updateAssets(m);
 
         switch(e.type) {
 
@@ -98,6 +99,17 @@ void MainMenu::updateMusic()
 
     if (AudioTracker::isStopped())
         AudioTracker::play(UISound_MenuMusic);
+}
+
+void MainMenu::updateAssets(Menu &menu)
+{
+    for (unsigned I = 0, E = items.count(); I != E; ++I) {
+        MainMenuItem *item = items[I];
+        MappedVolume map;
+        MenuItem &mi = menuItems[I];
+        auto flags = item->getAssets(mi, map);
+        menu.replaceIcon(I, mi.icon);
+    }
 }
 
 void MainMenu::execItem(unsigned index)

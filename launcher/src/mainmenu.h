@@ -51,6 +51,7 @@ private:
     static const Sifteo::MenuAssets menuAssets;
 
     void updateMusic();
+    void updateAssets(Sifteo::Menu &menu);
 
     // Note: these functions are marked NOINLINE as a cache usage optimization.
     NOINLINE void loadAssets();
