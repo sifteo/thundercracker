@@ -10,7 +10,7 @@
 #include <sifteo.h>
 using namespace Sifteo;
 
-static const unsigned kNumBatteryLevels = 4;
+static const unsigned kNumBatteryLevels = 8;
 static const unsigned kMaxBatteryLevel = 256;
 
 MainMenuItem::Flags StatusApplet::getAssets(MenuItem &assets, MappedVolume&)
@@ -19,25 +19,31 @@ MainMenuItem::Flags StatusApplet::getAssets(MenuItem &assets, MappedVolume&)
     icon.image(vec(0,0), Icon_BatteryMaster);
 
     float batteryLevelBuddy = float(CubeID(0).batteryLevel()) / float(kMaxBatteryLevel); // TODO: Find out which CubeId we are dealing with in the menu
-    batteryLevelBuddy = 1.0f;
+    batteryLevelBuddy = 0.4f; // XXX: test code
 
     unsigned numBatteryLevelsBuddy = batteryLevelBuddy * float(kNumBatteryLevels);
     numBatteryLevelsBuddy = MIN(numBatteryLevelsBuddy, levelCounter);
 
-    for (int i = 0; i < numBatteryLevelsBuddy; ++i)
-    {
-        icon.image(vec(Battery_Black.tileWidth() * i + 2, 3), Battery_Black);
+    for (int i = 0; i < kNumBatteryLevels/2; ++i) {
+        if (numBatteryLevelsBuddy >= i*2) {
+            icon.image(vec(Battery_Black.tileWidth() * i + 2, 3), Battery_Black, 1);
+        } else if (numBatteryLevelsBuddy == i*2-1) {
+            icon.image(vec(Battery_Black.tileWidth() * i + 2, 3), Battery_Black, 0);
+        }
     }
 
     float batteryLevelMaster = float(CubeID(0).batteryLevel()) / float(kMaxBatteryLevel); // TODO: use API for master battery
-    batteryLevelMaster = 1.0f;
+    batteryLevelMaster = 0.9f; // XXX: test code
 
     unsigned numBatteryLevelsMaster = batteryLevelMaster * float(kNumBatteryLevels);
     numBatteryLevelsMaster = MIN(numBatteryLevelsMaster, levelCounter);
 
-    for (int i = 0; i < numBatteryLevelsMaster; ++i)
-    {
-        icon.image(vec(Battery_Red.tileWidth() * i + 2, 7), Battery_Red);
+    for (int i = 0; i < kNumBatteryLevels/2; ++i) {
+        if (numBatteryLevelsMaster >= i*2) {
+            icon.image(vec(Battery_Red.tileWidth() * i + 2, 7), Battery_Red, 1);
+        } else if (numBatteryLevelsMaster == i*2-1) {
+            icon.image(vec(Battery_Red.tileWidth() * i + 2, 7), Battery_Red, 0);
+        }
     }
     
     assets.icon = icon;
@@ -88,17 +94,19 @@ void StatusApplet::prepaint(CubeSet cubes, CubeID mainCube)
 
             vid.bg0.image(vec(2,2), Icon_Battery);
 
-            float batteryLevelBuddy = float(cube.batteryLevel()) / float(kMaxBatteryLevel); // TODO: Find out which CubeId we are dealing with in the menu
-            batteryLevelBuddy = 1.0f;
+            float batteryLevelBuddy = float(cube.batteryLevel()) / float(kMaxBatteryLevel);
+            batteryLevelBuddy = 1.0f; // XXX: test code
 
             unsigned numBatteryLevelsBuddy = batteryLevelBuddy * float(kNumBatteryLevels);
             numBatteryLevelsBuddy = MIN(numBatteryLevelsBuddy, levelCounter);
 
-            for (int i = 0; i < numBatteryLevelsBuddy; ++i)
-            {
-                vid.bg0.image(vec(Battery_Black.tileWidth() * i + 4, 5), Battery_Black);
+            for (int i = 0; i < kNumBatteryLevels/2; ++i) {
+                if (numBatteryLevelsBuddy >= i*2) {
+                    vid.bg0.image(vec(Battery_Black.tileWidth() * i + 4, 5), Battery_Black, 1);
+                } else if (numBatteryLevelsBuddy == i*2-1) {
+                    vid.bg0.image(vec(Battery_Black.tileWidth() * i + 4, 5), Battery_Black, 0);
+                }
             }
-
         }
     }
 }

@@ -25,5 +25,5 @@ Icon_Battery = image{ "images/icon-battery.png" }
 Icon_BatteryMaster = image{ "images/icon-battery-master.png" }
 
 -- Battery Gauge
-Battery_Black = image { "images/battery-black.png" }
-Battery_Red = image { "images/battery-red.png" }
+Battery_Black = image { "images/battery-black.png", width=8 }
+Battery_Red = image { "images/battery-red.png", width=16 }
