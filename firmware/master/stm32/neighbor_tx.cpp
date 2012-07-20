@@ -30,9 +30,8 @@ namespace {
             txPeriodTimer.setDuty(NBR_TX_TIM_CH + i, duty);
     }
 
-    static volatile uint16_t txData;    // data in the process of being transmitted. if 0, we're done.
-    static uint16_t txWaitPeriods;      // how many bit periods to wait before beginning our next transmission
-    static uint16_t txDataBuffer;
+    static uint16_t txData;         // Shift register for transmission in progress, 0 if done
+    static uint16_t txDataBuffer;   // Current packet we're transmitting
 
     static enum TxState {
         Idle,
@@ -124,8 +123,9 @@ IRQ_HANDLER ISR_FN(NBR_TX_TIM)()
         case Transmitting:
             // was the previous bit our last one?
             if (txData == 0) {
+                // Between transmissions, use the prescaler to reduce IRQ load.
                 setDuty(0);
-                txWaitPeriods = Neighbor::NUM_TX_WAIT_PERIODS;
+                txPeriodTimer.setPeriod(Neighbor::BIT_PERIOD_TICKS, Neighbor::NUM_TX_WAIT_PERIODS);
                 txState = BetweenTransmissions;
             } else {
                 // send data out big endian
@@ -135,11 +135,12 @@ IRQ_HANDLER ISR_FN(NBR_TX_TIM)()
             break;
 
         case BetweenTransmissions:
-            if (--txWaitPeriods == 0) {
-                // load data from our buffer and update our state
-                txData = txDataBuffer;
-                txState = Transmitting;
-            }
+            // Load data from our buffer and update our state.
+            // Go back to our usual 1x prescaler.
+
+            txData = txDataBuffer;
+            txState = Transmitting;
+            txPeriodTimer.setPeriod(Neighbor::BIT_PERIOD_TICKS, 0);
             break;
 
         case Idle:
