@@ -12,6 +12,14 @@
 #include <sifteo/menu.h>
 using namespace Sifteo;
 
+static unsigned getNumCubes(CubeSet cubes) {
+    unsigned count = 0;
+    for (int i = 0; i < cubes.size(); ++i) {
+        if (cubes.test(i))
+            ++count;
+    }
+    return count;
+}
 
 const MenuAssets MainMenu::menuAssets = {
     &Menu_BgTile, &Menu_Footer, NULL, {&Menu_Tip0, &Menu_Tip1, &Menu_Tip2, NULL}
@@ -65,11 +73,14 @@ void MainMenu::eventLoop(Menu &m)
         switch(e.type) {
 
             case MENU_ITEM_PRESS:
-                if (execItem(e.item, m))
+                if (canLaunchItem(e.item)) {
+                    execItem(e.item);
                     return;
-                else
+                } else {
+                    toggleCubeRangeAlert(e.item, m);
                     performDefault = false;
-                    break;
+                }
+                break;
             case MENU_ITEM_ARRIVE:
                 itemIndexCurrent = e.item;
                 if (itemIndexCurrent >= 0) {
@@ -96,9 +107,8 @@ void MainMenu::eventLoop(Menu &m)
 
         }
 
-        if (performDefault) {
+        if (performDefault)
             m.performDefault();
-        }
     }
 }
 
@@ -127,39 +137,49 @@ void MainMenu::updateIcons(Menu &menu)
     }
 }
 
-bool MainMenu::execItem(unsigned index, Sifteo::Menu &menu)
+bool MainMenu::canLaunchItem(unsigned index)
 {
     ASSERT(index < arraysize(items));
     MainMenuItem *item = items[index];
 
-    unsigned numCubes = cubes.size();
     unsigned minCubes = item->getCubeRange().sys.minCubes;
     unsigned maxCubes = item->getCubeRange().sys.maxCubes;
 
-    if (numCubes >= minCubes && numCubes <= maxCubes) {
-        /// XXX: Instead of a separate animation, integrate this animation with the menu itself
-        /// XXX: Cube range init here is temporary.
+    unsigned numCubes = getNumCubes(cubes);
+    return numCubes >= minCubes && numCubes <= maxCubes;
+}
 
-        DefaultLoadingAnimation anim;
-
-        CubeSet itemCubes = item->getCubeRange().initMinimum();
-        item->bootstrap(itemCubes, anim);
-        item->exec();
-        return true;
+void MainMenu::toggleCubeRangeAlert(unsigned index, Sifteo::Menu &menu)
+{
+    if (cubeRangeSavedIcon == NULL) {
+        ASSERT(index < arraysize(items));
+        MainMenuItem *item = items[index];
+        
+        cubeRangeSavedIcon = menuItems[index].icon;
+        
+        cubeRangeAlertIcon.init();
+        cubeRangeAlertIcon.image(vec(0,0), Icon_CubeRange);
+        cubeRangeAlertIcon.image(vec(2,4), Numbers, item->getCubeRange().sys.minCubes);
+        cubeRangeAlertIcon.image(vec(7,4), Numbers, item->getCubeRange().sys.maxCubes);
+        
+        menu.replaceIcon(index, cubeRangeAlertIcon);
     } else {
-        if (cubeRangeSavedIcon == NULL) {
-            cubeRangeSavedIcon = menuItems[index].icon;
-            cubeRangeAlertIcon.init();
-            cubeRangeAlertIcon.image(vec(0,0), Icon_CubeRange);
-            cubeRangeAlertIcon.image(vec(2,4), Numbers, minCubes);
-            cubeRangeAlertIcon.image(vec(7,4), Numbers, maxCubes);
-            menu.replaceIcon(index, cubeRangeAlertIcon);
-        } else {
-            menu.replaceIcon(index, cubeRangeSavedIcon);
-            cubeRangeSavedIcon = NULL;
-        }
-        return false;
+        menu.replaceIcon(index, cubeRangeSavedIcon);
+        cubeRangeSavedIcon = NULL;
     }
+}
+
+void MainMenu::execItem(unsigned index)
+{
+    /// XXX: Instead of a separate animation, integrate this animation with the menu itself
+    /// XXX: Cube range init here is temporary.
+
+    DefaultLoadingAnimation anim;
+
+    MainMenuItem *item = items[index];
+    CubeSet itemCubes = item->getCubeRange().initMinimum();
+    item->bootstrap(itemCubes, anim);
+    item->exec();
 }
 
 void MainMenu::arriveItem(unsigned index)

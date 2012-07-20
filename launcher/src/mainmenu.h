@@ -60,10 +60,13 @@ private:
     void updateMusic();
     void updateIcons(Sifteo::Menu &menu);
 
+    bool canLaunchItem(unsigned index);
+    void toggleCubeRangeAlert(unsigned index, Sifteo::Menu &menu);
+
     // Note: these functions are marked NOINLINE as a cache usage optimization.
     NOINLINE void loadAssets();
     NOINLINE void eventLoop(Sifteo::Menu &m);
-    NOINLINE bool execItem(unsigned index, Sifteo::Menu &menu);
+    NOINLINE void execItem(unsigned index);
     NOINLINE void arriveItem(unsigned index);
     NOINLINE void departItem(unsigned index);
     NOINLINE void prepaintItem(unsigned index);
