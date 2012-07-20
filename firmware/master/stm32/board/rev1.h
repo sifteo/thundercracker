@@ -61,4 +61,8 @@
 #define BTN_HOME_GPIO       GPIOPin(&GPIOC, 0)
 #define BTN_HOME_EXTI_VEC   EXTI0
 
+// N E I G H B O R S
+#define NEIGHBOR_TX_TIM     TIM5
+#define NEIGHBOR_RX_TIM     TIM3
+
 #endif // _BOARD_REV1_H

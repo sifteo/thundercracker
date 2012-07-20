@@ -36,6 +36,12 @@
 #define NBR_OUT1_GPIO       GPIOPin(&GPIOB, 8)
 #define NBR_OUT2_GPIO       GPIOPin(&GPIOB, 9)
 
+#define NBR_IN1_GPIO        GPIOPin(&GPIOA, 2)
+#define NBR_IN2_GPIO        GPIOPin(&GPIOA, 3)
+
+#define NBR_TX_TIM          TIM6
+#define NBR_RX_TIM          TIM3
+
 // U A R T
 #define UART_DBG            USART3
 #define UART_RX_GPIO        GPIOPin(&GPIOB, 11)

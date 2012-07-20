@@ -18,7 +18,7 @@
 #include "adc.h"
 
 static I2CSlave i2c(&I2C1);
-static Neighbor neighbor(&TIM5, &TIM3);
+static Neighbor neighbor(&NEIGHBOR_TX_TIM, &NEIGHBOR_RX_TIM);
 
 // control for the pass-through USB of the master under test
 static GPIOPin testUsbEnable = USB_PWR_GPIO;
@@ -49,11 +49,11 @@ TestJig::TestHandler const TestJig::handlers[] = {
 
 void TestJig::init()
 {
-    NVIC.irqEnable(IVT.TIM3);                   // neighbor rx
-    NVIC.irqPrioritize(IVT.TIM3, 0x50);
+    NVIC.irqEnable(IVT.NEIGHBOR_RX_TIM);
+    NVIC.irqPrioritize(IVT.NEIGHBOR_RX_TIM, 0x50);
 
-    NVIC.irqEnable(IVT.TIM5);                   // neighbor tx
-    NVIC.irqPrioritize(IVT.TIM5, 0x60);
+    NVIC.irqEnable(IVT.NEIGHBOR_TX_TIM);
+    NVIC.irqPrioritize(IVT.NEIGHBOR_TX_TIM, 0x60);
 
     // neighbor 0 and 1 are on ISR_EXTI9_5 - see exti.cpp
 
