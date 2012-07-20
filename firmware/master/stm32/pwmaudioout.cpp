@@ -60,8 +60,8 @@ namespace PwmAudioOut {
      */
     static const unsigned DITHER_MASK = 31;
 
-    static const HwTimer pwmTimer(&TIM1);
-    static const HwTimer sampleTimer(&TIM4);
+    static const HwTimer pwmTimer(&AUDIO_PWM_TIM);
+    static const HwTimer sampleTimer(&AUDIO_SAMPLE_TIM);
     static const GPIOPin outA(&AUDIO_PWMA_PORT, AUDIO_PWMA_PIN);
     static const GPIOPin outB(&AUDIO_PWMB_PORT, AUDIO_PWMB_PIN);
 
@@ -75,6 +75,7 @@ namespace PwmAudioOut {
 void AudioOutDevice::init(AudioMixer *mixer)
 {
     // TIM1 partial remap for complementary channels
+    STATIC_ASSERT(&AUDIO_PWM_TIM == &TIM1);
     AFIO.MAPR |= (1 << 6);
     
     PwmAudioOut::mixer = mixer;
@@ -189,7 +190,7 @@ IRQ_HANDLER ISR_TIM4()
 
         if (sample) {
             unsigned duty = (sample * PwmAudioOut::PWM_PERIOD) >> 15;
-            const HwTimer pwmTimer(&TIM1);
+            const HwTimer pwmTimer(&AUDIO_PWM_TIM);
             pwmTimer.setDuty(AUDIO_PWM_CHAN, duty);
         }
     }

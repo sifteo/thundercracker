@@ -54,6 +54,8 @@
 #define AUDIO_PWMB_PORT     GPIOA
 #define AUDIO_PWMB_PIN      8
 #define AUDIO_PWM_CHAN      1
+#define AUDIO_PWM_TIM       TIM1
+#define AUDIO_SAMPLE_TIM    TIM4
 
 // M I S C
 #define BTN_HOME_GPIO       GPIOPin(&GPIOC, 0)
