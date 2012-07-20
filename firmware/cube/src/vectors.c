@@ -96,6 +96,8 @@ init_2:
         lcall   _flash_init                     ; Init flash state machine
         lcall   _sensors_init                   ; Init sensor IRQs
         setb    _IEN_EN                         ; Global interrupt enable (subsystem init done)
+
+disconnected_init_sjmp:
         ljmp    _disconnected_init              ; Init disconnected mode and enter graphics loop
 
         .ds     2
@@ -117,7 +119,7 @@ _graphics_render_ret::
 1$:
         mov     a, _sensor_tick_counter_high    ; Check connection timeout
         cjne    a, _radio_packet_deadline, 2$
-        sjmp    3$                              ; Disconnect if we reach the deadline
+        sjmp    disconnected_init_sjmp          ; Disconnect if we reach the deadline
 2$:
         lcall   _flash_handle_fifo              ; Pump flash FIFO
         sjmp    _graphics_render                ; Poll for graphics rendering
