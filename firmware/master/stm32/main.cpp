@@ -22,6 +22,7 @@
 #include "crc.h"
 #include "sampleprofiler.h"
 #include "bootloader.h"
+#include "cubeconnector.h"
 #include "neighbor_tx.h"
 
 
@@ -128,6 +129,7 @@ int main()
     FlashStack::init();
     HomeButton::init();
     NeighborTX::init();
+    CubeConnector::init();
 
     Volume::init();
     AudioOutDevice::init(&AudioMixer::instance);
@@ -146,9 +148,6 @@ int main()
 
     while (SysTime::ticks() < SysTime::msTicks(210));
     Radio::begin();
-
-    // XXX default master ID
-    NeighborTX::start(0xFF00, ~0);
 
     /*
      * Start the game runtime, and execute the Launcher app.

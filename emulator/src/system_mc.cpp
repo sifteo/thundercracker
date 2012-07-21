@@ -33,6 +33,8 @@
 #include "crc.h"
 #include "volume.h"
 #include "homebutton.h"
+#include "cubeconnector.h"
+#include "neighbor_tx.h"
 
 SystemMC *SystemMC::instance;
 std::vector< std::vector<uint8_t> > SystemMC::pendingGameInstalls;
@@ -135,6 +137,8 @@ void SystemMC::threadFn(void *param)
     HomeButton::init();
     Volume::init();
     Radio::init();
+    NeighborTX::init();
+    CubeConnector::init();
 
     instance->autoInstall();
 

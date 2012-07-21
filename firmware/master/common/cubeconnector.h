@@ -6,7 +6,9 @@
 #ifndef _CUBE_CONNECTOR_H
 #define _CUBE_CONNECTOR_H
 
+#include <protocol.h>
 #include "radio.h"
+#include "ringbuffer.h"
 
 
 /*
@@ -26,12 +28,32 @@
  */
 
 class CubeConnector {
- public:
+public:
+    static void init();
+
     // RadioManager callbacks
     static void radioProduce(PacketTransmission &tx);
     static void radioAcknowledge(const PacketBuffer &packet);
+    static void radioEmptyAcknowledge();
     static void radioTimeout();
 
+private:
+    enum State {
+        PairingFirstContact     = 0,
+        PairingFirstVerify,
+        PairingFinalVerify      = PairingFirstVerify + 3,
+    };
+
+    static RadioAddress pairingAddr;
+    static uint8_t neighborKey;
+    static _SYSPseudoRandomState prng;
+    static uint8_t txState;
+    static uint8_t txSubstate;
+    static RingBuffer<RadioManager::FIFO_DEPTH, uint8_t, uint8_t> rxState;
+    static uint8_t pairingHWID[HWID_LEN];
+
+    static void setNeighborKey(unsigned k);
+    static void nextNeighborKey();
 };
 
 #endif

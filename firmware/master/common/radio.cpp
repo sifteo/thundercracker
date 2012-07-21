@@ -106,8 +106,7 @@ void RadioManager::ackWithPacket(const PacketBuffer &packet)
 
 void RadioManager::ackEmpty()
 {
-    // The transmit succeeded, but there was no data in the ACK.
-    fifo.dequeue();
+    dispatchEmptyAcknowledge(fifo.dequeue());
 }
 
 void RadioManager::timeout()
@@ -134,6 +133,13 @@ void RadioManager::dispatchAcknowledge(unsigned id, const PacketBuffer &packet)
     CubeSlot &slot = CubeSlot::getInstance(id);
     if (slot.enabled())
         slot.radioAcknowledge(packet);
+}
+
+void RadioManager::dispatchEmptyAcknowledge(unsigned id)
+{
+    // Cubes don't care, only the connector.
+    if (id == CONNECTOR_ID)
+        return CubeConnector::radioEmptyAcknowledge();
 }
 
 void RadioManager::dispatchTimeout(unsigned id)

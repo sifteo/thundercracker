@@ -181,7 +181,6 @@ class RadioManager {
     static void ackEmpty();
     static void timeout();
 
- private:
     /*
      * FIFO buffer of slot numbers that have pending acknowledgments.
      * This lets us match up ACKs with endpoints. Accessed ONLY in
@@ -192,7 +191,10 @@ class RadioManager {
      * this will be quite small. This is also independent of the
      * number of cubes in use. Must be a power of two.
      */
-    typedef RingBuffer<8, uint8_t, uint8_t> fifo_t;
+    static const unsigned FIFO_DEPTH = 8;
+
+ private:
+    typedef RingBuffer<FIFO_DEPTH, uint8_t, uint8_t> fifo_t;
     static fifo_t fifo;
 
     // ID for the CubeConnector. Must not collide with any CubeSlot ID.
@@ -212,6 +214,7 @@ class RadioManager {
     // Dispatch to a paritcular producer, by ID
     static bool dispatchProduce(unsigned id, PacketTransmission &tx);
     static void dispatchAcknowledge(unsigned id, const PacketBuffer &packet);
+    static void dispatchEmptyAcknowledge(unsigned id);
     static void dispatchTimeout(unsigned id);
 };
 

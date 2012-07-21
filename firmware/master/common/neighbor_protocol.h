@@ -38,6 +38,14 @@ namespace Neighbor {
      */
     static const unsigned NUM_TX_WAIT_PERIODS = 192;
 
+    /*
+     * Neighbor ID constants
+     */
+
+    static const unsigned FIRST_CUBE_ID = 0xE0;
+    static const unsigned NUM_CUBE_ID = 24;
+    static const unsigned FIRST_MASTER_ID = FIRST_CUBE_ID + NUM_CUBE_ID;
+    static const unsigned NUM_MASTER_ID = 8;
 }
 
 #endif
