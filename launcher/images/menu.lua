@@ -22,12 +22,18 @@ NineBlock_Shapes = image{ "images/nineblock-shapes.png", width=32, height=32 }
 
 Icon_GetGames = image{ "images/icon-getgames.png" }
 Icon_Battery = image{ "images/icon-battery.png" }
-Icon_BatteryMaster = image{ "images/icon-battery-master.png" }
 Icon_CubeRange = image{ "images/icon-cuberange.png" }
 
 -- Battery Gauge
-Battery_Black = image{ "images/battery-black.png", height=8 }
+Battery = image{ "images/img-battery.png" }
+BatteryBars = 
+{
+    image{ "images/img-battery-bars-1.png" },
+    image{ "images/img-battery-bars-2.png" },
+    image{ "images/img-battery-bars-3.png" },
+    image{ "images/img-battery-bars-4.png" }
+}
 
 -- Cube Range
-Numbers = image{ "images/numbers.png", height=16 }
-NumbersSmall = image{ "images/numbers-small.png", height=8 }
+Font = image{ "images/font.png", width=8, height=8 }
+Numbers = image { "images/Numbers.png", height=16 }

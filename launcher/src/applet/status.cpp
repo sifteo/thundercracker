@@ -11,22 +11,20 @@
 using namespace Sifteo;
 
 
-static const unsigned kNumBatteryTiles = 3;
-static const unsigned kNumBatteryLevels = 8 * kNumBatteryTiles;
 static const unsigned kMaxBatteryLevel = 256;
 
 template<typename T>
 static void drawBattery(T &canvas, float batteryLevel, int levelCounter, Int2 pos)
 {
-    unsigned numBatteryLevels = batteryLevel * float(kNumBatteryLevels);
+    unsigned numBatteryLevels = batteryLevel * float(arraysize(BatteryBars));
     numBatteryLevels = MIN(numBatteryLevels, levelCounter);
-        
-    for (int i = 0; i < kNumBatteryTiles; ++i) {
-        unsigned baseBars = i * 8;
-        if (numBatteryLevels > baseBars) {
-            int numBars = numBatteryLevels - baseBars;
-            canvas.image(vec(Battery_Black.tileWidth() * i + pos.x, pos.y), Battery_Black, numBars - 1);
-        }
+    
+    canvas.image(vec(pos.x-1, pos.y-1), Battery);
+
+    if (numBatteryLevels > 0) {
+        --numBatteryLevels;
+        ASSERT(numBatteryLevels < arraysize(BatteryBars));
+        canvas.image(pos, BatteryBars[numBatteryLevels]);
     }
 }
 
@@ -34,7 +32,7 @@ static void drawBattery(T &canvas, float batteryLevel, int levelCounter, Int2 po
 MainMenuItem::Flags StatusApplet::getAssets(MenuItem &assets, MappedVolume&)
 {
     icon.init();
-    icon.image(vec(0,0), Icon_BatteryMaster);
+    icon.image(vec(0,0), Icon_Battery);
 
     float batteryLevelBuddy = float(CubeID(0).batteryLevel()) / float(kMaxBatteryLevel); // TODO: Find out which CubeId we are dealing with in the menu
     batteryLevelBuddy = 0.4f; // XXX: test code
@@ -43,6 +41,10 @@ MainMenuItem::Flags StatusApplet::getAssets(MenuItem &assets, MappedVolume&)
     float batteryLevelMaster = float(CubeID(0).batteryLevel()) / float(kMaxBatteryLevel); // TODO: use API for master battery
     batteryLevelMaster = 0.9f; // XXX: test code
     drawBattery(icon, batteryLevelMaster, levelCounter, vec(2, 8));
+
+    // TODO: number of connected cubes
+
+    // TODO: amount of free blocks
 
     assets.icon = icon;
     return NONE;
@@ -79,7 +81,7 @@ void StatusApplet::prepaint(CubeSet cubes, CubeID mainCube)
 {
     static bool frame = true;
     if (frame) {
-        if (levelCounter < kNumBatteryLevels)
+        if (levelCounter < arraysize(BatteryBars))
         {
             ++levelCounter;
         }
@@ -94,7 +96,7 @@ void StatusApplet::prepaint(CubeSet cubes, CubeID mainCube)
 
             float batteryLevelBuddy = float(cube.batteryLevel()) / float(kMaxBatteryLevel);
             batteryLevelBuddy = 1.0f; // XXX: test code
-            
+
             drawBattery(vid.bg0, batteryLevelBuddy, levelCounter, vec(4, 4));
         }
     }
