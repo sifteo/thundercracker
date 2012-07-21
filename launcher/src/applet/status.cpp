@@ -28,6 +28,14 @@ static void drawBattery(T &canvas, float batteryLevel, int levelCounter, Int2 po
     }
 }
 
+template<typename T>
+static void drawText(T &canvas, const char* text, Int2 pos)
+{
+    for (int i = 0; text[i] != 0; i++) {
+        canvas.image(vec(pos.x + i, pos.y), Font, text[i]-32);
+    }
+}
+
 
 MainMenuItem::Flags StatusApplet::getAssets(MenuItem &assets, MappedVolume&)
 {
@@ -36,13 +44,17 @@ MainMenuItem::Flags StatusApplet::getAssets(MenuItem &assets, MappedVolume&)
 
     float batteryLevelBuddy = float(CubeID(0).batteryLevel()) / float(kMaxBatteryLevel); // TODO: Find out which CubeId we are dealing with in the menu
     batteryLevelBuddy = 0.4f; // XXX: test code
-    drawBattery(icon, batteryLevelBuddy, levelCounter, vec(2, 2));
-
+    drawBattery(icon, batteryLevelBuddy, levelCounter, vec(1, 2));
+    drawText(icon, "Buddy", vec(5, 2));
+    
     float batteryLevelMaster = float(CubeID(0).batteryLevel()) / float(kMaxBatteryLevel); // TODO: use API for master battery
     batteryLevelMaster = 0.9f; // XXX: test code
-    drawBattery(icon, batteryLevelMaster, levelCounter, vec(2, 8));
+    drawBattery(icon, batteryLevelMaster, levelCounter, vec(1, 5));
+    drawText(icon, "Master", vec(5, 5));
 
     // TODO: number of connected cubes
+    drawText(icon, "3 cubes", vec(3, 8));
+    drawText(icon, "128 blocks", vec(1, 10));
 
     // TODO: amount of free blocks
 
