@@ -26,8 +26,8 @@ Icon_BatteryMaster = image{ "images/icon-battery-master.png" }
 Icon_CubeRange = image{ "images/icon-cuberange.png" }
 
 -- Battery Gauge
-Battery_Black = image{ "images/battery-black.png", width=8 }
-Battery_Red = image{ "images/battery-red.png", width=16 }
+Battery_Black = image{ "images/battery-black.png", height=8 }
 
 -- Cube Range
 Numbers = image{ "images/numbers.png", height=16 }
+NumbersSmall = image{ "images/numbers-small.png", height=8 }
