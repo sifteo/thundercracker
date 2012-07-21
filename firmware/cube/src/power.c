@@ -183,6 +183,12 @@ void power_init(void)
     /*
      * Safe defaults, everything off.
      * All control lines must be low before supply rails are turned on.
+     *
+     * XXX: It still feels like something is wrong with this sequence... I'm
+     *      seeing a current consumption of about 100 mA at 1.5v for the
+     *      very first poweron after battery insertion, but only about 75mA
+     *      after we wake up from sleep. I'm not sure what the disparity is
+     *      caused by, and it really seems like we should strive to fix this!
      */
 
     MISC_PORT = 0;
