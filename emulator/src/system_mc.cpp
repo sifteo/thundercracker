@@ -194,11 +194,11 @@ void SystemMC::doRadioPacket()
     ASSERT(buf.ptx.dest != NULL);
     buf.packet.len = buf.ptx.packet.len;
 
-    // Simulates (hardware * software) retries
-    static const uint32_t MAX_RETRIES = 150;
+    ASSERT(buf.ptx.numHardwareRetries <= PacketTransmission::MAX_HARDWARE_RETRIES);
+    const unsigned numTries = (1 + unsigned(buf.ptx.numHardwareRetries))
+                            * (1 + unsigned(buf.ptx.numSoftwareRetries));
 
-    for (unsigned retry = 0; retry < MAX_RETRIES; ++retry) {
-
+    for (unsigned retry = 0; retry < numTries; ++retry) {
         /*
          * Deliver it to the proper cube.
          *
@@ -231,8 +231,8 @@ void SystemMC::doRadioPacket()
                 buf.ptx.dest->id[0],
                 buf.packet.len));
 
-            // Nybbles in little-endian order. With the exception
-            // of flash-escaped bytes, the TX packets are always nybble streams.
+            // Nybbles in little-endian order. Except for arguments to escape
+            // codes, the TX packets are always nybble streams.
 
             for (unsigned i = 0; i < sizeof buf.packet.payload; i++) {
                 if (i < buf.packet.len) {

@@ -87,12 +87,30 @@ struct PacketBuffer {
 struct PacketTransmission {
     PacketBuffer packet;
     const RadioAddress *dest;
-    bool noAck;
 
-    PacketTransmission() : noAck(false) {}
+    bool noAck;
+    uint8_t numHardwareRetries;
+    uint8_t numSoftwareRetries;
+
+    static const unsigned MAX_HARDWARE_RETRIES = 15;
+
+    static const unsigned DEFAULT_HARDWARE_RETRIES = MAX_HARDWARE_RETRIES;
+    static const unsigned DEFAULT_SOFTWARE_RETRIES = 64;
+
+    void init() {
+        noAck = 0;
+        numHardwareRetries = DEFAULT_HARDWARE_RETRIES;
+        numSoftwareRetries = DEFAULT_SOFTWARE_RETRIES;
+    }
+
+    PacketTransmission() {
+        init();
+    }
 
     PacketTransmission(const RadioAddress *_dest, uint8_t *_bytes, unsigned _len=0)
-        : packet(PacketBuffer(_bytes, _len)), dest(_dest), noAck(false) {}
+        : packet(PacketBuffer(_bytes, _len)), dest(_dest) {
+        init();
+    }
 };
 
 
@@ -140,25 +158,6 @@ class Radio {
      */
     static void setTxPower(TxPower pwr);
     static TxPower txPower();
-
-    /*
-     * 15 is the maximum number of HW retries supported by the nordic radios.
-     * Soft retries can be adjusted based on our desired timeout duration.
-     */
-    static const unsigned DEFAULT_HARD_RETRIES = 15;
-    static const unsigned DEFAULT_SOFT_RETRIES = 32;
-
-    /*
-     * Retry control.
-     *
-     * The radio hardware supports up to 15 automatic retries, and we allow
-     * a 'soft' retry count, that acts as a multiplier of the hard retry value.
-     */
-    static void setRetryCount(uint8_t hard, uint8_t soft);
-
-    #ifndef SIFTEO_SIMULATOR
-    static void setRfTestEnabled(bool enabled);
-    #endif
 };
 
 

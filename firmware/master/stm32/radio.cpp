@@ -30,13 +30,3 @@ Radio::TxPower Radio::txPower()
 {
     return NRF24L01::instance.txPower();
 }
-
-void Radio::setRetryCount(uint8_t hard, uint8_t soft)
-{
-    NRF24L01::instance.setRetryCount(hard, soft);
-}
-
-void Radio::setRfTestEnabled(bool enabled)
-{
-    NRF24L01::instance.setRfTestEnabled(enabled);
-}
