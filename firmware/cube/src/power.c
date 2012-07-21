@@ -49,6 +49,44 @@ static void power_delay()
 }
 
 
+static void power_minisleep(void)
+{
+    /*
+     * Go to sleep, with just the bare minimum amount of setup.
+     * this is used as part of the public power_sleep() function,
+     * plus this is how we go to sleep quickly after a wake-on-rf
+     * poll. This assumes that the system's hardware has not been
+     * initialized at all.
+     */
+
+    // Open the OPMCON latch if necessary, so we can configure
+    // WUOPC1 and the pin states.
+    OPMCON = 0;
+
+    // To save current, all pins are configured as inputs.
+    // We also need our shake wakeup pin to be an input.
+    ADDR_DIR = 0xff;
+    CTRL_DIR = 0xff;
+    MISC_DIR = 0xff;
+
+    // We must reset WUOPC1 before any sleep, even if it hasn't been cleared.
+    WUOPC1 = WUOPC_BIT;
+
+    // We must latch these port states, to preserve them during sleep.
+    // This latch stays locked until early wakeup, in power_init().
+    OPMCON = OPMCON_LATCH_LOCKED;
+
+    // Remember that we're sleeping deliberately
+    powerdown_state = POWERDOWN_MAGIC;
+
+    // While we're asleep, the watchdog will keep running off the low-power RC oscillator.
+    CLKLFCTRL = CLKLFCTRL_SRC_RC;
+
+    // Memory retention, timers on.
+    PWRDWN = PWRDWN_MEMRET_TIMERS;
+}
+
+
 static void power_wake_on_rf_poll(void)
 {
     /*
@@ -103,15 +141,8 @@ static void power_wake_on_rf_poll(void)
 
     radio_rx_disable();
     RF_CKEN = 0;
-    
-    OPMCON = 0;
-    ADDR_DIR = 0xff;            // Set addr pins to inputs
-    CTRL_DIR = 0xff;            // Set ctrl pins to inputs
-    MISC_DIR = 0xff;            // Set bus pins to inputs
-    WUOPC1 = SHAKE_WUOPC_BIT;
-    OPMCON = OPMCON_LATCH_LOCKED;
 
-    PWRDWN = PWRDWN_MEMRET_TIMERS;
+    power_minisleep();
 
     __asm
 1$:
@@ -261,12 +292,11 @@ void power_sleep(void)
     CTRL_PORT = CTRL_3V3_EN;                    // Turn off the 2V DS rail
     CTRL_PORT = 0;                              // Turn off the 3.3V rail
 
-    {
+    /*
+     * Set up the accelerometer for shake-to-wake.
+     */
     #if HWREV >= 5
-        /*
-         * Wakeup on shake
-         */
-
+    {
         static const __code uint8_t init[] = {
             // ADC turned off
             ACCEL_TEMP_CFG_REG, 0,
@@ -286,38 +316,8 @@ void power_sleep(void)
         // I2C controller off
         W2CON0 = 0;
         __asm I2C_PULSE() __endasm;
-
-        ADDR_DIR = 0xff;            // Set addr pins to inputs
-        CTRL_DIR = 0xff;            // Set ctrl pins to inputs
-        MISC_DIR = 0xff;            // Set bus pins to inputs
-        WUOPC1 = SHAKE_WUOPC_BIT;
-
-    #else
-        /*
-         * Wakeup on touch
-         */
-
-        WUOPC1 = TOUCH_WUOPC_BIT;
+    }
     #endif
-    }
 
-    // We must latch these port states, to preserve them during sleep.
-    // This latch stays locked until early wakeup, in power_init().
-    OPMCON = OPMCON_LATCH_LOCKED;
-
-    // Remember that we're sleeping deliberately
-    powerdown_state = POWERDOWN_MAGIC;
-
-    // While we're asleep, the watchdog will keep running off the low-power RC oscillator.
-    CLKLFCTRL = CLKLFCTRL_SRC_RC;
-
-    while (1) {
-        // Memory retention, timers on.
-        PWRDWN = PWRDWN_MEMRET_TIMERS;
-
-        /*
-         * We loop purely out of paranoia. This point should never be reached.
-         * On wakeup, the system experiences a soft reset.
-         */
-    }
+    power_minisleep();
 }

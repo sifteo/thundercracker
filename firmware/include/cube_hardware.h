@@ -83,11 +83,11 @@
 #define MISC_TOUCH      (1 << 7)
 #define MISC_NB_IN      (1 << 6)   // T1 input
 
-// Touch is on a wakeup-capable pin
-#define TOUCH_WUOPC_BIT (1 << 7)
-
-// Shake as a wakeup source
-#define SHAKE_WUOPC_BIT (1 << 1)
+#if HWREV >= 5
+#   define WUOPC_BIT    (1 << 1)   // Wake on shake
+#else
+#   define WUOPC_BIT    (1 << 7)   // WAke on touch
+#endif
 
 // Numbered according to the standard side enum.
 // Both the number and name are represented here; due to the binary masking, both are critical.
