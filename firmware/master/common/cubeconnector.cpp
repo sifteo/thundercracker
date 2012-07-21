@@ -17,7 +17,7 @@ RingBuffer<RadioManager::FIFO_DEPTH, uint8_t, uint8_t> CubeConnector::rxState;
 
 uint8_t CubeConnector::neighborKey;
 uint8_t CubeConnector::txState;
-uint8_t CubeConnector::txSubstate;
+uint8_t CubeConnector::pairingPacketCounter;
 uint8_t CubeConnector::pairingHWID[HWID_LEN];
 
 
@@ -100,13 +100,15 @@ void CubeConnector::radioProduce(PacketTransmission &tx)
          *
          * We periodically hop to the next neighbor key, not because we need
          * to for verification purposes, but to help us avoid spamming any
-         * single radio frequency too badly. Right now we'll do that every
-         * 256 transmit opportunities, so the hop rate scales with our
-         * transmit rate. At the quickest, this will mean a hop about once
-         * a second.
+         * single radio frequency too badly. We do this based on the number
+         * of packets sent since the last key hop, so the hop rate scales
+         * with our transmit rate.
+         *
+         * Right now we just hop every time an 8-bit packet counter overflows.
+         * At the fastest, this equates to about one hop per second.
          */
         case PairingFirstContact:
-            if (!++txSubstate) {
+            if (!++pairingPacketCounter) {
                 nextNeighborKey();
             }
             tx.dest = &pairingAddr;

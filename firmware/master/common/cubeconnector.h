@@ -48,7 +48,7 @@ private:
     static uint8_t neighborKey;
     static _SYSPseudoRandomState prng;
     static uint8_t txState;
-    static uint8_t txSubstate;
+    static uint8_t pairingPacketCounter;
     static RingBuffer<RadioManager::FIFO_DEPTH, uint8_t, uint8_t> rxState;
     static uint8_t pairingHWID[HWID_LEN];
 
