@@ -60,6 +60,17 @@ static void power_wake_on_rf_poll(void)
      * The powerdown sequence is much simplified, since almost nothing is on yet.
      */
 
+     /*
+      * Set up the watchdog early. This will wake us up after sleeping, for
+      * the next poll. But we also might as well have it running during the
+      * poll itself, in case we get stuck somehow.
+      */
+
+    CLKLFCTRL = CLKLFCTRL_SRC_RC;
+    WDSV;
+    WDSV = 0x80;
+    WDSV = 0x00;
+
     // Set up the default idle radio address, and turn on the receiver
     radio_idle_hop = 0;
     radio_set_idle_addr();
@@ -87,16 +98,18 @@ static void power_wake_on_rf_poll(void)
     }
 
     /*
-     * Back to sleep! Use the watchdog to wake up for the next poll.
+     * Back to sleep! The watchdog will wake us for the next poll.
      */
 
     radio_rx_disable();
     RF_CKEN = 0;
-
-    CLKLFCTRL = CLKLFCTRL_SRC_RC;
-    WDSV;
-    WDSV = 0x80;
-    WDSV = 0x00;
+    
+    OPMCON = 0;
+    ADDR_DIR = 0xff;            // Set addr pins to inputs
+    CTRL_DIR = 0xff;            // Set ctrl pins to inputs
+    MISC_DIR = 0xff;            // Set bus pins to inputs
+    WUOPC1 = SHAKE_WUOPC_BIT;
+    OPMCON = OPMCON_LATCH_LOCKED;
 
     PWRDWN = PWRDWN_MEMRET_TIMERS;
 
@@ -120,22 +133,7 @@ void power_init(void)
      */
 
     uint8_t pwrdwn_value = PWRDWN;
-    OPMCON = 0;
-    WUOPC1 = 0;
     PWRDWN = 0;
-
-    /*
-     * Safe defaults, everything off.
-     * All control lines must be low before supply rails are turned on.
-     */
-
-    MISC_PORT = 0;
-    CTRL_PORT = 0;
-    ADDR_PORT = 0;
-    BUS_DIR = 0xFF;
-    MISC_DIR = MISC_DIR_VALUE;
-    CTRL_DIR = CTRL_DIR_VALUE;
-    ADDR_DIR = 0;
 
     /*
      * Normally we wake up via shake or by battery insertion. Wake-on-pin
@@ -150,6 +148,25 @@ void power_init(void)
      */
     if (!(pwrdwn_value & PWRDWN_WAKE_FROM_PIN) && powerdown_state == POWERDOWN_MAGIC)
         power_wake_on_rf_poll();
+
+    /*
+     * Safe defaults, everything off.
+     * All control lines must be low before supply rails are turned on.
+     */
+
+    MISC_PORT = 0;
+    CTRL_PORT = 0;
+    ADDR_PORT = 0;
+    BUS_DIR = 0xFF;
+    MISC_DIR = MISC_DIR_VALUE;
+    CTRL_DIR = CTRL_DIR_VALUE;
+    ADDR_DIR = 0;
+
+    // Disable wake-on-pin during normal operation
+    WUOPC1 = 0;
+
+    // Open the latch only after we've configured default port state
+    OPMCON = 0;
 
     /*
      * Bring up the power supplies.
