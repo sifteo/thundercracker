@@ -42,18 +42,26 @@ private:
         PairingFirstContact     = 0,
         PairingFirstVerify,
         PairingFinalVerify      = PairingFirstVerify + 3,
+        PairingBeginHop,
+        HopConfirm,
     };
 
-    static RadioAddress pairingAddr;
     static uint8_t neighborKey;
     static _SYSPseudoRandomState prng;
+
+    static RadioAddress pairingAddr;
+    static RadioAddress connectionAddr;
+
     static uint8_t txState;
-    static uint8_t pairingPacketCounter;
     static RingBuffer<RadioManager::FIFO_DEPTH, uint8_t, uint8_t> rxState;
-    static uint8_t pairingHWID[HWID_LEN];
+    static uint8_t pairingPacketCounter;
+    static uint8_t hwid[HWID_LEN];
 
     static void setNeighborKey(unsigned k);
     static void nextNeighborKey();
+
+    static void chooseConnectionAddr();
+    static void produceRadioHop(PacketTransmission &tx, RadioAddress &src, RadioAddress &dest);
 };
 
 #endif

@@ -12,13 +12,15 @@
 #include "prng.h"
 
 RadioAddress CubeConnector::pairingAddr = { 0, RF_PAIRING_ADDRESS };
+RadioAddress CubeConnector::connectionAddr;
+
 _SYSPseudoRandomState CubeConnector::prng;
 RingBuffer<RadioManager::FIFO_DEPTH, uint8_t, uint8_t> CubeConnector::rxState;
 
 uint8_t CubeConnector::neighborKey;
 uint8_t CubeConnector::txState;
 uint8_t CubeConnector::pairingPacketCounter;
-uint8_t CubeConnector::pairingHWID[HWID_LEN];
+uint8_t CubeConnector::hwid[HWID_LEN];
 
 
 void CubeConnector::init()
@@ -65,8 +67,7 @@ void CubeConnector::nextNeighborKey()
      * so we make the best use of our very limited ID space.
      */
 
-    SysTime::Ticks now = SysTime::ticks();
-    PRNG::init(&prng, PRNG::value(&prng) ^ uint32_t(now ^ (now >> 32)));
+    PRNG::collectTimingEntropy(&prng);
 
     unsigned newKey;
     if (neighborKey < Neighbor::NUM_MASTER_ID) {
@@ -80,6 +81,47 @@ void CubeConnector::nextNeighborKey()
     }
 
     setNeighborKey(newKey);
+}
+
+void CubeConnector::chooseConnectionAddr()
+{
+    /*
+     * Pick a new random connection channel and address, for use by
+     * a new cube that we want to connect. These numbers need to be
+     * random and difficult to guess, but we don't require a secure RNG
+     * since obviously we're still transmitting in cleartext :)
+     *
+     * Channel can be any value within range.
+     *
+     * Addresses should avoid bytes 0x00, 0x55, 0xAA, and 0xFF.
+     * Explicitly exclude these from our random number space, while
+     * otherwise keeping it perfectly uniform.
+     */
+
+    PRNG::collectTimingEntropy(&prng);
+
+    connectionAddr.channel = PRNG::valueBounded(&prng, RadioAddress::MAX_CHANNEL);
+
+    for (unsigned i = 0; i < arraysize(connectionAddr.id); ++i) {
+        unsigned value = PRNG::valueBounded(&prng, 256 - 4) + 1;
+        if (value >= 0x55) value++;
+        if (value >= 0xAA) value++;
+        connectionAddr.id[i] = value;
+    }
+}
+
+void CubeConnector::produceRadioHop(PacketTransmission &tx, RadioAddress &src, RadioAddress &dest)
+{
+    /*
+     * Assemble a packet containing only a Radio Hop. Send it to the
+     * source address, but encode the destination address in the packet.
+     */
+
+    tx.dest = &src;
+    tx.packet.len = 7;
+    tx.packet.bytes[0] = 0x7a;
+    tx.packet.bytes[1] = dest.channel;
+    memcpy(&tx.packet.bytes[2], dest.id, sizeof dest.id);
 }
 
 void CubeConnector::radioProduce(PacketTransmission &tx)
@@ -135,6 +177,25 @@ void CubeConnector::radioProduce(PacketTransmission &tx)
             tx.packet.bytes[0] = 0xff;
             break;
 
+        /*
+         * Once our pairing verification is done, send the cube a hop
+         * to connect it on an address and channel of our choice.
+         */
+        case PairingBeginHop:
+            chooseConnectionAddr();
+            produceRadioHop(tx, pairingAddr, connectionAddr);
+            break;
+
+        /*
+         * We think we just hopped to a new connection-specific address and
+         * channel. See if we can regain contact with the cube at this new
+         * address, to verify that the hop worked.
+         */
+        case HopConfirm:
+            tx.dest = &connectionAddr;
+            tx.packet.len = 1;
+            tx.packet.bytes[0] = 0xff;
+            break;
     };
 }
 
@@ -154,7 +215,7 @@ void CubeConnector::radioAcknowledge(const PacketBuffer &packet)
         case PairingFirstContact:
             nextNeighborKey();
             if (packet.len >= RF_ACK_LEN_HWID) {
-                memcpy(pairingHWID, ack->hwid, sizeof pairingHWID);
+                memcpy(hwid, ack->hwid, sizeof hwid);
                 txState = packetRxState + 1;
             } else {
                 txState = PairingFirstContact;
@@ -167,13 +228,28 @@ void CubeConnector::radioAcknowledge(const PacketBuffer &packet)
          */
         case PairingFirstVerify ... PairingFinalVerify:
             nextNeighborKey();
-            if (packet.len >= RF_ACK_LEN_HWID && !memcmp(pairingHWID, ack->hwid, sizeof pairingHWID)) {
+            if (packet.len >= RF_ACK_LEN_HWID && !memcmp(hwid, ack->hwid, sizeof hwid)) {
                 txState = packetRxState + 1;
             } else {
                 txState = PairingFirstContact;
             }
             break;
 
+        /*
+         * We got a successful response back from the hop packet. Okay,
+         * but we'll still want to verify that it actaully shows up on
+         * the new address too.
+         */
+        case PairingBeginHop:
+            txState = HopConfirm;
+            break;
+
+        /*
+         * Woo, hop confirmed.
+         */
+        case HopConfirm:
+            UART("GOT IT!\r\n");
+            break;
     }
 }
 
@@ -181,6 +257,16 @@ void CubeConnector::radioTimeout()
 {
     unsigned packetRxState = rxState.dequeue();
     switch (packetRxState) {
+
+        /*
+         * Our hop packet timed out. That's actually fine, since it
+         * may just mean that the cube hopped successfully but we
+         * lost the ACK packet. Go ahead and try to check for it on
+         * the new address.
+         */
+        case PairingBeginHop:
+            txState = HopConfirm;
+            break;
 
         /*
          * In all other cases, abort what we were doing and go back to
