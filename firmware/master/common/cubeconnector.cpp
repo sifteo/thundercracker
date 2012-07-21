@@ -103,7 +103,7 @@ void CubeConnector::chooseConnectionAddr()
     connectionAddr.channel = PRNG::valueBounded(&prng, RadioAddress::MAX_CHANNEL);
 
     for (unsigned i = 0; i < arraysize(connectionAddr.id); ++i) {
-        unsigned value = PRNG::valueBounded(&prng, 256 - 4) + 1;
+        unsigned value = PRNG::valueBounded(&prng, 255 - 4) + 1;
         if (value >= 0x55) value++;
         if (value >= 0xAA) value++;
         connectionAddr.id[i] = value;
@@ -190,11 +190,15 @@ void CubeConnector::radioProduce(PacketTransmission &tx)
          * We think we just hopped to a new connection-specific address and
          * channel. See if we can regain contact with the cube at this new
          * address, to verify that the hop worked.
+         *
+         * Since we don't get a full ACK automatically any more due to
+         * having been disconnected, we'll need to explicitly request one
+         * with the Explicit Full ACK code.
          */
         case HopConfirm:
             tx.dest = &connectionAddr;
             tx.packet.len = 1;
-            tx.packet.bytes[0] = 0xff;
+            tx.packet.bytes[0] = 0x79;
             break;
     };
 }
@@ -245,10 +249,15 @@ void CubeConnector::radioAcknowledge(const PacketBuffer &packet)
             break;
 
         /*
-         * Woo, hop confirmed.
+         * Woo, hop confirmed. Assuming the HWID matches, this means the
+         * new cube has finished connecting and we can hand it off to a CubeSlot.
          */
         case HopConfirm:
-            UART("GOT IT!\r\n");
+            if (packet.len >= RF_ACK_LEN_HWID && !memcmp(hwid, ack->hwid, sizeof hwid)) {
+                UART("GOT IT!\r\n");
+            } else {
+                txState = PairingFirstContact;
+            }
             break;
     }
 }
