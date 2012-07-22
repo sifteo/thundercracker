@@ -132,8 +132,8 @@ void SystemMC::threadFn(void *param)
         return;
     }
 
-    // Start the master at the current time, according to the cube simulation clock
-    instance->ticks = instance->sys->time.clocks;
+    // Start the master at some point shortly after the cubes come up
+    instance->ticks = instance->sys->time.clocks + MCTiming::STARTUP_DELAY;
     instance->radioPacketDeadline = instance->ticks + MCTiming::TICKS_PER_PACKET;
 
     HomeButton::init();
