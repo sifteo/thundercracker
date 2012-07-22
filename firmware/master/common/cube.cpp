@@ -36,6 +36,7 @@ void CubeSlot::connect(const RadioAddress &addr, const RF_ACKType &fullACK)
     Atomic::And(CubeSlots::flashResetSent, ~cv);
     Atomic::And(CubeSlots::flashAddrPending, ~cv);
     lastACK = fullACK;
+    address = addr;
 
     // The cube is now connected. At this instant we may start sending packets to it.
     Atomic::Or(CubeSlots::sysConnected, cv);
