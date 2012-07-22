@@ -277,7 +277,7 @@ void CubeConnector::radioAcknowledge(const PacketBuffer &packet)
             if (packet.len >= RF_ACK_LEN_HWID && !memcmp(hwid, ack->hwid, sizeof hwid)) {
                 CubeSlot &cube = CubeSlots::instances[cubeID];
                 if (cube.isSlotAvailable()) {
-                    cube.connect(connectionAddr, *ack);
+                    cube.connect(SysLFS::kCubeBase, connectionAddr, *ack);
                 }
             }
             txState = PairingFirstContact;

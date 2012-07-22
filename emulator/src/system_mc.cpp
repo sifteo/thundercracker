@@ -97,8 +97,10 @@ void SystemMC::autoInstall()
 
     do {
 
-        // Create an initial SysLFS volume
-        SysLFS::write(SysLFS::kDummy, 0, 0);
+        // XXX: Automatically pair all cubes
+        SysLFS::PairingIDRecord pairingID;
+        pairingID.init();
+        SysLFS::write(SysLFS::kPairingID, pairingID);
 
         // Install a launcher
         const char *launcher = sys->opt_launcherFilename.empty() ? NULL : sys->opt_launcherFilename.c_str();

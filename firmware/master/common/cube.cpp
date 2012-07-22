@@ -25,9 +25,8 @@
 #endif
 
 
-void CubeSlot::connect(const RadioAddress &addr, const RF_ACKType &fullACK)
+void CubeSlot::connect(SysLFS::Key cubeRecord, const RadioAddress &addr, const RF_ACKType &fullACK)
 {
-    LOG(("CUBE[%d]: Connected to system\n", id()));
     _SYSCubeIDVector cv = bit();
 
     // Reset state
@@ -37,6 +36,12 @@ void CubeSlot::connect(const RadioAddress &addr, const RF_ACKType &fullACK)
     Atomic::And(CubeSlots::flashAddrPending, ~cv);
     lastACK = fullACK;
     address = addr;
+    this->cubeRecord = cubeRecord;
+
+    LOG(("CUBE[%d]: Connected to system! "
+        "record=%02x addr=%02x/%02x%02x%02x%02x%02x hwid=%"PRIu64"016x\n",
+        id(), cubeRecord, addr.channel, addr.id[0], addr.id[1], addr.id[2], addr.id[3],
+        addr.id[4], getHWID()));
 
     // The cube is now connected. At this instant we may start sending packets to it.
     Atomic::Or(CubeSlots::sysConnected, cv);

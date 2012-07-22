@@ -7,6 +7,8 @@
 #include "crc.h"
 #include "bits.h"
 #include "prng.h"
+#include "cube.h"
+#include "cubeslots.h"
 
 
 int SysLFS::read(Key k, uint8_t *buffer, unsigned bufferSize)
@@ -74,34 +76,30 @@ int SysLFS::write(Key k, const uint8_t *data, unsigned dataSize, bool gc)
 
 SysLFS::Key SysLFS::CubeRecord::makeKey(_SYSCubeID cube)
 {
-    /*
-     * TO DO: The association from _SYSCubeID to SysLFS::Key should be
-     *        made at the time of pairing, and probably stored by CubeSlot.
-     *        When the cube is first pair, we either find an existing
-     *        CubeRecord for that HWID, or we allocate a new CubeRecord by
-     *        recycling a 'dead' cube's Key.
-     *
-     *        Until pairing is in place, we use a 1:1 mapping between CubeID
-     *        and Key.
-     */
-
+    // CubeSlots store their own mapping back to their paired CubeRecord key
     ASSERT(cube < _SYS_NUM_CUBE_SLOTS);
-    return Key(kCubeBase + cube);
+    return CubeSlots::instances[cube].getCubeRecordKey();
 }
 
 bool SysLFS::CubeRecord::decodeKey(Key cubeKey, _SYSCubeID &cube)
 {
     /*
-     * Reverse mapping from key back to Cube ID.
-     *
-     * XXX: This may require reimplementation when makeKey() is fleshed out.
+     * Reverse mapping from key back to Cube ID. Since only
+     * connected cubes have an associated CubeRecord, this only
+     * searches the vector of sysConnected cubes.
      */
 
-    unsigned i = cubeKey - kCubeBase;
-    if (i < _SYS_NUM_CUBE_SLOTS) {
-        cube = i;
-        return true;
+    _SYSCubeIDVector cv = CubeSlots::sysConnected;
+    while (cv) {
+        _SYSCubeID c = Intrinsic::CLZ(cv);
+        cv ^= Intrinsic::LZ(c);
+
+        if (makeKey(c) == cubeKey) {
+            cube = c;
+            return true;
+        }
     }
+
     return false;
 }
 
@@ -122,6 +120,18 @@ bool SysLFS::CubeRecord::load(const FlashLFSObjectIter &iter)
 
     // Valid if CRC is okay
     return size >= sizeof *this && iter.readAndCheck((uint8_t*) this, sizeof *this);
+}
+
+void SysLFS::PairingIDRecord::init()
+{
+    // 0xFF is always an invalid HWID byte
+    memset(this, 0xFF, sizeof *this);
+}
+
+void SysLFS::PairingMRURecord::init()
+{
+    // Fill with invalid indices
+    memset(this, 0xFF, sizeof *this);
 }
 
 bool SysLFS::CubeAssetsRecord::checkBinding(FlashVolume vol, unsigned numSlots) const

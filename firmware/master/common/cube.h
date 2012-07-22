@@ -15,6 +15,7 @@
 #include "systime.h"
 #include "cubecodec.h"
 #include "paintcontrol.h"
+#include "flash_syslfs.h"
 
 
 /**
@@ -35,7 +36,7 @@ class CubeSlot {
     void radioAcknowledge(const PacketBuffer &packet);
     void radioTimeout();
 
-    void connect(const RadioAddress &addr, const RF_ACKType &fullACK);
+    void connect(SysLFS::Key cubeRecord, const RadioAddress &addr, const RF_ACKType &fullACK);
     void disconnect();
 
     _SYSCubeID id() const {
@@ -156,6 +157,12 @@ class CubeSlot {
         return &address;
     }
 
+    ALWAYS_INLINE SysLFS::Key getCubeRecordKey() const {
+        ASSERT(cubeRecord >= SysLFS::kCubeBase);
+        ASSERT(cubeRecord < SysLFS::kCubeBase + SysLFS::kCubeCount);
+        return cubeRecord;
+    }
+
  private:
     // Limit on round-trip time
     static const unsigned RTT_DEADLINE_MS = 250;
@@ -172,7 +179,8 @@ class CubeSlot {
 
     _SYSVideoBuffer *vbuf;
     RadioAddress address;
-    
+    SysLFS::Key cubeRecord;
+
     DEBUG_ONLY(SysTime::Ticks assetLoadTimestamp);
 
     // Timers, used only by ISR
