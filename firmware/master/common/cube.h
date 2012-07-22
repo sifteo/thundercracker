@@ -167,29 +167,21 @@ class CubeSlot {
     // Limit on round-trip time
     static const unsigned RTT_DEADLINE_MS = 250;
 
-    /*
-     * Data buffers, provided by game code.
-     *
-     * 'vbuf' is non-NULL any time this cube has a buffer attached. We
-     * will try to send out any changes in that buffer. The buffer
-     * pointer is guaranteed to remain valid until it's set to NULL or
-     * to a different pointer, which can happen only outside of IRQ
-     * context.
-     */
+    // Large data
+    SysTime::Ticks flashDeadline;
+    PaintControl paintControl;
 
+    // Other aligned data
     _SYSVideoBuffer *vbuf;
+    CubeCodec codec;
+    uint16_t timeSyncState;
+
+    // Byte variables
     RadioAddress address;
     SysLFS::Key cubeRecord;
+    RF_ACKType lastACK;
 
     DEBUG_ONLY(SysTime::Ticks assetLoadTimestamp);
-
-    // Timers, used only by ISR
-    SysTime::Ticks flashDeadline;
-    uint32_t timeSyncState;
-
-    PaintControl paintControl;
-    CubeCodec codec;
-    RF_ACKType lastACK;
 
     void requestFlashReset();
     uint16_t calculateTimeSync();
