@@ -47,16 +47,30 @@ namespace SysLFS {
     /*
      * Key space
      *
-     * Keys in the range [0x00, 0x27] are currently unallocated.
+     * Keys below the first item in the table are currently unallocated.
      */
 
     enum Key {
-        kDummy          = 0x27,
+        kPairingMRU     = 0x26,
+        kPairingID      = 0x27,
         kCubeBase       = 0x28,
         kCubeCount      = _SYS_NUM_CUBE_SLOTS,
         kAssetSlotBase  = kCubeBase + kCubeCount,
         kAssetSlotCount = _SYS_NUM_CUBE_SLOTS * ASSET_SLOTS_PER_CUBE,
         kEnd            = kAssetSlotBase + kAssetSlotCount,
+    };
+
+    /*
+     * Pairing data
+     */
+
+    struct PairingMRURecord {
+        // Indices into hwid[], in order of most recently used first.
+        uint8_t rank[_SYS_NUM_CUBE_SLOTS];
+    };
+
+    struct PairingIDRecord {
+        uint64_t hwid[_SYS_NUM_CUBE_SLOTS];
     };
 
     /*
