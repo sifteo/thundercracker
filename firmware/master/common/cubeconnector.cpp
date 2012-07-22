@@ -6,6 +6,8 @@
 #include <protocol.h>
 #include "macros.h"
 #include "cubeconnector.h"
+#include "cube.h"
+#include "cubeslots.h"
 #include "neighbor_tx.h"
 #include "neighbor_protocol.h"
 #include "systime.h"
@@ -134,7 +136,7 @@ void CubeConnector::produceRadioHop(PacketBuffer &buf)
     buf.len = 8;
     buf.bytes[0] = 0x7a;
     buf.bytes[1] = connectionAddr.channel;
-    memcpy(&tx.packet.bytes[2], connectionAddr.id, 5);
+    memcpy(&buf.bytes[2], connectionAddr.id, 5);
     buf.bytes[7] = 0xE0 | cubeID;
 }
 
@@ -272,7 +274,7 @@ void CubeConnector::radioAcknowledge(const PacketBuffer &packet)
          * finished connecting and we can hand it off to a CubeSlot.
          */
         case HopConfirm:
-            if (packet.len >= RF_ACK_LEN_HWID && !memcmp(hwid, ack->hwid, sizeof hwid) {
+            if (packet.len >= RF_ACK_LEN_HWID && !memcmp(hwid, ack->hwid, sizeof hwid)) {
                 CubeSlot &cube = CubeSlots::instances[cubeID];
                 if (cube.isSlotAvailable()) {
                     cube.connect(connectionAddr, *ack);

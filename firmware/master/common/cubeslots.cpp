@@ -12,14 +12,14 @@
 
 CubeSlot CubeSlots::instances[_SYS_NUM_CUBE_SLOTS];
 
-_SYSCubeIDVector CubeSlots::vecEnabled = 0;
-_SYSCubeIDVector CubeSlots::vecConnected = 0;
+_SYSCubeIDVector CubeSlots::sysConnected = 0;
+_SYSCubeIDVector CubeSlots::userConnected = 0;
 _SYSCubeIDVector CubeSlots::flashResetWait = 0;
 _SYSCubeIDVector CubeSlots::flashResetSent = 0;
 _SYSCubeIDVector CubeSlots::flashAddrPending = 0;
 
-_SYSCubeID CubeSlots::minCubes = 0;
-_SYSCubeID CubeSlots::maxCubes = _SYS_NUM_CUBE_SLOTS;
+_SYSCubeID CubeSlots::minUserCubes = 0;
+_SYSCubeID CubeSlots::maxUserCubes = _SYS_NUM_CUBE_SLOTS;
 
 _SYSAssetLoader *CubeSlots::assetLoader = 0;
 

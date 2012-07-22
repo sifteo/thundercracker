@@ -17,6 +17,21 @@
 
 extern "C" {
 
+uint32_t _SYS_getConnectedCubes()
+{
+    return CubeSlots::userConnected;
+}
+
+void _SYS_setCubeRange(uint32_t minimum, uint32_t maximum)
+{
+    if (minimum >= _SYS_NUM_CUBE_SLOTS ||
+        maximum >= _SYS_NUM_CUBE_SLOTS ||
+        minimum > maximum)
+        return SvmRuntime::fault(F_SYSCALL_PARAM);
+    
+    CubeSlots::setCubeRange(minimum, maximum);
+}
+
 void _SYS_setVideoBuffer(_SYSCubeID cid, struct _SYSVideoBuffer *vbuf)
 {
     if (!isAligned(vbuf))

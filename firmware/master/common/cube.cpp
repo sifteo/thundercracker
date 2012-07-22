@@ -209,7 +209,7 @@ bool CubeSlot::radioProduce(PacketTransmission &tx)
                 if (done) {
                     /* Finished sending the group, and the cube finished writing it. */
                     Atomic::SetLZ(L->complete, id());
-                    Event::setCubePending(_SYS_CUBE_ASSETDONE, id());
+                    Event::setCubePending(Event::PID_CUBE_ASSETDONE, id());
 
                     DEBUG_ONLY({
                         // In debug builds only, we log the asset download time
@@ -258,14 +258,6 @@ bool CubeSlot::radioProduce(PacketTransmission &tx)
 
 void CubeSlot::radioAcknowledge(const PacketBuffer &packet)
 {
-    if (!connected()) {
-        Event::setCubePending(_SYS_CUBE_FOUND, id());
-        setConnected();
-
-        LOG(("%u cubes connected\n",
-            Intrinsic::POPCOUNT(CubeSlots::vecConnected)));
-    }
-
     RF_ACKType *ack = (RF_ACKType *) packet.bytes;
 
     // ACKs are always at least one byte.
@@ -338,7 +330,7 @@ void CubeSlot::radioAcknowledge(const PacketBuffer &packet)
             accelState.x = x;
             accelState.y = y;
             accelState.z = z;
-            Event::setCubePending(_SYS_CUBE_ACCELCHANGE, id());
+            Event::setCubePending(Event::PID_CUBE_ACCELCHANGE, id());
         }
     }
 
@@ -347,11 +339,11 @@ void CubeSlot::radioAcknowledge(const PacketBuffer &packet)
 
         // Look for valid touch up/down events, signified by any edge on the touch toggle bit
         if ((neighbors[0] ^ ack->neighbors[0]) & NB0_FLAG_TOUCH) {
-            Event::setCubePending(_SYS_CUBE_TOUCH, id());
+            Event::setCubePending(Event::PID_CUBE_TOUCH, id());
         }
 
         // Trigger a rescan of all neighbors, during event dispatch
-        Event::setCubePending(_SYS_NEIGHBOR_ADD, id());
+        Event::setCubePending(Event::PID_NEIGHBORS, id());
 
         // Store the raw state
         neighbors[0] = ack->neighbors[0];

@@ -912,7 +912,7 @@ void XmTrackerPlayer::processEffects(XmTrackerChannel &channel)
                     break;
 
                 default:
-                    Event::setBasePending(_SYS_BASE_TRACKER, (type << 8) | param);
+                    Event::setBasePending(Event::PID_BASE_TRACKER, (type << 8) | param);
                     type = XmTrackerPattern::kNoEffect;
                     break;
 
@@ -920,7 +920,7 @@ void XmTrackerPlayer::processEffects(XmTrackerChannel &channel)
             break;
         }
         default:
-            Event::setBasePending(_SYS_BASE_TRACKER, (type << 8) | param);
+            Event::setBasePending(Event::PID_BASE_TRACKER, (type << 8) | param);
             type = XmTrackerPattern::kNoEffect;
             break;
 

@@ -375,7 +375,7 @@ bool PaintControl::vramFlushed(CubeSlot *cube)
 
         PAINT_LOG((LOG_PREFIX "TRIGGERING\n", LOG_PARAMS));
 
-        if (cube->hasValidFrameACK() && (vbuf->flags & _SYS_VBF_SYNC_ACK)) {
+        if (vbuf->flags & _SYS_VBF_SYNC_ACK) {
             // We're sync'ed up. Trigger a one-shot render
 
             // Should never have SYNC_ACK set when in CONTINUOUS mode.

@@ -58,7 +58,7 @@ void RadioManager::produce(PacketTransmission &tx)
             if (deferred.empty()) {
                 // Start the next round-robin cycle
 
-                schedule.words[0] = CubeSlots::vecEnabled | Intrinsic::LZ(CONNECTOR_ID);
+                schedule.words[0] = CubeSlots::sysConnected | Intrinsic::LZ(CONNECTOR_ID);
 
             } else {
                 // We still have deferred producers that haven't transmitted.
@@ -122,7 +122,7 @@ bool RadioManager::dispatchProduce(unsigned id, PacketTransmission &tx)
     }
 
     CubeSlot &slot = CubeSlot::getInstance(id);
-    return slot.enabled() && slot.radioProduce(tx);
+    return slot.isSysConnected() && slot.radioProduce(tx);
 }
 
 void RadioManager::dispatchAcknowledge(unsigned id, const PacketBuffer &packet)
@@ -131,7 +131,7 @@ void RadioManager::dispatchAcknowledge(unsigned id, const PacketBuffer &packet)
         return CubeConnector::radioAcknowledge(packet);
 
     CubeSlot &slot = CubeSlot::getInstance(id);
-    if (slot.enabled())
+    if (slot.isSysConnected())
         slot.radioAcknowledge(packet);
 }
 
@@ -148,6 +148,6 @@ void RadioManager::dispatchTimeout(unsigned id)
         return CubeConnector::radioTimeout();
 
     CubeSlot &slot = CubeSlot::getInstance(id);
-    if (slot.enabled())
+    if (slot.isSysConnected())
         slot.radioTimeout();
 }
