@@ -61,12 +61,20 @@ update: encrypted
 	$(SDK_DIR)/bin/swiss update $(BIN).sft
 
 objdump: $(BIN).elf
-	arm-none-eabi-objdump -d $< | arm-none-eabi-c++filt | less
+	arm-none-eabi-objdump -d $< | arm-none-eabi-c++filt -n | less
 
 readelf: $(BIN).elf
 	arm-none-eabi-readelf -a $< | less
 
-.PHONY: all clean syscall-table ocd unlock program encrypted fwload objdump
+sizeprof: $(BIN).elf
+	@echo
+	@echo Top Flash consumers:
+	@arm-none-eabi-readelf -W -s $< | grep -v NOTYPE | grep ": 080" | sort -n -k 3 -r | head -n 30 | arm-none-eabi-c++filt -n
+	@echo
+	@echo Top RAM consumers:
+	@arm-none-eabi-readelf -W -s $< | grep -v NOTYPE | grep ": 2000" | sort -n -k 3 -r | head -n 20 | arm-none-eabi-c++filt -n
+
+.PHONY: all clean syscall-table ocd unlock program encrypted fwload objdump sizeprof
 
 # Several steps, to work around Win32 command line length limits
 clean:
