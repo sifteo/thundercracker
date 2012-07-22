@@ -38,9 +38,9 @@ int main()
     NVIC.irqPrioritize(IVT.UsbOtg_FS, 0x90);    //  Lower prio than radio
 
     //Set an LED high so we know we're up and running.
-    GPIOPin red = LED_GREEN2_GPIO;
-    red.setControl(GPIOPin::OUT_2MHZ);
-    red.setHigh();
+    GPIOPin power = LED_GREEN2_GPIO;
+    power.setControl(GPIOPin::OUT_2MHZ);
+    power.setHigh();
     
     /*
      * High-level hardware initialization
