@@ -21,6 +21,7 @@ uint8_t CubeConnector::neighborKey;
 uint8_t CubeConnector::txState;
 uint8_t CubeConnector::pairingPacketCounter;
 uint8_t CubeConnector::hwid[HWID_LEN];
+_SYSCubeID CubeConnector::cubeID;
 
 
 void CubeConnector::init()
@@ -83,7 +84,7 @@ void CubeConnector::nextNeighborKey()
     setNeighborKey(newKey);
 }
 
-void CubeConnector::chooseConnectionAddr()
+bool CubeConnector::chooseConnectionAddr()
 {
     /*
      * Pick a new random connection channel and address, for use by
@@ -96,6 +97,10 @@ void CubeConnector::chooseConnectionAddr()
      * Addresses should avoid bytes 0x00, 0x55, 0xAA, and 0xFF.
      * Explicitly exclude these from our random number space, while
      * otherwise keeping it perfectly uniform.
+     *
+     * If no more cube IDs are available, we return false.
+     * Otherwise, we return true after successfully initializing the
+     * connection channel, address, and cube ID.
      */
 
     PRNG::collectTimingEntropy(&prng);
@@ -108,26 +113,48 @@ void CubeConnector::chooseConnectionAddr()
         if (value >= 0xAA) value++;
         connectionAddr.id[i] = value;
     }
+
+    // Pick a cube ID, based on what's available right now.
+    _SYSCubeIDVector cv = CubeSlots::availableSlots();
+    if (cv) {
+        cubeID = Intrinsic::CLZ(cv);
+        return true;
+    } else {
+        return false;
+    }
 }
 
-void CubeConnector::produceRadioHop(PacketTransmission &tx, RadioAddress &src, RadioAddress &dest)
+void CubeConnector::produceRadioHop(PacketBuffer &buf)
 {
     /*
-     * Assemble a packet containing only a Radio Hop. Send it to the
-     * source address, but encode the destination address in the packet.
+     * Assemble a packet containing only a Radio Hop to the current
+     * connectionAddr and cubeID.
      */
 
-    tx.dest = &src;
-    tx.packet.len = 7;
-    tx.packet.bytes[0] = 0x7a;
-    tx.packet.bytes[1] = dest.channel;
-    memcpy(&tx.packet.bytes[2], dest.id, sizeof dest.id);
+    buf.len = 8;
+    buf.bytes[0] = 0x7a;
+    buf.bytes[1] = connectionAddr.channel;
+    memcpy(&tx.packet.bytes[2], connectionAddr.id, 5);
+    buf.bytes[7] = 0xE0 | cubeID;
 }
 
 void CubeConnector::radioProduce(PacketTransmission &tx)
 {
     rxState.enqueue(txState);
     switch (txState) {
+
+        /*
+         * Once our pairing verification is done, send the cube a hop
+         * to connect it on an address and channel of our choice.
+         */
+        case PairingBeginHop:
+            if (chooseConnectionAddr()) {
+                tx.dest = &pairingAddr;
+                produceRadioHop(tx.packet);
+                break;
+            }
+            txState = PairingFirstContact;
+            // Address generation failed, FALL THROUGH to first contact...
 
         /*
          * Our first chance to talk to a new cube who's in range of our
@@ -175,15 +202,6 @@ void CubeConnector::radioProduce(PacketTransmission &tx)
             tx.dest = &pairingAddr;
             tx.packet.len = 1;
             tx.packet.bytes[0] = 0xff;
-            break;
-
-        /*
-         * Once our pairing verification is done, send the cube a hop
-         * to connect it on an address and channel of our choice.
-         */
-        case PairingBeginHop:
-            chooseConnectionAddr();
-            produceRadioHop(tx, pairingAddr, connectionAddr);
             break;
 
         /*
@@ -249,15 +267,18 @@ void CubeConnector::radioAcknowledge(const PacketBuffer &packet)
             break;
 
         /*
-         * Woo, hop confirmed. Assuming the HWID matches, this means the
-         * new cube has finished connecting and we can hand it off to a CubeSlot.
+         * Woo, hop confirmed. Assuming the HWID matches and the cubeID
+         * we chose is still available, this means the new cube has
+         * finished connecting and we can hand it off to a CubeSlot.
          */
         case HopConfirm:
-            if (packet.len >= RF_ACK_LEN_HWID && !memcmp(hwid, ack->hwid, sizeof hwid)) {
-                UART("GOT IT!\r\n");
-            } else {
-                txState = PairingFirstContact;
+            if (packet.len >= RF_ACK_LEN_HWID && !memcmp(hwid, ack->hwid, sizeof hwid) {
+                CubeSlot &cube = CubeSlots::instances[cubeID];
+                if (cube.isSlotAvailable()) {
+                    cube.connect(connectionAddr, *ack);
+                }
             }
+            txState = PairingFirstContact;
             break;
     }
 }

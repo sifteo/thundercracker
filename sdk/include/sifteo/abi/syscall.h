@@ -149,10 +149,6 @@ void _SYS_setVector(_SYSVectorID vid, void *handler, void *context) _SC(122);
 void *_SYS_getVectorHandler(_SYSVectorID vid) _SC(123);
 void *_SYS_getVectorContext(_SYSVectorID vid) _SC(124);
 
-// Typically only needed by system menu code
-void _SYS_enableCubes(_SYSCubeIDVector cv) _SC(125);
-void _SYS_disableCubes(_SYSCubeIDVector cv) _SC(126);
-
 // Sensors
 uint32_t _SYS_getAccel(_SYSCubeID cid) _SC(54);
 uint32_t _SYS_getNeighbors(_SYSCubeID cid) _SC(59);
@@ -161,6 +157,10 @@ uint32_t _SYS_getShake(_SYSCubeID cid) _SC(128);
 uint32_t _SYS_getBatteryV(_SYSCubeID cid) _SC(129);
 uint32_t _SYS_isTouching(_SYSCubeID cid) _SC(55);
 uint64_t _SYS_getCubeHWID(_SYSCubeID cid) _SC(130);
+
+// Cube management
+uint32_t _SYS_getConnectedCubes() _SC(16);
+void _SYS_setCubeRange(uint32_t minimum, uint32_t maximum) _SC(125);
 
 // Audio
 uint32_t _SYS_audio_play(const struct _SYSAudioModule *mod, _SYSAudioChannelID ch, enum _SYSAudioLoopType loop) _SC(35);

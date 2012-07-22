@@ -208,12 +208,34 @@ public:
     /// Create a CubeSet with a single CubeID in it.
     CubeSet(CubeID cube) : BitArray<_SYS_NUM_CUBE_SLOTS>(cube) {}
 
+    /// Create a CubeSet from a _SYSCubeIDVector
+    CubeSet(_SYSCubeIDVector sys) : BitArray<_SYS_NUM_CUBE_SLOTS>() {
+        words[0] = sys;
+    }
+
     /**
      * @brief Create a new CubeSet with a range of cubes.
      *
      * This is a half-open interval. All IDs >= 'begin' and < 'end' are in the set.
      */
     CubeSet(CubeID begin, CubeID end) : BitArray<_SYS_NUM_CUBE_SLOTS>(begin, end) {}
+
+    /**
+     * @brief Return a CubeSet containing all connected cubes which are visible to the
+     * current application.
+     *
+     * The number of available cubes will always be within the limits set by your
+     * Metadata::cubeRange(). Furthermore, returned cube IDs are all guaranteed to
+     * be less than the maximum number of cubes defined in your range. If your
+     * code supports at most 6 cubes, for instance, it's perfectly fine to declare
+     * 6-element arrays and index them with any CubeID in this set.
+     *
+     * The returned CubeSet is guaranteed not to change until the relevant
+     * connection and/or disconnection events have been dispatched to your application.
+     */
+    static CubeSet connected() {
+        return CubeSet(_SYS_getConnectedCubes());
+    }
 };
 
 

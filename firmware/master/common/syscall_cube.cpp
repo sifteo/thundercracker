@@ -17,16 +17,6 @@
 
 extern "C" {
 
-void _SYS_enableCubes(_SYSCubeIDVector cv)
-{
-    CubeSlots::enableCubes(CubeSlots::truncateVector(cv));
-}
-
-void _SYS_disableCubes(_SYSCubeIDVector cv)
-{
-    CubeSlots::disableCubes(CubeSlots::truncateVector(cv));
-}
-
 void _SYS_setVideoBuffer(_SYSCubeID cid, struct _SYSVideoBuffer *vbuf)
 {
     if (!isAligned(vbuf))

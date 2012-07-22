@@ -25,6 +25,35 @@
 #endif
 
 
+void CubeSlot::connect(const RadioAddress &addr, const RF_ACKType &fullACK)
+{
+    LOG(("CUBE[%d]: Connected to system\n", id()));
+    _SYSCubeIDVector cv = bit();
+
+    // Reset state
+    NeighborSlot::resetSlots(cv);
+    Atomic::And(CubeSlots::flashResetWait, ~cv);
+    Atomic::And(CubeSlots::flashResetSent, ~cv);
+    Atomic::And(CubeSlots::flashAddrPending, ~cv);
+
+    // The cube is now connected. At this instant we may start sending packets to it.
+    Atomic::Or(CubeSlots::sysConnected, cv);
+}
+
+
+void CubeSlot::disconnect()
+{
+    LOG(("CUBE[%d]: Disconnected from system\n", id()));
+    _SYSCubeIDVector cv = bit();
+
+    // Disconnect it from the system; the user will follow when we dispatch the event.
+    Atomic::And(CubeSlots::sysConnected, ~cv);
+
+    NeighborSlot::resetSlots(cv);
+    NeighborSlot::resetPairs(cv);
+}
+
+
 void CubeSlot::startAssetLoad(SvmMemory::VirtAddr groupVA, uint16_t baseAddr)
 {
     /*
@@ -64,7 +93,7 @@ void CubeSlot::startAssetLoad(SvmMemory::VirtAddr groupVA, uint16_t baseAddr)
     LC->head = 0;
     LC->tail = 0;
 
-#ifdef SIFTEO_SIMULATOR
+    #ifdef SIFTEO_SIMULATOR
     if (CubeSlots::simAssetLoaderBypass) {
         /*
          * Asset loader bypass mode: Instead of actually sending this
@@ -92,7 +121,7 @@ void CubeSlot::startAssetLoad(SvmMemory::VirtAddr groupVA, uint16_t baseAddr)
             return;
         }
     }
-#endif
+    #endif
 
     LOG(("FLASH[%d]: Sending asset group %s, at base address 0x%08x\n",
         id(), SvmDebugPipe::formatAddress(G->pHdr).c_str(), baseAddr));
@@ -118,24 +147,6 @@ void CubeSlot::requestFlashReset()
 {
     Atomic::And(CubeSlots::flashResetSent, ~bit());
     Atomic::Or(CubeSlots::flashResetWait, bit());
-}
-
-const RadioAddress *CubeSlot::getRadioAddress()
-{
-    /*
-     * XXX: Pairing. Try to connect, if we aren't connected. And use a real address.
-     *      For now I'm hardcoding the default address, since that's what
-     *      the emulator will come up with.
-     */
-
-    address.channel = 0x2;
-    address.id[0] = id();
-    address.id[1] = 0xe7;
-    address.id[2] = 0xe7;
-    address.id[3] = 0xe7;
-    address.id[4] = 0xe7;
-
-    return &address;
 }
 
 bool CubeSlot::radioProduce(PacketTransmission &tx)
@@ -270,21 +281,13 @@ void CubeSlot::radioAcknowledge(const PacketBuffer &packet)
         return;
     }
 
-    // If we're expecting a stale packet, completely ignore its contents.
-    if (CubeSlots::expectStaleACK & bit()) {
-        Atomic::ClearLZ(CubeSlots::expectStaleACK, id());
-        return;
-    }
-
     // All ACKs have a header byte with frame rate control info
     {
         uint8_t delta = ack->frame_count - framePrevACK;
         delta &= FRAME_ACK_COUNT;
         framePrevACK = ack->frame_count;
 
-        if ((CubeSlots::frameACKValid & bit()) == 0) {
-            Atomic::SetLZ(CubeSlots::frameACKValid, id());
-        } else if (delta) {
+        if (delta) {
             // Some frame(s) finished rendering.
             paintControl.ackFrames(this, delta);
         }
@@ -293,36 +296,28 @@ void CubeSlot::radioAcknowledge(const PacketBuffer &packet)
     if (packet.len >= offsetof(RF_ACKType, flash_fifo_bytes) + sizeof ack->flash_fifo_bytes) {
         // This ACK includes a valid flash_fifo_bytes counter
 
-        if (CubeSlots::flashACKValid & bit()) {
-            // Two valid ACKs in a row, we can count bytes.
+        uint8_t loadACK = ack->flash_fifo_bytes - flashPrevACK;
 
-            uint8_t loadACK = ack->flash_fifo_bytes - flashPrevACK;
+        DEBUG_LOG(("FLASH[%d]: Valid ACK for %d bytes (resetWait=%d, resetSent=%d)\n",
+            id(), loadACK,
+            !!(CubeSlots::flashResetWait & bit()),
+            !!(CubeSlots::flashResetSent & bit())));
 
-            DEBUG_LOG(("FLASH[%d]: Valid ACK for %d bytes (resetWait=%d, resetSent=%d)\n",
-                id(), loadACK,
-                !!(CubeSlots::flashResetWait & bit()),
-                !!(CubeSlots::flashResetSent & bit())));
-
-            if ((CubeSlots::flashResetWait & bit()) && (CubeSlots::flashResetSent & bit())) {
-                // We're waiting on a reset
-                if (loadACK)
-                    Atomic::ClearLZ(CubeSlots::flashResetWait, id());
-            } else {
-                /*
-                 * Acknowledge FIFO bytes
-                 *
-                 * Note that these ACKs may get lost; CubeCodec will explicitly request
-                 * a resend if it's out of buffer space! (Normally dropped ACKs aren't
-                 * an issue, since we'll have other ACKs in the pipeline. But if we hit
-                 * a pipeline bubble and/or multiple ACKs drop in a row, we need to
-                 * intervene)
-                 */
-                codec.flashAckBytes(loadACK);
-            }
-
+        if ((CubeSlots::flashResetWait & bit()) && (CubeSlots::flashResetSent & bit())) {
+            // We're waiting on a reset
+            if (loadACK)
+                Atomic::ClearLZ(CubeSlots::flashResetWait, id());
         } else {
-            // Now we've seen one ACK
-            Atomic::SetLZ(CubeSlots::flashACKValid, id());
+            /*
+             * Acknowledge FIFO bytes
+             *
+             * Note that these ACKs may get lost; CubeCodec will explicitly request
+             * a resend if it's out of buffer space! (Normally dropped ACKs aren't
+             * an issue, since we'll have other ACKs in the pipeline. But if we hit
+             * a pipeline bubble and/or multiple ACKs drop in a row, we need to
+             * intervene)
+             */
+            codec.flashAckBytes(loadACK);
         }
 
         flashPrevACK = ack->flash_fifo_bytes;
@@ -350,19 +345,13 @@ void CubeSlot::radioAcknowledge(const PacketBuffer &packet)
     if (packet.len >= offsetof(RF_ACKType, neighbors) + sizeof ack->neighbors) {
         // Has valid neighbor/flag data
 
-        if (CubeSlots::neighborACKValid & bit()) {
-            // Look for valid touches, signified by any edge on the touch toggle bit
-
-            if ((neighbors[0] ^ ack->neighbors[0]) & NB0_FLAG_TOUCH) {
-                Event::setCubePending(_SYS_CUBE_TOUCH, id());
-            }
-
-            // Trigger a rescan of all neighbors, during event dispatch
-            Event::setCubePending(_SYS_NEIGHBOR_ADD, id());
-
-        } else {
-            Atomic::SetLZ(CubeSlots::neighborACKValid, id());
+        // Look for valid touch up/down events, signified by any edge on the touch toggle bit
+        if ((neighbors[0] ^ ack->neighbors[0]) & NB0_FLAG_TOUCH) {
+            Event::setCubePending(_SYS_CUBE_TOUCH, id());
         }
+
+        // Trigger a rescan of all neighbors, during event dispatch
+        Event::setCubePending(_SYS_NEIGHBOR_ADD, id());
 
         // Store the raw state
         neighbors[0] = ack->neighbors[0];
@@ -373,63 +362,36 @@ void CubeSlot::radioAcknowledge(const PacketBuffer &packet)
 
     if (packet.len >= offsetof(RF_ACKType, battery_v) + sizeof ack->battery_v) {
         // Has valid battery voltage
-        
+
         rawBatteryV = ack->battery_v;
     }
 
     if (packet.len >= offsetof(RF_ACKType, hwid) + sizeof ack->hwid) {
-        // Has valid hardware ID
+        // Has valid hardware ID. We already know the cube's HWID from when we
+        // first connected it... but just out of paranoia, check whether it's changed
+        // and disconnect the cube if so.
 
         STATIC_ASSERT(sizeof hwid == sizeof ack->hwid);
-        memcpy(hwid, ack->hwid, sizeof ack->hwid);
-        Atomic::SetLZ(CubeSlots::hwidValid, id());
+        if (memcmp(hwid, ack->hwid, sizeof ack->hwid))
+            disconnect();
     }
 }
 
 // Are we being touched right now?
-bool CubeSlot::isTouching() const {
+bool CubeSlot::isTouching() const
+{
     // touch state is transmitted in the NB0_FLAG_TOUCH bit
     // of the first neighbor value
-    return neighbors[0] & NB0_FLAG_TOUCH;
+    return !!(neighbors[0] & NB0_FLAG_TOUCH);
 }
 
 void CubeSlot::radioTimeout()
 {
-    /* XXX: Disconnect this cube */
-    
-    if (connected()) {
-        Event::setCubePending(_SYS_CUBE_LOST, id());
-        setDisconnected();
-		
-        uint32_t count = Intrinsic::POPCOUNT(CubeSlots::vecConnected);
-        LOG(("%u cubes connected\n", count));
-    }
+    disconnect();
 }
 
 uint64_t CubeSlot::getHWID()
 {
-    /*
-     * Return this cube's Hardware ID. If we don't know the ID yet, this
-     * blocks until the ID can be retrieved over the radio. (This happens
-     * as a side-effect of completing a Flash Reset.)
-     */
-
-    if (!(CubeSlots::hwidValid & bit())) {
-        if (!enabled() || !connected()) {
-            // Cube disappeared! Cancel.
-            return _SYS_INVALID_HWID;
-        }
-
-        // If no assets are loading / have loaded, send our own reset.
-        // (We don't want to stomp on an ongoing asset download!)
-        if (!isAssetLoading())
-            requestFlashReset();
-
-        do {
-            Tasks::idle();
-        } while (!(CubeSlots::hwidValid & bit()));
-    }
-    
     uint64_t result = 0;
     memcpy(&result, hwid, sizeof hwid);
     return result;

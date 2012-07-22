@@ -56,12 +56,13 @@ private:
     static RingBuffer<RadioManager::FIFO_DEPTH, uint8_t, uint8_t> rxState;
     static uint8_t pairingPacketCounter;
     static uint8_t hwid[HWID_LEN];
+    static _SYSCubeID cubeID;
 
     static void setNeighborKey(unsigned k);
     static void nextNeighborKey();
 
-    static void chooseConnectionAddr();
-    static void produceRadioHop(PacketTransmission &tx, RadioAddress &src, RadioAddress &dest);
+    static bool chooseConnectionAddr();
+    static void produceRadioHop(PacketBuffer &buf);
 };
 
 #endif

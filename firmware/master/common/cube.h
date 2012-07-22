@@ -35,6 +35,9 @@ class CubeSlot {
     void radioAcknowledge(const PacketBuffer &packet);
     void radioTimeout();
 
+    void connect(const RadioAddress &addr, const RF_ACKType &fullACK);
+    void disconnect();
+
     _SYSCubeID id() const {
         _SYSCubeID i = this - &CubeSlots::instances[0];
         ASSERT(i < _SYS_NUM_CUBE_SLOTS);
@@ -52,20 +55,16 @@ class CubeSlot {
         return Intrinsic::LZ(id());
     }
 
-    bool ALWAYS_INLINE enabled() const {
-        return !!(bit() & CubeSlots::vecEnabled);
+    bool ALWAYS_INLINE isSysConnected() const {
+        return !!(bit() & CubeSlots::sysConnected);
     }
-    
-    bool ALWAYS_INLINE connected() const {
-        return !!(bit() & CubeSlots::vecConnected);
+
+    bool ALWAYS_INLINE isUserConnected() const {
+        return !!(bit() & CubeSlots::userConnected);
     }
-    
-    void ALWAYS_INLINE setConnected() {
-        CubeSlots::connectCubes(Intrinsic::LZ(id()));
-    }
-    
-    void ALWAYS_INLINE setDisconnected() {
-        CubeSlots::disconnectCubes(Intrinsic::LZ(id()));
+
+    bool ALWAYS_INLINE isSlotAvailable() const {
+        return !(bit() & (CubeSlots::sysConnected | CubeSlots::userConnected));
     }
 
     void ALWAYS_INLINE setVideoBuffer(_SYSVideoBuffer *v) {
@@ -144,15 +143,13 @@ class CubeSlot {
         return framePrevACK;
     }
 
-    bool ALWAYS_INLINE hasValidFrameACK() const {
-        return CubeSlots::frameACKValid & bit();
-    }
-
     ALWAYS_INLINE _SYSVideoBuffer* getVBuf() const {
         return vbuf;
     }
 
-    const RadioAddress *getRadioAddress();
+    ALWAYS_INLINE const RadioAddress *getRadioAddress() const {
+        return &address;
+    }
 
  private:
     // Limit on round-trip time
