@@ -59,12 +59,13 @@ protected:
     void setTrackerCallbackInterval(uint32_t usec);
 
 private:
-    uint32_t playingChannelMask;    // channels that are actively playing
-    AudioChannelSlot channelSlots[_SYS_AUDIO_MAX_CHANNELS];
-
     // Tracker callback timer
     uint32_t trackerCallbackInterval;
     uint32_t trackerCallbackCountdown;
+
+    uint32_t playingChannelMask;    // channels that are actively playing
+
+    AudioChannelSlot channelSlots[_SYS_AUDIO_MAX_CHANNELS];
 
     bool mixAudio(int *buffer, uint32_t numFrames);
 };

@@ -24,9 +24,9 @@
 AudioMixer AudioMixer::instance;
 
 AudioMixer::AudioMixer() :
-    playingChannelMask(0),
     trackerCallbackInterval(0),
-    trackerCallbackCountdown(0)
+    trackerCallbackCountdown(0),
+    playingChannelMask(0)
 {}
 
 void AudioMixer::init()
