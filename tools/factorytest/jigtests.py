@@ -7,8 +7,8 @@ SimulatedBatteryVoltage = 1
 # Cube Power Iteration - cycles from 1.5V down to .8 and then back up
 # [ 1.5V, 1.2V, 1.0V, 0.8V ]
 
-cube_voltage = [[0x07,0x45], [0x05,0xd1], [0x04,0xd9], [0x03,0xe0] ]
-# cube_voltage = [[0x03,0xe0]]
+# cube_voltage = [[0x07,0x45], [0x05,0xd1], [0x04,0xd9], [0x03,0xe0] ]
+cube_voltage = [[0x07,0x45],]
 
 # Master Power Iteration - cycles from 3.2V down to 2.0V and then back up
 # [ 3.2V, 2.9V, 2.6V, 2.3, 2.0V ]
@@ -33,7 +33,7 @@ def setSimulatedBatteryVoltage(devMgr):
         
         usb.txPacket([SimulatedBatteryVoltage, value[1] , value[0]])
         # Ideally it would return a unique byte for each iteration
-        resp = usb.rxPacket(1,1)
+        resp = usb.rxPacket()
         print resp.opcode
         from time import sleep
         sleep(5);
