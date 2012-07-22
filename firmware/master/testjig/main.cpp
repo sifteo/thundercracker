@@ -12,6 +12,7 @@
 #include "testjig.h"
 #include "gpio.h"
 #include "bootloader.h"
+#include "powermanager.h"
 
 /*
  * Test Jig application specific entry point.
@@ -47,10 +48,12 @@ int main()
      */
 
     SysTime::init();
-    Radio::init();
+    // Radio::init(); // Needed?
     Tasks::init();
 
-    UsbDevice::init();
+    PowerManager::init();
+    
+    // UsbDevice::init();
 
     /*
      * Once the TestJig is initialized, test commands from the host will arrive
