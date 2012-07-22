@@ -35,6 +35,7 @@ void CubeSlot::connect(const RadioAddress &addr, const RF_ACKType &fullACK)
     Atomic::And(CubeSlots::flashResetWait, ~cv);
     Atomic::And(CubeSlots::flashResetSent, ~cv);
     Atomic::And(CubeSlots::flashAddrPending, ~cv);
+    lastACK = fullACK;
 
     // The cube is now connected. At this instant we may start sending packets to it.
     Atomic::Or(CubeSlots::sysConnected, cv);
@@ -275,20 +276,16 @@ void CubeSlot::radioAcknowledge(const PacketBuffer &packet)
 
     // All ACKs have a header byte with frame rate control info
     {
-        uint8_t delta = ack->frame_count - framePrevACK;
+        uint8_t delta = ack->frame_count - lastACK.frame_count;
         delta &= FRAME_ACK_COUNT;
-        framePrevACK = ack->frame_count;
-
-        if (delta) {
-            // Some frame(s) finished rendering.
+        if (delta)
             paintControl.ackFrames(this, delta);
-        }
     }
 
     if (packet.len >= offsetof(RF_ACKType, flash_fifo_bytes) + sizeof ack->flash_fifo_bytes) {
         // This ACK includes a valid flash_fifo_bytes counter
 
-        uint8_t loadACK = ack->flash_fifo_bytes - flashPrevACK;
+        uint8_t loadACK = ack->flash_fifo_bytes - lastACK.flash_fifo_bytes;
 
         DEBUG_LOG(("FLASH[%d]: Valid ACK for %d bytes (resetWait=%d, resetSent=%d)\n",
             id(), loadACK,
@@ -311,51 +308,29 @@ void CubeSlot::radioAcknowledge(const PacketBuffer &packet)
              */
             codec.flashAckBytes(loadACK);
         }
-
-        flashPrevACK = ack->flash_fifo_bytes;
     }
 
     if (packet.len >= offsetof(RF_ACKType, accel) + sizeof ack->accel) {
         // Has valid accelerometer data. Is it different from our previous state?
 
-        int8_t x = ack->accel[0];
-        int8_t y = ack->accel[1];
-        int8_t z = ack->accel[2];
-
         // Test for gestures
         AccelState &accel = AccelState::getInstance( id() );
-        accel.update(x, y);
+        accel.update(ack->accel[0], ack->accel[1]);
 
-        if (x != accelState.x || y != accelState.y || z != accelState.z) {
-            accelState.x = x;
-            accelState.y = y;
-            accelState.z = z;
+        if (memcmp(lastACK.accel, ack->accel, sizeof lastACK.accel))
             Event::setCubePending(Event::PID_CUBE_ACCELCHANGE, id());
-        }
     }
 
     if (packet.len >= offsetof(RF_ACKType, neighbors) + sizeof ack->neighbors) {
         // Has valid neighbor/flag data
 
         // Look for valid touch up/down events, signified by any edge on the touch toggle bit
-        if ((neighbors[0] ^ ack->neighbors[0]) & NB0_FLAG_TOUCH) {
+        if ((lastACK.neighbors[0] ^ ack->neighbors[0]) & NB0_FLAG_TOUCH) {
             Event::setCubePending(Event::PID_CUBE_TOUCH, id());
         }
 
         // Trigger a rescan of all neighbors, during event dispatch
         Event::setCubePending(Event::PID_NEIGHBORS, id());
-
-        // Store the raw state
-        neighbors[0] = ack->neighbors[0];
-        neighbors[1] = ack->neighbors[1];
-        neighbors[2] = ack->neighbors[2];
-        neighbors[3] = ack->neighbors[3];
-    }
-
-    if (packet.len >= offsetof(RF_ACKType, battery_v) + sizeof ack->battery_v) {
-        // Has valid battery voltage
-
-        rawBatteryV = ack->battery_v;
     }
 
     if (packet.len >= offsetof(RF_ACKType, hwid) + sizeof ack->hwid) {
@@ -363,10 +338,12 @@ void CubeSlot::radioAcknowledge(const PacketBuffer &packet)
         // first connected it... but just out of paranoia, check whether it's changed
         // and disconnect the cube if so.
 
-        STATIC_ASSERT(sizeof hwid == sizeof ack->hwid);
-        if (memcmp(hwid, ack->hwid, sizeof ack->hwid))
+        if (memcmp(lastACK.hwid, ack->hwid, sizeof ack->hwid))
             disconnect();
     }
+
+    // Store the mutable parts of the ACK packet (Prior to the HWID)
+    memcpy(&lastACK, ack, MIN(offsetof(RF_ACKType, hwid), packet.len));
 }
 
 // Are we being touched right now?
@@ -374,7 +351,7 @@ bool CubeSlot::isTouching() const
 {
     // touch state is transmitted in the NB0_FLAG_TOUCH bit
     // of the first neighbor value
-    return !!(neighbors[0] & NB0_FLAG_TOUCH);
+    return !!(lastACK.neighbors[0] & NB0_FLAG_TOUCH);
 }
 
 void CubeSlot::radioTimeout()
@@ -385,7 +362,7 @@ void CubeSlot::radioTimeout()
 uint64_t CubeSlot::getHWID()
 {
     uint64_t result = 0;
-    memcpy(&result, hwid, sizeof hwid);
+    memcpy(&result, lastACK.hwid, sizeof lastACK.hwid);
     return result;
 }
 

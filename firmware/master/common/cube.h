@@ -71,12 +71,17 @@ class CubeSlot {
         vbuf = v;
     }
 
-    ALWAYS_INLINE const _SYSByte4& getAccelState() {
-        return accelState;
+    ALWAYS_INLINE const _SYSByte4 getAccelState() {
+        _SYSByte4 state;
+        state.x = lastACK.accel[0];
+        state.y = lastACK.accel[1];
+        state.z = lastACK.accel[2];
+        state.w = 0;
+        return state;
     }
 
     ALWAYS_INLINE const uint8_t* getRawNeighbors() const {
-        return neighbors;
+        return lastACK.neighbors;
     }
 
     bool isTouching() const;
@@ -136,11 +141,11 @@ class CubeSlot {
     uint64_t getHWID();
 
     unsigned ALWAYS_INLINE getRawBatteryV() const {
-        return rawBatteryV;
+        return lastACK.battery_v;
     }
 
     uint8_t ALWAYS_INLINE getLastFrameACK() const {
-        return framePrevACK;
+        return lastACK.frame_count;
     }
 
     ALWAYS_INLINE _SYSVideoBuffer* getVBuf() const {
@@ -170,19 +175,13 @@ class CubeSlot {
     
     DEBUG_ONLY(SysTime::Ticks assetLoadTimestamp);
 
-    SysTime::Ticks flashDeadline;       // Used only by ISR
-    uint32_t timeSyncState;             // XXX: For the current time-sync hack
+    // Timers, used only by ISR
+    SysTime::Ticks flashDeadline;
+    uint32_t timeSyncState;
 
     PaintControl paintControl;
     CubeCodec codec;
-
-    // Byte variables
-    uint8_t flashPrevACK;
-    uint8_t framePrevACK;
-    uint8_t neighbors[4];
-    uint8_t hwid[_SYS_HWID_BYTES];
-    uint8_t rawBatteryV;
-    _SYSByte4 accelState;
+    RF_ACKType lastACK;
 
     void requestFlashReset();
     uint16_t calculateTimeSync();
