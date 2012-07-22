@@ -85,16 +85,68 @@ bool Event::dispatchCubePID(PriorityID pid, _SYSCubeID cid)
 
     switch (pid) {
 
+        /*
+         * Something neighbor-related happened, that's all we know.
+         * Poke the NeighborSlot subsystem to re-scan the neighbor
+         * matrix again, and produce any applicable events. We only
+         * remove this from cubesPending after NeighborSlot finishes
+         * generating events.
+         */
         case PID_NEIGHBORS:
             if (NeighborSlot::instances[cid].sendNextEvent())
                 return true;
             Atomic::And(params[pid].cubesPending, ~Intrinsic::LZ(cid));
             return false;
 
-        case PID_CONNECTION:
-            // XXX
-            Atomic::And(params[pid].cubesPending, ~Intrinsic::LZ(cid));
-            return false;
+        /*
+         * A system cube connect/disconnect happened for this slot.
+         *
+         * This PID is *only* ever set pending if a system connect
+         * or disconnect happened. So, we can guess what happened
+         * based on the current state of the sysConnected and
+         * userConnected bits for this cube.
+         *
+         * If the two bits are in different states, a single connect
+         * or disconnect occurred on this cube. If both are 0, a
+         * cube connected but subsequently disconnected before we
+         * could tell userspace about it. Ignore these events. If
+         * both are 1, however, this means a cube that was previously
+         * connected has disconnected, and a (possibly different)
+         * cube connected in its place.
+         *
+         * For this last case, we want to emit a disconnect event
+         * followed by a connect. To do this in two steps, we'll
+         * emit the disconnect and clear the userConnected bit
+         * without clearing the cubesPending bit.
+         */
+        case PID_CONNECTION: {
+            _SYSCubeIDVector bit = Intrinsic::LZ(cid);
+            _SYSCubeIDVector userConn = CubeSlots::userConnected & bit;
+            _SYSCubeIDVector sysConn = CubeSlots::sysConnected & bit;
+
+            if (userConn) {
+                if (sysConn) {
+                    // Disconnect followed by reconnect (Leave event pending)
+                    Atomic::And(CubeSlots::userConnected, ~bit);
+                    return callCubeEvent(_SYS_CUBE_DISCONNECT, cid);
+                } else {
+                    // Disconnect only
+                    Atomic::And(params[pid].cubesPending, ~bit);
+                    Atomic::And(CubeSlots::userConnected, ~bit);
+                    return callCubeEvent(_SYS_CUBE_DISCONNECT, cid);
+                }
+            } else {
+                if (sysConn) {
+                    // Connect only
+                    Atomic::And(params[pid].cubesPending, ~bit);
+                    Atomic::Or(CubeSlots::userConnected, bit);
+                    return callCubeEvent(_SYS_CUBE_CONNECT, cid);
+                } else {
+                    // Connect followed by disconnect.
+                    return false;
+                }
+            }
+        }
 
         default:
             break;

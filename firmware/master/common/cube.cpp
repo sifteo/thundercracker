@@ -39,6 +39,9 @@ void CubeSlot::connect(const RadioAddress &addr, const RF_ACKType &fullACK)
 
     // The cube is now connected. At this instant we may start sending packets to it.
     Atomic::Or(CubeSlots::sysConnected, cv);
+
+    // Propagate this connection to userspace
+    Event::setCubePending(Event::PID_CONNECTION, id());
 }
 
 
@@ -52,6 +55,9 @@ void CubeSlot::disconnect()
 
     NeighborSlot::resetSlots(cv);
     NeighborSlot::resetPairs(cv);
+
+    // Propagate this disconnection to userspace
+    Event::setCubePending(Event::PID_CONNECTION, id());
 }
 
 
