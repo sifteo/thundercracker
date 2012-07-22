@@ -64,6 +64,18 @@ bool Hardware::init(VirtualTime *masterTimer, const char *firmwareFile,
     return true;
 }
 
+uint64_t Hardware::getHWID() const
+{
+    /*
+     * Read the HWID straight from the cube's NVM. May return ~0 if
+     * the cube has not yet initialized its own HWID.
+     */
+
+    uint64_t result;
+    memcpy(&result, flash.getStorage()->nvm, sizeof result);
+    return result;
+}
+
 void Hardware::reset()
 {
     CPU::em8051_reset(&cpu, false);

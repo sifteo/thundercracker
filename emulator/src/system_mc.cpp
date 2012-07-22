@@ -97,11 +97,6 @@ void SystemMC::autoInstall()
 
     do {
 
-        // XXX: Automatically pair all cubes
-        SysLFS::PairingIDRecord pairingID;
-        pairingID.init();
-        SysLFS::write(SysLFS::kPairingID, pairingID);
-
         // Install a launcher
         const char *launcher = sys->opt_launcherFilename.empty() ? NULL : sys->opt_launcherFilename.c_str();
         if (!sys->flash.installLauncher(launcher))
@@ -125,6 +120,29 @@ void SystemMC::autoInstall()
     FlashDevice::setStealthIO(-1);
 }
 
+void SystemMC::pairCube(unsigned cubeID, unsigned pairingID)
+{
+    // Use stealth flash I/O, for speed
+    FlashDevice::setStealthIO(1);
+
+    SysLFS::PairingIDRecord rec;
+    ASSERT(cubeID < _SYS_NUM_CUBE_SLOTS);
+    ASSERT(pairingID < arraysize(rec.hwid));
+
+    if (!SysLFS::read(SysLFS::kPairingID, rec))
+        rec.init();
+
+    uint64_t hwid = sys->cubes[cubeID].getHWID();
+    ASSERT(hwid != uint64_t(-1));
+
+    rec.hwid[pairingID] = hwid;
+    if (!SysLFS::write(SysLFS::kPairingID, rec)) {
+        ASSERT(0);
+    }
+
+    FlashDevice::setStealthIO(-1);
+}
+
 void SystemMC::threadFn(void *param)
 {
     if (setjmp(instance->mThreadExitJmp)) {
@@ -135,15 +153,30 @@ void SystemMC::threadFn(void *param)
     // Start the master at some point shortly after the cubes come up
     instance->ticks = instance->sys->time.clocks + MCTiming::STARTUP_DELAY;
     instance->radioPacketDeadline = instance->ticks + MCTiming::TICKS_PER_PACKET;
+    Tasks::waitForInterrupt();
 
+    // Subsystem initialization
     HomeButton::init();
     Volume::init();
     Radio::init();
     NeighborTX::init();
     CubeConnector::init();
 
+    /*
+     * Emulator magic: Automatically install games and pair cubes
+     */
+
     instance->autoInstall();
 
+    for (unsigned i = 0; i < instance->sys->opt_numCubes; i++) {
+        // Create an arbitrary non-1:1 mapping between cube IDs and
+        // pairings, just to help keep us honest in the firmware and
+        // catch any places where we get the two confused.
+
+        instance->pairCube(i, _SYS_NUM_CUBE_SLOTS - 1 - i);
+    }
+
+    // Start running userspace code!
     SvmLoader::runLauncher();
 }
 
