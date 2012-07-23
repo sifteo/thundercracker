@@ -15,6 +15,11 @@
 #include "prng.h"
 #include "tasks.h"
 
+#ifdef SIFTEO_SIMULATOR
+#   include "system.h"
+#   include "system_mc.h"
+#endif
+
 RadioAddress CubeConnector::pairingAddr = { 0, RF_PAIRING_ADDRESS };
 RadioAddress CubeConnector::connectionAddr;
 RadioAddress CubeConnector::reconnectAddr;
@@ -210,6 +215,12 @@ bool CubeConnector::popReconnectQueue()
      * Extract the next reconnectable cube from our queue, and use it to
      * set the current hwid and reconnectAddr.
      */
+
+    // Reconnection can be disabled in Siftulator. This is used by cube firmware unit tests.
+    #ifdef SIFTEO_SIMULATOR
+    if (SystemMC::getSystem()->opt_noCubeReconnect)
+        return false;
+    #endif
 
     unsigned index;
     if (!reconnectQueue.clearFirst(index))
