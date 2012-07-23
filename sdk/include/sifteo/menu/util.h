@@ -66,13 +66,11 @@ inline void Menu::detectNeighbors()
     }
 }
 
-
 inline uint8_t Menu::computeSelected()
 {
     int s = (position + (kItemPixelWidth() / 2)) / kItemPixelWidth();
     return clamp(s, 0, numItems - 1);
 }
-
 
 // positions are in pixel units
 // columns are in tile-units

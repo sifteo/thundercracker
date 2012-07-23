@@ -72,6 +72,8 @@ void MainMenu::run()
 
 void MainMenu::eventLoop(Menu &m)
 {
+    int itemChoice = -1;
+
     struct MenuEvent e;
     while (m.pollEvent(&e)) {
 
@@ -85,8 +87,7 @@ void MainMenu::eventLoop(Menu &m)
 
             case MENU_ITEM_PRESS:
                 if (canLaunchItem(e.item)) {
-                    execItem(e.item);
-                    return;
+                    itemChoice = e.item;
                 } else {
                     toggleCubeRangeAlert(e.item, m);
                     performDefault = false;
@@ -121,6 +122,9 @@ void MainMenu::eventLoop(Menu &m)
         if (performDefault)
             m.performDefault();
     }
+
+    if (itemChoice != -1)
+        execItem(itemChoice);
 }
 
 void MainMenu::updateMusic()
