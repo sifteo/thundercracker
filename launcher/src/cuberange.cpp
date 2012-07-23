@@ -24,6 +24,5 @@ bool CubeRange::isValid()
 void CubeRange::set()
 {
     LOG("LAUNCHER: Using cube range [%d,%d]\n", sys.minCubes, sys.maxCubes);
-    SCRIPT_FMT(LUA, "System():setOptions{ numCubes = %d }", sys.minCubes);
     _SYS_setCubeRange(sys.minCubes, sys.maxCubes);
 }
