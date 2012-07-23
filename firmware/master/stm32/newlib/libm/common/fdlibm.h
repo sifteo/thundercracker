@@ -227,7 +227,9 @@ extern float __ieee754_scalbf __P((float,float));
 extern float __kernel_sinf __P((float,float,int));
 extern float __kernel_cosf __P((float,float));
 extern float __kernel_tanf __P((float,float,int));
-extern int   __kernel_rem_pio2f __P((float*,float*,int,int,int,const __int32_t*));
+
+// SIFTEO: Made this table 8-bit instead of 32-bit
+extern int   __kernel_rem_pio2f __P((float*,float*,int,int,int,const __int8_t*));
 
 /* The original code used statements like
 	n0 = ((*(int*)&one)>>29)^1;		* index of high word *
