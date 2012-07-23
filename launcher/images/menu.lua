@@ -13,6 +13,9 @@ Menu_Footer = image{ "images/Footer.png" }
 
 Menu_LabelEmpty = image{ "images/LabelEmpty.png" }
 
+-- Font
+Font = image{ "images/font.png", width=8, height=8 }
+
 -- NineBlockPattern, for representing icon-less games
 
 NineBlock_Center = image{ "images/nineblock-center.png" }
@@ -32,7 +35,3 @@ BatteryBars = image{ {
     "images/img-battery-bars-3.png",
     "images/img-battery-bars-4.png"
 } }
-
--- Cube Range
-Font = image{ "images/font.png", width=8, height=8 }
-Numbers = image { "images/Numbers.png", height=16 }
