@@ -12,7 +12,13 @@
 
 void draw_clear()
 {
-    // Clear all of VRAM (1 kB)
+    /*
+     * Clear all of VRAM (1 kB) except for mode and flags.
+     *
+     * We want to avoid resetting those fields continuously,
+     * so we have a smoother transition from disconnected
+     * to connected mode.
+     */
 
     __asm
         mov     dptr, #0
@@ -21,12 +27,12 @@ void draw_clear()
         movx    @dptr, a
         inc     dptr
 
-        mov     a, #(1024 >> 8)
+        mov     a, #(_SYS_VA_MODE >> 8)
         cjne    a, dph, 1$
-    __endasm ;
+        mov     a, #(_SYS_VA_MODE & 0xFF)
+        cjne    a, dpl, 1$
 
-    vram.mode = _SYS_VM_BG0_ROM;
-    vram.flags = _SYS_VF_CONTINUOUS;
+    __endasm ;
 }
 
 void draw_image(const __code uint8_t *image)

@@ -319,6 +319,11 @@ void disconnected_init(void)
      * Initialize disconnected-mode state
      */
 
+    // These are set up only once.
+    // Flags are auto-cleared by radio ISR on connection.
+    vram.mode = _SYS_VM_BG0_ROM;
+    vram.flags = _SYS_VF_CONTINUOUS;
+
     disc_battery_draw = 0;
     disc_has_trophy = 0;
 

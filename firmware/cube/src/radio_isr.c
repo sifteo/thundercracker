@@ -8,6 +8,7 @@
 
 #include <cube_hardware.h>
 #include <protocol.h>
+#include <sifteo/abi/vram.h>
 #include "radio.h"
 #include "flash.h"
 #include "params.h"
@@ -1013,6 +1014,11 @@ void radio_hop(void) __naked __using(RF_BANK)
 
         clr     _radio_state_reset_not_pending
         setb    _radio_connected
+
+        mov     dptr, #_SYS_VA_FLAGS    ; Clear video flags
+        clr     a
+        movx    @dptr, a
+        mov     dptr, #rxs_default      ; Restore DPTR
 
         ;--------------------------------------------------------------------
         ; Read Arguments
