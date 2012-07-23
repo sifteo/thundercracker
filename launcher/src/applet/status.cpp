@@ -36,8 +36,24 @@ static void drawText(T &canvas, const char* text, Int2 pos)
     }
 }
 
+static unsigned getNumCubes(CubeSet cubes)
+{
+    unsigned count = 0;
+    for (int i = 0; i < cubes.size(); ++i) {
+        if (cubes.test(i))
+            ++count;
+    }
+    return count;
+}
 
-MainMenuItem::Flags StatusApplet::getAssets(MenuItem &assets, MappedVolume&)
+static unsigned getFreeBlocks()
+{
+    // TODO: amount of free blocks
+    return 128;
+}
+
+
+MainMenuItem::Flags StatusApplet::getAssets(MenuItem &assets, MappedVolume &)
 {
     icon.init();
     icon.image(vec(0,0), Icon_Battery);
@@ -52,12 +68,14 @@ MainMenuItem::Flags StatusApplet::getAssets(MenuItem &assets, MappedVolume&)
     drawBattery(icon, batteryLevelMaster, levelCounter, vec(1, 5));
     drawText(icon, "Master", vec(5, 5));
 
-    // TODO: number of connected cubes
-    drawText(icon, "3 cubes", vec(3, 8));
-    drawText(icon, "128 blocks", vec(1, 10));
-
-    // TODO: amount of free blocks
-
+    String<8> bufferCubes;
+    bufferCubes << getNumCubes(cubes) << " cubes";
+    drawText(icon, bufferCubes.c_str(), vec(3, 8));
+    
+    String<16> bufferBlocks;
+    bufferBlocks << getFreeBlocks() << " blocks";
+    drawText(icon, bufferBlocks.c_str(), vec(1, 10));
+    
     assets.icon = icon;
     return NONE;
 }
@@ -117,5 +135,21 @@ void StatusApplet::prepaint(CubeSet cubes, CubeID mainCube)
 void StatusApplet::add(MainMenu &menu)
 {
     static StatusApplet instance;
+    
+    Events::cubeFound.set(&StatusApplet::onCubeFound, &instance);
+    Events::cubeLost.set(&StatusApplet::onCubeLost, &instance);
+
     menu.append(&instance);
+}
+
+void StatusApplet::onCubeFound(unsigned cubeId)
+{
+    ASSERT(!cubes.test(cubeId));
+    cubes.mark(cubeId);
+}
+
+void StatusApplet::onCubeLost(unsigned cubeId)
+{
+    ASSERT(cubes.test(cubeId));
+    cubes.clear(cubeId);
 }

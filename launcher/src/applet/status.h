@@ -13,7 +13,7 @@ class MainMenu;
 class StatusApplet : public MainMenuItem
 {
 public:
-    virtual MainMenuItem::Flags getAssets(Sifteo::MenuItem &assets, Sifteo::MappedVolume&);
+    virtual MainMenuItem::Flags getAssets(Sifteo::MenuItem &assets, Sifteo::MappedVolume &);
     virtual bool autoRefreshIcon() { return true; }
 
     virtual void exec();
@@ -24,6 +24,10 @@ public:
     static void add(MainMenu &menu);
 
 private:
+    void onCubeFound(unsigned cubeId);
+    void onCubeLost(unsigned cubeId);
+
+    Sifteo::CubeSet cubes;
     Sifteo::RelocatableTileBuffer<12,12> icon;
     unsigned levelCounter;
 };
