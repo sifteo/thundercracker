@@ -4,6 +4,7 @@ BIN_DIR := $(TC_DIR)/sdk/bin
 MASTER_DIR := $(TC_DIR)/firmware/master
 
 include $(TC_DIR)/Makefile.platform
+include Makefile.defs
 
 BIN := swiss
 
