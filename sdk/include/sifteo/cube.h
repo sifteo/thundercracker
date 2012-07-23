@@ -208,11 +208,6 @@ public:
     /// Create a CubeSet with a single CubeID in it.
     CubeSet(CubeID cube) : BitArray<_SYS_NUM_CUBE_SLOTS>(cube) {}
 
-    /// Create a CubeSet from a _SYSCubeIDVector
-    CubeSet(_SYSCubeIDVector sys) : BitArray<_SYS_NUM_CUBE_SLOTS>() {
-        words[0] = sys;
-    }
-
     /**
      * @brief Create a new CubeSet with a range of cubes.
      *
@@ -234,7 +229,9 @@ public:
      * connection and/or disconnection events have been dispatched to your application.
      */
     static CubeSet connected() {
-        return CubeSet(_SYS_getConnectedCubes());
+        CubeSet result;
+        result.words[0] = _SYS_getConnectedCubes();
+        return result;
     }
 };
 
