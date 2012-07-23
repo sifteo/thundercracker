@@ -55,7 +55,9 @@ bool SystemMC::init(System *sys)
     FlashStack::init();
     Crc32::init();
 
-    if (!instance->sys->opt_headless) {
+    if (instance->sys->opt_headless) {
+        Tasks::trigger(Tasks::AudioPull);
+    } else {
         AudioOutDevice::init();
         AudioOutDevice::start();
     }

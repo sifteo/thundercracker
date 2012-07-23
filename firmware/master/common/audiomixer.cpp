@@ -103,18 +103,6 @@ ALWAYS_INLINE bool AudioMixer::mixAudio(int *buffer, uint32_t numFrames)
 void AudioMixer::pullAudio()
 {
     /*
-     * Early out when we can quickly determine that no channels are playing
-     * and the tracker is idle.
-     */
-
-    #ifdef SIFTEO_SIMULATOR
-        MCAudioVisData::instance.mixerActive = AudioMixer::instance.active();
-    #endif
-
-    if (!AudioMixer::instance.active() && AudioMixer::instance.trackerCallbackInterval == 0)
-        return;
-
-    /*
      * Support audio in Siftulator, even in headless mode.
      *
      * In headless mode, we want to continue mixing even though
@@ -128,6 +116,29 @@ void AudioMixer::pullAudio()
     #else
         const bool headless = false;
     #endif
+
+    /*
+     * Early out when we can quickly determine that no channels are playing
+     * and the tracker is idle.
+     *
+     * Note that in headless mode, we have no audio driver to wake up our
+     * task, we're polling based on wallclock time: so we constantly re-trigger
+     * our own task. In other modes, we do NOT do this. We only wake up when
+     * the audio driver has dequeued some samples.
+     */
+
+    #ifdef SIFTEO_SIMULATOR
+        if (headless) {
+            Tasks::trigger(Tasks::AudioPull);
+        }
+    #endif
+
+    #ifdef SIFTEO_SIMULATOR
+        MCAudioVisData::instance.mixerActive = AudioMixer::instance.active();
+    #endif
+
+    if (!AudioMixer::instance.active() && AudioMixer::instance.trackerCallbackInterval == 0)
+        return;
 
     /*
      * In order to amortize the cost of iterating over channels, our
