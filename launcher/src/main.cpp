@@ -34,15 +34,18 @@ void disconnect(void*, unsigned cid)
 
 void main()
 {
+    /// XXX: Huge hack for testing... just wait for three cubes to connect cube.
+    //       The launcher should always handle cubes arriving and departing dynamically.
+    while (!CubeSet::connected().test(2)) {
+        System::yield();
+    }
+
     // In simulation, if exactly one game is installed, run it immediately.
     ELFMainMenuItem::autoexec();
 
     AudioTracker::play(UISound_Startup);
 
-    /// XXX: Big hack for testing... just wait for the first cube.
-    while (CubeSet::connected().empty())
-        System::yield();
-
+    // XXX: Also mostly just for testing.
     Events::cubeConnect.set(connect);
     Events::cubeDisconnect.set(disconnect);
 
