@@ -472,6 +472,7 @@ void CubeConnector::radioTimeout()
          * the new address.
          */
         case PairingBeginHop:
+        case ReconnectBeginHop:
             txState = HopConfirm;
             break;
 
