@@ -308,22 +308,16 @@ void CubeSlot::radioAcknowledge(const PacketBuffer &packet)
             !!(CubeSlots::flashResetWait & bit()),
             !!(CubeSlots::flashResetSent & bit())));
 
-        if ((CubeSlots::flashResetWait & bit()) && (CubeSlots::flashResetSent & bit())) {
-            // We're waiting on a reset
-            if (loadACK)
-                Atomic::ClearLZ(CubeSlots::flashResetWait, id());
-        } else {
-            /*
-             * Acknowledge FIFO bytes
-             *
-             * Note that these ACKs may get lost; CubeCodec will explicitly request
-             * a resend if it's out of buffer space! (Normally dropped ACKs aren't
-             * an issue, since we'll have other ACKs in the pipeline. But if we hit
-             * a pipeline bubble and/or multiple ACKs drop in a row, we need to
-             * intervene)
-             */
-            codec.flashAckBytes(loadACK);
-        }
+        /*
+         * Acknowledge FIFO bytes
+         *
+         * Note that these ACKs may get lost; CubeCodec will explicitly request
+         * a resend if it's out of buffer space! (Normally dropped ACKs aren't
+         * an issue, since we'll have other ACKs in the pipeline. But if we hit
+         * a pipeline bubble and/or multiple ACKs drop in a row, we need to
+         * intervene)
+         */
+        codec.flashAckBytes(loadACK);
     }
 
     if (packet.len >= offsetof(RF_ACKType, accel) + sizeof ack->accel) {
@@ -343,6 +337,11 @@ void CubeSlot::radioAcknowledge(const PacketBuffer &packet)
         // Look for valid touch up/down events, signified by any edge on the touch toggle bit
         if ((lastACK.neighbors[0] ^ ack->neighbors[0]) & NB0_FLAG_TOUCH) {
             Event::setCubePending(Event::PID_CUBE_TOUCH, id());
+        }
+
+        // Is this a flash reset ACK?
+        if ((lastACK.neighbors[1] ^ ack->neighbors[1]) & NB1_FLAG_FLS_RESET) {
+            Atomic::ClearLZ(CubeSlots::flashResetWait, id());
         }
 
         // Trigger a rescan of all neighbors, during event dispatch
