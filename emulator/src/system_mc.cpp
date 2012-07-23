@@ -170,11 +170,14 @@ void SystemMC::threadFn(void *param)
     instance->autoInstall();
 
     for (unsigned i = 0; i < instance->sys->opt_numCubes; i++) {
-        // Create an arbitrary non-identity mapping between cube IDs and
-        // pairings, just to help keep us honest in the firmware and
-        // catch any places where we get the two confused.
-
-        instance->pairCube(i, _SYS_NUM_CUBE_SLOTS - 1 - i);
+        /*
+         * Create an arbitrary non-identity mapping between cube IDs and
+         * pairings, just to help keep us honest in the firmware and
+         * catch any places where we get the two confused.
+         *
+         * (We still keep the cubes in the same order, to reduce confusion...)
+         */
+        instance->pairCube(i, (i + 8) % _SYS_NUM_CUBE_SLOTS);
     }
 
     // Subsystem initialization
