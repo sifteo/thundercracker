@@ -120,6 +120,8 @@ uint64_t _SYS_fmod(uint32_t aL, uint32_t aH, uint32_t bL, uint32_t bH) _SC(106);
 uint64_t _SYS_pow(uint32_t aL, uint32_t aH, uint32_t bL, uint32_t bH) _SC(107);
 uint64_t _SYS_sqrt(uint32_t aL, uint32_t aH) _SC(108);
 uint64_t _SYS_logd(uint32_t aL, uint32_t aH) _SC(109);
+uint32_t _SYS_sinf(uint32_t a) _SC(169);
+uint32_t _SYS_cosf(uint32_t a) _SC(170);
 
 void _SYS_memset8(uint8_t *dest, uint8_t value, uint32_t count) _SC(44);
 void _SYS_memset16(uint16_t *dest, uint16_t value, uint32_t count) _SC(110);

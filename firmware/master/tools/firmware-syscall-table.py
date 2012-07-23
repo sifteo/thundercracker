@@ -85,6 +85,8 @@ aliasTable = {
     '_SYS_logd': '__ieee754_log',
     '_SYS_pow': '__ieee754_pow',
     '_SYS_powf': '__ieee754_powf',
+    '_SYS_sinf': 'sinf',
+    '_SYS_cosf': 'cosf',
     
     # 64-bit integer operators
     '_SYS_sdiv_i64' : '__aeabi_ldivmod',

@@ -105,8 +105,6 @@ OBJS_STM32 += \
     $(MASTER_DIR)/stm32/newlib/libm/math/ef_sqrt.stm32.o \
     $(MASTER_DIR)/stm32/newlib/libm/math/e_log.stm32.o \
     $(MASTER_DIR)/stm32/newlib/libm/math/ef_log.stm32.o \
-    $(MASTER_DIR)/stm32/newlib/libm/math/w_sincos.stm32.o \
-    $(MASTER_DIR)/stm32/newlib/libm/math/wf_sincos.stm32.o \
     $(MASTER_DIR)/stm32/newlib/libm/math/s_sin.stm32.o \
     $(MASTER_DIR)/stm32/newlib/libm/math/k_sin.stm32.o \
     $(MASTER_DIR)/stm32/newlib/libm/math/sf_sin.stm32.o \
