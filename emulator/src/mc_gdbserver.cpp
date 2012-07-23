@@ -433,7 +433,7 @@ void GDBServer::handlePacket()
         case 'g': {
             // Read all registers
             txPacketBegin();
-            uint32_t bitmap = Debugger::ALL_REGISTER_BITS;
+            uint32_t bitmap = Debugger::allRegisterBits();
             msgCmd[0] = Debugger::M_READ_REGISTERS | bitmap;
             uint32_t replyLen = message(1);
             for (uint32_t r = 0; r < NUM_GDB_REGISTERS; r++) {
@@ -445,7 +445,7 @@ void GDBServer::handlePacket()
 
         case 'G': {
             // Write all registers
-            uint32_t bitmap = Debugger::ALL_REGISTER_BITS;
+            uint32_t bitmap = Debugger::allRegisterBits();
             uint32_t svmRegCount = Intrinsic::POPCOUNT(bitmap);
             uint32_t offset = 1;
             for (uint32_t r = 0; r < NUM_GDB_REGISTERS; r++) {
@@ -465,7 +465,7 @@ void GDBServer::handlePacket()
             txPacketBegin();
             int reg = 0;
             if (sscanf(rxPacket, "p%x", &reg) == 1) {
-                uint32_t bitmap = Debugger::ALL_REGISTER_BITS & Debugger::argBit(regGDBtoSVM(reg));
+                uint32_t bitmap = Debugger::allRegisterBits() & Debugger::argBit(regGDBtoSVM(reg));
                 if (bitmap) {
                     msgCmd[0] = Debugger::M_READ_REGISTERS | bitmap;
                     if (message(1) == 1)
