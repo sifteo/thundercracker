@@ -213,9 +213,8 @@ void CubeConnector::radioProduce(PacketTransmission &tx)
         case_PairingFirstContact:
             refillReconnectQueue();
             if (!(pairingPacketCounter++)) {
-                LOG(("NEW KEY\n"));
                 nextNeighborKey();
-            }                LOG(("pair-fu\n"));
+            }
             tx.dest = &pairingAddr;
             tx.packet.len = 1;
             tx.packet.bytes[0] = 0xff;
@@ -234,6 +233,7 @@ void CubeConnector::radioProduce(PacketTransmission &tx)
          * reconnectable address.
          */
         case ReconnectFirstContact:
+        case_ReconnectFirstContact:
             if (popReconnectQueue()) {
                 tx.dest = &reconnectAddr;
                 tx.packet.len = 1;
@@ -287,6 +287,18 @@ void CubeConnector::radioProduce(PacketTransmission &tx)
             goto case_PairingFirstContact;
 
         /*
+         * Similarly, begin a hop after reconnection
+         */
+        case ReconnectBeginHop:
+            if (chooseConnectionAddr()) {
+                tx.dest = &reconnectAddr;
+                produceRadioHop(tx.packet);
+                rxState.enqueue(ReconnectBeginHop);
+                break;
+            }
+            goto case_ReconnectFirstContact;
+
+        /*
          * We think we just hopped to a new connection-specific address and
          * channel. See if we can regain contact with the cube at this new
          * address, to verify that the hop worked.
@@ -322,8 +334,6 @@ void CubeConnector::radioAcknowledge(const PacketBuffer &packet)
             if (packet.len >= RF_ACK_LEN_HWID) {
                 memcpy(hwid, ack->hwid, sizeof hwid);
                 txState = packetRxState + 1;
-            } else {
-                txState = PairingFirstContact;
             }
             break;
 
@@ -341,11 +351,24 @@ void CubeConnector::radioAcknowledge(const PacketBuffer &packet)
             break;
 
         /*
+         * We got a response back from a paired cube that we'd like to connect!
+         * Assuming the HWID matches what we have on file, continue the
+         * connection attempt by beginning a hop.
+         */
+        case ReconnectFirstContact:
+        case ReconnectAltFirstContact:
+            if (packet.len >= RF_ACK_LEN_HWID && !memcmp(hwid, ack->hwid, sizeof hwid)) {
+                txState = ReconnectBeginHop;
+            }
+            break;
+
+        /*
          * We got a successful response back from the hop packet. Okay,
          * but we'll still want to verify that it actaully shows up on
          * the new address too.
          */
         case PairingBeginHop:
+        case ReconnectBeginHop:
             txState = HopConfirm;
             break;
 

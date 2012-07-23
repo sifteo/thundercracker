@@ -47,6 +47,7 @@ private:
         HopConfirm,
         ReconnectFirstContact,
         ReconnectAltFirstContact,
+        ReconnectBeginHop,
     };
 
     static uint8_t neighborKey;
