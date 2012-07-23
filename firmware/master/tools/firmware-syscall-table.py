@@ -77,14 +77,14 @@ aliasTable = {
     '_SYS_un_f64': '__unorddf2',
 
     # Math library functions
-    '_SYS_fmodf': 'fmodf',
-    '_SYS_sqrtf': 'sqrtf',
-    '_SYS_logf': 'logf',
-    '_SYS_fmod': 'fmod',
-    '_SYS_sqrt': 'sqrt',
-    '_SYS_logd': 'log',
-    '_SYS_pow': 'pow',
-    '_SYS_powf': 'powf',
+    '_SYS_fmodf': '__ieee754_fmodf',
+    '_SYS_sqrtf': '__ieee754_sqrtf',
+    '_SYS_logf': '__ieee754_logf',
+    '_SYS_fmod': '__ieee754_fmod',
+    '_SYS_sqrt': '__ieee754_sqrt',
+    '_SYS_logd': '__ieee754_log',
+    '_SYS_pow': '__ieee754_pow',
+    '_SYS_powf': '__ieee754_powf',
     
     # 64-bit integer operators
     '_SYS_sdiv_i64' : '__aeabi_ldivmod',
