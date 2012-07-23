@@ -95,12 +95,11 @@ v_001b: ljmp    _tf1_isr
 init_2:
         lcall   _flash_init                     ; Init flash state machine
         lcall   _sensors_init                   ; Init sensor IRQs
+        acall   v_004b                          ; Manually run RF interrupt, to drain RX FIFO
         setb    _IEN_EN                         ; Global interrupt enable (subsystem init done)
 
 disconnected_init_sjmp:
         ljmp    _disconnected_init              ; Init disconnected mode and enter graphics loop
-
-        .ds     2
 
         ;---------------------------------
         ; TF2 Vector
