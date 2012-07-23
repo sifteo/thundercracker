@@ -20,6 +20,7 @@ System::System()
         opt_continueOnException(false),
         opt_turbo(false),
         opt_lockRotationByDefault(false),
+        opt_noCubeReconnect(false),
         opt_paintTrace(false),
         opt_svmTrace(false),
         opt_svmFlashStats(false),
