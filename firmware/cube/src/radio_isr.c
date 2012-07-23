@@ -816,11 +816,12 @@ rx_complete_0:
 rx_complete_1:
 
         ; Push back our disconnection deadline. We disconnect if there have not been
-        ; any radio packets in 2 to 3 TF0 ticks. (There is an uncertainty of one tick)
-        ; This is just barely longer than the longest possible nap duration of 2 seconds.
+        ; any radio packets in 256 to 512 TF0 ticks. (There is an uncertainty of one
+        ; low-byte rollover, making this the minimum nonzero timeout). This about 1
+        ; to 2 seconds.
 
         mov     a, _sensor_tick_counter_high
-        add     a, #3
+        add     a, #2
         mov     _radio_packet_deadline, a
 
         ; nRF Interrupt acknowledge
