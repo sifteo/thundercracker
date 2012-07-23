@@ -11,13 +11,18 @@
 #include "neighbor_tx.h"
 #include "neighbor_protocol.h"
 #include "systime.h"
+#include "radioaddrfactory.h"
 #include "prng.h"
 
 RadioAddress CubeConnector::pairingAddr = { 0, RF_PAIRING_ADDRESS };
 RadioAddress CubeConnector::connectionAddr;
+RadioAddress CubeConnector::reconnectAddr;
 
 _SYSPseudoRandomState CubeConnector::prng;
 RingBuffer<RadioManager::FIFO_DEPTH, uint8_t, uint8_t> CubeConnector::rxState;
+
+SysLFS::PairingIDRecord CubeConnector::savedPairings;
+BitVector<SysLFS::NUM_PAIRINGS> CubeConnector::reconnectQueue;
 
 uint8_t CubeConnector::neighborKey;
 uint8_t CubeConnector::txState;
@@ -37,6 +42,10 @@ void CubeConnector::init()
     neighborKey = ~0;
     nextNeighborKey();
     ASSERT(neighborKey < Neighbor::NUM_MASTER_ID);
+
+    // Load saved pairing HWIDs from SysLFS
+    if (!SysLFS::read(SysLFS::kPairingID, savedPairings))
+        savedPairings.init();
 
     // State machine init
     txState = PairingFirstContact;
@@ -106,15 +115,7 @@ bool CubeConnector::chooseConnectionAddr()
      */
 
     PRNG::collectTimingEntropy(&prng);
-
-    connectionAddr.channel = PRNG::valueBounded(&prng, RadioAddress::MAX_CHANNEL);
-
-    for (unsigned i = 0; i < arraysize(connectionAddr.id); ++i) {
-        unsigned value = PRNG::valueBounded(&prng, 255 - 4) + 1;
-        if (value >= 0x55) value++;
-        if (value >= 0xAA) value++;
-        connectionAddr.id[i] = value;
-    }
+    RadioAddrFactory::random(connectionAddr, prng);
 
     // Pick a cube ID, based on what's available right now.
     _SYSCubeIDVector cv = CubeSlots::availableSlots();
@@ -140,23 +141,51 @@ void CubeConnector::produceRadioHop(PacketBuffer &buf)
     buf.bytes[7] = 0xE0 | cubeID;
 }
 
+void CubeConnector::refillReconnectQueue()
+{
+    /*
+     * This is how we establish our round-robin schedule for sharing bandwidth
+     * between pairing and reconnection attempts. This queue contains all pairing
+     * IDs that we still need to transmit to. When this queue runs out, we try to
+     * pair a new cube before refilling the round-robin queue.
+     *
+     * This queue includes all pairing slots which aren't associated with
+     * currently-connected cubes, and which have plausibly valid HWIDs stored.
+     */
+
+    for (unsigned i = 0; i < SysLFS::NUM_PAIRINGS; ++i) {
+
+        if (CubeSlots::pairConnected.test(i))
+            continue;
+
+        if (savedPairings.hwid[i] == SysLFS::PairingIDRecord::INVALID_HWID)
+            continue;
+
+        reconnectQueue.mark(i);
+    }
+}
+
+bool CubeConnector::popReconnectQueue()
+{
+    /*
+     * Extract the next reconnectable cube from our queue, and use it to
+     * set the current hwid and reconnectAddr.
+     */
+
+    unsigned index;
+    if (!reconnectQueue.clearFirst(index))
+        return false;
+
+    uint64_t hwid64 = savedPairings.hwid[index];
+    memcpy(hwid, &hwid64, sizeof hwid);
+    RadioAddrFactory::fromHardwareID(reconnectAddr, hwid64);
+
+    return true;
+}
+
 void CubeConnector::radioProduce(PacketTransmission &tx)
 {
-    rxState.enqueue(txState);
     switch (txState) {
-
-        /*
-         * Once our pairing verification is done, send the cube a hop
-         * to connect it on an address and channel of our choice.
-         */
-        case PairingBeginHop:
-            if (chooseConnectionAddr()) {
-                tx.dest = &pairingAddr;
-                produceRadioHop(tx.packet);
-                break;
-            }
-            txState = PairingFirstContact;
-            // Address generation failed, FALL THROUGH to first contact...
 
         /*
          * Our first chance to talk to a new cube who's in range of our
@@ -176,17 +205,54 @@ void CubeConnector::radioProduce(PacketTransmission &tx)
          * with our transmit rate.
          *
          * Right now we just hop every time an 8-bit packet counter overflows.
-         * At the fastest, this equates to about one hop per second.
+         * At the fastest, this equates to about one hop per second. Note that
+         * this is designed so that we also call nextNeighborKey() on the
+         * very first radioProduce() after the counter is initialized to zero.
          */
         case PairingFirstContact:
-            if (!++pairingPacketCounter) {
+        case_PairingFirstContact:
+            refillReconnectQueue();
+            if (!(pairingPacketCounter++)) {
+                LOG(("NEW KEY\n"));
                 nextNeighborKey();
-            }
+            }                LOG(("pair-fu\n"));
             tx.dest = &pairingAddr;
             tx.packet.len = 1;
             tx.packet.bytes[0] = 0xff;
             tx.numSoftwareRetries = 0;
             tx.numHardwareRetries = 0;
+            rxState.enqueue(PairingFirstContact);
+            break;
+
+        /*
+         * Similarly, this is our first chance to talk to a paired cube
+         * that we aren't yet connected with. This same radio packet has
+         * the dual purpose of alerting us to the presence of such a
+         * cube, and waking that cube up from sleep.
+         *
+         * We toggle between a primary and an alternate channel for each
+         * reconnectable address.
+         */
+        case ReconnectFirstContact:
+            if (popReconnectQueue()) {
+                tx.dest = &reconnectAddr;
+                tx.packet.len = 1;
+                tx.packet.bytes[0] = 0xff;
+                tx.numSoftwareRetries = 0;
+                tx.numHardwareRetries = 0;
+                rxState.enqueue(ReconnectFirstContact);
+                break;
+            }
+            goto case_PairingFirstContact;
+
+        case ReconnectAltFirstContact:
+            RadioAddrFactory::channelToggle(reconnectAddr);
+            tx.dest = &reconnectAddr;
+            tx.packet.len = 1;
+            tx.packet.bytes[0] = 0xff;
+            tx.numSoftwareRetries = 0;
+            tx.numHardwareRetries = 0;
+            rxState.enqueue(txState);
             break;
 
         /*
@@ -204,7 +270,21 @@ void CubeConnector::radioProduce(PacketTransmission &tx)
             tx.dest = &pairingAddr;
             tx.packet.len = 1;
             tx.packet.bytes[0] = 0xff;
+            rxState.enqueue(txState);
             break;
+
+        /*
+         * Once our pairing verification is done, send the cube a hop
+         * to connect it on an address and channel of our choice.
+         */
+        case PairingBeginHop:
+            if (chooseConnectionAddr()) {
+                tx.dest = &pairingAddr;
+                produceRadioHop(tx.packet);
+                rxState.enqueue(PairingBeginHop);
+                break;
+            }
+            goto case_PairingFirstContact;
 
         /*
          * We think we just hopped to a new connection-specific address and
@@ -219,6 +299,7 @@ void CubeConnector::radioProduce(PacketTransmission &tx)
             tx.dest = &connectionAddr;
             tx.packet.len = 1;
             tx.packet.bytes[0] = 0x79;
+            rxState.enqueue(txState);
             break;
     };
 }
@@ -301,11 +382,24 @@ void CubeConnector::radioTimeout()
             break;
 
         /*
-         * In all other cases, abort what we were doing and go back to
-         * the default first-contact state.
+         * If we timed out while trying to reconnect, hop over to the
+         * alternate channel before giving up totally.
+         */
+        case ReconnectFirstContact:
+            txState = ReconnectAltFirstContact;
+            break;
+
+        /*
+         * In all other cases, abort what we were doing and send out
+         * a new spam packet to someone. Who? That's determined by
+         * our reconnectQueue.
+         *
+         * If there's a reconnectable HWID in the queue, we head to
+         * ReconnectFirstContact to try poking it. If not, that will
+         * fall through to PairingFirstContact and refill the queue.
          */
         default:
-            txState = PairingFirstContact;
+            txState = ReconnectFirstContact;
             break;
     }
 }

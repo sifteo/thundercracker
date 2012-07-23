@@ -45,6 +45,7 @@ void CubeSlot::connect(SysLFS::Key cubeRecord, const RadioAddress &addr, const R
 
     // The cube is now connected. At this instant we may start sending packets to it.
     Atomic::Or(CubeSlots::sysConnected, cv);
+    CubeSlots::pairConnected.atomicMark(cubeRecord - SysLFS::kCubeBase);
 
     // Propagate this connection to userspace
     Event::setCubePending(Event::PID_CONNECTION, id());
@@ -59,11 +60,14 @@ void CubeSlot::disconnect()
     // Disconnect it from the system; the user will follow when we dispatch the event.
     Atomic::And(CubeSlots::sysConnected, ~cv);
 
-    NeighborSlot::resetSlots(cv);
-    NeighborSlot::resetPairs(cv);
+    // Begin trying to reconnect
+    CubeSlots::pairConnected.atomicClear(cubeRecord - SysLFS::kCubeBase);
 
     // Propagate this disconnection to userspace
     Event::setCubePending(Event::PID_CONNECTION, id());
+
+    NeighborSlot::resetSlots(cv);
+    NeighborSlot::resetPairs(cv);
 }
 
 

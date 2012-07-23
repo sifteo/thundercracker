@@ -43,6 +43,7 @@ namespace SysLFS {
     const unsigned ASSET_SLOTS_PER_BANK = _SYS_ASSET_SLOTS_PER_BANK;
     const unsigned TILES_PER_ASSET_SLOT = _SYS_TILES_PER_ASSETSLOT;
     const unsigned ASSET_GROUPS_PER_SLOT = _SYS_ASSET_GROUPS_PER_SLOT;
+    const unsigned NUM_PAIRINGS = _SYS_NUM_CUBE_SLOTS;
 
     /*
      * Key space
@@ -70,14 +71,16 @@ namespace SysLFS {
      */
 
     struct PairingIDRecord {
-        uint64_t hwid[_SYS_NUM_CUBE_SLOTS];
+        uint64_t hwid[NUM_PAIRINGS];
+
+        static const uint64_t INVALID_HWID = uint64_t(-1);
 
         void init();
     };
 
     struct PairingMRURecord {
         // Indices into hwid[], in order of most recently used first.
-        uint8_t rank[_SYS_NUM_CUBE_SLOTS];
+        uint8_t rank[NUM_PAIRINGS];
 
         void init();
     };

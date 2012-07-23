@@ -148,17 +148,20 @@ void SystemMC::threadFn(void *param)
         return;
     }
 
+    /*
+     * Start the master at some point shortly after the cubes come up,
+     * using a no-op deadline event.
+     *
+     * We can't just use Tasks::waitForInterrupt() here, since the
+     * MC is not yet initialized and we don't want to handle radio packets.
+     */
+     
     // Start the master at some point shortly after the cubes come up
     instance->ticks = instance->sys->time.clocks + MCTiming::STARTUP_DELAY;
     instance->radioPacketDeadline = instance->ticks + MCTiming::TICKS_PER_PACKET;
-    Tasks::waitForInterrupt();
 
-    // Subsystem initialization
-    HomeButton::init();
-    Volume::init();
-    Radio::init();
-    NeighborTX::init();
-    CubeConnector::init();
+    instance->sys->getCubeSync().beginEventAt(instance->ticks, instance->mThreadRunning);
+    instance->sys->getCubeSync().endEvent(instance->radioPacketDeadline);
 
     /*
      * Emulator magic: Automatically install games and pair cubes
@@ -173,6 +176,13 @@ void SystemMC::threadFn(void *param)
 
         instance->pairCube(i, _SYS_NUM_CUBE_SLOTS - 1 - i);
     }
+
+    // Subsystem initialization
+    HomeButton::init();
+    Volume::init();
+    NeighborTX::init();
+    CubeConnector::init();
+    Radio::init();
 
     // Start running userspace code!
     SvmLoader::runLauncher();

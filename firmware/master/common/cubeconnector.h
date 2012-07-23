@@ -9,6 +9,7 @@
 #include <protocol.h>
 #include "radio.h"
 #include "ringbuffer.h"
+#include "flash_syslfs.h"
 
 
 /*
@@ -44,13 +45,19 @@ private:
         PairingFinalVerify      = PairingFirstVerify + 3,
         PairingBeginHop,
         HopConfirm,
+        ReconnectFirstContact,
+        ReconnectAltFirstContact,
     };
 
     static uint8_t neighborKey;
     static _SYSPseudoRandomState prng;
 
+    static SysLFS::PairingIDRecord savedPairings;
+    static BitVector<SysLFS::NUM_PAIRINGS> reconnectQueue;
+
     static RadioAddress pairingAddr;
     static RadioAddress connectionAddr;
+    static RadioAddress reconnectAddr;
 
     static uint8_t txState;
     static RingBuffer<RadioManager::FIFO_DEPTH, uint8_t, uint8_t> rxState;
@@ -60,6 +67,8 @@ private:
 
     static void setNeighborKey(unsigned k);
     static void nextNeighborKey();
+    static void refillReconnectQueue();
+    static bool popReconnectQueue();
 
     static bool chooseConnectionAddr();
     static void produceRadioHop(PacketBuffer &buf);

@@ -8,6 +8,8 @@
 
 #include <sifteo/abi.h>
 #include "macros.h"
+#include "bits.h"
+#include "flash_syslfs.h"
 
 class CubeSlot;
 
@@ -22,6 +24,8 @@ namespace CubeSlots {
     extern _SYSCubeIDVector flashResetWait;     /// We need to reset flash before writing to it
     extern _SYSCubeIDVector flashResetSent;     /// We've sent an unacknowledged flash reset    
     extern _SYSCubeIDVector flashAddrPending;   /// Need to send an addressing command to the flash codec
+
+    extern BitVector<SysLFS::NUM_PAIRINGS> pairConnected;   /// Connected cubes, indexed by pairing ID
     
     extern _SYSCubeID minUserCubes;             /// Curent cube range for userspace
     extern _SYSCubeID maxUserCubes;
