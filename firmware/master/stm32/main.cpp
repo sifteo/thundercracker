@@ -155,18 +155,3 @@ int main()
 
     SvmLoader::runLauncher();
 }
-
-extern "C" {
-    /*
-     * Standard library stubs, for memory optimization
-     */
-
-    int __errno() {
-        /*
-         * Normally this pulls in a big RAM object, "impure_data", where
-         * newlib stores errno. But we never write to it, this is just read
-         * by the floating point library. Stub it out to save lots of RAM.
-         */
-        return 0;
-    }
-}
