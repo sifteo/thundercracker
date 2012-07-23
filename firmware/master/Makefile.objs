@@ -90,12 +90,12 @@ OBJS_STM32 = \
 # it seems more mature and we don't need the features added by mathfp.
 
 OBJS_STM32 += \
+    $(MASTER_DIR)/stm32/newlib/libc/machine/arm/memcpy.stm32.o \
+    $(MASTER_DIR)/stm32/newlib/libc/machine/arm/memset.stm32.o \
     $(MASTER_DIR)/stm32/newlib/libc/machine/arm/strcpy.stm32.o \
     $(MASTER_DIR)/stm32/newlib/libc/machine/arm/strcmp.stm32.o \
     $(MASTER_DIR)/stm32/newlib/libc/machine/arm/strlen.stm32.o \
-    $(MASTER_DIR)/stm32/newlib/libc/string/memcpy.stm32.o \
     $(MASTER_DIR)/stm32/newlib/libc/string/memchr.stm32.o \
-    $(MASTER_DIR)/stm32/newlib/libc/string/memset.stm32.o \
     $(MASTER_DIR)/stm32/newlib/libc/string/memcmp.stm32.o \
     $(MASTER_DIR)/stm32/newlib/libm/math/e_fmod.stm32.o \
     $(MASTER_DIR)/stm32/newlib/libm/math/ef_fmod.stm32.o \
