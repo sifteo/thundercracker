@@ -105,6 +105,14 @@ struct CubeID {
 
     /**
      * @brief Return the physical accelerometer state, as a signed byte-vector.
+     *
+     * All components are signed bytes, ranging from -128 to 127, with a full
+     * scale range of 2G. +X is to the right, +Y is toward the bottom of the screen,
+     * and +Z points "into" the screen.
+     *
+     * A vector of (0, 0, 0) is considered free-fall. A cube lying flat on the table
+     * will have X and Y coordinates near zero, and a positive Z coordinate near 64.
+     * An upside-down cube would have a negative Z coordinate near -64.
      */
     Byte3 accel() const {
         ASSERT(sys < NUM_SLOTS);

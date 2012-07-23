@@ -73,10 +73,11 @@ class CubeSlot {
     }
 
     ALWAYS_INLINE const _SYSByte4 getAccelState() {
+        // All bytes in protocol happen to be inverted relative to the SDK
         _SYSByte4 state;
-        state.x = lastACK.accel[0];
-        state.y = lastACK.accel[1];
-        state.z = lastACK.accel[2];
+        state.x = -lastACK.accel[0];
+        state.y = -lastACK.accel[1];
+        state.z = -lastACK.accel[2];
         state.w = 0;
         return state;
     }
