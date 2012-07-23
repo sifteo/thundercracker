@@ -83,6 +83,9 @@ sizeprof: $(BIN).elf
 	@echo
 	@echo Top RAM consumers:
 	@arm-none-eabi-readelf -W -s $< | grep -v NOTYPE | grep ": 2000" | sort -n -k 3 -r | head -n 20 | arm-none-eabi-c++filt -n
+	@echo
+	@echo Program segment summary:
+	@arm-none-eabi-readelf -l $< | grep LOAD
 
 .PHONY: all clean syscall-table ocd unlock program encrypted fwload objdump sizeprof
 

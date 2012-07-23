@@ -203,7 +203,7 @@ namespace Debugger {
      */
     const uint32_t BITMAP_SHIFT = 8;
 
-    static inline uint32_t argBit(unsigned r) {
+    static ALWAYS_INLINE uint32_t argBit(unsigned r) {
         return (0x80000000 >> BITMAP_SHIFT) >> r;
     }
     
