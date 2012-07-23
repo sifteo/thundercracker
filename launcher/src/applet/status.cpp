@@ -16,15 +16,15 @@ static const unsigned kMaxBatteryLevel = 256;
 template<typename T>
 static void drawBattery(T &canvas, float batteryLevel, int levelCounter, Int2 pos)
 {
-    unsigned numBatteryLevels = batteryLevel * float(arraysize(BatteryBars));
+    unsigned numBatteryLevels = batteryLevel * float(BatteryBars.numFrames());
     numBatteryLevels = MIN(numBatteryLevels, levelCounter);
     
     canvas.image(vec(pos.x-1, pos.y-1), Battery);
 
     if (numBatteryLevels > 0) {
         --numBatteryLevels;
-        ASSERT(numBatteryLevels < arraysize(BatteryBars));
-        canvas.image(pos, BatteryBars[numBatteryLevels]);
+        ASSERT(numBatteryLevels < BatteryBars.numFrames());
+        canvas.image(pos, BatteryBars, numBatteryLevels);
     }
 }
 
@@ -93,7 +93,7 @@ void StatusApplet::prepaint(CubeSet cubes, CubeID mainCube)
 {
     static bool frame = true;
     if (frame) {
-        if (levelCounter < arraysize(BatteryBars))
+        if (levelCounter < BatteryBars.numFrames())
         {
             ++levelCounter;
         }

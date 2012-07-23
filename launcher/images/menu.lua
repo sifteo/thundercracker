@@ -26,13 +26,12 @@ Icon_CubeRange = image{ "images/icon-cuberange.png" }
 
 -- Battery Gauge
 Battery = image{ "images/img-battery.png" }
-BatteryBars = 
-{
-    image{ "images/img-battery-bars-1.png" },
-    image{ "images/img-battery-bars-2.png" },
-    image{ "images/img-battery-bars-3.png" },
-    image{ "images/img-battery-bars-4.png" }
-}
+BatteryBars = image{ {
+    "images/img-battery-bars-1.png",
+    "images/img-battery-bars-2.png",
+    "images/img-battery-bars-3.png",
+    "images/img-battery-bars-4.png"
+} }
 
 -- Cube Range
 Font = image{ "images/font.png", width=8, height=8 }
