@@ -83,5 +83,51 @@ OBJS_STM32 = \
     $(MASTER_DIR)/stm32/neighbor_tx.stm32.o \
     $(MASTER_DIR)/stm32/syscall_math.stm32.o
 
+# Library code.
+#
+# Note that newlib has two math libraries.
+# Currently we're using "math" instead of the newer "mathfp", because
+# it seems more mature and we don't need the features added by mathfp.
+
+OBJS_STM32 += \
+    $(MASTER_DIR)/stm32/newlib/libc/machine/arm/strcpy.stm32.o \
+    $(MASTER_DIR)/stm32/newlib/libc/machine/arm/strcmp.stm32.o \
+    $(MASTER_DIR)/stm32/newlib/libc/machine/arm/strlen.stm32.o \
+    $(MASTER_DIR)/stm32/newlib/libc/string/memcpy.stm32.o \
+    $(MASTER_DIR)/stm32/newlib/libc/string/memchr.stm32.o \
+    $(MASTER_DIR)/stm32/newlib/libc/string/memset.stm32.o \
+    $(MASTER_DIR)/stm32/newlib/libc/string/memcmp.stm32.o \
+    $(MASTER_DIR)/stm32/newlib/libm/math/e_fmod.stm32.o \
+    $(MASTER_DIR)/stm32/newlib/libm/math/ef_fmod.stm32.o \
+    $(MASTER_DIR)/stm32/newlib/libm/math/w_fmod.stm32.o \
+    $(MASTER_DIR)/stm32/newlib/libm/math/wf_fmod.stm32.o \
+    $(MASTER_DIR)/stm32/newlib/libm/math/e_pow.stm32.o \
+    $(MASTER_DIR)/stm32/newlib/libm/math/ef_pow.stm32.o \
+    $(MASTER_DIR)/stm32/newlib/libm/math/w_pow.stm32.o \
+    $(MASTER_DIR)/stm32/newlib/libm/math/wf_pow.stm32.o \
+    $(MASTER_DIR)/stm32/newlib/libm/math/e_sqrt.stm32.o \
+    $(MASTER_DIR)/stm32/newlib/libm/math/ef_sqrt.stm32.o \
+    $(MASTER_DIR)/stm32/newlib/libm/math/w_sqrt.stm32.o \
+    $(MASTER_DIR)/stm32/newlib/libm/math/wf_sqrt.stm32.o \
+    $(MASTER_DIR)/stm32/newlib/libm/math/e_log.stm32.o \
+    $(MASTER_DIR)/stm32/newlib/libm/math/ef_log.stm32.o \
+    $(MASTER_DIR)/stm32/newlib/libm/math/w_log.stm32.o \
+    $(MASTER_DIR)/stm32/newlib/libm/math/wf_log.stm32.o \
+    $(MASTER_DIR)/stm32/newlib/libm/math/w_sincos.stm32.o \
+    $(MASTER_DIR)/stm32/newlib/libm/math/wf_sincos.stm32.o \
+    $(MASTER_DIR)/stm32/newlib/libm/math/s_sin.stm32.o \
+    $(MASTER_DIR)/stm32/newlib/libm/math/k_sin.stm32.o \
+    $(MASTER_DIR)/stm32/newlib/libm/math/sf_sin.stm32.o \
+    $(MASTER_DIR)/stm32/newlib/libm/math/kf_sin.stm32.o \
+    $(MASTER_DIR)/stm32/newlib/libm/math/s_cos.stm32.o \
+    $(MASTER_DIR)/stm32/newlib/libm/math/k_cos.stm32.o \
+    $(MASTER_DIR)/stm32/newlib/libm/math/sf_cos.stm32.o \
+    $(MASTER_DIR)/stm32/newlib/libm/math/kf_cos.stm32.o \
+    $(MASTER_DIR)/stm32/newlib/libm/math/ef_rem_pio2.stm32.o \
+    $(MASTER_DIR)/stm32/newlib/libm/math/kf_rem_pio2.stm32.o \
+    $(MASTER_DIR)/stm32/newlib/libm/math/sf_floor.stm32.o \
+    $(MASTER_DIR)/stm32/newlib/libm/common/s_scalbn.stm32.o \
+    $(MASTER_DIR)/stm32/newlib/libm/common/sf_scalbn.stm32.o
+
 # Other target specific sources should be appended to OBJS_STM32
 # in their project specific Makefiles

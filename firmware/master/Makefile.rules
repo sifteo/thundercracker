@@ -6,8 +6,9 @@ all: $(BIN).elf $(BIN).bin $(BIN).hex
 
 encrypted: $(BIN).sft
 
-$(BIN).elf: $(OBJS_STM32)
-	$(CC) -o $@ $^ $(LDFLAGS)
+$(BIN).elf: $(OBJS_STM32) $(LDSCRIPT)
+	@echo Linking $@
+	@$(CC) -o $@ $(OBJS_STM32) $(LDFLAGS)
 
 $(BIN).bin: $(BIN).elf
 	arm-none-eabi-objcopy -O binary $< $@
@@ -18,8 +19,17 @@ $(BIN).hex: $(BIN).elf
 $(BIN).sft: $(BIN).bin
 	$(TC_DIR)/tools/fwdeploy/fwdeploy $(BIN).bin $(BIN).sft
 
-%.stm32.o: %.cpp $(CDEPS) $(LDSCRIPT)
-	$(CC) -c $(CCFLAGS) $(DEPFLAGS) $< -o $@
+%.stm32.o: %.cpp $(CDEPS)
+	@echo Compiling $<
+	@$(CC) -c $(FLAGS) $(CCFLAGS) $(DEPFLAGS) $< -o $@
+
+%.stm32.o: %.c $(CDEPS)
+	@echo Compiling $<
+	@$(CC) -c $(FLAGS) $(CFLAGS) $(DEPFLAGS) $< -o $@
+
+%.stm32.o: %.S $(CDEPS)
+	@echo Assembling $<
+	$(CC) -c $(FLAGS) $(DEPFLAGS) $< -o $@
 
 $(MASTER_DIR)/common/syscall-table.def: $(TC_DIR)/sdk/include/sifteo/abi/syscall.h $(MASTER_DIR)/tools/firmware-syscall-table.py
 	python $(MASTER_DIR)/tools/firmware-syscall-table.py < $< > $@
