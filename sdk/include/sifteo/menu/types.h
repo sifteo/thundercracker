@@ -105,7 +105,6 @@ class Menu {
     void setPeekTiles(uint8_t numTiles);
     void anchor(uint8_t item);
     
-
  private:
     static const float kTimeDilator = 13.1f;
     static const float kMaxSpeedMultiplier = 3.f;
@@ -198,6 +197,7 @@ class Menu {
     // util.h
     void detectNeighbors();
     uint8_t computeSelected();
+    void checkForPress();
     void drawColumn(int);
     void drawFooter(bool force = false);
     int stoppingPositionFor(int);

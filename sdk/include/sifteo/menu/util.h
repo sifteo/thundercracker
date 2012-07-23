@@ -72,6 +72,17 @@ inline uint8_t Menu::computeSelected()
     return clamp(s, 0, numItems - 1);
 }
 
+inline void Menu::checkForPress()
+{
+    bool touch = vid.cube().isTouching();
+
+    if (touch && !prevTouch) {
+        currentEvent.type = MENU_ITEM_PRESS;
+        currentEvent.item = computeSelected();
+    }
+    prevTouch = touch;
+}
+
 // positions are in pixel units
 // columns are in tile-units
 // each icon is 80px/10tl wide with a 16px/2tl spacing

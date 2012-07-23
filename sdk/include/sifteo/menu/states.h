@@ -150,13 +150,7 @@ inline void Menu::transToStatic()
 
 inline void Menu::stateStatic()
 {
-    bool touch = vid.cube().isTouching();
-
-    if (touch && !prevTouch) {
-        currentEvent.type = MENU_ITEM_PRESS;
-        currentEvent.item = computeSelected();
-    }
-    prevTouch = touch;
+    checkForPress();
 }
 
 inline void Menu::transFromStatic()
@@ -243,6 +237,8 @@ inline void Menu::transToInertia()
 
 inline void Menu::stateInertia()
 {
+    checkForPress();
+
     const float stiffness = 0.333f;
 
     // do not pull to item unless tilting has stopped.
