@@ -88,7 +88,7 @@ _DEFUN (memset, (DST, C, LENGTH),
   void* DST0 = DST;
   unsigned char C_BYTE = C;
 
-#if defined(PREFER_SIZE_OVER_SPEED) || defined(__OPTIMIZE_SIZE__)
+#if defined(PREFER_SIZE_OVER_SPEED)
   const char* DST_end = (char*)DST + LENGTH;
   while ((char*)DST < DST_end) {
     *((char*)DST) = C_BYTE;

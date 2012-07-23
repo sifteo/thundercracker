@@ -86,7 +86,7 @@ _DEFUN (memcpy, (OUT, IN, N),
 {
   void* OUT0 = OUT;
 
-#if defined(PREFER_SIZE_OVER_SPEED) || defined(__OPTIMIZE_SIZE__)
+#if defined(PREFER_SIZE_OVER_SPEED)
   const char* OUT_end = (char*)OUT + N;
   while ((char*)OUT < OUT_end) {
     *((char*)OUT) = *((char*)IN);
