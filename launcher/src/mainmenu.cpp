@@ -13,6 +13,14 @@
 using namespace Sifteo;
 
 
+template<typename T>
+static void drawText(T &canvas, const char* text, Int2 pos)
+{
+    for (int i = 0; text[i] != 0; i++) {
+        canvas.image(vec(pos.x + i, pos.y), Font, text[i]-32);
+    }
+}
+
 static unsigned getNumCubes(CubeSet cubes)
 {
     unsigned count = 0;
@@ -162,8 +170,15 @@ void MainMenu::toggleCubeRangeAlert(unsigned index, Sifteo::Menu &menu)
         
         cubeRangeAlertIcon.init();
         cubeRangeAlertIcon.image(vec(0,0), Icon_CubeRange);
-        cubeRangeAlertIcon.image(vec(2,4), Numbers, item->getCubeRange().sys.minCubes);
-        cubeRangeAlertIcon.image(vec(7,4), Numbers, item->getCubeRange().sys.maxCubes);
+
+        drawText(cubeRangeAlertIcon, "You need", vec(1,3));
+
+        String<16> buffer;
+        buffer << item->getCubeRange().sys.minCubes << "-" << item->getCubeRange().sys.maxCubes;
+        drawText(cubeRangeAlertIcon, buffer.c_str(), vec(1,4));
+        drawText(cubeRangeAlertIcon, "cubes to", vec(1,5));
+        drawText(cubeRangeAlertIcon, "play this", vec(1,6));
+        drawText(cubeRangeAlertIcon, "game.", vec(1,7));
         
         menu.replaceIcon(index, cubeRangeAlertIcon);
     } else {
