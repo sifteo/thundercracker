@@ -88,8 +88,13 @@ extern __bit nb_rx_mask_bit1;
  *
  * If this is zero (the default while disconnected), neighbor transmit
  * is disabled.
+ *
+ * Note: On real hardware, this is overlaid with an unused SFR purely
+ *       to save RAM. But in Siftulator, this also gives us an easy
+ *       way to peek at the cube's assigned neighbor ID and show
+ *       that ID in the heads-up display.
  */
-extern uint8_t nb_tx_id;
+__sfr __at 0xA1 nb_tx_id;
 
 /*
  * We do a little bit of signal conditioning on neighbors before

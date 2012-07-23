@@ -58,8 +58,6 @@ _fls_st::           ; 5 bytes
     .ds 5
 _x_bg0_first_addr:: ; 1 byte
     .ds 1
-_y_spr_line::       ; 1 byte
-    .ds 1
 
 ; ----------------------------------
 

@@ -20,7 +20,6 @@ volatile uint8_t sensor_tick_counter_high;
 
 uint8_t nb_bits_remaining;
 uint8_t nb_buffer[2];
-uint8_t nb_tx_id;
 
 __bit nb_tx_mode;
 __bit nb_rx_mask_state0;

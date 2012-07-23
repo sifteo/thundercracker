@@ -9,6 +9,9 @@
 #include "graphics_sprite.h"
 #include "sensors.h"
 
+uint8_t y_spr_line;
+uint8_t y_spr_line_limit;
+
 
 void vm_bg0_spr_bg1(void) __naked
 {
