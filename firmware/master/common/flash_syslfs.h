@@ -43,6 +43,8 @@ namespace SysLFS {
     const unsigned ASSET_SLOTS_PER_BANK = _SYS_ASSET_SLOTS_PER_BANK;
     const unsigned TILES_PER_ASSET_SLOT = _SYS_TILES_PER_ASSETSLOT;
     const unsigned ASSET_GROUPS_PER_SLOT = _SYS_ASSET_GROUPS_PER_SLOT;
+
+    // This cannot be changed without modifying the Key layout below
     const unsigned NUM_PAIRINGS = _SYS_NUM_CUBE_SLOTS;
 
     /*
@@ -55,9 +57,9 @@ namespace SysLFS {
         kPairingMRU     = 0x26,
         kPairingID      = 0x27,
         kCubeBase       = 0x28,
-        kCubeCount      = _SYS_NUM_CUBE_SLOTS,
+        kCubeCount      = NUM_PAIRINGS,
         kAssetSlotBase  = kCubeBase + kCubeCount,
-        kAssetSlotCount = _SYS_NUM_CUBE_SLOTS * ASSET_SLOTS_PER_CUBE,
+        kAssetSlotCount = NUM_PAIRINGS * ASSET_SLOTS_PER_CUBE,
         kEnd            = kAssetSlotBase + kAssetSlotCount,
     };
 
@@ -76,6 +78,7 @@ namespace SysLFS {
         static const uint64_t INVALID_HWID = uint64_t(-1);
 
         void init();
+        void load();
     };
 
     struct PairingMRURecord {
@@ -83,6 +86,12 @@ namespace SysLFS {
         uint8_t rank[NUM_PAIRINGS];
 
         void init();
+        void load();
+        bool access(unsigned index);
+
+        unsigned getOldest() const {
+            return rank[NUM_PAIRINGS - 1];
+        };
     };
 
     /*
@@ -233,6 +242,7 @@ namespace SysLFS {
     }
 
     void deleteAll();
+    void deleteCube(unsigned index);
 
 } // end namespace SysLFS
 

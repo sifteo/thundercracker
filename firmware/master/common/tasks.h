@@ -42,7 +42,8 @@ public:
         Debugger,
         AssetLoader,
         HomeButton,
-        Profiler
+        CubeConnector,
+        Profiler,
     };
 
     static void init() {

@@ -8,6 +8,7 @@
 #include "svmdebugger.h"
 #include "cubeslots.h"
 #include "homebutton.h"
+#include "cubeconnector.h"
 
 #ifndef SIFTEO_SIMULATOR
 #include "usb/usbdevice.h"
@@ -36,6 +37,7 @@ static ALWAYS_INLINE void taskInvoke(unsigned id)
         case Tasks::Debugger:       return SvmDebugger::messageLoop();
         case Tasks::AssetLoader:    return CubeSlots::assetLoaderTask();
         case Tasks::HomeButton:     return HomeButton::task();
+        case Tasks::CubeConnector:  return CubeConnector::task();
     #endif
 
     #if !defined(SIFTEO_SIMULATOR) && !defined(BOOTLOADER)
@@ -77,7 +79,7 @@ bool Tasks::work()
     do {
         unsigned idx = Intrinsic::CLZ(tasks);
         taskInvoke(idx);
-        tasks = (pendingMask &= ~Intrinsic::LZ(idx));
+        tasks = (iterationMask &= ~Intrinsic::LZ(idx));
     } while (tasks);
 
     return true;

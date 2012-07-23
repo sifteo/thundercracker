@@ -38,6 +38,9 @@ public:
     static void radioEmptyAcknowledge();
     static void radioTimeout();
 
+    // Callback for Tasks::CubeConnector
+    static void task();
+
 private:
     enum State {
         PairingFirstContact     = 0,
@@ -50,11 +53,22 @@ private:
         ReconnectBeginHop,
     };
 
+    enum TaskWorkItems {
+        TaskRecyclePairings,
+        TaskSavePairingID,
+        TaskSavePairingMRU,
+
+        NUM_WORK_ITEMS,         // Must be last
+    };
+
     static uint8_t neighborKey;
     static _SYSPseudoRandomState prng;
 
-    static SysLFS::PairingIDRecord savedPairings;
+    static SysLFS::PairingIDRecord savedPairingID;
+    static SysLFS::PairingMRURecord savedPairingMRU;
     static BitVector<SysLFS::NUM_PAIRINGS> reconnectQueue;
+    static BitVector<SysLFS::NUM_PAIRINGS> recycleQueue;
+    static BitVector<NUM_WORK_ITEMS> taskWork;
 
     static RadioAddress pairingAddr;
     static RadioAddress connectionAddr;

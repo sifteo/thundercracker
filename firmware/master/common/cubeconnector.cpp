@@ -13,6 +13,7 @@
 #include "systime.h"
 #include "radioaddrfactory.h"
 #include "prng.h"
+#include "tasks.h"
 
 RadioAddress CubeConnector::pairingAddr = { 0, RF_PAIRING_ADDRESS };
 RadioAddress CubeConnector::connectionAddr;
@@ -21,8 +22,11 @@ RadioAddress CubeConnector::reconnectAddr;
 _SYSPseudoRandomState CubeConnector::prng;
 RingBuffer<RadioManager::FIFO_DEPTH, uint8_t, uint8_t> CubeConnector::rxState;
 
-SysLFS::PairingIDRecord CubeConnector::savedPairings;
+SysLFS::PairingIDRecord CubeConnector::savedPairingID;
+SysLFS::PairingMRURecord CubeConnector::savedPairingMRU;
 BitVector<SysLFS::NUM_PAIRINGS> CubeConnector::reconnectQueue;
+BitVector<SysLFS::NUM_PAIRINGS> CubeConnector::recycleQueue;
+BitVector<CubeConnector::NUM_WORK_ITEMS> CubeConnector::taskWork;
 
 uint8_t CubeConnector::neighborKey;
 uint8_t CubeConnector::txState;
@@ -45,12 +49,46 @@ void CubeConnector::init()
     ASSERT(neighborKey < Neighbor::NUM_MASTER_ID);
 
     // Load saved pairing HWIDs from SysLFS
-    if (!SysLFS::read(SysLFS::kPairingID, savedPairings))
-        savedPairings.init();
+    savedPairingID.load();
+    savedPairingMRU.load();
 
     // State machine init
     txState = PairingFirstContact;
     rxState.init();
+}
+
+void CubeConnector::task()
+{
+    /*
+     * Handle work items from our taskWork vector. New work items may be
+     * set pending at any time by the ISR, so we need to be sure to
+     * always clear flags before performing the associated work, and we
+     * need to use atomic ops.
+     */
+
+    BitVector<NUM_WORK_ITEMS> pending = taskWork;
+    unsigned index;
+    while (pending.clearFirst(index)) {
+        taskWork.atomicClear(index);
+        switch (index) {
+ 
+            case TaskSavePairingID:
+                SysLFS::write(SysLFS::kPairingID, savedPairingID);
+                break;
+
+            case TaskSavePairingMRU:
+                SysLFS::write(SysLFS::kPairingMRU, savedPairingMRU);
+                break;
+
+            case TaskRecyclePairings:
+                while (recycleQueue.findFirst(index)) {
+                    recycleQueue.atomicClear(index);
+                    SysLFS::deleteCube(index);
+                }
+                break;
+
+        }
+    }
 }
 
 void CubeConnector::setNeighborKey(unsigned k)
@@ -159,7 +197,7 @@ void CubeConnector::refillReconnectQueue()
         if (CubeSlots::pairConnected.test(i))
             continue;
 
-        if (savedPairings.hwid[i] == SysLFS::PairingIDRecord::INVALID_HWID)
+        if (savedPairingID.hwid[i] == SysLFS::PairingIDRecord::INVALID_HWID)
             continue;
 
         reconnectQueue.mark(i);
@@ -177,7 +215,7 @@ bool CubeConnector::popReconnectQueue()
     if (!reconnectQueue.clearFirst(index))
         return false;
 
-    uint64_t hwid64 = savedPairings.hwid[index];
+    uint64_t hwid64 = savedPairingID.hwid[index];
     memcpy(hwid, &hwid64, sizeof hwid);
     RadioAddrFactory::fromHardwareID(reconnectAddr, hwid64);
     cubeRecord = SysLFS::Key(SysLFS::kCubeBase + index);
@@ -187,11 +225,24 @@ bool CubeConnector::popReconnectQueue()
 
 void CubeConnector::newCubeRecord()
 {
-    // XXX: Implement me! Allocate a new cubeRecord by looking for the
-    //      least recently used slot. Update the SysLFS data in RAM,
-    //      and set a pending task to write it out to flash.
+    /*
+     * Set cubeRecord based on the least recently used ID,
+     * in order to recycle information about the cube we've
+     * paired least recently.
+     */
 
-    cubeRecord = SysLFS::kCubeBase;
+    // Remember to delete old SysLFS information about this cube
+    unsigned index = savedPairingMRU.getOldest();
+    recycleQueue.atomicMark(index);
+    taskWork.atomicMark(TaskRecyclePairings);
+    Tasks::trigger(Tasks::CubeConnector);
+
+    // Write the new HWID
+    memcpy(&savedPairingID.hwid[index], hwid, HWID_LEN);
+    taskWork.atomicMark(TaskSavePairingID);
+    Tasks::trigger(Tasks::CubeConnector);
+
+    cubeRecord = SysLFS::Key(SysLFS::kCubeBase + index);
 }
 
 void CubeConnector::radioProduce(PacketTransmission &tx)
@@ -391,6 +442,14 @@ void CubeConnector::radioAcknowledge(const PacketBuffer &packet)
          */
         case HopConfirm:
             if (packet.len >= RF_ACK_LEN_HWID && !memcmp(hwid, ack->hwid, sizeof hwid)) {
+
+                // Mark this pairing as "recently used", so we don't recycle it
+                if (savedPairingMRU.access(cubeRecord - SysLFS::kCubeBase)) {
+                    taskWork.atomicMark(TaskSavePairingMRU);
+                    Tasks::trigger(Tasks::CubeConnector);
+                }
+
+                // Connect the cube!
                 CubeSlot &cube = CubeSlots::instances[cubeID];
                 if (cube.isSlotAvailable()) {
                     cube.connect(cubeRecord, connectionAddr, *ack);

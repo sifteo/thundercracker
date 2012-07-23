@@ -98,6 +98,7 @@ OBJS_STM32 += \
     $(MASTER_DIR)/stm32/newlib/libc/machine/arm/strlen.stm32.o \
     $(MASTER_DIR)/stm32/newlib/libc/string/memchr.stm32.o \
     $(MASTER_DIR)/stm32/newlib/libc/string/memcmp.stm32.o \
+    $(MASTER_DIR)/stm32/newlib/libc/string/memmove.stm32.o \
     $(MASTER_DIR)/stm32/newlib/libm/math/e_fmod.stm32.o \
     $(MASTER_DIR)/stm32/newlib/libm/math/ef_fmod.stm32.o \
     $(MASTER_DIR)/stm32/newlib/libm/math/e_pow.stm32.o \
