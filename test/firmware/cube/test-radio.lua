@@ -122,14 +122,14 @@ TestRadio = {}
         -- radio address.
 
         radio:setHWID("01f263338b1351cf")
-        assertEquals(gx.cube:getRadioAddress(), "5c/85851d2793")
+        assertEquals(gx.cube:getRadioAddress(), "13/c885851d27")
 
         radio:setHWID("01b636d36540699d")
-        assertEquals(gx.cube:getRadioAddress(), "74/ecde5b7c12")
+        assertEquals(gx.cube:getRadioAddress(), "12/edecde5b7c")
 
         radio:setHWID("00b636d36540699d")
-        assertEquals(gx.cube:getRadioAddress(), "4f/1f4bcd7d96")
+        assertEquals(gx.cube:getRadioAddress(), "16/671f4bcd7d")
 
         radio:setHWID("04b636d36540699d")
-        assertEquals(gx.cube:getRadioAddress(), "72/fe93e32f4b")
+        assertEquals(gx.cube:getRadioAddress(), "4b/79fe93e32f")
     end

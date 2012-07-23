@@ -117,4 +117,11 @@ radio = {}
 
         gx.cube:reset()
         gx.sys:vsleep(0.4)
+
+        -- Verify
+        local i = 0
+        for hexByte in hexString:gmatch("..") do
+            assertEquals(gx.cube:nbPeek(i), tonumber(hexByte, 16))
+            i = i + 1
+        end
     end

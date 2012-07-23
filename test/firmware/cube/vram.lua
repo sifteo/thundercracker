@@ -84,7 +84,7 @@ gx = {}
         
         gx.sys = System()
         gx.cube = Cube(0)               
-        gx.sys:setOptions{numCubes=1, turbo=true}
+        gx.sys:setOptions{numCubes=1, turbo=true, noCubeReconnect=true}
         gx.sys:init()
 
         gx.lastExceptionCount = 0
