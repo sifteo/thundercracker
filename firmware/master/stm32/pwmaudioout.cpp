@@ -99,7 +99,6 @@ void AudioOutDevice::start()
     
     // Start clocking out samples
     PwmAudioOut::sampleTimer.enableUpdateIsr();
-    Tasks::setPending(Tasks::AudioPull);
 }
 
 
@@ -191,4 +190,7 @@ IRQ_HANDLER ISR_FN(AUDIO_SAMPLE_TIM)()
 
     GPIOPin::setControl(&AUDIO_PWMA_PORT, AUDIO_PWMA_PIN, ctrlA);
     GPIOPin::setControl(&AUDIO_PWMB_PORT, AUDIO_PWMB_PIN, ctrlB);
+
+    // Ask for more audio data
+    Tasks::trigger(Tasks::AudioPull);
 }

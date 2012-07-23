@@ -23,7 +23,6 @@ SvmDebugger SvmDebugger::instance;
 
 void SvmDebugger::messageLoop(void *param)
 {
-    Tasks::clearPending(Tasks::Debugger);
     /*
      * Re-entrancy guard. Normally this isn't something we have to worry
      * about, but an emulated syscall during single-step can call Tasks::work()
@@ -71,7 +70,7 @@ bool SvmDebugger::signal(Svm::Debugger::Signals sig)
 
     // Make sure the debugger event loop will run, and tell it to stop/run.
     instance.stopped = sig;
-    Tasks::setPending(Tasks::Debugger);
+    Tasks::trigger(Tasks::Debugger);
     return true;
 }
 

@@ -59,7 +59,6 @@ bool SystemMC::init(System *sys)
         AudioOutDevice::init();
         AudioOutDevice::start();
     }
-    Tasks::setPending(Tasks::AudioPull);
 
     return true;
 }

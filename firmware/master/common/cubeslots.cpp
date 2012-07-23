@@ -116,8 +116,6 @@ void CubeSlots::assetLoaderTask()
      * directly. The _SYSAssetLoader includes a tiny FIFO buffer for each cube.
      */
 
-    Tasks::clearPending(Tasks::AssetLoader);
-
     _SYSAssetLoader *L = assetLoader;
     _SYSAssetLoaderCube *cubeArray = reinterpret_cast<_SYSAssetLoaderCube*>(L + 1);
     if (!L) return;

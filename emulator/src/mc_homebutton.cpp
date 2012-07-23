@@ -14,7 +14,7 @@ void init()
 void onChange()
 {
     if (isPressed()) {
-        Tasks::setPending(Tasks::HomeButton);
+        Tasks::trigger(Tasks::HomeButton);
     }
 }
 

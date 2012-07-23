@@ -491,7 +491,7 @@ bool CubeCodec::flashSend(PacketBuffer &buf, _SYSAssetLoaderCube *lc, _SYSCubeID
      */
 
     if (!flashAddrPending && fifoCount == 0) {
-        Tasks::setPending(Tasks::AssetLoader);
+        Tasks::trigger(Tasks::AssetLoader);
         return false;
     }
 
@@ -557,7 +557,7 @@ bool CubeCodec::flashSend(PacketBuffer &buf, _SYSAssetLoaderCube *lc, _SYSCubeID
         if (loadBufferAvail == FLS_FIFO_USABLE)
             done = true;
     } else {
-        Tasks::setPending(Tasks::AssetLoader);
+        Tasks::trigger(Tasks::AssetLoader);
     }
 
     return true;

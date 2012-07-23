@@ -26,9 +26,9 @@ void SampleProfiler::onUSBData(const USBProtocolMsg &m)
 
     if (m.payload[1]) {
         timer.enableUpdateIsr();
-        Tasks::setPending(Tasks::Profiler);
+        Tasks::trigger(Tasks::Profiler);
     } else {
-        Tasks::clearPending(Tasks::Profiler);
+        Tasks::cancel(Tasks::Profiler);
         timer.disableUpdateIsr();
     }
 }
@@ -46,6 +46,7 @@ void SampleProfiler::task()
     USBProtocolMsg m(USBProtocol::Profiler);
     m.append((uint8_t*)&sampleBuf, sizeof sampleBuf);
     UsbDevice::write(m.bytes, m.len);
+    Tasks::trigger(Tasks::Profiler);
 }
 
 /*

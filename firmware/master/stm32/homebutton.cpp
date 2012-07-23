@@ -43,7 +43,7 @@ void onChange()
     GPIOPin green = LED_GREEN_GPIO;
     green.setLow();
 
-    Tasks::setPending(Tasks::HomeButton);
+    Tasks::trigger(Tasks::HomeButton);
 }
 
 bool isPressed()
@@ -64,19 +64,20 @@ void task()
      * If the button has been released, we're done.
      */
     if (!isPressed()) {
-        Tasks::clearPending(Tasks::HomeButton);
         GPIOPin green = LED_GREEN_GPIO;
         green.setHigh();
         return;
     }
     
-    //Returns from the task if the button is being held while connected to USB
-    if ( PowerManager::vbus.isHigh() ) {
+    // Do nothing if we're connected to USB power
+    if (PowerManager::vbus.isHigh()) 
+        return;
+
+    // Keep polling while the button is held down
+    if (SysTime::ticks() < shutdownDeadline) {
+        Tasks::trigger(Tasks::HomeButton);
         return;
     }
-
-    if (SysTime::ticks() < shutdownDeadline)
-        return;
 
     // power off sequence
     GPIOPin green = LED_GREEN_GPIO;

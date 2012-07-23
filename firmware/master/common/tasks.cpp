@@ -16,6 +16,7 @@
 #endif
 
 uint32_t Tasks::pendingMask;
+uint32_t Tasks::iterationMask;
 
 /*
  * Table of runnable tasks.
@@ -44,50 +45,53 @@ static ALWAYS_INLINE void taskInvoke(unsigned id)
     }
 }
 
-void Tasks::init()
+bool Tasks::work()
 {
-    pendingMask = 0;
-}
+    /*
+     * We sample pendingMask exactly once, and use this to quickly make
+     * the determination of whether any work is to be done or not.
+     *
+     * If we do have some amount of work to do, we atomically transfer
+     * all pending flags from pendingMask to iterationMask, where we
+     * clear the flags as we invoke each callback.
+     *
+     * This method is efficient in the common cases, and it is safe
+     * even in tricky edge cases like tasks which re-trigger themselves
+     * but may be cancelled by a different task. The iterationMask
+     * is also cancelled if we cancel a task, to handle the case where
+     * the cancelled task was already pulled from pendingMask.
+     */
 
-/*
- * Service any tasks that are pending since our last round of work.
- * Should be called in main thread context, as callbacks might typically
- * take some time - it's the whole reason Tasks exists, after all.
- */
-void Tasks::work()
-{
-    uint32_t mask = pendingMask;
+    // Quickest possible early-exit
+    uint32_t tasks = pendingMask;
+    if (LIKELY(!tasks))
+        return false;
 
-    while (mask) {
-        // Must clear the bit before invoking the callback
-        unsigned idx = Intrinsic::CLZ(mask);
-        mask ^= Intrinsic::LZ(idx);
+    // Clear only the bits we managed to capture above
+    Atomic::And(pendingMask, ~tasks);
+
+    // Doesn't need to be atomic; we're not required to catch changes to
+    // iterationMask made outside of task handlers (i.e. in ISRs)
+    iterationMask = tasks;
+
+    do {
+        unsigned idx = Intrinsic::CLZ(tasks);
         taskInvoke(idx);
-    }
+        tasks = (pendingMask &= ~Intrinsic::LZ(idx));
+    } while (tasks);
+
+    return true;
 }
 
-/*
- * Run pending tasks, OR if no tasks are pending, wait for interrupts.
- * This is the correct way to block the main thread of execution while
- * waiting for a condition.
- */
 void Tasks::idle()
 {
     /*
-     * XXX: This should really exit before waitForInterrupt(), in the
-     *      event that we're actually making forward progress in work().
-     *      Right now there isn't a good way of detecting this, though.
-     *
-     *      I'd like to call waitForInterrupt() if and only if there
-     *      were no pending tasks, but this currently doesn't work because
-     *      of tasks like AudioPull which are almost always runnable.
-     *
-     *      So, until we find a clean solution to that problem, idle() is
-     *      equivalent to work() followed by waitForInterrupt(). But we're
-     *      still consolidating our idling logic as much as possible so that
-     *      this strategy can be changed easily later.
+     * Run pending tasks, OR if no tasks are pending, wait for interrupts.
+     * This is the correct way to block the main thread of execution while
+     * waiting for a condition, as it avoids unnecessary WFIs when the
+     * caller is waiting on something which requires Tasks to execute.
      */
 
-    work();
-    waitForInterrupt();
+    if (!work())
+        waitForInterrupt();
 }

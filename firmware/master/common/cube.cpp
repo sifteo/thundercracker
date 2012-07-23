@@ -153,7 +153,7 @@ void CubeSlot::startAssetLoad(SvmMemory::VirtAddr groupVA, uint16_t baseAddr)
     Atomic::SetLZ(L->cubeVec, id());
 
     // Start filling our asset data FIFOs.
-    Tasks::setPending(Tasks::AssetLoader);
+    Tasks::trigger(Tasks::AssetLoader);
 }
 
 void CubeSlot::requestFlashReset()

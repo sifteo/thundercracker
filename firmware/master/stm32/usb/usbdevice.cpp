@@ -146,18 +146,16 @@ uint8_t UsbDevice::epINBuf[UsbHardware::MAX_PACKET];
 */
 void UsbDevice::handleOUTData()
 {
-    Tasks::clearPending(Tasks::UsbOUT);
-
     USBProtocolMsg m;
     m.len = UsbHardware::epReadPacket(OutEpAddr, m.bytes, m.bytesFree());
     if (m.len > 0) {
-#if ((BOARD == BOARD_TEST_JIG) && !defined(BOOTLOADER))
+    #if ((BOARD == BOARD_TEST_JIG) && !defined(BOOTLOADER))
         TestJig::onTestDataReceived(m.bytes, m.len);
-#elif defined(BOOTLOADER)
+    #elif defined(BOOTLOADER)
         Bootloader::onUsbData(m.bytes, m.len);
-#else
+    #else
         USBProtocol::dispatch(m);
-#endif
+    #endif
     }
 }
 
@@ -219,7 +217,7 @@ void UsbDevice::inEndpointCallback(uint8_t ep)
  */
 void UsbDevice::outEndpointCallback(uint8_t ep)
 {
-    Tasks::setPending(Tasks::UsbOUT);
+    Tasks::trigger(Tasks::UsbOUT);
 }
 
 /*

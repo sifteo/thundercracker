@@ -75,7 +75,7 @@ void PowerManager::beginVbusMonitor()
 void PowerManager::onVBusEdge()
 {
     debounceDeadline = SysTime::ticks() + SysTime::msTicks(DEBOUNCE_MILLIS);
-    Tasks::setPending(Tasks::PowerManager);
+    Tasks::trigger(Tasks::PowerManager);
 }
 
 /*
@@ -84,10 +84,11 @@ void PowerManager::onVBusEdge()
  */
 void PowerManager::vbusDebounce()
 {
-    if (SysTime::ticks() < debounceDeadline)
+    if (SysTime::ticks() < debounceDeadline) {
+        // Poll until our deadline is elapsed
+        Tasks::trigger(Tasks::PowerManager);
         return;
-
-    Tasks::clearPending(Tasks::PowerManager);
+    }
 
     State s = state();
     if (s != lastState)

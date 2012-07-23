@@ -79,6 +79,9 @@ int PortAudioOutDevice::portAudioCallback(const void *inputBuffer, void *outputB
     while (framesPerBuffer--)
         *outBuf++ = self->upsampleFilter(0);
 
+    // Ask for more audio data
+    Tasks::trigger(Tasks::AudioPull);
+
     return paContinue;
 }
 
