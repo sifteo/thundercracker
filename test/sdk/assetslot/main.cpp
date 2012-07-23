@@ -394,7 +394,8 @@ void testEviction()
 
 void main()
 {
-    _SYS_enableCubes(cubes);
+    while (CubeSet::connected() != cubes)
+        System::yield();
 
     SCRIPT(LUA,
         package.path = package.path .. ";../../lib/?.lua"
