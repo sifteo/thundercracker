@@ -29,6 +29,7 @@ uint8_t CubeConnector::txState;
 uint8_t CubeConnector::pairingPacketCounter;
 uint8_t CubeConnector::hwid[HWID_LEN];
 _SYSCubeID CubeConnector::cubeID;
+SysLFS::Key CubeConnector::cubeRecord;
 
 
 void CubeConnector::init()
@@ -179,8 +180,18 @@ bool CubeConnector::popReconnectQueue()
     uint64_t hwid64 = savedPairings.hwid[index];
     memcpy(hwid, &hwid64, sizeof hwid);
     RadioAddrFactory::fromHardwareID(reconnectAddr, hwid64);
+    cubeRecord = SysLFS::Key(SysLFS::kCubeBase + index);
 
     return true;
+}
+
+void CubeConnector::newCubeRecord()
+{
+    // XXX: Implement me! Allocate a new cubeRecord by looking for the
+    //      least recently used slot. Update the SysLFS data in RAM,
+    //      and set a pending task to write it out to flash.
+
+    cubeRecord = SysLFS::kCubeBase;
 }
 
 void CubeConnector::radioProduce(PacketTransmission &tx)
@@ -278,6 +289,7 @@ void CubeConnector::radioProduce(PacketTransmission &tx)
          * to connect it on an address and channel of our choice.
          */
         case PairingBeginHop:
+            newCubeRecord();
             if (chooseConnectionAddr()) {
                 tx.dest = &pairingAddr;
                 produceRadioHop(tx.packet);
@@ -381,7 +393,7 @@ void CubeConnector::radioAcknowledge(const PacketBuffer &packet)
             if (packet.len >= RF_ACK_LEN_HWID && !memcmp(hwid, ack->hwid, sizeof hwid)) {
                 CubeSlot &cube = CubeSlots::instances[cubeID];
                 if (cube.isSlotAvailable()) {
-                    cube.connect(SysLFS::kCubeBase, connectionAddr, *ack);
+                    cube.connect(cubeRecord, connectionAddr, *ack);
                 }
             }
             txState = PairingFirstContact;

@@ -65,11 +65,13 @@ private:
     static uint8_t pairingPacketCounter;
     static uint8_t hwid[HWID_LEN];
     static _SYSCubeID cubeID;
+    static SysLFS::Key cubeRecord;
 
     static void setNeighborKey(unsigned k);
     static void nextNeighborKey();
     static void refillReconnectQueue();
     static bool popReconnectQueue();
+    static void newCubeRecord();
 
     static bool chooseConnectionAddr();
     static void produceRadioHop(PacketBuffer &buf);
