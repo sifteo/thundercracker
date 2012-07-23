@@ -91,6 +91,11 @@ class Hardware {
 
     uint64_t getHWID() const;
 
+    ALWAYS_INLINE unsigned getNeighborID() const {
+        // This is assigned by the cube firmware, and stored for our perusal in an unused SFR.
+        return cpu.mSFR[0xA1 - 0x80];
+    }
+
     ALWAYS_INLINE void tick(bool *cpuTicked=NULL) {
         if (!isSleeping()) {
             CPU::em8051_tick(&cpu, 1, cpu.sbt, cpu.mProfileData != NULL, Tracer::isEnabled(), cpu.mBreakpoint != 0, cpuTicked);
