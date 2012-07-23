@@ -45,8 +45,7 @@ public:
     static void inEndpointCallback(uint8_t ep);
     static void outEndpointCallback(uint8_t ep);
 
-    static void handleINData(void *p);
-    static void handleOUTData(void *p);
+    static void handleOUTData();
 
     static int read(uint8_t *buf, unsigned len);
     static int write(const uint8_t *buf, unsigned len);

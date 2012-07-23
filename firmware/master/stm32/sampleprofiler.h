@@ -25,7 +25,7 @@ public:
     static void onUSBData(const USBProtocolMsg &m);
 
     static void processSample(uint32_t pc);
-    static void task(void *p);
+    static void task();
 
     static ALWAYS_INLINE SubSystem subsystem() {
         return subsys;

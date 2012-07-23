@@ -29,7 +29,7 @@ int PortAudioOutDevice::portAudioCallback(const void *inputBuffer, void *outputB
      * Copy from the source AudioBuffer to our simulation-only supplemental
      * buffer which covers up the jitter in our virtual clock.
      */
-    ring.pull(self->buf);
+    ring.pull(AudioMixer::output);
 
     if (self->bufferFilling) {
         /*
@@ -82,10 +82,8 @@ int PortAudioOutDevice::portAudioCallback(const void *inputBuffer, void *outputB
     return paContinue;
 }
 
-void PortAudioOutDevice::init(AudioMixer *mixer)
+void PortAudioOutDevice::init()
 {
-    this->mixer = mixer;
-
     ASSERT(Pa_Initialize() == paNoError);
 
     PaDeviceIndex outDeviceIndex = Pa_GetDefaultOutputDevice();
@@ -108,8 +106,6 @@ void PortAudioOutDevice::init(AudioMixer *mixer)
         NULL                                // hostApiSpecificStreamInfo
     };
 
-    buf.init();
-
     PaError err = Pa_OpenStream(&outStream,
                                 NULL,                           //inputParameters,
                                 &outParams,
@@ -123,8 +119,6 @@ void PortAudioOutDevice::init(AudioMixer *mixer)
         LOG(("AUDIO: Couldn't open stream :(\n"));
         return;
     }
-
-    Tasks::setPending(Tasks::AudioPull, &buf);
 }
 
 void PortAudioOutDevice::start()

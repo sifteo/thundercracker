@@ -18,11 +18,15 @@ public:
     // Global sample rate for mixing and audio output
     static const unsigned SAMPLE_HZ = 16000;
 
+    // Type and size for output buffer, between mixer and audio device
+    typedef RingBuffer<512, int16_t> OutputBuffer;
+
     AudioMixer();
 
     void init();
 
     static AudioMixer instance;
+    static OutputBuffer output;
 
     static void test();
 
@@ -48,7 +52,7 @@ public:
         return playingChannelMask != 0;
     }
 
-    static void pullAudio(void *p);
+    static void pullAudio();
 
     ALWAYS_INLINE unsigned channelID(AudioChannelSlot *slot) {
         return slot - &channelSlots[0];

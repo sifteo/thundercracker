@@ -58,7 +58,7 @@ bool isPressed()
  * Wait for the button to be held long enough to be sure it's a shut down request,
  * then blink the green LED to indicate we're going away.
  */
-void task(void *p)
+void task()
 {
     /*
      * If the button has been released, we're done.

@@ -144,7 +144,7 @@ uint8_t UsbDevice::epINBuf[UsbHardware::MAX_PACKET];
     Called from within Tasks::work() to process usb OUT data on the
     main thread.
 */
-void UsbDevice::handleOUTData(void *p)
+void UsbDevice::handleOUTData()
 {
     Tasks::clearPending(Tasks::UsbOUT);
 
@@ -159,14 +159,6 @@ void UsbDevice::handleOUTData(void *p)
         USBProtocol::dispatch(m);
 #endif
     }
-}
-
-/*
-    Called from within Tasks::work() to handle a usb IN event on the main thread.
-    TBD whether this is actually helpful.
-*/
-void UsbDevice::handleINData(void *p) {
-    (void)p;
 }
 
 void UsbDevice::init() {

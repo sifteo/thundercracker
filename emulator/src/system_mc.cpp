@@ -56,11 +56,10 @@ bool SystemMC::init(System *sys)
     Crc32::init();
 
     if (!instance->sys->opt_headless) {
-        AudioOutDevice::init(&AudioMixer::instance);
+        AudioOutDevice::init();
         AudioOutDevice::start();
-    } else {
-        AudioOutDevice::initStub();
     }
+    Tasks::setPending(Tasks::AudioPull);
 
     return true;
 }

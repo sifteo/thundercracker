@@ -15,14 +15,12 @@ class PortAudioOutDevice
 {
 public:
     PortAudioOutDevice();
-    void init(AudioMixer *mixer);
+    void init();
     void start();
     void stop();
 
 private:
     PaStream *outStream;
-    AudioMixer *mixer;
-    AudioBuffer buf;
 
     /*
      * Upsampling amount: Open the host's audio device at this multiple of

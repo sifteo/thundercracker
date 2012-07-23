@@ -17,50 +17,36 @@
 
 uint32_t Tasks::pendingMask;
 
-// XXX: managing the list of tasks for different configurations
-// is starting to get a little unwieldy...
-Tasks::Task Tasks::TaskList[] = {
-    #ifdef SIFTEO_SIMULATOR
-    { 0 },
-    { 0 },
-    #else
-    { PowerManager::vbusDebounce, 0 },
-    { UsbDevice::handleOUTData, 0},
+/*
+ * Table of runnable tasks.
+ */
+
+static ALWAYS_INLINE void taskInvoke(unsigned id)
+{
+    switch (id) {
+
+    #ifndef SIFTEO_SIMULATOR
+        case Tasks::PowerManager:   return PowerManager::vbusDebounce();
+        case Tasks::UsbOUT:         return UsbDevice::handleOUTData();
     #endif
 
     #ifndef BOOTLOADER
-    { AudioMixer::pullAudio, 0},
-    { SvmDebugger::messageLoop, 0},
-    { CubeSlots::assetLoaderTask, 0 },
-    { HomeButton::task, 0 },
+        case Tasks::AudioPull:      return AudioMixer::pullAudio();
+        case Tasks::Debugger:       return SvmDebugger::messageLoop();
+        case Tasks::AssetLoader:    return CubeSlots::assetLoaderTask();
+        case Tasks::HomeButton:     return HomeButton::task();
     #endif
 
     #if !defined(SIFTEO_SIMULATOR) && !defined(BOOTLOADER)
-    { SampleProfiler::task, 0 },
+        case Tasks::Profiler:       return SampleProfiler::task();
     #endif
-};
+
+    }
+}
 
 void Tasks::init()
 {
     pendingMask = 0;
-}
-
-/*
- * Pend a given task handler to be run the next time we have time.
- */
-void Tasks::setPending(TaskID id, void* p)
-{
-    ASSERT((unsigned)id < arraysize(TaskList));
-    Task &task = TaskList[id];
-    ASSERT(task.callback != NULL);
-    task.param = p;
-
-    Atomic::SetLZ(pendingMask, id);
-}
-
-void Tasks::clearPending(TaskID id)
-{
-    Atomic::ClearLZ(pendingMask, id);
 }
 
 /*
@@ -76,9 +62,7 @@ void Tasks::work()
         // Must clear the bit before invoking the callback
         unsigned idx = Intrinsic::CLZ(mask);
         mask ^= Intrinsic::LZ(idx);
-
-        Task &task = TaskList[idx];
-        task.callback(task.param);
+        taskInvoke(idx);
     }
 }
 

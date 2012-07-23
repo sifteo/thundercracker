@@ -60,7 +60,7 @@ namespace CubeSlots {
     void paintCubes(_SYSCubeIDVector cv, bool wait=true);
     void finishCubes(_SYSCubeIDVector cv);
 
-    void assetLoaderTask(void *);
+    void assetLoaderTask();
     void fetchAssetLoaderData(_SYSAssetLoaderCube *lc);
 }
 

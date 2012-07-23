@@ -22,6 +22,8 @@
 
 
 AudioMixer AudioMixer::instance;
+AudioMixer::OutputBuffer AudioMixer::output;
+
 
 AudioMixer::AudioMixer() :
     trackerCallbackInterval(0),
@@ -31,6 +33,8 @@ AudioMixer::AudioMixer() :
 
 void AudioMixer::init()
 {
+    output.init();
+
     uint32_t mask = playingChannelMask;
     while (mask) {
         unsigned idx = Intrinsic::CLZ(mask);
@@ -96,7 +100,7 @@ ALWAYS_INLINE bool AudioMixer::mixAudio(int *buffer, uint32_t numFrames)
  * Called from within Tasks::work to mix audio on the main thread, to be
  * consumed by the audio out device.
  */
-void AudioMixer::pullAudio(void *p)
+void AudioMixer::pullAudio()
 {
     /*
      * Early out when we can quickly determine that no channels are playing
@@ -126,14 +130,6 @@ void AudioMixer::pullAudio(void *p)
     #endif
 
     /*
-     * Destination buffer, provided by the audio device.
-     * If no audio device is available (yet) this will be NULL.
-     */
-    AudioBuffer *buf = static_cast<AudioBuffer*>(p);
-    if (!buf && !headless)
-        return;
-
-    /*
      * In order to amortize the cost of iterating over channels, our
      * audio mixer operates on small arrays of samples at a time. We
      * give it a tiny buffer on the stack, which then flushes out
@@ -150,7 +146,7 @@ void AudioMixer::pullAudio(void *p)
      */
 
     int blockBuffer[32];
-    unsigned samplesLeft = buf->writeAvailable();
+    unsigned samplesLeft = output.writeAvailable();
 
     #ifdef SIFTEO_SIMULATOR
         if (headless) {
@@ -245,7 +241,7 @@ void AudioMixer::pullAudio(void *p)
             #endif
 
             if (!headless) {
-                buf->enqueue(sample16);
+                output.enqueue(sample16);
             }
         } while (--blockSize);
 

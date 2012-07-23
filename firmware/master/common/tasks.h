@@ -7,10 +7,12 @@
 #define TASKS_H
 
 #include "macros.h"
+#include "machine.h"
 
 class Tasks
 {
 public:
+    // Order defines task priority. Higher priorities come first.
     enum TaskID {
         PowerManager,
         UsbOUT,
@@ -36,8 +38,13 @@ public:
      * Call clearPending() to unregister your task. You can pend it again
      * at any time.
      */
-    static void setPending(TaskID id, void *p = 0);
-    static void clearPending(TaskID id);
+    static void setPending(TaskID id) {
+        Atomic::SetLZ(pendingMask, id);
+    }
+
+    static void clearPending(TaskID id) {
+        Atomic::ClearLZ(pendingMask, id);
+    }
 
     /*
      * Block until the next hardware event occurs.
@@ -52,15 +59,7 @@ public:
 #endif
 
 private:
-    typedef void (*TaskCallback)(void *);
-
     static uint32_t pendingMask;
-    struct Task {
-        TaskCallback callback;
-        void *param;
-    };
-
-    static Task TaskList[];
 };
 
 #endif // TASKS_H

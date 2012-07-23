@@ -41,7 +41,7 @@ void SampleProfiler::processSample(uint32_t pc)
     sampleBuf = (subsys << 28) | pc;
 }
 
-void SampleProfiler::task(void *p)
+void SampleProfiler::task()
 {
     USBProtocolMsg m(USBProtocol::Profiler);
     m.append((uint8_t*)&sampleBuf, sizeof sampleBuf);

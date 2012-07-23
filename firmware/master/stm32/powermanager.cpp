@@ -82,7 +82,7 @@ void PowerManager::onVBusEdge()
  * Provides for a little settling time from the last edge
  * on vbus before initiating the actual rail transition
  */
-void PowerManager::vbusDebounce(void* p)
+void PowerManager::vbusDebounce()
 {
     if (SysTime::ticks() < debounceDeadline)
         return;

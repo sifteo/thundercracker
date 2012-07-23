@@ -108,7 +108,7 @@ void CubeSlots::finishCubes(_SYSCubeIDVector cv)
     }
 }
 
-void CubeSlots::assetLoaderTask(void *)
+void CubeSlots::assetLoaderTask()
 {
     /*
      * Pump data from flash memory into the current _SYSAssetLoader as needed.

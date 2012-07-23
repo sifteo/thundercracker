@@ -132,7 +132,7 @@ int main()
     CubeConnector::init();
 
     Volume::init();
-    AudioOutDevice::init(&AudioMixer::instance);
+    AudioOutDevice::init();
     AudioOutDevice::start();
 
     PowerManager::beginVbusMonitor();

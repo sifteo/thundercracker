@@ -16,9 +16,9 @@
 static PortAudioOutDevice gPortAudio;
 
 
-void AudioOutDevice::init(AudioMixer *mixer)
+void AudioOutDevice::init()
 {
-    gPortAudio.init(mixer);
+    gPortAudio.init();
 }
 
 void AudioOutDevice::start()

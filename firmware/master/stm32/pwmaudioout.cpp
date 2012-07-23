@@ -67,19 +67,13 @@ namespace PwmAudioOut {
 
     static _SYSPseudoRandomState dither;
 
-    static AudioMixer *mixer;
-    static AudioBuffer buffer;
-
 }
 
-void AudioOutDevice::init(AudioMixer *mixer)
+void AudioOutDevice::init()
 {
     // TIM1 partial remap for complementary channels
     STATIC_ASSERT(&AUDIO_PWM_TIM == &TIM1);
     AFIO.MAPR |= (1 << 6);
-    
-    PwmAudioOut::mixer = mixer;
-    PwmAudioOut::buffer.init();
 
     // Initialize PRNG for audio dithering
     PRNG::init(&PwmAudioOut::dither, 0);
@@ -105,7 +99,7 @@ void AudioOutDevice::start()
     
     // Start clocking out samples
     PwmAudioOut::sampleTimer.enableUpdateIsr();
-    Tasks::setPending(Tasks::AudioPull, &PwmAudioOut::buffer);
+    Tasks::setPending(Tasks::AudioPull);
 }
 
 
@@ -158,8 +152,8 @@ IRQ_HANDLER ISR_FN(AUDIO_SAMPLE_TIM)()
     GPIOPin::Control ctrlA = GPIOPin::OUT_2MHZ;
     GPIOPin::Control ctrlB = GPIOPin::OUT_2MHZ;
 
-    if (!PwmAudioOut::buffer.empty()) {
-        int sample = PwmAudioOut::buffer.dequeue();
+    if (!AudioMixer::output.empty()) {
+        int sample = AudioMixer::output.dequeue();
 
         /*
          * We've now extracted the sign, and the remaining sample is a 15-bit
