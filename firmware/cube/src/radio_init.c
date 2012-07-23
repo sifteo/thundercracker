@@ -153,25 +153,7 @@ void radio_set_idle_addr(void)
      * This function disables the radio receiver if it's enabled, and enables
      * it again before leaving.
      *
-     * Algorithm:
-     *
-     *   1. Start by CRC'ing the first three bytes of the HWID
-     *   2. Next, for each of the remaining five bytes:
-     *      a. CRC this byte of the HWID
-     *      b. If the result is one of the disallowed values (00, FF, AA, 55)
-     *         repeatedly CRC a zero byte until the value is no longer disallowed.
-     *         With a proper generator polynomial this loop is guaranteed to
-     *         terminate.
-     *      c. Store the current 8-bit CRC state as an address byte
-     *   3. CRC a single zero byte
-     *   4. If the low 7 bits of the result are greater than 125, repeatedly
-     *      CRC additional zero bytes until it is <= 125.
-     *   5. Take the low 7 bits of the current CRC state as our channel number.
-     *
-     * If idle_hop is set:
-     *
-     *   1. Add 62 to the address
-     *   2. If it's greater than 125, subtract 126
+     * This algorithm is described by protocol.h.
      */
 
     radio_rx_disable();
@@ -182,9 +164,9 @@ void radio_set_idle_addr(void)
         mov     _CCPDATIB, #0x84    ; Generator polynomial (See tools/gfm.py)
         mov     dptr, #PARAMS_HWID  ; Point to stored 64-bit HWID
 
-        ; Step (1), feed three bytes through CRC
+        ; Step (1), feed two bytes through CRC
 
-        mov     r0, #3
+        mov     r0, #2
 1$:     movx    a, @dptr            ; CRC next byte of HWID
         inc     dptr
         xrl     a, _CCPDATO
@@ -197,12 +179,12 @@ void radio_set_idle_addr(void)
         mov     a, #(RF_CMD_W_REGISTER | RF_REG_RX_ADDR_P0)
         acall   _radio_tx_sync
 
-        ; Step (2), use remaining 5 bytes to generate RX address
+        ; Step (2), use next 5 bytes to generate RX address
 
         mov     r0, #5
 2$:     movx    a, @dptr            ; CRC next byte of HWID
         inc     dptr
-        sjmp    4$                  ; (skip zero)
+        sjmp    4$
 3$:     mov     a, #0xFF            ; Retry, CRC a 0xFF byte
 4$:     xrl     a, _CCPDATO
         mov     _CCPDATIA, a
@@ -228,24 +210,28 @@ void radio_set_idle_addr(void)
 
         ; Step (3), prepare channel byte
 
-5$:     mov     a, _CCPDATO
-        xrl     a, #0xFF
+        movx    a, @dptr            ; CRC last byte of HWID
+        inc     dptr
+        sjmp    7$
+5$:     mov     a, #0xFF            ; Retry, CRC a 0xFF byte
+7$:     xrl     a, _CCPDATO
         mov     _CCPDATIA, a
+
         anl     a, #0x7F            ; Only examine low 7 bits
         mov     r0, a               ; Save channel
-        add     a, #(256 - 126)     ; Is it 126 or greater?
-        jc      5$                  ;    (4) Try again
+        add     a, #(255 - MAX_RF_CHANNEL)
+        jc      5$
 
         ; Handle idle_hop, rotate our channel by 62.
 
         jnb     _radio_idle_hop, 6$
 
-        mov     a, r0               ; Add 62 to the channel
-        add     a, #62
+        mov     a, r0
+        add     a, #(MAX_RF_CHANNEL / 2)
         mov     r0, a               ; Assume this channel is good
-        add     a, #(256 - 126)     ;   Did it overflow?
-        jnc     6$                  ; No, it was good. Keep using that.
-        mov     r0, a               ; Yes, it overflowed. Use the version we subtracted 126 from
+        add     a, #(255 - MAX_RF_CHANNEL)
+        jnc     6$                  ; It was good. Keep using that.
+        mov     r0, a               ; It overflowed. Use the version we adjusted
 
 6$:     mov     a, r0
         acall   _radio_tx_sync      ; Write channel
@@ -279,9 +265,10 @@ void radio_set_pairing_addr()
     __asm
         clr     _RF_CSN
         mov     a, #(RF_CMD_W_REGISTER | RF_REG_RF_CH)
-        mov     _CCPDATIB, #0x1C
+        mov     _CCPDATIB, #RF_PAIRING_GFM
         acall   _radio_tx_sync
         mov     a, _CCPDATO
+        anl     a, #RF_PAIRING_MASK
         acall   _radio_tx_sync
         setb    _RF_CSN
     __endasm ;

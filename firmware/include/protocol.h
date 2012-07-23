@@ -99,17 +99,17 @@
  *
  * This is based on the Galois Field CRC we use for flash CRCs:
  *
- *   1. Start by CRC'ing the first three bytes of the HWID
- *   2. Next, for each of the remaining five bytes:
+ *   1. Start by CRC'ing the first two bytes of the HWID
+ *   2. Next, for each of the next five bytes:
  *      a. CRC this byte of the HWID
  *      b. If the result is one of the disallowed values (00, FF, AA, 55)
  *         repeatedly CRC a 0xFF byte until the value is no longer disallowed.
  *         With a proper generator polynomial this loop is guaranteed to
  *         terminate.
  *      c. Store the current 8-bit CRC state as an address byte
- *   3. CRC a single 0xFF byte
- *   4. If the low 7 bits of the result are greater than 125, repeatedly
- *      CRC additional 0xFF bytes until it is <= 125.
+ *   3. CRC the last byte of the HWID
+ *   4. If the low 7 bits of the result are greater than MAX_RF_CHANNEL, repeatedly
+ *      CRC additional 0xFF bytes until it is <= MAX_RF_CHANNEL.
  *   5. Take the low 7 bits of the current CRC state as our channel number.
  *
  * This scheme is designed to preserve the entropy in our HWID, to be
@@ -127,8 +127,8 @@
  * we flip a "channel toggle" bit and reassign the idle channel address.
  * When this toggle bit is 1, the address (after step 5 above) is modified:
  *
- *    1. Add 62 to the address
- *    2. If it's greater than 125, subtract 126
+ *    1. Add (MAX_RF_CHANNEL / 2) to the address
+ *    2. If it's greater than MAX_RF_CHANNEL, subtract (MAX_RF_CHANNEL + 1)
  *
  *  Pairing Channel / Address
  * ---------------------------
@@ -160,15 +160,27 @@
 #define RF_PAIRING_ADDRESS      { 0xec, 0x4f, 0xa9, 0x52, 0x18 }
 
 /*
+ * Max supported channel in the nRF is 125, but the max FCC legal channel is 83.
+ * Note that our RF_PAIRING_CHANNELS must fall within this limit too.
+ */
+#define MAX_RF_CHANNEL          83
+
+/*
  * The channel is derived from the neighbor ID (24-31) via Galois Field
- * multiplication by the constant 0x1C, using the 8-bit AES Galois Field.
+ * multiplication by the constant 0x0C, using the 8-bit AES Galois Field,
+ * followed by a bitwise AND with 0x7F.
+ *
  * This is efficient to implement on the nRF using its GF multiplication
  * accelerator. Elsewhere, we can use a simple lookup table.
  *
- * IDs 24 through 31 correspond with channels:
+ * This transformation has some nice properties:
+ *   - It spans 52 MHz, which is a significant fraction of the available bandwidth
+ *   - No channel is closer than 4 MHz to another.
  */
 
-#define RF_PAIRING_CHANNELS     { 59, 39, 3, 31, 75, 87, 115, 111 }
+#define RF_PAIRING_GFM          0x0C
+#define RF_PAIRING_MASK         0x7F
+#define RF_PAIRING_CHANNELS     { 32, 44, 56, 52, 16, 28, 8, 4 }
 
 
 /**************************************************************************

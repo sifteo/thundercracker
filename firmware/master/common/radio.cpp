@@ -90,6 +90,7 @@ void RadioManager::produce(PacketTransmission &tx)
         // Does this producer even want to transmit right now?
         if (dispatchProduce(id, tx)) {
             // Yes, we're transmitting a packet! Update state and exit.
+            ASSERT(tx.dest->channel <= MAX_RF_CHANNEL);
             lastPID[id] = nextPID;
             nextPID = (nextPID + 1) & PID_MASK;
             schedule.words[0] |= deferred.words[0];

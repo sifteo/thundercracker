@@ -3,6 +3,7 @@
  * Copyright <c> 2012 Sifteo, Inc. All rights reserved.
  */
 
+#include <protocol.h>
 #include "radioaddrfactory.h"
 
 
@@ -29,7 +30,7 @@ const uint8_t RadioAddrFactory::gf84[0x100] = {
 
 void RadioAddrFactory::random(RadioAddress &addr, _SYSPseudoRandomState &prng)
 {
-    addr.channel = PRNG::valueBounded(&prng, RadioAddress::MAX_CHANNEL);
+    addr.channel = PRNG::valueBounded(&prng, MAX_RF_CHANNEL);
 
     for (unsigned i = 0; i < arraysize(addr.id); ++i) {
         unsigned value = PRNG::valueBounded(&prng, 255 - 4) + 1;
@@ -45,13 +46,12 @@ void RadioAddrFactory::fromHardwareID(RadioAddress &addr, uint64_t hwid)
 {
     uint8_t reg;
 
-    // Feed first three bytes into CRC, to collect entropy
+    // Feed first two bytes into CRC, to collect entropy
     reg =      0xB4 ^ hwid; hwid >>= 8;
-    reg = gf84[reg] ^ hwid; hwid >>= 8;
     reg = gf84[reg] ^ hwid; hwid >>= 8;
 
     for (unsigned i = 0; i < 5; ++i) {
-        // Each of the other five bytes clock out an address byte
+        // Each of the next five bytes clock out an address byte
         reg = gf84[reg] ^ hwid; hwid >>= 8;
 
         // Explicitly avoid disallowed values
@@ -61,15 +61,19 @@ void RadioAddrFactory::fromHardwareID(RadioAddress &addr, uint64_t hwid)
         addr.id[i] = reg;
     }
 
-    // Pick a channel <= 125
-    do {
-        reg = ~gf84[reg];
+    // Pick a legal channel, using the last entropy byte
+    reg = gf84[reg] ^ hwid; hwid >>= 8;
+
+    while (1) {
         addr.channel = reg & 0x7F;
-    } while (addr.channel > 125);
+        if (addr.channel <= MAX_RF_CHANNEL)
+            break;
+        reg = ~gf84[reg];
+    }
 }
 
 void RadioAddrFactory::channelToggle(RadioAddress &addr)
 {
-    if ((addr.channel += 62) > 125)
-        addr.channel -= 126;
+    if ((addr.channel += MAX_RF_CHANNEL / 2) > MAX_RF_CHANNEL)
+        addr.channel -= MAX_RF_CHANNEL + 1;
 }

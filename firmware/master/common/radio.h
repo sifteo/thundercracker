@@ -24,8 +24,6 @@ struct RadioAddress {
     uint8_t channel;
     uint8_t id[5];
 
-    static const unsigned MAX_CHANNEL = 125;
-
     uint64_t pack() const {
         uint64_t addr = 0;
         for (int i = 4; i >= 0; i--)
