@@ -34,6 +34,12 @@ void disconnect(void*, unsigned cid)
 
 void main()
 {
+    AudioTracker::play(UISound_Startup);
+
+    // XXX: Also mostly just for testing.
+    Events::cubeConnect.set(connect);
+    Events::cubeDisconnect.set(disconnect);
+
     /// XXX: Huge hack for testing... just wait for three cubes to connect cube.
     //       The launcher should always handle cubes arriving and departing dynamically.
     while (!CubeSet::connected().test(2)) {
@@ -42,12 +48,6 @@ void main()
 
     // In simulation, if exactly one game is installed, run it immediately.
     ELFMainMenuItem::autoexec();
-
-    AudioTracker::play(UISound_Startup);
-
-    // XXX: Also mostly just for testing.
-    Events::cubeConnect.set(connect);
-    Events::cubeDisconnect.set(disconnect);
 
     while (1) {
         static MainMenu menu;
