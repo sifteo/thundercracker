@@ -237,21 +237,33 @@ bool CubeConnector::popReconnectQueue()
 void CubeConnector::newCubeRecord()
 {
     /*
-     * Set cubeRecord based on the least recently used ID,
-     * in order to recycle information about the cube we've
-     * paired least recently.
+     * Set cubeRecord based on the least recently used ID
+     * which isn't currently connected.
+     *
+     * Recycle the existing slot, and write our new pairing
+     * data there. In the event every slot is full, we set
+     * cubeRecord arbitrarily without udpating hwid[],
+     * so that the pairing will fail.
      */
 
-    // Remember to delete old SysLFS information about this cube
-    unsigned index = savedPairingMRU.getOldest();
-    recycleQueue.atomicMark(index);
-    taskWork.atomicMark(TaskRecyclePairings);
-    Tasks::trigger(Tasks::CubeConnector);
+    unsigned index;
+    for (int i = SysLFS::NUM_PAIRINGS - 1; i >= 0; --i) {
+        index = savedPairingMRU.rank[i];
+        if (!CubeSlots::pairConnected.test(index)) {
 
-    // Write the new HWID
-    memcpy(&savedPairingID.hwid[index], hwid, HWID_LEN);
-    taskWork.atomicMark(TaskSavePairingID);
-    Tasks::trigger(Tasks::CubeConnector);
+            // Remember to delete old SysLFS information about this cube
+            recycleQueue.atomicMark(index);
+            taskWork.atomicMark(TaskRecyclePairings);
+            Tasks::trigger(Tasks::CubeConnector);
+
+            // Write the new HWID
+            memcpy(&savedPairingID.hwid[index], hwid, HWID_LEN);
+            taskWork.atomicMark(TaskSavePairingID);
+            Tasks::trigger(Tasks::CubeConnector);
+
+            break;
+        }
+    }
 
     cubeRecord = SysLFS::Key(SysLFS::kCubeBase + index);
 }

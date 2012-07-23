@@ -88,10 +88,6 @@ namespace SysLFS {
         void init();
         void load();
         bool access(unsigned index);
-
-        unsigned getOldest() const {
-            return rank[NUM_PAIRINGS - 1];
-        };
     };
 
     /*
