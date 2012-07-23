@@ -69,6 +69,11 @@ void task(void *p)
         green.setHigh();
         return;
     }
+    
+    //Returns from the task if the button is being held while connected to USB
+    if ( PowerManager::vbus.isHigh() ) {
+        return;
+    }
 
     if (SysTime::ticks() < shutdownDeadline)
         return;

@@ -1,6 +1,6 @@
 import sys, time, inspect
 import usb.core, usb.util, serial
-import mastertests, jigtests
+import mastertests, jigtests, cubetests
 
 IN_EP = 0x81
 OUT_EP = 0x1
@@ -13,6 +13,7 @@ class TestResponse(object):
     def __init__(self, opcode, payload):
         self.opcode = opcode
         self.payload = payload
+        self.length = len(payload)
 
 class SerialDevice(object):
     def __init__(self, comport):
@@ -49,7 +50,7 @@ class UsbDevice(object):
         self._dev.write(OUT_EP, bytes)
 
     def rxPacket(self, timeout = 250):
-        payload = self._dev.read(IN_EP, UsbDevice.MAX_PACKET, timeout = timeout)
+        payload = self._dev.read(IN_EP, UsbDevice.MAX_PACKET, None ,timeout = timeout)
         return TestResponse(payload[0], payload[1:])
 
 # simple manager to lazily access devices
