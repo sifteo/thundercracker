@@ -49,6 +49,7 @@ void MainMenu::init()
 
 void MainMenu::run()
 {
+    // Wait for at least one cube to be connected, since we need that to display the menu.
     while (getNumCubes(CubeSet::connected()) < 1) {
         System::yield();
     }

@@ -8,8 +8,8 @@
 #include "shared.h"
 #include "assets.gen.h"
 #include <sifteo.h>
-using namespace Sifteo;
 
+using namespace Sifteo;
 
 static const unsigned kMaxBatteryLevel = 256;
 static const float kBatteryLevelLow = 0.25f;
@@ -50,13 +50,13 @@ static unsigned getFreeBlocks()
     return 128;
 }
 
-float getBatteryLevelMaster() {
+static float getBatteryLevelMaster() {
     // XXX: replace with real master battery API
     //return float(CubeID(0).batteryLevel()) / float(kMaxBatteryLevel);
     return 0.9f; // XXX: test code
 }
 
-float getBatteryLevelCube(CubeID cube) {
+static float getBatteryLevelCube(CubeID cube) {
     // XXX: put this in once batteryLevel() returns the real values
     //return float(cube.batteryLevel()) / float(kMaxBatteryLevel);
     switch (cube) { // XXX: test code
