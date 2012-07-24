@@ -1,7 +1,7 @@
 -- Launcher sounds
 
---Sound_BatteryLowBase = sound{ "sounds/battLowBase.raw" }
---Sound_BatteryLowCube = sound{ "sounds/battLowCube.raw" }
+Sound_BatteryLowBase = sound{ "sounds/battLowBase.raw" }
+Sound_BatteryLowCube = sound{ "sounds/battLowCube.raw" }
 Sound_ConfirmClick = sound{ "sounds/confirmClick.raw" }
 Sound_NonPossibleAction = sound{ "sounds/nonPossibleAction.raw" }
 Sound_TiltClick = sound{ "sounds/tiltClick.raw" }
