@@ -141,7 +141,8 @@ CubeSet MainMenu::cubes()
 
 void MainMenu::cubeConnect(unsigned cid)
 {
-    AudioTracker::play(UISound_ConnectBase);
+    AudioTracker::play(Tracker_CubeConnect);
+
     Shared::video[cid].attach(cid);
 
     if (cid != mainCube) {
@@ -153,7 +154,7 @@ void MainMenu::cubeConnect(unsigned cid)
 
 void MainMenu::cubeDisconnect(unsigned cid)
 {
-    AudioTracker::play(UISound_CubeLost);
+    AudioTracker::play(Tracker_CubeDisconnect);
 }
 
 void MainMenu::updateSound(Sifteo::Menu &menu)
