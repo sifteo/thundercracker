@@ -242,21 +242,21 @@ void MainMenu::arriveItem(unsigned index)
 {
     ASSERT(index < arraysize(items));
     MainMenuItem *item = items[index];
-    item->arrive(mainCube);
+    item->arrive();
 }
 
 void MainMenu::departItem(unsigned index)
 {
     ASSERT(index < arraysize(items));
     MainMenuItem *item = items[index];
-    item->depart(mainCube);
+    item->depart();
 }
 
 void MainMenu::prepaintItem(unsigned index)
 {
     ASSERT(index < arraysize(items));
     MainMenuItem *item = items[index];
-    item->prepaint(mainCube);
+    item->prepaint();
 }
 
 void MainMenu::loadAssets()

@@ -12,6 +12,7 @@ using namespace Sifteo;
 
 
 static const unsigned kMaxBatteryLevel = 256;
+static const float kBatteryLevelLow = 0.25f;
 
 template<typename T>
 static void drawBattery(T &canvas, float batteryLevel, int levelCounter, Int2 pos)
@@ -53,14 +54,15 @@ static unsigned getFreeBlocks()
 }
 
 float getBatteryLevelMaster() {
+    // XXX: replace with real master battery API
     //return float(CubeID(0).batteryLevel()) / float(kMaxBatteryLevel);
-    return 0.9f; // XXX: replace with real master battery API
+    return 0.9f; // XXX: test code
 }
 
 float getBatteryLevelCube(CubeID cube) {
     // XXX: put this in once batteryLevel() returns the real values
     //return float(cube.batteryLevel()) / float(kMaxBatteryLevel);
-    switch (cube) {
+    switch (cube) { // XXX: test code
         default:
         case 0: return 0.1f;
         case 1: return 0.5f;
@@ -74,7 +76,7 @@ MainMenuItem::Flags StatusApplet::getAssets(MenuItem &assets, MappedVolume &)
     icon.init();
     icon.image(vec(0,0), Icon_Battery);
 
-    drawBattery(icon, getBatteryLevelCube(CubeID(0)), levelCounter, vec(1, 2));
+    drawBattery(icon, getBatteryLevelCube(*CubeSet::connected().begin()), levelCounter, vec(1, 2));
     drawText(icon, "Buddy", vec(5, 2));
     
     drawBattery(icon, getBatteryLevelMaster(), levelCounter, vec(1, 5));
@@ -96,23 +98,24 @@ void StatusApplet::exec()
 {
 }
 
-void StatusApplet::arrive(CubeID mainCube)
+void StatusApplet::arrive()
 {
     levelCounter = 0;
 
+    // Draw Icon Background
     for (CubeID cube : CubeSet::connected()) {
-        if (cube != mainCube) {
+        if (cube != *CubeSet::connected().begin()) {
             auto &vid = Shared::video[cube];
             vid.bg0.image(vec(2, 2), Icon_Battery);
         }
     }
 
-    // Low battery SFX
-    if (getBatteryLevelMaster() <= 0.25f) {
+    // Low Battery SFX
+    if (getBatteryLevelMaster() <= kBatteryLevelLow) {
         AudioChannel(0).play(Sound_BatteryLowBase);
     } else {
         for (CubeID cube : CubeSet::connected()) {
-            if (getBatteryLevelCube(cube) <= 0.25f) {
+            if (getBatteryLevelCube(cube) <= kBatteryLevelLow) {
                 AudioChannel(0).play(Sound_BatteryLowCube);
                 break;
             }
@@ -120,11 +123,11 @@ void StatusApplet::arrive(CubeID mainCube)
     }
 }
 
-void StatusApplet::depart(CubeID mainCube)
+void StatusApplet::depart()
 {
     // Display a background on all other cubes
     for (CubeID cube : CubeSet::connected())
-        if (cube != mainCube) {
+        if (cube != *CubeSet::connected().begin()) {
             auto &vid = Shared::video[cube];
             vid.initMode(BG0);
             vid.attach(cube);
@@ -132,7 +135,7 @@ void StatusApplet::depart(CubeID mainCube)
         }
 }
 
-void StatusApplet::prepaint(CubeID mainCube)
+void StatusApplet::prepaint()
 {
     static bool frame = true;
     if (frame) {
@@ -144,7 +147,7 @@ void StatusApplet::prepaint(CubeID mainCube)
     frame = !frame;
 
     for (CubeID cube : CubeSet::connected()) {
-        if (cube != mainCube) {
+        if (cube != *CubeSet::connected().begin()) {
             auto &vid = Shared::video[cube];
             vid.bg0.image(vec(2,2), Icon_Battery);
             drawBattery(vid.bg0, getBatteryLevelCube(cube), levelCounter, vec(4, 4));

@@ -17,9 +17,9 @@ public:
     virtual bool autoRefreshIcon() { return true; }
 
     virtual void exec();
-    virtual void arrive(Sifteo::CubeID mainCube);
-    virtual void depart(Sifteo::CubeID mainCube);
-    virtual void prepaint(Sifteo::CubeID mainCube);
+    virtual void arrive();
+    virtual void depart();
+    virtual void prepaint();
 
     static void add(MainMenu &menu);
 
