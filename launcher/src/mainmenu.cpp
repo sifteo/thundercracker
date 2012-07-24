@@ -75,10 +75,10 @@ void MainMenu::eventLoop(Menu &m)
     struct MenuEvent e;
     while (m.pollEvent(&e)) {
 
+        // Load any cubes that have connected but have not yet been loaded
         if (getNumCubes(cubesToLoad) > 0) {
             loadAssets();
         }
-
         updateSound(m);
         updateMusic();
         updateIcons(m);
