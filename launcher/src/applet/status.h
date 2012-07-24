@@ -25,5 +25,4 @@ public:
 
 private:
     Sifteo::RelocatableTileBuffer<12,12> icon;
-    unsigned levelCounter;
 };

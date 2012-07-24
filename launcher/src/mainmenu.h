@@ -63,13 +63,14 @@ private:
     void cubeConnect(unsigned cid);
     void cubeDisconnect(unsigned cid);
 
+    void updateAssets();
     void updateSound(Sifteo::Menu &menu);
     void updateMusic();
     void updateIcons(Sifteo::Menu &menu);
 
     bool canLaunchItem(unsigned index);
     void toggleCubeRangeAlert(unsigned index, Sifteo::Menu &menu);
-    void checkForAlertDismiss(Sifteo::Menu &menu);
+    void updateAlerts(Sifteo::Menu &menu);
 
     // Note: these functions are marked NOINLINE as a cache usage optimization.
     NOINLINE void loadAssets();

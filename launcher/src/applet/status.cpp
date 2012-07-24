@@ -15,10 +15,9 @@ static const unsigned kMaxBatteryLevel = 256;
 static const float kBatteryLevelLow = 0.25f;
 
 template<typename T>
-static void drawBattery(T &canvas, float batteryLevel, int levelCounter, Int2 pos)
+static void drawBattery(T &canvas, float batteryLevel, Int2 pos)
 {
     unsigned numBatteryLevels = ceil(batteryLevel * float(BatteryBars.numFrames()));
-    numBatteryLevels = MIN(numBatteryLevels, levelCounter);
     
     canvas.image(vec(pos.x-1, pos.y-1), Battery);
 
@@ -74,10 +73,10 @@ MainMenuItem::Flags StatusApplet::getAssets(MenuItem &assets, MappedVolume &)
     icon.init();
     icon.image(vec(0,0), Icon_Battery);
 
-    drawBattery(icon, getBatteryLevelCube(*CubeSet::connected().begin()), levelCounter, vec(1, 2));
+    drawBattery(icon, getBatteryLevelCube(*CubeSet::connected().begin()), vec(1, 2));
     drawText(icon, "Buddy", vec(5, 2));
     
-    drawBattery(icon, getBatteryLevelMaster(), levelCounter, vec(1, 5));
+    drawBattery(icon, getBatteryLevelMaster(), vec(1, 5));
     drawText(icon, "Master", vec(5, 5));
 
     String<8> bufferCubes;
@@ -98,8 +97,6 @@ void StatusApplet::exec()
 
 void StatusApplet::arrive()
 {
-    levelCounter = 0;
-
     // Draw Icon Background
     for (CubeID cube : CubeSet::connected()) {
         if (cube != *CubeSet::connected().begin()) {
@@ -136,20 +133,11 @@ void StatusApplet::depart()
 
 void StatusApplet::prepaint()
 {
-    static bool frame = true;
-    if (frame) {
-        if (levelCounter < BatteryBars.numFrames())
-        {
-            ++levelCounter;
-        }
-    }
-    frame = !frame;
-
     for (CubeID cube : CubeSet::connected()) {
         if (cube != *CubeSet::connected().begin()) {
             auto &vid = Shared::video[cube];
             vid.bg0.image(vec(2,2), Icon_Battery);
-            drawBattery(vid.bg0, getBatteryLevelCube(cube), levelCounter, vec(4, 4));
+            drawBattery(vid.bg0, getBatteryLevelCube(cube), vec(4, 4));
         }
     }
 }

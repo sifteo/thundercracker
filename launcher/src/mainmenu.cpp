@@ -49,8 +49,6 @@ void MainMenu::init()
 
 void MainMenu::run()
 {
-    // XXX: we should be able to start with 0 cubes, add the first one and have
-    // the launcher still work.
     while (getNumCubes(CubeSet::connected()) < 1) {
         System::yield();
     }
@@ -60,7 +58,7 @@ void MainMenu::run()
 
     // Load our own local assets plus all icon assets
     cubesToLoad = CubeSet::connected();
-    loadAssets();
+    updateAssets();
 
     // Run the menu on our main cube
     Menu m(Shared::video[mainCube], &menuAssets, &menuItems[0]);
@@ -75,14 +73,11 @@ void MainMenu::eventLoop(Menu &m)
     struct MenuEvent e;
     while (m.pollEvent(&e)) {
 
-        // Load any cubes that have connected but have not yet been loaded
-        if (getNumCubes(cubesToLoad) > 0) {
-            loadAssets();
-        }
+        updateAssets();
         updateSound(m);
         updateMusic();
         updateIcons(m);
-        checkForAlertDismiss(m);
+        updateAlerts(m);
 
         bool performDefault = true;
 
@@ -150,6 +145,13 @@ void MainMenu::cubeDisconnect(unsigned cid)
     AudioTracker::play(Tracker_CubeDisconnect);
 
     cubesToLoad.clear(cid);
+}
+
+void MainMenu::updateAssets()
+{
+    if (getNumCubes(cubesToLoad) > 0) {
+        loadAssets();
+    }
 }
 
 void MainMenu::updateSound(Sifteo::Menu &menu)
@@ -237,7 +239,7 @@ void MainMenu::toggleCubeRangeAlert(unsigned index, Sifteo::Menu &menu)
     }
 }
 
-void MainMenu::checkForAlertDismiss(Sifteo::Menu &menu)
+void MainMenu::updateAlerts(Sifteo::Menu &menu)
 {
     if (cubeRangeSavedIcon != NULL && itemIndexCurrent != -1) {
         if (mainCube.isShaking() || mainCube.tilt().x != 0 || mainCube.tilt().y != 0) {
