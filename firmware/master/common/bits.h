@@ -54,6 +54,36 @@ public:
         }
     }
 
+    /// Mark (set to 1) a single bit, using atomic operations
+    void atomicMark(unsigned index)
+    {
+        const unsigned NUM_WORDS = (tSize + 31) / 32;
+
+        ASSERT(index < tSize);
+        if (NUM_WORDS > 1) {
+            unsigned word = index >> 5;
+            unsigned bit = index & 31;
+            Atomic::Or(words[word], Intrinsic::LZ(bit));
+        } else {
+            Atomic::Or(words[0], Intrinsic::LZ(index));
+        }
+    }
+
+    /// Clear (set to 0) a single bit, using atomic operations
+    void atomicClear(unsigned index)
+    {
+        const unsigned NUM_WORDS = (tSize + 31) / 32;
+
+        ASSERT(index < tSize);
+        if (NUM_WORDS > 1) {
+            unsigned word = index >> 5;
+            unsigned bit = index & 31;
+            Atomic::And(words[word], ~Intrinsic::LZ(bit));
+        } else {
+            Atomic::And(words[0], ~Intrinsic::LZ(index));
+        }
+    }
+
     /// Mark (set to 1) all bits in the vector
     void mark()
     {

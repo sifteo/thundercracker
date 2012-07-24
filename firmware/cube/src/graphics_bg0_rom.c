@@ -302,8 +302,8 @@ static void vm_bg0_rom_line(void)
     __asm
         mov     r4, _x_bg0_first_w
         mov     r5, _x_bg0_last_w
-        lcall   _vm_bg0_rom_next_tile
-        lcall   _vm_bg0_rom_tile_partial
+        acall   _vm_bg0_rom_next_tile
+        acall   _vm_bg0_rom_tile_partial
     __endasm ;
 
     /*
@@ -321,7 +321,7 @@ static void vm_bg0_rom_line(void)
         mov     r5, #15
 2$:
 
-        lcall   _vm_bg0_rom_next_tile
+        acall   _vm_bg0_rom_next_tile
         mov     psw, #0
         mov     _DPL1, r6
         mov     _DPH1, r7
@@ -342,7 +342,7 @@ static void vm_bg0_rom_line(void)
         mov     psw, #0                 ; Restore bank
         mov     _DPS, #0                ; Must restore DPTR
         djnz    r5, 2$                  ; Next tile
-        ljmp    99$
+        ajmp    99$
 
         ; ---- 4-color mode
 
@@ -418,9 +418,9 @@ static void vm_bg0_rom_line(void)
         rrc     a
         jc      37$
 27$:    ASM_ADDR_INC4()
-        ljmp    8$
+        ajmp    8$
 
-14$:    ljmp    15$                     ; Longer jump to blank-tile loop
+14$:    ajmp    15$                     ; Longer jump to blank-tile loop
 
 30$:    PIXEL_FROM_REGS(r2,r3)          ; Index 1 ladder
         rrc     a
@@ -444,25 +444,25 @@ static void vm_bg0_rom_line(void)
         rrc     a
         jnc     47$
 37$:    PIXEL_FROM_REGS(r2,r3)
-        ljmp    8$
+        ajmp    8$
 
 41$:    mov     BUS_PORT, r0            ; Transition 1 -> 0 ladder
-        ljmp    21$
+        ajmp    21$
 42$:    mov     BUS_PORT, r0
-        ljmp    22$
+        ajmp    22$
 43$:    mov     BUS_PORT, r0
-        ljmp    23$
+        ajmp    23$
 44$:    mov     BUS_PORT, r0
-        ljmp    24$
+        ajmp    24$
 45$:    mov     BUS_PORT, r0
-        ljmp    25$
+        ajmp    25$
 46$:    mov     BUS_PORT, r0
-        ljmp    26$
+        ajmp    26$
 47$:    mov     BUS_PORT, r0
-        ljmp    27$
+        ajmp    27$
 
 15$:    lcall   _addr_inc32     ; Blank byte, no comparisons
-        ljmp    8$
+        ajmp    8$
 
 99$:
     __endasm ;
@@ -475,8 +475,8 @@ static void vm_bg0_rom_line(void)
         inc     r1              ; Negate the x-wrap check for this tile
         mov     r4, a           ; Width computed earlier
         mov     r5, #0          ; No skipped bits
-        lcall   _vm_bg0_rom_next_tile
-        lcall   _vm_bg0_rom_tile_partial
+        acall   _vm_bg0_rom_next_tile
+        acall   _vm_bg0_rom_tile_partial
 1$:
     __endasm ;
 }
@@ -492,6 +492,11 @@ void vm_bg0_rom(void) __naked
         vm_bg0_rom_line();
         vm_bg0_next();
     } while (--y);    
+
+    // Our prologue code is reused by vm_solid
+    __asm
+lcd_end_frame_and_graphics_ret::
+    __endasm ;
 
     lcd_end_frame();
     GRAPHICS_RET();

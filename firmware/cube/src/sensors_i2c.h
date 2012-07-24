@@ -19,15 +19,11 @@
  */
 
 #if HWREV >= 4
-
-    #define ACCEL_ADDR_TX           0x32    // 00110010 - SDO is pulled HIGH (internally)
-    #define ACCEL_ADDR_RX           0x33    // 00110011 - SDO is pulled HIGH (internally)
-
+    #define ACCEL_ADDR_TX       0x32    // 00110010 - SDO is pulled HIGH (internally)
+    #define ACCEL_ADDR_RX       0x33    // 00110011 - SDO is pulled HIGH (internally)
 #else
-
-    #define ACCEL_ADDR_TX           0x30    // 00110000 - SDO is tied LOW
-    #define ACCEL_ADDR_RX           0x31    // 00110001 - SDO is tied LOW
-
+    #define ACCEL_ADDR_TX       0x30    // 00110000 - SDO is tied LOW
+    #define ACCEL_ADDR_RX       0x31    // 00110001 - SDO is tied LOW
 #endif
 
 #define ACCEL_CTRL_REG1         0x20
@@ -53,9 +49,13 @@
 #define ACCEL_INT1_DUR          0x33
 #define ACCEL_DUR_INIT          0x0A    // duration (@50HZ ODR -> LSB = 20ms)
 
-#define ACCEL_START_READ_X      0xA8    // (AUTO_INC_BIT | OUT_X_L)
+#define ACCEL_TEMP_CFG_REG      0x1f    // Temperature and ADC config
+#define ACCEL_TEMP_CFG_INIT     0x80    //   ADC on, Temperature sensor off
 
-extern static void i2c_tx(const __code uint8_t *);
+#define ACCEL_START_READ_X      0xA8    // (AUTO_INC_BIT | OUT_X_L)
+#define ACCEL_START_READ_BAT    0x88    // (AUTO_INC_BIT | OUT_1_L)
+
+extern static void i2c_accel_tx(const __code uint8_t *);
 
 /*
  * Factory test hardware
@@ -63,5 +63,38 @@ extern static void i2c_tx(const __code uint8_t *);
 
 #define FACTORY_ADDR_TX         0xAA
 #define FACTORY_ADDR_RX         0xAB
+
+/*
+ * I2C initiation.
+ *
+ * The I2C state machine responds to completion interrupts. We need an external
+ * event to initiate each transaction. This could come in multiple places: From TF2
+ * if we're just finishing up neighbor transmit, or from TF0 if we're skipping
+ * neighbor transmit.
+ *
+ * This is a small macro, since we don't want to spend the stack space on a function
+ * call from these call sites.
+ */
+
+#pragma sdcc_hash +
+
+#define I2C_PULSE()                                                                                  __endasm; \
+    __asm anl     _MISC_DIR, #~MISC_I2C           ; Output drivers enabled                           __endasm; \
+    __asm xrl     _MISC_PORT, #MISC_I2C           ; Now pulse I2C lines low                          __endasm; \
+    __asm orl     _MISC_PORT, #MISC_I2C           ; Drive pins high - This delivers a 250 ns pulse   __endasm; \
+    __asm
+
+#define I2C_RESET()                                                                                  __endasm; \
+    __asm mov     _W2CON0, #0                     ; Reset I2C master                                 __endasm; \
+    __asm I2C_PULSE()                             ; Drive pins high - This delivers a 250 ns pulse   __endasm; \
+    __asm mov     _W2CON0, #1                     ; Turn on I2C controller                           __endasm; \
+    __asm mov     _W2CON0, #7                     ; Master mode, 100 kHz.                            __endasm; \
+    __asm
+
+#define I2C_INITIATE()                                                                               __endasm; \
+    __asm mov     _i2c_state, #0                  ; Reset our state machine                          __endasm; \
+    __asm I2C_RESET()                             ; Reset I2C master                                 __endasm; \
+    __asm mov     _W2DAT, #ACCEL_ADDR_TX          ; Trigger the next I2C transaction                 __endasm; \
+    __asm
 
 #endif

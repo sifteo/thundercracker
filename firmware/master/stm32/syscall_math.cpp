@@ -20,14 +20,22 @@ extern "C" {
 void _SYS_sincosf(uint32_t x, float *sinOut, float *cosOut)
 {
     float fX = reinterpret_cast<float&>(x);
-    float dummy;
 
-    if (!SvmMemory::mapRAM(sinOut, sizeof *sinOut))
-        sinOut = &dummy;
-    if (!SvmMemory::mapRAM(cosOut, sizeof *cosOut))
-        cosOut = &dummy;
+    /*
+     * This syscall is provided for cases where the sine and
+     * cosine of the same angle are being computed. There are algorithms
+     * which can calculate these two functions together faster than we
+     * could calculate both separately, but so far we don't have an
+     * implementation of this in our math library.
+     *
+     * So, for now, just turn this into separate sine and cosine operations.
+     */
 
-    sincosf(fX, sinOut, cosOut);
+    if (SvmMemory::mapRAM(sinOut, sizeof *sinOut))
+        *sinOut = sinf(fX);
+
+    if (SvmMemory::mapRAM(cosOut, sizeof *cosOut))
+        *cosOut = cosf(fX);
 }
 
 __attribute__((naked, noreturn))

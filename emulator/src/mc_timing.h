@@ -36,8 +36,8 @@ struct MCTiming {
     static const unsigned TICKS_PER_PAGE_WRITE = 16512;
     static const unsigned TICKS_PER_BLOCK_ERASE = 8000000;
 
-    // Fairly arbitrary 1/4 second delay from cube startup to MC startup
-    static const unsigned STARTUP_DELAY = TICK_HZ / 4;
+    // Delay long enough for cubes to establish a HWID, for auto-pairing.
+    static const unsigned STARTUP_DELAY = 200000;
 
     // Fractional number of CPU cycles per tick (72/16 MHz)
     static const unsigned CPU_RATE_NUMERATOR = 9;

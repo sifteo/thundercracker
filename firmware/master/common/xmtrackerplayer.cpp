@@ -195,7 +195,7 @@ inline void XmTrackerPlayer::loadNextNotes()
         struct XmTrackerChannel &channel = channels[i];
 
         // ProTracker 2/3 compatibility. FastTracker II maintains final tremolo volume
-        channel.volume = channel.tremolo.volume;
+        channel.volume = channel.tremoloVolume;
 
         pattern.getNote(next.row, i, note);
 
@@ -279,8 +279,8 @@ inline void XmTrackerPlayer::loadNextNotes()
              * Cache the old period and reset the portamento effect state in
              * case the note involves a tone portamento.
              */
-            channel.porta.active = false;
-            channel.porta.period = channel.period;
+            channel.portaActive = false;
+            channel.portaPeriod = channel.period;
             channel.period = getPeriod(channel.realNote(note.note), channel.instrument.finetune);
 
             // New notes get a fresh fadeout
@@ -291,8 +291,8 @@ inline void XmTrackerPlayer::loadNextNotes()
          * indicated by the lack of a porta period), reset the portamento
          * period to the new period.
          */
-        if (note.instrument != channel.note.instrument || !channel.porta.period) {
-            channel.porta.period = channel.period;
+        if (note.instrument != channel.note.instrument || !channel.portaPeriod) {
+            channel.portaPeriod = channel.period;
         }
 
         if (channel.period) {
@@ -386,10 +386,10 @@ void XmTrackerPlayer::processVibrato(XmTrackerChannel &channel)
 
 void XmTrackerPlayer::processPorta(XmTrackerChannel &channel)
 {
-    if (!channel.porta.active) {
-        channel.porta.active = true;
-        /* Frequency shifting from channel.period to channel.porta.period, so
-         * apply the porta.period to the channel state and cache the target.
+    if (!channel.portaActive) {
+        channel.portaActive = true;
+        /* Frequency shifting from channel.period to channel.portaPeriod, so
+         * apply the portaPeriod to the channel state and cache the target.
          *
          * This is all done because once the porta effect ends, if it did not
          * make it to the target period, the channel should keep playing the
@@ -397,8 +397,8 @@ void XmTrackerPlayer::processPorta(XmTrackerChannel &channel)
          * note comes along in the pattern and resets the period.
          */
         uint32_t tmp = channel.period;
-        channel.period = channel.porta.period;
-        channel.porta.period = tmp;
+        channel.period = channel.portaPeriod;
+        channel.portaPeriod = tmp;
     }
 
     if (!ticks) {
@@ -408,18 +408,18 @@ void XmTrackerPlayer::processPorta(XmTrackerChannel &channel)
         return;
     }
 
-    if (!channel.porta.period) {
+    if (!channel.portaPeriod) {
         LOG((LGPFX"Error: Porta period was not set, can not shift!\n"));
-        ASSERT(channel.porta.period);
+        ASSERT(channel.portaPeriod);
         return;
     }
 
-    int32_t delta=(int32_t)channel.period-(int32_t)channel.porta.period;
+    int32_t delta=(int32_t)channel.period-(int32_t)channel.portaPeriod;
 
     if (!delta) return;
 
     if (abs(delta) < channel.tonePorta * 4) {
-        channel.period = channel.porta.period;
+        channel.period = channel.portaPeriod;
     } else if (delta < 0) {
         channel.period += channel.tonePorta * 4;
     } else {
@@ -582,7 +582,7 @@ void XmTrackerPlayer::processTremolo(XmTrackerChannel &channel)
     if (channel.tremolo.phase >= arraysize(sineTable)) delta = -delta;
     channel.tremolo.phase = (channel.tremolo.speed + channel.tremolo.phase) % (arraysize(sineTable) * 2);
 
-    channel.volume = clamp(channel.tremolo.volume + delta, 0, (int)kMaxVolume);
+    channel.volume = clamp(channel.tremoloVolume + delta, 0, (int)kMaxVolume);
 }
 
 void XmTrackerPlayer::processPatternBreak(uint16_t nextPhrase, uint16_t nextRow)
@@ -606,12 +606,12 @@ void XmTrackerPlayer::processPatternBreak(uint16_t nextPhrase, uint16_t nextRow)
 void XmTrackerPlayer::processRetrigger(XmTrackerChannel &channel, uint8_t interval, uint8_t slide)
 {
     if (!interval) return;
-    if (!ticks) channel.retrigger.phase = 0;
+    if (!ticks) channel.retriggerPhase = 0;
 
-    channel.retrigger.phase++;
+    channel.retriggerPhase++;
 
-    if (channel.retrigger.phase >= interval) {
-        channel.retrigger.phase = 0;
+    if (channel.retriggerPhase >= interval) {
+        channel.retriggerPhase = 0;
         channel.state = STATE_START;
         channel.applyStateOnTick = ticks;
 
@@ -708,7 +708,7 @@ void XmTrackerPlayer::processEffects(XmTrackerChannel &channel)
 
         case fxTremolo:
             if (!ticks) {
-                channel.tremolo.volume = channel.volume;
+                channel.tremoloVolume = channel.volume;
                 if (param & 0xF0) channel.tremolo.speed = (param & 0xF0) >> 4;
                 if (param & 0x0F) channel.tremolo.depth = param & 0x0F;
             }
@@ -912,7 +912,7 @@ void XmTrackerPlayer::processEffects(XmTrackerChannel &channel)
                     break;
 
                 default:
-                    Event::setBasePending(_SYS_BASE_TRACKER, (type << 8) | param);
+                    Event::setBasePending(Event::PID_BASE_TRACKER, (type << 8) | param);
                     type = XmTrackerPattern::kNoEffect;
                     break;
 
@@ -920,7 +920,7 @@ void XmTrackerPlayer::processEffects(XmTrackerChannel &channel)
             break;
         }
         default:
-            Event::setBasePending(_SYS_BASE_TRACKER, (type << 8) | param);
+            Event::setBasePending(Event::PID_BASE_TRACKER, (type << 8) | param);
             type = XmTrackerPattern::kNoEffect;
             break;
 
@@ -1079,7 +1079,7 @@ void XmTrackerPlayer::commit()
             finalVolume = channel.volume;
 
             // ProTracker 2/3 compatibility. FastTracker II maintains final tremolo volume
-            if (channel.note.effectType != fxTremolo) channel.tremolo.volume = finalVolume;
+            if (channel.note.effectType != fxTremolo) channel.tremoloVolume = finalVolume;
 
             // Apply envelope
             if (channel.instrument.volumeType) {

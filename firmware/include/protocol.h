@@ -99,23 +99,88 @@
  *
  * This is based on the Galois Field CRC we use for flash CRCs:
  *
- *   1. Start by CRC'ing the first three bytes of the HWID
- *   2. Next, for each of the remaining five bytes:
+ *   1. Start by CRC'ing the first two bytes of the HWID
+ *   2. Next, for each of the next five bytes:
  *      a. CRC this byte of the HWID
  *      b. If the result is one of the disallowed values (00, FF, AA, 55)
- *         repeatedly CRC a zero byte until the value is no longer disallowed.
+ *         repeatedly CRC a 0xFF byte until the value is no longer disallowed.
  *         With a proper generator polynomial this loop is guaranteed to
  *         terminate.
  *      c. Store the current 8-bit CRC state as an address byte
- *   3. CRC a single zero byte
- *   4. If the low 7 bits of the result are greater than 125, repeatedly
- *      CRC additional zero bytes until it is <= 125.
+ *   3. CRC the last byte of the HWID
+ *   4. If the low 7 bits of the result are greater than MAX_RF_CHANNEL, repeatedly
+ *      CRC additional 0xFF bytes until it is <= MAX_RF_CHANNEL.
  *   5. Take the low 7 bits of the current CRC state as our channel number.
  *
  * This scheme is designed to preserve the entropy in our HWID, to be
  * very simple to implement in the cube firmware, and to produce addresses
  * and channels which meet the nRF's constraints.
+ *
+ *   Idle Hopping
+ *  --------------
+ *
+ * This is a very minimal channel hopping scheme, intended solely to ensure
+ * that a cube isn't permanently unconnectable just because its default
+ * channel happens to be super noisy.
+ *
+ * One second after entering the idle state, and every second thereafter,
+ * we flip a "channel toggle" bit and reassign the idle channel address.
+ * When this toggle bit is 1, the address (after step 5 above) is modified:
+ *
+ *    1. Add (MAX_RF_CHANNEL / 2) to the address
+ *    2. If it's greater than MAX_RF_CHANNEL, subtract (MAX_RF_CHANNEL + 1)
+ *
+ *  Pairing Channel / Address
+ * ---------------------------
+ *
+ * Neighbor packets look like this:
+ *
+ *    First byte:   "1 1 1 id[4] id[3] id[2] id[1] id[0]"
+ *    Second byte:  "/id[4] /id[3] /id[2] /id[1] /id[0] 0 0 0"
+ *
+ * The ID complement bits act as a check, and the final 0 bits serve as
+ * damping for the LC tank. ID values normally range from 0 to 23, corresponding
+ * to a CubeID in the SDK.
+ *
+ * The eight IDs from 24 through 31 are reserved for use by the base's neighbor
+ * transmitters. Normally the base will cycle pseudorandomly through these eight
+ * IDs, and will only interpret a neighbor event as coming from "this" base if the
+ * ID matches the one currently being transmitted. Using a single neighbor ID,
+ * there's a 1 in 8 chance of collision. But by cycling the master ID quickly and
+ * observing this change, the master may further reduce the chance of collision.
+ * Using one cycle (two samples) it is reduced to 1 in 64. Using four cycles, it's
+ * only 1 in 4096.
+ *
+ * During pairing, this ID is used to determine the channel we listen on. The
+ * address is fixed, as the base doesn't yet know our HWID.
+ *
+ * The address during pairing is an arbitrary random pattern:
  */
+ 
+#define RF_PAIRING_ADDRESS      { 0xec, 0x4f, 0xa9, 0x52, 0x18 }
+
+/*
+ * Max supported channel in the nRF is 125, but the max FCC legal channel is 83.
+ * Note that our RF_PAIRING_CHANNELS must fall within this limit too.
+ */
+#define MAX_RF_CHANNEL          83
+
+/*
+ * The channel is derived from the neighbor ID (24-31) via Galois Field
+ * multiplication by the constant 0x0C, using the 8-bit AES Galois Field,
+ * followed by a bitwise AND with 0x7F.
+ *
+ * This is efficient to implement on the nRF using its GF multiplication
+ * accelerator. Elsewhere, we can use a simple lookup table.
+ *
+ * This transformation has some nice properties:
+ *   - It spans 52 MHz, which is a significant fraction of the available bandwidth
+ *   - No channel is closer than 4 MHz to another.
+ */
+
+#define RF_PAIRING_GFM          0x0C
+#define RF_PAIRING_MASK         0x7F
+#define RF_PAIRING_CHANNELS     { 32, 44, 56, 52, 16, 28, 8, 4 }
 
 
 /**************************************************************************
@@ -247,11 +312,21 @@
  * all, we have a reserved region of the diff codes, which are
  * redundant encodings for the 4-bit 'copy' code:
  *
- *   1000 0111             Sensor timer sync escape
- *   1001 0111             Explicit full ACK request
+ *   1000 0111             Sensor timer sync escape (Byte args: TL0, TH0)
+ *   1001 0111             Explicit full ACK request (No args)
+ *   1010 0111             Radio hop (Byte args: Channel, Optional 5-byte addr, Optional neighbor ID)
+ *   1011 0111             Radio nap (Byte args: Duration low, duration high)
  *
- *   1010 0111             Reserved for future use
- *   1011 0111             Reserved for future use
+ *     Notes:
+ *
+ *       - All of these are escape codes which exit nybble mode and process
+ *         the remainder of the packet as byte arguments for this code.
+ *
+ *       - Additional bytes after these escapes are reserved for future expansion.
+ *         Current firmware will ignore them.
+ *
+ *       - Radio Hop always switches a cube into Connected state.
+ *       - The codec state is always reset after a Radio Hop packet.
  *
  * Next, the RLE codes. These begin with a 4-bit code that repeats the
  * last primary code. However, consecutive copies of this repeat code
@@ -332,8 +407,8 @@
 #define RF_ACK_LEN_ACCEL        4
 #define RF_ACK_LEN_NEIGHBOR     8
 #define RF_ACK_LEN_FLASH_FIFO   9
-#define RF_ACK_LEN_BATTERY_V    11
-#define RF_ACK_LEN_HWID         19
+#define RF_ACK_LEN_BATTERY_V    10
+#define RF_ACK_LEN_HWID         18
 #define RF_ACK_LEN_MAX          RF_ACK_LEN_HWID
 
 // Struct offsets. Matches the C code before, but intended for inline assembly use
@@ -342,13 +417,16 @@
 #define RF_ACK_NEIGHBOR         4
 #define RF_ACK_FLASH_FIFO       8
 #define RF_ACK_BATTERY_V        9
-#define RF_ACK_HWID             11
+#define RF_ACK_HWID             10
 
 #define HWID_LEN                8
 
 #define NB_ID_MASK              0x1F    // ID portion of neighbor bytes
 #define NB_FLAG_SIDE_ACTIVE     0x80    // There's a cube neighbored on this side
-#define NB0_FLAG_TOUCH          0x40    // In neighbors[0], toggles when touch is detected
+#define NB_BASE_MASK            0x98    // Combination of SIDE_ACTIVE and an ID between 24 and 31
+
+#define NB0_FLAG_TOUCH          0x40    // In neighbors[0], indicates touch state
+#define NB1_FLAG_FLS_RESET      0x40    // In neighbors[1], toggles at any flash state machine reset
 
 #define FRAME_ACK_CONTINUOUS    0x40
 #define FRAME_ACK_COUNT         0x3F
@@ -394,12 +472,12 @@ typedef union {
         /*
          * Number of bytes processed by the flash decoder so
          * far. Increments and wraps around, never decrements or
-         * resets. Also increments once on a flash reset completion.
+         * resets.
          */
         uint8_t flash_fifo_bytes;
 
-        // Current raw battery voltage level (16-bit little endian)
-        uint8_t battery_v[2];
+        // Filtered 8-bit battery voltage level
+        uint8_t battery_v;
 
         // Unique hardware ID
         uint8_t hwid[HWID_LEN];
@@ -418,7 +496,7 @@ typedef struct {
     int8_t accel[3];
     uint8_t neighbors[4];
     uint8_t flash_fifo_bytes;
-    uint16_t battery_v[2];
+    uint8_t battery_v;
 } RF_MemACKType;
 
 
@@ -449,8 +527,8 @@ typedef struct {
 
 #define FLS_BLOCK_SIZE          (64*1024)   // Size of flash erase blocks
 
-#define FLS_FIFO_SIZE           73      // Size of buffer between radio and flash decoder
-#define FLS_FIFO_USABLE         72      // Usable space in FIFO (SIZE-1)
+#define FLS_FIFO_SIZE           87      // Size of buffer between radio and flash decoder
+#define FLS_FIFO_USABLE         86      // Usable space in FIFO (SIZE-1)
 
 #define FLS_LUT_SIZE            16      // Size of persistent color LUT used by RLE encodings
 
@@ -471,7 +549,7 @@ typedef struct {
 #define FLS_OP_QUERY_CRC        0xe2    // Args: (queryID, numBlocks)
 #define FLS_OP_CHECK_QUERY      0xe3    // Args: (numBytes, bytes...)
 
-// From 0xe3 to 0xff are all reserved codes currently
+// From 0xe4 to 0xff are all reserved codes currently
 
 /*
  * Minimum operand sizes for various opcodes:

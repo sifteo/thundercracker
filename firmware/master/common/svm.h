@@ -203,18 +203,20 @@ namespace Debugger {
      */
     const uint32_t BITMAP_SHIFT = 8;
 
-    static inline uint32_t argBit(unsigned r) {
+    static ALWAYS_INLINE uint32_t argBit(unsigned r) {
         return (0x80000000 >> BITMAP_SHIFT) >> r;
     }
     
-    static const uint32_t ALL_REGISTER_BITS =
-        Debugger::argBit(0) | Debugger::argBit(1) |
-        Debugger::argBit(2) | Debugger::argBit(3) |
-        Debugger::argBit(4) | Debugger::argBit(5) |
-        Debugger::argBit(6) | Debugger::argBit(7) |
-        Debugger::argBit(8) | Debugger::argBit(9) |
-        Debugger::argBit(REG_FP) | Debugger::argBit(REG_SP) |
-        Debugger::argBit(REG_PC) | Debugger::argBit(REG_CPSR);
+    static ALWAYS_INLINE uint32_t allRegisterBits() {
+        return
+            Debugger::argBit(0) | Debugger::argBit(1) |
+            Debugger::argBit(2) | Debugger::argBit(3) |
+            Debugger::argBit(4) | Debugger::argBit(5) |
+            Debugger::argBit(6) | Debugger::argBit(7) |
+            Debugger::argBit(8) | Debugger::argBit(9) |
+            Debugger::argBit(REG_FP) | Debugger::argBit(REG_SP) |
+            Debugger::argBit(REG_PC) | Debugger::argBit(REG_CPSR);
+    }
 
     /*
      * The runtime has storage for up to four hardware breakpoints.

@@ -277,11 +277,11 @@ public:
     EventRateProbe(uint32_t counter=0)
         : counter(counter), hz(0) {}
         
-    void update(ElapsedTime &et, uint32_t newValue) {
-        uint32_t oldValue = counter;
+    void update(ElapsedTime &et, uint32_t newValue, uint32_t maxDelta=0x1000) {
         double s = et.virtualSeconds();
+        uint32_t delta = newValue - counter;
         counter = newValue;
-        hz = s > 0 ? (newValue - oldValue) / s : 0;
+        hz = (s > 0 && delta <= maxDelta) ? delta / s : 0;
     }
     
     float getHZ() {

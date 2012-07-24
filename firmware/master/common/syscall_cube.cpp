@@ -12,19 +12,24 @@
 #include "svmruntime.h"
 #include "cubeslots.h"
 #include "cube.h"
-#include "neighbors.h"
+#include "neighborslot.h"
 #include "accel.h"
 
 extern "C" {
 
-void _SYS_enableCubes(_SYSCubeIDVector cv)
+uint32_t _SYS_getConnectedCubes()
 {
-    CubeSlots::enableCubes(CubeSlots::truncateVector(cv));
+    return CubeSlots::userConnected;
 }
 
-void _SYS_disableCubes(_SYSCubeIDVector cv)
+void _SYS_setCubeRange(uint32_t minimum, uint32_t maximum)
 {
-    CubeSlots::disableCubes(CubeSlots::truncateVector(cv));
+    if (minimum >= _SYS_NUM_CUBE_SLOTS ||
+        maximum >= _SYS_NUM_CUBE_SLOTS ||
+        minimum > maximum)
+        return SvmRuntime::fault(F_SYSCALL_PARAM);
+    
+    CubeSlots::setCubeRange(minimum, maximum);
 }
 
 void _SYS_setVideoBuffer(_SYSCubeID cid, struct _SYSVideoBuffer *vbuf)

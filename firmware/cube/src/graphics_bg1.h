@@ -125,13 +125,13 @@ void state_bg1_0(void) __naked;
     __asm
 
 #define BG1_JB_L(lbl)                                           __endasm; \
-    __asm jnb    b.0, (.+6)                                     __endasm; \
-    __asm ljmp   lbl                                            __endasm; \
+    __asm jnb    b.0, (.+5)                                     __endasm; \
+    __asm ajmp   lbl                                            __endasm; \
     __asm
 
 #define BG1_JNB_L(lbl)                                          __endasm; \
-    __asm jb     b.0, (.+6)                                     __endasm; \
-    __asm ljmp   lbl                                            __endasm; \
+    __asm jb     b.0, (.+5)                                     __endasm; \
+    __asm ajmp   lbl                                            __endasm; \
     __asm
     
 #define CHROMA_PREP()                                           __endasm; \
@@ -144,14 +144,14 @@ void state_bg1_0(void) __naked;
 
 #define CHROMA_J_TRANSPARENT(l1, lbl)                           __endasm; \
     __asm cjne  a, BUS_PORT, l1                                 __endasm; \
-    __asm ljmp  lbl                                             __endasm; \
+    __asm ajmp  lbl                                             __endasm; \
     __asm l1:                                                   __endasm; \
     __asm
     
-// Chroma-key test with ljmp to each result
+// Chroma-key test with ajmp to each result
 #define CHROMA_LONG(l1, opaque, transparent)                        __endasm; \
     __asm   CHROMA_J_TRANSPARENT(l1, transparent)                   __endasm; \
-    __asm   ljmp    opaque                                          __endasm; \
+    __asm   ajmp    opaque                                          __endasm; \
     __asm
 
 

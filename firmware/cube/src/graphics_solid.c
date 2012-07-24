@@ -8,6 +8,9 @@
 
 #include "graphics.h"
 
+// Soak up the space between BG1 and the Tile ROM
+#pragma codeseg BG1LINE
+
 
 /*
  * Copy vram.color to the LCD bus, and repeat for every pixel.
@@ -36,8 +39,8 @@ void vm_solid(void) __naked
 
         djnz    r2, 2$
         djnz    r1, 1$
-    __endasm ;
 
-    lcd_end_frame();
-    GRAPHICS_RET();
+        ajmp    lcd_end_frame_and_graphics_ret
+
+    __endasm ;
 }

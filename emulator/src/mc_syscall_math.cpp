@@ -288,6 +288,18 @@ uint32_t _SYS_logf(uint32_t a)
     return reinterpret_cast<uint32_t&>(r);
 }
 
+uint32_t _SYS_sinf(uint32_t a)
+{
+    float r = sinf(reinterpret_cast<float&>(a));
+    return reinterpret_cast<uint32_t&>(r);
+}
+
+uint32_t _SYS_cosf(uint32_t a)
+{
+    float r = cosf(reinterpret_cast<float&>(a));
+    return reinterpret_cast<uint32_t&>(r);
+}
+
 uint64_t _SYS_fmod(uint32_t aL, uint32_t aH, uint32_t bL, uint32_t bH)
 {
     uint64_t a = aL | (uint64_t)aH << 32;

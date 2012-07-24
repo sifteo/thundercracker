@@ -55,8 +55,7 @@ void VirtAssetSlots::bind(FlashVolume volume, unsigned numSlots)
     boundVolume = volume;
     numBoundSlots = numSlots;
 
-    // XXX: Should rebind only connected cubes (HWID valid, paired in SysLFS)
-    rebind(CubeSlots::vecEnabled);
+    rebind(CubeSlots::sysConnected);
 }
 
 void VirtAssetSlots::rebind(_SYSCubeIDVector cv)

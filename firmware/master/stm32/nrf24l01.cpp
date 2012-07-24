@@ -22,9 +22,11 @@ NRF24L01 NRF24L01::instance(RF_CE_GPIO,
                                       staticSpiCompletionHandler));
 bool NRF24L01::rfTestModeEnabled = false;
 
-void NRF24L01::init() {
 
-    STATIC_ASSERT(Radio::DEFAULT_HARD_RETRIES == MAX_HW_RETRIES);
+void NRF24L01::init()
+{
+
+    STATIC_ASSERT(PacketTransmission::MAX_HARDWARE_RETRIES == MAX_HW_RETRIES);
 
     /*
      * Common hardware initialization, regardless of radio usage mode.
@@ -52,7 +54,7 @@ void NRF24L01::init() {
         2, CMD_W_REGISTER | REG_RX_PW_P0,       32,
         
         /* Auto retry delay, 500us, 15 retransmits */
-        2, CMD_W_REGISTER | REG_SETUP_RETR,     0x10 | hardRetries,
+        2, CMD_W_REGISTER | REG_SETUP_RETR,     AUTO_RETRY_DELAY | hardRetries,
 
         /* 5-byte address width */
         2, CMD_W_REGISTER | REG_SETUP_AW,       0x03,
@@ -152,16 +154,16 @@ void NRF24L01::setPRXMode(bool enabled)
  */
 void NRF24L01::setConstantCarrier(bool enabled, unsigned channel)
 {
-// From the L01 datasheet:
-//    1. Set PWR_UP  = 1 and  PRIM_RX = 0 in the  CONFIG  register.
-//    2. Wait 1.5ms  PWR_UP ->standby.
-//    3. In the RF register set:
-//    X CONT_WAVE = 1.
-//    X PLL_LOCK  = 1.
-//    X RF_PWR.
-//    4. Set the wanted RF channel.
-//    5. Set CE high.
-//    6. Keep CE high as long as the carrier is needed.
+    // From the L01 datasheet:
+    //    1. Set PWR_UP  = 1 and  PRIM_RX = 0 in the  CONFIG  register.
+    //    2. Wait 1.5ms  PWR_UP ->standby.
+    //    3. In the RF register set:
+    //    X CONT_WAVE = 1.
+    //    X PLL_LOCK  = 1.
+    //    X RF_PWR.
+    //    4. Set the wanted RF channel.
+    //    5. Set CE high.
+    //    6. Keep CE high as long as the carrier is needed.
 
     if (enabled) {
         spi.begin();
@@ -184,21 +186,6 @@ void NRF24L01::setConstantCarrier(bool enabled, unsigned channel)
 
         ce.setLow();
     }
-}
-
-/*
- * Configure the retry behavior of the radio driver.
- * Always maintain our auto retry delay of 500us
- */
-void NRF24L01::applyRetryCount()
-{
-    hardRetries = hardRetriesPending;
-    softRetriesMax = softRetriesMaxPending;
-
-    spi.begin();
-    spi.transfer(CMD_W_REGISTER | REG_SETUP_RETR);
-    spi.transfer(0x10 | hardRetries);
-    spi.end();
 }
 
 void NRF24L01::setTxPower(Radio::TxPower pwr)
@@ -241,7 +228,7 @@ void NRF24L01::isr()
 
     case 0:
         // Shouldn't happen, but.. electrical noise maybe?
-        UART("Spurious nRF IRQ!");
+        UART("Spurious nRF IRQ!\r\n");
         break;
 
     case MAX_RT:
@@ -263,7 +250,7 @@ void NRF24L01::isr()
 
     default:
         // Other cases are not allowed. Do something non-fatal...
-        UART("Unhandled nRF IRQ status");
+        UART("Unhandled nRF IRQ status!\r\n");
         beginTransmit();
         break;
     }
@@ -328,14 +315,10 @@ void NRF24L01::beginTransmit()
      * ways. We assume that re-entry only occurs after ce.setHigh().
      */
 
-    // Retry update requested?
-    if (hardRetriesPending != hardRetries || softRetriesMaxPending != softRetriesMax) {
-        applyRetryCount();
-    }
-
-    txBuffer.noAck = false;
+    txBuffer.init();
     produce(txBuffer);
-    softRetriesLeft = softRetriesMax;
+
+    softRetriesLeft = txBuffer.numSoftwareRetries;
 
 #ifdef DEBUG_MASTER_TX
     Debug::logToBuffer(txBuffer.packet.bytes, txBuffer.packet.len);
@@ -376,17 +359,18 @@ void NRF24L01::staticSpiCompletionHandler(void *p)
     NRF24L01::instance.onSpiComplete();
 }
 
-/*
- * An SPI transmission has completed.
- * NRF transmit and receive operations consist of multiple SPI transmissions,
- * so step to the next state and execute accordingly.
- *
- * NOTE: the RX states are only executed in the event that data arrived on one
- * of the ACK packets that we've received. Otherwise, we start in directly on
- * the TX states.
- */
 void NRF24L01::onSpiComplete()
 {
+    /*
+     * An SPI transmission has completed.
+     * NRF transmit and receive operations consist of multiple SPI transmissions,
+     * so step to the next state and execute accordingly.
+     *
+     * NOTE: the RX states are only executed in the event that data arrived on one
+     * of the ACK packets that we've received. Otherwise, we start in directly on
+     * the TX states.
+     */
+
     SampleProfiler::SubSystem s = SampleProfiler::subsystem();
     SampleProfiler::setSubsystem(SampleProfiler::RFISR);
 
@@ -443,6 +427,18 @@ void NRF24L01::onSpiComplete()
         break;
 
     case TXAddressRx:
+        // Set retry count if necessary, otherwise FALL THROUGH to payload.
+        if (txBuffer.numHardwareRetries != hardRetries) {
+            txnState = TXSetupRetr;
+            spi.begin();
+            txAddressBuffer[0] = CMD_W_REGISTER | REG_SETUP_RETR;
+            txAddressBuffer[1] = AUTO_RETRY_DELAY | txBuffer.numHardwareRetries;
+            spi.txDma(txAddressBuffer, 2);
+            break;
+        }
+
+    case TXSetupRetr:
+        hardRetries = txBuffer.numHardwareRetries;
         txnState = TXPayload;
         spi.begin();
         txData[0] = txBuffer.noAck ? CMD_W_TX_PAYLOAD_NO_ACK : CMD_W_TX_PAYLOAD;

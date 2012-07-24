@@ -74,11 +74,6 @@ void em8051_reset(em8051 *aCPU, int aWipe)
 
     memset(aCPU->mSFR, 0, 128);
 
-    // If we wake up from deep sleep, set PWRDWN accordingly.
-    // XXX: Currently the only wakeup source is Wakeup From Pin.
-    aCPU->mSFR[REG_PWRDWN] = aCPU->deepSleep ? 0x81 : 0x00;
-    aCPU->deepSleep = false;
-
     aCPU->mPC = 0;
     aCPU->mTickDelay = 1;
     aCPU->prescaler12 = 12;
@@ -107,7 +102,13 @@ void em8051_reset(em8051 *aCPU, int aWipe)
     aCPU->mSFR[REG_SPIRDAT] = 0x00;
     aCPU->mSFR[REG_RFCON] = RFCON_RFCSN;
 
-    aCPU->mSFR[REG_CLKLFCTRL] = 0x07;
+    // Pretend the 16 MHz xtal is ready immediately
+    aCPU->mSFR[REG_CLKLFCTRL] = 0x0F;
+
+    // XXX: Fake sleep support in siftulator :(
+    aCPU->mSFR[REG_PWRDWN] = 0x00;
+    aCPU->deepSleep = false;
+
 
     // build function pointer lists
 
@@ -202,7 +203,7 @@ const char *em8051_exc_name(int aCode)
 {
     static const char *exc_names[] = {
         "Breakpoint reached",
-        "SP exception: stack address > 127",
+        "Stack overflow",
         "Invalid operation: acc-to-a move",
         "PSW not preserved over interrupt call",
         "SP not preserved over interrupt call",
@@ -236,6 +237,7 @@ NEVER_INLINE void timer_clklf_tick(em8051 *aCPU)
 {
     /*
      * Tick at approximately 32 kHz.
+     * This is used by the watchdog timer and RTC2.
      */
 
     if (aCPU->wdtEnabled) {
@@ -246,6 +248,30 @@ NEVER_INLINE void timer_clklf_tick(em8051 *aCPU)
             ((Cube::Hardware*) aCPU->callbackData)->logWatchdogReset();
             em8051_reset(aCPU, true);
         }
+    }
+
+    uint8_t rtc2con = aCPU->mSFR[REG_RTC2CON];
+    if (rtc2con & RTC2CON_ENABLE) {
+        // Tick RTC2
+        unsigned rtc2 = aCPU->rtc2 + 1;
+
+        // RTC2 compare
+        if (rtc2con & RTC2CON_COMPARE_EN) {
+            uint16_t cmp = aCPU->mSFR[REG_RTC2CMP0] | (aCPU->mSFR[REG_RTC2CMP1] << 8);
+            if (cmp == rtc2) {
+                // Compare matched!
+                aCPU->mSFR[REG_IRCON] |= IRCON_TICK;
+                aCPU->needInterruptDispatch = true;
+                if (rtc2con & RTC2CON_COMPARE_RST)
+                    rtc2 = 0;
+            }
+        }
+
+        aCPU->rtc2 = rtc2;
+
+    } else {
+        // Clock off, RTC2 reset
+        aCPU->rtc2 = 0;
     }
 }
 
@@ -297,6 +323,8 @@ NEVER_INLINE void timer_tick_work(em8051 *aCPU, bool tick12)
                 except(aCPU, EXCEPTION_CLKLF);
             break;
 
+        case CLKLFSRC_RC:
+            // RC. Behave the same as synthesized.
         case CLKLFSRC_SYNTH:
             // Synthesized
 

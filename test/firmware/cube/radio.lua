@@ -73,6 +73,25 @@ radio = {}
         return ack
     end
 
+    function radio:isListening()
+        -- Is the radio ACK'ing received packets right now? We test by sending a ping.
+        return self:tx('ff') ~= nil
+    end
+
+    function radio:expectWake()
+        -- Called when the radio is asleep. Poll for it to wake up, and return
+        -- the amount of time it took to do so.
+
+        local timeref = gx.sys:vclock()
+        local deadline = timeref + 4
+        repeat
+            if gx.sys:vclock() > deadline then
+                error("Timeout while waiting for radio wakeup")
+            end
+        until self:isListening()
+        return gx.sys:vclock() - timeref
+    end
+
     function radio:expectQuery(idByte)
         -- Expect a query result to arrive. Poll for that, for a limited
         -- time, while ignoring any normal ACK packets that come back.
@@ -85,4 +104,24 @@ radio = {}
             end
         until packet:byte(1) == bit.bor(idByte, 0x80)
         return packet:sub(2)
+    end
+    
+    function radio:setHWID(hexString)
+        -- Change the cube's hardware ID and reboot it
+
+        local i = 0
+        for hexByte in hexString:gmatch("..") do
+            gx.cube:nbPoke(i, tonumber(hexByte, 16))
+            i = i + 1
+        end
+
+        gx.cube:reset()
+        gx.sys:vsleep(0.4)
+
+        -- Verify
+        local i = 0
+        for hexByte in hexString:gmatch("..") do
+            assertEquals(gx.cube:nbPeek(i), tonumber(hexByte, 16))
+            i = i + 1
+        end
     end

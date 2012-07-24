@@ -3,10 +3,10 @@
 #include "nrf24l01.h"
 #include "powermanager.h"
 #include "board.h"
+#include "neighbor_rx.h"
 
 #if (BOARD == BOARD_TEST_JIG)
 #include "testjig.h"
-#include "neighbor.h"
 #endif
 
 /*
@@ -32,11 +32,8 @@ IRQ_HANDLER ISR_EXTI9_5()
 #if (BOARD == BOARD_TEST_JIG)
 
     // neighbor ins 0 and 1 are on exti lines 6 and 7 respectively
-    if (Neighbor::inIrqPending(0))
-        TestJig::neighborInIsr(0);
-
-    if (Neighbor::inIrqPending(1))
-        TestJig::neighborInIsr(1);
+    NeighborRX::pulseISR(0);
+    NeighborRX::pulseISR(1);
 
 #endif
 }

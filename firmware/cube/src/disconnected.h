@@ -9,7 +9,8 @@
 #ifndef _DISCONNECTED_H
 #define _DISCONNECTED_H
 
-void disconnected_screen(void);
+void disconnected_init(void);
+void disconnected_poll(void);
 
 #endif
 

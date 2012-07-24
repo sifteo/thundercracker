@@ -35,6 +35,10 @@
 // N E I G H B O R
 #define NBR_OUT1_GPIO       GPIOPin(&GPIOB, 8)
 #define NBR_OUT2_GPIO       GPIOPin(&GPIOB, 9)
+#define NBR_IN1_GPIO        GPIOPin(&GPIOA, 2)
+#define NBR_IN2_GPIO        GPIOPin(&GPIOA, 3)
+#define NBR_TX_TIM          TIM4
+#define NBR_TX_TIM_CH       3                       // CH3=PB8, CH4=PB9
 
 // U A R T
 #define UART_DBG            USART3
@@ -55,6 +59,8 @@
 #define AUDIO_PWMB_PORT     GPIOA
 #define AUDIO_PWMB_PIN      8
 #define AUDIO_PWM_CHAN      1
+#define AUDIO_PWM_TIM       TIM1
+#define AUDIO_SAMPLE_TIM    TIM3
 
 #define VOLUME_TIM          TIM5
 #define VOLUME_CHAN         2

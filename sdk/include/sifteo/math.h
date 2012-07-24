@@ -236,6 +236,20 @@ double inline sqrt(double a)
     return reinterpret_cast<double&>(r);
 }
 
+/// Calculate the sine of a specified angle, in radians. Single-precision.
+float inline sin(float x)
+{
+    uint32_t r = _SYS_sinf(reinterpret_cast<uint32_t&>(x));
+    return reinterpret_cast<float&>(r);
+}
+
+/// Calculate the cosine of a specified angle, in radians. Single-precision.
+float inline cos(float x)
+{
+    uint32_t r = _SYS_cosf(reinterpret_cast<uint32_t&>(x));
+    return reinterpret_cast<float&>(r);
+}
+
 /**
  * @brief Simultaneously compute the sine and cosine of a specified angle,
  * in radians.
@@ -247,22 +261,6 @@ double inline sqrt(double a)
 void inline sincos(float x, float *s, float *c)
 {
     _SYS_sincosf(reinterpret_cast<uint32_t&>(x), s, c);
-}
-
-/// Calculate the sine of a specified angle, in radians. Single-precision.
-float inline sin(float x)
-{
-    float s;
-    sincos(x, &s, 0);
-    return s;
-}
-
-/// Calculate the cosine of a specified angle, in radians. Single-precision.
-float inline cos(float x)
-{
-    float c;
-    sincos(x, 0, &c);
-    return c;
 }
 
 /**

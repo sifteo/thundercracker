@@ -19,6 +19,9 @@
 #define TOSTRING(_x)    STRINGIFY(_x)
 #define SRCLINE         __FILE__ ":" TOSTRING(__LINE__)
 
+#define _ISR_FN(_x)     ISR_ ## _x
+#define ISR_FN(_x)      _ISR_FN(_x)
+
 #ifndef MIN
 #define MIN(a,b)   ((a) < (b) ? (a) : (b))
 #define MAX(a,b)   ((a) > (b) ? (a) : (b))

@@ -20,21 +20,26 @@ struct XmTrackerEnvelopeMemory {
 };
 
 struct XmTrackerChannel {
-    struct _SYSXMInstrument instrument;
-    struct XmTrackerNote note;
-    uint16_t userVolume;
-    uint16_t volume;
-    uint16_t fadeout;
+    _SYSXMInstrument instrument;
+    XmTrackerEnvelopeMemory envelope;
+    XmTrackerNote note;
+
     uint32_t period;
     uint32_t frequency;
     uint32_t offset;
+    uint16_t userVolume;
+    uint16_t volume;
+    uint16_t fadeout;
     uint8_t state;
     uint8_t applyStateOnTick;
 
-    struct XmTrackerEnvelopeMemory envelope;
-
     // Effect parameters
     struct {
+        uint32_t portaPeriod;
+        uint16_t retriggerPhase;
+        uint16_t tremoloVolume;
+
+        uint8_t portaActive;
         uint8_t portaUp;
         uint8_t portaDown;
         uint8_t tonePorta;
@@ -44,10 +49,6 @@ struct XmTrackerChannel {
         uint8_t fineSlideDown:4,
                 fineSlideUp:4;
         struct {
-            uint32_t period;
-            bool active;
-        } porta;
-        struct {
             uint8_t phase;
             uint8_t speed:4,
                     depth:4;
@@ -56,13 +57,11 @@ struct XmTrackerChannel {
         struct {
             uint8_t speed:4,
                     interval:4;
-            uint16_t phase;
         } retrigger;
         struct {
             uint8_t phase;
             uint8_t speed:4,
                     depth:4;
-            uint16_t volume;
         } tremolo;
         struct {
             uint8_t on:4,
@@ -71,8 +70,8 @@ struct XmTrackerChannel {
         } tremor;
     };
 
-    inline uint8_t realNote(uint8_t pNote = 0) const {
-
+    inline uint8_t realNote(uint8_t pNote = 0) const
+    {
         // Implied argument
         if (pNote == 0)
             pNote = note.note;

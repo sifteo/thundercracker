@@ -8,6 +8,8 @@
 
 #include <sifteo/abi.h>
 #include "macros.h"
+#include "bits.h"
+#include "flash_syslfs.h"
 
 class CubeSlot;
 
@@ -17,19 +19,16 @@ namespace CubeSlots {
     /*
      * One-bit flags for each cube are packed into global vectors
      */
-    extern _SYSCubeIDVector vecEnabled;         /// Cube enabled
-    extern _SYSCubeIDVector vecConnected;       /// Cube connected
+    extern _SYSCubeIDVector sysConnected;       /// Cube connected by the system
+    extern _SYSCubeIDVector userConnected;      /// Cube is seen as connected by userspace
     extern _SYSCubeIDVector flashResetWait;     /// We need to reset flash before writing to it
     extern _SYSCubeIDVector flashResetSent;     /// We've sent an unacknowledged flash reset    
-    extern _SYSCubeIDVector flashACKValid;      /// 'flashPrevACK' is valid
-    extern _SYSCubeIDVector frameACKValid;      /// 'framePrevACK' is valid
-    extern _SYSCubeIDVector neighborACKValid;   /// Neighbor/touch state is valid
-    extern _SYSCubeIDVector expectStaleACK;     /// Expect this cube to send us one stale (buffered) ACK
     extern _SYSCubeIDVector flashAddrPending;   /// Need to send an addressing command to the flash codec
-    extern _SYSCubeIDVector hwidValid;          /// Has a valid cube hardware ID
+
+    extern BitVector<SysLFS::NUM_PAIRINGS> pairConnected;   /// Connected cubes, indexed by pairing ID
     
-    extern _SYSCubeID minCubes;
-    extern _SYSCubeID maxCubes;
+    extern _SYSCubeID minUserCubes;             /// Curent cube range for userspace
+    extern _SYSCubeID maxUserCubes;
     
     /*
      * Shared asset loader, for all cubes. This pointer itself must be
@@ -50,22 +49,22 @@ namespace CubeSlots {
         // For security/reliability, all cube IDs from game code must be checked
         return id < _SYS_NUM_CUBE_SLOTS;
     }
-    
-    void enableCubes(_SYSCubeIDVector cv); 
-    void disableCubes(_SYSCubeIDVector cv);
-    void solicitCubes(_SYSCubeID min, _SYSCubeID max);
-    void connectCubes(_SYSCubeIDVector cv);
-    void disconnectCubes(_SYSCubeIDVector cv);
-    
+
     static ALWAYS_INLINE _SYSCubeIDVector truncateVector(_SYSCubeIDVector cv) {
         // For security/reliability, all cube vectors from game code must be checked
         return cv & (0xFFFFFFFF << (32 - _SYS_NUM_CUBE_SLOTS));
     }
-    
+
+    static _SYSCubeIDVector availableSlots() {
+        return truncateVector(~(sysConnected | userConnected));
+    }
+
+    void setCubeRange(unsigned minimum, unsigned maximum);
+
     void paintCubes(_SYSCubeIDVector cv, bool wait=true);
     void finishCubes(_SYSCubeIDVector cv);
 
-    void assetLoaderTask(void *);
+    void assetLoaderTask();
     void fetchAssetLoaderData(_SYSAssetLoaderCube *lc);
 }
 

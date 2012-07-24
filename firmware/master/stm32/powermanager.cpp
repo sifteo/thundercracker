@@ -72,19 +72,20 @@ void PowerManager::beginVbusMonitor()
 void PowerManager::onVBusEdge()
 {
     debounceDeadline = SysTime::ticks() + SysTime::msTicks(DEBOUNCE_MILLIS);
-    Tasks::setPending(Tasks::PowerManager);
+    Tasks::trigger(Tasks::PowerManager);
 }
 
 /*
  * Provides for a little settling time from the last edge
  * on vbus before initiating the actual rail transition
  */
-void PowerManager::vbusDebounce(void* p)
+void PowerManager::vbusDebounce()
 {
-    if (SysTime::ticks() < debounceDeadline)
+    if (SysTime::ticks() < debounceDeadline) {
+        // Poll until our deadline is elapsed
+        Tasks::trigger(Tasks::PowerManager);
         return;
-
-    Tasks::clearPending(Tasks::PowerManager);
+    }
 
     State s = state();
     if (s != lastState)

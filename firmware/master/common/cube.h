@@ -15,6 +15,7 @@
 #include "systime.h"
 #include "cubecodec.h"
 #include "paintcontrol.h"
+#include "flash_syslfs.h"
 
 
 /**
@@ -35,6 +36,9 @@ class CubeSlot {
     void radioAcknowledge(const PacketBuffer &packet);
     void radioTimeout();
 
+    void connect(SysLFS::Key cubeRecord, const RadioAddress &addr, const RF_ACKType &fullACK);
+    void disconnect();
+
     _SYSCubeID id() const {
         _SYSCubeID i = this - &CubeSlots::instances[0];
         ASSERT(i < _SYS_NUM_CUBE_SLOTS);
@@ -52,32 +56,34 @@ class CubeSlot {
         return Intrinsic::LZ(id());
     }
 
-    bool ALWAYS_INLINE enabled() const {
-        return !!(bit() & CubeSlots::vecEnabled);
+    bool ALWAYS_INLINE isSysConnected() const {
+        return !!(bit() & CubeSlots::sysConnected);
     }
-    
-    bool ALWAYS_INLINE connected() const {
-        return !!(bit() & CubeSlots::vecConnected);
+
+    bool ALWAYS_INLINE isUserConnected() const {
+        return !!(bit() & CubeSlots::userConnected);
     }
-    
-    void ALWAYS_INLINE setConnected() {
-        CubeSlots::connectCubes(Intrinsic::LZ(id()));
-    }
-    
-    void ALWAYS_INLINE setDisconnected() {
-        CubeSlots::disconnectCubes(Intrinsic::LZ(id()));
+
+    bool ALWAYS_INLINE isSlotAvailable() const {
+        return !(bit() & (CubeSlots::sysConnected | CubeSlots::userConnected));
     }
 
     void ALWAYS_INLINE setVideoBuffer(_SYSVideoBuffer *v) {
         vbuf = v;
     }
 
-    ALWAYS_INLINE const _SYSByte4& getAccelState() {
-        return accelState;
+    ALWAYS_INLINE const _SYSByte4 getAccelState() {
+        // All bytes in protocol happen to be inverted relative to the SDK
+        _SYSByte4 state;
+        state.x = -lastACK.accel[0];
+        state.y = -lastACK.accel[1];
+        state.z = -lastACK.accel[2];
+        state.w = 0;
+        return state;
     }
 
     ALWAYS_INLINE const uint8_t* getRawNeighbors() const {
-        return neighbors;
+        return lastACK.neighbors;
     }
 
     bool isTouching() const;
@@ -136,58 +142,47 @@ class CubeSlot {
 
     uint64_t getHWID();
 
-    uint16_t ALWAYS_INLINE getRawBatteryV() const {
-        return rawBatteryV;
+    unsigned ALWAYS_INLINE getRawBatteryV() const {
+        return lastACK.battery_v;
     }
 
     uint8_t ALWAYS_INLINE getLastFrameACK() const {
-        return framePrevACK;
-    }
-
-    bool ALWAYS_INLINE hasValidFrameACK() const {
-        return CubeSlots::frameACKValid & bit();
+        return lastACK.frame_count;
     }
 
     ALWAYS_INLINE _SYSVideoBuffer* getVBuf() const {
         return vbuf;
     }
 
-    const RadioAddress *getRadioAddress();
+    ALWAYS_INLINE const RadioAddress *getRadioAddress() const {
+        return &address;
+    }
+
+    ALWAYS_INLINE SysLFS::Key getCubeRecordKey() const {
+        ASSERT(cubeRecord >= SysLFS::kCubeBase);
+        ASSERT(cubeRecord < SysLFS::kCubeBase + SysLFS::kCubeCount);
+        return cubeRecord;
+    }
 
  private:
     // Limit on round-trip time
     static const unsigned RTT_DEADLINE_MS = 250;
 
-    /*
-     * Data buffers, provided by game code.
-     *
-     * 'vbuf' is non-NULL any time this cube has a buffer attached. We
-     * will try to send out any changes in that buffer. The buffer
-     * pointer is guaranteed to remain valid until it's set to NULL or
-     * to a different pointer, which can happen only outside of IRQ
-     * context.
-     */
-
-    _SYSVideoBuffer *vbuf;
-    RadioAddress address;
-    
-    DEBUG_ONLY(SysTime::Ticks assetLoadTimestamp);
-
-    SysTime::Ticks flashDeadline;       // Used only by ISR
-    uint32_t timeSyncState;             // XXX: For the current time-sync hack
-
+    // Large data
+    SysTime::Ticks flashDeadline;
     PaintControl paintControl;
+
+    // Other aligned data
+    _SYSVideoBuffer *vbuf;
     CubeCodec codec;
+    uint16_t timeSyncState;
 
     // Byte variables
-    uint8_t flashPrevACK;
-    uint8_t framePrevACK;
-    uint8_t neighbors[4];
-    uint8_t hwid[_SYS_HWID_BYTES];
+    RadioAddress address;
+    SysLFS::Key cubeRecord;
+    RF_ACKType lastACK;
 
-    // Other sensor data
-    _SYSByte4 accelState;
-    uint16_t rawBatteryV;
+    DEBUG_ONLY(SysTime::Ticks assetLoadTimestamp);
 
     void requestFlashReset();
     uint16_t calculateTimeSync();

@@ -12,6 +12,7 @@
 
 #include "radio.h"
 #include "sensors.h"
+#include "sensors_i2c.h"
 #include "sensors_nb.h"
 
 uint8_t __idata nb_instant_state[4];
@@ -55,28 +56,25 @@ void tf0_isr(void) __interrupt(VECTOR_TF0) __naked
         ; Start transmitting the next neighbor packet, assuming we
         ; have not already missed our chance due to interrupt latency.
         ;
-        ; XXX: This is mostly only necessary because we currently run at
-        ;      the same prio as RFIRQ. Suck. See the priority discussion
-        ;      below, there may be a way to work around this by using a
-        ;      different time source. It actually isnt that bad at the moment,
-        ;      and we end up here infrequently.
+        ; This is mostly only necessary because we currently run at
+        ; the same prio as RFIRQ. Suck. See the priority discussion
+        ; below, there may be a way to work around this by using a
+        ; different time source. It is not so bad though, and we
+        ; end up here infrequently.
 
-        mov    a, TH0
-        jnz    1$
-        mov    a, TL0
-        addc   a, #(0x100 - NB_DEADLINE)
-        jc     1$
-
-        ; Okay, there is still time! Start the TX IRQ.
-        
-        setb    _nb_tx_mode
-
-        ; Start transmitting.
-        ;
-        ; The first byte is already computed in nb_tx_id.
-        ; The second is complemented and shifted left by 3.
+        mov     a, TH0
+        jnz     nb_skip_tx
+        mov     a, TL0
+        addc    a, #(0x100 - NB_DEADLINE)
+        jc      nb_skip_tx                          ; Not enough time left, skip transmit
 
         mov     a, _nb_tx_id
+        jz      nb_skip_tx                          ; Neighbor transmit disabled
+
+        ; The first byte of the packet is identical to nb_tx_id,
+        ; which is already in A. The second is complemented and shifted left by 3.
+        ; Prepare our 16-bit transmit buffer with both bytes of the packet.
+
         mov     _nb_buffer, a
         cpl     a
         swap    a
@@ -84,15 +82,24 @@ void tf0_isr(void) __interrupt(VECTOR_TF0) __naked
         anl     a, #0xF8
         mov     _nb_buffer+1, a
 
-        mov     _nb_bits_remaining, #NB_TX_BITS
-        mov     _TL2, #(0x100 - NB_BIT_TICKS)
-        setb    _T2CON_T2I0
+        ; Start transmitting.
 
-1$:
+        NB_BEGIN_TX()
+
+        sjmp    nb_filter
+
+nb_skip_tx:
+    
+        ; Skip transmitting, go right to I2C and neighbor RX.
+
+        I2C_INITIATE()
+        NB_BEGIN_RX()
 
         ;--------------------------------------------------------------------
         ; Neighbor Filtering
         ;--------------------------------------------------------------------
+
+nb_filter:
 
         ; Any valid neighbor packets we receive in this period are latched into
         ; nb_instant_state by the RX code. Ideally we would get one packet from
@@ -151,17 +158,6 @@ void tf0_isr(void) __interrupt(VECTOR_TF0) __naked
         mov     @r0, a
         orl     _ack_bits, #RF_ACK_BIT_NEIGHBOR
 
-#ifdef DEBUG_NBR
-        mov     _nbr_temp, a
-        mov     a, r0
-        clr     c
-        add     a, #(_nbr_data - RF_ACK_NEIGHBOR)
-        subb    a, #_ack_data
-        mov     r1, a
-        mov     a, _nbr_temp
-        mov     @r1, a
-#endif
-
 5$:     ; Loop to the next side
 
         mov     a, r0
@@ -179,26 +175,13 @@ void tf0_isr(void) __interrupt(VECTOR_TF0) __naked
 
         mov     a, _MISC_PORT
         anl     a, #MISC_TOUCH
-        cjne    a, #MISC_TOUCH, 6$
-        
+        jz      6$
+
         jb      _touch, 8$
-#ifdef TOUCH_DEBOUNCE
-        mov     _touch_off, #(TOUCH_DEBOUNCE_OFF)
-        djnz    _touch_on, 8$
-#endif
-#ifdef DEBUG_TOUCH
-        mov     a, _touch_count
-        inc     a
-        mov     _touch_count, a
-#endif
         setb    _touch
         sjmp    7$
 6$:
         jnb     _touch, 8$
-#ifdef TOUCH_DEBOUNCE
-        mov     _touch_on, #(TOUCH_DEBOUNCE_ON)
-        djnz    _touch_off, 8$
-#endif
         clr     _touch
 7$: 
 

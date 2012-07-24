@@ -22,23 +22,17 @@ public:
              SPIMaster _spi)
         : irq(_irq), ce(_ce), spi(_spi),
           txBuffer(NULL, txData + 1), rxBuffer(rxData + 1), txnState(Idle),
-          softRetriesMax(       Radio::DEFAULT_SOFT_RETRIES),
-          hardRetries(          Radio::DEFAULT_HARD_RETRIES),
-          hardRetriesPending(   Radio::DEFAULT_HARD_RETRIES),
-          softRetriesMaxPending(Radio::DEFAULT_SOFT_RETRIES)
+          softRetriesLeft(0),
+          hardRetries(PacketTransmission::DEFAULT_HARDWARE_RETRIES)
           {}
 
     static NRF24L01 instance;
 
     static const unsigned MAX_HW_RETRIES = 15;
+    static const uint8_t AUTO_RETRY_DELAY = 0x10;   // 500 us
 
     void init();
     void beginTransmitting();
-
-    void setRetryCount(uint8_t hard, uint8_t soft) {
-        hardRetriesPending = hard & MAX_HW_RETRIES;
-        softRetriesMaxPending = soft;
-    }
 
     void setTxPower(Radio::TxPower pwr);
     Radio::TxPower txPower();
@@ -116,6 +110,7 @@ public:
         TXChannel,
         TXAddressTx,
         TXAddressRx,
+        TXSetupRetr,
         TXPayload,
         TXPulseCE
     };
@@ -125,18 +120,8 @@ public:
     /*
      * Current retry counts.
      */
-    uint8_t softRetriesMax;
     uint8_t softRetriesLeft;
-    // only requirement to maintain hard retry count is so we can detect when
-    // a new count has been requested, without querying the device
-    uint8_t hardRetries;
-
-    /*
-     * Buffered retry counts.
-     * Can only be applied when a transmission is not in progress.
-     */
-    uint8_t hardRetriesPending;
-    uint8_t softRetriesMaxPending;
+    uint8_t hardRetries;        // Current device setting (to avoid unnecessary SPI comms)
 
     /*
      * The extra byte here is required for the SPI command byte that must
@@ -144,6 +129,7 @@ public:
      */
     uint8_t txData[PacketBuffer::MAX_LEN + 1];
     uint8_t rxData[PacketBuffer::MAX_LEN + 1];
+
     /*
      * NOTE: This exists because the RadioAddress struct does not provide room
      * for the extra byte we need to efficiently transmit these details via DMA.
@@ -158,7 +144,6 @@ public:
     void beginReceive();
     void beginTransmit();
     void pulseCE();
-    void applyRetryCount();
 
     /*
      * Helpers to forward RF events to the appropriate destination.

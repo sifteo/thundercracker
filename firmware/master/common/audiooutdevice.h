@@ -11,18 +11,12 @@
 #include "tasks.h"
 
 class AudioMixer;
-typedef RingBuffer<512, int16_t> AudioBuffer;
 
 
 class AudioOutDevice
 {
 public:
-    // Start mixer with no audio device
-    static void initStub() {
-        Tasks::setPending(Tasks::AudioPull, NULL);
-    }
-
-    static void init(AudioMixer *mixer);
+    static void init();
     static void start();
     static void stop();
 };

@@ -86,6 +86,9 @@ class RSTParser:
 
         # Does this have an address?
         if bytes and address:
+            if int(address,16) >= 16384:
+                raise ValueError("Argh, found address overflow in %r:\n%s"
+                    % (module, line.strip()))
             self.lines[int(address,16)] = line
 
         # Notes in the comments?
@@ -116,7 +119,7 @@ class RSTParser:
                 # that we patch into, store the instruction.
 
                 a = int(address, 16)
-                if a not in self.patchedAddrs:
+                if a not in self.patchedAddrs and not text.startswith("."):
                     self.storeCode(a, binascii.a2b_hex(bytes), tokens[-1].split(',')[-1], module)
 
             elif tokens[0][-1] == ':':
@@ -161,16 +164,13 @@ class RSTParser:
                 # Current address, used in some busy-loops
                 self.branchTargets[address] = True
 
-            elif source == '(.-2)':
-                # Used in SPI_WAIT
-                self.branchTargets[address-2] = True
-
-            elif source == '(.+6)':
-                # Used in BG1
-                self.branchTargets[address+6] = True
-
             else:
-                raise Exception("Unimplemented relative label '%s'" % source)
+                # Of the form (.+N) or (.-N)?
+                m = re.match(r'\(\.([-+][0-9]+)\)', source)
+                if m:
+                    self.branchTargets[address + int(m.group(1))] = True
+                else:
+                    raise Exception("Unimplemented relative label '%s'" % source)
 
         # Module size accounting, per-byte rather than per-instruction
         for byte in data:
@@ -278,6 +278,9 @@ class CallGraph:
             if addr in self.unvisited:
                 del self.unvisited[addr]
 
+            if addr not in self.p.instructions:
+                raise ValueError("Analyzer error, hit unknown address 0x%04x on path %r" % (addr, path))
+
             # Decode the instruction
             bytes = self.p.instructions[addr][0]
             mnemonic = self.opTable[bytes[0]]
@@ -288,6 +291,13 @@ class CallGraph:
                 target_imm16 = (bytes[1] << 8) | bytes[2]
 
             #print "%04x %-20s -- sp=%02x path=%s" % (addr, mnemonic, sp, ', '.join("%04x" % a for a in path))
+
+            # Take this opportunity to check ACALL/AJMP instructions.
+            # There's an SDCC bug which causes them to be encoded incorrectly
+            # if they're at the very end of a 2kB page!
+            if mnemonic in ('ajmp_offset', 'acall_offset') and (addr & 0x7FF) >= 0x7FE:
+                raise ValueError("Found %s instruction at address 0x%04x, which will provoke an SDCC bug!"
+                    % (mnemonic, addr))
 
             # Dynamic branch
             if mnemonic == 'jmp_indir_a_dptr':

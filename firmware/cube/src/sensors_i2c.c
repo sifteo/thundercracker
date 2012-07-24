@@ -19,11 +19,38 @@ uint8_t i2c_state;
 uint8_t i2c_temp_1;
 uint8_t i2c_temp_2;
 
+// 16-bit accumulator, for integrating battery voltage
+uint16_t i2c_battery_total;
+uint8_t i2c_battery_count;
+
 __bit i2c_a21_current;  // Set by main thread only. What do we want A21 to be?
 __bit i2c_a21_target;   // Set by ISR only. What was A21 last updated to?
 __bit i2c_a21_lock;     // Set by ISR only. Is an A21 update in progress?
 
 __bit i2c_saved_dps;    // Store DPS in a bit variable, to save space
+
+
+void read_factory_packet_header() __naked
+{
+    /*
+     * Read the first byte of our factory test packet.
+     *
+     * Also, at this point, exit the disconnected state. A testjig
+     * that writes commands to us counts as a connection, and resets
+     * the packet deadline to the max possible (over 5 minutes)
+     */
+    __asm
+        setb    _radio_connected
+
+        mov     a, _sensor_tick_counter_high
+        dec     a
+        mov     _radio_packet_deadline, a
+
+        mov     a, _W2DAT
+
+        ajmp    read_factory_packet_header_ret
+    __endasm ;
+}
 
 
 /*
@@ -61,7 +88,7 @@ void spi_i2c_isr(void) __interrupt(VECTOR_SPI_I2C) __naked
 
         mov     dptr, #_i2c_state_fn    ; Call the state handler
         mov     a, _i2c_state
-        lcall   i2c_j
+        acall   i2c_j
         mov     _i2c_state, a           ; Returns next state
 
         ; Return from IRQ. We get called back after the next byte finishes.
@@ -86,7 +113,7 @@ void spi_i2c_isr(void) __interrupt(VECTOR_SPI_I2C) __naked
         mov     _i2c_state, #(as_nop - _i2c_state_fn)
         sjmp    #1$
 
-        ; Static analysis NOTE dyn_branch i2c_j [atf]s_[0-9]
+        ; Static analysis NOTE dyn_branch i2c_j [atfb]s_[0-9]
 i2c_j:  jmp     @a+dptr
 
     __endasm ;
@@ -146,15 +173,7 @@ as_4:
 
         ; 5. Read X axis high byte.
 as_5:
-        #if HWREV >= 3
-                ; x axis is inverted on rev 3 hardware
-                mov     a, _W2DAT
-                cpl     a
-                mov     _i2c_temp_1, a
-        #else
-                mov     _i2c_temp_1, _W2DAT
-        #endif
-
+        mov     _i2c_temp_1, _W2DAT
         NEXT    (as_6)
 
         ; 6. Read (and discard) Y axis low byte.
@@ -163,11 +182,8 @@ as_6:
         NEXT    (as_7)
 
         ; 7. Read Y axis high byte.
-        ;    (Y axis is inverted on rev 2+ hardware)
 as_7:
-        mov     a, _W2DAT
-        cpl     a
-        mov     _i2c_temp_2, a
+        mov     _i2c_temp_2, _W2DAT
         NEXT    (as_8)
 
         ; 8. Read (and discard) Z axis low byte.
@@ -177,34 +193,48 @@ as_8:
         orl     _W2CON0, #W2CON0_STOP
         NEXT    (as_9)
 
-        ; 9. Read Z axis high byte.
-        ;
-        ; In rapid succession, store both axes and set the change flag
-        ; if necessary. This minimizes the chances of ever sending one old axis and
-        ; one new axis. In fact, since this interrupt is higher priority than the
-        ; RF interrupt, we are guaranteed to send synchronized updates of both axes.
+        ; 9. Read Z axis high byte, and store results
 as_9:
+        ljmp    _i2c_accel_store_results
+i2c_accel_store_results_ret:
 
+        ; Fall through...
+
+        ;--------------------------------------------------------------------
+        ; Battery A/D Converter States
+        ;--------------------------------------------------------------------
+
+        ; 1. Send TX address, start transaction
+bs_1:
+        mov     _W2DAT, #ACCEL_ADDR_TX
+        NEXT    (bs_2)
+
+        ; 2. TX address finished, Send register address next
+bs_2:
+        mov     _W2DAT, #ACCEL_START_READ_BAT
+        NEXT    (bs_3)
+
+        ; 3. Register address finished. Send repeated start, and RX address
+bs_3:
+        orl     _W2CON0, #W2CON0_START
+        mov     _W2DAT, #ACCEL_ADDR_RX
+        NEXT    (bs_4)
+
+        ; 4. RX address finished. Subsequent bytes will be reads.
+bs_4:
+        NEXT    (bs_5)
+
+        ; 5. Read and ignore low byte.
+        ; This is the second-to-last byte, so we queue a Stop condition.
+bs_5:
         mov     a, _W2DAT
-        xrl     a, (_ack_data + RF_ACK_ACCEL + 2)
-        jz      1$
-        xrl     (_ack_data + RF_ACK_ACCEL + 2), a
-        orl     _ack_bits, #RF_ACK_BIT_ACCEL
-1$:
+        orl     _W2CON0, #W2CON0_STOP
+        NEXT    (bs_6)
 
-        mov     a, _i2c_temp_2
-        xrl     a, (_ack_data + RF_ACK_ACCEL + 1)
-        jz      2$
-        xrl     (_ack_data + RF_ACK_ACCEL + 1), a
-        orl     _ack_bits, #RF_ACK_BIT_ACCEL
-2$:
-
-        mov     a, _i2c_temp_1
-        xrl     a, (_ack_data + RF_ACK_ACCEL + 0)
-        jz      3$
-        xrl     (_ack_data + RF_ACK_ACCEL + 0), a
-        orl     _ack_bits, #RF_ACK_BIT_ACCEL
-3$:
+        ; 6. Read high byte, and store results
+bs_6:
+        ljmp    _i2c_battery_store_results
+i2c_battery_store_results_ret:
 
         ; Fall through...
 
@@ -338,7 +368,8 @@ fs_6n:
 
         ; 6. Read first byte of factory test packet. Check for one-byte ops.
 fs_6:
-        mov     a, _W2DAT
+        ajmp    _read_factory_packet_header
+read_factory_packet_header_ret:
 
         cjne    a, #0xfd, #fs_skip_fd   ; Check for flash data [fd] packet
         NEXT    (fs_9)
@@ -425,5 +456,125 @@ void i2c_a21_wait(void) __naked
 2$:     setb    _IEN_EN             ; Leave critical section
         sjmp    #1$                 ; Keep waiting
 
+    __endasm ;
+}
+
+void i2c_battery_store_results() __naked
+{
+    /*
+     * Store a battery voltage measurement.
+     *
+     * The high byte is in W2DAT. The low byte is ignored. The ADC is only 10-bit,
+     * and even the high 8 bits are pretty noisy. For battery voltage, we'd much
+     * prefer a slower but higher resolution result, so we integrate this noisy
+     * data over time in order to get a stable 8-bit battery voltage reading.
+     *
+     * The voltage we sample from the accelerometer is formatted as a signed
+     * value, where 0 is the middle of the range, and polarity is inverted.
+     * To convert it back to an unsigned number with the proper polarity, we
+     * subtract the sample from 0x7F.
+     */
+
+    __asm
+
+        ; Convert to unsigned
+
+        mov     a, #0x7F
+        clr     c
+        subb    a, _W2DAT
+
+        ; Add to the 16-bit accumulator
+
+        add     a, _i2c_battery_total+0
+        mov     _i2c_battery_total+0, a
+
+        mov     a, _i2c_battery_total+1
+        addc    a, #0
+        mov     _i2c_battery_total+1, a
+
+        ; Roll over after 256 measurements
+
+        djnz    _i2c_battery_count, 1$
+
+        ; Skip hysteresis test if we have never updated the battery voltage
+
+        mov     a, (_ack_data + RF_ACK_BATTERY_V)
+        jz      4$
+
+        ; Apply hysteresis. The reading must change by more than one LSB
+        ; before we actually update it.
+
+        mov     a, _i2c_battery_total+1
+        clr     c
+        subb    a, (_ack_data + RF_ACK_BATTERY_V)
+        jz      3$                                      ; Skip if no delta
+        dec     a
+        jz      3$                                      ; Skip if delta +1
+        add     a, #2
+        jz      3$                                      ; Skip if delta -1
+4$:
+
+        ; Force the battery voltage to be nonzero. We reserve zero to
+        ; mean we have not yet finished integrating.
+
+        mov     a, _i2c_battery_total+1
+        jnz     2$
+        inc     a
+2$:
+
+        ; Update the ACK buffer
+
+        mov     (_ack_data + RF_ACK_BATTERY_V), a
+        orl     _ack_bits, #RF_ACK_BIT_BATTERY_V
+
+3$:     ; Clear accumulator and exit
+
+        clr     a
+        mov     _i2c_battery_total+0, a
+        mov     _i2c_battery_total+1, a
+
+1$:
+        ljmp    i2c_battery_store_results_ret
+
+    __endasm ;
+}
+
+void i2c_accel_store_results() __naked
+{
+    /*
+     * In rapid succession, store both axes and set the change flag
+     * if necessary. This minimizes the chances of ever sending one old axis and
+     * one new axis. In fact, since this interrupt is higher priority than the
+     * RF interrupt, we are guaranteed to send synchronized updates of both axes.
+     *
+     * Expects the X axis to be in W2DAT, with X and Y in i2c_temp_1 and _2 respectively.
+     * Returns by jumping to i2c_accel_store_results_ret.
+     */
+
+    __asm
+
+        mov     a, _W2DAT
+
+        xrl     a, (_ack_data + RF_ACK_ACCEL + 2)
+        jz      1$
+        xrl     (_ack_data + RF_ACK_ACCEL + 2), a
+        orl     _ack_bits, #RF_ACK_BIT_ACCEL
+1$:
+
+        mov     a, _i2c_temp_2
+        xrl     a, (_ack_data + RF_ACK_ACCEL + 1)
+        jz      2$
+        xrl     (_ack_data + RF_ACK_ACCEL + 1), a
+        orl     _ack_bits, #RF_ACK_BIT_ACCEL
+2$:
+
+        mov     a, _i2c_temp_1
+        xrl     a, (_ack_data + RF_ACK_ACCEL + 0)
+        jz      3$
+        xrl     (_ack_data + RF_ACK_ACCEL + 0), a
+        orl     _ack_bits, #RF_ACK_BIT_ACCEL
+3$:
+
+        ljmp    i2c_accel_store_results_ret
     __endasm ;
 }

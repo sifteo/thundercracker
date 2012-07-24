@@ -8,6 +8,7 @@
 
 #include <cube_hardware.h>
 #include <protocol.h>
+#include <sifteo/abi/vram.h>
 #include "radio.h"
 #include "flash.h"
 #include "params.h"
@@ -15,6 +16,7 @@
 
 RF_MemACKType __near ack_data;
 uint8_t __near ack_bits;
+
 
 // Disable to prevent radio from writing to VRAM, for testing
 #define WRITE_TO_VRAM
@@ -33,6 +35,11 @@ uint8_t __near ack_bits;
  */
 
 #define RX_NEXT_NYBBLE                                  __endasm; \
+        __asm   djnz    R_NYBBLE_COUNT, rx_loop         __endasm; \
+        __asm   ajmp    rx_complete                     __endasm; \
+        __asm
+
+#define RX_NEXT_NYBBLE_L                                __endasm; \
         __asm   djnz    R_NYBBLE_COUNT, rx_loop         __endasm; \
         __asm   ljmp    rx_complete                     __endasm; \
         __asm
@@ -79,6 +86,7 @@ uint8_t __near ack_bits;
 #define AR_NYBBLE_COUNT         (RF_BANK*8 + 7)
 
 uint16_t vram_dptr;                      // Current VRAM write pointer
+uint8_t radio_packet_deadline;           // Time at which we'll enter disconnected mode
 __bit radio_state_reset_not_pending;     // Next packet should start with a clean slate
 __bit radio_saved_dps;                   // Store DPS in a bit variable, to save space
 
@@ -173,11 +181,11 @@ bsE:
         ; From RLE state? Go to rxs_default
         cjne    R_STATE, #(rxs_rle - rxs_default), 6$
         mov     R_STATE, a
-        ljmp    rxs_default
+        ajmp    rxs_default
 
         ; Otherwise, next nybble.
 6$:     mov     R_STATE, a
-        ljmp    rx_next_sjmp
+        ajmp    rx_next_sjmp
 
         ; ---- Loop for negative diffs
 
@@ -244,8 +252,13 @@ rx_begin_packet:
         ;--------------------------------------------------------------------
 
         ; If the last radio packet was not maximum length, reset state now.
+        ; Also, if we are not connected, we always reset packet state, as we
+        ; need the protocol to be stateless while in disconnected mode.
 
+        jnb     _radio_connected, state_reset
         jb      _radio_state_reset_not_pending, no_state_reset
+
+state_reset:
         setb    _radio_state_reset_not_pending
 
         mov     R_STATE, #0        
@@ -379,7 +392,7 @@ rx_j:   jmp     @a+dptr
 rxs_diff_2:
         mov     R_DIFF, a
         mov     R_LOW, #0
-        ljmp    _rx_write_deltas
+        ajmp    _rx_write_deltas
 
         ;-------------------------------------------
         ; Default state (initial nybble)
@@ -394,7 +407,7 @@ rxs_default:
         jnz     27$
         mov     AR_LOW, R_INPUT
         mov     R_STATE, #(rxs_rle - rxs_default)
-        RX_NEXT_NYBBLE
+        RX_NEXT_NYBBLE_L
 
         ; ------------ Nybble 01ss -- Copy
 
@@ -403,7 +416,7 @@ rxs_default:
         mov     AR_SAMPLE, R_INPUT
         mov     R_DIFF, #RF_VRAM_DIFF_BASE
         mov     R_LOW, #0
-        ljmp    _rx_write_deltas
+        ajmp    _rx_write_deltas
 11$:
 
         ; ------------ Nybble 10ss -- Diff
@@ -411,7 +424,7 @@ rxs_default:
         cjne    a, #0x8, 12$
         mov     AR_SAMPLE, R_INPUT
         mov     R_STATE, #(rxs_diff_1 - rxs_default)
-        RX_NEXT_NYBBLE
+        RX_NEXT_NYBBLE_L
 12$:
 
         ; ------------ Nybble 11xx -- Literal Index
@@ -428,7 +441,7 @@ rxs_default:
         mov     R_STATE, #(rxs_literal - rxs_default)
 
 rx_next_sjmp:
-        RX_NEXT_NYBBLE
+        RX_NEXT_NYBBLE_L
 
         ;-------------------------------------------
         ; 4-bit diff
@@ -438,7 +451,7 @@ rxs_diff_1:
         mov     a, R_INPUT
         anl     a, #0xF
         cjne    a, #7, rxs_diff_2
-        ljmp    rx_special              ; Redundant copy encoding, special meaning
+        ajmp    rx_special              ; Redundant copy encoding, special meaning
 
         ;-------------------------------------------
         ; Literal 14-bit index
@@ -503,7 +516,7 @@ rxs_rle:
         jz      13$
 
         anl     AR_LOW, #0xF            ; Only the low nybble is part of the valid run length
-        ljmp    _rx_write_deltas
+        ajmp    _rx_write_deltas
 
 13$:
         mov     a, R_LOW        ; Check low two bits of the _first_ RLE nybble
@@ -671,11 +684,14 @@ rxs_wrdelta_1_fragment:
         add     a, #4           ; n+5  (rx_write_deltas already adds 1)
         mov     R_LOW, a
 
-        ljmp    _rx_write_deltas
+        ajmp    _rx_write_deltas
 
         ;--------------------------------------------------------------------
-        ; Special codes (8-bit copy encoding)
+        ; Special escape codes (8-bit copy encoding)
         ;--------------------------------------------------------------------
+
+        ; These are all escape codes which return to rx_complete after optionally
+        ; dequeueing argument bytes directly from the RX FIFO.
 
 rx_special:
 
@@ -694,22 +710,47 @@ rx_special:
         mov     _SPIRDAT, #0
         setb    _TCON_TR0                       ; Restart timer
 
-        sjmp    rx_complete                     ; Ignore rest of packet
-
+        sjmp    rx_complete
 1$:
+
         ; -------- 1001 0111 -- Explicit ACK request
 
-        cjne    R_SAMPLE, #1, 2$
+        cjne    R_SAMPLE, #1, 3$
 
         mov     _ack_bits, #0xFF                ; Do ALL the acks!
 
+        sjmp    rx_complete
+3$:
+
+        ; -------- 1010 0111 -- Radio Hop
+
+        cjne    R_SAMPLE, #2, 2$
+        ljmp    _radio_hop
 2$:
-        ; -------- 
 
-        ; Unknown code, or fall-through from a code we finished handling.
-        ; Process the next nybble like usual.
+        ; -------- 1011 0111 <LOW> <HIGH> -- Radio nap
 
-        ljmp    rx_next_sjmp
+        ; Turn off the radio, and turn it off at the given time (measured
+        ; in CLKLF ticks) after the current packet timestamp, which was captured
+        ; by RTC2 when the radio interrupt occurred.
+
+        mov     a, _SPIRDAT                     ; Low byte
+        mov     _SPIRDAT, #0
+        add     a, _RTC2CPT00                   ; Add current packet timestamp
+        mov     _RTC2CMP0, a                    ; Set RTC2 compare value
+        SPI_WAIT                                ; (Does not affect flags)
+        mov     a, _SPIRDAT                     ; High byte
+        mov     _SPIRDAT, #0
+        addc    a, _RTC2CPT01                   ; Add high bytes
+        mov     _RTC2CMP1, a
+
+        ; Enable RTC2 compare interrupt, and turn the radio off. We turn it back on
+        ; in the RTC2 ISR.
+
+        mov     _RTC2CON, #0x0D
+        clr     _RF_CE
+
+        sjmp    rx_complete
 
         ;--------------------------------------------------------------------
         ; Flash FIFO Write
@@ -772,6 +813,16 @@ rx_complete:
         mov     a, _SPIRDAT     ; Throw away one extra dummy byte
 rx_complete_0:
         setb    _RF_CSN         ; End SPI transaction
+rx_complete_1:
+
+        ; Push back our disconnection deadline. We disconnect if there have not been
+        ; any radio packets in 256 to 512 TF0 ticks. (There is an uncertainty of one
+        ; low-byte rollover, making this the minimum nonzero timeout). This about 1
+        ; to 2 seconds.
+
+        mov     a, _sensor_tick_counter_high
+        add     a, #2
+        mov     _radio_packet_deadline, a
 
         ; nRF Interrupt acknowledge
 
@@ -780,10 +831,6 @@ rx_complete_0:
         mov     _SPIRDAT, #RF_STATUS_RX_DR                      ; Clear interrupt flag
         SPI_WAIT                                                ; RX STATUS byte
         mov     a, _SPIRDAT
-        
-        ; Reset powerdown timer
-        
-        POWER_IDLE_RESET_ASM()
 
         ; We may have had multiple packets queued. Typically we can handle incoming
         ; packets at line rate, but if there is a particularly long VRAM write that
@@ -840,7 +887,10 @@ rx_complete_0:
 
 rx_ack:
 
+        mov     a, #0xFF
+        jnb     _radio_connected, 1$                    ; Always send full ACK when disconnected
         mov     a, _ack_bits                            ; Leave ack_bits in acc
+1$:
         jz      no_ack                                  ; Skip the ACK entirely if empty
         mov     _ack_bits, #0                           ; Reset pending ACK bits
 
@@ -854,29 +904,29 @@ rx_ack:
 
         clr     c
 
-        jnb     RF_ACK_ABIT_HWID, $10
+        jnb     RF_ACK_ABIT_HWID, 10$
         mov     R_INPUT, #RF_MEM_ACK_LEN
         setb    c
-        sjmp    $20
+        sjmp    20$
 
-$10:    jnb     RF_ACK_ABIT_BATTERY_V, $11
+10$:    jnb     RF_ACK_ABIT_BATTERY_V, 11$
         mov     R_INPUT, #RF_ACK_LEN_BATTERY_V
-        sjmp    $20
+        sjmp    20$
 
-$11:    jnb     RF_ACK_ABIT_FLASH_FIFO, $12
+11$:    jnb     RF_ACK_ABIT_FLASH_FIFO, 12$
         mov     R_INPUT, #RF_ACK_LEN_FLASH_FIFO
-        sjmp    $20
+        sjmp    20$
 
-$12:    jnb     RF_ACK_ABIT_NEIGHBOR, $13
+12$:    jnb     RF_ACK_ABIT_NEIGHBOR, 13$
         mov     R_INPUT, #RF_ACK_LEN_NEIGHBOR
-        sjmp    $20
+        sjmp    20$
 
-$13:    jnb     RF_ACK_ABIT_ACCEL, $14
+13$:    jnb     RF_ACK_ABIT_ACCEL, 14$
         mov     R_INPUT, #RF_ACK_LEN_ACCEL
-        sjmp    $20
+        sjmp    20$
 
-$14:    mov     R_INPUT, #RF_ACK_LEN_FRAME
-$20:
+14$:    mov     R_INPUT, #RF_ACK_LEN_FRAME
+20$:
 
         ; Send the portion of the packet that comes from ack_data.
         
@@ -926,5 +976,146 @@ no_ack:
         pop     acc
         reti
         
+    __endasm ;
+}
+
+
+/*
+ * radio_hop --
+ *
+ *    This handles the Radio Hop command, which escapes from nybble
+ *    mode and takes up to 7 bytes of arguments:
+ *
+ *      - Radio channel
+ *      - Radio address (5 byte)
+ *      - Neighbor ID
+ *
+ *    This command always switches to Connected mode, if we aren't
+ *    there already. Also, we always cause a state reset, in part because
+ *    this function requires re-using a bunch of our state registers
+ *    as temporary space to store the new radio address.
+ *
+ *    Note that the hop occurs immediately without leaving the ISR, but
+ *    after the radio has already sent the ACK. It's possible that this
+ *    ACK may get dropped, so if the master sees a timeout it may need
+ *    to retry on our new channel/address.
+ *
+ *    Temporary space used:
+ *
+ *      r0                      Loop iterator / pointer
+ *      R_LOW+ (r1-r7)          Parameter bytes
+ *      _vram_dptr              Count of argument bytes
+ *      _vram_dptr+1            Copy of argument count
+ */
+
+void radio_hop(void) __naked __using(RF_BANK)
+{
+    __asm
+        ; State changes
+
+        clr     _radio_state_reset_not_pending
+        setb    _radio_connected
+
+        mov     dptr, #_SYS_VA_FLAGS    ; Clear video flags
+        clr     a
+        movx    @dptr, a
+        mov     dptr, #rxs_default      ; Restore DPTR
+
+        ;--------------------------------------------------------------------
+        ; Read Arguments
+        ;--------------------------------------------------------------------
+
+        mov     a, R_NYBBLE_COUNT               ; Convert nybble count to byte count
+        dec     a
+        clr     c
+        rrc     a
+        jz      10$                             ; Zero bytes (done)
+        mov     _vram_dptr, a                   ; Otherwise, this is the new byte count
+
+        add     a, #(256 - 7)                   ; Clamp count to 7 (ignore remainder)
+        jnc     1$
+        mov     _vram_dptr, #7
+1$:
+
+        mov     _vram_dptr+1, _vram_dptr        ; Save copy of argument count
+        mov     R_TMP, #AR_LOW                  ; Start writing to r1
+
+2$:
+        SPI_WAIT
+        mov     a, _SPIRDAT                     ; Load next SPI byte
+        mov     _SPIRDAT, #0                    ; Dummy write
+        mov     @R_TMP, a                       ; Store it in our temporary space
+
+        inc     R_TMP                           ; Advance head pointer
+        djnz    _vram_dptr, 2$                  ; Next byte
+
+        ;--------------------------------------------------------------------
+        ; Write Channel
+        ;--------------------------------------------------------------------
+
+        SPI_WAIT
+        mov     a, _SPIRDAT                     ; Throw away one extra dummy byte
+        setb    _RF_CSN                         ; End SPI transaction
+        clr     _RF_CE                          ; Turn off radio receiver temporarily
+        clr     _RF_CSN                         ; Begin SPI transaction
+
+        mov     _SPIRDAT, #(RF_CMD_W_REGISTER | RF_REG_RF_CH)
+
+        mov     a, R_LOW                        ; Channel is masked with 0x7F to stay in hardware spec
+        anl     a, #0x7F
+        mov     _SPIRDAT, a
+
+        SPI_WAIT                                ; Flush one byte, leave a single dummy byte in FIFO
+        mov     a, _SPIRDAT
+
+        ;--------------------------------------------------------------------
+        ; Write Address
+        ;--------------------------------------------------------------------
+
+        mov     a, _vram_dptr+1                 ; Only proceed if we have 6+ bytes
+        add     a, #(256 - 6)
+        jnc     10$
+
+        SPI_WAIT
+        setb    _RF_CSN                         ; End SPI transaction
+        mov     a, _SPIRDAT                     ; Throw away one extra dummy byte from FIFO
+        clr     _RF_CSN                         ; Begin SPI transaction
+
+        mov     _SPIRDAT, #(RF_CMD_W_REGISTER | RF_REG_RX_ADDR_P0)
+
+        mov     R_TMP, #(AR_LOW + 1)            ; Write 5 bytes, starting with the 2nd buffered byte
+3$:
+        mov     a, @R_TMP
+        mov     _SPIRDAT, a
+        inc     R_TMP
+        SPI_WAIT
+        mov     a, _SPIRDAT
+        cjne    R_TMP, #(AR_LOW + 1 + 5), 3$
+
+        ;--------------------------------------------------------------------
+        ; Neighbor ID
+        ;--------------------------------------------------------------------
+
+        ; Note: We expect the neighbor ID to already have the three high bits set,
+        ;       but we do not enforce this. Maybe it will be useful in the future to
+        ;       transmit slightly different neighbor packets under master control.
+
+        mov     a, _vram_dptr+1
+        cjne    a, #7, 10$                      ; Only proceed if we have exactly 7 bytes
+        mov     _nb_tx_id, (AR_LOW + 6)         ;   Save byte 7 as new neighbor ID
+
+        ;--------------------------------------------------------------------
+        ; Finish packet
+        ;--------------------------------------------------------------------
+
+10$:
+
+        SPI_WAIT
+        mov     a, _SPIRDAT     ; Throw away one extra dummy byte
+        setb    _RF_CSN         ; End SPI transaction
+        setb    _RF_CE          ; Turn radio receiver back on
+
+        ljmp    rx_complete_1
+
     __endasm ;
 }

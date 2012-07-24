@@ -66,16 +66,30 @@ void FrontendOverlay::draw()
         else
             realTimeColor.set(1, 0.5, 0.5);
 
-        // Calculate cube hardware rates.
-        //
-        // (Note that opt_numCubes is not synchronized with this thread,
-        // but that's okay. This only needs to be an estimated cube count.)
+        /*
+         * For each cube, show its neighbor ID (Equal to the CubeID in userspace)
+         * as well as its most recent frame rate measurement.
+         *
+         * (Note that opt_numCubes is not synchronized with this thread,
+         * but that's okay. This only needs to be an estimated cube count.)
+         */
         
         for (unsigned i = 0; i < sys->opt_numCubes; i++) {
             // FPS (LCD writes per second)
             cubes[i].lcd_wr.update(slowTimer, sys->cubes[i].lcd.getFrameCount());
-            snprintf(cubes[i].fps, sizeof cubes[i].fps,
-                     "#%d - %.1f FPS", i, cubes[i].lcd_wr.getHZ());
+            float fps = cubes[i].lcd_wr.getHZ();
+
+            // Get neighbor ID, and see if it's valid
+            unsigned nbID = sys->cubes[i].getNeighborID();
+
+            // Start appending to our string buffer
+            char *p = cubes[i].fps, *end = p + sizeof cubes[i].fps;
+            *p = 0;
+
+            if (nbID >= 0xE0)
+                p += snprintf(p, end-p, "#%d - ", nbID & 0x1F);
+
+            p += snprintf(p, end-p, "%.1f FPS", fps);
         }
 
         slowTimer.start();

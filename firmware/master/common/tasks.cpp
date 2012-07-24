@@ -8,6 +8,7 @@
 #include "svmdebugger.h"
 #include "cubeslots.h"
 #include "homebutton.h"
+#include "cubeconnector.h"
 
 #ifndef SIFTEO_SIMULATOR
 #include "usb/usbdevice.h"
@@ -16,94 +17,83 @@
 #endif
 
 uint32_t Tasks::pendingMask;
+uint32_t Tasks::iterationMask;
 
-// XXX: managing the list of tasks for different configurations
-// is starting to get a little unwieldy...
-Tasks::Task Tasks::TaskList[] = {
-    #ifdef SIFTEO_SIMULATOR
-    { 0 },
-    { 0 },
-    #else
-    { PowerManager::vbusDebounce, 0 },
-    { UsbDevice::handleOUTData, 0},
+/*
+ * Table of runnable tasks.
+ */
+
+static ALWAYS_INLINE void taskInvoke(unsigned id)
+{
+    switch (id) {
+
+    #ifndef SIFTEO_SIMULATOR
+        case Tasks::PowerManager:   return PowerManager::vbusDebounce();
+        case Tasks::UsbOUT:         return UsbDevice::handleOUTData();
     #endif
 
     #ifndef BOOTLOADER
-    { AudioMixer::pullAudio, 0},
-    { SvmDebugger::messageLoop, 0},
-    { CubeSlots::assetLoaderTask, 0 },
-    { HomeButton::task, 0 },
+        case Tasks::AudioPull:      return AudioMixer::pullAudio();
+        case Tasks::Debugger:       return SvmDebugger::messageLoop();
+        case Tasks::AssetLoader:    return CubeSlots::assetLoaderTask();
+        case Tasks::HomeButton:     return HomeButton::task();
+        case Tasks::CubeConnector:  return CubeConnector::task();
     #endif
 
     #if !defined(SIFTEO_SIMULATOR) && !defined(BOOTLOADER)
-    { SampleProfiler::task, 0 },
+        case Tasks::Profiler:       return SampleProfiler::task();
     #endif
-};
 
-void Tasks::init()
-{
-    pendingMask = 0;
-}
-
-/*
- * Pend a given task handler to be run the next time we have time.
- */
-void Tasks::setPending(TaskID id, void* p)
-{
-    ASSERT((unsigned)id < arraysize(TaskList));
-    Task &task = TaskList[id];
-    ASSERT(task.callback != NULL);
-    task.param = p;
-
-    Atomic::SetLZ(pendingMask, id);
-}
-
-void Tasks::clearPending(TaskID id)
-{
-    Atomic::ClearLZ(pendingMask, id);
-}
-
-/*
- * Service any tasks that are pending since our last round of work.
- * Should be called in main thread context, as callbacks might typically
- * take some time - it's the whole reason Tasks exists, after all.
- */
-void Tasks::work()
-{
-    uint32_t mask = pendingMask;
-
-    while (mask) {
-        // Must clear the bit before invoking the callback
-        unsigned idx = Intrinsic::CLZ(mask);
-        mask ^= Intrinsic::LZ(idx);
-
-        Task &task = TaskList[idx];
-        task.callback(task.param);
     }
 }
 
-/*
- * Run pending tasks, OR if no tasks are pending, wait for interrupts.
- * This is the correct way to block the main thread of execution while
- * waiting for a condition.
- */
+bool Tasks::work()
+{
+    /*
+     * We sample pendingMask exactly once, and use this to quickly make
+     * the determination of whether any work is to be done or not.
+     *
+     * If we do have some amount of work to do, we atomically transfer
+     * all pending flags from pendingMask to iterationMask, where we
+     * clear the flags as we invoke each callback.
+     *
+     * This method is efficient in the common cases, and it is safe
+     * even in tricky edge cases like tasks which re-trigger themselves
+     * but may be cancelled by a different task. The iterationMask
+     * is also cancelled if we cancel a task, to handle the case where
+     * the cancelled task was already pulled from pendingMask.
+     */
+
+    // Quickest possible early-exit
+    uint32_t tasks = pendingMask;
+    if (LIKELY(!tasks))
+        return false;
+
+    // Clear only the bits we managed to capture above
+    Atomic::And(pendingMask, ~tasks);
+
+    // Doesn't need to be atomic; we're not required to catch changes to
+    // iterationMask made outside of task handlers (i.e. in ISRs)
+    iterationMask = tasks;
+
+    do {
+        unsigned idx = Intrinsic::CLZ(tasks);
+        taskInvoke(idx);
+        tasks = (iterationMask &= ~Intrinsic::LZ(idx));
+    } while (tasks);
+
+    return true;
+}
+
 void Tasks::idle()
 {
     /*
-     * XXX: This should really exit before waitForInterrupt(), in the
-     *      event that we're actually making forward progress in work().
-     *      Right now there isn't a good way of detecting this, though.
-     *
-     *      I'd like to call waitForInterrupt() if and only if there
-     *      were no pending tasks, but this currently doesn't work because
-     *      of tasks like AudioPull which are almost always runnable.
-     *
-     *      So, until we find a clean solution to that problem, idle() is
-     *      equivalent to work() followed by waitForInterrupt(). But we're
-     *      still consolidating our idling logic as much as possible so that
-     *      this strategy can be changed easily later.
+     * Run pending tasks, OR if no tasks are pending, wait for interrupts.
+     * This is the correct way to block the main thread of execution while
+     * waiting for a condition, as it avoids unnecessary WFIs when the
+     * caller is waiting on something which requires Tasks to execute.
      */
 
-    work();
-    waitForInterrupt();
+    if (!work())
+        waitForInterrupt();
 }

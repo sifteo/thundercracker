@@ -20,6 +20,8 @@ from hex import hexDump
 # Note that we want one that's both a generator and which has a 1:1 mapping for CRCs.
 BEST_GEN = 0x84
 
+MAX_RF_CHANNEL = 83
+
 # Initial conditions for CRC
 INITIAL = 0xff
 
@@ -172,23 +174,25 @@ def hwidToRadioSettings(hwid):
     reg = INITIAL
     reg = xcrc(hwid[0], reg)
     reg = xcrc(hwid[1], reg)
-    reg = xcrc(hwid[2], reg)
 
     addr = []
-    for byte in hwid[3:]:
+    for byte in hwid[2:7]:
         reg = xcrc(byte, reg)
         while 1:
             if reg in (0x00, 0xFF, 0xAA, 0x55):
-                reg = xcrc(0, reg)
+                print "(disallowed byte %02x)" % reg
+                reg = xcrc(0xFF, reg)
             else:
                 addr.append(reg)
                 break
 
+    reg = xcrc(hwid[7], reg)
     while 1:
-        reg = xcrc(0, reg)
         ch = reg & 0x7F
-        if ch <= 125:
+        if ch <= MAX_RF_CHANNEL:
             break
+        print "(disallowed channel %d)" % ch
+        reg = xcrc(0xFF, reg)
 
     return tuple(addr), ch
 
@@ -197,7 +201,7 @@ def hexlist(bytes):
 
 def testHWID(hwid):
     addr, ch = hwidToRadioSettings(hwid)
-    print "\t%s: %s ch=%d" % (hexlist(hwid), hexlist(addr), ch)
+    print "\t%s: %02x/%s" % (hexlist(hwid), ch, hexlist(addr))
 
 def testRadioSettings():
     print "\nSample radio settings for various HWIDs:"
@@ -211,10 +215,32 @@ def testRadioSettings():
         hwid[0] = i
         testHWID(hwid)
 
+def minDist(l):
+    # Find the distance between the two closest elements of a list
+    closest = 1e999
+    for i in range(len(l)):
+        for j in range(i+1, len(l)):
+            closest = min(closest, abs(l[i] - l[j]))
+    return closest
+
+def findPairingChannels():
+    print "\nFinding pairing channels:"
+    for g in range(256):
+        isOkay = True
+        l = []
+        for x in range(24, 32):
+            channel = gfm(x, g) & 0x7F
+            if channel in l or channel > MAX_RF_CHANNEL:
+                isOkay = False
+            l.append(channel)
+        if isOkay:
+            m = sorted(l)
+            print "\t0x%02x - Span %d, dist %d, %s" % (g, m[-1] - m[0], minDist(l), l)
 
 if __name__ == "__main__":
-    findAllGenerators()
-    testCRCBytes()
-    testCRCBitErrors()
-    crcSamples()
-    testRadioSettings()
+    #findAllGenerators()
+    #testCRCBytes()
+    #testCRCBitErrors()
+    #crcSamples()
+    #testRadioSettings()
+    findPairingChannels()

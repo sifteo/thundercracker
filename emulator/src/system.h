@@ -54,6 +54,7 @@ class System {
     bool opt_lockRotationByDefault;
     bool opt_radioTrace;
     bool opt_traceEnabledAtStartup;
+    bool opt_noCubeReconnect;
 
     // Master firmware debug options
     bool opt_paintTrace;

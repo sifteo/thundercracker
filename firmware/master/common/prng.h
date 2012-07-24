@@ -28,6 +28,8 @@ struct PRNG {
 
     // For internal use by the system
     static uint32_t anonymousValue();
+
+    static void collectTimingEntropy(_SYSPseudoRandomState *state);
 };
 
 #endif
