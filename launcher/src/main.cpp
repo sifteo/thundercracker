@@ -26,7 +26,7 @@ void main()
     // In simulation, if exactly one game is installed, run it immediately.
     ELFMainMenuItem::autoexec();
 
-    AudioTracker::play(UISound_Startup);
+    AudioTracker::play(Tracker_Startup);
 
     while (1) {
         static MainMenu menu;

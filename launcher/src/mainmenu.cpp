@@ -87,6 +87,7 @@ void MainMenu::eventLoop(Menu &m)
 
             case MENU_ITEM_PRESS:
                 if (canLaunchItem(e.item)) {
+                    AudioChannel(0).play(Sound_ConfirmClick);
                     itemChoice = e.item;
                 } else {
                     toggleCubeRangeAlert(e.item, m);
@@ -135,7 +136,7 @@ void MainMenu::updateMusic()
      */
 
     if (AudioTracker::isStopped())
-        AudioTracker::play(UISound_MenuMusic);
+        AudioTracker::play(Tracker_MenuMusic);
 }
 
 void MainMenu::updateIcons(Menu &menu)
@@ -167,6 +168,8 @@ bool MainMenu::canLaunchItem(unsigned index)
 void MainMenu::toggleCubeRangeAlert(unsigned index, Sifteo::Menu &menu)
 {
     if (cubeRangeSavedIcon == NULL) {
+        AudioChannel(0).play(Sound_NonPossibleAction);
+
         ASSERT(index < arraysize(items));
         MainMenuItem *item = items[index];
         

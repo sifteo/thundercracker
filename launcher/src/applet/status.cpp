@@ -109,6 +109,8 @@ void StatusApplet::depart(CubeSet cubes, CubeID mainCube)
 
 void StatusApplet::prepaint(CubeSet cubes, CubeID mainCube)
 {
+    // TODO: Battery low SFX
+
     static bool frame = true;
     if (frame) {
         if (levelCounter < BatteryBars.numFrames())
