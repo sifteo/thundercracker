@@ -94,9 +94,12 @@ public:
         STATIC_ASSERT(NUM_FULL_WORDS + 1 == NUM_WORDS ||
                       NUM_FULL_WORDS == NUM_WORDS);
 
+        #pragma clang diagnostic push
+        #pragma clang diagnostic ignored "-Wtautological-compare"
         // Set fully-utilized words only
         for (unsigned i = 0; i < NUM_FULL_WORDS; ++i)
             words[i] = -1;
+        #pragma clang diagnostic pop
 
         if (NUM_FULL_WORDS != NUM_WORDS) {
             // Set only bits < tSize in the last word.
@@ -115,9 +118,12 @@ public:
         STATIC_ASSERT(NUM_FULL_WORDS + 1 == NUM_WORDS ||
                       NUM_FULL_WORDS == NUM_WORDS);
 
+        #pragma clang diagnostic push
+        #pragma clang diagnostic ignored "-Wtautological-compare"
         // Set fully-utilized words only
         for (unsigned i = 0; i < NUM_FULL_WORDS; ++i)
             words[i] ^= -1;
+        #pragma clang diagnostic pop
 
         if (NUM_FULL_WORDS != NUM_WORDS) {
             // Set only bits < tSize in the last word.
