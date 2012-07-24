@@ -38,6 +38,8 @@ const MenuAssets MainMenu::menuAssets = {
 
 void MainMenu::init()
 {
+    time = SystemTime::now();
+
     items.clear();
     itemIndexCurrent = 0;
     cubeRangeSavedIcon = NULL;
@@ -77,6 +79,7 @@ void MainMenu::eventLoop(Menu &m)
     struct MenuEvent e;
     while (m.pollEvent(&e)) {
 
+        updateSound(m);
         updateMusic();
         updateIcons(m);
         checkForAlertDismiss(m);
@@ -126,6 +129,18 @@ void MainMenu::eventLoop(Menu &m)
 
     if (itemChoice != -1)
         execItem(itemChoice);
+}
+
+void MainMenu::updateSound(Sifteo::Menu &menu)
+{
+    // TODO: increase the click speed for fast scrolling
+    if (menu.getState() == MENU_STATE_TILTING) {
+        Sifteo::TimeDelta dt = Sifteo::SystemTime::now() - time;
+        if (dt.milliseconds() > 300) {
+            time += dt;
+            AudioChannel(0).play(Sound_TiltClick);
+        }
+    }
 }
 
 void MainMenu::updateMusic()
