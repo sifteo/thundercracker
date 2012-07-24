@@ -133,10 +133,16 @@ void MainMenu::eventLoop(Menu &m)
 
 void MainMenu::updateSound(Sifteo::Menu &menu)
 {
-    // TODO: increase the click speed for fast scrolling
+    Sifteo::TimeDelta dt = Sifteo::SystemTime::now() - time;
+    
     if (menu.getState() == MENU_STATE_TILTING) {
-        Sifteo::TimeDelta dt = Sifteo::SystemTime::now() - time;
-        if (dt.milliseconds() > 300) {
+        unsigned threshold = abs(Shared::video[mainCube].virtualAccel().x) > 46 ? 200 : 300;
+        if (dt.milliseconds() >= threshold) {
+            time += dt;
+            AudioChannel(0).play(Sound_TiltClick);
+        }
+    } else if (menu.getState() == MENU_STATE_INERTIA) {
+        if (dt.milliseconds() >= 400) {
             time += dt;
             AudioChannel(0).play(Sound_TiltClick);
         }
