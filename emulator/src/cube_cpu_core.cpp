@@ -74,11 +74,6 @@ void em8051_reset(em8051 *aCPU, int aWipe)
 
     memset(aCPU->mSFR, 0, 128);
 
-    // If we wake up from deep sleep, set PWRDWN accordingly.
-    // XXX: Currently the only wakeup source is Wakeup From Pin.
-    aCPU->mSFR[REG_PWRDWN] = aCPU->deepSleep ? 0x81 : 0x00;
-    aCPU->deepSleep = false;
-
     aCPU->mPC = 0;
     aCPU->mTickDelay = 1;
     aCPU->prescaler12 = 12;
@@ -107,7 +102,13 @@ void em8051_reset(em8051 *aCPU, int aWipe)
     aCPU->mSFR[REG_SPIRDAT] = 0x00;
     aCPU->mSFR[REG_RFCON] = RFCON_RFCSN;
 
-    aCPU->mSFR[REG_CLKLFCTRL] = 0x07;
+    // Pretend the 16 MHz xtal is ready immediately
+    aCPU->mSFR[REG_CLKLFCTRL] = 0x0F;
+
+    // XXX: Fake sleep support in siftulator :(
+    aCPU->mSFR[REG_PWRDWN] = 0x00;
+    aCPU->deepSleep = false;
+
 
     // build function pointer lists
 
@@ -322,6 +323,8 @@ NEVER_INLINE void timer_tick_work(em8051 *aCPU, bool tick12)
                 except(aCPU, EXCEPTION_CLKLF);
             break;
 
+        case CLKLFSRC_RC:
+            // RC. Behave the same as synthesized.
         case CLKLFSRC_SYNTH:
             // Synthesized
 
