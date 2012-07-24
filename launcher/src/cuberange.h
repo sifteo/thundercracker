@@ -19,6 +19,7 @@ public:
 
     CubeRange(const _SYSMetadataCubeRange *cr = 0);
 
+    bool isEmpty();
     bool isValid();
     void set();
 };

@@ -89,8 +89,14 @@ void MainMenu::eventLoop(Menu &m)
                     AudioChannel(0).play(Sound_ConfirmClick);
                     itemChoice = e.item;
                 } else {
-                    toggleCubeRangeAlert(e.item, m);
-                    performDefault = false;
+                    ASSERT(e.item < arraysize(items));
+                    if (items[e.item]->getCubeRange().isEmpty()) {
+                        AudioChannel(0).play(Sound_NonPossibleAction);
+                        performDefault = false;
+                    } else {
+                        toggleCubeRangeAlert(e.item, m);
+                        performDefault = false;
+                    }
                 }
                 break;
             case MENU_ITEM_ARRIVE:
