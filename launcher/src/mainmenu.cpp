@@ -48,27 +48,20 @@ void MainMenu::init()
 }
 
 void MainMenu::run()
-{ 
+{
+    // XXX: we should be able to start with 0 cubes, add the first one and have
+    // the launcher still work.
     while (getNumCubes(CubeSet::connected()) < 1) {
         System::yield();
     }
 
-    // Load our own local assets plus all icon assets
-    loadAssets();
-
     // Pick one cube to be the 'main' cube, where we show the menu
     mainCube = *cubes().begin();
 
-    // Display a background on all other cubes
-    for (CubeID cube : cubes()) {
-        if (cube != mainCube) {
-            auto& vid = Shared::video[cube];
-            vid.initMode(BG0);
-            vid.attach(cube);
-            vid.bg0.erase(Menu_StripeTile);
-        }
-    }
-    
+    // Load our own local assets plus all icon assets
+    cubesToLoad = CubeSet::connected();
+    loadAssets();
+
     // Run the menu on our main cube
     Menu m(Shared::video[mainCube], &menuAssets, &menuItems[0]);
     m.setIconYOffset(8);
@@ -81,6 +74,10 @@ void MainMenu::eventLoop(Menu &m)
 
     struct MenuEvent e;
     while (m.pollEvent(&e)) {
+
+        if (getNumCubes(cubesToLoad) > 0) {
+            loadAssets();
+        }
 
         updateSound(m);
         updateMusic();
@@ -145,16 +142,14 @@ void MainMenu::cubeConnect(unsigned cid)
 
     Shared::video[cid].attach(cid);
 
-    if (cid != mainCube) {
-        auto& vid = Shared::video[cid];
-        vid.initMode(BG0);
-        vid.bg0.erase(Menu_StripeTile);
-    }
+    cubesToLoad.mark(cid);
 }
 
 void MainMenu::cubeDisconnect(unsigned cid)
 {
     AudioTracker::play(Tracker_CubeDisconnect);
+
+    cubesToLoad.clear(cid);
 }
 
 void MainMenu::updateSound(Sifteo::Menu &menu)
@@ -288,11 +283,15 @@ void MainMenu::prepaintItem(unsigned index)
 
 void MainMenu::loadAssets()
 {
-    CubeSet connectedCubes = cubes();
-
     ScopedAssetLoader loader;
+
+    // Only load the cubes that are currently queued to load. In case there
+    // is a new cube that gets connected during loading, we want to wait and
+    // load that one in the next round.
+    CubeSet cubesLoading = cubesToLoad;
+
     DefaultLoadingAnimation anim;
-    anim.begin(connectedCubes);
+    anim.begin(cubesLoading);
 
     // Bind the local volume's slots.
     _SYS_asset_bindSlots(Volume::running(), Shared::NUM_SLOTS);
@@ -343,7 +342,7 @@ void MainMenu::loadAssets()
             totalBytes += group.compressedSize();
             allLoadableItems.mark(I);
 
-            if (!group.isInstalled(connectedCubes)) {
+            if (!group.isInstalled(cubesLoading)) {
                 uninstalledTiles += group.tileAllocation();
                 uninstalledBytes += group.compressedSize();
                 uninstalledItems.mark(I);
@@ -374,18 +373,18 @@ void MainMenu::loadAssets()
     // Keep count of progress from previous load operations.
     unsigned progress = 0;
 
-    if (!MenuGroup.isInstalled(connectedCubes)) {
+    if (!MenuGroup.isInstalled(cubesLoading)) {
 
         // Include the size of this group in our progress calculation
         uninstalledBytes += MenuGroup.compressedSize();
 
-        if (!loader.start(MenuGroup, Shared::primarySlot, connectedCubes)) {
+        if (!loader.start(MenuGroup, Shared::primarySlot, cubesLoading)) {
             Shared::primarySlot.erase();
-            loader.start(MenuGroup, Shared::primarySlot, connectedCubes);
+            loader.start(MenuGroup, Shared::primarySlot, cubesLoading);
         }
 
         while (!loader.isComplete()) {
-            for (CubeID cube : connectedCubes) {
+            for (CubeID cube : cubesLoading) {
                 anim.paint(CubeSet(cube), clamp<int>(loader.progressBytes(cube)
                     * 100 / uninstalledBytes, 0, 100));
             }
@@ -408,10 +407,10 @@ void MainMenu::loadAssets()
         ASSERT(mi.icon);
         AssetGroup &group = mi.icon->assetGroup();
 
-        loader.start(group, Shared::iconSlot, connectedCubes);
+        loader.start(group, Shared::iconSlot, cubesLoading);
 
         while (!loader.isComplete()) {
-            for (CubeID cube : connectedCubes) {
+            for (CubeID cube : cubesLoading) {
                 anim.paint(CubeSet(cube), clamp<int>((progress + loader.progressBytes(cube))
                     * 100 / uninstalledBytes, 0, 100));
             }
@@ -422,5 +421,17 @@ void MainMenu::loadAssets()
         progress += group.compressedSize();
     }
 
-    anim.end(connectedCubes);
+    anim.end(cubesLoading);
+
+    for (CubeID cube : cubesLoading) {
+        // Initialize the graphics on non-menu cubes
+        if (cube != mainCube) {
+            auto& vid = Shared::video[cube];
+            vid.initMode(BG0);
+            vid.attach(cube);
+            vid.bg0.erase(Menu_StripeTile);
+        }
+        // Mark this cube as having been loaded
+        cubesToLoad.clear(cube);
+    }
 }

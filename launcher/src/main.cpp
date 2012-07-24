@@ -23,6 +23,8 @@ static Metadata M = Metadata()
 
 void main()
 {
+    // TODO: remove all cubes with Lua before start so we can test proper add/remove
+
     AudioTracker::play(Tracker_Startup);
 
     // In simulation, if exactly one game is installed, run it immediately.

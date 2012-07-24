@@ -58,7 +58,8 @@ private:
     const Sifteo::AssetImage *cubeRangeSavedIcon;
 
     Sifteo::CubeSet cubes();
-    
+    Sifteo::CubeSet cubesToLoad;
+
     void cubeConnect(unsigned cid);
     void cubeDisconnect(unsigned cid);
 
