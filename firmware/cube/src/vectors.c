@@ -56,10 +56,12 @@ __start__stack:
         ;---------------------------------
 
 v_0000:
-        clr     _IEN_EN                         ; Make sure interrupts are off during init
         mov     sp, #(__start__stack - 1)       ; Init stack
 
-        lcall   _radio_init                     ; Turn on radio, and program it with static settings
+        clr     a                               ; IRAM clear loop
+        mov     r0, a
+1$:     mov     @r0, a
+        djnz    r0, 1$
 
         sjmp    init_1                          ; Continue init below...
 
@@ -74,14 +76,13 @@ v_000b: ljmp    _tf0_isr
         ;---------------------------------
 
 init_1:
+
+1$:     mov     a, _CLKLFCTRL                   ; Wait for 16 MHz oscillator startup
+        jnb     acc.3, 1$
+
+        lcall   _radio_init                     ; Turn on radio, and program it with static settings
         lcall   _power_init                     ; Check wakeup reason, handle wake-on-RF, turn on power rails
 
-        clr     a                               ; IRAM clear loop
-        mov     r0, a
-1$:     mov     @r0, a
-        djnz    r0, 1$
-
-        lcall   _params_init                    ; Initialize HWID in NVM
         sjmp    init_2                          ; Continue init below...
 
         ;---------------------------------
@@ -93,13 +94,12 @@ v_001b: ljmp    _tf1_isr
         ;---------------------------------
 
 init_2:
+        lcall   _params_init                    ; Initialize HWID in NVM
         lcall   _flash_init                     ; Init flash state machine
         lcall   _sensors_init                   ; Init sensor IRQs
         acall   v_004b                          ; Manually run RF interrupt, to drain RX FIFO
-        setb    _IEN_EN                         ; Global interrupt enable (subsystem init done)
 
-disconnected_init_sjmp:
-        ljmp    _disconnected_init              ; Init disconnected mode and enter graphics loop
+        sjmp    init_3                          ; Continue init below...
 
         ;---------------------------------
         ; TF2 Vector
@@ -135,7 +135,13 @@ _graphics_render_ret::
 
 v_004b: ljmp    _radio_isr
 
-        .ds 5
+        ;---------------------------------
+
+init_3:
+        setb    _IEN_EN                         ; Global interrupt enable (subsystem init done)
+
+disconnected_init_sjmp:
+        ljmp    _disconnected_init              ; Init disconnected mode and enter graphics loop
 
         ;---------------------------------
         ; SPI/I2C Vector

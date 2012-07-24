@@ -73,8 +73,6 @@ void radio_init(void)
      * This is the very first initialization step we run, before any
      * peripherals are powered on. This needs to stay short, since
      * it runs even while we're asleep and polling for wake-on-RF.
-     *
-     * Runs before clearing RAM!
      */
 
     static const __code uint8_t table[] = {
