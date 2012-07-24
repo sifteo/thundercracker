@@ -10,10 +10,14 @@
 #include "homebutton.h"
 #include "cubeconnector.h"
 
-#ifndef SIFTEO_SIMULATOR
-#include "usb/usbdevice.h"
-#include "sampleprofiler.h"
-#include "powermanager.h"
+#ifdef SIFTEO_SIMULATOR
+#   include "mc_timing.h"
+#   include "system_mc.h"
+#   include "system.h"
+#else
+#   include "usb/usbdevice.h"
+#   include "sampleprofiler.h"
+#   include "powermanager.h"
 #endif
 
 uint32_t Tasks::pendingMask;
@@ -68,6 +72,17 @@ bool Tasks::work()
     uint32_t tasks = pendingMask;
     if (LIKELY(!tasks))
         return false;
+
+    /*
+     * Elapse some time in simulation. Besides factoring in as part of our
+     * timing model, this ensures that a Tasks::work() loop or Tasks::idle()
+     * will always elaps a nonzero amount of time, even if there's a task
+     * queued which is always triggered. This prevents us from getting into
+     * an infinite loop in such cases.
+     */
+    #ifdef SIFTEO_SIMULATOR
+    SystemMC::elapseTicks(MCTiming::TICKS_PER_TASKS_WORK);
+    #endif
 
     // Clear only the bits we managed to capture above
     Atomic::And(pendingMask, ~tasks);

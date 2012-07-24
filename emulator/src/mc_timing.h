@@ -27,6 +27,11 @@ struct MCTiming {
     // (This is especially arbitrary... I guessed ~200 CPU cycles)
     static const unsigned TICKS_PER_SVC = 50;
 
+    // XXX: Arbitrary time for Tasks::work(), necessary so simulator
+    // can make forward progress in cases where Tasks are polling for
+    // time to elapse. (For example, audio output with --headless)
+    static const unsigned TICKS_PER_TASKS_WORK = 10;
+
     // XXX: Arbitrary unverified time for flash cache miss, in ticks
     // (Based on theoretical 18 MHz / 1.8 MBps bus speed and 256-byte pages,
     // including some generous padding)
