@@ -111,6 +111,10 @@ inline void Menu::transFromStart()
         prev_ut = computeCurrentTile() + kNumTilesX;
         updateBG0();
 
+        // Placed here to fix the bug where some icons tiles appear missing when the menu is initialized.
+        // Open to other better ideas of where to stick the finish...
+        System::finish();
+
         for(int i = 0; i < NUM_SIDES; i++) {
             neighbors[i].neighborSide = NO_SIDE;
             neighbors[i].neighbor = CubeID::UNDEFINED;
