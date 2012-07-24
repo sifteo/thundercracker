@@ -36,7 +36,7 @@ extern __bit disc_battery_draw;     // 0 = drawing logo, 1 = drawing battery
 // The cube's idle timeout, measured in units of 1.57 seconds (sensor_tick_counter overflow rate).
 // Reset when entering idle mode, or when the score is incremented.
 // Current timeout: 1 minute
-#define IDLE_TIMEOUT    4
+#define IDLE_TIMEOUT    38
 
 // Threshold for detecting score-affecting bounces
 #define BOUNCE_THR      0x40
