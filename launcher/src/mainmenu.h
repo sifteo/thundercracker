@@ -43,7 +43,6 @@ public:
 
 private:
     Sifteo::SystemTime time;
-    Sifteo::CubeSet cubes;
     Sifteo::CubeID mainCube;
 
     Sifteo::Array<MainMenuItem*, MAX_ITEMS> items;
@@ -58,6 +57,8 @@ private:
     Sifteo::RelocatableTileBuffer<12,12> cubeRangeAlertIcon;
     const Sifteo::AssetImage *cubeRangeSavedIcon;
 
+    Sifteo::CubeSet cubes();
+    
     void cubeConnect(unsigned cid);
     void cubeDisconnect(unsigned cid);
 

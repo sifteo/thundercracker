@@ -25,10 +25,6 @@ void main()
 {
     AudioTracker::play(Tracker_Startup);
 
-    while (!CubeSet::connected().test(2)) {
-        System::yield();
-    }
-
     // In simulation, if exactly one game is installed, run it immediately.
     ELFMainMenuItem::autoexec();
 

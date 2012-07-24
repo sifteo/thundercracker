@@ -13,7 +13,7 @@
 
 using namespace Sifteo;
 
-static void drawText(RelocatableTileBuffer<12,12> &icon, const char* text, Int2 pos)
+static void drawText(RelocatableTileBuffer<12,12> &icon, const char *text, Int2 pos)
 {
     for (int i = 0; text[i] != 0; ++i) {
         icon.image(vec(pos.x + i, pos.y), Font, text[i]-32);
@@ -44,28 +44,31 @@ void MainMenu::init()
     itemIndexCurrent = 0;
     cubeRangeSavedIcon = NULL;
 
-    // XXX: For now, we just use one cube
-    _SYS_setCubeRange(1, 1);
-    cubes = CubeSet::connected();
+    _SYS_setCubeRange(1, _SYS_NUM_CUBE_SLOTS-1); // XXX: eventually this will be the system default
 }
 
 void MainMenu::run()
-{
+{ 
+    while (getNumCubes(CubeSet::connected()) < 1) {
+        System::yield();
+    }
+
     // Load our own local assets plus all icon assets
     loadAssets();
 
     // Pick one cube to be the 'main' cube, where we show the menu
-    mainCube = *cubes.begin();
+    mainCube = *cubes().begin();
 
     // Display a background on all other cubes
-    for (CubeID cube : cubes)
+    for (CubeID cube : cubes()) {
         if (cube != mainCube) {
             auto& vid = Shared::video[cube];
             vid.initMode(BG0);
             vid.attach(cube);
             vid.bg0.erase(Menu_StripeTile);
         }
-
+    }
+    
     // Run the menu on our main cube
     Menu m(Shared::video[mainCube], &menuAssets, &menuItems[0]);
     m.setIconYOffset(8);
@@ -129,6 +132,11 @@ void MainMenu::eventLoop(Menu &m)
 
     if (itemChoice != -1)
         execItem(itemChoice);
+}
+
+CubeSet MainMenu::cubes()
+{
+    return CubeSet::connected();
 }
 
 void MainMenu::cubeConnect(unsigned cid)
@@ -200,7 +208,7 @@ bool MainMenu::canLaunchItem(unsigned index)
     unsigned minCubes = item->getCubeRange().sys.minCubes;
     unsigned maxCubes = item->getCubeRange().sys.maxCubes;
 
-    unsigned numCubes = getNumCubes(cubes);
+    unsigned numCubes = getNumCubes(cubes());
     return numCubes >= minCubes && numCubes <= maxCubes;
 }
 
@@ -279,9 +287,11 @@ void MainMenu::prepaintItem(unsigned index)
 
 void MainMenu::loadAssets()
 {
+    CubeSet connectedCubes = cubes();
+
     ScopedAssetLoader loader;
     DefaultLoadingAnimation anim;
-    anim.begin(cubes);
+    anim.begin(connectedCubes);
 
     // Bind the local volume's slots.
     _SYS_asset_bindSlots(Volume::running(), Shared::NUM_SLOTS);
@@ -332,7 +342,7 @@ void MainMenu::loadAssets()
             totalBytes += group.compressedSize();
             allLoadableItems.mark(I);
 
-            if (!group.isInstalled(cubes)) {
+            if (!group.isInstalled(connectedCubes)) {
                 uninstalledTiles += group.tileAllocation();
                 uninstalledBytes += group.compressedSize();
                 uninstalledItems.mark(I);
@@ -363,18 +373,18 @@ void MainMenu::loadAssets()
     // Keep count of progress from previous load operations.
     unsigned progress = 0;
 
-    if (!MenuGroup.isInstalled(cubes)) {
+    if (!MenuGroup.isInstalled(connectedCubes)) {
 
         // Include the size of this group in our progress calculation
         uninstalledBytes += MenuGroup.compressedSize();
 
-        if (!loader.start(MenuGroup, Shared::primarySlot, cubes)) {
+        if (!loader.start(MenuGroup, Shared::primarySlot, connectedCubes)) {
             Shared::primarySlot.erase();
-            loader.start(MenuGroup, Shared::primarySlot, cubes);
+            loader.start(MenuGroup, Shared::primarySlot, connectedCubes);
         }
 
         while (!loader.isComplete()) {
-            for (CubeID cube : cubes) {
+            for (CubeID cube : connectedCubes) {
                 anim.paint(CubeSet(cube), clamp<int>(loader.progressBytes(cube)
                     * 100 / uninstalledBytes, 0, 100));
             }
@@ -397,10 +407,10 @@ void MainMenu::loadAssets()
         ASSERT(mi.icon);
         AssetGroup &group = mi.icon->assetGroup();
 
-        loader.start(group, Shared::iconSlot, cubes);
+        loader.start(group, Shared::iconSlot, connectedCubes);
 
         while (!loader.isComplete()) {
-            for (CubeID cube : cubes) {
+            for (CubeID cube : connectedCubes) {
                 anim.paint(CubeSet(cube), clamp<int>((progress + loader.progressBytes(cube))
                     * 100 / uninstalledBytes, 0, 100));
             }
@@ -411,5 +421,5 @@ void MainMenu::loadAssets()
         progress += group.compressedSize();
     }
 
-    anim.end(cubes);
+    anim.end(connectedCubes);
 }
