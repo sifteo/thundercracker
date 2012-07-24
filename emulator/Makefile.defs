@@ -17,7 +17,7 @@ FLAGS += -DNOT_USERSPACE -DSIFTEO_SIMULATOR -D__STDC_FORMAT_MACROS
 FLAGS += -DSDK_VERSION=$(shell git describe --tags)
 
 # Disable unwanted warnings, but be generally pretty pedantic
-WARNFLAGS += -Wall -Werror -Wno-unused -Wno-strict-aliasing -Wno-uninitialized
+WARNFLAGS += -Wall -Werror -Wno-unused -Wno-strict-aliasing -Wno-uninitialized -Wno-unknown-pragmas
 
 # Resources
 ifeq ($(BUILD_PLATFORM), windows32)
