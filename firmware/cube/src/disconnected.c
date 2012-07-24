@@ -36,7 +36,7 @@ extern __bit disc_battery_draw;     // 0 = drawing logo, 1 = drawing battery
 // The cube's idle timeout, measured in units of 1.57 seconds (sensor_tick_counter overflow rate).
 // Reset when entering idle mode, or when the score is incremented.
 // Current timeout: 1 minute
-#define IDLE_TIMEOUT    38
+#define IDLE_TIMEOUT    4
 
 // Threshold for detecting score-affecting bounces
 #define BOUNCE_THR      0x40
@@ -231,14 +231,21 @@ static void fp_bounce_axis(void) __naked
     __endasm ;
 }
 
-static void add_s8_to_s16(void) __naked
+static void sub_s8_from_s16(void) __naked
 {
     /*
-     * Assembly-callable math utility. Adds a signed 8-bit value from 'a'
-     * to a signed 16-bit value in r3:r2.
+     * Assembly-callable math utility, with two entry points.
+     *
+     * Adds or subtracts signed 8-bit value (in 'a') to/from a signed 16-bit value in r3:r2.
      */
 
     __asm
+
+        cpl     a       ; Twos complement
+        inc     a
+
+_add_s8_to_s16::
+
         jb      acc.7, 1$
 
         ; Positive
@@ -545,8 +552,8 @@ fp_bounce_axis_ret:
         ; the logo to the center, an accelerometer force, plus some damping.
         ;
         ; Equivalent to:
-        ;    disc_logo_x += (disc_logo_dx -= x + (disc_logo_dx >> FP_BITS) + ack_data.accel[0]);
-        ;    disc_logo_y += (disc_logo_dy -= -BATTERY_HEIGHT + y + (disc_logo_dy >> FP_BITS) + ack_data.accel[1]);
+        ;    disc_logo_x += (disc_logo_dx -= x + (disc_logo_dx >> FP_BITS) - ack_data.accel[0]);
+        ;    disc_logo_y += (disc_logo_dy -= -BATTERY_HEIGHT + y + (disc_logo_dy >> FP_BITS) - ack_data.accel[1]);
 
         ; ---- X axis
 
@@ -558,7 +565,7 @@ fp_bounce_axis_ret:
         mov     a, r4                               ; Damping force
         acall   _add_s8_to_s16
         mov     a, (_ack_data + RF_ACK_ACCEL + 0)   ; Tilt force
-        acall   _add_s8_to_s16
+        acall   _sub_s8_from_s16
         mov     r0, #_disc_logo_dx                  ; Integrate velocity and position
         acall   _fp_integrate_axis
 
@@ -571,7 +578,7 @@ fp_bounce_axis_ret:
         mov     a, r5                               ; Damping force
         acall   _add_s8_to_s16
         mov     a, (_ack_data + RF_ACK_ACCEL + 1)   ; Tilt force
-        acall   _add_s8_to_s16
+        acall   _sub_s8_from_s16
         mov     r0, #_disc_logo_dy                  ; Integrate velocity and position
         acall   _fp_integrate_axis
 
