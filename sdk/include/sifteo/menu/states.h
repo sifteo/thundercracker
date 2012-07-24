@@ -251,7 +251,7 @@ inline void Menu::stateInertia()
     }
     // if still tilting, do not bounce back to the stopping position.
     if ((tiltDirection < 0 && velocity >= 0.f) || (tiltDirection > 0 && velocity <= 0.f)) {
-            return;
+        return;
     }
 
     velocity += stopping_position - position;

@@ -135,12 +135,14 @@ inline float Menu::velocityMultiplier()
 
 inline float Menu::maxVelocity()
 {
+    // Tilt velocity increase to a faster amount if the acceleration is above
+    // a certain value. Tune the threshold and speed here...
     const float kMaxNormalSpeed = abs(accel.x) > 11.5f ? 70.f : 40.f;
     return kMaxNormalSpeed *
-           // x-axis linear limit
-           (abs(accel.x) / kOneG()) *
-           // y-axis multiplier
-           velocityMultiplier();
+        // x-axis linear limit
+        (abs(accel.x) / kOneG()) *
+        // y-axis multiplier
+        velocityMultiplier();
 }
 
 inline float Menu::lerp(float min, float max, float u)

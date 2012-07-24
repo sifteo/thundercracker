@@ -254,6 +254,11 @@ inline void Menu::anchor(uint8_t item)
     startingItem = item;
 }
 
+inline MenuState Menu::getState()
+{
+    return currentState;
+}
+
 /**
  * @} end addtogroup menu
  */
