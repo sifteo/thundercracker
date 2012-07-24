@@ -29,20 +29,18 @@ static void drawBattery(T &canvas, float batteryLevel, int levelCounter, Int2 po
     }
 }
 
-template<typename T>
-static void drawText(T &canvas, const char* text, Int2 pos)
+static void drawText(RelocatableTileBuffer<12,12> &icon, const char* text, Int2 pos)
 {
     for (int i = 0; text[i] != 0; i++) {
-        canvas.image(vec(pos.x + i, pos.y), Font, text[i]-32);
+        icon.image(vec(pos.x + i, pos.y), Font, text[i]-32);
     }
 }
 
 static unsigned getNumCubes(CubeSet cubes)
 {
     unsigned count = 0;
-    for (int i = 0; i < cubes.size(); ++i) {
-        if (cubes.test(i))
-            ++count;
+    for (CubeID cube : cubes) {
+        ++count;
     }
     return count;
 }
@@ -126,13 +124,14 @@ void StatusApplet::arrive()
 void StatusApplet::depart()
 {
     // Display a background on all other cubes
-    for (CubeID cube : CubeSet::connected())
+    for (CubeID cube : CubeSet::connected()) {
         if (cube != *CubeSet::connected().begin()) {
             auto &vid = Shared::video[cube];
             vid.initMode(BG0);
             vid.attach(cube);
             vid.bg0.erase(Menu_StripeTile);
         }
+    }
 }
 
 void StatusApplet::prepaint()

@@ -65,8 +65,18 @@ public:
      */
     virtual void exec() = 0;
 
-    // TODO: docs
+    /** 
+     * Hook for menu item's arriving as the current item.
+     */
     virtual void arrive() {}
+    
+    /** 
+     * Hook for menu item's departing from being the current item.
+     */
     virtual void depart() {}
+    
+    /** 
+     * Hook for custom drawing prior to the menu calling System::paint().
+     */
     virtual void prepaint() {}
 };

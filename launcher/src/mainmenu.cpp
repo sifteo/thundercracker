@@ -13,20 +13,18 @@
 using namespace Sifteo;
 
 
-template<typename T>
-static void drawText(T &canvas, const char* text, Int2 pos)
+static void drawText(RelocatableTileBuffer<12,12> &icon, const char* text, Int2 pos)
 {
-    for (int i = 0; text[i] != 0; i++) {
-        canvas.image(vec(pos.x + i, pos.y), Font, text[i]-32);
+    for (int i = 0; text[i] != 0; ++i) {
+        icon.image(vec(pos.x + i, pos.y), Font, text[i]-32);
     }
 }
 
 static unsigned getNumCubes(CubeSet cubes)
 {
     unsigned count = 0;
-    for (int i = 0; i < cubes.size(); ++i) {
-        if (cubes.test(i))
-            ++count;
+    for (CubeID cube : cubes) {
+        ++count;
     }
     return count;
 }
@@ -142,7 +140,8 @@ void MainMenu::updateSound(Sifteo::Menu &menu)
             AudioChannel(0).play(Sound_TiltClick);
         }
     } else if (menu.getState() == MENU_STATE_INERTIA) {
-        if (dt.milliseconds() >= 400) {
+        unsigned threshold = 400;
+        if (dt.milliseconds() >= threshold) {
             time += dt;
             AudioChannel(0).play(Sound_TiltClick);
         }
