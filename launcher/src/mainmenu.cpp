@@ -10,8 +10,8 @@
 #include "assets.gen.h"
 #include <sifteo.h>
 #include <sifteo/menu.h>
-using namespace Sifteo;
 
+using namespace Sifteo;
 
 static void drawText(RelocatableTileBuffer<12,12> &icon, const char* text, Int2 pos)
 {
@@ -33,9 +33,11 @@ const MenuAssets MainMenu::menuAssets = {
     &Menu_BgTile, &Menu_Footer, NULL, {&Menu_Tip0, &Menu_Tip1, &Menu_Tip2, NULL}
 };
 
-
 void MainMenu::init()
 {
+    Events::cubeConnect.set(&MainMenu::cubeConnect, this);
+    Events::cubeDisconnect.set(&MainMenu::cubeDisconnect, this);
+    
     time = SystemTime::now();
 
     items.clear();
@@ -127,6 +129,23 @@ void MainMenu::eventLoop(Menu &m)
 
     if (itemChoice != -1)
         execItem(itemChoice);
+}
+
+void MainMenu::cubeConnect(unsigned cid)
+{
+    AudioTracker::play(UISound_ConnectBase);
+    Shared::video[cid].attach(cid);
+
+    if (cid != mainCube) {
+        auto& vid = Shared::video[cid];
+        vid.initMode(BG0);
+        vid.bg0.erase(Menu_StripeTile);
+    }
+}
+
+void MainMenu::cubeDisconnect(unsigned cid)
+{
+    AudioTracker::play(UISound_CubeLost);
 }
 
 void MainMenu::updateSound(Sifteo::Menu &menu)

@@ -58,6 +58,9 @@ private:
     Sifteo::RelocatableTileBuffer<12,12> cubeRangeAlertIcon;
     const Sifteo::AssetImage *cubeRangeSavedIcon;
 
+    void cubeConnect(unsigned cid);
+    void cubeDisconnect(unsigned cid);
+
     void updateSound(Sifteo::Menu &menu);
     void updateMusic();
     void updateIcons(Sifteo::Menu &menu);
