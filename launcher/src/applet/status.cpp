@@ -81,7 +81,7 @@ MainMenuItem::Flags StatusApplet::getAssets(MenuItem &assets, MappedVolume &)
     drawText(icon, "Master", vec(5, 5));
 
     String<8> bufferCubes;
-    bufferCubes << getNumCubes(cubes) << " cubes";
+    bufferCubes << getNumCubes(CubeSet::connected()) << " cubes";
     drawText(icon, bufferCubes.c_str(), vec(3, 8));
     
     String<16> bufferBlocks;
@@ -96,11 +96,11 @@ void StatusApplet::exec()
 {
 }
 
-void StatusApplet::arrive(CubeSet cubes, CubeID mainCube)
+void StatusApplet::arrive(CubeID mainCube)
 {
     levelCounter = 0;
 
-    for (CubeID cube : cubes) {
+    for (CubeID cube : CubeSet::connected()) {
         if (cube != mainCube) {
             auto &vid = Shared::video[cube];
             vid.bg0.image(vec(2, 2), Icon_Battery);
@@ -111,7 +111,7 @@ void StatusApplet::arrive(CubeSet cubes, CubeID mainCube)
     if (getBatteryLevelMaster() <= 0.25f) {
         AudioChannel(0).play(Sound_BatteryLowBase);
     } else {
-        for (CubeID cube : cubes) {
+        for (CubeID cube : CubeSet::connected()) {
             if (getBatteryLevelCube(cube) <= 0.25f) {
                 AudioChannel(0).play(Sound_BatteryLowCube);
                 break;
@@ -120,10 +120,10 @@ void StatusApplet::arrive(CubeSet cubes, CubeID mainCube)
     }
 }
 
-void StatusApplet::depart(CubeSet cubes, CubeID mainCube)
+void StatusApplet::depart(CubeID mainCube)
 {
     // Display a background on all other cubes
-    for (CubeID cube : cubes)
+    for (CubeID cube : CubeSet::connected())
         if (cube != mainCube) {
             auto &vid = Shared::video[cube];
             vid.initMode(BG0);
@@ -132,7 +132,7 @@ void StatusApplet::depart(CubeSet cubes, CubeID mainCube)
         }
 }
 
-void StatusApplet::prepaint(CubeSet cubes, CubeID mainCube)
+void StatusApplet::prepaint(CubeID mainCube)
 {
     static bool frame = true;
     if (frame) {
@@ -143,7 +143,7 @@ void StatusApplet::prepaint(CubeSet cubes, CubeID mainCube)
     }
     frame = !frame;
 
-    for (CubeID cube : cubes) {
+    for (CubeID cube : CubeSet::connected()) {
         if (cube != mainCube) {
             auto &vid = Shared::video[cube];
             vid.bg0.image(vec(2,2), Icon_Battery);
@@ -155,21 +155,5 @@ void StatusApplet::prepaint(CubeSet cubes, CubeID mainCube)
 void StatusApplet::add(MainMenu &menu)
 {
     static StatusApplet instance;
-    
-    Events::cubeConnect.set(&StatusApplet::onCubeFound, &instance);
-    Events::cubeDisconnect.set(&StatusApplet::onCubeLost, &instance);
-
     menu.append(&instance);
-}
-
-void StatusApplet::onCubeFound(unsigned cubeId)
-{
-    ASSERT(!cubes.test(cubeId));
-    cubes.mark(cubeId);
-}
-
-void StatusApplet::onCubeLost(unsigned cubeId)
-{
-    ASSERT(cubes.test(cubeId));
-    cubes.clear(cubeId);
 }

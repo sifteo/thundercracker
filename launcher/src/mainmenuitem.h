@@ -66,7 +66,7 @@ public:
     virtual void exec() = 0;
 
     // TODO: docs
-    virtual void arrive(Sifteo::CubeSet cubes, Sifteo::CubeID mainCube) {}
-    virtual void depart(Sifteo::CubeSet cubes, Sifteo::CubeID mainCube) {}
-    virtual void prepaint(Sifteo::CubeSet cubes, Sifteo::CubeID mainCube) {}
+    virtual void arrive(Sifteo::CubeID mainCube) {}
+    virtual void depart(Sifteo::CubeID mainCube) {}
+    virtual void prepaint(Sifteo::CubeID mainCube) {}
 };

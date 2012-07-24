@@ -17,17 +17,13 @@ public:
     virtual bool autoRefreshIcon() { return true; }
 
     virtual void exec();
-    virtual void arrive(Sifteo::CubeSet cubes, Sifteo::CubeID mainCube);
-    virtual void depart(Sifteo::CubeSet cubes, Sifteo::CubeID mainCube);
-    virtual void prepaint(Sifteo::CubeSet cubes, Sifteo::CubeID mainCube);
+    virtual void arrive(Sifteo::CubeID mainCube);
+    virtual void depart(Sifteo::CubeID mainCube);
+    virtual void prepaint(Sifteo::CubeID mainCube);
 
     static void add(MainMenu &menu);
 
 private:
-    void onCubeFound(unsigned cubeId);
-    void onCubeLost(unsigned cubeId);
-
-    Sifteo::CubeSet cubes;
     Sifteo::RelocatableTileBuffer<12,12> icon;
     unsigned levelCounter;
 };

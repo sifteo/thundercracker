@@ -25,8 +25,6 @@ public:
         volume.exec();
     }
 
-    virtual void prepaint(Sifteo::CubeSet cubes, Sifteo::CubeID mainCube);
-
     virtual CubeRange getCubeRange() const {
         return cubeRange;
     }
