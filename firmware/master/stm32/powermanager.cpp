@@ -37,9 +37,6 @@ void PowerManager::init()
     GPIOPin vcc3v3 = VCC33_ENABLE_GPIO;
     vcc3v3.setControl(GPIOPin::OUT_2MHZ);
 
-    //Sets the last state on first start. 
-    lastState = BatteryPwr;
-
     /*
      * Set initial state.
      *
@@ -96,7 +93,7 @@ void PowerManager::vbusDebounce(void* p)
 
 void PowerManager::setState(State s)
 {
-#if (BOARD >= BOARD_TC_MASTER_REV2) && (BOARD != BOARD_TEST_JIG)
+#if (BOARD >= BOARD_TC_MASTER_REV2)
     GPIOPin vcc3v3 = VCC33_ENABLE_GPIO;
 
     switch (s) {
@@ -109,13 +106,9 @@ void PowerManager::setState(State s)
         vcc3v3.setHigh();
         UsbDevice::init();
         break;
-
-    default:
-        break;
     }
-#elif (BOARD == BOARD_TEST_JIG)
-    UsbDevice::init();
 #endif
+
     lastState = s;
 }
 
