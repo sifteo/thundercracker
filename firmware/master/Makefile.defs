@@ -12,21 +12,22 @@ MASTER_DIR = $(TC_DIR)/firmware/master
 # assuming it will be inlined. The inlined code should end up being
 # smaller due to constant folding. Without optimization, a lot of our
 # code ends up too large and/or slow to run on real hardware!
-CCFLAGS += -Os
+FLAGS += -Os
 
-# Math
-CCFLAGS += -ffast-math
-LDFLAGS += -lm
+# No standard libraries, no math libraries.
+# Use our own patched libraries. We do, however, use the default libgcc.
+FLAGS += -ffast-math -D_IEEE_LIBM
+LDFLAGS += -nostdlib -lgcc
 
 # Versioning
 VERSION := $(shell git describe --tags)
-CCFLAGS += -DSDK_VERSION=$(VERSION)
+FLAGS += -DSDK_VERSION=$(VERSION)
 
 # Always build with debug symbols (It can't hurt)
-CCFLAGS += -g3
+FLAGS += -g3
 
 # NOTE: putting DEPFLAGS here separately, since $(@F) didn't want to expand
-# properly when included as part of CCFLAGS
+# properly when included as part of FLAGS
 DEPFLAGS = -MD -MP -MF .dep/$(@F).d
 
 # Heavy debug options, only enabled by an explicit environment variable.
@@ -34,17 +35,15 @@ DEPFLAGS = -MD -MP -MF .dep/$(@F).d
 # if you know what you're doing! The main effect it has right now is to make
 # JTAG debugging possible, at the expense of flash memory access.
 ifneq ($(DEBUG),)
-    CCFLAGS += -DDEBUG
-endif
-
-# Configurable radio channel
-ifneq ($(MASTER_RF_CHAN),)
-    CCFLAGS += -DMASTER_RF_CHAN=$(MASTER_RF_CHAN)
+    FLAGS += -DDEBUG
 endif
 
 # Environment defs
 # NOTE: specify these relative to MASTER_DIR so both normal and testjig builds can share
-CCFLAGS += \
+FLAGS += \
+	-I$(MASTER_DIR)/stm32/newlib/libm/common \
+	-I$(MASTER_DIR)/stm32/newlib/libc/include \
+	-I$(MASTER_DIR)/stm32/newlib/libm/include \
 	-I$(MASTER_DIR)/common \
 	-I$(MASTER_DIR)/stm32 \
 	-I$(MASTER_DIR)/../include \
@@ -53,10 +52,10 @@ CCFLAGS += \
 	-D__STDC_FORMAT_MACROS
 
 # Disable unwanted warnings, but be generally pretty pedantic
-CCFLAGS += -Wall -Werror -Wno-unused -Wno-strict-aliasing
+FLAGS += -Wall -Werror -Wno-unused -Wno-strict-aliasing
 
-# GCC's lame excuse for link-time optimization... saves only a little space
-CCFLAGS += -ffunction-sections -fdata-sections
+# Link-time garbage collection
+FLAGS += -ffunction-sections -fdata-sections
 LDFLAGS += -Wl,--gc-sections
 
 # Disable unwanted C++ features
@@ -72,14 +71,14 @@ CCFLAGS += -fno-use-cxa-atexit
 ifeq ($(BOOTLOADABLE), )
     LDSCRIPT_GEN := python $(MASTER_DIR)/tools/ldscript-gen.py
 else
-    CCFLAGS += -DBOOTLOADABLE
+    FLAGS += -DBOOTLOADABLE
     LDSCRIPT_GEN := python $(MASTER_DIR)/tools/ldscript-gen.py --bootloadable
 endif
 
 #adding a flag for the test jig
 #mostly used for compiling the bootloader for the testjig
 ifneq ($(TEST_JIG),)
-	CCFLAGS += -DBOARD=BOARD_TEST_JIG
+	FLAGS += -DBOARD=BOARD_TEST_JIG
 endif
 
 # default linker script handling
@@ -91,7 +90,7 @@ endif
 ARCH := -mthumb -mcpu=cortex-m3 -mfix-cortex-m3-ldrd \
     -msoft-float -mno-thumb-interwork
 
-CCFLAGS += $(ARCH)
+FLAGS += $(ARCH)
 LDFLAGS += $(ARCH) \
               -Wl,-Map=$(BIN).map,--cref,--gc-sections,-u,IVT \
               -T $(LDSCRIPT) -nostartfiles

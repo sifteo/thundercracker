@@ -20,7 +20,7 @@ public:
         return static_cast<State>(vbus.isHigh());
     }
 
-    static void vbusDebounce(void* p);
+    static void vbusDebounce();
     static void shutdown();
 
     // only exposed for use via exti

@@ -37,9 +37,6 @@ void PowerManager::init()
     GPIOPin vcc3v3 = VCC33_ENABLE_GPIO;
     vcc3v3.setControl(GPIOPin::OUT_2MHZ);
 
-    //Sets the last state on first start. 
-    lastState = BatteryPwr;
-
     /*
      * Set initial state.
      *
@@ -75,19 +72,20 @@ void PowerManager::beginVbusMonitor()
 void PowerManager::onVBusEdge()
 {
     debounceDeadline = SysTime::ticks() + SysTime::msTicks(DEBOUNCE_MILLIS);
-    Tasks::setPending(Tasks::PowerManager);
+    Tasks::trigger(Tasks::PowerManager);
 }
 
 /*
  * Provides for a little settling time from the last edge
  * on vbus before initiating the actual rail transition
  */
-void PowerManager::vbusDebounce(void* p)
+void PowerManager::vbusDebounce()
 {
-    if (SysTime::ticks() < debounceDeadline)
+    if (SysTime::ticks() < debounceDeadline) {
+        // Poll until our deadline is elapsed
+        Tasks::trigger(Tasks::PowerManager);
         return;
-
-    Tasks::clearPending(Tasks::PowerManager);
+    }
 
     State s = state();
     if (s != lastState)
@@ -96,7 +94,7 @@ void PowerManager::vbusDebounce(void* p)
 
 void PowerManager::setState(State s)
 {
-#if (BOARD >= BOARD_TC_MASTER_REV2) && (BOARD != BOARD_TEST_JIG)
+#if (BOARD >= BOARD_TC_MASTER_REV2)
     GPIOPin vcc3v3 = VCC33_ENABLE_GPIO;
 
     switch (s) {
@@ -109,13 +107,9 @@ void PowerManager::setState(State s)
         vcc3v3.setHigh();
         UsbDevice::init();
         break;
-
-    default:
-        break;
     }
-#elif (BOARD == BOARD_TEST_JIG)
-    UsbDevice::init();
 #endif
+
     lastState = s;
 }
 

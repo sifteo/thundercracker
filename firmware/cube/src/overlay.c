@@ -56,6 +56,8 @@ _fls_tail::         ; 1 byte
     .ds 1
 _fls_st::           ; 5 bytes
     .ds 5
+_x_bg0_first_addr:: ; 1 byte
+    .ds 1
 
 ; ----------------------------------
 
@@ -65,11 +67,24 @@ _lcd_window_x::     ;     1 byte
 _lcd_window_y::     ;     1 byte
     .ds 1           ; +1
 _bg2_state::        ;     14 bytes
-_draw_xy::          ;     2 bytes
     .ds 2           ; +2
-_draw_attr::        ;     1 byte
-    .ds 1           ; +4
-    .ds 20-5        ; +5
+_disc_logo_x::      ;     2 bytes
+    .ds 2           ; +4
+_disc_logo_y::      ;     2 bytes
+    .ds 2           ; +6
+_disc_logo_dx::     ;     2 bytes
+    .ds 2           ; +8
+_disc_logo_dy::     ;     2 bytes
+    .ds 2           ; +10
+_disc_score::       ;     1 byte
+    .ds 1           ; +12
+_disc_sleep_timer:: ;     1 byte
+    .ds 1           ; +13
+_disc_hop_timer::   ;     1 byte
+    .ds 1           ; +14
+_disc_nb_base::     ;     1 byte
+    .ds 1           ; +15
+    .ds 20-16       ; +16
 
 ; ----------------------------------
 
@@ -85,13 +100,20 @@ _x_bg1_rshift::
     .ds 1
 _x_bg1_lshift::
     .ds 1
+_disc_battery_draw::
 _x_bg1_offset_bit0::
     .ds 1
+_disc_bounce_type::
 _x_bg1_offset_bit1::
     .ds 1
+_disc_has_trophy::
 _x_bg1_offset_bit2::
     .ds 1
 _y_bg1_empty::
+    .ds 1
+_radio_connected::
+    .ds 1
+_radio_idle_hop::
     .ds 1
 
 ; ----------------------------------

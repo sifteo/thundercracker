@@ -345,6 +345,8 @@ extern volatile TIM_t TIM2;
 extern volatile TIM_t TIM3;
 extern volatile TIM_t TIM4;
 extern volatile TIM_t TIM5;
+extern volatile TIM_t TIM6;
+extern volatile TIM_t TIM7;
 extern volatile TIM_t TIM8;
 
 

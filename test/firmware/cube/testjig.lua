@@ -9,6 +9,7 @@ local bit = require("bit")
 
 require("radio")
 require("vram")
+require("luaunit")
 
 jig = {}
 
@@ -76,5 +77,12 @@ jig = {}
     end
 
     function jig:flashReset()
-        jig:programFlashAndWait('', 1, 'fe')
+        -- Flash reset is acknowledged by toggling bit 0x40 in the 6th byte.
+
+        local ack1 = gx.cube:testGetACK():byte(6)
+        gx.cube:testWrite(packHex("fe"))
+        gx.sys:vsleep(0.2)
+        local ack2 = gx.cube:testGetACK():byte(6)
+
+        assertEquals(bit.bxor(ack1, ack2), 0x40)
     end

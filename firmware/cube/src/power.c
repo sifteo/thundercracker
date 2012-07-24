@@ -12,9 +12,25 @@
 #include "radio.h"
 #include "sensors_i2c.h"
 
-uint8_t power_sleep_timer;
 
-void power_delay()
+/*
+ * We maintain a state variable in data-retentive SRAM
+ * to determine whether we are waking up on battery insertion
+ * or just waking up from sleep.
+ *
+ * (This location overlaps vram space. After power init,
+ * it will be cleared during disconnected_init)
+ *
+ * Our magic value here is just any word that seems very unlikely
+ * to find by chance in uninitialized SRAM.
+ */
+
+#define POWERDOWN_MAGIC     0x55AA
+
+static __xdata __at 0x0000 uint16_t powerdown_state;
+
+
+static void power_delay()
 {
     /*
      * Arbitrary delay, currently about 2 ms.
@@ -33,6 +49,107 @@ void power_delay()
 }
 
 
+static void power_minisleep(void)
+{
+    /*
+     * Go to sleep, with just the bare minimum amount of setup.
+     * this is used as part of the public power_sleep() function,
+     * plus this is how we go to sleep quickly after a wake-on-rf
+     * poll. This assumes that the system's hardware has not been
+     * initialized at all.
+     */
+
+    // Open the OPMCON latch if necessary, so we can configure
+    // WUOPC1 and the pin states.
+    OPMCON = 0;
+
+    // To save current, all pins are configured as inputs.
+    // We also need our shake wakeup pin to be an input.
+    ADDR_DIR = 0xff;
+    CTRL_DIR = 0xff;
+    MISC_DIR = 0xff;
+
+    // We must reset WUOPC1 before any sleep, even if it hasn't been cleared.
+    WUOPC1 = WUOPC_BIT;
+
+    // We must latch these port states, to preserve them during sleep.
+    // This latch stays locked until early wakeup, in power_init().
+    OPMCON = OPMCON_LATCH_LOCKED;
+
+    // Remember that we're sleeping deliberately
+    powerdown_state = POWERDOWN_MAGIC;
+
+    // While we're asleep, the watchdog will keep running off the low-power RC oscillator.
+    CLKLFCTRL = CLKLFCTRL_SRC_RC;
+
+    // Memory retention, timers on.
+    PWRDWN = PWRDWN_MEMRET_TIMERS;
+}
+
+
+static void power_wake_on_rf_poll(void)
+{
+    /*
+     * Poll for incoming radio packets, for a short time. Operates during very
+     * early init, when waking up from our wake-on-rf timer.
+     *
+     * If we detect a packet within the allotted time, this function returns
+     * and we continue initialization as normal. If not, we go right back to sleep.
+     * The powerdown sequence is much simplified, since almost nothing is on yet.
+     */
+
+     /*
+      * Set up the watchdog early. This will wake us up after sleeping, for
+      * the next poll. But we also might as well have it running during the
+      * poll itself, in case we get stuck somehow.
+      */
+
+    CLKLFCTRL = CLKLFCTRL_SRC_RC;
+    WDSV;
+    WDSV = 0xcc;
+    WDSV = 0x00;
+
+    // Set up the default idle radio address, and turn on the receiver
+    radio_idle_hop = 0;
+    radio_set_idle_addr();
+
+    /*
+     * Poll for a received packet.
+     *
+     * This is a little sucky, because (a) we need an entire packet, and (b) we
+     * have to poll over SPI. We can't use the RF interrupt flag here easily,
+     * since the flag is auto-clear and we don't actually want to execute our
+     * ISR yet. And we can't use the RPD register really, since its power threshold
+     * is much higher than the nRF's usual RX threshold.
+     */
+
+    {
+        uint8_t i = 0, j = 2;
+        do {
+            do {
+                __asm
+                    lcall   _radio_fifo_status
+                    jnb     acc.0, 1$              ; RX_EMPTY bit
+                __endasm ;
+            } while (--i);
+        } while (--j);
+    }
+
+    /*
+     * Back to sleep! The watchdog will wake us for the next poll.
+     */
+
+    radio_rx_disable();
+    RF_CKEN = 0;
+
+    power_minisleep();
+
+    __asm
+1$:
+    __endasm ;
+}
+
+
 void power_init(void)
 {
     /*
@@ -42,21 +159,55 @@ void power_init(void)
      *
      * We don't care why we were sleeping. If we did, though, we could do
      * something useful with the value read back from PWRDWN.
+     *
+     * Runs before clearing RAM, but after initializing the radio.
      */
 
-    PWRDWN;
-    OPMCON = 0;
-    WUOPC1 = 0;
+    uint8_t pwrdwn_value = PWRDWN;
     PWRDWN = 0;
 
     /*
-     * Basic poweron.
+     * XXX: Another power management mystery... as far as I can tell, the
+     *      radio peripheral just doesn't receive properly after waking up
+     *      from pin. We can communicate with and configure the radio, and
+     *      its registers seem fine, but we don't receive any packets.
      *
+     *      So, for now, I'm working around this by immediately resetting
+     *      if we wake due to shaking. We'll reboot again, and this time it
+     *      will be a watchdog timeout, and the radio will be fine.
+     */
+    if (pwrdwn_value & PWRDWN_WAKE_FROM_PIN) {
+        powerdown_state = 0;
+        CLKLFCTRL = CLKLFCTRL_SRC_RC;
+        WDSV;
+        WDSV = 0x01;
+        WDSV = 0x00;
+        while (1);
+    }
+
+    /*
+     * Normally we wake up via shake or by battery insertion. Wake-on-pin
+     * will be reported in the saved PWRDWN value. We differentiate
+     * battery insertion vs. watchdog wakeup by examining a flag in the
+     * data-retentive region of SRAM.
+     *
+     * If we woke up by shake or battery insertion, continue initializing
+     * as usual. If we woke up by timer, do a quick poll to see if a base
+     * is trying to wake us over-the-air. If so, we continue to power on,
+     * but if not we'll go back to sleep ASAP.
+     */
+    if (powerdown_state == POWERDOWN_MAGIC)
+        power_wake_on_rf_poll();
+
+    /*
      * Safe defaults, everything off.
-     * all control lines must be low before supply rails are turned on.
+     * All control lines must be low before supply rails are turned on.
      *
-     * We need to sequence this carefully, so that we can bring up
-     * the 3.3v and 2.0v rails without causing any contention.
+     * XXX: It still feels like something is wrong with this sequence... I'm
+     *      seeing a current consumption of about 100 mA at 1.5v for the
+     *      very first poweron after battery insertion, but only about 75mA
+     *      after we wake up from sleep. I'm not sure what the disparity is
+     *      caused by, and it really seems like we should strive to fix this!
      */
 
     MISC_PORT = 0;
@@ -67,17 +218,22 @@ void power_init(void)
     CTRL_DIR = CTRL_DIR_VALUE;
     ADDR_DIR = 0;
 
-    // Turn on 3.3V boost
-    CTRL_PORT = CTRL_3V3_EN;
+    // Disable wake-on-pin during normal operation
+    WUOPC1 = 0;
 
-    // Give 3.3V boost >1ms to turn-on
-    power_delay();
+    // Open the latch only after we've configured default port state
+    OPMCON = 0;
 
-    // Turn on 2V ds load switch
-    CTRL_PORT = CTRL_3V3_EN | CTRL_DS_EN;
-
-    // Give load-switch time to turn-on (Datasheet unclear so >1ms should suffice)
-    power_delay();
+    /*
+     * Bring up the power supplies.
+     *
+     * We need to sequence this carefully, so that we can bring up
+     * the 3.3v and 2.0v rails without causing any contention.
+     */
+    CTRL_PORT = CTRL_3V3_EN;                // Turn on 3.3V boost
+    power_delay();                          // Give 3.3V boost >1ms to turn-on
+    CTRL_PORT = CTRL_3V3_EN | CTRL_DS_EN;   // Turn on 2V ds load switch
+    power_delay();                          // Give load-switch time to turn-on
 
     /*
      * Now turn-on other control lines. Sequence them so that we're sure to latch
@@ -104,9 +260,7 @@ void power_init(void)
      * here until when we enter the main loop.
      */
     CLKLFCTRL = CLKLFCTRL_SRC_SYNTH;
-    #ifndef DISABLE_WDT
-        power_wdt_set();
-    #endif
+    power_wdt_set();
 
     /*
      * Neighbor Tx Experimental setting.
@@ -142,6 +296,7 @@ void power_sleep(void)
     cli();                      // Stop all interrupt handlers
     radio_rx_disable();         // Take the radio out of RX mode
 
+    RTC2CON = 0;                // Turn off RTC2 timer and interrupts
     RF_CKEN = 0;                // Stop the radio clock
     RNGCTL = 0;                 // RNG peripheral off
     ADCCON1 = 0;                // ADC peripheral off
@@ -154,73 +309,40 @@ void power_sleep(void)
     ADDR_PORT = 0;              // Address bus must be all zero
     MISC_PORT = 0;              // Neighbor/I2C set to idle-mode as well
 
-    // Sequencing is important. First, bring flash control lines low
-    CTRL_PORT = CTRL_3V3_EN | CTRL_DS_EN;
-
-    // Turn off the 2V DS rail
-    CTRL_PORT = CTRL_3V3_EN;
-
-    // Turn off the 3.3V rail
-    CTRL_PORT = 0;
-
-#if HWREV >= 5
     /*
-     * Wakeup on shake
+     * Power supply shutdown. Sequencing is important!
      */
 
-    //Sends brief 250 ns pulse on both I2C lines
-    __asm 
-        mov     _W2CON0, #0               		; Reset I2C master
-        anl     _MISC_DIR, #~MISC_I2C      		; Output drivers enabled
-        xrl     _MISC_PORT, #MISC_I2C      		; Now pulse I2C lines low
-        orl     _MISC_PORT, #MISC_I2C   		; Drive pins high - This delivers a 250 ns pulse
-        mov     _W2CON0, #1               		; Turn on I2C controller
-        mov     _W2CON0, #7               		; Master mode, 100 kHz.
-    __endasm;
+    CTRL_PORT = CTRL_3V3_EN | CTRL_DS_EN;       // First, bring flash control lines low
+    CTRL_PORT = CTRL_3V3_EN;                    // Turn off the 2V DS rail
+    CTRL_PORT = 0;                              // Turn off the 3.3V rail
 
-    // Enable inertial interrupt on INT2
+    /*
+     * Set up the accelerometer for shake-to-wake.
+     */
+    #if HWREV >= 5
     {
         static const __code uint8_t init[] = {
-            3, ACCEL_ADDR_TX, ACCEL_CTRL_REG2, ACCEL_REG2_INIT,
-            3, ACCEL_ADDR_TX, ACCEL_CTRL_REG6, ACCEL_REG6_INIT,
-            3, ACCEL_ADDR_TX, ACCEL_INT1_CFG,  ACCEL_CFG_INIT,
-            3, ACCEL_ADDR_TX, ACCEL_INT1_THS,  ACCEL_THS_INIT,
-            3, ACCEL_ADDR_TX, ACCEL_INT1_DUR,  ACCEL_DUR_INIT,
+            // ADC turned off
+            ACCEL_TEMP_CFG_REG, 0,
+
+            // Enable inertial interrupt on INT2
+            ACCEL_CTRL_REG2, ACCEL_REG2_INIT,
+            ACCEL_CTRL_REG6, ACCEL_REG6_INIT,
+            ACCEL_INT1_CFG,  ACCEL_CFG_INIT,
+            ACCEL_INT1_THS,  ACCEL_THS_INIT,
+            ACCEL_INT1_DUR,  ACCEL_DUR_INIT,
+
             0
         };
-        i2c_tx(init);
+
+        i2c_accel_tx(init);
+
+        // I2C controller off
+        W2CON0 = 0;
+        __asm I2C_PULSE() __endasm;
     }
-    
-    __asm
-        mov     _W2CON0, #0                     ; Turn off I2C peripheral
-        anl     _MISC_DIR, #~MISC_I2C      		; Output drivers enabled
-        xrl     _MISC_PORT, #MISC_I2C      		; Now pulse I2C lines low
-        orl     _MISC_PORT, #MISC_I2C   		; Drive pins high - This delivers a 250 ns pulse
-    __endasm;
-    
-    ADDR_DIR = 0xff;            // Set addr pins to inputs
-    CTRL_DIR = 0xff;            // Set ctrl pins to inputs
-    MISC_DIR = 0xff;             // Set bus pins to inputs
-    WUOPC1 = SHAKE_WUOPC_BIT;
+    #endif
 
-#else
-    /*
-     * Wakeup on touch
-     */
-
-    WUOPC1 = TOUCH_WUOPC_BIT;
-#endif
-
-    // We must latch these port states, to preserve them during sleep.
-    // This latch stays locked until early wakeup, in power_init().
-    OPMCON = OPMCON_LATCH_LOCKED;
-
-    while (1) {
-        PWRDWN = 1;
-
-        /*
-         * We loop purely out of paranoia. This point should never be reached.
-         * On wakeup, the system experiences a soft reset.
-         */
-    }
+    power_minisleep();
 }

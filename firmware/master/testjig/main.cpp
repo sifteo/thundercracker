@@ -12,6 +12,7 @@
 #include "testjig.h"
 #include "gpio.h"
 #include "bootloader.h"
+#include "powermanager.h"
 
 /*
  * Test Jig application specific entry point.
@@ -19,7 +20,6 @@
  */
 int main()
 {
-  
     #ifdef BOOTLOADABLE
         NVIC.setVectorTable(NVIC.VectorTableFlash, Bootloader::SIZE);
     #endif
@@ -47,10 +47,8 @@ int main()
      */
 
     SysTime::init();
-    // Radio::init(); // Needed?
+    PowerManager::init();   // fires up USB
     Tasks::init();
-    
-    UsbDevice::init();
 
     /*
      * Once the TestJig is initialized, test commands from the host will arrive

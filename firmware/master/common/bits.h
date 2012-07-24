@@ -54,6 +54,36 @@ public:
         }
     }
 
+    /// Mark (set to 1) a single bit, using atomic operations
+    void atomicMark(unsigned index)
+    {
+        const unsigned NUM_WORDS = (tSize + 31) / 32;
+
+        ASSERT(index < tSize);
+        if (NUM_WORDS > 1) {
+            unsigned word = index >> 5;
+            unsigned bit = index & 31;
+            Atomic::Or(words[word], Intrinsic::LZ(bit));
+        } else {
+            Atomic::Or(words[0], Intrinsic::LZ(index));
+        }
+    }
+
+    /// Clear (set to 0) a single bit, using atomic operations
+    void atomicClear(unsigned index)
+    {
+        const unsigned NUM_WORDS = (tSize + 31) / 32;
+
+        ASSERT(index < tSize);
+        if (NUM_WORDS > 1) {
+            unsigned word = index >> 5;
+            unsigned bit = index & 31;
+            Atomic::And(words[word], ~Intrinsic::LZ(bit));
+        } else {
+            Atomic::And(words[0], ~Intrinsic::LZ(index));
+        }
+    }
+
     /// Mark (set to 1) all bits in the vector
     void mark()
     {
@@ -64,9 +94,18 @@ public:
         STATIC_ASSERT(NUM_FULL_WORDS + 1 == NUM_WORDS ||
                       NUM_FULL_WORDS == NUM_WORDS);
 
+        #ifdef __clang__
+        #   pragma clang diagnostic push
+        #   pragma clang diagnostic ignored "-Wtautological-compare"
+        #endif
+
         // Set fully-utilized words only
         for (unsigned i = 0; i < NUM_FULL_WORDS; ++i)
             words[i] = -1;
+
+        #ifdef __clang__
+        #   pragma clang diagnostic pop
+        #endif
 
         if (NUM_FULL_WORDS != NUM_WORDS) {
             // Set only bits < tSize in the last word.
@@ -85,9 +124,18 @@ public:
         STATIC_ASSERT(NUM_FULL_WORDS + 1 == NUM_WORDS ||
                       NUM_FULL_WORDS == NUM_WORDS);
 
+        #ifdef __clang__
+        #   pragma clang diagnostic push
+        #   pragma clang diagnostic ignored "-Wtautological-compare"
+        #endif
+
         // Set fully-utilized words only
         for (unsigned i = 0; i < NUM_FULL_WORDS; ++i)
             words[i] ^= -1;
+
+        #ifdef __clang__
+        #   pragma clang diagnostic pop
+        #endif
 
         if (NUM_FULL_WORDS != NUM_WORDS) {
             // Set only bits < tSize in the last word.

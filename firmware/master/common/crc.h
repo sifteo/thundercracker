@@ -93,27 +93,27 @@ private:
  
 #ifndef SIFTEO_SIMULATOR
 
-inline void Crc32::init()
+ALWAYS_INLINE void Crc32::init()
 {
     RCC.AHBENR |= (1 << 6);
 }
 
-inline void Crc32::deinit()
+ALWAYS_INLINE void Crc32::deinit()
 {
     RCC.AHBENR &= ~(1 << 6);
 }
 
-inline void Crc32::reset()
+ALWAYS_INLINE void Crc32::reset()
 {
     CRC.CR = (1 << 0);
 }
 
-inline uint32_t Crc32::get()
+ALWAYS_INLINE uint32_t Crc32::get()
 {
     return CRC.DR;
 }
 
-inline void Crc32::add(uint32_t word)
+ALWAYS_INLINE void Crc32::add(uint32_t word)
 {
     CRC.DR = word;
 }

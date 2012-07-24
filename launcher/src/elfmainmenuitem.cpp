@@ -37,8 +37,8 @@ void ELFMainMenuItem::autoexec()
     LOG("LAUNCHER: Automatically executing single game\n");
 
     AssetLoaderBypassDelegate delegate;
-    CubeSet cubes = inst.getCubeRange().initMinimum();
-    inst.bootstrap(cubes, delegate);
+    inst.getCubeRange().set();
+    inst.bootstrap(CubeSet::connected(), delegate);
     inst.exec();
 }
 
@@ -200,8 +200,6 @@ void ELFMainMenuItem::bootstrap(Sifteo::CubeSet cubes, ProgressDelegate &progres
      *      That shouldn't change until just before we exec.
      */
 
-    LOG("LAUNCHER: Enabling cubes 0x%08x\n", _SYSCubeIDVector(cubes));
-    _SYS_enableCubes(cubes);
     _SYS_asset_bindSlots(volume, numAssetSlots);
 
     /*

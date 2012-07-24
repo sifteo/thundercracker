@@ -156,8 +156,8 @@ void StatusApplet::add(MainMenu &menu)
 {
     static StatusApplet instance;
     
-    Events::cubeFound.set(&StatusApplet::onCubeFound, &instance);
-    Events::cubeLost.set(&StatusApplet::onCubeLost, &instance);
+    Events::cubeConnect.set(&StatusApplet::onCubeFound, &instance);
+    Events::cubeDisconnect.set(&StatusApplet::onCubeLost, &instance);
 
     menu.append(&instance);
 }

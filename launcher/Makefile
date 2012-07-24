@@ -17,7 +17,7 @@ OBJS = \
 	src/applet/getgames.o \
 	src/applet/status.o
 
-ASSETDEPS += images/*.png sounds/*.xm $(ASSETS).lua
+ASSETDEPS += images/*.lua images/*.png sounds/*.lua sounds/*.xm $(ASSETS).lua
 CDEPS += src/*.h
 CCFLAGS += -Isrc
 

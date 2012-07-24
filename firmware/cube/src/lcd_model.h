@@ -128,9 +128,6 @@
 /*
  * Some LCDs have different addressing schemes, based on how the
  * controller and the panel are wired together.
- *
- * XXX: These non-default addressing schemes need some work when the LCD
- *      is flipped/rotated. We'll need to handle this differently.
  */
 
 #ifdef LCD_MODEL_GIANTPLUS_ILI9163C

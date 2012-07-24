@@ -43,6 +43,7 @@ void AudioSampleData::fetchBlockPCM(uint32_t sampleNum, const _SYSAudioModule &m
     SvmMemory::VirtAddr va = mod.pData + (sampleNum * sizeof(int16_t));
     SvmMemory::PhysAddr pa = (SvmMemory::PhysAddr) dest;
 
+    FlashBlockRef ref;
     SvmMemory::copyROData(ref, pa, va, HALF_BUFFER * sizeof(int16_t));
 
     // Update state (Ignore snapshots)
@@ -66,6 +67,8 @@ void AudioSampleData::fetchBlockADPCM(uint32_t sampleNum, const _SYSAudioModule 
     ASSERT((stateSampleNum & HALF_BUFFER_MASK) == 0);
     ADPCMDecoder dec;
     dec.load(stateSampleNum ? state.adpcm : adpcmIC);
+
+    FlashBlockRef ref;
 
     // Are we not decoding contiguously? May need to loop so we can skip forward.
     while (1) {

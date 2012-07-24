@@ -32,6 +32,7 @@ static __xdata __at 0x0000 union _SYSVideoRAM vram;
  */
 
 void lcd_sleep();
+void lcd_pwm_fade();
 void lcd_begin_frame();
 void lcd_end_frame();
 

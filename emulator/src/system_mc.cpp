@@ -33,6 +33,8 @@
 #include "crc.h"
 #include "volume.h"
 #include "homebutton.h"
+#include "cubeconnector.h"
+#include "neighbor_tx.h"
 
 SystemMC *SystemMC::instance;
 std::vector< std::vector<uint8_t> > SystemMC::pendingGameInstalls;
@@ -53,11 +55,11 @@ bool SystemMC::init(System *sys)
     FlashStack::init();
     Crc32::init();
 
-    if (!instance->sys->opt_headless) {
-        AudioOutDevice::init(&AudioMixer::instance);
-        AudioOutDevice::start();
+    if (instance->sys->opt_headless) {
+        Tasks::trigger(Tasks::AudioPull);
     } else {
-        AudioOutDevice::initStub();
+        AudioOutDevice::init();
+        AudioOutDevice::start();
     }
 
     return true;
@@ -95,9 +97,6 @@ void SystemMC::autoInstall()
 
     do {
 
-        // Create an initial SysLFS volume
-        SysLFS::write(SysLFS::kDummy, 0, 0);
-
         // Install a launcher
         const char *launcher = sys->opt_launcherFilename.empty() ? NULL : sys->opt_launcherFilename.c_str();
         if (!sys->flash.installLauncher(launcher))
@@ -121,6 +120,29 @@ void SystemMC::autoInstall()
     FlashDevice::setStealthIO(-1);
 }
 
+void SystemMC::pairCube(unsigned cubeID, unsigned pairingID)
+{
+    // Use stealth flash I/O, for speed
+    FlashDevice::setStealthIO(1);
+
+    SysLFS::PairingIDRecord rec;
+    ASSERT(cubeID < _SYS_NUM_CUBE_SLOTS);
+    ASSERT(pairingID < arraysize(rec.hwid));
+
+    if (!SysLFS::read(SysLFS::kPairingID, rec))
+        rec.init();
+
+    uint64_t hwid = sys->cubes[cubeID].getHWID();
+    ASSERT(hwid != uint64_t(-1));
+
+    rec.hwid[pairingID] = hwid;
+    if (!SysLFS::write(SysLFS::kPairingID, rec)) {
+        ASSERT(0);
+    }
+
+    FlashDevice::setStealthIO(-1);
+}
+
 void SystemMC::threadFn(void *param)
 {
     if (setjmp(instance->mThreadExitJmp)) {
@@ -128,16 +150,46 @@ void SystemMC::threadFn(void *param)
         return;
     }
 
+    /*
+     * Start the master at some point shortly after the cubes come up,
+     * using a no-op deadline event.
+     *
+     * We can't just use Tasks::waitForInterrupt() here, since the
+     * MC is not yet initialized and we don't want to handle radio packets.
+     */
+     
     // Start the master at some point shortly after the cubes come up
     instance->ticks = instance->sys->time.clocks + MCTiming::STARTUP_DELAY;
     instance->radioPacketDeadline = instance->ticks + MCTiming::TICKS_PER_PACKET;
 
-    HomeButton::init();
-    Volume::init();
-    Radio::init();
+    instance->sys->getCubeSync().beginEventAt(instance->ticks, instance->mThreadRunning);
+    instance->sys->getCubeSync().endEvent(instance->radioPacketDeadline);
+
+    /*
+     * Emulator magic: Automatically install games and pair cubes
+     */
 
     instance->autoInstall();
 
+    for (unsigned i = 0; i < instance->sys->opt_numCubes; i++) {
+        /*
+         * Create an arbitrary non-identity mapping between cube IDs and
+         * pairings, just to help keep us honest in the firmware and
+         * catch any places where we get the two confused.
+         *
+         * (We still keep the cubes in the same order, to reduce confusion...)
+         */
+        instance->pairCube(i, (i + 8) % _SYS_NUM_CUBE_SLOTS);
+    }
+
+    // Subsystem initialization
+    HomeButton::init();
+    Volume::init();
+    NeighborTX::init();
+    CubeConnector::init();
+    Radio::init();
+
+    // Start running userspace code!
     SvmLoader::runLauncher();
 }
 
@@ -194,11 +246,11 @@ void SystemMC::doRadioPacket()
     ASSERT(buf.ptx.dest != NULL);
     buf.packet.len = buf.ptx.packet.len;
 
-    // Simulates (hardware * software) retries
-    static const uint32_t MAX_RETRIES = 150;
+    ASSERT(buf.ptx.numHardwareRetries <= PacketTransmission::MAX_HARDWARE_RETRIES);
+    const unsigned numTries = (1 + unsigned(buf.ptx.numHardwareRetries))
+                            * (1 + unsigned(buf.ptx.numSoftwareRetries));
 
-    for (unsigned retry = 0; retry < MAX_RETRIES; ++retry) {
-
+    for (unsigned retry = 0; retry < numTries; ++retry) {
         /*
          * Deliver it to the proper cube.
          *
@@ -221,7 +273,7 @@ void SystemMC::doRadioPacket()
 
         // Log this transaction
         if (sys->opt_radioTrace) {
-            LOG(("RADIO: %6dms %02d/%02x%02x%02x%02x%02x -- TX[%2d] ",
+            LOG(("RADIO: %6dms %02x/%02x%02x%02x%02x%02x -- TX[%2d] ",
                 int(SysTime::ticks() / SysTime::msTicks(1)),
                 buf.ptx.dest->channel,
                 buf.ptx.dest->id[4],
@@ -231,8 +283,8 @@ void SystemMC::doRadioPacket()
                 buf.ptx.dest->id[0],
                 buf.packet.len));
 
-            // Nybbles in little-endian order. With the exception
-            // of flash-escaped bytes, the TX packets are always nybble streams.
+            // Nybbles in little-endian order. Except for arguments to escape
+            // codes, the TX packets are always nybble streams.
 
             for (unsigned i = 0; i < sizeof buf.packet.payload; i++) {
                 if (i < buf.packet.len) {

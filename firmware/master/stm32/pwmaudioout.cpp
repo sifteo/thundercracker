@@ -60,25 +60,20 @@ namespace PwmAudioOut {
      */
     static const unsigned DITHER_MASK = 31;
 
-    static const HwTimer pwmTimer(&TIM1);
-    static const HwTimer sampleTimer(&TIM4);
+    static const HwTimer pwmTimer(&AUDIO_PWM_TIM);
+    static const HwTimer sampleTimer(&AUDIO_SAMPLE_TIM);
     static const GPIOPin outA(&AUDIO_PWMA_PORT, AUDIO_PWMA_PIN);
     static const GPIOPin outB(&AUDIO_PWMB_PORT, AUDIO_PWMB_PIN);
 
     static _SYSPseudoRandomState dither;
 
-    static AudioMixer *mixer;
-    static AudioBuffer buffer;
-
 }
 
-void AudioOutDevice::init(AudioMixer *mixer)
+void AudioOutDevice::init()
 {
     // TIM1 partial remap for complementary channels
+    STATIC_ASSERT(&AUDIO_PWM_TIM == &TIM1);
     AFIO.MAPR |= (1 << 6);
-    
-    PwmAudioOut::mixer = mixer;
-    PwmAudioOut::buffer.init();
 
     // Initialize PRNG for audio dithering
     PRNG::init(&PwmAudioOut::dither, 0);
@@ -104,7 +99,6 @@ void AudioOutDevice::start()
     
     // Start clocking out samples
     PwmAudioOut::sampleTimer.enableUpdateIsr();
-    Tasks::setPending(Tasks::AudioPull, &PwmAudioOut::buffer);
 }
 
 
@@ -131,7 +125,7 @@ void AudioOutDevice::stop()
 }
 
 
-IRQ_HANDLER ISR_TIM4()
+IRQ_HANDLER ISR_FN(AUDIO_SAMPLE_TIM)()
 {
     /*
      * This is the sampleTimer (TIM4) ISR, called regularly at our
@@ -151,14 +145,14 @@ IRQ_HANDLER ISR_TIM4()
      */
 
     // Acknowledge IRQ by clearing timer status
-    TIM4.SR = 0; 
+    AUDIO_SAMPLE_TIM.SR = 0; 
 
     // Default state, zero volts across speaker.
     GPIOPin::Control ctrlA = GPIOPin::OUT_2MHZ;
     GPIOPin::Control ctrlB = GPIOPin::OUT_2MHZ;
 
-    if (!PwmAudioOut::buffer.empty()) {
-        int sample = PwmAudioOut::buffer.dequeue();
+    if (!AudioMixer::output.empty()) {
+        int sample = AudioMixer::output.dequeue();
 
         /*
          * We've now extracted the sign, and the remaining sample is a 15-bit
@@ -189,11 +183,14 @@ IRQ_HANDLER ISR_TIM4()
 
         if (sample) {
             unsigned duty = (sample * PwmAudioOut::PWM_PERIOD) >> 15;
-            const HwTimer pwmTimer(&TIM1);
+            const HwTimer pwmTimer(&AUDIO_PWM_TIM);
             pwmTimer.setDuty(AUDIO_PWM_CHAN, duty);
         }
     }
 
     GPIOPin::setControl(&AUDIO_PWMA_PORT, AUDIO_PWMA_PIN, ctrlA);
     GPIOPin::setControl(&AUDIO_PWMB_PORT, AUDIO_PWMB_PIN, ctrlB);
+
+    // Ask for more audio data
+    Tasks::trigger(Tasks::AudioPull);
 }

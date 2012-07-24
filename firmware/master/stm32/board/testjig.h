@@ -43,6 +43,11 @@
 #define NBR_IN3_GPIO        GPIOPin(&GPIOB, 0)
 #define NBR_IN4_GPIO        GPIOPin(&GPIOB, 1)
 
+#define NBR_RX_TIM          TIM3
+#define NBR_TX_TIM          TIM5
+#define NBR_TX_TIM_CH       1
+
+
 // XXX: these are not currently broken out separately per channel
 #define NBR_BUF_GPIO        GPIOPin(&GPIOC, 8)
 
@@ -65,6 +70,8 @@
 #define AUDIO_PWMB_PORT     GPIOA
 #define AUDIO_PWMB_PIN      8
 #define AUDIO_PWM_CHAN      1
+#define AUDIO_PWM_TIM       TIM1
+#define AUDIO_SAMPLE_TIM    TIM4
 
 #define VOLUME_TIM          TIM5
 #define VOLUME_CHAN         2

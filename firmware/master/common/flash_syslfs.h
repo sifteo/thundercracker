@@ -44,23 +44,60 @@ namespace SysLFS {
     const unsigned TILES_PER_ASSET_SLOT = _SYS_TILES_PER_ASSETSLOT;
     const unsigned ASSET_GROUPS_PER_SLOT = _SYS_ASSET_GROUPS_PER_SLOT;
 
+    // This cannot be changed without modifying the Key layout below
+    const unsigned NUM_PAIRINGS = _SYS_NUM_CUBE_SLOTS;
+
     /*
      * Key space
      *
-     * Keys in the range [0x00, 0x27] are currently unallocated.
+     * Keys below the first item in the table are currently unallocated.
      */
 
     enum Key {
-        kDummy          = 0x27,
+        kPairingMRU     = 0x26,
+        kPairingID      = 0x27,
         kCubeBase       = 0x28,
-        kCubeCount      = _SYS_NUM_CUBE_SLOTS,
+        kCubeCount      = NUM_PAIRINGS,
         kAssetSlotBase  = kCubeBase + kCubeCount,
-        kAssetSlotCount = _SYS_NUM_CUBE_SLOTS * ASSET_SLOTS_PER_CUBE,
+        kAssetSlotCount = NUM_PAIRINGS * ASSET_SLOTS_PER_CUBE,
         kEnd            = kAssetSlotBase + kAssetSlotCount,
     };
 
     /*
-     * Per-cube stored data
+     * Pairing data.
+     *
+     * We quickly access data for all paired-but-disconnected cubes
+     * in aggregate, by storing them in two records. The ID record
+     * changes infrequently (only when a new cube is paired), while
+     * the MRU record may change at every connection event.
+     */
+
+    struct PairingIDRecord {
+        uint64_t hwid[NUM_PAIRINGS];
+
+        static const uint64_t INVALID_HWID = uint64_t(-1);
+
+        void init();
+        void load();
+    };
+
+    struct PairingMRURecord {
+        // Indices into hwid[], in order of most recently used first.
+        uint8_t rank[NUM_PAIRINGS];
+
+        void init();
+        void load();
+        bool access(unsigned index);
+    };
+
+    /*
+     * Per-cube data for connected cubes.
+     *
+     * This data is associated with a CubeSlot at the moment it's
+     * connected to a cube. The IDs starting with kCubeBase parallel
+     * the slots in PairingIDRecord, however they do *not* map
+     * one-to-one with our CubeSlots. CubeSlot is responsible
+     * for storing this mapping for each connected cube.
      */
 
     struct AssetSlotIdentity {
@@ -97,20 +134,14 @@ namespace SysLFS {
             SlotVector_t &vecOut, unsigned &costOut) const;
     };
 
-    struct CubePairingRecord {
-        uint64_t hwid;
-        // XXX: More here... Radio frequencies, address, etc.
-    };
-
     struct CubeRecord {
         CubeAssetsRecord assets;
-        CubePairingRecord pairing;
-
-        static Key makeKey(_SYSCubeID cube);
-        static bool decodeKey(Key cubeKey, _SYSCubeID &cube);
 
         void init();
         bool load(const FlashLFSObjectIter &iter);
+
+        static Key makeKey(_SYSCubeID cube);
+        static bool decodeKey(Key cubeKey, _SYSCubeID &cube);
     };
 
     /*
@@ -187,8 +218,7 @@ namespace SysLFS {
         STATIC_ASSERT(sizeof(LoadedAssetGroupRecord) == 3);
         STATIC_ASSERT(sizeof(AssetSlotRecord) == 3 * ASSET_GROUPS_PER_SLOT + 1);
         STATIC_ASSERT(sizeof(AssetSlotOverviewRecord) == 4);
-        STATIC_ASSERT(sizeof(CubeRecord) == sizeof(CubePairingRecord) +
-            ASSET_SLOTS_PER_CUBE * sizeof(AssetSlotOverviewRecord));
+        STATIC_ASSERT(sizeof(CubeRecord) == ASSET_SLOTS_PER_CUBE * sizeof(AssetSlotOverviewRecord));
 
         return FlashLFSCache::get(FlashMapBlock::invalid());
     }
@@ -208,6 +238,7 @@ namespace SysLFS {
     }
 
     void deleteAll();
+    void deleteCube(unsigned index);
 
 } // end namespace SysLFS
 

@@ -2,7 +2,7 @@ BIN = cube.hex
 
 # Main segment
 OBJS = \
-        src/main.rel \
+        src/vectors.rel \
         src/graphics_dispatch.rel \
         src/graphics_bg0.rel \
         src/graphics_bg1_setup.rel \
@@ -12,7 +12,6 @@ OBJS = \
         src/graphics_fb32.rel \
         src/graphics_fb64.rel \
         src/graphics_fb128.rel \
-        src/graphics_solid.rel \
         src/graphics_stamp.rel \
         src/sensors_init.rel \
         src/sensors_i2c.rel \
@@ -24,24 +23,25 @@ OBJS = \
         src/lcd.rel \
         src/radio_init.rel \
         src/radio_isr.rel \
-        src/battery.rel \
         src/flash_hal.rel \
         src/flash_decoder.rel \
-        src/params.rel \
         src/draw.rel \
         src/tilerom.rel \
         src/disconnected.rel
 
 # Funny BG1 segment, to support ACALL alignment. Order matters.
 # bg1_line needs to be at the beginning of the segment; bg0_rom
-# is just the right size to pad the rest of the segment up until
-# the tilerom data begins.
+# and solid together are just the right size to pad the rest of
+# the segment up until the tilerom data begins.
 OBJS += \
         src/graphics_bg1_line.rel \
         src/graphics_bg0_rom.rel \
-        
+        src/params.rel \
+        src/graphics_solid.rel
+
+TC_DIR = ../..
 FIRMWARE_INC = ../include
-SDK_DIR = ../../sdk
+SDK_DIR = $(TC_DIR)/sdk
 
 SDCC = sdcc
 CDEPS = src/*.h $(FIRMWARE_INC)/*.h $(SDK_DIR)/include/sifteo/*.h
@@ -64,7 +64,7 @@ LDFLAGS += --nostdlib
 # This is the default build target; this runs static analysis checks which
 # should be performed on every automated build.
 sizeprof: $(BIN)
-	python ../../emulator/resources/firmware-sizeprof.py src/*.rst
+	python $(TC_DIR)/emulator/resources/firmware-sizeprof.py src/*.rst
 
 $(BIN): $(OBJS)
 	$(SDCC) -o $@ $(LDFLAGS) $(OBJS)
@@ -77,7 +77,23 @@ $(BIN): $(OBJS)
 src/tilerom.c: tilerom/src-palettes.png tilerom/src-tiles.png tilerom/romgen.py
 	python tilerom/romgen.py
 
+debug: $(BIN)
+	$(SDK_DIR)/bin/siftulator -l $(TC_DIR)/extras/loopy/loopy.elf -n 1 -d -f $(BIN)
+
+tests: $(BIN)
+	cd $(TC_DIR)/test/firmware/cube; ../../../sdk/bin/siftulator --headless -e tests.lua -l mc-stub.elf  -f ../../../firmware/cube/cube.hex
+
+cube.bin: cube.hex
+	makebin -p $< $@
+
+cube.png: cube.bin
+	(echo "P4 256 512"; cat $<) | convert - $@
+
+visualize: cube.png
+	open $<
+
 clean:
 	rm -f *.mem src/*.rel src/*.rst src/*.sym *.lnk src/*.lst *.map src/*.asm
+	rm -f cube.bin cube.png cube.hex
     
-.PHONY: clean sizeprof
+.PHONY: clean sizeprof debug tests visualize

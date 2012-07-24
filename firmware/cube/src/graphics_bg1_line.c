@@ -204,6 +204,24 @@ static void state_bg0_7(void) __naked { DEF_STATE_BG0(7) }
     __asm l2:                                                   __endasm; \
     __asm
 
+// LCALL / AJMP, with EOL test
+#define CHROMA_BG1_BG0_EOL_LA(l1,l2,l3, x0,x1, eolC,eolJ)       __endasm; \
+    __asm CHROMA_J_OPAQUE(l1)                                   __endasm; \
+    __asm   orl   ADDR_PORT, #2                                 __endasm; \
+    __asm   jnb   BUS_PORT.6, l3                                __endasm; \
+    __asm   lcall x0                                            __endasm; \
+    __asm   lcall eolC                                          __endasm; \
+    __asm   ajmp  eolJ                                          __endasm; \
+    __asm l3:                                                   __endasm; \
+    __asm   lcall x0                                            __endasm; \
+    __asm   lcall _addr_inc4                                    __endasm; \
+    __asm   lcall x1                                            __endasm; \
+    __asm   sjmp l2                                             __endasm; \
+    __asm l1:                                                   __endasm; \
+    __asm   ASM_ADDR_INC4()                                     __endasm; \
+    __asm l2:                                                   __endasm; \
+    __asm
+
 #define CHROMA_BG1_TARGET(lbl)                                  __endasm; \
     __asm mov   _DPS, #1                                        __endasm; \
     __asm sjmp  lbl                                             __endasm; \
@@ -462,7 +480,7 @@ static void vm_bg0_bg1_tiles_fast_p5(void) __naked
         ajmp    12$
 16$:    acall   _state_bg1_3
         ajmp    17$
-6$:     acall   _state_bg1_0
+6$:     lcall   _state_bg1_0
         sjmp 18$
 
     __endasm ;
@@ -481,28 +499,28 @@ static void vm_bg0_bg1_tiles_fast_p6(void) __naked
         ASM_BG0_NEXT(9$) BG1_LOOP(10$)
         
 14$:    lcall   _state_bg1_2
-        ljmp 13$
+        ajmp 13$
 1$:     lcall   _state_bg1_0
         
-        CHROMA_BG1_BG0_EOL(30$,40$,50$, _state_bg0_6, _state_bg1_1, _addr_inc8,  16$)
-        CHROMA_BG1_BG0    (31$,41$,     _state_bg0_7, _state_bg1_2)
+        CHROMA_BG1_BG0_EOL_LA(30$,40$,50$, _state_bg0_6, _state_bg1_1, _addr_inc8,  16$)
+        CHROMA_BG1_BG0       (31$,41$,     _state_bg0_7, _state_bg1_2)
         
 17$:    ASM_BG0_NEXT_FROM_BG1(8$) BG1_LOOP(13$)
 13$:
-        CHROMA_BG1_BG0_EOL(32$,42$,52$, _state_bg0_0, _state_bg1_3, _addr_inc24, 6$)
-        CHROMA_BG1_BG0    (33$,43$,     _state_bg0_1, _state_bg1_4)
-        CHROMA_BG1_BG0_EOL(34$,44$,54$, _state_bg0_2, _state_bg1_5, _addr_inc16, 6$)
-        CHROMA_BG1_BG0    (35$,45$,     _state_bg0_3, _state_bg1_6)
-        CHROMA_BG1_BG0_EOL(36$,46$,56$, _state_bg0_4, _state_bg1_7, _addr_inc8,  6$)
-        CHROMA_BG1_BG0    (37$,47$,     _state_bg0_5, _state_bg1_0)
+        CHROMA_BG1_BG0_EOL_LA(32$,42$,52$, _state_bg0_0, _state_bg1_3, _addr_inc24, 6$)
+        CHROMA_BG1_BG0       (33$,43$,     _state_bg0_1, _state_bg1_4)
+        CHROMA_BG1_BG0_EOL_LA(34$,44$,54$, _state_bg0_2, _state_bg1_5, _addr_inc16, 6$)
+        CHROMA_BG1_BG0       (35$,45$,     _state_bg0_3, _state_bg1_6)
+        CHROMA_BG1_BG0_EOL_LA(36$,46$,56$, _state_bg0_4, _state_bg1_7, _addr_inc8,  6$)
+        CHROMA_BG1_BG0       (37$,47$,     _state_bg0_5, _state_bg1_0)
         
 18$:    BG1_NEXT_BIT() ASM_BG1_NEXT() BG1_UPDATE_BIT() BG1_JB_L(1$)
         lcall   _state_bg0_6
-        ljmp    12$
+        ajmp    12$
 16$:    lcall   _state_bg1_2
-        ljmp    17$
+        ajmp    17$
 6$:     lcall   _state_bg1_0
-        sjmp 18$
+        ajmp 18$
 
     __endasm ;
 }
@@ -520,26 +538,26 @@ static void vm_bg0_bg1_tiles_fast_p7(void) __naked
         ASM_BG0_NEXT(9$) BG1_LOOP(10$)
         
 14$:    lcall   _state_bg1_1
-        ljmp    13$
+        sjmp    13$
 1$:     lcall   _state_bg1_0
         
         CHROMA_BG1_BG0(30$,40$,  _state_bg0_7, _state_bg1_1)
         
 17$:    ASM_BG0_NEXT_FROM_BG1(8$) BG1_LOOP(13$)
 13$:
-        CHROMA_BG1_BG0_EOL(31$,41$,51$, _state_bg0_0, _state_bg1_2, _addr_inc28, 6$)
-        CHROMA_BG1_BG0    (32$,42$,     _state_bg0_1, _state_bg1_3)
-        CHROMA_BG1_BG0_EOL(33$,43$,53$, _state_bg0_2, _state_bg1_4, _addr_inc20, 6$)
-        CHROMA_BG1_BG0    (34$,44$,     _state_bg0_3, _state_bg1_5)
-        CHROMA_BG1_BG0_EOL(35$,45$,55$, _state_bg0_4, _state_bg1_6, _addr_inc12, 6$)
-        CHROMA_BG1_BG0    (36$,46$,     _state_bg0_5, _state_bg1_7)
-        CHROMA_BG1_BG0    (37$,47$,     _state_bg0_6, _state_bg1_0)
+        CHROMA_BG1_BG0_EOL_LA(31$,41$,51$, _state_bg0_0, _state_bg1_2, _addr_inc28, 6$)
+        CHROMA_BG1_BG0       (32$,42$,     _state_bg0_1, _state_bg1_3)
+        CHROMA_BG1_BG0_EOL_LA(33$,43$,53$, _state_bg0_2, _state_bg1_4, _addr_inc20, 6$)
+        CHROMA_BG1_BG0       (34$,44$,     _state_bg0_3, _state_bg1_5)
+        CHROMA_BG1_BG0_EOL_LA(35$,45$,55$, _state_bg0_4, _state_bg1_6, _addr_inc12, 6$)
+        CHROMA_BG1_BG0       (36$,46$,     _state_bg0_5, _state_bg1_7)
+        CHROMA_BG1_BG0       (37$,47$,     _state_bg0_6, _state_bg1_0)
         
 18$:    BG1_NEXT_BIT() ASM_BG1_NEXT() BG1_UPDATE_BIT() BG1_JB_L(1$)
         lcall   _state_bg0_7
-        ljmp    12$
+        ajmp    12$
 6$:     lcall   _state_bg1_0
-        sjmp 18$
+        sjmp    18$
 
     __endasm ;
 }
@@ -645,39 +663,31 @@ void vm_bg0_bg1_line(void)
 
         BG1_UPDATE_BIT()
  
-#ifdef BG1_SLOW_AND_STEADY
-        ; Debugging only: Use the pixel renderer for everything
-        mov     R_LOOP_COUNT, #LCD_WIDTH
-        lcall   _vm_bg0_bg1_pixels
-#else
-        
         ; Render a partial tile at the beginning of the line, if we have one
         
         mov     a, _x_bg0_first_w
         jb      acc.3, 1$
         mov     R_LOOP_COUNT, a
-        lcall   _vm_bg0_bg1_pixels
+        acall   _vm_bg0_bg1_pixels
         
         ; We did render a partial tile; there are always 15 full tiles, then another partial.
         
         mov     R_LOOP_COUNT, #15
-        lcall   _vm_bg0_bg1_tiles_fast
+        acall   _vm_bg0_bg1_tiles_fast
         mov     _DPS, #0
 
         mov     a, _y_bg1_addr_l
         add     a, _x_bg1_last_addr
         mov     R_BG1_ADDR, a
         mov     R_LOOP_COUNT, _x_bg0_last_w
-        lcall   _vm_bg0_bg1_pixels
+        acall   _vm_bg0_bg1_pixels
         sjmp    2$
         
         ; No partial tile? We are doing a fully aligned burst of 16 tiles.
 1$:
         mov     R_LOOP_COUNT, #16
-        lcall    _vm_bg0_bg1_tiles_fast       
+        acall    _vm_bg0_bg1_tiles_fast       
 
-#endif  // !BG1_SLOW_AND_STEADY
-     
         ; Cleanup. Our renderers might not switch back to DPTR.
 2$:       
         mov     _DPS, #0

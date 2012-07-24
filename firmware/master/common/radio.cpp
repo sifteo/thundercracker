@@ -6,85 +6,149 @@
 #include <string.h>
 #include "radio.h"
 #include "cube.h"
-#include "systime.h"
+#include "cubeconnector.h"
 
-_SYSCubeID RadioManager::epFifo[RadioManager::FIFO_SIZE];
-uint8_t RadioManager::epHead;
-uint8_t RadioManager::epTail;
-_SYSCubeID RadioManager::schedNext;
+RadioManager::fifo_t RadioManager::fifo;
+uint8_t RadioManager::nextPID;
+uint8_t RadioManager::lastPID[RadioManager::NUM_PRODUCERS];
+BitVector<RadioManager::NUM_PRODUCERS> RadioManager::schedule;
+
 
 void RadioManager::produce(PacketTransmission &tx)
 {
     /*
-     * Currently we just try all cubes in round-robin order until we
-     * find one that will give us a packet.
+     * Produce the next radio packet to transmit. This module's
+     * responsibility is to multiplex our available radio bandwidth
+     * between all enabled CubeSlots and the CubeConnector.
      *
-     * XXX: We don't have a fallback when there are zero enabled slots
+     * To ensure fair allocation of bandwidth, each of the possible
+     * packet producers are given transmit opportunities in a
+     * round-robin fashion. Each of these producers may give up their
+     * transmit slot by returning false from radioProduce(), with the
+     * exception of CubeConnector.
      *
-     * XXX: This isn't the most efficient use of our time, especially
-     *      if all cubes are idling and don't need to transmit packets
-     *      at the full rate. We should be able to throttle down the
-     *      transmit rate in these cases.
+     * To further complicate matters, we need to sequence our
+     * transmissions to avoid exposing an nRF protocol limitation:
+     * Each packet includes a 2-bit sequence number, used to detect
+     * and discard duplicate packets when we retransmit after a
+     * dropped ACK. The protocol was designed to assume each PTX
+     * is transmitting to a single receiver at a time. But when
+     * you multiplex one PTX among several receivers as we're doing,
+     * there is still only a single global 2-bit counter for the
+     * PTX. In the worst case, if we have exactly four cubes in
+     * our round-robin rotation, we'll hit a duplicate packet ID
+     * every time and every packet will be dropped!
+     *
+     * To avoid this, we explicitly keep track of the ID that was
+     * used for the last transmission by a particular producer
+     * and we'll reorder our round-robin rotation to avoid ID
+     * collisions.
      */
 
+    // Producers we're temporarily skipping due to an ID collision
+    BitVector<RadioManager::NUM_PRODUCERS> deferred;
+    deferred.clear();
+
     for (;;) {
-        ASSERT(schedNext < _SYS_NUM_CUBE_SLOTS);
-        STATIC_ASSERT(_SYS_NUM_CUBE_SLOTS <= 32);
-        
-        // No more enabled slots? Loop back to zero.
-        if (!(_SYSCubeIDVector)(CubeSlots::vecEnabled << schedNext)) {
-            schedNext = 0;
+        unsigned id;
 
-            if (!CubeSlots::vecEnabled) {
-                /*
-                 * Oh, no enabled slots period.
-                 *
-                 * XXX: Once we have pairing and transmit throttling, this
-                 *      shouldn't happen, since we'd be sending pairing packets,
-                 *      and at a lower rate. But for now, this is the state we
-                 *      find ourselves in before any cube slots are enabled.
-                 *
-                 *      So, for now, send a minimal junk packet to.. anywhere.
-                 */
+        if (!schedule.clearFirst(id)) {
+            // No more producers in the schedule.
 
-                static const RadioAddress addr = {};
-                tx.dest = &addr;
-                tx.packet.len = 1;
-                fifoPush(_SYS_NUM_CUBE_SLOTS - 1);
+            if (deferred.empty()) {
+                // Start the next round-robin cycle
 
-                return;
+                schedule.words[0] = CubeSlots::sysConnected | Intrinsic::LZ(CONNECTOR_ID);
+
+            } else {
+                // We still have deferred producers that haven't transmitted.
+                // This means every single producer in the schedule was deferred!
+                // This can easily happen if we have exactly one producer left, and
+                // it happened to land on an unlucky PID. Try transmitting anyway.
+                // If the packet is dropped, oh well.
+                //
+                // (Note that currently this state also occurs immediately after
+                // initialization, because all of our PIDs are cleared to zero.
+                // So, we have some test coverage for this code.)
+
+                schedule = deferred;
+                nextPID = (nextPID + 1) & PID_MASK;
+                deferred.clear();
             }
+
+            ASSERT(!schedule.empty());
+            continue;
         }
 
-        _SYSCubeID id = schedNext++;
-        CubeSlot &slot = CubeSlot::getInstance(id);
+        // We have a candidate producer, but would it cause an ID collision?
+        ASSERT(id < NUM_PRODUCERS);
+        if (nextPID == lastPID[id]) {
+            deferred.mark(id);
+            continue;
+        }
 
-        if (slot.enabled() && slot.radioProduce(tx)) {
-            // Remember this slot in our queue.
-            fifoPush(id);
-            break;
+        // Does this producer even want to transmit right now?
+        if (dispatchProduce(id, tx)) {
+            // Yes, we're transmitting a packet! Update state and exit.
+            ASSERT(tx.dest->channel <= MAX_RF_CHANNEL);
+            lastPID[id] = nextPID;
+            nextPID = (nextPID + 1) & PID_MASK;
+            schedule.words[0] |= deferred.words[0];
+            fifo.enqueue(id);
+            return;
         }
     }
 }
 
 void RadioManager::ackWithPacket(const PacketBuffer &packet)
 {
-    CubeSlot &slot = CubeSlot::getInstance(fifoPop());
-
-    if (slot.enabled())
-        slot.radioAcknowledge(packet);
+    dispatchAcknowledge(fifo.dequeue(), packet);
 }
 
 void RadioManager::ackEmpty()
 {
-    // The transmit succeeded, but there was no data in the ACK.
-    fifoPop();
+    dispatchEmptyAcknowledge(fifo.dequeue());
 }
 
 void RadioManager::timeout()
 {
-    CubeSlot &slot = CubeSlot::getInstance(fifoPop());
+    dispatchTimeout(fifo.dequeue());
+}
 
-    if (slot.enabled())
+bool RadioManager::dispatchProduce(unsigned id, PacketTransmission &tx)
+{
+    if (id == CONNECTOR_ID) {
+        CubeConnector::radioProduce(tx);
+        return true;
+    }
+
+    CubeSlot &slot = CubeSlot::getInstance(id);
+    return slot.isSysConnected() && slot.radioProduce(tx);
+}
+
+void RadioManager::dispatchAcknowledge(unsigned id, const PacketBuffer &packet)
+{
+    if (id == CONNECTOR_ID)
+        return CubeConnector::radioAcknowledge(packet);
+
+    CubeSlot &slot = CubeSlot::getInstance(id);
+    if (slot.isSysConnected())
+        slot.radioAcknowledge(packet);
+}
+
+void RadioManager::dispatchEmptyAcknowledge(unsigned id)
+{
+    // Cubes don't care, only the connector.
+    if (id == CONNECTOR_ID)
+        return CubeConnector::radioEmptyAcknowledge();
+}
+
+void RadioManager::dispatchTimeout(unsigned id)
+{
+    if (id == CONNECTOR_ID)
+        return CubeConnector::radioTimeout();
+
+    CubeSlot &slot = CubeSlot::getInstance(id);
+    if (slot.isSysConnected())
         slot.radioTimeout();
 }

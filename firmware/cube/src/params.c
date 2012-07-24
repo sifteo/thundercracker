@@ -9,6 +9,9 @@
 #include "cube_hardware.h"
 #include "params.h"
 
+// Soak up the space between BG1 and the Tile ROM
+#pragma codeseg BG1LINE
+
 
 void params_init()
 {
@@ -22,40 +25,54 @@ void params_init()
      * MUST be called before interrupts are enabled. We don't want
      * to enter ISRs while FSR_WEN is set!
      *
-     * Inside the HWID, we embed the FIRMWARE_REV_CODE and HARDWARE_REV_CODE,
-     * as the first and second bytes respectively.
+     * Inside the HWID, we embed the HWID_REVISION_CODE as the first byte.
      */
-     
-    uint8_t i;
 
-    if (params.hwid[0] == 0xFF) {
-        FSR_WEN = 1;
-        params.hwid[0] = HWID_REVISION_CODE;
-        FSR_WEN = 0;
-    }
+    __asm
 
-    // Power on RNG, with bias corrector
-    RNGCTL = 0xC0;
+        mov     dptr, #PARAMS_HWID
 
-    for (i = 1; i < HWID_LEN; i++)
-        if (params.hwid[i] == 0xFF) {
-            uint8_t b;
+        ;--------------------------------------------------------------------
+        ; Revision Byte
+        ;--------------------------------------------------------------------
 
-            /*  
-             * IDs can't have 0xFF bytes, since that is indistinguishable
-             * from unprogrammed flash. Cycle the hardware RNG until we get
-             * a byte that isn't 0xFF.
-             */
-            do {
-                while (!(RNGCTL & 0x20));
-                b = RNGDAT;
-            } while (b == 0xFF);
-                
-            FSR_WEN = 1;
-            params.hwid[i] = b;
-            FSR_WEN = 0;
-        }
-            
-    // RNG to sleep now!
-    RNGCTL = 0;
+        movx    a, @dptr
+        inc     a
+        jnz     1$                  ; Skip if already programmed
+
+        setb    _FSR_WEN
+        mov     a, #HWID_REVISION_CODE
+        movx    @dptr, a
+        clr     _FSR_WEN
+
+1$:
+        inc     dptr
+
+        ;--------------------------------------------------------------------
+        ; Random bytes
+        ;--------------------------------------------------------------------
+
+        mov     _RNGCTL, #0xC0      ; Power on RNG, with bias corrector
+
+4$:     movx    a, @dptr
+        inc     a
+        jnz     2$                  ; Skip if already programmed
+
+3$:     mov     a, _RNGCTL          ; Wait for RNG
+        jnb     acc.5, 3$
+
+        setb    _FSR_WEN            ; Program value from RNG
+        mov     a, _RNGDAT
+        movx    @dptr, a
+        clr     _FSR_WEN
+
+        sjmp    4$                  ; Test byte, make sure it is not 0xFF
+
+2$:     inc     dptr
+        mov     a, _DPL
+        cjne    a, #(PARAMS_HWID + HWID_LEN), 4$
+
+        mov     _RNGCTL, #0         ; RNG back to sleep
+
+    __endasm ;
 }

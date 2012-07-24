@@ -4,6 +4,7 @@
 #include "macros.h"
 
 #include "radio.h"
+#include "nrf24l01.h"
 #include "flash_device.h"
 #include "usb/usbdevice.h"
 #include "usbprotocol.h"
@@ -108,6 +109,8 @@ void FactoryTest::produce(PacketTransmission &tx)
     CubeSlot &slot = CubeSlot::getInstance(0);
     tx.dest = slot.getRadioAddress();
     tx.packet.len = 0;
+    tx.numSoftwareRetries = 0;
+    tx.numHardwareRetries = 0;
 
     uint8_t packetLen = MAX(1, rfTransmissionsRemaining % PacketBuffer::MAX_LEN);
     for (unsigned i = 0; i < packetLen; ++i)
@@ -321,8 +324,7 @@ void FactoryTest::bootloadRequestHandler(uint8_t argc, const uint8_t *args)
  */
 void FactoryTest::rfPacketTestHandler(uint8_t argc, const uint8_t *args)
 {
-    Radio::setRetryCount(0, 0);
-    Radio::setRfTestEnabled(true);
+    NRF24L01::setRfTestEnabled(true);
 
     rfSuccessCount = 0;
     rfTransmissionsRemaining = *reinterpret_cast<const uint16_t*>(&args[1]);
@@ -330,8 +332,7 @@ void FactoryTest::rfPacketTestHandler(uint8_t argc, const uint8_t *args)
     while (rfTransmissionsRemaining)
         Tasks::waitForInterrupt();
 
-    Radio::setRfTestEnabled(false);
-    Radio::setRetryCount(Radio::DEFAULT_HARD_RETRIES, Radio::DEFAULT_SOFT_RETRIES);
+    NRF24L01::setRfTestEnabled(false);
 
     /*
      * Respond with the number of packets sent, and the number of successful transmissions

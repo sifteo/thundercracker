@@ -44,9 +44,9 @@ void MainMenu::init()
     itemIndexCurrent = 0;
     cubeRangeSavedIcon = NULL;
 
-    // XXX: Fake cubeset initialization, until we have real cube connect/disconnect
-    cubes = CubeSet(0,3);
-    _SYS_enableCubes(cubes);
+    // XXX: For now, we just use one cube
+    _SYS_setCubeRange(1, 1);
+    cubes = CubeSet::connected();
 }
 
 void MainMenu::run()
@@ -227,13 +227,14 @@ void MainMenu::checkForAlertDismiss(Sifteo::Menu &menu)
 void MainMenu::execItem(unsigned index)
 {
     /// XXX: Instead of a separate animation, integrate this animation with the menu itself
-    /// XXX: Cube range init here is temporary.
 
     DefaultLoadingAnimation anim;
 
+    ASSERT(index < arraysize(items));
     MainMenuItem *item = items[index];
-    CubeSet itemCubes = item->getCubeRange().initMinimum();
-    item->bootstrap(itemCubes, anim);
+
+    item->getCubeRange().set();
+    item->bootstrap(CubeSet::connected(), anim);
     item->exec();
 }
 

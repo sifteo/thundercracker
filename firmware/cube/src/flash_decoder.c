@@ -39,9 +39,7 @@
 #include "cube_hardware.h"
 #include "radio.h"
 #include "sensors.h"
-#include "main.h"
 #include "lcd.h"
-#include "draw.h"
 #include <protocol.h>
 
 /*
@@ -107,12 +105,12 @@ __bit fls_bit2;
 // Return to a label on the next loop iteration
 #define NEXT(_label)                                            __endasm; \
     __asm mov   _fls_state, STATE(_label)                       __endasm; \
-    __asm ljmp  flash_loop                                      __endasm; \
+    __asm ajmp  flash_loop                                      __endasm; \
     __asm
 
 // Return to the current state on the next loop iteration
 #define AGAIN()                                                 __endasm; \
-    __asm ljmp  flash_loop                                      __endasm; \
+    __asm ajmp  flash_loop                                      __endasm; \
     __asm
 
 
@@ -160,7 +158,7 @@ static void flash_dequeue() __naked
 static void flash_dequeue_st1p() __naked
 {
     __asm
-        lcall   _flash_dequeue
+        acall   _flash_dequeue
         mov     R_PTR, _fls_st+0
         mov     @R_PTR, a
         inc     _fls_st+0
@@ -241,9 +239,9 @@ void flash_init(void)
         mov     _flash_fifo_head, a
 
         ; Flash reset must send back a full packet, including the HWID.
-        ; We acknowledge a reset as if it were one data byte.
+        ; We acknowledge a reset by toggling NB1_FLAG_FLS_RESET.
 
-        inc     (_ack_data + RF_ACK_FLASH_FIFO)
+        xrl     (_ack_data + RF_ACK_NEIGHBOR + 1), #(NB1_FLAG_FLS_RESET)
         orl     _ack_bits, #RF_ACK_BIT_HWID
 
     __endasm ;
@@ -259,14 +257,6 @@ void flash_init(void)
 
 void flash_handle_fifo() __naked
 {
-    #ifdef DEBUG_FLASH_DECODER
-        vram.flags = _SYS_VF_CONTINUOUS;
-        draw_xy = XY(0,0); draw_hex(++B);
-        draw_xy = XY(0,1); draw_hex(flash_fifo_head);
-        draw_xy = XY(0,2); draw_hex(fls_tail);
-        draw_xy = XY(0,3); draw_hex(fls_state);
-    #endif
-
     __asm
 
         ; Handle reset requests with a tailcall to init
@@ -360,7 +350,7 @@ flop_7: sjmp    op_special_t    ; 0xe0
 
 flst_opcode:
 
-        lcall   _flash_dequeue      ; Consume opcode byte
+        acall   _flash_dequeue      ; Consume opcode byte
         swap    a                   ; Directly convert to an offset in our LUT
         anl     a, #0x0E
 flo_j:  jmp     @a+dptr
@@ -372,13 +362,13 @@ flo_j:  jmp     @a+dptr
 op_lut1:
 
         mov     a, R_BYTE
-        lcall   _flash_addr_lut         ; Point to LUT entry from opcode argument
+        acall   _flash_addr_lut         ; Point to LUT entry from opcode argument
         mov     _fls_st+0, a
 
         NEXT(flst_1)
-flst_1: lcall   _flash_dequeue_st1p     ; Store low byte
+flst_1: acall   _flash_dequeue_st1p     ; Store low byte
         NEXT(flst_2)
-flst_2: lcall   _flash_dequeue_st1p     ; Store high byte
+flst_2: acall   _flash_dequeue_st1p     ; Store high byte
 
 flst_opcode_n:
         NEXT(flst_opcode)
@@ -390,7 +380,7 @@ flst_opcode_n:
         ; No additional data necessary to write the entire tile.
 
 op_tile_p0:
-        ljmp    _flash_tile_p0
+        ajmp    _flash_tile_p0
 
         ;--------------------------------------------------------------------
         ; Opcode: TILE_P*_R4
@@ -411,18 +401,18 @@ op_tile_p4_r4:
         setb    _fls_bit1
 
 op_tile_r4:
-        lcall   _flash_tile_init
+        acall   _flash_tile_init
         NEXT(flst_3)
-flst_3: ljmp    _flash_tile_r4
+flst_3: ajmp    _flash_tile_r4
 
         ;--------------------------------------------------------------------
         ; Opcode: TILE_P16
         ;--------------------------------------------------------------------
 
 op_tile_p16:
-        lcall   _flash_tile_init
+        acall   _flash_tile_init
         NEXT(flst_4)
-flst_4: ljmp    _flash_tile_p16
+flst_4: ajmp    _flash_tile_p16
 
         ;--------------------------------------------------------------------
         ; Trampolines
@@ -447,9 +437,9 @@ op_lut16:
 
         mov     _fls_st, #_fls_st+1
         NEXT(flst_5)
-flst_5: lcall   _flash_dequeue_st1p
+flst_5: acall   _flash_dequeue_st1p
         NEXT(flst_6)
-flst_6: lcall   _flash_dequeue_st1p
+flst_6: acall   _flash_dequeue_st1p
         mov     _fls_st, #_fls_lut          ; Write to beginning of LUT
         NEXT(flst_7)
 flst_7:
@@ -459,9 +449,9 @@ flst_7:
 
         mov     a, _fls_st                  ; Exit when we reach the end of the LUT
         cjne    a, #_fls_lut+32, 4$
-        ljmp    flst_opcode
+        ajmp    flst_opcode
 4$:
-        lcall   _flash_rr16                 ; 16-bit right rotate into C
+        acall   _flash_rr16                 ; 16-bit right rotate into C
         jc      5$
 
         ; C=0, skip this bit.
@@ -471,9 +461,9 @@ flst_7:
 
         ; C=1, read two bytes then back
 
-5$:     lcall   _flash_dequeue_st1p
+5$:     acall   _flash_dequeue_st1p
         NEXT(flst_8)
-flst_8: lcall   _flash_dequeue_st1p
+flst_8: acall   _flash_dequeue_st1p
         NEXT(flst_7)
 
         ;--------------------------------------------------------------------
@@ -492,19 +482,19 @@ op_special:
         mov     _flash_addr_low, #0
 
         NEXT(flst_9)
-flst_9: lcall   _flash_dequeue
+flst_9: acall   _flash_dequeue
         anl     a, #0xfe                ; Must keep LSB clear
         mov     _flash_addr_lat1, a
 
         NEXT(flst_A)
-flst_A: lcall   _flash_dequeue
+flst_A: acall   _flash_dequeue
         rrc     a
         mov     _flash_addr_a21, c
         clr     c                       ; Keep LSB clear here too
         rlc     a
         mov     _flash_addr_lat2, a
 
-        ljmp    flst_opcode_n
+        ajmp    flst_opcode_n
 op_address_end:
 
         ;---------------------------------
@@ -514,12 +504,12 @@ op_address_end:
         cjne    a, #FLS_OP_QUERY_CRC, op_query_crc_end
 
         NEXT(flst_B)
-flst_B: lcall   _flash_dequeue
+flst_B: acall   _flash_dequeue
         orl     a, #QUERY_ACK_BIT       ; Ensure query bit is set
         mov     _radio_query, a
 
         NEXT(flst_C)
-flst_C: ljmp    _flash_query_crc
+flst_C: ajmp    _flash_query_crc
 
 op_query_crc_end:
 
@@ -530,11 +520,11 @@ op_query_crc_end:
         cjne    a, #FLS_OP_CHECK_QUERY, op_check_query_end
 
         NEXT(flst_D)
-flst_D: lcall   _flash_dequeue
+flst_D: acall   _flash_dequeue
         mov     _fls_st+0, a            ; Save byte count
 
         NEXT(flst_E)
-flst_E: ljmp    _flash_check_query
+flst_E: ajmp    _flash_check_query
 
 op_check_query_end:
 
@@ -575,7 +565,7 @@ static void flash_query_crc() __naked
         ; Setup
         ;--------------------------------------------------------------------
 
-        lcall   _flash_dequeue      ; Store block count
+        acall   _flash_dequeue      ; Store block count
         mov     R_COUNT1, a
 
         mov     _CCPDATIB, #0x84    ; Generator polynomial (See tools/gfm.py)
@@ -660,7 +650,7 @@ static void flash_query_crc() __naked
         mov     r0, #17             ; Send back 17-byte response
         lcall   _radio_ack_query
 
-        ljmp    flst_opcode_n       ; Done, next opcode.
+        ajmp    flst_opcode_n       ; Done, next opcode.
 
     __endasm ;
 }
@@ -699,7 +689,7 @@ static void flash_check_query() __naked
         mov     R_COUNT2, #0            ; Keep track of mismatches in R_COUNT2
         mov     R_TMP0, #_radio_query   ; Loop over the query buffer
 2$:
-        lcall   _flash_dequeue          ; Clobbers R_PTR, R_BYTE
+        acall   _flash_dequeue          ; Clobbers R_PTR, R_BYTE
         xrl     a, @R_TMP0              ; XOR with command byte,
         orl     a, R_COUNT2             ;   OR difference with R_COUNT2
         mov     R_COUNT2, a
@@ -711,7 +701,7 @@ static void flash_check_query() __naked
         jz      3$
 
         NEXT(flst_hang)                 ; Failed, enter hang state
-3$:     ljmp    flst_opcode_n           ; Succeeded, back to opcode state
+3$:     ajmp    flst_opcode_n           ; Succeeded, back to opcode state
 
     __endasm ;
 }
@@ -728,16 +718,16 @@ static void flash_tile_p0() __naked
 {
     __asm
         mov     a, R_BYTE
-        lcall   _flash_addr_lut     ; Point to LUT entry from opcode argument
+        acall   _flash_addr_lut     ; Point to LUT entry from opcode argument
 
         ; Output one whole tile (4 buffers, 16 words per buffer) with the same color.
 
         mov     R_COUNT1, #4
-1$:     lcall   _flash_buffer_begin
+1$:     acall   _flash_buffer_begin
         mov     R_COUNT2, #16
-2$:     lcall   _flash_buffer_word
+2$:     acall   _flash_buffer_word
         djnz    R_COUNT2, 2$
-        lcall   _flash_buffer_commit
+        acall   _flash_buffer_commit
         djnz    R_COUNT1, 1$
 
         AGAIN()
@@ -841,11 +831,11 @@ static void flash_tile_p16() __naked
         ; and R_COUNT2 counts bits in our shift register. The shift register
         ; itself is in R_SHIFT.
 
-        lcall   _flash_buffer_begin
+        acall   _flash_buffer_begin
 
         mov     R_COUNT1, #2
 1$:
-        lcall   _flash_dequeue  ; Next byte is 8-bit mask
+        acall   _flash_dequeue  ; Next byte is 8-bit mask
         mov     R_SHIFT, a
         mov     R_COUNT2, #8
 2$:
@@ -855,12 +845,12 @@ static void flash_tile_p16() __naked
         jnc     3$              ; Zero bit? Skip pixel load.
 
         mov     _fls_st+0, #(_fls_lut + 15*2)   ; Load pixel from FIFO into lut[15]
-        lcall   _flash_dequeue_st1p
-        lcall   _flash_dequeue_st1p
+        acall   _flash_dequeue_st1p
+        acall   _flash_dequeue_st1p
 3$:
 
         mov     R_PTR, #(_fls_lut + 15*2)       ; Output pixel from lut[15]
-        lcall   _flash_buffer_word  
+        acall   _flash_buffer_word  
 
         djnz    R_COUNT2, 2$
         djnz    R_COUNT1, 1$
@@ -912,7 +902,7 @@ static void flash_tile_r4() __naked
         ; Note that 16 pixels is always a multiple of 1 nybble,
         ; in any of our supported bit depths.
 
-        lcall   _flash_buffer_begin
+        acall   _flash_buffer_begin
         mov     R_COUNT1, #16
 flr4_pixel_loop:
 
@@ -935,7 +925,7 @@ flr4_pixel_loop:
         cpl     _fls_bit2               ; Negate buffer status
         jnb      _fls_bit2, 1$          ; Done if we had a nybble indeed
 
-        lcall   _flash_dequeue          ; Refill our buffer
+        acall   _flash_dequeue          ; Refill our buffer
         swap    a                       ; Save the most significant nybble for later
         mov     _fls_st+3, a
 1$:
@@ -985,8 +975,8 @@ flr4_out_1bpp:
 1$:
         mov     R_BYTE, a       ; Output least significant pixel
         anl     a, #1
-        lcall   _flash_addr_lut
-        lcall   _flash_buffer_word
+        acall   _flash_addr_lut
+        acall   _flash_buffer_word
 
         mov     a, R_BYTE       ; Next pixel
         rr      a
@@ -1006,8 +996,8 @@ flr4_out_2bpp:
 1$:
         mov     R_BYTE, a       ; Output least significant pixel
         anl     a, #3
-        lcall   _flash_addr_lut
-        lcall   _flash_buffer_word
+        acall   _flash_addr_lut
+        acall   _flash_buffer_word
 
         mov     a, R_BYTE       ; Next pixel
         rr      a
@@ -1024,8 +1014,8 @@ flr4_out_2bpp:
 flr4_out_4bpp:
 
         mov     a, _fls_st+1    ; Whole nybble is color index
-        lcall   _flash_addr_lut
-        lcall   _flash_buffer_word
+        acall   _flash_addr_lut
+        acall   _flash_buffer_word
 
         dec     R_COUNT1
 
@@ -1050,11 +1040,11 @@ flr4_next_pixel:
 
 flr4_buffer_done:
 
-        lcall   _flash_buffer_commit
+        acall   _flash_buffer_commit
         
         djnz    _fls_st+2, 1$
         mov     _fls_state, STATE(flst_opcode)
-1$:     ljmp    flash_loop
+1$:     ajmp    flash_loop
 
     __endasm ;
 }

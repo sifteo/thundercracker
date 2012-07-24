@@ -103,6 +103,7 @@ struct em8051
     uint8_t wdsvHigh;           // High half of start value for WDT
     uint8_t wdsvState;          // WDT register state machine
 
+    uint16_t rtc2;              // 16-bit RTC2 counter
     unsigned wdtCounter;        // 24-bit watchdog counter
 
     void *callbackData;

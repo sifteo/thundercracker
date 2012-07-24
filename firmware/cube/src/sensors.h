@@ -16,23 +16,11 @@ void sensors_init();
 /*
  * We export a global tick counter, which can be used by other modules
  * who need a low-frequency timebase.
- *
- * This is currently used by battery voltage polling, and LCD delays.
  */
 extern volatile uint8_t sensor_tick_counter;
 extern volatile uint8_t sensor_tick_counter_high;
 
-#ifdef DEBUG_NBR
-	extern uint8_t __idata nbr_data[4];
-	extern uint8_t	nbr_temp;
-	extern uint8_t __idata nbr_data_valid[2];
-	extern uint8_t __idata nbr_data_invalid[2];
-#endif
-
 extern __bit touch;
-#ifdef DEBUG_TOUCH
-    extern uint8_t touch_count;
-#endif
 
 /*
  * Interrupt declarations must be visible in main.c

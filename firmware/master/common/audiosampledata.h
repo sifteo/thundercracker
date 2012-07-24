@@ -23,14 +23,6 @@ public:
         state.sampleNum = 0;
     }
 
-    /*
-     * This should be called after a unit of work has been finished, to
-     * recycle the FlashBlockRef.
-     */
-    void ALWAYS_INLINE releaseRef() {
-        ref.release();
-    }
-
     // Retrieve a single sample, via the cache
     int ALWAYS_INLINE getSample(unsigned sampleNum, const _SYSAudioModule &mod)
     {
@@ -69,7 +61,6 @@ private:
 
     int16_t samples[FULL_BUFFER];
 
-    FlashBlockRef ref;          // Released by caller when a unit of work is complete.
     uint32_t autoSnapshotPoint;
 
     struct State {

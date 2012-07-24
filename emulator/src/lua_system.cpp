@@ -73,6 +73,9 @@ int LuaSystem::setOptions(lua_State *L)
     if (LuaScript::argMatch(L, "svmStackMonitor"))
         sys->opt_svmStackMonitor = lua_toboolean(L, -1);
 
+    if (LuaScript::argMatch(L, "noCubeReconnect"))
+        sys->opt_noCubeReconnect = lua_toboolean(L, -1);
+
     if (!LuaScript::argEnd(L))
         return 0;
 

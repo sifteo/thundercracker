@@ -14,7 +14,7 @@ void init()
 void onChange()
 {
     if (isPressed()) {
-        Tasks::setPending(Tasks::HomeButton);
+        Tasks::trigger(Tasks::HomeButton);
     }
 }
 
@@ -26,7 +26,7 @@ bool isPressed()
 /*
  * Called from within Tasks::work to handle a button event on the main loop.
  */
-void task(void *p)
+void task()
 {
     // do things here
 }

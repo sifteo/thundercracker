@@ -7,6 +7,8 @@
 #include "crc.h"
 #include "bits.h"
 #include "prng.h"
+#include "cube.h"
+#include "cubeslots.h"
 
 
 int SysLFS::read(Key k, uint8_t *buffer, unsigned bufferSize)
@@ -74,34 +76,30 @@ int SysLFS::write(Key k, const uint8_t *data, unsigned dataSize, bool gc)
 
 SysLFS::Key SysLFS::CubeRecord::makeKey(_SYSCubeID cube)
 {
-    /*
-     * TO DO: The association from _SYSCubeID to SysLFS::Key should be
-     *        made at the time of pairing, and probably stored by CubeSlot.
-     *        When the cube is first pair, we either find an existing
-     *        CubeRecord for that HWID, or we allocate a new CubeRecord by
-     *        recycling a 'dead' cube's Key.
-     *
-     *        Until pairing is in place, we use a 1:1 mapping between CubeID
-     *        and Key.
-     */
-
+    // CubeSlots store their own mapping back to their paired CubeRecord key
     ASSERT(cube < _SYS_NUM_CUBE_SLOTS);
-    return Key(kCubeBase + cube);
+    return CubeSlots::instances[cube].getCubeRecordKey();
 }
 
 bool SysLFS::CubeRecord::decodeKey(Key cubeKey, _SYSCubeID &cube)
 {
     /*
-     * Reverse mapping from key back to Cube ID.
-     *
-     * XXX: This may require reimplementation when makeKey() is fleshed out.
+     * Reverse mapping from key back to Cube ID. Since only
+     * connected cubes have an associated CubeRecord, this only
+     * searches the vector of sysConnected cubes.
      */
 
-    unsigned i = cubeKey - kCubeBase;
-    if (i < _SYS_NUM_CUBE_SLOTS) {
-        cube = i;
-        return true;
+    _SYSCubeIDVector cv = CubeSlots::sysConnected;
+    while (cv) {
+        _SYSCubeID c = Intrinsic::CLZ(cv);
+        cv ^= Intrinsic::LZ(c);
+
+        if (makeKey(c) == cubeKey) {
+            cube = c;
+            return true;
+        }
     }
+
     return false;
 }
 
@@ -122,6 +120,106 @@ bool SysLFS::CubeRecord::load(const FlashLFSObjectIter &iter)
 
     // Valid if CRC is okay
     return size >= sizeof *this && iter.readAndCheck((uint8_t*) this, sizeof *this);
+}
+
+void SysLFS::PairingIDRecord::init()
+{
+    // 0xFF is always an invalid HWID byte
+    memset(this, 0xFF, sizeof *this);
+}
+
+void SysLFS::PairingIDRecord::load()
+{
+    if (!read(SysLFS::kPairingID, *this))
+        init();
+}
+
+void SysLFS::PairingMRURecord::init()
+{
+    // Fill with invalid indices. We'll fix it up in load().
+    memset(this, 0xFF, sizeof *this);
+}
+
+void SysLFS::PairingMRURecord::load()
+{
+    if (!read(SysLFS::kPairingMRU, *this))
+        init();
+
+    /*
+     * We need the MRU list to contain exactly one copy of each index,
+     * so we're sure to use the full capacity of the pairing table
+     * when assigning new IDs. So, at load-time, we will scan through
+     * the record and replace any duplicate or invalid IDs with unrepresented IDs.
+     *
+     * This avoids logic errors during pairing, if we had some other data
+     * corruption issue which leads to a badly formed MRU record. For example,
+     * if we were to write the MRU list to flash while the ISR is updating it.
+     * These cases are rare, and it isn't worth our while to use heavier synchronization
+     * primitives- this is just a caching hint anyway, so it's fine as long as we don't
+     * end up with a long-term problem.
+     */
+
+    // First pass: Which indices are missing?
+
+    BitVector<NUM_PAIRINGS> missing;
+    missing.mark();
+
+    for (unsigned i = 0; i < NUM_PAIRINGS; ++i) {
+        unsigned r = rank[i];
+        if (r < NUM_PAIRINGS)
+            missing.clear(r);
+    }
+
+    // Second pass: Look for duplicated/invalid elements, fill in with missing ones
+
+    BitVector<NUM_PAIRINGS> found;
+    found.clear();
+
+    for (unsigned i = 0; i < NUM_PAIRINGS; ++i) {
+        if (rank[i] >= NUM_PAIRINGS || found.test(rank[i])) {
+            unsigned recycled = 0;
+            ASSERT(!missing.empty());
+            missing.clearFirst(recycled);
+            rank[i] = recycled;
+        }
+        found.mark(rank[i]);
+    }
+
+    ASSERT(missing.empty());
+}
+
+bool SysLFS::PairingMRURecord::access(unsigned index)
+{
+    /*
+     * Move 'index' to the front of the list.
+     * Returns 'true' if this entailed making any changes, 'false' if not.
+     */
+
+    ASSERT(index < NUM_PAIRINGS);
+
+    if (rank[0] == index)
+        return false;
+
+    unsigned i;
+    for (i = 0; i < NUM_PAIRINGS; ++i) {
+        if (rank[i] == index)
+            break;
+    }
+    if (i == NUM_PAIRINGS) {
+        /*
+         * Not in list. Shouldn't happen unless our list is inconsistent,
+         * but this can happen. See load() above. In that case, we assume
+         * we're replacing the last element.
+         */
+        i--;
+    }
+
+    // Make room. Shift all prior elements up by one.
+    ASSERT(i > 0);
+    memmove(&rank[1], &rank[0], sizeof(rank[0]) * i);
+
+    rank[0] = index;
+    return true;
 }
 
 bool SysLFS::CubeAssetsRecord::checkBinding(FlashVolume vol, unsigned numSlots) const
@@ -596,4 +694,19 @@ void SysLFS::deleteAll()
         if (vol.getType() == FlashVolume::T_LFS && !vol.getParent().block.isValid())
             vol.deleteSingle();
     }
+}
+
+void SysLFS::deleteCube(unsigned index)
+{
+    /*
+     * Delete all saved information about a particular cube index
+     */
+
+    ASSERT(index < kCubeCount);
+
+    Key cubeKey = Key(kCubeBase + index);
+    write(cubeKey, 0, 0);
+
+    for (unsigned i = 0; i < ASSET_SLOTS_PER_CUBE; ++i)
+        write(AssetSlotRecord::makeKey(cubeKey, i), 0, 0);
 }

@@ -76,8 +76,8 @@ void testColors()
 
 void main()
 {
-    // Bootstrapping that would normally be done by the Launcher
-    _SYS_enableCubes(cube.bit());
+    while (!CubeSet::connected().test(cube))
+        System::yield();
 
     SCRIPT(LUA,
         package.path = package.path .. ";../../lib/?.lua"
