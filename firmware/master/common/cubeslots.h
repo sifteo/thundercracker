@@ -20,6 +20,7 @@ namespace CubeSlots {
      * One-bit flags for each cube are packed into global vectors
      */
     extern _SYSCubeIDVector sysConnected;       /// Cube connected by the system
+    extern _SYSCubeIDVector disconnectFlag;     /// Cube has been disconnected since last event dispatch
     extern _SYSCubeIDVector userConnected;      /// Cube is seen as connected by userspace
     extern _SYSCubeIDVector flashResetWait;     /// We need to reset flash before writing to it
     extern _SYSCubeIDVector flashResetSent;     /// We've sent an unacknowledged flash reset    
@@ -53,10 +54,6 @@ namespace CubeSlots {
     static ALWAYS_INLINE _SYSCubeIDVector truncateVector(_SYSCubeIDVector cv) {
         // For security/reliability, all cube vectors from game code must be checked
         return cv & (0xFFFFFFFF << (32 - _SYS_NUM_CUBE_SLOTS));
-    }
-
-    static _SYSCubeIDVector availableSlots() {
-        return truncateVector(~(sysConnected | userConnected));
     }
 
     void setCubeRange(unsigned minimum, unsigned maximum);

@@ -57,6 +57,10 @@ void CubeSlot::disconnect()
     LOG(("CUBE[%d]: Disconnected from system\n", id()));
     _SYSCubeIDVector cv = bit();
 
+    // Make sure we dispatch a user disconnect event, even if another cube
+    // or the same cube reconnects in the same slot before we can dispatch the event.
+    Atomic::Or(CubeSlots::disconnectFlag, cv);
+
     // Disconnect it from the system; the user will follow when we dispatch the event.
     Atomic::And(CubeSlots::sysConnected, ~cv);
 

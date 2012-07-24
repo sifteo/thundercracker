@@ -13,6 +13,7 @@
 CubeSlot CubeSlots::instances[_SYS_NUM_CUBE_SLOTS];
 
 _SYSCubeIDVector CubeSlots::sysConnected = 0;
+_SYSCubeIDVector CubeSlots::disconnectFlag = 0;
 _SYSCubeIDVector CubeSlots::userConnected = 0;
 _SYSCubeIDVector CubeSlots::flashResetWait = 0;
 _SYSCubeIDVector CubeSlots::flashResetSent = 0;

@@ -102,50 +102,35 @@ bool Event::dispatchCubePID(PriorityID pid, _SYSCubeID cid)
          * A system cube connect/disconnect happened for this slot.
          *
          * This PID is *only* ever set pending if a system connect
-         * or disconnect happened. So, we can guess what happened
-         * based on the current state of the sysConnected and
-         * userConnected bits for this cube.
-         *
-         * If the two bits are in different states, a single connect
-         * or disconnect occurred on this cube. If both are 0, a
-         * cube connected but subsequently disconnected before we
-         * could tell userspace about it. Ignore these events. If
-         * both are 1, however, this means a cube that was previously
-         * connected has disconnected, and a (possibly different)
-         * cube connected in its place.
-         *
-         * For this last case, we want to emit a disconnect event
-         * followed by a connect. To do this in two steps, we'll
-         * emit the disconnect and clear the userConnected bit
-         * without clearing the cubesPending bit.
+         * or disconnect happened. We can determine which events
+         * to send based on comparing the userConnected and sysConnected
+         * flags, as well as using the disconnectFlag to catch
+         * transient disconnections which haven't affected the state
+         * of sysConnected at all.
          */
         case PID_CONNECTION: {
             _SYSCubeIDVector bit = Intrinsic::LZ(cid);
+            _SYSCubeIDVector dcFlag = CubeSlots::disconnectFlag & bit;
             _SYSCubeIDVector userConn = CubeSlots::userConnected & bit;
             _SYSCubeIDVector sysConn = CubeSlots::sysConnected & bit;
 
-            if (userConn) {
-                if (sysConn) {
-                    // Disconnect followed by reconnect (Leave event pending)
-                    Atomic::And(CubeSlots::userConnected, ~bit);
-                    return callCubeEvent(_SYS_CUBE_DISCONNECT, cid);
-                } else {
-                    // Disconnect only
-                    Atomic::And(params[pid].cubesPending, ~bit);
-                    Atomic::And(CubeSlots::userConnected, ~bit);
-                    return callCubeEvent(_SYS_CUBE_DISCONNECT, cid);
-                }
-            } else {
-                if (sysConn) {
-                    // Connect only
-                    Atomic::And(params[pid].cubesPending, ~bit);
-                    Atomic::Or(CubeSlots::userConnected, bit);
-                    return callCubeEvent(_SYS_CUBE_CONNECT, cid);
-                } else {
-                    // Connect followed by disconnect.
-                    return false;
-                }
+            // Always clear disconnect flag after reading it
+            Atomic::And(CubeSlots::disconnectFlag, ~bit);
+
+            // Connected in userspace, and need disconnection?
+            // Leave our event pending, since we may need to CONNECT also.
+            if (userConn && (dcFlag || !sysConn)) {
+                Atomic::And(CubeSlots::userConnected, ~bit);
+                return callCubeEvent(_SYS_CUBE_DISCONNECT, cid);
             }
+
+            // Need a connect? After this point, no more events are pending for this cube.
+            Atomic::And(params[pid].cubesPending, ~bit);
+            if (sysConn && !userConn) {
+                Atomic::Or(CubeSlots::userConnected, bit);
+                return callCubeEvent(_SYS_CUBE_CONNECT, cid);
+            }
+            return false;
         }
 
         default:

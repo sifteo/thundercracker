@@ -162,7 +162,7 @@ bool CubeConnector::chooseConnectionAddr()
     RadioAddrFactory::random(connectionAddr, prng);
 
     // Pick a cube ID, based on what's available right now.
-    _SYSCubeIDVector cv = CubeSlots::availableSlots();
+    _SYSCubeIDVector cv = ~CubeSlots::sysConnected;
     if (cv) {
         cubeID = Intrinsic::CLZ(cv);
         return true;
@@ -474,7 +474,7 @@ void CubeConnector::radioAcknowledge(const PacketBuffer &packet)
 
                 // Connect the cube!
                 CubeSlot &cube = CubeSlots::instances[cubeID];
-                if (cube.isSlotAvailable()) {
+                if (!cube.isSysConnected()) {
                     cube.connect(cubeRecord, connectionAddr, *ack);
                 }
             }

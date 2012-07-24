@@ -64,10 +64,6 @@ class CubeSlot {
         return !!(bit() & CubeSlots::userConnected);
     }
 
-    bool ALWAYS_INLINE isSlotAvailable() const {
-        return !(bit() & (CubeSlots::sysConnected | CubeSlots::userConnected));
-    }
-
     void ALWAYS_INLINE setVideoBuffer(_SYSVideoBuffer *v) {
         vbuf = v;
     }
