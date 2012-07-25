@@ -8,6 +8,14 @@
 #include "cube.h"
 #include "cubeconnector.h"
 
+#ifdef RADIO_UART_TRACE
+#   define RADIO_UART_STR(_x)   UART(_x)
+#   define RADIO_UART_HEX(_i)   UART_HEX(_i)
+#else
+#   define RADIO_UART_STR(_x)
+#   define RADIO_UART_HEX(_i)
+#endif
+
 RadioManager::fifo_t RadioManager::fifo;
 uint8_t RadioManager::nextPID;
 uint8_t RadioManager::lastPID[RadioManager::NUM_PRODUCERS];
@@ -117,6 +125,9 @@ void RadioManager::timeout()
 
 bool RadioManager::dispatchProduce(unsigned id, PacketTransmission &tx)
 {
+    RADIO_UART_STR("\r\ntx ");
+    RADIO_UART_HEX(id);
+    
     if (id == CONNECTOR_ID) {
         CubeConnector::radioProduce(tx);
         return true;
@@ -128,6 +139,9 @@ bool RadioManager::dispatchProduce(unsigned id, PacketTransmission &tx)
 
 void RadioManager::dispatchAcknowledge(unsigned id, const PacketBuffer &packet)
 {
+    RADIO_UART_STR("\r\nack ");
+    RADIO_UART_HEX(id);
+
     if (id == CONNECTOR_ID)
         return CubeConnector::radioAcknowledge(packet);
 
@@ -138,6 +152,9 @@ void RadioManager::dispatchAcknowledge(unsigned id, const PacketBuffer &packet)
 
 void RadioManager::dispatchEmptyAcknowledge(unsigned id)
 {
+    RADIO_UART_STR("\r\nack0 ");
+    RADIO_UART_HEX(id);
+
     // Cubes don't care, only the connector.
     if (id == CONNECTOR_ID)
         return CubeConnector::radioEmptyAcknowledge();
@@ -145,6 +162,9 @@ void RadioManager::dispatchEmptyAcknowledge(unsigned id)
 
 void RadioManager::dispatchTimeout(unsigned id)
 {
+    RADIO_UART_STR("\r\nTIMEOUT ");
+    RADIO_UART_HEX(id);
+
     if (id == CONNECTOR_ID)
         return CubeConnector::radioTimeout();
 
