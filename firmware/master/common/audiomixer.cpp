@@ -165,8 +165,12 @@ void AudioMixer::pullAudio()
         }
     #endif
 
-    if (samplesLeft < arraysize(blockBuffer))
-        return AudioOutDevice::pullFromMixer();
+    if (samplesLeft < arraysize(blockBuffer)) {
+        // Need more room in the buffer before we can mix!
+        if (!headless)
+            AudioOutDevice::pullFromMixer();
+        return;
+    }
 
     #ifndef SIFTEO_SIMULATOR
         SampleProfiler::SubSystem s = SampleProfiler::subsystem();
@@ -270,7 +274,8 @@ void AudioMixer::pullAudio()
     }
 
     // Give the output a chance to dequeue data immediately (Only used on Siftulator)
-    AudioOutDevice::pullFromMixer();
+    if (!headless)
+        AudioOutDevice::pullFromMixer();
 
     #ifndef SIFTEO_SIMULATOR
         SampleProfiler::setSubsystem(s);
