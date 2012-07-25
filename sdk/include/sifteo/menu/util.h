@@ -99,16 +99,16 @@ inline void Menu::drawColumn(int x)
         Int2 srcXY = { ((x % kItemTileWidth()) % img.tileWidth()), 0 };
         vid.bg0.image(topLeft, size, img, srcXY);
     } else {
-		if (assets->overflowIcon && umod(x,kIconTileWidth) < kItemTileWidth()) {
-			// drawing the overflow icon
-	        x = umod(x, kItemTileWidth());
-	        const AssetImage &img = *assets->overflowIcon;
-	        Int2 srcXY = { ((x % kItemTileWidth()) % img.tileWidth()), 0 };
-	        vid.bg0.image(topLeft, size, img, srcXY);
-		} else {
-        	// drawing a blank column
-        	vid.bg0.fill(topLeft, size, *assets->background);
-		}
+        if (assets->overflowIcon && umod(x,kIconTileWidth) < kItemTileWidth()) {
+            // drawing the overflow icon
+            x = umod(x, kItemTileWidth());
+            const AssetImage &img = *assets->overflowIcon;
+            Int2 srcXY = { ((x % kItemTileWidth()) % img.tileWidth()), 0 };
+            vid.bg0.image(topLeft, size, img, srcXY);
+        } else {
+            // drawing a blank column
+            vid.bg0.fill(topLeft, size, *assets->background);
+        }
     }
 }
 
