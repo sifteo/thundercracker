@@ -22,10 +22,10 @@ inline Menu::Menu(VideoBuffer &vid, const MenuAssets *aAssets, MenuItem *aItems)
     : vid(vid)
 {
     currentEvent.type = MENU_UNEVENTFUL;
-    changeState(MENU_STATE_START);
     items = aItems;
     assets = aAssets;
-
+    changeState(MENU_STATE_START);
+    
     // initialize instance constants
     kHeaderHeight = 0;
     kFooterHeight = 0;
@@ -153,6 +153,9 @@ inline bool Menu::pollEvent(struct MenuEvent *ev)
         case MENU_STATE_FINISH:
             transFromFinish();
             break;
+        case MENU_STATE_HOP_UP:
+            transFromHopUp();
+            break;
     }
     if (dispatchEvent(ev)) {
         return (ev->type != MENU_EXIT);
@@ -174,6 +177,9 @@ inline bool Menu::pollEvent(struct MenuEvent *ev)
             break;
         case MENU_STATE_FINISH:
             stateFinish();
+            break;
+        case MENU_STATE_HOP_UP:
+            stateHopUp();
             break;
     }
     if (dispatchEvent(ev)) {

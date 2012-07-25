@@ -83,13 +83,15 @@ struct MenuEvent {
  *   Tilting: cube is being tilted. -> Inertia.
  *   Inertia: menu is coasting. -> Tilting, Static.
  *   Finish: item selected, animate out menu. -> Start.
+ *   Hop Up: inverse of Finish, item hops back into menu. -> Static
  */
 typedef enum {
     MENU_STATE_START,
     MENU_STATE_STATIC,
     MENU_STATE_TILTING,
     MENU_STATE_INERTIA,
-    MENU_STATE_FINISH
+    MENU_STATE_FINISH,
+    MENU_STATE_HOP_UP
 } MenuState;
 
 
@@ -183,6 +185,9 @@ class Menu {
     void transToFinish();
     void stateFinish();
     void transFromFinish();
+    void transToHopUp();
+    void stateHopUp();
+    void transFromHopUp();
 
     // events.h
     bool dispatchEvent(struct MenuEvent *ev);
