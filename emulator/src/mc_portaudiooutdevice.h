@@ -18,6 +18,7 @@ public:
     void init();
     void start();
     void stop();
+    void pullFromMixer();
 
 private:
     PaStream *outStream;

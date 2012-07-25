@@ -13,6 +13,22 @@
 PortAudioOutDevice::PortAudioOutDevice() :
     outStream(0), upsampleCounter(0) {}
 
+void PortAudioOutDevice::pullFromMixer()
+{
+    /*
+     * Copy from the source AudioBuffer to our simulation-only supplemental
+     * buffer which covers up the jitter in our virtual clock.
+     *
+     * Runs only from Task context. (Our simBuffer requires no more than one writer)
+     */
+
+    ASSERT(bufferThreshold > 0);
+    simBuffer.pull(AudioMixer::output, bufferThreshold);
+
+    if (simBuffer.readAvailable() < bufferThreshold)
+        Tasks::trigger(Tasks::AudioPull);
+}
+
 int PortAudioOutDevice::portAudioCallback(const void *inputBuffer, void *outputBuffer,
     unsigned long framesPerBuffer, const PaStreamCallbackTimeInfo* timeInfo,
     PaStreamCallbackFlags statusFlags, void *userData)
@@ -36,12 +52,8 @@ int PortAudioOutDevice::portAudioCallback(const void *inputBuffer, void *outputB
         self->bufferFilling = true;
     }
 
-    /*
-     * Copy from the source AudioBuffer to our simulation-only supplemental
-     * buffer which covers up the jitter in our virtual clock.
-     */
-    ASSERT(self->bufferThreshold > 0);
-    ring.pull(AudioMixer::output, self->bufferThreshold);
+    // Ask for more audio data
+    Tasks::trigger(Tasks::AudioPull);
 
     if (self->bufferFilling) {
         /*
@@ -116,9 +128,6 @@ int PortAudioOutDevice::portAudioCallback(const void *inputBuffer, void *outputB
     // (But make sure to filter the silence, to avoid discontinuities)
     while (outputRemaining--)
         *outBuf++ = self->upsampleFilter(0);
-
-    // Ask for more audio data
-    Tasks::trigger(Tasks::AudioPull);
 
     return paContinue;
 }
