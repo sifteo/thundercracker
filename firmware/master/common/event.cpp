@@ -7,7 +7,6 @@
 #include "event.h"
 #include "cube.h"
 #include "neighborslot.h"
-#include "assetslot.h"
 
 Event::VectorInfo Event::vectors[_SYS_NUM_VECTORS];
 Event::Params Event::params[NUM_PIDS];
@@ -129,7 +128,6 @@ bool Event::dispatchCubePID(PriorityID pid, _SYSCubeID cid)
             Atomic::And(params[pid].cubesPending, ~bit);
             if (sysConn && !userConn) {
                 Atomic::Or(CubeSlots::userConnected, bit);
-                VirtAssetSlots::rebindCube(cid);
                 return callCubeEvent(_SYS_CUBE_CONNECT, cid);
             }
             return false;
