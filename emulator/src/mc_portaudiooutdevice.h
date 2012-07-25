@@ -44,21 +44,36 @@ private:
 
     /*
      * An additional simulation-only buffer, necessary because of the
-     * jitter in our virtual clock. On Windows especially, this is
-     * super jittery due to the low Sleep resolution available there.
-     * And to make things worse, PA on Windows tends to request
-     * much larger audio blocks, making it much easier to underrun.
+     * jitter in our virtual clock. We allocate this buffer very large;
+     * the amount of it we actually use is determined dynamically.
      *
-     * So, use a much larger buffer on Windows.
+     * Note that this buffer shouldn't be *too* large. If we're legitimately
+     * running too slowly to keep up with the audio output device, this
+     * buffer will quickly fill to its capacity and we want the upper-limit
+     * on audio outout latency not to be too astronomical.
      */
-    #ifdef _WIN32
-    typedef RingBuffer<2048, int16_t> SimBuffer_t;
-    #else
-    typedef RingBuffer<512, int16_t> SimBuffer_t;
-    #endif
+    typedef RingBuffer<0x10000, int16_t> SimBuffer_t;
+
+    /*
+     * How long do we wait (in number of audio samples) before deciding
+     * that a new low-water-mark in the buffer has been stable long enough
+     * that we can decrease our bufferThreshold? Smaller values will adapt
+     * more quickly and be more eager to lower latency, while larger
+     * values are more conservative and more likely to avoid underruns.
+     */
+    static const unsigned NUM_WATERMARK_SAMPLES = 100000;
 
     SimBuffer_t simBuffer;
     uint32_t bufferFilling;     // Must be 32-bit (atomic access)
+    uint32_t bufferThreshold;   // Number of samples we'd like to keep buffered
+
+    uint32_t lowWaterMark;      // Smallest buffer fill level we've seen
+    uint32_t lowWaterSamples;   // Number of times we've seen the buffer >= lowWaterMark
+
+    void resetWaterMark() {
+        lowWaterSamples = 0;
+        lowWaterMark = -1;
+    }
 
     static int portAudioCallback(const void *inputBuffer, void *outputBuffer,
                                 unsigned long framesPerBuffer,

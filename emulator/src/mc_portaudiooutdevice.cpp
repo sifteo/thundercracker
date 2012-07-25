@@ -24,19 +24,35 @@ int PortAudioOutDevice::portAudioCallback(const void *inputBuffer, void *outputB
     int16_t *outBuf = (int16_t*)outputBuffer;
     PortAudioOutDevice *self = static_cast<PortAudioOutDevice*>(userData);
     SimBuffer_t &ring = self->simBuffer;
+    unsigned outputRemaining = framesPerBuffer;
+
+    /*
+     * Make sure we're buffering at least twice what the OS asks for
+     * at each callback. If not, go back to pre-filling the buffer.
+     */
+    unsigned minThreshold = MIN(ring.capacity(), framesPerBuffer << 1);
+    if (self->bufferThreshold < minThreshold) {
+        self->bufferThreshold = minThreshold;
+        self->bufferFilling = true;
+    }
 
     /*
      * Copy from the source AudioBuffer to our simulation-only supplemental
      * buffer which covers up the jitter in our virtual clock.
      */
-    ring.pull(AudioMixer::output);
+    ASSERT(self->bufferThreshold > 0);
+    ring.pull(AudioMixer::output, self->bufferThreshold);
 
     if (self->bufferFilling) {
         /*
          * Waiting for buffer to fill
          */
-        if (ring.full())
+
+        self->resetWaterMark();
+
+        if (ring.readAvailable() >= self->bufferThreshold)
             self->bufferFilling = false;
+
     } else {
         /*
          * Copy from the intermediate buffer to PortAudio's
@@ -49,16 +65,18 @@ int PortAudioOutDevice::portAudioCallback(const void *inputBuffer, void *outputB
         int lastSample = self->lastSample;
         unsigned upsampleCounter = self->upsampleCounter;
 
-        while (framesPerBuffer) {
+        while (outputRemaining) {
             if (upsampleCounter == 0) {
                 if (ring.empty()) {
                     /*
                      * An underrun happened, oh noes. To make sure
                      * we can recover from this, give the ring buffer
                      * time to completely fill before we start pulling
-                     * from it again.
+                     * from it again, and increase our adaptive buffer
+                     * fill threshold.
                      */
                     self->bufferFilling = true;
+                    self->bufferThreshold = MIN(ring.capacity(), self->bufferThreshold << 1);
                     break;
                 }
                 lastSample = ring.dequeue();
@@ -67,16 +85,36 @@ int PortAudioOutDevice::portAudioCallback(const void *inputBuffer, void *outputB
             upsampleCounter--;
 
             *outBuf++ = self->upsampleFilter(lastSample);
-            framesPerBuffer--;
+            outputRemaining--;
         }
 
         self->lastSample = lastSample;
         self->upsampleCounter = upsampleCounter;
+
+        /*
+         * Can we shrink the buffer? If it's been a while since the
+         * buffer has been under a particular fill level, we can try
+         * shrinking our buffer by some portion of that level.
+         */
+
+        unsigned fillLevel = ring.readAvailable();
+        if (fillLevel < self->lowWaterMark) {
+            self->lowWaterMark = fillLevel;
+            self->lowWaterSamples = 0;
+        } else {
+            self->lowWaterSamples += framesPerBuffer;
+            if (self->lowWaterSamples > NUM_WATERMARK_SAMPLES) {
+                int newThreshold = self->bufferThreshold - (self->lowWaterMark / 2);
+                newThreshold = MIN(ring.capacity(), MAX(minThreshold, newThreshold));
+                self->bufferThreshold = newThreshold;
+                self->resetWaterMark();
+            }
+        }
     }
 
     // Underrun or mixer is disabled. Nothing to play but silence.
     // (But make sure to filter the silence, to avoid discontinuities)
-    while (framesPerBuffer--)
+    while (outputRemaining--)
         *outBuf++ = self->upsampleFilter(0);
 
     // Ask for more audio data
@@ -126,6 +164,16 @@ void PortAudioOutDevice::init()
 
 void PortAudioOutDevice::start()
 {
+    /*
+     * Default buffer level. We can adjust it up and down dynamically,
+     * but a reasonably large starting buffer size makes it less likely
+     * our audio will glitch during startup, when we're busy anyway.
+     */
+    simBuffer.init();
+    bufferFilling = true;
+    bufferThreshold = 4096;
+    resetWaterMark();
+
     PaError err = Pa_StartStream(outStream);
     if (err != paNoError) {
         LOG(("AUDIO: Couldn't start stream :(\n"));
@@ -141,7 +189,6 @@ void PortAudioOutDevice::stop()
         return;
     }
 }
-
 
 int16_t PortAudioOutDevice::upsampleFilter(int16_t sample)
 {
