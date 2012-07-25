@@ -3,6 +3,7 @@
  * Copyright <c> 2012 Sifteo, Inc. All rights reserved.
  */
 
+#include <algorithm>
 #include <string.h>
 #include "mc_portaudiooutdevice.h"
 #include "audiomixer.h"
@@ -117,7 +118,7 @@ int PortAudioOutDevice::portAudioCallback(const void *inputBuffer, void *outputB
             self->lowWaterSamples += framesPerBuffer;
             if (self->lowWaterSamples > NUM_WATERMARK_SAMPLES) {
                 int newThreshold = self->bufferThreshold - (self->lowWaterMark / 2);
-                newThreshold = MIN(ring.capacity(), MAX(minThreshold, newThreshold));
+                newThreshold = std::min<int>(ring.capacity(), std::max<int>(minThreshold, newThreshold));
                 self->bufferThreshold = newThreshold;
                 self->resetWaterMark();
             }
