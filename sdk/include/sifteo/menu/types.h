@@ -41,7 +41,8 @@ struct MenuAssets {
     const PinnedAssetImage *background; /// 1x1tl background image, repeating
     const AssetImage *footer;           /// ptr to 16x4tl blank footer
     const AssetImage *header;           /// ptr to 16x2tl blank header, optional if all items have no labels.
-    const AssetImage *tips[8];          /// NULL-terminated array of ptrs to 16x4tl footer tips ("Choose a thing", "Tilt to scroll", "Press to select", …)
+    const AssetImage *tips[8];          /// (Optional) NULL-terminated array of ptrs to 16x4tl footer tips ("Choose a thing", "Tilt to scroll", "Press to select", …)
+	const AssetImage *overflowIcon;		/// (Optional) Icon to be rendered in the "-1" and "N" slots respectively
 };
 
 struct MenuItem {
