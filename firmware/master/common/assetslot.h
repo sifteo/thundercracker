@@ -139,7 +139,7 @@ public:
     static void bind(FlashVolume volume, unsigned numSlots);
 
     // Refresh the current binding, if any, on some specified set of cubes.
-    // Called when new cubes are paired.
+    // Called when new cubes are connected.
     static void rebind(_SYSCubeIDVector cv);
     static void rebindCube(_SYSCubeID cube);
 
