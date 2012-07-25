@@ -303,6 +303,26 @@ public:
         }
     }
 
+    /// How many bits are marked in this vector?
+    unsigned count() const
+    {
+        const unsigned NUM_WORDS = (tSize + 31) / 32;
+
+        if (NUM_WORDS > 1) {
+            #pragma clang diagnostic push
+            #pragma clang diagnostic ignored "-Wtautological-compare"
+            unsigned c = 0;
+            for (unsigned w = 0; w < NUM_WORDS; w++)
+                c += __builtin_popcount(words[w]);
+            return c;
+            #pragma clang diagnostic pop
+        } else if (NUM_WORDS == 1) {
+            return __builtin_popcount(words[0]);
+        } else {
+            return 0;
+        }
+    }
+
     /**
      * @brief Find the lowest index where there's a marked (1) bit.
      *
