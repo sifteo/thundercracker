@@ -18,7 +18,9 @@
 #   include "usb/usbdevice.h"
 #   include "sampleprofiler.h"
 #   include "powermanager.h"
-#   include "testjig.h"
+#   if (BOARD == BOARD_TEST_JIG)
+#       include "testjig.h"
+#   endif
 #endif
 
 uint32_t Tasks::pendingMask;
