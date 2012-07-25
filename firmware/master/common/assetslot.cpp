@@ -107,8 +107,6 @@ void VirtAssetSlots::rebindCube(_SYSCubeID cube)
             // Bump up the access rank of an existing binding
 
             needWrite = true;
-            
-            SysLFS::write(ck, cr);
         }
 
         // Bind all slots
