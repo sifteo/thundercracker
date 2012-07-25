@@ -193,14 +193,17 @@ void MainMenu::updateMusic()
 
 void MainMenu::updateIcons(Menu &menu)
 {
-    for (unsigned i = 0, e = items.count(); i != e; ++i) {
-        if (items[i]->autoRefreshIcon()) {
-            MenuItem &mi = menuItems[i];
-            
-            MappedVolume map;
-            auto flags = items[i]->getAssets(mi, map);
-            
-            menu.replaceIcon(i, mi.icon);
+    // TODO: should this happen at longer intervals?
+    if (menu.getState() == MENU_STATE_STATIC) {
+        for (unsigned i = 0, e = items.count(); i != e; ++i) {
+            if (items[i]->autoRefreshIcon()) {
+                MenuItem &mi = menuItems[i];
+                
+                MappedVolume map;
+                auto flags = items[i]->getAssets(mi, map);
+                
+                menu.replaceIcon(i, mi.icon);
+            }
         }
     }
 }

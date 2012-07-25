@@ -29,10 +29,10 @@ void main()
         System::yield();
     }
 
-    AudioTracker::play(Tracker_Startup);
-
     // In simulation, if exactly one game is installed, run it immediately.
     ELFMainMenuItem::autoexec();
+
+    AudioTracker::play(Tracker_Startup);
 
     while (1) {
         static MainMenu menu;
