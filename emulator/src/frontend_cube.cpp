@@ -119,7 +119,7 @@ bool FrontendCube::draw(GLRenderer &r)
     bool framebufferChanged = cookie != lastLcdCookie;
     lastLcdCookie = cookie;
     
-    static const uint16_t blackness[hw->lcd.WIDTH * hw->lcd.HEIGHT] = { 0 };
+    static const uint16_t blackness[128 * 128] = { 0 };
     const uint16_t *framebuffer = hw->lcd.isVisible() ? hw->lcd.fb_mem : blackness;
 
     r.drawCube(id, body->GetPosition(), body->GetAngle(),
