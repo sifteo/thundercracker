@@ -369,11 +369,6 @@ inline void Menu::transFromFinish()
  */
 inline void Menu::transToHopUp()
 {
-    // Prepare screen for item animation
-
-    // We're about to switch things up in VRAM, make sure the cubes are done drawing.
-    System::finish();
-
     // blank out the background layer
     vid.initMode(BG0_SPR_BG1);
     vid.bg0.setPanning(vec(0, 0));
