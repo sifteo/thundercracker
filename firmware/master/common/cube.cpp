@@ -70,6 +70,7 @@ void CubeSlot::disconnect()
     // Propagate this disconnection to userspace
     Event::setCubePending(Event::PID_CONNECTION, id());
 
+    setVideoBuffer(0);
     NeighborSlot::resetSlots(cv);
     NeighborSlot::resetPairs(cv);
 }
@@ -77,9 +78,8 @@ void CubeSlot::disconnect()
 void CubeSlot::userConnect()
 {
     Atomic::Or(CubeSlots::userConnected, bit());
-
-    // XXX: breaking unit tests, disabled for now
-    //VirtAssetSlots::rebindCube(id());
+    setVideoBuffer(0);
+    VirtAssetSlots::rebindCube(id());
 }
 
 void CubeSlot::userDisconnect()
