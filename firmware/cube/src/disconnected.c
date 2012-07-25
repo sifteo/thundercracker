@@ -326,10 +326,8 @@ void disconnected_init(void)
      * Initialize disconnected-mode state
      */
 
-    // These are set up only once.
-    // Flags are auto-cleared by radio ISR on connection.
     vram.mode = _SYS_VM_BG0_ROM;
-    vram.flags = _SYS_VF_CONTINUOUS;
+    vram.flags = _SYS_VF_TOGGLE;
 
     disc_battery_draw = 0;
     disc_has_trophy = 0;
@@ -364,6 +362,17 @@ void disconnected_poll(void)
      * Handle one main loop cycle, in disconnected mode.
      * Returns by tailcall to graphics_render().
      */
+
+    /*
+     * Explicit frame toggle: Easier to quiesce after connection, as compared
+     * to if we were using _SYS_VF_CONTINUOUS.
+     */
+    __asm
+        mov     dptr, #_SYS_VA_FLAGS
+        movx    a, @dptr
+        xrl     a, #_SYS_VF_TOGGLE
+        movx    @dptr, a
+    __endasm ;
 
     if (disc_battery_draw) {
         /*
