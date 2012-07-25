@@ -105,7 +105,7 @@ class Menu {
     bool itemVisible(uint8_t item);
     void setIconYOffset(uint8_t px);
     void setPeekTiles(uint8_t numTiles);
-    void anchor(uint8_t item);
+    void anchor(uint8_t item, bool hopUp = false);
     MenuState getState();
     
  private:
