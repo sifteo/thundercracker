@@ -389,7 +389,7 @@ public:
                 }
             }
             #pragma clang diagnostic pop
-       } else if (NUM_WORDS == 1) {
+        } else if (NUM_WORDS == 1) {
             uint32_t v = words[0];
             if (v) {
                 unsigned bit = clz(v);
@@ -486,6 +486,46 @@ public:
             words[0] = range(begin) & ~range(end);
         }
     }
+
+    /// Bitwise AND of two BitArrays of the same size
+    BitArray<tSize> operator & (const BitArray<tSize> &other) const
+    {
+        const unsigned NUM_WORDS = (tSize + 31) / 32;
+        BitArray<tSize> result;
+        #pragma clang diagnostic push
+        #pragma clang diagnostic ignored "-Wtautological-compare"
+        for (unsigned w = 0; w < NUM_WORDS; w++)
+            result.words[w] = words[w] & other.words[w];
+        #pragma clang diagnostic pop
+        return result;
+    }
+
+    /// Bitwise OR of two BitArrays of the same size
+    BitArray<tSize> operator | (const BitArray<tSize> &other) const
+    {
+        const unsigned NUM_WORDS = (tSize + 31) / 32;
+        BitArray<tSize> result;
+        #pragma clang diagnostic push
+        #pragma clang diagnostic ignored "-Wtautological-compare"
+        for (unsigned w = 0; w < NUM_WORDS; w++)
+            result.words[w] = words[w] | other.words[w];
+        #pragma clang diagnostic pop
+        return result;
+    }
+
+    /// Bitwise XOR of two BitArrays of the same size
+    BitArray<tSize> operator ^ (const BitArray<tSize> &other) const
+    {
+        const unsigned NUM_WORDS = (tSize + 31) / 32;
+        BitArray<tSize> result;
+        #pragma clang diagnostic push
+        #pragma clang diagnostic ignored "-Wtautological-compare"
+        for (unsigned w = 0; w < NUM_WORDS; w++)
+            result.words[w] = words[w] ^ other.words[w];
+        #pragma clang diagnostic pop
+        return result;
+    }
+
 };
 
 
