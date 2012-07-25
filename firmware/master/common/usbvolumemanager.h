@@ -21,6 +21,7 @@ public:
         DeleteVolume,
         DeleteSysLFS,
         FirmwareVersion,
+
     };
 
     struct VolumeOverviewReply {
@@ -44,6 +45,11 @@ public:
 
 private:
     static FlashVolumeWriter writer;
+
+    // handlers
+    static ALWAYS_INLINE void volumeOverview(USBProtocolMsg &reply);
+    static ALWAYS_INLINE void volumeDetail(const USBProtocolMsg &m, USBProtocolMsg &reply);
+    static ALWAYS_INLINE void volumeMetadata(const USBProtocolMsg &m, USBProtocolMsg &reply);
 };
 
 #endif // _USB_VOLUME_MANAGER_H
