@@ -260,6 +260,10 @@ inline void Menu::anchor(uint8_t item, bool hopUp)
     startingItem = item;
     
     if (hopUp) {
+        position = stoppingPositionFor(startingItem);
+        prev_ut = computeCurrentTile() + kNumTilesX;
+        updateBG0();
+        
         changeState(MENU_STATE_HOP_UP);
     }
 }
