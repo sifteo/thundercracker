@@ -20,15 +20,6 @@ static void drawText(RelocatableTileBuffer<12,12> &icon, const char *text, Int2 
     }
 }
 
-static unsigned getNumCubes(CubeSet cubes)
-{
-    unsigned count = 0;
-    for (CubeID cube : cubes) {
-        ++count;
-    }
-    return count;
-}
-
 const MenuAssets MainMenu::menuAssets = {
     &Menu_BgTile, &Menu_Footer, NULL, {&Menu_Tip0, &Menu_Tip1, &Menu_Tip2, NULL}
 };
@@ -50,9 +41,8 @@ void MainMenu::init()
 void MainMenu::run()
 {
     // Wait for at least one cube to be connected, since we need that to display the menu.
-    while (getNumCubes(CubeSet::connected()) < 1) {
+    while (CubeSet::connected().empty())
         System::yield();
-    }
 
     // Pick one cube to be the 'main' cube, where we show the menu
     mainCube = *cubes().begin();
@@ -156,7 +146,7 @@ void MainMenu::cubeDisconnect(unsigned cid)
 
 void MainMenu::updateAssets()
 {
-    if (getNumCubes(cubesToLoad) > 0) {
+    if (!cubesToLoad.empty()) {
         loadAssets();
     }
 }
@@ -216,7 +206,7 @@ bool MainMenu::canLaunchItem(unsigned index)
     unsigned minCubes = item->getCubeRange().sys.minCubes;
     unsigned maxCubes = item->getCubeRange().sys.maxCubes;
 
-    unsigned numCubes = getNumCubes(cubes());
+    unsigned numCubes = cubes().count();
     return numCubes >= minCubes && numCubes <= maxCubes;
 }
 
