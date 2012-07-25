@@ -44,6 +44,7 @@ public:
         HomeButton,
         CubeConnector,
         Profiler,
+        TestJig
     };
 
     static void init() {

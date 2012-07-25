@@ -242,7 +242,7 @@ int UsbDevice::controlRequest(Usb::SetupData *req, uint8_t **buf, uint16_t *len)
 bool UsbDevice::waitForPreviousWrite()
 {
     while (configured && txInProgress)
-        ;
+        Tasks::waitForInterrupt();
     return configured;
 }
 

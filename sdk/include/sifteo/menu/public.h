@@ -22,10 +22,10 @@ inline Menu::Menu(VideoBuffer &vid, const MenuAssets *aAssets, MenuItem *aItems)
     : vid(vid)
 {
     currentEvent.type = MENU_UNEVENTFUL;
-    changeState(MENU_STATE_START);
     items = aItems;
     assets = aAssets;
-
+    changeState(MENU_STATE_START);
+    
     // initialize instance constants
     kHeaderHeight = 0;
     kFooterHeight = 0;
@@ -153,6 +153,9 @@ inline bool Menu::pollEvent(struct MenuEvent *ev)
         case MENU_STATE_FINISH:
             transFromFinish();
             break;
+        case MENU_STATE_HOP_UP:
+            transFromHopUp();
+            break;
     }
     if (dispatchEvent(ev)) {
         return (ev->type != MENU_EXIT);
@@ -174,6 +177,9 @@ inline bool Menu::pollEvent(struct MenuEvent *ev)
             break;
         case MENU_STATE_FINISH:
             stateFinish();
+            break;
+        case MENU_STATE_HOP_UP:
+            stateHopUp();
             break;
     }
     if (dispatchEvent(ev)) {
@@ -248,10 +254,18 @@ inline void Menu::setPeekTiles(uint8_t numTiles)
  * of the same menu since running the event pump after an item is pressed
  * restarts the menu.
  */
-inline void Menu::anchor(uint8_t item)
+inline void Menu::anchor(uint8_t item, bool hopUp)
 {
     ASSERT(item < numItems);
     startingItem = item;
+    
+    if (hopUp) {
+        position = stoppingPositionFor(startingItem);
+        prev_ut = computeCurrentTile() + kNumTilesX;
+        updateBG0();
+        
+        changeState(MENU_STATE_HOP_UP);
+    }
 }
 
 inline MenuState Menu::getState()
