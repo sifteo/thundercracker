@@ -144,14 +144,15 @@ void TestJig::onI2cEvent()
      *
      * On the repeated start condition, send the ACK packet that we
      * received during the former transmission.
+     *
+     * NOTE: because we need to potentially block when writing this data over USB,
+     *       we trigger our task to do it for us, but this means that any
+     *       additional i2c data that arrives in the meantime will be dropped.
+     *       This is generally fine, since we're not tracking any specific packet.
      */
     if (status & I2CSlave::AddressMatch) {
-        if (sensorsTransaction.enabled && sensorsTransaction.byteIdx > 0) {
-            uint8_t resp[1 + sizeof sensorsTransaction.cubeAck] = { EventAckPacket };
-            memcpy(resp + 1, &sensorsTransaction.cubeAck, sizeof sensorsTransaction.cubeAck);
-            UsbDevice::write(resp, sizeof resp);
-        }
-        sensorsTransaction.byteIdx = 0;
+        if (sensorsTransaction.enabled && sensorsTransaction.byteIdx > 0)
+            Tasks::trigger(Tasks::TestJig);
     }
 
     /*
@@ -186,6 +187,21 @@ void TestJig::onI2cEvent()
             sensorsTransaction.byteIdx++;
         }
     }
+}
+
+/*
+ * An opportunity to perform any potentially longer running operations.
+ * The only requirement for this at the moment is to write i2c data over USB
+ * since that's a blocking operation.
+ */
+void TestJig::task()
+{
+    uint8_t resp[1 + sizeof sensorsTransaction.cubeAck] = { EventAckPacket };
+    memcpy(resp + 1, &sensorsTransaction.cubeAck, sizeof sensorsTransaction.cubeAck);
+    // clear this as soon as we've copied the appropriate data
+    sensorsTransaction.byteIdx = 0;
+
+    UsbDevice::write(resp, sizeof resp);
 }
 
 /*******************************************

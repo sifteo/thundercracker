@@ -18,6 +18,7 @@
 #   include "usb/usbdevice.h"
 #   include "sampleprofiler.h"
 #   include "powermanager.h"
+#   include "testjig.h"
 #endif
 
 uint32_t Tasks::pendingMask;
@@ -34,6 +35,10 @@ static ALWAYS_INLINE void taskInvoke(unsigned id)
     #ifndef SIFTEO_SIMULATOR
         case Tasks::PowerManager:   return PowerManager::vbusDebounce();
         case Tasks::UsbOUT:         return UsbDevice::handleOUTData();
+
+        #if (BOARD == BOARD_TEST_JIG)
+        case Tasks::TestJig:        return TestJig::task();
+        #endif
     #endif
 
     #ifndef BOOTLOADER
