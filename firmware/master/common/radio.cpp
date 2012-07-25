@@ -18,8 +18,8 @@
 
 RadioManager::fifo_t RadioManager::fifo;
 uint8_t RadioManager::nextPID;
-uint8_t RadioManager::lastPID[RadioManager::NUM_PRODUCERS];
-BitVector<RadioManager::NUM_PRODUCERS> RadioManager::schedule;
+uint32_t RadioManager::schedule[RadioManager::PID_COUNT];
+uint32_t RadioManager::nextSchedule[RadioManager::PID_COUNT];
 
 
 void RadioManager::produce(PacketTransmission &tx)
@@ -47,64 +47,138 @@ void RadioManager::produce(PacketTransmission &tx)
      * our round-robin rotation, we'll hit a duplicate packet ID
      * every time and every packet will be dropped!
      *
-     * To avoid this, we explicitly keep track of the ID that was
-     * used for the last transmission by a particular producer
-     * and we'll reorder our round-robin rotation to avoid ID
-     * collisions.
+     * To avoid this, our scheduling algorithm has been designed
+     * to specifically select only producers which would not cause
+     * such a collision.
+     *
+     * We do this by maintaining four separate schedule queues, one
+     * for each of the four possible PID values. The queue we put
+     * a producer into is dictated by the PID that producer had
+     * last time we gave it a transmit opportunity. Because we
+     * have these four queues, we actually have no need to store
+     * this last PID explicitly.
+     *
+     * At every transmit opportunity, we can ask any producer for
+     * a packet as long as it's in a schedule *other* than the one
+     * corresponding to the last PID we transmitted.
+     *
+     * We'd be stuck if the only pending producers were located on
+     * the one queue corresponding to this last PID. If this does
+     * happen, we have no choice but to transmit a dummy packet
+     * or skip the producer for the current scheduling cycle. However,
+     * we take a preventative measure by always choosing a producer
+     * from the per-PID queue which the greatest number of items in it.
+     * This way, we reduce our chances of using up a producer we
+     * would really need to use later on in the cycle.
+     *
+     * This is clearly not a globally optimal algorithm, but it should
+     * yield an optimal-enough solution in all cases, and it needs
+     * to be efficient enough to run on every radio ISR :)
      */
 
-    // Producers we're temporarily skipping due to an ID collision
-    BitVector<RadioManager::NUM_PRODUCERS> deferred;
-    deferred.clear();
+    const uint32_t activeMask = CubeSlots::sysConnected | Intrinsic::LZ(CONNECTOR_ID);
 
     for (;;) {
-        unsigned id;
 
-        if (!schedule.clearFirst(id)) {
-            // No more producers in the schedule.
+        /*
+         * Look for the most populous queue other than the
+         * one corresponding to our nextPID, ignoring empty
+         * queues.
+         *
+         * While we're in here, we clear inactive producers from the schedule.
+         */
 
-            if (deferred.empty()) {
-                // Start the next round-robin cycle
+        const unsigned NOT_FOUND = -1;
+        unsigned thisPID = nextPID;
+        unsigned foundPID = 0;
+        unsigned foundCount = 0;
 
-                schedule.words[0] = CubeSlots::sysConnected | Intrinsic::LZ(CONNECTOR_ID);
+        for (unsigned i = 0; i < PID_COUNT; ++i) {
+            if (i != thisPID) {
+                uint32_t masked = activeMask & schedule[i];
+                schedule[i] = masked;
+                unsigned count = Intrinsic::POPCOUNT(masked);
+                if (count > foundCount) {
+                    foundPID = i;
+                    foundCount = count;
+                }
+            }
+        }
 
-            } else {
-                // We still have deferred producers that haven't transmitted.
-                // This means every single producer in the schedule was deferred!
-                // This can easily happen if we have exactly one producer left, and
-                // it happened to land on an unlucky PID. Try transmitting anyway.
-                // If the packet is dropped, oh well.
-                //
-                // (Note that currently this state also occurs immediately after
-                // initialization, because all of our PIDs are cleared to zero.
-                // So, we have some test coverage for this code.)
+        /*
+         * If we didn't find anything, it could be because
+         * all of our queues are empty and we just need to
+         * roll over nextSchedule to schedule. Or it could
+         * be that all of our remaining producers would cause
+         * a collision!
+         *
+         * In the latter case, we need to insert a dummy packet
+         * in order to skip the offending PID.
+         */
 
-                schedule = deferred;
-                nextPID = (nextPID + 1) & PID_MASK;
-                deferred.clear();
+        if (foundCount == 0) {
+            if (schedule[thisPID] == 0) {
+
+                /*
+                 * Roll-over items from 'nextSchedule' to current schedule.
+                 * This is how we carry forward our notion of the last PID
+                 * that each producer transmitted on.
+                 *
+                 * Producers for cubes which are no longer connected will
+                 * automatically drop from this list when we process the schedule.
+                 * Adds, however, need to be considered explicitly. We do that
+                 * here. Any items which should be in the schedule but aren't
+                 * are added to an arbitrary PID's queue.
+                 */
+
+                uint32_t added = activeMask;
+                for (unsigned i = 0; i < PID_COUNT; ++i) {
+                    uint32_t s = nextSchedule[i];
+                    nextSchedule[i] = 0;
+                    schedule[i] = s;
+                    added &= ~s;
+                }
+                schedule[0] |= added;
+                continue;
             }
 
-            ASSERT(!schedule.empty());
-            continue;
-        }
+            /*
+             * Send a dummy packet to an address that is never valid,
+             * just to force the radio to bump its PID.
+             */
 
-        // We have a candidate producer, but would it cause an ID collision?
-        ASSERT(id < NUM_PRODUCERS);
-        if (nextPID == lastPID[id]) {
-            deferred.mark(id);
-            continue;
-        }
-
-        // Does this producer even want to transmit right now?
-        if (dispatchProduce(id, tx)) {
-            // Yes, we're transmitting a packet! Update state and exit.
-            ASSERT(tx.dest->channel <= MAX_RF_CHANNEL);
-            lastPID[id] = nextPID;
-            nextPID = (nextPID + 1) & PID_MASK;
-            schedule.words[0] |= deferred.words[0];
-            fifo.enqueue(id);
+            static const RadioAddress dummy = { 0, { 0xFF, 0xFF, 0xFF, 0xFF, 0xFF } };
+            tx.dest = &dummy;
+            tx.packet.bytes[0] = 0xFF;
+            tx.packet.len = 1;
+            nextPID = (thisPID + 1) & PID_MASK;
+            fifo.enqueue(DUMMY_ID);
             return;
         }
+
+        /*
+         * Now extract the next producer from our chosen priority queue,
+         * and re-add it in its new location, if applicable.
+         */
+
+        ASSERT(schedule[foundPID]);
+        unsigned producer = Intrinsic::CLZ(schedule[foundPID]);
+        ASSERT(producer < NUM_PRODUCERS);
+        uint32_t producerBit = Intrinsic::LZ(producer);
+
+        // Always remove from current schedule
+        schedule[foundPID] ^= producerBit;
+
+        // Does this producer even want to transmit right now?
+        if (dispatchProduce(producer, tx)) {
+            nextSchedule[thisPID] |= producerBit;
+            nextPID = (thisPID + 1) & PID_MASK;
+            fifo.enqueue(producer);
+            return;
+        }
+
+        // If not, put it back with its existing PID but in the new schedule
+        nextSchedule[foundPID] |= producerBit;
     }
 }
 
@@ -127,7 +201,9 @@ bool RadioManager::dispatchProduce(unsigned id, PacketTransmission &tx)
 {
     RADIO_UART_STR("\r\ntx ");
     RADIO_UART_HEX(id);
-    
+
+    ASSERT(id < NUM_PRODUCERS);
+
     if (id == CONNECTOR_ID) {
         CubeConnector::radioProduce(tx);
         return true;
@@ -144,6 +220,11 @@ void RadioManager::dispatchAcknowledge(unsigned id, const PacketBuffer &packet)
 
     if (id == CONNECTOR_ID)
         return CubeConnector::radioAcknowledge(packet);
+
+    if (id >= NUM_PRODUCERS) {
+        ASSERT(id == DUMMY_ID);
+        return;
+    }
 
     CubeSlot &slot = CubeSlot::getInstance(id);
     if (slot.isSysConnected())
@@ -167,6 +248,11 @@ void RadioManager::dispatchTimeout(unsigned id)
 
     if (id == CONNECTOR_ID)
         return CubeConnector::radioTimeout();
+
+    if (id >= NUM_PRODUCERS) {
+        ASSERT(id == DUMMY_ID);
+        return;
+    }
 
     CubeSlot &slot = CubeSlot::getInstance(id);
     if (slot.isSysConnected())

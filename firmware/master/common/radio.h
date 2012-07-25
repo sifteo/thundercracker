@@ -203,14 +203,18 @@ class RadioManager {
     // Total number of producers in the system, including CONNECTOR_ID
     static const unsigned NUM_PRODUCERS = CONNECTOR_ID + 1;
 
+    // Dummy ID, not counted in NUM_PRODUCERS
+    static const unsigned DUMMY_ID = NUM_PRODUCERS;
+
     // Tracking packet IDs, for explicitly avoiding ID collisions
-    static const unsigned PID_MASK = 3;
+    static const unsigned PID_COUNT = 4;
+    static const unsigned PID_MASK = PID_COUNT - 1;
     static uint8_t nextPID;
-    static uint8_t lastPID[NUM_PRODUCERS];
 
-    // Remaining producers in the current round-robin rotation
-    static BitVector<NUM_PRODUCERS> schedule;
-
+    // Priority queues for each PID value
+    static uint32_t schedule[PID_COUNT];
+    static uint32_t nextSchedule[PID_COUNT];
+    
     // Dispatch to a paritcular producer, by ID
     static bool dispatchProduce(unsigned id, PacketTransmission &tx);
     static void dispatchAcknowledge(unsigned id, const PacketBuffer &packet);
