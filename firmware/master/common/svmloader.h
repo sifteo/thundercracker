@@ -45,6 +45,11 @@ public:
         return mapVols[0];
     }
 
+    // Return the last running volume (the one that exec()'ed the current one) if any.
+    static FlashVolume getPreviousVolume() {
+        return previousVolume;
+    }
+
     // Is this volume mapped anywhere?
     static bool isVolumeMapped(FlashVolume vol) {
         STATIC_ASSERT(arraysize(mapVols) == 2);
@@ -60,6 +65,7 @@ private:
     static FlashBlockRef mapRefs[SvmMemory::NUM_FLASH_SEGMENTS];
     static FlashVolume mapVols[SvmMemory::NUM_FLASH_SEGMENTS];
     static uint8_t runLevel;
+    static FlashVolume previousVolume;
 
     static FlashVolume findLauncher();
     static bool prepareToExec(const Elf::Program &program, SvmRuntime::StackInfo &stack);

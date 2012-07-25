@@ -230,6 +230,21 @@ public:
         return (_SYSVolumeHandle) _SYS_fs_runningVolume();
     }
 
+    /**
+     * @brief Return the Volume corresponding to the previously running program.
+     *
+     * This refers to the program that was running before the last exec().
+     * For normal games, this will always be the Volume associated with the
+     * system launcher.
+     *
+     * If there was no previously running program (the system booted directly
+     * into the current Volume) this returns a volume with the invalid value
+     * of zero.
+     */
+    static Volume previous() {
+        return (_SYSVolumeHandle) _SYS_fs_previousVolume();
+    }
+
     /// Equality comparison operator
     bool operator== (_SYSVolumeHandle other) const {
         return sys == other;

@@ -94,6 +94,7 @@ void checkSelf()
     ASSERT(games.count() == 0);
     ASSERT(launchers.count() == 1);
     ASSERT(launchers[0] == Volume::running());
+    ASSERT(Volume(0) == Volume::previous());
 
     // Test our metadata, and some string ops
     MappedVolume self(Volume::running());

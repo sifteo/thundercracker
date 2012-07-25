@@ -228,6 +228,7 @@ void *_SYS_elf_metadata(_SYSVolumeHandle vol, unsigned key, unsigned minSize, un
 int32_t _SYS_fs_objectRead(unsigned key, uint8_t *buffer, unsigned bufferSize, _SYSVolumeHandle parent) _SC(167);
 int32_t _SYS_fs_objectWrite(unsigned key, const uint8_t *data, unsigned dataSize) _SC(60);
 uint32_t _SYS_fs_runningVolume() _SC(168);
+uint32_t _SYS_fs_previousVolume() _SC(171);
 
 
 #ifdef __cplusplus

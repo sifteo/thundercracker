@@ -283,5 +283,17 @@ uint32_t _SYS_fs_runningVolume()
     return vol.getHandle();
 }
 
+uint32_t _SYS_fs_previousVolume()
+{
+    // Return a _SYSVolumeHandle for the volume running before the last exec()
+
+    FlashVolume vol = SvmLoader::getPreviousVolume();
+    if (vol.block.isValid()) {
+        ASSERT(vol.isValid());
+        return vol.getHandle();
+    }
+    return 0;
+}
+
 
 }  // extern "C"
