@@ -66,13 +66,22 @@ inline void Menu::detectNeighbors()
     }
 }
 
-
 inline uint8_t Menu::computeSelected()
 {
     int s = (position + (kItemPixelWidth() / 2)) / kItemPixelWidth();
     return clamp(s, 0, numItems - 1);
 }
 
+inline void Menu::checkForPress()
+{
+    bool touch = vid.cube().isTouching();
+
+    if (touch && !prevTouch) {
+        currentEvent.type = MENU_ITEM_PRESS;
+        currentEvent.item = computeSelected();
+    }
+    prevTouch = touch;
+}
 
 // positions are in pixel units
 // columns are in tile-units
@@ -126,12 +135,14 @@ inline float Menu::velocityMultiplier()
 
 inline float Menu::maxVelocity()
 {
-    const float kMaxNormalSpeed = 40.f;
+    // Tilt velocity increase to a faster amount if the acceleration is above
+    // a certain value. Tune the threshold and speed here...
+    const float kMaxNormalSpeed = abs(accel.x) > 11.5f ? 70.f : 40.f;
     return kMaxNormalSpeed *
-           // x-axis linear limit
-           (abs(accel.x) / kOneG()) *
-           // y-axis multiplier
-           velocityMultiplier();
+        // x-axis linear limit
+        (abs(accel.x) / kOneG()) *
+        // y-axis multiplier
+        velocityMultiplier();
 }
 
 inline float Menu::lerp(float min, float max, float u)

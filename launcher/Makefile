@@ -14,7 +14,8 @@ OBJS = \
 	src/defaultloadinganimation.o \
 	src/cuberange.o \
 	src/nineblock.o \
-	src/applet/getgames.o
+	src/applet/getgames.o \
+	src/applet/status.o
 
 ASSETDEPS += images/*.lua images/*.png sounds/*.lua sounds/*.xm $(ASSETS).lua
 CDEPS += src/*.h

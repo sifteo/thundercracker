@@ -8,6 +8,7 @@
 #include "elfmainmenuitem.h"
 #include "assets.gen.h"
 #include "applet/getgames.h"
+#include "applet/status.h"
 #include "shared.h"
 
 using namespace Sifteo;
@@ -20,31 +21,15 @@ static Metadata M = Metadata()
     .title("System Launcher")
     .package("com.sifteo.launcher", TOSTRING(SDK_VERSION));
 
-
-void connect(void*, unsigned cid)
-{
-    AudioTracker::play(UISound_ConnectBase);
-    Shared::video[cid].attach(cid);
-}
-
-void disconnect(void*, unsigned cid)
-{
-    AudioTracker::play(UISound_CubeLost);
-}
-
 void main()
 {
-    AudioTracker::play(UISound_Startup);
-
-    // XXX: Also mostly just for testing.
-    Events::cubeConnect.set(connect);
-    Events::cubeDisconnect.set(disconnect);
-
-    /// XXX: Huge hack for testing... just wait for three cubes to connect cube.
-    //       The launcher should always handle cubes arriving and departing dynamically.
-    while (!CubeSet::connected().test(2)) {
+    // Wait a little bit to allow all cube connection events to process
+    SystemTime time = SystemTime::now();
+    while ((SystemTime::now() - time).milliseconds() < 500) {
         System::yield();
     }
+
+    AudioTracker::play(Tracker_Startup);
 
     // In simulation, if exactly one game is installed, run it immediately.
     ELFMainMenuItem::autoexec();
@@ -56,6 +41,7 @@ void main()
         // Populate the menu
         ELFMainMenuItem::findGames(menu);
         GetGamesApplet::add(menu);
+        StatusApplet::add(menu);
 
         menu.run();
     }

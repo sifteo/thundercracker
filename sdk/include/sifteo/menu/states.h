@@ -111,6 +111,10 @@ inline void Menu::transFromStart()
         prev_ut = computeCurrentTile() + kNumTilesX;
         updateBG0();
 
+        // Placed here to fix the bug where some icons tiles appear missing when the menu is initialized.
+        // Open to other better ideas of where to stick the finish...
+        System::finish();
+
         for(int i = 0; i < NUM_SIDES; i++) {
             neighbors[i].neighborSide = NO_SIDE;
             neighbors[i].neighbor = CubeID::UNDEFINED;
@@ -150,13 +154,7 @@ inline void Menu::transToStatic()
 
 inline void Menu::stateStatic()
 {
-    bool touch = vid.cube().isTouching();
-
-    if (touch && !prevTouch) {
-        currentEvent.type = MENU_ITEM_PRESS;
-        currentEvent.item = computeSelected();
-    }
-    prevTouch = touch;
+    checkForPress();
 }
 
 inline void Menu::transFromStatic()
@@ -243,6 +241,8 @@ inline void Menu::transToInertia()
 
 inline void Menu::stateInertia()
 {
+    checkForPress();
+
     const float stiffness = 0.333f;
 
     // do not pull to item unless tilting has stopped.
@@ -251,7 +251,7 @@ inline void Menu::stateInertia()
     }
     // if still tilting, do not bounce back to the stopping position.
     if ((tiltDirection < 0 && velocity >= 0.f) || (tiltDirection > 0 && velocity <= 0.f)) {
-            return;
+        return;
     }
 
     velocity += stopping_position - position;

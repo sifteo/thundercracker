@@ -16,6 +16,11 @@ CubeRange::CubeRange(const _SYSMetadataCubeRange *cr)
         bzero(sys);
 }
 
+bool CubeRange::isEmpty()
+{
+    return sys.minCubes == 0;
+}
+
 bool CubeRange::isValid()
 {
     return sys.minCubes <= sys.maxCubes && sys.minCubes <= _SYS_NUM_CUBE_SLOTS;
