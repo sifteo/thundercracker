@@ -36,8 +36,13 @@ class CubeSlot {
     void radioAcknowledge(const PacketBuffer &packet);
     void radioTimeout();
 
+    // System connect/disconnect handlers (ISR context)
     void connect(SysLFS::Key cubeRecord, const RadioAddress &addr, const RF_ACKType &fullACK);
     void disconnect();
+
+    // Userspace connect/disconnect handlers (Task context)
+    void userConnect();
+    void userDisconnect();
 
     _SYSCubeID id() const {
         _SYSCubeID i = this - &CubeSlots::instances[0];

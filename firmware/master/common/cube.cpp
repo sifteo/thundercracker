@@ -16,6 +16,7 @@
 #include "neighborslot.h"
 #include "paintcontrol.h"
 #include "cubeslots.h"
+#include "assetslot.h"
 
 // Simulator headers, for simAssetLoaderBypass.
 #ifdef SIFTEO_SIMULATOR
@@ -51,7 +52,6 @@ void CubeSlot::connect(SysLFS::Key cubeRecord, const RadioAddress &addr, const R
     Event::setCubePending(Event::PID_CONNECTION, id());
 }
 
-
 void CubeSlot::disconnect()
 {
     LOG(("CUBE[%d]: Disconnected from system\n", id()));
@@ -74,6 +74,18 @@ void CubeSlot::disconnect()
     NeighborSlot::resetPairs(cv);
 }
 
+void CubeSlot::userConnect()
+{
+    Atomic::Or(CubeSlots::userConnected, bit());
+
+    // XXX: breaking unit tests, disabled for now
+    //VirtAssetSlots::rebindCube(id());
+}
+
+void CubeSlot::userDisconnect()
+{
+    Atomic::And(CubeSlots::userConnected, ~bit());
+}
 
 void CubeSlot::startAssetLoad(SvmMemory::VirtAddr groupVA, uint16_t baseAddr)
 {

@@ -120,14 +120,14 @@ bool Event::dispatchCubePID(PriorityID pid, _SYSCubeID cid)
             // Connected in userspace, and need disconnection?
             // Leave our event pending, since we may need to CONNECT also.
             if (userConn && (dcFlag || !sysConn)) {
-                Atomic::And(CubeSlots::userConnected, ~bit);
+                CubeSlots::instances[cid].userDisconnect();
                 return callCubeEvent(_SYS_CUBE_DISCONNECT, cid);
             }
 
             // Need a connect? After this point, no more events are pending for this cube.
             Atomic::And(params[pid].cubesPending, ~bit);
             if (sysConn && !userConn) {
-                Atomic::Or(CubeSlots::userConnected, bit);
+                CubeSlots::instances[cid].userConnect();
                 return callCubeEvent(_SYS_CUBE_CONNECT, cid);
             }
             return false;
