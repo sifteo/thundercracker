@@ -166,7 +166,7 @@ void AudioMixer::pullAudio()
     #endif
 
     if (samplesLeft < arraysize(blockBuffer))
-        return;
+        return AudioOutDevice::pullFromMixer();
 
     #ifndef SIFTEO_SIMULATOR
         SampleProfiler::SubSystem s = SampleProfiler::subsystem();
@@ -268,6 +268,9 @@ void AudioMixer::pullAudio()
         // Write back local copy of Countdown, only if it's real.
         AudioMixer::instance.trackerCallbackCountdown = trackerCountdown;
     }
+
+    // Give the output a chance to dequeue data immediately (Only used on Siftulator)
+    AudioOutDevice::pullFromMixer();
 
     #ifndef SIFTEO_SIMULATOR
         SampleProfiler::setSubsystem(s);
