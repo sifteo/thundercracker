@@ -6,6 +6,8 @@
 
 #include <list>
 #include <stdint.h>
+#include <stdio.h>
+#include <stdlib.h>
 
 namespace Usb {
 
