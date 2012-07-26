@@ -93,7 +93,11 @@ bool PairCube::dumpPairingData()
         }
 
         table.cell() << std::setiosflags(std::ios::hex) << std::setw(2) << std::setfill('0') << reply->pairingSlot;
-        table.cell() << std::setiosflags(std::ios::hex) << std::setw(16) << std::setfill('0') << reply->hwid;
+        if (reply->hwid == ~0) {
+            table.cell() << "(empty)";
+        } else {
+            table.cell() << std::setiosflags(std::ios::hex) << std::setw(16) << std::setfill('0') << reply->hwid;
+        }
         table.endRow();
     }
 
