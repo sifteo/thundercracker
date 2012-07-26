@@ -24,8 +24,8 @@ uint32_t _SYS_getConnectedCubes()
 
 void _SYS_setCubeRange(uint32_t minimum, uint32_t maximum)
 {
-    if (minimum >= _SYS_NUM_CUBE_SLOTS ||
-        maximum >= _SYS_NUM_CUBE_SLOTS ||
+    if (minimum > _SYS_NUM_CUBE_SLOTS ||
+        maximum > _SYS_NUM_CUBE_SLOTS ||
         minimum > maximum)
         return SvmRuntime::fault(F_SYSCALL_PARAM);
     
