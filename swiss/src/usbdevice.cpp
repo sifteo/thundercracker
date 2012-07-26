@@ -41,17 +41,27 @@ bool UsbDevice::open(uint16_t vendorId, uint16_t productId, uint8_t interface)
         if (r < 0)
             continue;
 
-        if (desc.idVendor == vendorId && desc.idProduct == productId) {
-            USB_TRACE(("USB: Starting libusb_open()\n"));
-            r = libusb_open(dev, &mHandle);
-            if (r >= 0) {
-                 if (populateDeviceInfo(dev)) {
-                     // found!
-                     break;
-                 }
+        if (desc.idVendor != vendorId || desc.idProduct != productId)
+            continue;
+
+        USB_TRACE(("USB: Starting libusb_open()\n"));
+
+        libusb_device_handle *handle;
+        r = libusb_open(dev, &handle);
+        if (r < 0)
+            continue;
+
+        libusb_config_descriptor *cfg;
+        r = libusb_get_config_descriptor(dev, 0, &cfg);
+        if (r >= 0) {
+            bool found = populateDeviceInfo(cfg);
+            libusb_free_config_descriptor(cfg);
+            if (found) {
+                mHandle = handle;
+                break;
             }
-            mHandle = 0;
         }
+        libusb_close(handle);
     }
 
     libusb_free_device_list(devs, 1);
@@ -82,14 +92,9 @@ bool UsbDevice::open(uint16_t vendorId, uint16_t productId, uint8_t interface)
  * Verify this device looks like what we expect,
  * and retrieve its endpoint details.
  */
-bool UsbDevice::populateDeviceInfo(libusb_device *dev)
+bool UsbDevice::populateDeviceInfo(libusb_config_descriptor *cfg)
 {
     USB_TRACE(("USB: Begin populateDeviceInfo()\n"));
-
-    struct libusb_config_descriptor *cfg;
-    int r = libusb_get_config_descriptor(dev, 0, &cfg);
-    if (r < 0)
-        return false;
 
     // need at least 1 interface
     if (cfg->bNumInterfaces < 1 || cfg->interface->num_altsetting < 1)

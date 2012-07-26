@@ -57,10 +57,9 @@ public:
     int writePacketSync(const uint8_t *buf, int maxlen, int *transferred, unsigned timeout = -1);
 
 private:
-
     static const unsigned NUM_CONCURRENT_IN_TRANSFERS = 16;
 
-    bool populateDeviceInfo(libusb_device *dev);
+    bool populateDeviceInfo(libusb_config_descriptor *cfg);
     bool submitINTransfer();
 
     static void LIBUSB_CALL onRxComplete(libusb_transfer *);
