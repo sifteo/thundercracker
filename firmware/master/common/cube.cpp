@@ -364,6 +364,13 @@ void CubeSlot::radioAcknowledge(const PacketBuffer &packet)
         Event::setCubePending(Event::PID_NEIGHBORS, id());
     }
 
+    if (packet.len >= offsetof(RF_ACKType, battery_v) + sizeof ack->battery_v) {
+        // Packet has a valid battery voltage. Dispatch an event, if it's changed.
+
+        if (lastACK.battery_v != ack->battery_v)
+            Event::setCubePending(Event::PID_CUBE_BATTERY, id());
+    }
+
     if (packet.len >= offsetof(RF_ACKType, hwid) + sizeof ack->hwid) {
         // Has valid hardware ID. We already know the cube's HWID from when we
         // first connected it... but just out of paranoia, check whether it's changed
