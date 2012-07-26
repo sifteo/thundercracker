@@ -190,7 +190,7 @@ struct CubeID {
      */
     float batteryLevel() const {
         ASSERT(sys < NUM_SLOTS);
-        return _SYS_cubeBatteryLevel(*this) / float(_SYS_MAX_BATTERY);
+        return _SYS_cubeBatteryLevel(*this) / float(_SYS_BATTERY_MAX);
     }
 
     CubeID operator ++() { return ++sys; }

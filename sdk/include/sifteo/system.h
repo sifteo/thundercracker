@@ -170,7 +170,7 @@ class System {
      * To get the battery level for a single cube, call CubeID::batteryLevel().
      */
     float batteryLevel() const {
-        return _SYS_sysBatteryLevel() / float(_SYS_MAX_BATTERY);
+        return _SYS_sysBatteryLevel() / float(_SYS_BATTERY_MAX);
     }
 
 };
