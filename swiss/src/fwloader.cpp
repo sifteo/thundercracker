@@ -45,8 +45,6 @@ int FwLoader::run(int argc, char **argv, IODevice &_dev)
     while (_dev.numPendingOUTPackets()) {
         _dev.processEvents();
     }
-    _dev.close();
-    _dev.processEvents();
 
     return success ? 0 : 1;
 }
