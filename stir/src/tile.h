@@ -214,7 +214,19 @@ class TileStack {
     void add(TileRef t);
     void replace(TileRef t);
 
-    TileRef median();
+    inline __attribute__ ((always_inline)) TileRef median()
+    {
+        if (!cache) {
+            if (tiles.size() == 1) {
+                // Special-case for a single-tile stack. No copy, just add a reference
+                cache = TileRef(tiles[0]);
+            } else {
+                // General-case median algorithm
+                computeMedian();
+            }
+        }
+        return cache;
+    }
 
     bool isPinned() const {
         return mPinned;
@@ -235,6 +247,8 @@ class TileStack {
     unsigned index;
     bool mPinned;
     bool mLossless;
+
+    void computeMedian();
 };
 
 
