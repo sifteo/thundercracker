@@ -145,7 +145,7 @@ void CPPSourceWriter::writeGroup(const Group &group)
         mStream <<
             "}};\n\n"
             "Sifteo::AssetGroup " << group.getName() << " = {{\n" <<
-            indent << "/* pHdr      */ reinterpret_cast<uint32_t>(&" << group.getName() << "_data.hdr),\n" <<
+            indent << "/* pHdr      */ reinterpret_cast<uintptr_t>(&" << group.getName() << "_data.hdr),\n" <<
             "}};\n\n";
     }
 
@@ -218,7 +218,7 @@ void CPPSourceWriter::writeSound(const Sound &sound)
         indent << "/* type       */ " << enc->getTypeSymbol() << ",\n" <<
         indent << "/* volume     */ " << sound.getVolume() << ",\n" <<
         indent << "/* dataSize   */ " << data.size() << ",\n" <<
-        indent << "/* pData      */ reinterpret_cast<uint32_t>(" << sound.getName() << "_data),\n" <<
+        indent << "/* pData      */ reinterpret_cast<uintptr_t>(" << sound.getName() << "_data),\n" <<
         "}};\n\n";
 
     delete enc;
@@ -276,7 +276,7 @@ void CPPSourceWriter::writeImage(const Image &image, bool writeDecl, bool writeA
             mStream << indent << "/* group    */ 0,\n";
         } else {
             // Reference a normal group
-            mStream << indent << "/* group    */ reinterpret_cast<uint32_t>(&" << image.getGroup()->getName() << "),\n";
+            mStream << indent << "/* group    */ reinterpret_cast<uintptr_t>(&" << image.getGroup()->getName() << "),\n";
         }
 
         mStream <<
@@ -284,7 +284,6 @@ void CPPSourceWriter::writeImage(const Image &image, bool writeDecl, bool writeA
             indent << "/* height   */ " << height << ",\n" <<
             indent << "/* frames   */ " << grids.size() << ",\n";
     }
-
 
     bool autoFormat = !(image.isPinned() || image.isFlat());
     bool isSingleTile = width == 1 && height == 1 && grids.size() == 1;
@@ -315,7 +314,7 @@ void CPPSourceWriter::writeImage(const Image &image, bool writeDecl, bool writeA
                 mStream <<
                     indent << "/* format   */ " << format << ",\n" <<
                     indent << "/* reserved */ 0,\n" <<
-                    indent << "/* pData    */ reinterpret_cast<uint32_t>(" << image.getName() << "_data)\n}}";
+                    indent << "/* pData    */ reinterpret_cast<uintptr_t>(" << image.getName() << "_data)\n}}";
             
                 if (image.inList()) {
                     mStream << ",\n";
@@ -344,7 +343,7 @@ void CPPSourceWriter::writeImage(const Image &image, bool writeDecl, bool writeA
         mStream <<
             indent << "/* format   */ _SYS_AIF_FLAT,\n" <<
             indent << "/* reserved */ 0,\n" <<
-            indent << "/* pData    */ reinterpret_cast<uint32_t>(" << image.getName() << "_data)\n}}";
+            indent << "/* pData    */ reinterpret_cast<uintptr_t>(" << image.getName() << "_data)\n}}";
 
         if (image.inList()) {
             mStream << ",\n";
@@ -445,7 +444,7 @@ void CPPSourceWriter::writeTracker(const Tracker &tracker)
         indent << indent << "/* dataSize   */ " << instrument.sample.dataSize << ",\n" <<
         indent << indent << "/* pData      */ ";
         if (instrument.sample.pData < tracker.numSamples()) {
-            mStream << "reinterpret_cast<uint32_t>(_Tracker_sample" << instrument.sample.pData << "_data),\n";
+            mStream << "reinterpret_cast<uintptr_t>(_Tracker_sample" << instrument.sample.pData << "_data),\n";
         } else {
             mStream << "0,\n";
         }
@@ -456,7 +455,7 @@ void CPPSourceWriter::writeTracker(const Tracker &tracker)
         indent << "/* compression           */ " << (int32_t)instrument.compression << ",\n" <<
         indent << "/* volumeEnvelopePoints  */ ";
         if (instrument.volumeEnvelopePoints < song.nInstruments) {
-            mStream << "reinterpret_cast<uint32_t>(" << tracker.getName() << "_instrument" << i << "_envelope),\n";
+            mStream << "reinterpret_cast<uintptr_t>(" << tracker.getName() << "_instrument" << i << "_envelope),\n";
         } else {
             mStream << "0,\n";
         }
@@ -494,7 +493,7 @@ void CPPSourceWriter::writeTracker(const Tracker &tracker)
         "\n{ // Pattern " << i << "\n" <<
         indent << "/* nRows     */ " << (uint32_t)pattern.nRows << ",\n" <<
         indent << "/* dataSize  */ " << (uint32_t)pattern.dataSize << ",\n" <<
-        indent << "/* pData     */ reinterpret_cast<uint32_t>(" << tracker.getName() << "_pattern" << i << "_data),\n" <<
+        indent << "/* pData     */ reinterpret_cast<uintptr_t>(" << tracker.getName() << "_pattern" << i << "_data),\n" <<
         "},";
     }
     mStream << "};\n\n";
@@ -511,14 +510,14 @@ void CPPSourceWriter::writeTracker(const Tracker &tracker)
     // Song:
     mStream <<
     "extern const Sifteo::AssetTracker " << tracker.getName() << " = {{\n" <<
-    indent << "/* patternOrderTable     */ reinterpret_cast<uint32_t>(" << tracker.getName() << "_patternOrderTable),\n" <<
+    indent << "/* patternOrderTable     */ reinterpret_cast<uintptr_t>(" << tracker.getName() << "_patternOrderTable),\n" <<
     indent << "/* patternOrderTableSize */ " << song.patternOrderTableSize << ",\n" <<
     indent << "/* restartPosition       */ " << tracker.getRestartPosition() << ",\n" <<
     indent << "/* nChannels             */ " << (uint32_t)song.nChannels << ",\n" <<
     indent << "/* nPatterns             */ " << song.nPatterns << ",\n" <<
-    indent << "/* patterns              */ reinterpret_cast<uint32_t>(" << tracker.getName() << "_patterns),\n" <<
+    indent << "/* patterns              */ reinterpret_cast<uintptr_t>(" << tracker.getName() << "_patterns),\n" <<
     indent << "/* nInstruments          */ " << (uint32_t)song.nInstruments << ",\n" <<
-    indent << "/* instruments           */ reinterpret_cast<uint32_t>(" << tracker.getName() << "_instruments),\n" <<
+    indent << "/* instruments           */ reinterpret_cast<uintptr_t>(" << tracker.getName() << "_instruments),\n" <<
     indent << "/* frequencyTable        */ " << (uint32_t)song.frequencyTable << ",\n" <<
     indent << "/* tempo                 */ " << song.tempo << ",\n" <<
     indent << "/* bpm                   */ " << song.bpm << ",\n" <<
@@ -542,10 +541,9 @@ void CPPHeaderWriter::head()
 
 void CPPHeaderWriter::writeGroup(const Group &group)
 {
-    if (group.isFixed())
-        return;
-
-    mStream << "extern Sifteo::AssetGroup " << group.getName() << ";\n";
+    if (!group.isFixed()) {
+        mStream << "extern Sifteo::AssetGroup " << group.getName() << ";\n";
+    }
 
     for (std::set<Image*>::iterator i = group.getImages().begin();
          i != group.getImages().end(); i++) {
