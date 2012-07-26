@@ -21,6 +21,7 @@ public:
         DeleteVolume,
         DeleteSysLFS,
         FirmwareVersion,
+        PairCube,
     };
 
     struct VolumeOverviewReply {
@@ -40,10 +41,21 @@ public:
         unsigned key;
     };
 
+    struct PairCubeRequest {
+        uint64_t hwid;
+        unsigned pairingSlot;
+    };
+
     static void onUsbData(const USBProtocolMsg &m);
 
 private:
     static FlashVolumeWriter writer;
+
+    // handlers
+    static ALWAYS_INLINE void volumeOverview(USBProtocolMsg &reply);
+    static ALWAYS_INLINE void volumeDetail(const USBProtocolMsg &m, USBProtocolMsg &reply);
+    static ALWAYS_INLINE void volumeMetadata(const USBProtocolMsg &m, USBProtocolMsg &reply);
+    static ALWAYS_INLINE void pairCube(const USBProtocolMsg &m, USBProtocolMsg &reply);
 };
 
 #endif // _USB_VOLUME_MANAGER_H

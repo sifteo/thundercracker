@@ -5,6 +5,7 @@
 #include "installer.h"
 #include "manifest.h"
 #include "delete.h"
+#include "paircube.h"
 #include "usbdevice.h"
 #include "macros.h"
 
@@ -41,7 +42,13 @@ static const Command commands[] = {
         "delete data from the Sifteo Base",
         "delete (--all | --sys | volume)",
         Delete::run
-    }
+    },
+    {
+        "pair",
+        "add a pairing record to the Sifteo Base",
+        "pair <slotID> <hardwareID>",
+        PairCube::run
+    },
 };
 
 static void usage()
