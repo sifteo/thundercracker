@@ -77,13 +77,20 @@ private:
     Endpoint mInEndpoint;
     Endpoint mOutEndpoint;
 
-    void removeTransfer(std::list<libusb_transfer*> &list, libusb_transfer *t);
+    void removeTransfer(Endpoint &ep, libusb_transfer *t);
+    void cancelTransfers(Endpoint &ep);
 
     libusb_device_handle *mHandle;
 
     struct Packet {
         uint8_t *buf;
         uint8_t len;
+
+        Packet(libusb_transfer *t) {
+            len = t->actual_length;
+            buf = (uint8_t*)malloc(len);
+            memcpy(buf, t->buffer, len);
+        }
     };
     std::list<Packet> mBufferedINPackets;
 };
