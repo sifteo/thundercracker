@@ -15,7 +15,6 @@ int FwLoader::run(int argc, char **argv, IODevice &_dev)
     if (argc < 2)
         return 1;
 
-
     bool success;
     bool init = false;
     bool rpc = false;
@@ -35,15 +34,11 @@ int FwLoader::run(int argc, char **argv, IODevice &_dev)
     }
     
     FwLoader loader(_dev, rpc);
-    
+
     if (init) {
         success = loader.requestBootloaderUpdate();
     } else {
         success = loader.load(path);
-    }
-
-    while (_dev.numPendingOUTPackets()) {
-        _dev.processEvents();
     }
 
     return success ? 0 : 1;
@@ -124,7 +119,7 @@ void FwLoader::resetBootloader()
     const uint8_t ptrRequest[] = { Bootloader::CmdResetAddrPtr };
     dev.writePacket(ptrRequest, sizeof ptrRequest);
 
-    while (!dev.numPendingOUTPackets())
+    while (dev.numPendingOUTPackets())
         dev.processEvents();
 }
 
@@ -241,6 +236,8 @@ bool FwLoader::sendFirmwareFile(FILE *f, uint32_t crc, uint32_t size)
     p += sizeof(size);
 
     dev.writePacket(finalBuf, p - finalBuf);
+    while (dev.numPendingOUTPackets())
+        dev.processEvents();
 
     return true;
 }
