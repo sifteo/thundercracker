@@ -5,26 +5,24 @@
 
 #include "cubeslots.h"
 #include "cube.h"
-#include "neighbors.h"
+#include "neighborslot.h"
 #include "machine.h"
 #include "tasks.h"
 #include "radio.h"
 
 CubeSlot CubeSlots::instances[_SYS_NUM_CUBE_SLOTS];
 
-_SYSCubeIDVector CubeSlots::vecEnabled = 0;
-_SYSCubeIDVector CubeSlots::vecConnected = 0;
+_SYSCubeIDVector CubeSlots::sysConnected = 0;
+_SYSCubeIDVector CubeSlots::disconnectFlag = 0;
+_SYSCubeIDVector CubeSlots::userConnected = 0;
 _SYSCubeIDVector CubeSlots::flashResetWait = 0;
 _SYSCubeIDVector CubeSlots::flashResetSent = 0;
-_SYSCubeIDVector CubeSlots::flashACKValid = 0;
-_SYSCubeIDVector CubeSlots::frameACKValid = 0;
-_SYSCubeIDVector CubeSlots::neighborACKValid = 0;
-_SYSCubeIDVector CubeSlots::expectStaleACK = 0;
 _SYSCubeIDVector CubeSlots::flashAddrPending = 0;
-_SYSCubeIDVector CubeSlots::hwidValid = 0;
 
-_SYSCubeID CubeSlots::minCubes = 0;
-_SYSCubeID CubeSlots::maxCubes = _SYS_NUM_CUBE_SLOTS;
+BitVector<SysLFS::NUM_PAIRINGS> CubeSlots::pairConnected;
+
+_SYSCubeID CubeSlots::minUserCubes = 0;
+_SYSCubeID CubeSlots::maxUserCubes = _SYS_NUM_CUBE_SLOTS;
 
 _SYSAssetLoader *CubeSlots::assetLoader = 0;
 
@@ -33,47 +31,10 @@ bool CubeSlots::simAssetLoaderBypass;
 #endif
 
 
-void CubeSlots::solicitCubes(_SYSCubeID min, _SYSCubeID max)
+void CubeSlots::setCubeRange(unsigned minimum, unsigned maximum)
 {
-    minCubes = min;
-    maxCubes = max;
-}
-
-void CubeSlots::enableCubes(_SYSCubeIDVector cv)
-{
-    NeighborSlot::resetSlots(cv);
-    Atomic::Or(CubeSlots::vecEnabled, cv);
-
-    // Expect that the cube's radio may have one old ACK packet buffered. Ignore this packet.
-    Atomic::Or(CubeSlots::expectStaleACK, cv);
-}
-
-void CubeSlots::disableCubes(_SYSCubeIDVector cv)
-{
-    Atomic::And(CubeSlots::vecEnabled, ~cv);
-
-    Atomic::And(CubeSlots::flashResetWait, ~cv);
-    Atomic::And(CubeSlots::flashResetSent, ~cv);
-    Atomic::And(CubeSlots::flashACKValid, ~cv);
-    Atomic::And(CubeSlots::neighborACKValid, ~cv);
-    Atomic::And(CubeSlots::hwidValid, ~cv);
-
-    NeighborSlot::resetSlots(cv);
-    NeighborSlot::resetPairs(cv);
-
-    // TODO: if any of the cubes in cv are currently part of a
-    // neighbor-pair with any cubes that are still active, those
-    // active cubes neeed to remove their now-defunct neighbors
-}
-
-void CubeSlots::connectCubes(_SYSCubeIDVector cv)
-{
-    Atomic::Or(CubeSlots::vecConnected, cv);
-}
-
-void CubeSlots::disconnectCubes(_SYSCubeIDVector cv)
-{
-    Atomic::And(CubeSlots::vecConnected, ~cv);
+    minUserCubes = minimum;
+    maxUserCubes = maximum;
 }
 
 void CubeSlots::paintCubes(_SYSCubeIDVector cv, bool wait)
@@ -150,15 +111,13 @@ void CubeSlots::finishCubes(_SYSCubeIDVector cv)
     }
 }
 
-void CubeSlots::assetLoaderTask(void *)
+void CubeSlots::assetLoaderTask()
 {
     /*
      * Pump data from flash memory into the current _SYSAssetLoader as needed.
      * This lets us install assets from ISR context without accessing flash
      * directly. The _SYSAssetLoader includes a tiny FIFO buffer for each cube.
      */
-
-    Tasks::clearPending(Tasks::AssetLoader);
 
     _SYSAssetLoader *L = assetLoader;
     _SYSAssetLoaderCube *cubeArray = reinterpret_cast<_SYSAssetLoaderCube*>(L + 1);

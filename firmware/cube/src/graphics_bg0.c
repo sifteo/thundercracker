@@ -121,8 +121,8 @@ static void vm_bg0(void) __naked
     do {
         vm_bg0_line();
         vm_bg0_next();
-    } while (--y);    
+    } while (--y);
 
     lcd_end_frame();
-    GRAPHICS_RET();
+    GRAPHICS_ARET();
 }

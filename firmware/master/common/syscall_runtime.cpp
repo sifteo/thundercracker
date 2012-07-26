@@ -46,19 +46,19 @@ void _SYS_yield(void)
 
 void _SYS_paint(void)
 {
-    CubeSlots::paintCubes(CubeSlots::vecEnabled);
+    CubeSlots::paintCubes(CubeSlots::userConnected);
     SvmRuntime::dispatchEventsOnReturn();
 }
 
 void _SYS_paintUnlimited(void)
 {
-    CubeSlots::paintCubes(CubeSlots::vecEnabled, false);
+    CubeSlots::paintCubes(CubeSlots::userConnected, false);
     SvmRuntime::dispatchEventsOnReturn();
 }
 
 void _SYS_finish(void)
 {
-    CubeSlots::finishCubes(CubeSlots::vecEnabled);
+    CubeSlots::finishCubes(CubeSlots::userConnected);
     // Intentionally does _not_ dispatch events!
 }
 

@@ -11,20 +11,30 @@
 #include "tasks.h"
 
 class AudioMixer;
-typedef RingBuffer<512, int16_t> AudioBuffer;
 
 
 class AudioOutDevice
 {
 public:
-    // Start mixer with no audio device
-    static void initStub() {
-        Tasks::setPending(Tasks::AudioPull, NULL);
-    }
-
-    static void init(AudioMixer *mixer);
+    static void init();
     static void start();
     static void stop();
+
+    /*
+     * On real hardware, our audio device is 100% interrupt driven, and it pulls
+     * directly from the mixing buffer. On Siftulator, we don't have control over
+     * how often the OS calls us back to request more audio data, and if these
+     * callbacks happen to infrequently, we won't be able to extract data
+     * from the AudioMixer buffer fast enough. So, for simulation only, we
+     * provide a 'pull entry point which is used to give the AudioOutDevice
+     * a specific place to dequeue data from the AudioMixer buffer if it wants to.
+     */
+
+    #ifdef SIFTEO_SIMULATOR
+        static void pullFromMixer();
+    #else
+        static ALWAYS_INLINE void pullFromMixer() {}
+    #endif
 };
 
 

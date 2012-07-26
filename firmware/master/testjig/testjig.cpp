@@ -11,14 +11,14 @@
 #include "usb/usbdevice.h"
 #include "tasks.h"
 #include "i2c.h"
-#include "neighbor.h"
+#include "neighbor_tx.h"
+#include "neighbor_rx.h"
 #include "gpio.h"
 #include "macros.h"
 #include "dac.h"
 #include "adc.h"
 
 static I2CSlave i2c(&I2C1);
-static Neighbor neighbor(&TIM5, &TIM3);
 
 // control for the pass-through USB of the master under test
 static GPIOPin testUsbEnable = USB_PWR_GPIO;
@@ -49,11 +49,11 @@ TestJig::TestHandler const TestJig::handlers[] = {
 
 void TestJig::init()
 {
-    NVIC.irqEnable(IVT.TIM3);                   // neighbor rx
-    NVIC.irqPrioritize(IVT.TIM3, 0x50);
+    NVIC.irqEnable(IVT.NBR_RX_TIM);
+    NVIC.irqPrioritize(IVT.NBR_RX_TIM, 0x50);
 
-    NVIC.irqEnable(IVT.TIM5);                   // neighbor tx
-    NVIC.irqPrioritize(IVT.TIM5, 0x60);
+    NVIC.irqEnable(IVT.NBR_TX_TIM);
+    NVIC.irqPrioritize(IVT.NBR_TX_TIM, 0x60);
 
     // neighbor 0 and 1 are on ISR_EXTI9_5 - see exti.cpp
 
@@ -100,7 +100,8 @@ void TestJig::init()
 
     i2c.init(JIG_SCL_GPIO, JIG_SDA_GPIO, I2C_SLAVE_ADDRESS);
 
-    neighbor.init();
+    NeighborRX::init();
+    NeighborTX::init();
 }
 
 /*
@@ -116,20 +117,14 @@ void TestJig::onTestDataReceived(uint8_t *buf, unsigned len)
     }
 }
 
-// this additional glue is required to service IRQs from the shared EXTI vector.
-void TestJig::neighborInIsr(uint8_t side)
-{
-    neighbor.onRxPulse(side);
-}
-
 /*
  * Called from ISR context within Neighbors once we've received a message.
  * Forward it on over USB.
  */
-void TestJig::onNeighborMsgRx(uint8_t side, uint16_t msg)
+void NeighborRX::callback(unsigned side, unsigned msg)
 {
     // NB! neighbor transmitted in its native big endian format
-    const uint8_t response[] = { EventNeighbor, side, (msg >> 8) & 0xff, msg & 0xff };
+    const uint8_t response[] = { TestJig::EventNeighbor, side, (msg >> 8) & 0xff, msg & 0xff };
     UsbDevice::write(response, sizeof response);
 }
 
@@ -149,14 +144,15 @@ void TestJig::onI2cEvent()
      *
      * On the repeated start condition, send the ACK packet that we
      * received during the former transmission.
+     *
+     * NOTE: because we need to potentially block when writing this data over USB,
+     *       we trigger our task to do it for us, but this means that any
+     *       additional i2c data that arrives in the meantime will be dropped.
+     *       This is generally fine, since we're not tracking any specific packet.
      */
     if (status & I2CSlave::AddressMatch) {
-        if (sensorsTransaction.enabled && sensorsTransaction.byteIdx > 0) {
-            uint8_t resp[1 + sizeof sensorsTransaction.cubeAck] = { EventAckPacket };
-            memcpy(resp + 1, &sensorsTransaction.cubeAck, sizeof sensorsTransaction.cubeAck);
-            UsbDevice::write(resp, sizeof resp);
-        }
-        sensorsTransaction.byteIdx = 0;
+        if (sensorsTransaction.enabled && sensorsTransaction.byteIdx > 0)
+            Tasks::trigger(Tasks::TestJig);
     }
 
     /*
@@ -191,6 +187,21 @@ void TestJig::onI2cEvent()
             sensorsTransaction.byteIdx++;
         }
     }
+}
+
+/*
+ * An opportunity to perform any potentially longer running operations.
+ * The only requirement for this at the moment is to write i2c data over USB
+ * since that's a blocking operation.
+ */
+void TestJig::task()
+{
+    uint8_t resp[1 + sizeof sensorsTransaction.cubeAck] = { EventAckPacket };
+    memcpy(resp + 1, &sensorsTransaction.cubeAck, sizeof sensorsTransaction.cubeAck);
+    // clear this as soon as we've copied the appropriate data
+    sensorsTransaction.byteIdx = 0;
+
+    UsbDevice::write(resp, sizeof resp);
 }
 
 /*******************************************
@@ -268,7 +279,7 @@ void TestJig::beginNeighborRxHandler(uint8_t argc, uint8_t *args)
         return;
 
     uint8_t mask = args[1];
-    neighbor.beginReceiving(mask);
+    NeighborRX::start(mask);
 
     const uint8_t response[] = { args[0] };
     UsbDevice::write(response, sizeof response);
@@ -276,7 +287,7 @@ void TestJig::beginNeighborRxHandler(uint8_t argc, uint8_t *args)
 
 void TestJig::stopNeighborRxHandler(uint8_t argc, uint8_t *args)
 {
-    neighbor.stopReceiving();
+    NeighborRX::stop();
 
     const uint8_t response[] = { args[0] };
     UsbDevice::write(response, sizeof response);
@@ -344,7 +355,8 @@ void TestJig::beginNeighborTxHandler(uint8_t argc, uint8_t *args)
 {
     uint16_t txData = *reinterpret_cast<uint16_t*>(&args[1]);
     uint8_t sideMask = args[3];
-    neighbor.beginTransmitting(txData, sideMask);
+
+    NeighborTX::start(txData, sideMask);
 
     const uint8_t response[] = { args[0] };
     UsbDevice::write(response, sizeof response);
@@ -355,7 +367,7 @@ void TestJig::beginNeighborTxHandler(uint8_t argc, uint8_t *args)
  */
 void TestJig::stopNeighborTxHandler(uint8_t argc, uint8_t *args)
 {
-    neighbor.stopTransmitting();
+    NeighborTX::stop();
 
     const uint8_t response[] = { args[0] };
     UsbDevice::write(response, sizeof response);
@@ -365,31 +377,17 @@ void TestJig::stopNeighborTxHandler(uint8_t argc, uint8_t *args)
  * I N T E R R U P T  H A N D L E R S
  ******************************************/
 
-IRQ_HANDLER ISR_TIM3()
-{
-    uint8_t side;
-    uint16_t rxData;
-    if (neighbor.rxPeriodIsr(side, rxData)) {
-        TestJig::onNeighborMsgRx(side, rxData);
-    }
-}
-
-IRQ_HANDLER ISR_TIM5()
-{
-    neighbor.txPeriodISR();
-}
-
 /*
  * Neighbor Ins 2 and 3 are on EXTI lines 0 and 1 respectively.
  */
 IRQ_HANDLER ISR_EXTI0()
 {
-    neighbor.onRxPulse(2);
+    NeighborRX::pulseISR(2);
 }
 
 IRQ_HANDLER ISR_EXTI1()
 {
-    neighbor.onRxPulse(3);
+    NeighborRX::pulseISR(3);
 }
 
 IRQ_HANDLER ISR_I2C1_EV()

@@ -73,6 +73,7 @@ class SystemMC {
     static void threadFn(void *);
     void doRadioPacket();
     void autoInstall();
+    void pairCube(unsigned cubeID, unsigned pairingID);
 
     Cube::Hardware *getCubeForAddress(const RadioAddress *addr);
 

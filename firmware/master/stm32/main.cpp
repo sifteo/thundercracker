@@ -22,6 +22,9 @@
 #include "crc.h"
 #include "sampleprofiler.h"
 #include "bootloader.h"
+#include "cubeconnector.h"
+#include "neighbor_tx.h"
+
 
 /*
  * Application specific entry point.
@@ -61,8 +64,8 @@ int main()
 
     NVIC.irqEnable(IVT.BTN_HOME_EXTI_VEC);          //  home button
 
-    NVIC.irqEnable(IVT.TIM4);                       // sample rate timer
-    NVIC.irqPrioritize(IVT.TIM4, 0x50);             //  pretty high priority! (would cause audio jitter)
+    NVIC.irqEnable(IVT.AUDIO_SAMPLE_TIM);           // sample rate timer
+    NVIC.irqPrioritize(IVT.AUDIO_SAMPLE_TIM, 0x50); //  pretty high priority! (would cause audio jitter)
 
     NVIC.irqEnable(IVT.USART3);                     // factory test uart
     NVIC.irqPrioritize(IVT.USART3, 0x99);           //  loooooowest prio
@@ -74,6 +77,9 @@ int main()
 
     NVIC.irqEnable(IVT.PROFILER_TIM);               // sample profiler timer
     NVIC.irqPrioritize(IVT.PROFILER_TIM, 0x0);      //  highest possible priority
+
+    NVIC.irqEnable(IVT.NBR_TX_TIM);                 // Neighbor transmit
+    NVIC.irqPrioritize(IVT.NBR_TX_TIM, 0x60);       //  just below sample rate timer
 
     /*
      * High-level hardware initialization
@@ -122,9 +128,11 @@ int main()
     Tasks::init();
     FlashStack::init();
     HomeButton::init();
+    NeighborTX::init();
+    CubeConnector::init();
 
     Volume::init();
-    AudioOutDevice::init(&AudioMixer::instance);
+    AudioOutDevice::init();
     AudioOutDevice::start();
 
     PowerManager::beginVbusMonitor();

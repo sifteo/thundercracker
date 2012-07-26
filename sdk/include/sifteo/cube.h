@@ -105,6 +105,14 @@ struct CubeID {
 
     /**
      * @brief Return the physical accelerometer state, as a signed byte-vector.
+     *
+     * All components are signed bytes, ranging from -128 to 127, with a full
+     * scale range of 2G. +X is to the right, +Y is toward the bottom of the screen,
+     * and +Z points "into" the screen.
+     *
+     * A vector of (0, 0, 0) is considered free-fall. A cube lying flat on the table
+     * will have X and Y coordinates near zero, and a positive Z coordinate near 64.
+     * An upside-down cube would have a negative Z coordinate near -64.
      */
     Byte3 accel() const {
         ASSERT(sys < NUM_SLOTS);
@@ -174,11 +182,15 @@ struct CubeID {
     /**
      * @brief Get this cube's battery level.
      *
-     * @warning Units are currently TBD.
+     * The battery level has already been converted into a "fuel gauge"
+     * representation, with 0.0f representing a qualitatively dead
+     * battery and 1.0f representing a totally new battery.
+     *
+     * To get the battery level for the base unit, call System::batteryLevel().
      */
-    unsigned batteryLevel() const {
+    float batteryLevel() const {
         ASSERT(sys < NUM_SLOTS);
-        return _SYS_getBatteryV(*this);
+        return _SYS_cubeBatteryLevel(*this) / float(_SYS_BATTERY_MAX);
     }
 
     CubeID operator ++() { return ++sys; }
@@ -214,6 +226,25 @@ public:
      * This is a half-open interval. All IDs >= 'begin' and < 'end' are in the set.
      */
     CubeSet(CubeID begin, CubeID end) : BitArray<_SYS_NUM_CUBE_SLOTS>(begin, end) {}
+
+    /**
+     * @brief Return a CubeSet containing all connected cubes which are visible to the
+     * current application.
+     *
+     * The number of available cubes will always be within the limits set by your
+     * Metadata::cubeRange(). Furthermore, returned cube IDs are all guaranteed to
+     * be less than the maximum number of cubes defined in your range. If your
+     * code supports at most 6 cubes, for instance, it's perfectly fine to declare
+     * 6-element arrays and index them with any CubeID in this set.
+     *
+     * The returned CubeSet is guaranteed not to change until the relevant
+     * connection and/or disconnection events have been dispatched to your application.
+     */
+    static CubeSet connected() {
+        CubeSet result;
+        result.words[0] = _SYS_getConnectedCubes();
+        return result;
+    }
 };
 
 

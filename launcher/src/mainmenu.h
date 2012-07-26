@@ -42,16 +42,41 @@ public:
     void run();
 
 private:
-    Sifteo::CubeSet cubes;
+    Sifteo::SystemTime time;
+    Sifteo::CubeID mainCube;
 
     Sifteo::Array<MainMenuItem*, MAX_ITEMS> items;
     Sifteo::MenuItem menuItems[MAX_ITEMS + 1];
+    int itemIndexCurrent;
     static const Sifteo::MenuAssets menuAssets;
 
+    /**
+     * A icon that we swap in if the user tries to launch a game that requires
+     * an incompatible number of cubes
+     */
+    Sifteo::RelocatableTileBuffer<12,12> cubeRangeAlertIcon;
+    const Sifteo::AssetImage *cubeRangeSavedIcon;
+
+    Sifteo::CubeSet cubes();
+    Sifteo::CubeSet cubesToLoad;
+
+    void cubeConnect(unsigned cid);
+    void cubeDisconnect(unsigned cid);
+
+    void updateAssets();
+    void updateSound(Sifteo::Menu &menu);
     void updateMusic();
+    void updateIcons(Sifteo::Menu &menu);
+
+    bool canLaunchItem(unsigned index);
+    void toggleCubeRangeAlert(unsigned index, Sifteo::Menu &menu);
+    void updateAlerts(Sifteo::Menu &menu);
 
     // Note: these functions are marked NOINLINE as a cache usage optimization.
     NOINLINE void loadAssets();
     NOINLINE void eventLoop(Sifteo::Menu &m);
     NOINLINE void execItem(unsigned index);
+    NOINLINE void arriveItem(unsigned index);
+    NOINLINE void departItem(unsigned index);
+    NOINLINE void prepaintItem(unsigned index);
 };

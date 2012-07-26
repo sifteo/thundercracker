@@ -22,12 +22,16 @@
 
 void radio_isr(void) __interrupt(VECTOR_RF) __naked __using(RF_BANK);
 void radio_init(void);
+void radio_set_idle_addr(void);
+void radio_set_pairing_addr(void);
 void radio_ack_query() __naked;
-uint8_t radio_get_cube_id(void);
+void radio_fifo_status() __naked;
 
 extern RF_MemACKType __near ack_data;
 extern uint8_t __near ack_bits;
 extern uint8_t radio_query[32];
+extern __bit radio_connected;
+extern __bit radio_idle_hop;
 
 /*
  * We track the length of the next ACK packet using a bitmap, where each

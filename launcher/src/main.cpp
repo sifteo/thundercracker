@@ -8,6 +8,8 @@
 #include "elfmainmenuitem.h"
 #include "assets.gen.h"
 #include "applet/getgames.h"
+#include "applet/status.h"
+#include "shared.h"
 
 using namespace Sifteo;
 
@@ -19,13 +21,12 @@ static Metadata M = Metadata()
     .title("System Launcher")
     .package("com.sifteo.launcher", TOSTRING(SDK_VERSION));
 
-
 void main()
 {
     // In simulation, if exactly one game is installed, run it immediately.
     ELFMainMenuItem::autoexec();
 
-    AudioTracker::play(UISound_Startup);
+    AudioTracker::play(Tracker_Startup);
 
     while (1) {
         static MainMenu menu;
@@ -34,6 +35,7 @@ void main()
         // Populate the menu
         ELFMainMenuItem::findGames(menu);
         GetGamesApplet::add(menu);
+        StatusApplet::add(menu);
 
         menu.run();
     }

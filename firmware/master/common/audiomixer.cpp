@@ -22,15 +22,19 @@
 
 
 AudioMixer AudioMixer::instance;
+AudioMixer::OutputBuffer AudioMixer::output;
+
 
 AudioMixer::AudioMixer() :
-    playingChannelMask(0),
     trackerCallbackInterval(0),
-    trackerCallbackCountdown(0)
+    trackerCallbackCountdown(0),
+    playingChannelMask(0)
 {}
 
 void AudioMixer::init()
 {
+    output.init();
+
     uint32_t mask = playingChannelMask;
     while (mask) {
         unsigned idx = Intrinsic::CLZ(mask);
@@ -96,20 +100,8 @@ ALWAYS_INLINE bool AudioMixer::mixAudio(int *buffer, uint32_t numFrames)
  * Called from within Tasks::work to mix audio on the main thread, to be
  * consumed by the audio out device.
  */
-void AudioMixer::pullAudio(void *p)
+void AudioMixer::pullAudio()
 {
-    /*
-     * Early out when we can quickly determine that no channels are playing
-     * and the tracker is idle.
-     */
-
-    #ifdef SIFTEO_SIMULATOR
-        MCAudioVisData::instance.mixerActive = AudioMixer::instance.active();
-    #endif
-
-    if (!AudioMixer::instance.active() && AudioMixer::instance.trackerCallbackInterval == 0)
-        return;
-
     /*
      * Support audio in Siftulator, even in headless mode.
      *
@@ -126,11 +118,26 @@ void AudioMixer::pullAudio(void *p)
     #endif
 
     /*
-     * Destination buffer, provided by the audio device.
-     * If no audio device is available (yet) this will be NULL.
+     * Early out when we can quickly determine that no channels are playing
+     * and the tracker is idle.
+     *
+     * Note that in headless mode, we have no audio driver to wake up our
+     * task, we're polling based on wallclock time: so we constantly re-trigger
+     * our own task. In other modes, we do NOT do this. We only wake up when
+     * the audio driver has dequeued some samples.
      */
-    AudioBuffer *buf = static_cast<AudioBuffer*>(p);
-    if (!buf && !headless)
+
+    #ifdef SIFTEO_SIMULATOR
+        if (headless) {
+            Tasks::trigger(Tasks::AudioPull);
+        }
+    #endif
+
+    #ifdef SIFTEO_SIMULATOR
+        MCAudioVisData::instance.mixerActive = AudioMixer::instance.active();
+    #endif
+
+    if (!AudioMixer::instance.active() && AudioMixer::instance.trackerCallbackInterval == 0)
         return;
 
     /*
@@ -150,7 +157,7 @@ void AudioMixer::pullAudio(void *p)
      */
 
     int blockBuffer[32];
-    unsigned samplesLeft = buf->writeAvailable();
+    unsigned samplesLeft = output.writeAvailable();
 
     #ifdef SIFTEO_SIMULATOR
         if (headless) {
@@ -158,8 +165,12 @@ void AudioMixer::pullAudio(void *p)
         }
     #endif
 
-    if (samplesLeft < arraysize(blockBuffer))
+    if (samplesLeft < arraysize(blockBuffer)) {
+        // Need more room in the buffer before we can mix!
+        if (!headless)
+            AudioOutDevice::pullFromMixer();
         return;
+    }
 
     #ifndef SIFTEO_SIMULATOR
         SampleProfiler::SubSystem s = SampleProfiler::subsystem();
@@ -245,7 +256,7 @@ void AudioMixer::pullAudio(void *p)
             #endif
 
             if (!headless) {
-                buf->enqueue(sample16);
+                output.enqueue(sample16);
             }
         } while (--blockSize);
 
@@ -261,6 +272,10 @@ void AudioMixer::pullAudio(void *p)
         // Write back local copy of Countdown, only if it's real.
         AudioMixer::instance.trackerCallbackCountdown = trackerCountdown;
     }
+
+    // Give the output a chance to dequeue data immediately (Only used on Siftulator)
+    if (!headless)
+        AudioOutDevice::pullFromMixer();
 
     #ifndef SIFTEO_SIMULATOR
         SampleProfiler::setSubsystem(s);

@@ -56,6 +56,10 @@ inline void Menu::changeState(MenuState newstate)
             MENU_LOG("finish\n");
             transToFinish();
             break;
+        case MENU_STATE_HOP_UP:
+            MENU_LOG("hop up\n");
+            transToHopUp();
+            break;
     }
 }
 
@@ -111,6 +115,10 @@ inline void Menu::transFromStart()
         prev_ut = computeCurrentTile() + kNumTilesX;
         updateBG0();
 
+        // Placed here to fix the bug where some icons tiles appear missing when the menu is initialized.
+        // Open to other better ideas of where to stick the finish...
+        System::finish();
+
         for(int i = 0; i < NUM_SIDES; i++) {
             neighbors[i].neighborSide = NO_SIDE;
             neighbors[i].neighbor = CubeID::UNDEFINED;
@@ -150,13 +158,7 @@ inline void Menu::transToStatic()
 
 inline void Menu::stateStatic()
 {
-    bool touch = vid.cube().isTouching();
-
-    if (touch && !prevTouch) {
-        currentEvent.type = MENU_ITEM_PRESS;
-        currentEvent.item = computeSelected();
-    }
-    prevTouch = touch;
+    checkForPress();
 }
 
 inline void Menu::transFromStatic()
@@ -243,6 +245,8 @@ inline void Menu::transToInertia()
 
 inline void Menu::stateInertia()
 {
+    checkForPress();
+
     const float stiffness = 0.333f;
 
     // do not pull to item unless tilting has stopped.
@@ -251,7 +255,7 @@ inline void Menu::stateInertia()
     }
     // if still tilting, do not bounce back to the stopping position.
     if ((tiltDirection < 0 && velocity >= 0.f) || (tiltDirection > 0 && velocity <= 0.f)) {
-            return;
+        return;
     }
 
     velocity += stopping_position - position;
@@ -342,6 +346,77 @@ inline void Menu::transFromFinish()
 {
     if (stateFinished) {
         // We already animated ourselves out of a job. If we're being called again, reset the menu
+        changeState(MENU_STATE_START);
+
+        // And re-run the first iteraton of the event loop
+        MenuEvent ignore;
+        pollEvent(&ignore);
+        /* currentEvent will be set by this second iteration of pollEvent,
+         * so when we return from this function the currentEvent will be
+         * propagated back to pollEvent's parameter.
+         */
+    }
+}
+
+/**
+ * Finish state: MENU_STATE_HOP_UP
+ *
+ * This state is responsible for animating the menu in, after exiting a game.
+ * Transitions:
+ * -> Start when finished. This puts the menu back on the normal init path.
+ * Events:
+ * none.
+ */
+inline void Menu::transToHopUp()
+{
+    // Prepare screen for item animation
+
+    // We're about to switch things up in VRAM, make sure the cubes are done drawing.
+    System::finish();
+
+    // blank out the background layer
+    vid.initMode(BG0_SPR_BG1);
+    vid.bg0.setPanning(vec(0, 0));
+    vid.bg0.erase(*assets->background);
+    
+    if (assets->header) {
+        Int2 vec = {0, 0};
+        vid.bg0.image(vec, *assets->header);
+    }
+    if (assets->footer) {
+        Int2 vec = { 0, kNumVisibleTilesY - assets->footer->tileHeight() };
+        vid.bg0.image(vec, *assets->footer);
+    }
+    {
+        const AssetImage* icon = items[computeSelected()].icon;
+        vid.bg1.eraseMask();
+        vid.bg1.fillMask(vec(0,0), icon->tileSize());
+        vid.bg1.image(vec(0,0), *icon);
+    }
+    finishIteration = 30;
+}
+
+inline void Menu::stateHopUp()
+{
+    const float k = 5.f;
+    int offset = 0;
+
+    finishIteration--;
+    float u = finishIteration/33.f;
+    u = (1.f-k*u);
+    offset = int(12*(1.f-u*u));
+    vid.bg1.setPanning(vec(-kEndCapPadding, offset + kIconYOffset));
+    currentEvent.type = MENU_PREPAINT;
+
+    if (offset >= 0) {
+        stateFinished = true;
+    }
+}
+
+inline void Menu::transFromHopUp()
+{
+    if (stateFinished) {
+        // We're done with the animation, so jump right into the menu as normal.
         changeState(MENU_STATE_START);
 
         // And re-run the first iteraton of the event loop

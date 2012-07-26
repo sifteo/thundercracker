@@ -187,7 +187,7 @@ static uint32_t debuggerMsgCallback(const uint32_t *cmd,
     memcpy(mbox.cmd, cmd, cmdWords * sizeof(uint32_t));
 
     // Wake up the debugger's event loop
-    Tasks::setPending(Tasks::Debugger);
+    Tasks::trigger(Tasks::Debugger);
 
     // Wait for a reply
     do {

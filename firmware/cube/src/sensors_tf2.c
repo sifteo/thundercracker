@@ -193,17 +193,6 @@ nb_bit_done:
         swap    a                               ; match second byte format
         rr      a
         xrl     a, (_nb_buffer+1)               ; Check byte
-#ifdef DEBUG_NBR
-        jz      dbg_skip
-        mov     a, _nb_buffer
-        mov     _nbr_data_invalid, a
-        mov     a, (_nb_buffer+1)
-        swap    a
-        rl      a
-        mov     (_nbr_data_invalid+1), a
-        sjmp    nb_packet_done
-dbg_skip:
-#endif
         jnz     nb_packet_done                  ;   Invalid, ignore the packet.
 
         ; We store good packets in nb_instant_state here. The Timer 0 ISR
@@ -225,15 +214,6 @@ dbg_skip:
         orl     a, #NB_FLAG_SIDE_ACTIVE
         mov     @r0, a
 
-#ifdef DEBUG_NBR
-        mov     a, _nb_buffer
-        mov     _nbr_data_valid, a
-        mov     a, (_nb_buffer+1)
-        swap    a
-        rl      a
-        mov     (_nbr_data_valid+1), a
-#endif
-
         pop     0
         sjmp    nb_packet_done                  ; Done receiving
 
@@ -249,26 +229,13 @@ nb_tx_handoff:
         ; frequency very close to our neighbor resonance. So, this keeps the
         ; signals cleaner.
 
-        mov     _i2c_state, #0                  ; Reset our state machine
-        mov     _W2CON0, #0                     ; Reset I2C master
-        anl     _MISC_DIR, #~MISC_I2C           ; Output drivers enabled
-        xrl     MISC_PORT, #MISC_I2C            ; Now pulse I2C lines low
-        orl     MISC_PORT, #MISC_I2C            ; Drive pins high - This delivers a 250 ns pulse
-        mov     _W2CON0, #1                     ; Turn on I2C controller
-        mov     _W2CON0, #7                     ; Master mode, 100 kHz.
-        mov     _W2DAT, #ACCEL_ADDR_TX          ; Trigger the next I2C transaction
-        
+        I2C_INITIATE()
+
         ;--------------------------------------------------------------------
 
 nb_packet_done:
 
-        mov     TL1, #0xFF                      ; RX mode: Interrupt on the next incoming edge
-        mov     TH1, #0xFF
-        clr     _nb_tx_mode
-        setb    _TCON_TR1
-#if defined(NBR_TX) || defined(NBR_RX)
-        orl     _MISC_DIR, #MISC_NB_OUT         ; Let the LC tanks float
-#endif
+        NB_BEGIN_RX()
 
 nb_irq_ret:
 

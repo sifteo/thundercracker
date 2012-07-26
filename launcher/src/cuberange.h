@@ -19,14 +19,7 @@ public:
 
     CubeRange(const _SYSMetadataCubeRange *cr = 0);
 
+    bool isEmpty();
     bool isValid();
-
-    /**
-     * Set up the system to use exactly the minimum number of cubes.
-     * This is most meaningful in simulation, where we can actaully
-     * change the number of cubes.
-     *
-     * Returns a CubeSet representing the cubes we are using.
-     */
-    Sifteo::CubeSet initMinimum();
+    void set();
 };

@@ -66,17 +66,6 @@ class Radio {
 
     static const unsigned DEBUG_REG_SIZE = 0x80;
 
-    void setAddressLSB(uint8_t lsb) {
-        /*
-         * Override the least significant byte of this cube's TX/RX
-         * addresses.  Typically only useful for debugging. We can
-         * assign each cube a different default address, which isn't
-         * at all the case for real silicon.
-         */
-        regs[REG_RX_ADDR_P0] = lsb;
-        regs[REG_TX_ADDR] = lsb;
-    }
-
     uint8_t *getRegs() {
         return regs;
     }
@@ -137,6 +126,14 @@ class Radio {
             cpu->mSFR[REG_IRCON] |= IRCON_RF;
             cpu->needInterruptDispatch = true;
             irq_edge = 0;
+
+            // Radio IRQ edges also trigger the RTC2 external capture, if that's enabled.
+            uint8_t mask = RTC2CON_ENABLE | RTC2CON_EXTERNAL;
+            if (mask == (cpu->mSFR[REG_RTC2CON] & mask)) {
+                uint16_t rtc2 = cpu->rtc2;
+                cpu->mSFR[REG_RTC2CPT00] = rtc2;
+                cpu->mSFR[REG_RTC2CPT01] = rtc2 >> 8;
+            }
         }
     }
 

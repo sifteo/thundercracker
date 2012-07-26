@@ -16,17 +16,18 @@ CubeRange::CubeRange(const _SYSMetadataCubeRange *cr)
         bzero(sys);
 }
 
+bool CubeRange::isEmpty()
+{
+    return sys.minCubes == 0;
+}
+
 bool CubeRange::isValid()
 {
     return sys.minCubes <= sys.maxCubes && sys.minCubes <= _SYS_NUM_CUBE_SLOTS;
 }
 
-CubeSet CubeRange::initMinimum()
+void CubeRange::set()
 {
     LOG("LAUNCHER: Using cube range [%d,%d]\n", sys.minCubes, sys.maxCubes);
-    CubeSet cubes(0, sys.minCubes);
-    SCRIPT_FMT(LUA, "System():setOptions{ numCubes = %d }", sys.minCubes);
-    _SYS_enableCubes(cubes);
-    _SYS_disableCubes(~cubes);
-    return cubes;
+    _SYS_setCubeRange(sys.minCubes, sys.maxCubes);
 }

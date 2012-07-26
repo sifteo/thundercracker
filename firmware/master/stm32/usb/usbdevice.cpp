@@ -144,29 +144,19 @@ uint8_t UsbDevice::epINBuf[UsbHardware::MAX_PACKET];
     Called from within Tasks::work() to process usb OUT data on the
     main thread.
 */
-void UsbDevice::handleOUTData(void *p)
+void UsbDevice::handleOUTData()
 {
-    Tasks::clearPending(Tasks::UsbOUT);
-
     USBProtocolMsg m;
     m.len = UsbHardware::epReadPacket(OutEpAddr, m.bytes, m.bytesFree());
     if (m.len > 0) {
-#if ((BOARD == BOARD_TEST_JIG) && !defined(BOOTLOADER))
+    #if ((BOARD == BOARD_TEST_JIG) && !defined(BOOTLOADER))
         TestJig::onTestDataReceived(m.bytes, m.len);
-#elif defined(BOOTLOADER)
+    #elif defined(BOOTLOADER)
         Bootloader::onUsbData(m.bytes, m.len);
-#else
+    #else
         USBProtocol::dispatch(m);
-#endif
+    #endif
     }
-}
-
-/*
-    Called from within Tasks::work() to handle a usb IN event on the main thread.
-    TBD whether this is actually helpful.
-*/
-void UsbDevice::handleINData(void *p) {
-    (void)p;
 }
 
 void UsbDevice::init() {
@@ -227,7 +217,7 @@ void UsbDevice::inEndpointCallback(uint8_t ep)
  */
 void UsbDevice::outEndpointCallback(uint8_t ep)
 {
-    Tasks::setPending(Tasks::UsbOUT);
+    Tasks::trigger(Tasks::UsbOUT);
 }
 
 /*
@@ -252,7 +242,7 @@ int UsbDevice::controlRequest(Usb::SetupData *req, uint8_t **buf, uint16_t *len)
 bool UsbDevice::waitForPreviousWrite()
 {
     while (configured && txInProgress)
-        ;
+        Tasks::waitForInterrupt();
     return configured;
 }
 

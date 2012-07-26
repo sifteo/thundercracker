@@ -95,3 +95,18 @@ uint32_t PRNG::anonymousValue()
     init(&state, uint32_t(now ^ (now >> 32)));
     return value(&state);
 }
+
+void PRNG::collectTimingEntropy(_SYSPseudoRandomState *state)
+{
+    /*
+     * Add entropy to our PRNG using the current nanosecond timestamp.
+     * Call this before sampling the PRNG to use the timing of your event
+     * as an additional source of randomness.
+     *
+     * Unlike just re-seeding the PRNG using the nanosecond clock, this
+     * preserves a portion of the existing entropy in the PRNG state.
+     */
+
+    SysTime::Ticks now = SysTime::ticks();
+    init(state, value(state) ^ uint32_t(now ^ (now >> 32)));
+}

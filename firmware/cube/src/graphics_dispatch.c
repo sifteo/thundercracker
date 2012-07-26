@@ -7,8 +7,8 @@
  */
 
 #include "graphics.h"
-#include "main.h"
 #include "sensors.h"
+#include "power.h"
 
 uint8_t next_ack;
 
@@ -30,6 +30,9 @@ void graphics_render(void) __naked
      * (It is still possible for A21 to be set based on our change to
      * i2c_a21_target, but we don't require it.)
      */
+
+    // Reset watchdog ONLY in main loop!
+    power_wdt_set();
 
     __asm
 
@@ -64,8 +67,6 @@ void graphics_render(void) __naked
 
     __endasm ;
 
-    global_busy_flag = 1;
-
     // Set up colormap (Used by FB32, STAMP)
     DPH1 = _SYS_VA_COLORMAP >> 8;
 
@@ -89,8 +90,8 @@ gd_jmp: jmp     @a+dptr
         ; Static analysis NOTE dyn_branch gd_jmp gd_n
 
 gd_table:
-gd_n1:  ljmp    _vm_powerdown   ; 0x00
-        .ds 1
+gd_n1:  ajmp    _vm_powerdown   ; 0x00
+        .ds 2
 gd_n2:  ljmp    _vm_bg0_rom     ; 0x04
         .ds 1
 gd_n3:  ljmp    _vm_solid       ; 0x08
@@ -101,25 +102,25 @@ gd_n5:  ljmp    _vm_fb64        ; 0x10
         .ds 1
 gd_n6:  ljmp    _vm_fb128       ; 0x14
         .ds 1
-gd_n7:  ljmp    _vm_bg0         ; 0x18
-        .ds 1
-gd_n8:  ljmp    _vm_bg0_bg1     ; 0x1c
-        .ds 1
-gd_n9:  ljmp    _vm_bg0_spr_bg1 ; 0x20
-        .ds 1
+gd_n7:  ajmp    _vm_bg0         ; 0x18
+        .ds 2
+gd_n8:  ajmp    _vm_bg0_bg1     ; 0x1c
+        .ds 2
+gd_n9:  ajmp    _vm_bg0_spr_bg1 ; 0x20
+        .ds 2
 gd_n10: ljmp    _vm_bg2         ; 0x24
         .ds 1
 gd_n11: ljmp    _vm_stamp       ; 0x28
         .ds 1
-gd_n12: ljmp    _vm_powerdown   ; 0x2c (unused)
-        .ds 1
-gd_n13: ljmp    _vm_powerdown   ; 0x30 (unused)
-        .ds 1
-gd_n14: ljmp    _vm_powerdown   ; 0x34 (unused)
-        .ds 1
-gd_n15: ljmp    _vm_powerdown   ; 0x38 (unused)
-        .ds 1
-gd_n16: ljmp    _vm_powerdown   ; 0x3c (unused)
+gd_n12: ajmp    _vm_powerdown   ; 0x2c (unused)
+        .ds 2
+gd_n13: ajmp    _vm_powerdown   ; 0x30 (unused)
+        .ds 2
+gd_n14: ajmp    _vm_powerdown   ; 0x34 (unused)
+        .ds 2
+gd_n15: ajmp    _vm_powerdown   ; 0x38 (unused)
+        .ds 2
+gd_n16: ajmp    _vm_sleep       ; 0x3c
 
     __endasm ;
 }
@@ -127,7 +128,13 @@ gd_n16: ljmp    _vm_powerdown   ; 0x3c (unused)
 void vm_powerdown() __naked
 {
     lcd_sleep();
-    GRAPHICS_RET();
+    GRAPHICS_ARET();
+}
+
+void vm_sleep() __naked
+{
+    lcd_pwm_fade();
+    power_sleep();
 }
 
 void graphics_ack(void) __naked
@@ -145,7 +152,7 @@ void graphics_ack(void) __naked
         xrl     (_ack_data + RF_ACK_FRAME), a
         orl     _ack_bits, #RF_ACK_BIT_FRAME
 1$:
-        ljmp    _graphics_render_ret
+        ajmp    _graphics_render_ret
 
     __endasm ;
 }

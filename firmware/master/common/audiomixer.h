@@ -18,11 +18,15 @@ public:
     // Global sample rate for mixing and audio output
     static const unsigned SAMPLE_HZ = 16000;
 
+    // Type and size for output buffer, between mixer and audio device
+    typedef RingBuffer<512, int16_t> OutputBuffer;
+
     AudioMixer();
 
     void init();
 
     static AudioMixer instance;
+    static OutputBuffer output;
 
     static void test();
 
@@ -48,7 +52,7 @@ public:
         return playingChannelMask != 0;
     }
 
-    static void pullAudio(void *p);
+    static void pullAudio();
 
     ALWAYS_INLINE unsigned channelID(AudioChannelSlot *slot) {
         return slot - &channelSlots[0];
@@ -59,12 +63,13 @@ protected:
     void setTrackerCallbackInterval(uint32_t usec);
 
 private:
-    uint32_t playingChannelMask;    // channels that are actively playing
-    AudioChannelSlot channelSlots[_SYS_AUDIO_MAX_CHANNELS];
-
     // Tracker callback timer
     uint32_t trackerCallbackInterval;
     uint32_t trackerCallbackCountdown;
+
+    uint32_t playingChannelMask;    // channels that are actively playing
+
+    AudioChannelSlot channelSlots[_SYS_AUDIO_MAX_CHANNELS];
 
     bool mixAudio(int *buffer, uint32_t numFrames);
 };

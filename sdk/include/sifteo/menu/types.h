@@ -41,7 +41,8 @@ struct MenuAssets {
     const PinnedAssetImage *background; /// 1x1tl background image, repeating
     const AssetImage *footer;           /// ptr to 16x4tl blank footer
     const AssetImage *header;           /// ptr to 16x2tl blank header, optional if all items have no labels.
-    const AssetImage *tips[8];          /// NULL-terminated array of ptrs to 16x4tl footer tips ("Choose a thing", "Tilt to scroll", "Press to select", …)
+    const AssetImage *tips[8];          /// (Optional) NULL-terminated array of ptrs to 16x4tl footer tips ("Choose a thing", "Tilt to scroll", "Press to select", …)
+    const AssetImage *overflowIcon;     /// (Optional) Icon to be rendered in the "-1" and "N" slots respectively
 };
 
 struct MenuItem {
@@ -83,13 +84,15 @@ struct MenuEvent {
  *   Tilting: cube is being tilted. -> Inertia.
  *   Inertia: menu is coasting. -> Tilting, Static.
  *   Finish: item selected, animate out menu. -> Start.
+ *   Hop Up: inverse of Finish, item hops back into menu. -> Static
  */
 typedef enum {
     MENU_STATE_START,
     MENU_STATE_STATIC,
     MENU_STATE_TILTING,
     MENU_STATE_INERTIA,
-    MENU_STATE_FINISH
+    MENU_STATE_FINISH,
+    MENU_STATE_HOP_UP
 } MenuState;
 
 
@@ -103,9 +106,9 @@ class Menu {
     bool itemVisible(uint8_t item);
     void setIconYOffset(uint8_t px);
     void setPeekTiles(uint8_t numTiles);
-    void anchor(uint8_t item);
+    void anchor(uint8_t item, bool hopUp = false);
+    MenuState getState();
     
-
  private:
     static const float kTimeDilator = 13.1f;
     static const float kMaxSpeedMultiplier = 3.f;
@@ -183,6 +186,9 @@ class Menu {
     void transToFinish();
     void stateFinish();
     void transFromFinish();
+    void transToHopUp();
+    void stateHopUp();
+    void transFromHopUp();
 
     // events.h
     bool dispatchEvent(struct MenuEvent *ev);
@@ -198,6 +204,7 @@ class Menu {
     // util.h
     void detectNeighbors();
     uint8_t computeSelected();
+    void checkForPress();
     void drawColumn(int);
     void drawFooter(bool force = false);
     int stoppingPositionFor(int);

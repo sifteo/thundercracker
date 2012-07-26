@@ -56,7 +56,7 @@ bool AccelState::updateTiltState()
     }
 
     if (tiltChanged) {
-        Event::setCubePending(_SYS_CUBE_TILT, id());
+        Event::setCubePending(Event::PID_CUBE_TILT, id());
         return true;
     }
 
@@ -99,7 +99,7 @@ void AccelState::updateShakeState()
   
     if (shakeState != newGlobalShakeState) {
         shakeState = newGlobalShakeState;
-        Event::setCubePending(_SYS_CUBE_SHAKE, id());
+        Event::setCubePending(Event::PID_CUBE_SHAKE, id());
     }
 }
 

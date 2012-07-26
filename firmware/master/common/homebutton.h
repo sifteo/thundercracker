@@ -12,7 +12,7 @@ namespace HomeButton
     void onChange();
     bool isPressed();
 
-    void task(void *p);
+    void task();
 
 } // namespace Button
 

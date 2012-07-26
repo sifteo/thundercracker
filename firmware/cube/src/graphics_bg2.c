@@ -246,10 +246,10 @@ void vm_bg2(void) __naked
         BG2_ADDR_PIXEL()
         ASM_ADDR_INC4()
         djnz    r7, 1$
-        ljmp    20$
+        ajmp    20$
 
-12$:    ljmp    2$
-13$:    ljmp    3$
+12$:    ajmp    2$
+13$:    ajmp    3$
 
         ; ---- Main pixel loop
 1$:
@@ -291,7 +291,7 @@ void vm_bg2(void) __naked
         mov     a, r1
         BG2_X_UPDATE_NB()
         mov     a, r3
-        ljmp    14$
+        ajmp    14$
 
         ; Loop 
 7$:

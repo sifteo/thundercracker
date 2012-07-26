@@ -4,6 +4,7 @@ MASTER_DIR := $(TC_DIR)/firmware/master
 OBJS_COMMON = \
     $(MASTER_DIR)/common/syscall_asset.o \
     $(MASTER_DIR)/common/syscall_audio.o \
+    $(MASTER_DIR)/common/syscall_battery.o \
     $(MASTER_DIR)/common/syscall_cube.o \
     $(MASTER_DIR)/common/syscall_filesystem.o \
     $(MASTER_DIR)/common/syscall_prng.o \
@@ -14,9 +15,11 @@ OBJS_COMMON = \
     $(MASTER_DIR)/common/syscall_video.o \
     $(MASTER_DIR)/common/event.o \
     $(MASTER_DIR)/common/radio.o \
+    $(MASTER_DIR)/common/radioaddrfactory.o \
     $(MASTER_DIR)/common/assetslot.o \
     $(MASTER_DIR)/common/cubeslots.o \
     $(MASTER_DIR)/common/cube.o \
+    $(MASTER_DIR)/common/cubeconnector.o \
     $(MASTER_DIR)/common/cubecodec.o \
     $(MASTER_DIR)/common/audiomixer.o \
     $(MASTER_DIR)/common/adpcmdecoder.o \
@@ -25,7 +28,7 @@ OBJS_COMMON = \
     $(MASTER_DIR)/common/xmtrackerpattern.o \
     $(MASTER_DIR)/common/xmtrackerplayer.o \
     $(MASTER_DIR)/common/accel.o \
-    $(MASTER_DIR)/common/neighbors.o \
+    $(MASTER_DIR)/common/neighborslot.o \
     $(MASTER_DIR)/common/tasks.o \
     $(MASTER_DIR)/common/prng.o \
     $(MASTER_DIR)/common/crc.o \
@@ -79,7 +82,45 @@ OBJS_STM32 = \
     $(MASTER_DIR)/stm32/factorytest.stm32.o \
     $(MASTER_DIR)/stm32/exti.stm32.o \
     $(MASTER_DIR)/stm32/led.stm32.o \
+    $(MASTER_DIR)/stm32/neighbor_tx.stm32.o \
     $(MASTER_DIR)/stm32/syscall_math.stm32.o
+
+# Library code.
+#
+# Note that newlib has two math libraries.
+# Currently we're using "math" instead of the newer "mathfp", because
+# it seems more mature and we don't need the features added by mathfp.
+
+OBJS_STM32 += \
+    $(MASTER_DIR)/stm32/newlib/libc/machine/arm/memcpy.stm32.o \
+    $(MASTER_DIR)/stm32/newlib/libc/machine/arm/memset.stm32.o \
+    $(MASTER_DIR)/stm32/newlib/libc/machine/arm/strcpy.stm32.o \
+    $(MASTER_DIR)/stm32/newlib/libc/machine/arm/strcmp.stm32.o \
+    $(MASTER_DIR)/stm32/newlib/libc/machine/arm/strlen.stm32.o \
+    $(MASTER_DIR)/stm32/newlib/libc/string/memchr.stm32.o \
+    $(MASTER_DIR)/stm32/newlib/libc/string/memcmp.stm32.o \
+    $(MASTER_DIR)/stm32/newlib/libc/string/memmove.stm32.o \
+    $(MASTER_DIR)/stm32/newlib/libm/math/e_fmod.stm32.o \
+    $(MASTER_DIR)/stm32/newlib/libm/math/ef_fmod.stm32.o \
+    $(MASTER_DIR)/stm32/newlib/libm/math/e_pow.stm32.o \
+    $(MASTER_DIR)/stm32/newlib/libm/math/ef_pow.stm32.o \
+    $(MASTER_DIR)/stm32/newlib/libm/math/e_sqrt.stm32.o \
+    $(MASTER_DIR)/stm32/newlib/libm/math/ef_sqrt.stm32.o \
+    $(MASTER_DIR)/stm32/newlib/libm/math/e_log.stm32.o \
+    $(MASTER_DIR)/stm32/newlib/libm/math/ef_log.stm32.o \
+    $(MASTER_DIR)/stm32/newlib/libm/math/s_sin.stm32.o \
+    $(MASTER_DIR)/stm32/newlib/libm/math/k_sin.stm32.o \
+    $(MASTER_DIR)/stm32/newlib/libm/math/sf_sin.stm32.o \
+    $(MASTER_DIR)/stm32/newlib/libm/math/kf_sin.stm32.o \
+    $(MASTER_DIR)/stm32/newlib/libm/math/s_cos.stm32.o \
+    $(MASTER_DIR)/stm32/newlib/libm/math/k_cos.stm32.o \
+    $(MASTER_DIR)/stm32/newlib/libm/math/sf_cos.stm32.o \
+    $(MASTER_DIR)/stm32/newlib/libm/math/kf_cos.stm32.o \
+    $(MASTER_DIR)/stm32/newlib/libm/math/ef_rem_pio2.stm32.o \
+    $(MASTER_DIR)/stm32/newlib/libm/math/kf_rem_pio2.stm32.o \
+    $(MASTER_DIR)/stm32/newlib/libm/math/sf_floor.stm32.o \
+    $(MASTER_DIR)/stm32/newlib/libm/common/s_scalbn.stm32.o \
+    $(MASTER_DIR)/stm32/newlib/libm/common/sf_scalbn.stm32.o
 
 # Other target specific sources should be appended to OBJS_STM32
 # in their project specific Makefiles

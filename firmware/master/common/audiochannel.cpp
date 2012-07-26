@@ -136,7 +136,6 @@ bool AudioChannelSlot::mixAudio(int *buffer, uint32_t numFrames)
     } while (--numFrames);
 
     offset = localOffset;
-    samples.releaseRef();
 
     return true;
 }

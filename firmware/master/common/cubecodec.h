@@ -131,9 +131,8 @@ class CubeCodec {
     bool explicitAckRequest(PacketBuffer &buf)
     {
         /*
-         * If the buffer has room, adds an "Explicit ACK request" packet and
-         * returns true. Otherwise, returns false. Additional compression codes
-         * may follow this one; no codec state is affected.
+         * If the buffer has room, adds an "Explicit ACK request" escape and
+         * returns true. Otherwise, returns false.
          */
         if (txBits.hasRoomForFlush(buf, 8)) {
             txBits.append(0x79, 8);

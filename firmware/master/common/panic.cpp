@@ -60,9 +60,6 @@ void PanicMessenger::paint(_SYSCubeID cube)
     CubeSlot &slot = CubeSlots::instances[cube];
     avb->vbuf.vram.flags = _SYS_VF_CONTINUOUS;
 
-    CubeSlots::connectCubes(slot.bit());
-    CubeSlots::enableCubes(slot.bit());
-
     VRAM::init(avb->vbuf);
     VRAM::unlock(avb->vbuf);
     slot.setVideoBuffer(&avb->vbuf);
@@ -175,7 +172,7 @@ void PanicMessenger::haltUntilButton()
 
 void PanicMessenger::paintAndWait()
 {
-    _SYSCubeIDVector cubes = CubeSlots::vecEnabled;
+    _SYSCubeIDVector cubes = CubeSlots::sysConnected;
     if (cubes) {
         // Paint on first enabled cube
         paint(Intrinsic::CLZ(cubes));

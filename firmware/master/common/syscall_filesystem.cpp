@@ -283,5 +283,112 @@ uint32_t _SYS_fs_runningVolume()
     return vol.getHandle();
 }
 
+uint32_t _SYS_fs_previousVolume()
+{
+    // Return a _SYSVolumeHandle for the volume running before the last exec()
+
+    FlashVolume vol = SvmLoader::getPreviousVolume();
+    if (vol.block.isValid()) {
+        ASSERT(vol.isValid());
+        return vol.getHandle();
+    }
+    return 0;
+}
+
+uint32_t _SYS_fs_info(_SYSFilesystemInfo *buffer, uint32_t bufferSize)
+{
+    if (!SvmMemory::mapRAM(buffer, bufferSize)) {
+        SvmRuntime::fault(F_SYSCALL_ADDRESS);
+        return 0;
+    }
+
+    /*
+     * Tabulate the space used by everything in our filesystem
+     */
+
+    FlashVolumeIter vi;
+    FlashVolume vol;
+    _SYSFilesystemInfo info;
+
+    memset(&info, 0, sizeof info);
+
+    info.unitSize = FlashMapBlock::BLOCK_SIZE;
+    info.totalUnits = FlashMapBlock::NUM_BLOCKS;
+    info.freeUnits = FlashMapBlock::NUM_BLOCKS;
+
+    vi.begin();
+    while (vi.next(vol)) {
+        FlashBlockRef ref;
+        FlashVolumeHeader *hdr = FlashVolumeHeader::get(ref, vol.block);
+        ASSERT(hdr->isHeaderValid());
+
+        // Ignore deleted/incomplete volumes. (Treat them as free space)
+        if (hdr->isDeleted())
+            continue;
+
+        // All other volumes count against our free space
+        unsigned volUnits = hdr->numMapEntries();
+        info.freeUnits -= volUnits;
+
+        // Is this ours?
+        if (SvmLoader::getRunningVolume().block.code == vol.block.code)
+            info.selfElfUnits += volUnits;
+
+        // Count other volumes according to their type
+        switch (hdr->type) {
+
+            case FlashVolume::T_GAME:
+                info.gameElfUnits += volUnits;
+                break;
+
+            case FlashVolume::T_LAUNCHER:
+                info.launcherElfUnits += volUnits;
+                break;
+
+            case FlashVolume::T_LFS:
+                // For filesystems, look at the type of their parent
+
+                if (hdr->parentBlock == 0) {
+                    // No parent: SysLFS
+                    info.systemUnits += volUnits;
+                } else {
+                    FlashVolume parent = FlashMapBlock::fromCode(hdr->parentBlock);
+
+                    // Is this ours?
+                    if (SvmLoader::getRunningVolume().block.code == parent.block.code)
+                        info.selfObjUnits += volUnits;
+
+                    // Sort by parent's type
+                    switch (parent.getType()) {
+
+                        case FlashVolume::T_GAME:
+                            info.gameObjUnits += volUnits;
+                            break;
+
+                        case FlashVolume::T_LAUNCHER:
+                            info.launcherObjUnits += volUnits;
+                            break;
+                    }
+                }
+                break;
+        }
+    }
+
+    /* 
+     * Copy out results.
+     *
+     * The caller can request a subset of the available data, for forward compatibility.
+     * We return the amount of data actually written to the buffer, which could be limited
+     * by this firmware's _SYSFilesystemInfo size or by the app's buffer size.
+     *
+     * If the app gives us a bigger buffer than we know how to fill, pad the rest with zeroes.
+     */
+
+    unsigned actualSize = MIN(sizeof info, bufferSize);
+    memset(buffer, 0, bufferSize);
+    memcpy(buffer, &info, actualSize);
+    return actualSize;
+}
+
 
 }  // extern "C"

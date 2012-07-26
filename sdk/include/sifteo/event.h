@@ -222,11 +222,29 @@ namespace Events {
      * Cube events
      */
 
-    /// A new cube has been added.
-    const EventVector<_SYS_CUBE_FOUND>       cubeFound;
+    /**
+     * @brief A new cube has connected and is ready for use.
+     *
+     * This event is only sent for cubes within an application's range,
+     * as defined by Metadata::cubeRange(). The current set of connected
+     * cubes, retrievable with CubeSet::connected(), is updated immediately
+     * prior to dispatching this event.
+     */
+    const EventVector<_SYS_CUBE_CONNECT>     cubeConnect;
 
-    /// A cube has been lost.
-    const EventVector<_SYS_CUBE_LOST>        cubeLost;
+    /**
+     * @brief A formerly connected cube has been lost.
+     *
+     * This event is only sent if the number of cubes is still within the
+     * application's range, as defined by Metadata::cubeRange(). If the
+     * number of cubes falls below the application's minimum, instead of
+     * generating this event the system will prompt the user to reconnect
+     * a cube or to exit.
+     *
+     * The current set of connected cubes, retrievable with CubeSet::connected(),
+     * is updated immediately prior to dispatching this event.
+     */
+    const EventVector<_SYS_CUBE_DISCONNECT>  cubeDisconnect;
 
     /// An asynchronous asset download has completed.
     const EventVector<_SYS_CUBE_ASSETDONE>   cubeAssetDone;
@@ -242,6 +260,23 @@ namespace Events {
 
     /// A shake gesture was recognized on one cube.
     const EventVector<_SYS_CUBE_SHAKE>       cubeShake;
+
+    /// A cube's battery level has changed measurably
+    const EventVector<_SYS_CUBE_BATTERY>     cubeBatteryLevelChange;
+
+    /**
+     * @brief The application is responsible for repainting the screen on this cube
+     * and checking its installed assets.
+     *
+     * This event is issued by the system in any case where an otherwise-invisible
+     * system operation (a cube disconnecting and reconnecting, the user pausing and
+     * resuming the game) has caused the contents of a cube's VRAM and/or Asset Flash
+     * to require updating.
+     *
+     * If an application-visible cube disconnect/reconnect event has occurred, this
+     * event is always delivered after the applicable cubeDisconnect and cubeConnect.
+     */
+    const EventVector<_SYS_CUBE_REFRESH>     cubeRefresh;
 
     /*
      * Base events

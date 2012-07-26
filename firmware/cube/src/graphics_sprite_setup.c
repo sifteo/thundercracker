@@ -9,6 +9,9 @@
 #include "graphics_sprite.h"
 #include "sensors.h"
 
+uint8_t y_spr_line;
+uint8_t y_spr_line_limit;
+
 
 void vm_bg0_spr_bg1(void) __naked
 {
@@ -38,7 +41,7 @@ void vm_bg0_spr_bg1(void) __naked
     } while (y_spr_line != y_spr_line_limit);
     
     lcd_end_frame();
-    GRAPHICS_RET();
+    GRAPHICS_ARET();
 }
 
 void vm_spr_setup()

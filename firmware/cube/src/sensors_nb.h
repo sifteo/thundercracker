@@ -73,13 +73,28 @@
 
 extern uint8_t nb_bits_remaining;   // Bit counter for transmit or receive
 extern uint8_t nb_buffer[2];        // Packet shift register for TX/RX
-extern uint8_t nb_tx_id;            // The ID byte we're broadcasting
+
 extern __bit nb_tx_mode;            // We're in the middle of an active transmission
 extern __bit nb_rx_mask_state0;
 extern __bit nb_rx_mask_state1;
 extern __bit nb_rx_mask_state2;
 extern __bit nb_rx_mask_bit0;
 extern __bit nb_rx_mask_bit1;
+
+/*
+ * Our current neighbor ID. Valid IDs have the three MSBs set to 1,
+ * i.e. they're already formatted properly for use as the first byte
+ * of the raw neighbor packet.
+ *
+ * If this is zero (the default while disconnected), neighbor transmit
+ * is disabled.
+ *
+ * Note: On real hardware, this is overlaid with an unused SFR purely
+ *       to save RAM. But in Siftulator, this also gives us an easy
+ *       way to peek at the cube's assigned neighbor ID and show
+ *       that ID in the heads-up display.
+ */
+__sfr __at 0xA1 nb_tx_id;
 
 /*
  * We do a little bit of signal conditioning on neighbors before
@@ -103,5 +118,28 @@ extern uint8_t __idata nb_instant_state[4];
 
 // State that we'd like to promote to the ACK packet, if we can verify it.
 extern uint8_t __idata nb_prev_state[4];
+
+/*
+ * Shared neighbor state transition code
+ */
+
+#pragma sdcc_hash +
+
+// Prepare for TF1 interrupt on received start bit, let LC tanks float
+#define NB_BEGIN_RX()                           __endasm; \
+    __asm mov     TL1, #0xFF                    __endasm; \
+    __asm mov     TH1, #0xFF                    __endasm; \
+    __asm clr     _nb_tx_mode                   __endasm; \
+    __asm setb    _TCON_TR1                     __endasm; \
+    __asm orl     _MISC_DIR, #MISC_NB_OUT       __endasm; \
+    __asm
+
+// Go to transmit mode, set up bit period timer
+#define NB_BEGIN_TX()                               __endasm; \
+    __asm setb    _nb_tx_mode                       __endasm; \
+    __asm mov     _nb_bits_remaining, #NB_TX_BITS   __endasm; \
+    __asm mov     _TL2, #(0x100 - NB_BIT_TICKS)     __endasm; \
+    __asm setb    _T2CON_T2I0                       __endasm; \
+    __asm
 
 #endif

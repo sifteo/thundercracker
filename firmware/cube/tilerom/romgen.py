@@ -24,6 +24,30 @@ def RGB565(r, g, b):
     b5 = (b * 31 + 128) // 255;
     return (r5 << 11) | (g6 << 5) | b5
 
+def InverseRGB565(w):
+    # Convert RGB565 back to RGB color
+    return ( ((w >> 11) & 0x1F) * 255 / 31,
+             ((w >> 5 ) & 0x3F) * 255 / 63,
+             ((w >> 0 ) & 0x1F) * 255 / 31 )
+             
+def squashColorTo8Bit(w):
+    # Find the closest 8-bit color for the given RGB565 16-bit color.
+    # Used for palette entry 0, where the MSB and LSB must be equal.
+
+    best = None
+    bestDistance = 1e10
+    r1,g1,b1 = InverseRGB565(w)
+
+    for candidate in range(256):
+        candidate = candidate | (candidate << 8)
+        r2,g2,b2 = InverseRGB565(candidate)
+        diff = (r2-r1)**2 + (g2-g1)**2 + (b2-b1)**2
+        if diff < bestDistance:
+            best = candidate
+            bestDistance = diff
+
+    return best
+
 
 class Tiler:
     def __init__(self):
@@ -36,6 +60,7 @@ class Tiler:
         self.palette = tuple(Image.open(filename).getdata())
         if len(self.palette) != 16 * 4:
             raise ValueError("Must have exactly 16 palettes, of 4 colors each")
+        self.processPalette()
 
     def carveImage(self, image):
         width, height = image.size
@@ -92,6 +117,12 @@ class Tiler:
 
         if pixels not in self.memo:
             self.memo[pixels] = True
+            
+            # 4-color tiles can't cross a 128-tile boundary
+            if (len(self.tiles) & 0x7F) == 0x7F:
+                print "Inserting dummy tile #%d" % len(self.tiles)
+                self.tiles.append([0] * 64)
+
             for plane in (tuple([x & 1 for x in pixels]),
                           tuple([x >> 1 for x in pixels])):
                 self.tiles.append(plane)
@@ -121,7 +152,7 @@ class Tiler:
             else:
                 index = self.tiles[address][i]
 
-            tile.putpixel((x, y), self.palette[palBase + index])
+            tile.putpixel((x, y), self.reconstructedPalette[palBase + index])
     
         return tile
 
@@ -131,6 +162,8 @@ class Tiler:
         # an atlas dictionary, used by loadImage(), and we generate
         # a master image that can be used as a design reference or
         # as an input file for STIR.
+
+        print "Creating atlas %r..." % filename
 
         width = 128
         height = MAX_INDEX / width
@@ -151,6 +184,8 @@ class Tiler:
         image.save(filename)
 
     def loadImage(self, filename):
+        print "Processing image %r..." % filename
+
         image = Image.open(filename).convert("RGB")
         indices = []
 
@@ -195,9 +230,11 @@ class Tiler:
                     % (addr, name, self.cByteArray(data)))
 
     def saveCode(self, filename):
+        print "Generating code %r..." % filename
+
         arrays = [
             ('rom_tiles', self.swizzleTiles(self.tileBytes())),
-            ('rom_palettes', self.paletteBytes()),
+            ('rom_palettes', self.paletteBytes),
             ]
 
         for name, size, indices in self.images:
@@ -217,7 +254,10 @@ class Tiler:
                 parts.append("\n")
         return ''.join(parts)
 
-    def paletteBytes(self):
+    def processPalette(self):
+        # Given a raw palette in self.palette[], create paletteBytes and
+        # reconstructedPalette[].
+        #
         # Palettes are stored in format very specific to the graphics
         # engine's implementation. During the inner loop of BG0_ROM, we
         # use one entire register bank as a fast copy of the currently
@@ -234,10 +274,14 @@ class Tiler:
         # (very common) background pixels.
 
         bytes = []
+        reconstruct = []
 
         for i, color in enumerate(self.palette):
             value = RGB565(*color)
             palIndex = i & 3
+
+            if palIndex == 0:
+                value = squashColorTo8Bit(value)
 
             bytes.append(0x78 + (palIndex*2))
             bytes.append(value & 0xFF)
@@ -250,7 +294,10 @@ class Tiler:
                 bytes.append(0x22)      # ret
                 bytes.append(0x00)      # nop (pad to 16 bytes)
 
-        return bytes
+            reconstruct.append(InverseRGB565(value))
+
+        self.paletteBytes = bytes
+        self.reconstructedPalette = reconstruct
 
     def tileBytes(self):
         bytes = []
@@ -327,12 +374,12 @@ if __name__ == "__main__":
 
     for img in (
         "tilerom/img-logo.png",
+        "tilerom/img-trophy.png",
         "tilerom/img-battery.png",
-        "tilerom/img-radio-0.png",
-        "tilerom/img-radio-1.png",
-        "tilerom/img-radio-2.png",
-        "tilerom/img-radio-3.png",
-        "tilerom/img-power.png",
+        "tilerom/img-battery-bars-1.png",
+        "tilerom/img-battery-bars-2.png",
+        "tilerom/img-battery-bars-3.png",
+        "tilerom/img-battery-bars-4.png",
         ):
         t.loadImage(img)
 

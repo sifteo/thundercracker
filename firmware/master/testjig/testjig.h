@@ -20,9 +20,8 @@ public:
 
     static void init();
     static void onTestDataReceived(uint8_t *buf, unsigned len);
-    static void neighborInIsr(uint8_t side);
-    static void onNeighborMsgRx(uint8_t side, uint16_t msg);
     static void onI2cEvent();
+    static void task();
 
 private:
     static const unsigned I2C_SLAVE_ADDRESS = 0x55;

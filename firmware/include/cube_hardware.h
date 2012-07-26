@@ -39,6 +39,18 @@
 #define HWID_REVISION_CODE  0x01
 
 /*
+ * Battery thresholds
+ *
+ * These three thresholds are the boundaries between
+ * the four bars on our idle screen's battery meter.
+ */
+
+#define BATTERY_THRESHOLD_1     0x05
+#define BATTERY_THRESHOLD_2     0x40
+#define BATTERY_THRESHOLD_3     0x80
+
+
+/*
  * GPIO Ports
  */
 
@@ -71,11 +83,11 @@
 #define MISC_TOUCH      (1 << 7)
 #define MISC_NB_IN      (1 << 6)   // T1 input
 
-// Touch is on a wakeup-capable pin
-#define TOUCH_WUOPC_BIT (1 << 7)
-
-// Shake as a wakeup source
-#define SHAKE_WUOPC_BIT (1 << 1)
+#if HWREV >= 5
+#   define WUOPC_BIT    (1 << 1)   // Wake on shake
+#else
+#   define WUOPC_BIT    (1 << 7)   // WAke on touch
+#endif
 
 // Numbered according to the standard side enum.
 // Both the number and name are represented here; due to the binary masking, both are critical.
@@ -426,8 +438,10 @@ __sbit __at 0xEA RF_CKEN;
 #define W2CON0_STOP     0x20
 
 // W2CON1 bits
-#define W2CON1_NACK     0x02
-#define W2CON1_READY    0x01
+#define W2CON1_NACK         0x02
+#define W2CON1_READY        0x01
+#define W2CON1_NACK_ABIT    acc.1
+#define W2CON1_READY_ABIT   acc.0
 
 // OPMCON bits
 #define OPMCON_WDT_RESET_ENABLE 0x01
@@ -442,5 +456,15 @@ __sbit __at 0xEA RF_CKEN;
 #define CLKLFCTRL_READY         0x40
 #define CLKLFCTRL_PHASE         0x80
 
+// PWRDWN modes
+#define PWRDWN_OFF              0x00
+#define PWRDWN_DEEP_SLEEP       0x01
+#define PWRDWN_MEMRET           0x02
+#define PWRDWN_MEMRET_TIMERS    0x03
+#define PWRDWN_REGRET           0x04
+#define PWRDWN_STANDBY          0x07
+#define PWRDWN_WAKE_FROM_CMP    0x20
+#define PWRDWN_WAKE_FROM_TICK   0x40
+#define PWRDWN_WAKE_FROM_PIN    0x80
 
 #endif // __HARDWARE_H
