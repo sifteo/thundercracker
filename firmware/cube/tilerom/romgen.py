@@ -90,6 +90,7 @@ class Tiler:
         # Unused tiles are reserved with all '1' bits, equivalent to blank flash memory.
         # This means we can still program those tiles later if we need to, on OTP parts.
 
+        self.numDefinedTiles = len(self.tiles)
         while len(self.tiles) < MAX_TILES:
             self.tiles.append((1,) * (TILE * TILE))
 
@@ -135,25 +136,36 @@ class Tiler:
         mode = (index >> 9) & 1
         address = index & 0x1FF
 
-        tile = Image.new("RGB", (TILE, TILE))
-        for i in xrange(TILE*TILE):
-            x = i % TILE
-            y = i / TILE
+        tile = Image.new("RGBA", (TILE, TILE))
 
-            if mode:
-                if (address & 0x7F) == 0x7F:
-                    # DPL roll-over behavior is not defined.
-                    # In our current implementation this will cause an advancement by one
-                    # scanline, but apps shoudln't rely on that behaviour. So, this is a reserved
-                    # index. Mark it as blank in the atlas.
-                    index = 0
-                else:
+        # Default color to indicate areas of our atlas which are undefined
+        tile.paste((255, 0, 255, 128))
+
+        if (address & 0x7F) == 0x7F:
+            # DPL roll-over behavior is not defined.
+            # In our current implementation this will cause an advancement by one
+            # scanline, but apps shoudln't rely on that behaviour. So, this is a reserved
+            # index. Mark it as undefined in the atlas.
+            pass
+
+        elif mode:
+            # 4-color
+            if address + 1 < self.numDefinedTiles:
+                for i in xrange(TILE*TILE):
+                    x = i % TILE
+                    y = i / TILE
                     index = self.tiles[address][i] | (self.tiles[address + 1][i] << 1)
-            else:
-                index = self.tiles[address][i]
-
-            tile.putpixel((x, y), self.reconstructedPalette[palBase + index])
+                    tile.putpixel((x, y), self.reconstructedPalette[palBase + index])
     
+        else:
+            # 2-color
+            if address < self.numDefinedTiles:
+                for i in xrange(TILE*TILE):
+                    x = i % TILE
+                    y = i / TILE
+                    index = self.tiles[address][i]
+                    tile.putpixel((x, y), self.reconstructedPalette[palBase + index])    
+
         return tile
 
     def createAtlas(self, filename):
@@ -167,7 +179,7 @@ class Tiler:
 
         width = 128
         height = MAX_INDEX / width
-        image = Image.new("RGB", (width*TILE, height*TILE))
+        image = Image.new("RGBA", (width*TILE, height*TILE))
 
         for y in range(height):
             for x in range(width):
@@ -186,7 +198,7 @@ class Tiler:
     def loadImage(self, filename):
         print "Processing image %r..." % filename
 
-        image = Image.open(filename).convert("RGB")
+        image = Image.open(filename).convert("RGBA")
         indices = []
 
         for x, y, tile in self.carveImage(image):
