@@ -105,6 +105,11 @@ void UsbVolumeManager::onUsbData(const USBProtocolMsg &m)
         reply.append((const uint8_t*) TOSTRING(SDK_VERSION), sizeof(TOSTRING(SDK_VERSION)));
         break;
     }
+
+    case PairCube:
+        pairCube(m, reply);
+        break;
+
     }
 
 #ifndef SIFTEO_SIMULATOR
@@ -221,5 +226,36 @@ void UsbVolumeManager::volumeMetadata(const USBProtocolMsg &m, USBProtocolMsg &r
             size = MIN(size, reply.bytesFree());
             reply.append(meta, size);
         }
+    }
+}
+
+void UsbVolumeManager::pairCube(const USBProtocolMsg &m, USBProtocolMsg &reply)
+{
+    /*
+     * Directly add pairing info for the given cube hardware ID, without going
+     * through the neighbor/RF based pairing process.
+     *
+     * Note that this will only affect the base's normal pairing process
+     * after a restart, since CubeConnector only loads pairing IDs once
+     * during init.
+     *
+     * Useful to inject pairing information at the factory, for instance.
+     */
+
+    const PairCubeRequest *payload = m.castPayload<PairCubeRequest>();
+
+    reply.header |= PairCube;
+
+    SysLFS::PairingIDRecord rec;
+    rec.load();
+
+    if (payload->pairingSlot >= arraysize(rec.hwid)) {
+        ASSERT(0);
+        return;
+    }
+
+    rec.hwid[payload->pairingSlot] = payload->hwid;
+    if (!SysLFS::write(SysLFS::kPairingID, rec)) {
+        ASSERT(0);
     }
 }
