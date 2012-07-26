@@ -46,7 +46,7 @@ static const Command commands[] = {
     {
         "pair",
         "add a pairing record to the Sifteo Base",
-        "pair <slotID> <hardwareID>",
+        "pair (--read | slotID hardwareID)",
         PairCube::run
     },
 };

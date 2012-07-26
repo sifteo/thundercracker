@@ -11,13 +11,15 @@ public:
 
     static int run(int argc, char **argv, IODevice &_dev);
 
-    bool pair(uint8_t pairingSlot, uint64_t hwid);
+    bool pair(const char *slotStr, const char *hwidStr);
+    bool dumpPairingData();
 
 private:
     IODevice &dev;
 
     static bool getValidPairingSlot(const char *s, unsigned &pairingSlot);
     static bool getValidHWID(const char *s, uint64_t &hwid);
+    UsbVolumeManager::PairingSlotDetailReply *pairingSlotDetail(USBProtocolMsg &buf, unsigned pairingSlot);
 };
 
 #endif // PAIRCUBE_H
