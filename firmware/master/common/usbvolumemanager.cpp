@@ -110,6 +110,10 @@ void UsbVolumeManager::onUsbData(const USBProtocolMsg &m)
         pairCube(m, reply);
         break;
 
+    case PairingSlotDetail:
+        pairingSlotDetail(m, reply);
+        break;
+
     }
 
 #ifndef SIFTEO_SIMULATOR
@@ -242,6 +246,9 @@ void UsbVolumeManager::pairCube(const USBProtocolMsg &m, USBProtocolMsg &reply)
      * Useful to inject pairing information at the factory, for instance.
      */
 
+    if (m.payloadLen() < sizeof(PairCubeRequest))
+        return;
+
     const PairCubeRequest *payload = m.castPayload<PairCubeRequest>();
 
     reply.header |= PairCube;
@@ -258,4 +265,27 @@ void UsbVolumeManager::pairCube(const USBProtocolMsg &m, USBProtocolMsg &reply)
     if (!SysLFS::write(SysLFS::kPairingID, rec)) {
         ASSERT(0);
     }
+}
+
+void UsbVolumeManager::pairingSlotDetail(const USBProtocolMsg &m, USBProtocolMsg &reply)
+{
+    /*
+     * Return the HWID of the requested pairing slot.
+     */
+
+    if (m.payloadLen() < sizeof(unsigned))
+        return;
+
+    unsigned pairingSlot = *m.castPayload<unsigned>();
+
+    SysLFS::PairingIDRecord rec;
+    if (pairingSlot >= arraysize(rec.hwid))
+        return;
+
+    rec.load();
+    reply.header |= PairingSlotDetail;
+
+    PairingSlotDetailReply *r = reply.zeroCopyAppend<PairingSlotDetailReply>();
+    r->hwid = rec.hwid[pairingSlot];
+    r->pairingSlot = pairingSlot;
 }
