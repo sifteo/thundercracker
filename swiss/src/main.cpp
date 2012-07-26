@@ -74,6 +74,22 @@ static void version()
     fprintf(stderr, "swiss, " TOSTRING(SDK_VERSION) "\n");
 }
 
+static int run(int argc, char **argv, UsbDevice &usbdev)
+{
+    const unsigned numCommands = sizeof(commands) / sizeof(commands[0]);
+    const char *commandName = argv[1];
+
+    for (unsigned i = 0; i < numCommands; ++i) {
+        if (!strcmp(commandName, commands[i].name))
+            return commands[i].run(argc - 1, argv + 1, usbdev);
+    }
+
+    fprintf(stderr, "no command named %s\n", commandName);
+    usage();
+
+    return 1;
+}
+
 int main(int argc, char **argv)
 {
     if (argc < 2 || !strcmp(argv[1], "-h")) {
@@ -91,21 +107,15 @@ int main(int argc, char **argv)
      */
     Usb::init();
     UsbDevice usbdev;
+    int rv = run(argc, argv, usbdev);
 
-    const unsigned numCommands = sizeof(commands) / sizeof(commands[0]);
-    const char *commandName = argv[1];
-
-    for (unsigned i = 0; i < numCommands; ++i) {
-        if (!strcmp(commandName, commands[i].name)) {
-            int r = commands[i].run(argc - 1, argv + 1, usbdev);
-            Usb::deinit();
-            return r;
-        }
+    if (usbdev.isOpen()) {
+        usbdev.close();
+        while (usbdev.isOpen())
+            usbdev.processEvents();
     }
 
-    fprintf(stderr, "no command named %s\n", commandName);
-    usage();
-
-    return 1;
+    Usb::deinit();
+    return rv;
 }
 
