@@ -156,9 +156,12 @@ uint32_t _SYS_getAccel(_SYSCubeID cid) _SC(54);
 uint32_t _SYS_getNeighbors(_SYSCubeID cid) _SC(59);
 uint32_t _SYS_getTilt(_SYSCubeID cid) _SC(127);
 uint32_t _SYS_getShake(_SYSCubeID cid) _SC(128);
-uint32_t _SYS_getBatteryV(_SYSCubeID cid) _SC(129);
 uint32_t _SYS_isTouching(_SYSCubeID cid) _SC(55);
 uint64_t _SYS_getCubeHWID(_SYSCubeID cid) _SC(130);
+
+// Battery information
+uint32_t _SYS_cubeBatteryLevel(_SYSCubeID cid) _SC(129);
+uint32_t _SYS_sysBatteryLevel() _SC(173);
 
 // Cube management
 uint32_t _SYS_getConnectedCubes() _SC(16);
@@ -229,6 +232,7 @@ int32_t _SYS_fs_objectRead(unsigned key, uint8_t *buffer, unsigned bufferSize, _
 int32_t _SYS_fs_objectWrite(unsigned key, const uint8_t *data, unsigned dataSize) _SC(60);
 uint32_t _SYS_fs_runningVolume() _SC(168);
 uint32_t _SYS_fs_previousVolume() _SC(171);
+uint32_t _SYS_fs_info(_SYSFilesystemInfo *buffer, uint32_t bufferSize) _SC(172);
 
 
 #ifdef __cplusplus

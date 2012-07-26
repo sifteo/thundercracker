@@ -33,9 +33,6 @@ int Manifest::run(int argc, char **argv, IODevice &_dev)
     Manifest m(_dev, rpc);
     bool success = m.getVolumeOverview() && m.dumpOverview() && m.dumpVolumes();
 
-    _dev.close();
-    _dev.processEvents();
-
     return success ? 0 : 1;
 }
 

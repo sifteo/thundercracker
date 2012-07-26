@@ -7,9 +7,7 @@
 #include <list>
 #include <stdint.h>
 
-class UsbDevice : public IODevice {
-public:
-    UsbDevice();
+namespace Usb {
 
     static int init() {
         return libusb_init(0);
@@ -18,6 +16,13 @@ public:
     static void deinit() {
         libusb_exit(0);
     }
+
+} // namespace Usb
+
+
+class UsbDevice : public IODevice {
+public:
+    UsbDevice();
 
     void processEvents() {
         struct timeval tv = {

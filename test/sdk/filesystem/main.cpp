@@ -183,6 +183,37 @@ void createObjects()
     SCRIPT(LUA, player:stop());
 }
 
+void testFsInfo()
+{  
+    // Short reads
+    static _SYSFilesystemInfo info;
+    info.totalUnits = 0xABCDEF;
+    ASSERT(5 == _SYS_fs_info(&info, 5));
+    ASSERT(info.unitSize == 128*1024);
+    ASSERT(info.totalUnits == 0xABCD80);
+
+    // Long reads
+    ASSERT(sizeof info == _SYS_fs_info(&info, 0x800));
+
+    // Dump out contents
+    LOG_INT(info.unitSize);
+    LOG_INT(info.totalUnits);
+    LOG_INT(info.freeUnits);
+    LOG_INT(info.systemUnits);
+    LOG_INT(info.launcherElfUnits);
+    LOG_INT(info.launcherObjUnits);
+    LOG_INT(info.gameElfUnits);
+    LOG_INT(info.gameObjUnits);
+    LOG_INT(info.selfElfUnits);
+    LOG_INT(info.selfObjUnits);
+
+    FilesystemInfo fi;
+    fi.gather();
+
+    ASSERT(info.unitSize == fi.allocationUnitSize());
+    ASSERT(info.selfElfUnits == fi.selfElfUnits());
+}
+
 void main()
 {
     // Initialization
@@ -206,6 +237,9 @@ void main()
 
     // Back to Lua, let it check whether our wear levelling has been working
     SCRIPT(LUA, dumpAndCheckFilesystem());
+
+    // Test _SYS_fs_info() a bit
+    testFsInfo();
 
     LOG("Success.\n");
 }
