@@ -5,6 +5,7 @@ AR = arm-none-eabi-ar
 
 SDK_DIR = $(TC_DIR)/sdk
 MASTER_DIR = $(TC_DIR)/firmware/master
+STIR = $(abspath $(SDK_DIR)/bin/stir)
 
 # Only disable this in debugging emergencies!
 #
@@ -44,6 +45,7 @@ FLAGS += \
 	-I$(MASTER_DIR)/stm32/newlib/libm/common \
 	-I$(MASTER_DIR)/stm32/newlib/libc/include \
 	-I$(MASTER_DIR)/stm32/newlib/libm/include \
+	-I$(MASTER_DIR)/assets \
 	-I$(MASTER_DIR)/common \
 	-I$(MASTER_DIR)/stm32 \
 	-I$(MASTER_DIR)/../include \
