@@ -6,17 +6,18 @@
 #include "assets.gen.h"
 using namespace Sifteo;
 
-static const unsigned gNumCubes = 3;
 static Metadata M = Metadata()
     .title("Sensors SDK Example")
     .package("com.sifteo.sdk.sensors", "1.0")
     .icon(Icon)
-    .cubeRange(gNumCubes);
+    .cubeRange(0, CUBE_ALLOCATION);
+
+static VideoBuffer vid[CUBE_ALLOCATION];
 
 
 class EventCounters {
 public:
-    struct {
+    struct CubeInfo {
         unsigned touch;
         unsigned shake;
         unsigned neighborAdd;
@@ -29,9 +30,18 @@ public:
         Events::cubeShake.set(&EventCounters::onShake, this);
         Events::neighborAdd.set(&EventCounters::onNeighborAdd, this);
         Events::neighborRemove.set(&EventCounters::onNeighborRemove, this);
+        Events::cubeConnect.set(&EventCounters::onConnect, this);
     }
 
 private:
+    void onConnect(unsigned cube)
+    {
+        LOG("Cube %d connected\n", cube);
+        bzero(cubes[cube]);
+        vid[cube].initMode(BG0_ROM);
+        vid[cube].attach(cube);
+    }
+
     void onTouch(unsigned cube)
     {
         cubes[cube].touch++;
@@ -73,17 +83,16 @@ static void drawSideIndicator(BG0ROMDrawable &draw, Neighborhood &nb,
 
 void main()
 {
-    static VideoBuffer vid[CUBE_ALLOCATION];
     static EventCounters counters;
     counters.install();
 
-    for (CubeID cube = 0; cube < gNumCubes; ++cube) {
+    for (CubeID cube : CubeSet::connected()) {
         vid[cube].initMode(BG0_ROM);
         vid[cube].attach(cube);
     }
 
     while (1) {
-        for (CubeID cube = 0; cube < gNumCubes; ++cube) {
+       for (CubeID cube : CubeSet::connected()) {
             BG0ROMDrawable &draw = vid[cube].bg0rom;
             String<192> str;
 
