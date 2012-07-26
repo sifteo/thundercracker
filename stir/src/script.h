@@ -116,6 +116,10 @@ public:
     TilePool &getPool() {
         return pool;
     }
+    
+    bool isFixed() const {
+        return fixed;
+    }
 
     void setName(const char *s) {
         mName = s;
@@ -148,6 +152,7 @@ public:
 private:
     lua_Number quality;
     TilePool pool;
+    bool fixed;
     std::string mName;
     std::set<Image*> mImages;
     std::vector<uint8_t> mLoadstream;

@@ -111,41 +111,43 @@ CPPSourceWriter::CPPSourceWriter(Logger &log, const char *filename)
 
 void CPPSourceWriter::writeGroup(const Group &group)
 {
-    char hash[32];
+    if (!group.isFixed()) {
+        char hash[32];
 
-#ifdef __MINGW32__
-    sprintf(hash, "0x%016I64x", (long long unsigned int) group.getHash());
-#else
-    sprintf(hash, "0x%016llx", (long long unsigned int) group.getHash());
-#endif
+        #ifdef __MINGW32__
+            sprintf(hash, "0x%016I64x", (long long unsigned int) group.getHash());
+        #else
+            sprintf(hash, "0x%016llx", (long long unsigned int) group.getHash());
+        #endif
 
-    /*
-     * XXX: This method of generating the group Ordinal only works within
-     *      a single Stir run. Ideally we'd be able to use _SYS_lti_counter
-     *      or equivalent, but there's no efficient way to stick that in
-     *      read-only data yet.
-     */
+        /*
+         * XXX: This method of generating the group Ordinal only works within
+         *      a single Stir run. Ideally we'd be able to use _SYS_lti_counter
+         *      or equivalent, but there's no efficient way to stick that in
+         *      read-only data yet.
+         */
 
-    mStream <<
-        "\n"
-        "static const struct {\n" <<
-        indent << "struct _SYSAssetGroupHeader hdr;\n" <<
-        indent << "uint8_t data[" << group.getLoadstream().size() << "];\n"
-        "} " << group.getName() << "_data = {{\n" <<
-        indent << "/* reserved  */ 0,\n" <<
-        indent << "/* ordinal   */ " << nextGroupOrdinal++ << ",\n" <<
-        indent << "/* numTiles  */ " << group.getPool().size() << ",\n" <<
-        indent << "/* dataSize  */ " << group.getLoadstream().size() << ",\n" <<
-        indent << "/* hash      */ " << hash << ",\n"
-        "}, {\n";
+        mStream <<
+            "\n"
+            "static const struct {\n" <<
+            indent << "struct _SYSAssetGroupHeader hdr;\n" <<
+            indent << "uint8_t data[" << group.getLoadstream().size() << "];\n"
+            "} " << group.getName() << "_data = {{\n" <<
+            indent << "/* reserved  */ 0,\n" <<
+            indent << "/* ordinal   */ " << nextGroupOrdinal++ << ",\n" <<
+            indent << "/* numTiles  */ " << group.getPool().size() << ",\n" <<
+            indent << "/* dataSize  */ " << group.getLoadstream().size() << ",\n" <<
+            indent << "/* hash      */ " << hash << ",\n"
+            "}, {\n";
 
-    writeArray(group.getLoadstream());
+        writeArray(group.getLoadstream());
 
-    mStream <<
-        "}};\n\n"
-        "Sifteo::AssetGroup " << group.getName() << " = {{\n" <<
-        indent << "/* pHdr      */ reinterpret_cast<uint32_t>(&" << group.getName() << "_data.hdr),\n" <<
-        "}};\n\n";
+        mStream <<
+            "}};\n\n"
+            "Sifteo::AssetGroup " << group.getName() << " = {{\n" <<
+            indent << "/* pHdr      */ reinterpret_cast<uint32_t>(&" << group.getName() << "_data.hdr),\n" <<
+            "}};\n\n";
+    }
 
     mLog.infoBegin("Encoding images");
     for (std::set<Image*>::iterator i = group.getImages().begin();
@@ -260,8 +262,6 @@ void CPPSourceWriter::writeImage(const Image &image, bool writeDecl, bool writeA
         mStream << "extern const uint16_t " << image.getName() << "_data[];\n";
     }
 
-    // This header can often be optimized out by slinky, unless its address is taken.
-    // Here we output just the common non-format-specific header.
     if (writeAsset) {
         if (image.inList()) {
             mStream << "{{\n";
@@ -271,8 +271,15 @@ void CPPSourceWriter::writeImage(const Image &image, bool writeDecl, bool writeA
                 "extern const Sifteo::" << image.getClassName() << " " << image.getName() << " = {{\n";
         }
 
+        if (image.getGroup()->isFixed()) {
+            // Fixed groups have no runtime representation; assume indices are already absolute
+            mStream << indent << "/* group    */ 0,\n";
+        } else {
+            // Reference a normal group
+            mStream << indent << "/* group    */ reinterpret_cast<uint32_t>(&" << image.getGroup()->getName() << "),\n";
+        }
+
         mStream <<
-            indent << "/* group    */ reinterpret_cast<uint32_t>(&" << image.getGroup()->getName() << "),\n" <<
             indent << "/* width    */ " << width << ",\n" <<
             indent << "/* height   */ " << height << ",\n" <<
             indent << "/* frames   */ " << grids.size() << ",\n";
@@ -535,6 +542,9 @@ void CPPHeaderWriter::head()
 
 void CPPHeaderWriter::writeGroup(const Group &group)
 {
+    if (group.isFixed())
+        return;
+
     mStream << "extern Sifteo::AssetGroup " << group.getName() << ";\n";
 
     for (std::set<Image*>::iterator i = group.getImages().begin();

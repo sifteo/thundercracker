@@ -418,7 +418,7 @@ TileRef TileStack::median()
 
     if (cache)
         return cache;
-        
+
     if (tiles.size() == 1) {
         // Special-case for a single-tile stack. No copy, just add a reference
         cache = TileRef(tiles[0]);
@@ -470,7 +470,7 @@ TileRef TileStack::median()
     return cache;
 }
 
-TileStack* TilePool::closest(TileRef t)
+TileStack* TilePool::closest(TileRef t, double distance)
 {
     /*
      * Search for the closest tile set for the provided tile image.
@@ -479,7 +479,6 @@ TileStack* TilePool::closest(TileRef t)
      */
 
     const double epsilon = 1e-3;
-    double distance = t->options().getMaxMSE();
     TileStack *closest = NULL;
 
     for (std::list<TileStack>::iterator i = stackList.begin(); i != stackList.end(); i++) {
@@ -526,10 +525,14 @@ void TilePool::optimize(Logger &log)
      * Global optimizations to apply after filling a tile pool.
      */
 
-    optimizePalette(log);
-    optimizeTiles(log);
-    optimizeTrueColorTiles(log);
-    optimizeOrder(log);
+    if (numFixed) {
+        optimizeFixedTiles(log);
+    } else {
+        optimizePalette(log);
+        optimizeTiles(log);
+        optimizeTrueColorTiles(log);
+        optimizeOrder(log);
+    }
 }
 
 void TilePool::optimizePalette(Logger &log)
@@ -558,7 +561,7 @@ void TilePool::optimizePalette(Logger &log)
                 reducer.add((*i)->pixel(j), maxMSE);
         }
     }
-    
+
     // Skip the rest if all tiles are lossless
     if (needReduction) {
  
@@ -572,6 +575,67 @@ void TilePool::optimizePalette(Logger &log)
                 *i = (*i)->reduce(reducer);
         }
     }
+}
+
+void TilePool::optimizeFixedTiles(Logger &log)
+{
+    /*
+     * This is an alternative optimization path for pools which contain
+     * 'fixed' tiles. This means that "numFixed" tiles at the beginning
+     * of the tiles[] vector are set in stone, and all other tiles
+     * must be removed and replaced with references to these fixed tiles.
+     *
+     * This is used to implement groups with the 'atlas' parameter.
+     */
+
+    /* 
+     * All fixed tiles go, in order, into the final data structures.
+     */
+
+    stackList.clear();
+    stackIndex.resize(numFixed);
+    stackArray.resize(numFixed);
+
+    for (unsigned i = 0; i < numFixed; ++i) {
+        stackList.push_back(TileStack());
+        TileStack *c = &stackList.back();
+        c->add(tiles[i]);
+        c->index = i;
+        stackArray[i] = c;
+        stackIndex[i] = c;
+    }
+
+    /*
+     * All remaining tile serials use closest() to find matches in the fixed stacks.
+     */
+
+    log.taskBegin("Matching fixed tiles");
+
+    for (unsigned serial = numFixed; serial < tiles.size(); ++serial) {
+
+        /*
+         * We have no specific upper limit on the error, so we could
+         * just start out by calling closest() with a distance of HUGE_VAL,
+         * but this breaks a lot of the early-out optimizations inside.
+         * It's more efficient if we increase the distance gradually.
+         */
+
+        double distance = 1.0f;
+        TileStack *c;
+        do {
+            c = closest(tiles[serial], distance);
+            distance *= 100;
+        } while (!c);
+
+        tiles[serial] = c->median();
+        stackIndex.push_back(c);
+
+        if (serial == tiles.size() - 1 || !(serial % 32)) {
+            log.taskProgress("%u of %u", serial - numFixed + 1, tiles.size() - numFixed);
+        }
+    }
+
+    log.taskEnd();
 }
 
 void TilePool::optimizeTiles(Logger &log)
@@ -651,7 +715,7 @@ void TilePool::optimizeTilesPass(Logger &log,
 
                 std::tr1::unordered_map<Tile *, TileStack *>::iterator i = memo.find(&*tr);
                 if (i == memo.end()) {
-                    c = closest(tr);
+                    c = closest(tr, tr->options().getMaxMSE());
                     memo[&*tr] = c;
                 } else {
                     c = memo[&*tr];
