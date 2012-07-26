@@ -182,11 +182,15 @@ struct CubeID {
     /**
      * @brief Get this cube's battery level.
      *
-     * @warning Units are currently TBD.
+     * The battery level has already been converted into a "fuel gauge"
+     * representation, with 0.0f representing a qualitatively dead
+     * battery and 1.0f representing a totally new battery.
+     *
+     * To get the battery level for the base unit, call System::batteryLevel().
      */
-    unsigned batteryLevel() const {
+    float batteryLevel() const {
         ASSERT(sys < NUM_SLOTS);
-        return _SYS_getBatteryV(*this);
+        return _SYS_cubeBatteryLevel(*this) / float(_SYS_MAX_BATTERY);
     }
 
     CubeID operator ++() { return ++sys; }

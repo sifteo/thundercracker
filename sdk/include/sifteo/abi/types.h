@@ -47,6 +47,7 @@ extern "C" {
 
 #define _SYS_NUM_CUBE_SLOTS     24      // Total supported cube slots
 #define _SYS_CUBE_ID_INVALID    0xFF    // Reserved _SYSCubeID value
+#define _SYS_BATTERY_MAX        0x10000 // Battery levels are 16.16 fixed point
 
 typedef uint8_t _SYSCubeID;             // Cube slot index
 typedef int8_t _SYSSideID;              // Cube side index

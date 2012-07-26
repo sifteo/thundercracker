@@ -160,6 +160,19 @@ class System {
         return flag;
     }
 
+    /**
+     * @brief Get the system's battery level.
+     *
+     * The battery level has already been converted into a "fuel gauge"
+     * representation, with 0.0f representing a qualitatively dead
+     * battery and 1.0f representing a totally new battery.
+     *
+     * To get the battery level for a single cube, call CubeID::batteryLevel().
+     */
+    float batteryLevel() const {
+        return _SYS_sysBatteryLevel() / float(_SYS_MAX_BATTERY);
+    }
+
 };
 
 

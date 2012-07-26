@@ -156,9 +156,12 @@ uint32_t _SYS_getAccel(_SYSCubeID cid) _SC(54);
 uint32_t _SYS_getNeighbors(_SYSCubeID cid) _SC(59);
 uint32_t _SYS_getTilt(_SYSCubeID cid) _SC(127);
 uint32_t _SYS_getShake(_SYSCubeID cid) _SC(128);
-uint32_t _SYS_getBatteryV(_SYSCubeID cid) _SC(129);
 uint32_t _SYS_isTouching(_SYSCubeID cid) _SC(55);
 uint64_t _SYS_getCubeHWID(_SYSCubeID cid) _SC(130);
+
+// Battery information
+uint32_t _SYS_cubeBatteryLevel(_SYSCubeID cid) _SC(129);
+uint32_t _SYS_sysBatteryLevel() _SC(173);
 
 // Cube management
 uint32_t _SYS_getConnectedCubes() _SC(16);
