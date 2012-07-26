@@ -49,9 +49,12 @@ class UsbDevice(object):
     def txPacket(self, bytes):
         self._dev.write(OUT_EP, bytes)
 
-    def rxPacket(self, timeout = 250):
+    def rxPacket(self, timeout = 1):
         payload = self._dev.read(IN_EP, UsbDevice.MAX_PACKET, None ,timeout = timeout)
         return TestResponse(payload[0], payload[1:])
+
+    def reset(self):
+        self._dev.reset()
 
 # simple manager to lazily access devices
 class DeviceManager(object):
@@ -63,7 +66,11 @@ class DeviceManager(object):
 
     def testjig(self):
         if self._testjig is None:
-            self._testjig = UsbDevice(TESTJIG_PID)
+            try:
+                self._testjig = UsbDevice(TESTJIG_PID)
+            except:
+                print "Could not connect to testjig with PID: %x" % TESTJIG_PID
+                sys.exit(1)
         return self._testjig
 
     def masterUSB(self):
@@ -86,7 +93,7 @@ class TestRunner(object):
         return self.successCount + self.failCount
 
     def run(self, t):
-        sys.stdout.write("running %s... " % t.func_name)
+        print "running %s... " % t.func_name
         success = t(self.mgr)
         if success == False:
             print "FAIL"
@@ -100,13 +107,14 @@ class TestRunner(object):
         runner = TestRunner(devManager)
 
         # find all methods with "Test" in them and run them
-        tests = [o for o in inspect.getmembers(mastertests) if inspect.isfunction(o[1])]
-        for t in tests:
-            if "Test" in t[0]:
-                runner.run(t[1])
+        # tests = [o for o in inspect.getmembers(mastertests) if inspect.isfunction(o[1])]
+        # for t in tests:
+        #     if "Test" in t[0]:
+        #         runner.run(t[1])
 
         # template if you want to manually run a single test
-        # runner.run(mastertests.VBattCurrentDrawTest)
+        # while(1):
+        runner.run(cubetests.AccelerometerTest)
 
         print "COMPLETE. %d tests run, %d failures" % (runner.numTestsRun(), runner.failCount)
         if runner.failCount == 0:
