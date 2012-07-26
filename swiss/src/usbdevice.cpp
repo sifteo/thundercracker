@@ -1,8 +1,6 @@
 
 #include "usbdevice.h"
 #include "libusb.h"
-#include <string.h>
-#include <stdlib.h>
 #include <assert.h>
 
 #if 0
