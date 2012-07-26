@@ -6,64 +6,92 @@
 #include "assets.gen.h"
 using namespace Sifteo;
 
-static VideoBuffer vid[CUBE_ALLOCATION];
-
 static Metadata M = Metadata()
     .title("Sensors SDK Example")
-    .package("com.sifteo.sdk.sensors", "1.0")
+    .package("com.sifteo.sdk.sensors", "1.1")
     .icon(Icon)
     .cubeRange(0, CUBE_ALLOCATION);
 
-static void updateNeighbors(unsigned firstCube, unsigned secondCube);
+static VideoBuffer vid[CUBE_ALLOCATION];
 
 
-class EventCounters {
+class SensorListener {
 public:
-    struct CubeInfo {
+    struct Counter {
         unsigned touch;
         unsigned shake;
         unsigned neighborAdd;
         unsigned neighborRemove;
-    } cubes[CUBE_ALLOCATION];
+    } counters[CUBE_ALLOCATION];
 
     void install()
     {
-        Events::cubeTouch.set(&EventCounters::onTouch, this);
-        Events::cubeShake.set(&EventCounters::onShake, this);
-        Events::neighborAdd.set(&EventCounters::onNeighborAdd, this);
-        Events::neighborRemove.set(&EventCounters::onNeighborRemove, this);
-        Events::cubeAccelChange.set(&EventCounters::onAccelChange, this);
-        Events::cubeConnect.set(&EventCounters::onConnect, this);
+        Events::cubeTouch.set(&SensorListener::onTouch, this);
+        Events::cubeShake.set(&SensorListener::onShake, this);
+        Events::neighborAdd.set(&SensorListener::onNeighborAdd, this);
+        Events::neighborRemove.set(&SensorListener::onNeighborRemove, this);
+        Events::cubeAccelChange.set(&SensorListener::onAccelChange, this);
+        Events::cubeBatteryLevelChange.set(&SensorListener::onBatteryChange, this);
+        Events::cubeConnect.set(&SensorListener::onConnect, this);
+
+        // Handle already-connected cubes
+        for (CubeID cube : CubeSet::connected())
+            onConnect(cube);
     }
 
 private:
     void onConnect(unsigned id)
     {
+        CubeID cube(id);
+        uint64_t hwid = cube.hwID();
+
+        bzero(counters[id]);
         LOG("Cube %d connected\n", id);
-        bzero(cubes[id]);
+
         vid[id].initMode(BG0_ROM);
         vid[id].attach(id);
+
+        // Draw the cube's identity
+        String<128> str;
+        str << "I am cube #" << cube << "\n";
+        str << "hwid " << Hex(hwid >> 32) << "\n     " << Hex(hwid) << "\n\n";
+        vid[cube].bg0rom.text(vec(1,2), str);
+
+        // Draw initial state for all sensors
+        onTouch(cube);
+        onShake(cube);
+        onAccelChange(cube);
+        onBatteryChange(cube);
+        drawNeighbors(cube);
+    }
+
+    void onBatteryChange(unsigned id)
+    {
+        CubeID cube(id);
+        String<32> str;
+        str << "bat:   " << FixedFP(cube.batteryLevel(), 1, 3) << "\n";
+        vid[cube].bg0rom.text(vec(1,13), str);
     }
 
     void onTouch(unsigned id)
     {
         CubeID cube(id);
-        cubes[id].touch++;
+        counters[id].touch++;
         LOG("Touched cube #%d\n", id);
 
         String<32> str;
         str << "touch: " << cube.isTouching() <<
-            " (" << cubes[cube].touch << ")\n";
+            " (" << counters[cube].touch << ")\n";
         vid[cube].bg0rom.text(vec(1,8), str);
     }
 
     void onShake(unsigned cube)
     {
-        cubes[cube].shake++;
+        counters[cube].shake++;
         LOG("Shaking cube #%d\n", cube);
 
         String<16> str;
-        str << "shake: " << cubes[cube].shake;
+        str << "shake: " << counters[cube].shake;
         vid[cube].bg0rom.text(vec(1,12), str);
     }
 
@@ -89,41 +117,27 @@ private:
     void onNeighborRemove(unsigned firstCube, unsigned firstSide,
         unsigned secondCube, unsigned secondSide)
     {
-        cubes[firstCube].neighborRemove++;
-        cubes[secondCube].neighborRemove++;
+        counters[firstCube].neighborRemove++;
+        counters[secondCube].neighborRemove++;
         LOG("Neighbor Remove: %d:%d - %d:%d\n",
             firstCube, firstSide, secondCube, secondSide);
-        updateNeighbors(firstCube, secondCube);
+        drawNeighbors(firstCube);
+        drawNeighbors(secondCube);
     }
 
     void onNeighborAdd(unsigned firstCube, unsigned firstSide,
         unsigned secondCube, unsigned secondSide)
     {
-        cubes[firstCube].neighborAdd++;
-        cubes[secondCube].neighborAdd++;
+        counters[firstCube].neighborAdd++;
+        counters[secondCube].neighborAdd++;
         LOG("Neighbor Add: %d:%d - %d:%d\n",
             firstCube, firstSide, secondCube, secondSide);
-        updateNeighbors(firstCube, secondCube);
+        drawNeighbors(firstCube);
+        drawNeighbors(secondCube);
     }
-};
 
-static EventCounters counters;
-
-static void drawSideIndicator(BG0ROMDrawable &draw, Neighborhood &nb,
-    Int2 topLeft, Int2 size, Side s)
-{
-    unsigned nbColor = draw.ORANGE;
-    draw.fill(topLeft, size,
-        nbColor | (nb.hasNeighborAt(s) ? draw.SOLID_FG : draw.SOLID_BG));
-}
-
-void updateNeighbors(unsigned firstCube, unsigned secondCube) {
-    /*
-     * Neighboring indicator bars
-     */
-    const unsigned neighborCubes[] = { firstCube, secondCube };
-    for (unsigned i = 0; i < 2; ++i) {
-        CubeID cube = neighborCubes[i];
+    void drawNeighbors(CubeID cube)
+    {
         Neighborhood nb(cube);
 
         String<64> str;
@@ -133,8 +147,8 @@ void updateNeighbors(unsigned firstCube, unsigned secondCube) {
             << Hex(nb.neighborAt(BOTTOM), 2) << " "
             << Hex(nb.neighborAt(RIGHT), 2) << "\n";
 
-        str << "   +" << counters.cubes[cube].neighborAdd
-            << ", -" << counters.cubes[cube].neighborRemove
+        str << "   +" << counters[cube].neighborAdd
+            << ", -" << counters[cube].neighborRemove
             << "\n\n";
 
         BG0ROMDrawable &draw = vid[cube].bg0rom;
@@ -145,50 +159,25 @@ void updateNeighbors(unsigned firstCube, unsigned secondCube) {
         drawSideIndicator(draw, nb, vec( 1, 15), vec(14,  1), BOTTOM);
         drawSideIndicator(draw, nb, vec(15,  1), vec( 1, 14), RIGHT);
     }
-}
+
+    static void drawSideIndicator(BG0ROMDrawable &draw, Neighborhood &nb,
+        Int2 topLeft, Int2 size, Side s)
+    {
+        unsigned nbColor = draw.ORANGE;
+        draw.fill(topLeft, size,
+            nbColor | (nb.hasNeighborAt(s) ? draw.SOLID_FG : draw.SOLID_BG));
+    }
+};
+
 
 void main()
 {
-    counters.install();
-    uint64_t hwids[CUBE_ALLOCATION];
-    unsigned batteryLvls[CUBE_ALLOCATION];
+    static SensorListener sensors;
 
-    for (CubeID cube : CubeSet::connected()) {
-        vid[cube].initMode(BG0_ROM);
-        vid[cube].attach(cube);
-        hwids[cube] = _SYS_INVALID_HWID;
-        batteryLvls[cube] = 0;
-    }
+    sensors.install();
 
-    while (1) {
-       for (CubeID cube : CubeSet::connected()) {
-            /*
-             * Draw each cube's hardware ID.
-             * XXX: this can be event driven once we get cube
-             *      connect/disconnect events.
-             */
-            if (hwids[cube] == _SYS_INVALID_HWID) {
-                uint64_t hwid = cube.hwID();
-                hwids[cube] = hwid;
-
-                String<128> str;
-                str << "I am cube #" << cube << "\n";
-                str << "hwid " << Hex(hwid >> 32) << "\n     " << Hex(hwid) << "\n\n";
-                vid[cube].bg0rom.text(vec(1,2), str);
-            }
-
-            /*
-             * Poll for battery changes.
-             */
-            const unsigned lvl = cube.batteryLevel();
-            if (batteryLvls[cube] != lvl) {
-                batteryLvls[cube] = lvl;
-                String<128> str;
-                str << "bat:   " << Hex(lvl, 4) << "\n";
-                vid[cube].bg0rom.text(vec(1,13), str);
-            }
-        }
-
+    // We're entirely event-driven. Everything is
+    // updated by SensorListener's event callbacks.
+    while (1)
         System::paint();
-    }
 }
