@@ -89,7 +89,7 @@ int main(int argc, char **argv)
     /*
      * TODO: add support for specifying a TCP connection to siftulator.
      */
-    UsbDevice::init();
+    Usb::init();
     UsbDevice usbdev;
 
     const unsigned numCommands = sizeof(commands) / sizeof(commands[0]);
@@ -98,7 +98,7 @@ int main(int argc, char **argv)
     for (unsigned i = 0; i < numCommands; ++i) {
         if (!strcmp(commandName, commands[i].name)) {
             int r = commands[i].run(argc - 1, argv + 1, usbdev);
-            UsbDevice::deinit();
+            Usb::deinit();
             return r;
         }
     }
