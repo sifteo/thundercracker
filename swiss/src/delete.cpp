@@ -28,7 +28,6 @@ int Delete::run(int argc, char **argv, IODevice &_dev)
 
     } else {
         fprintf(stderr, "incorrect args\n");
-        return 1;
     }
 
     _dev.close();
