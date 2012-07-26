@@ -19,7 +19,8 @@ OBJS := \
     src/mappedfile.o    \
     src/installer.o     \
     src/manifest.o      \
-    src/delete.o
+    src/delete.o        \
+    src/paircube.o
 
 # include directories
 INCLUDES := \
