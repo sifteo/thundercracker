@@ -120,6 +120,19 @@ typedef uint32_t _SYSVolumeHandle;
 // Application-defined ID for a key in our key/value object store
 typedef uint8_t _SYSObjectKey;
 
+struct _SYSFilesystemInfo {
+    uint32_t unitSize;          // Size of allocation unit, in bytes
+    uint32_t totalUnits;        // Total number of allocation units on device
+    uint32_t freeUnits;         // Number of free or immediately-recyclable units
+    uint32_t systemUnits;       // Used by system data (cube pairing data, asset cache)
+    uint32_t launcherElfUnits;  // Used by launcher ELF volumes
+    uint32_t launcherObjUnits;  // Used by StoredObjects owned by launcher
+    uint32_t gameElfUnits;      // Used by game ELF volumes
+    uint32_t gameObjUnits;      // Used by StoredObjects owned by games
+    uint32_t selfElfUnits;      // Used by the currently executing volume (may overlap with above)
+    uint32_t selfObjUnits;      // StoredObjects owned by the currently executing volume (may overlap with above)
+};
+
 /*
  * RFC4122 compatible UUIDs.
  *

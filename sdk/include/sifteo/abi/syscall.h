@@ -229,6 +229,7 @@ int32_t _SYS_fs_objectRead(unsigned key, uint8_t *buffer, unsigned bufferSize, _
 int32_t _SYS_fs_objectWrite(unsigned key, const uint8_t *data, unsigned dataSize) _SC(60);
 uint32_t _SYS_fs_runningVolume() _SC(168);
 uint32_t _SYS_fs_previousVolume() _SC(171);
+uint32_t _SYS_fs_info(_SYSFilesystemInfo *buffer, uint32_t bufferSize) _SC(172);
 
 
 #ifdef __cplusplus
