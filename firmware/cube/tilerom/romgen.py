@@ -139,7 +139,7 @@ class Tiler:
         tile = Image.new("RGBA", (TILE, TILE))
 
         # Default color to indicate areas of our atlas which are undefined
-        tile.paste((255, 0, 255, 128))
+        tile.paste((255, 0, 255, 0))
 
         if (address & 0x7F) == 0x7F:
             # DPL roll-over behavior is not defined.
