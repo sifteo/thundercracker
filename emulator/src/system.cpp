@@ -17,6 +17,8 @@ System::System()
         : opt_headless(false),
         opt_numCubes(DEFAULT_CUBES),
         opt_whiteBackground(false),
+        opt_windowWidth(800),
+        opt_windowHeight(600),
         opt_continueOnException(false),
         opt_turbo(false),
         opt_lockRotationByDefault(false),

@@ -47,6 +47,8 @@ class System {
 
     // UI options
     bool opt_whiteBackground;
+    int opt_windowWidth;
+    int opt_windowHeight;
 
     // Global debug options
     bool opt_continueOnException;
