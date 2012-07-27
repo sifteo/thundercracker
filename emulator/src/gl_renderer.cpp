@@ -44,6 +44,12 @@ bool GLRenderer::init()
     GLhandleARB cubeBodyVP = loadShader(GL_VERTEX_SHADER, cube_body_vp);
     cubeBodyProgram = linkProgram(cubeBodyFP, cubeBodyVP);
 
+    extern const uint8_t mc_face_fp[];
+    extern const uint8_t mc_face_vp[];
+    GLhandleARB mcFaceFP = loadShader(GL_FRAGMENT_SHADER, mc_face_fp);
+    GLhandleARB mcFaceVP = loadShader(GL_VERTEX_SHADER, mc_face_vp);
+    mcFaceProgram = linkProgram(mcFaceFP, mcFaceVP);
+
     extern const uint8_t background_fp[];
     extern const uint8_t background_vp[];
     GLhandleARB backgroundFP = loadShader(GL_FRAGMENT_SHADER, background_fp);
@@ -220,7 +226,7 @@ void GLRenderer::beginFrame(float viewExtent, b2Vec2 viewCenter, unsigned pixelZ
 
     float zPlane = CubeConstants::SIZE * CubeConstants::HEIGHT;
     float zCamera = 5.0f;
-    float zNear = 0.1f;
+    float zNear = 1.0f;
     float zFar = 10.0f;
     float zDepth = zFar - zNear;
     
@@ -671,11 +677,13 @@ void GLRenderer::drawMC(b2Vec2 center, float angle)
 {
     glLoadIdentity();
     glTranslatef(center.x, center.y, 0.0f);
-    glRotatef(angle * (180.0f / M_PI), 0,0,1);
+    glRotatef(180 + angle * (180.0f / M_PI), 0,0,1);
     glScalef(CubeConstants::SIZE, CubeConstants::SIZE, CubeConstants::SIZE);
 
-    glUseProgramObjectARB(cubeBodyProgram);
+    glUseProgramObjectARB(mcFaceProgram);
     drawModel(mcFace);
+
+    glUseProgramObjectARB(cubeBodyProgram);
     drawModel(mcBody);
     drawModel(mcVolume);
 }

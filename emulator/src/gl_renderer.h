@@ -124,6 +124,7 @@ class GLRenderer {
     GLuint cubeFaceHilightTexture;
 
     GLhandleARB cubeBodyProgram;
+    GLhandleARB mcFaceProgram;
 
     GLhandleARB backgroundProgram;
     GLuint backgroundTexture;
