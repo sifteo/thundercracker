@@ -4,6 +4,7 @@ LOCAL_OBJS = \
     src/frontend_cube.o \
     src/frontend_mothership.o \
     src/frontend_overlay.o \
+    src/frontend_bmfont.o \
     src/lua_script.o \
     src/lua_system.o \
     src/lua_frontend.o \
@@ -57,6 +58,8 @@ GENERATED_FILES = \
     resources/firmware-sbt.cpp
 
 DATADEPS = \
+    resources/model_cube_body.bin \
+    resources/model_cube_face.bin \
     resources/*.png \
     resources/*.glsl \
     resources/*.fnt \

@@ -28,9 +28,10 @@ namespace CubeConstants {
     const float SIZE = 0.5;
 
     /*
-     * Height of the cube, relative to its half-width
+     * Height of the cube, relative to its half-width.
+     * This MUST equal the Z coordinate of the cube face model.
      */
-    const float HEIGHT = 0.6;
+    const float HEIGHT = 0.908884;
 
     /*
      * Size of the portion of the cube we're calling the "center". Has
