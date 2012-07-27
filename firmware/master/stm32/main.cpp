@@ -54,10 +54,10 @@ int main()
     NVIC.irqEnable(IVT.DMA2_Channel2);
     NVIC.irqPrioritize(IVT.DMA1_Channel2, 0x75);
 
-    NVIC.irqEnable(IVT.DMA1_Channel2);              // Flash SPI DMA1 channels 2 & 3
-    NVIC.irqPrioritize(IVT.DMA1_Channel2, 0x75);    //  higher than radio
-    NVIC.irqEnable(IVT.DMA1_Channel3);
-    NVIC.irqPrioritize(IVT.DMA1_Channel3, 0x75);
+    NVIC.irqEnable(IVT.FLASH_DMA_CHAN_RX);          // Flash SPI DMA channels
+    NVIC.irqPrioritize(IVT.FLASH_DMA_CHAN_RX, 0x75);//  higher than radio
+    NVIC.irqEnable(IVT.FLASH_DMA_CHAN_TX);
+    NVIC.irqPrioritize(IVT.FLASH_DMA_CHAN_TX, 0x75);
 
     NVIC.irqEnable(IVT.UsbOtg_FS);
     NVIC.irqPrioritize(IVT.UsbOtg_FS, 0x70);        //  Lower prio than radio
