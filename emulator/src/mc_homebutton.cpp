@@ -6,29 +6,27 @@
 namespace HomeButton
 {
 
+static uint32_t state;
+
+
 void init()
 {
-    // no-op in simulator
+    state = 0;
 }
 
-void onChange()
+void setPressed(bool value)
 {
-    if (isPressed()) {
+    if (state != value) {
+        state = value;
         Tasks::trigger(Tasks::HomeButton);
     }
 }
 
 bool isPressed()
 {
-    return glfwGetKey('B') == GLFW_PRESS;
+    return state;
 }
 
-/*
- * Called from within Tasks::work to handle a button event on the main loop.
- */
-void task()
-{
-    // do things here
-}
 
-} // namespace Button
+} // namespace HomeButton
+

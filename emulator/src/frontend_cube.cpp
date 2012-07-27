@@ -16,9 +16,9 @@ void FrontendCube::init(unsigned _id, Cube::Hardware *_hw, b2World &world, float
     id = _id;
     hw = _hw;
     lastLcdCookie = 0;
-    
+
     initBody(world, x, y);
-    
+
     initNeighbor(Cube::Neighbors::TOP, 0, -1);
     initNeighbor(Cube::Neighbors::BOTTOM, 0, 1);
 

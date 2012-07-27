@@ -20,6 +20,13 @@ namespace MCConstants {
      */
     const float SIZEX = 1.02;
     const float SIZEY = 0.5;
+
+    /*
+     * Radius of the portion of the cube that counts as the home button.
+     * In Box2D meters.
+     */
+    const float CENTER_SIZE = 0.18;
+
 }
 
 class FrontendMC {

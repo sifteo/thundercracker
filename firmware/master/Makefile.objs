@@ -14,6 +14,7 @@ OBJS_COMMON = \
     $(MASTER_DIR)/common/syscall_runtime.o \
     $(MASTER_DIR)/common/syscall_string.o \
     $(MASTER_DIR)/common/syscall_video.o \
+    $(MASTER_DIR)/common/homebutton.o \
     $(MASTER_DIR)/common/event.o \
     $(MASTER_DIR)/common/radio.o \
     $(MASTER_DIR)/common/radioaddrfactory.o \

@@ -8,12 +8,13 @@
 
 namespace HomeButton
 {
+    // Hardware-specific
     void init();
-    void onChange();
     bool isPressed();
 
+    // Hardware-independent
     void task();
-
-} // namespace Button
+    void shutdown();
+}
 
 #endif // HOMEBUTTON_H_

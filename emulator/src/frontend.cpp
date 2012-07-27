@@ -8,6 +8,7 @@
 
 #include "frontend.h"
 #include "ostime.h"
+#include "mc_homebutton.h"
 #include <time.h>
 
 Frontend *Frontend::instance = NULL;
@@ -37,14 +38,10 @@ bool Frontend::init(System *_sys)
     instance = this;
     sys = _sys;
     frameCount = 0;
-    cubeCount = 0;
+    cubeCount = -1;
     toggleZoom = false;
     isRunning = true;
     isRotationFixed = sys->opt_lockRotationByDefault;
-
-    // Initial postiion for the MC
-    b2Vec2 mcLoc = getCubeGridLoc(0, instance->sys->opt_numCubes, true);
-    mc.init(world, mcLoc.x, mcLoc.y);
 
     /*
      * We need to first position our default set of cubes, then
@@ -57,6 +54,9 @@ bool Frontend::init(System *_sys)
 
     // Zoom in from a slightly wider default view
     viewExtent = targetViewExtent() * 3.0;
+
+    // Initial postiion for the MC, center bottom
+    mc.init(world, 0, targetViewExtent());
 
     // Listen for collisions. This is how we update our neighbor matrix.
     world.SetContactListener(&contactListener);
@@ -71,23 +71,15 @@ bool Frontend::init(System *_sys)
     return true;
 }
 
-b2Vec2 Frontend::getCubeGridLoc(unsigned index, unsigned total, bool mc)
+b2Vec2 Frontend::getCubeGridLoc(unsigned index, unsigned total)
 {
     const float spacing = CubeConstants::SIZE * 2.7;
 
     unsigned gridW = std::min(3U, std::max(1U, total));
     unsigned gridH = (total + gridW - 1) / gridW;
 
-    float x, y;
-
-    if (mc) {
-        // Just off the top edge, in the exact middle
-        x = (gridW - 1) / 2.0f;
-        y = -2;
-    } else {
-        x = index % gridW;
-        y = index / gridW;
-    }
+    unsigned x = index % gridW;
+    unsigned y = index / gridW;
 
     return b2Vec2( ((gridW - 1) * -0.5 + x) * spacing,
                    ((gridH - 1) * -0.5 + y) * spacing );
@@ -173,14 +165,10 @@ void Frontend::moveWalls(bool immediate)
      * without losing them.
      */
 
-    float yRatio = renderer.getHeight() / (float)renderer.getWidth();
-    if (yRatio < 0.1)
-        yRatio = 0.1;
-
     const float padding = CubeConstants::SIZE * 1.5f;
 
     float x = padding + maxViewExtent + normalViewExtent;
-    float y = padding + maxViewExtent + normalViewExtent * yRatio;
+    float y = padding + maxViewExtent + normalViewExtent * getYRatio();
 
     if (immediate) {
         walls[0]->SetTransform(b2Vec2( x,  0), 0);
@@ -374,7 +362,7 @@ void GLFWCALL Frontend::onKey(int key, int state)
             break;
 
         case 'B':
-            // XXX HomeButton::onChange();
+            HomeButton::setPressed(true);
             break;
 
         case 'Z':
@@ -455,7 +443,7 @@ void GLFWCALL Frontend::onKey(int key, int state)
         switch (key) {
 
         case 'B':
-            // XXX HomeButton::onChange();
+            HomeButton::setPressed(false);
             break;
 
         }
@@ -535,8 +523,15 @@ void Frontend::onMouseDown(int button)
 
             mouseIsPulling = true;
 
+            b2Vec2 anchor = mousePicker.mPoint;
+            b2Vec2 center = mousePicker.mMC->getBody()->GetWorldCenter();
+            float centerDist = b2Distance(anchor, center);
+
+            if (centerDist < MCConstants::CENTER_SIZE)
+                HomeButton::setPressed(true);
+
             b2RevoluteJointDef jointDef;
-            jointDef.Initialize(mousePicker.mMC->getBody(), mouseBody, mousePicker.mPoint);
+            jointDef.Initialize(mousePicker.mMC->getBody(), mouseBody, anchor);
             mouseJoint = (b2RevoluteJoint*) world.CreateJoint(&jointDef);
         }
 
@@ -646,6 +641,10 @@ void Frontend::onMouseUp(int button)
             mousePicker.mCube->setTiltTarget(b2Vec2(0.0f, 0.0f));
             mousePicker.mCube->setTouch(false);
             mousePicker.mCube->setHoverTarget(CubeConstants::HOVER_NONE);                
+        }
+
+        if (mousePicker.mMC) {
+            HomeButton::setPressed(glfwGetKey('B') == GLFW_PRESS);
         }
 
         /* Mouse state reset */
@@ -800,6 +799,11 @@ void Frontend::scaleViewExtent(float ratio)
     isAnimatingNewCubeLayout = false;
     normalViewExtent = b2Clamp<float>(normalViewExtent * ratio,
                                       CubeConstants::SIZE * 0.1, maxViewExtent);
+}
+
+float Frontend::getYRatio()
+{
+    return std::max(0.1f, renderer.getHeight() / (float)renderer.getWidth());
 }
 
 void Frontend::draw()
