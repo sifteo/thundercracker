@@ -62,7 +62,7 @@ bool Frontend::init(System *_sys)
 
     // Open our GUI window
     glfwInit();
-    if (!openWindow(800, 600))
+    if (!openWindow(sys->opt_windowWidth, sys->opt_windowHeight))
         return false;
 
     overlay.init(&renderer, sys);
