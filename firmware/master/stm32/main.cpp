@@ -96,7 +96,7 @@ int main()
     Usart::Dbg.init(UART_RX_GPIO, UART_TX_GPIO, 115200);
     UART(("Firmware " TOSTRING(SDK_VERSION) "\r\n"));
 
-#ifdef DEBUG
+#ifdef REV2_GDB_REWORK
     DBGMCU_CR |= (1 << 30) |        // TIM14 stopped when core is halted
                  (1 << 29) |        // TIM13 ""
                  (1 << 28) |        // TIM12 ""
