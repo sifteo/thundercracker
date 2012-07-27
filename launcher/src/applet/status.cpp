@@ -15,13 +15,14 @@ static const unsigned kMaxBatteryLevel = 256;
 static const float kBatteryLevelLow = 0.25f;
 
 template<typename T>
-static void drawBattery(T &canvas, float batteryLevel, Int2 pos)
+static void drawBattery(T &canvas, float batteryLevel, Int2 pos, const AssetImage &battery)
 {
+    canvas.image(vec(pos.x-1, pos.y-1), battery);
+
     unsigned numBatteryLevels = ceil(batteryLevel * float(BatteryBars.numFrames()));
     
-    canvas.image(vec(pos.x-1, pos.y-1), Battery);
-
-    if (numBatteryLevels > 0) {
+    if (numBatteryLevels > 0)
+    {
         --numBatteryLevels;
         ASSERT(numBatteryLevels < BatteryBars.numFrames());
         canvas.image(pos, BatteryBars, numBatteryLevels);
@@ -50,12 +51,6 @@ static unsigned getFreeBlocks()
     return 128;
 }
 
-static float getBatteryLevelMaster() {
-    // XXX: replace with real master battery API
-    //return float(CubeID(0).batteryLevel()) / float(kMaxBatteryLevel);
-    return 0.9f; // XXX: test code
-}
-
 static float getBatteryLevelCube(CubeID cube) {
     // XXX: put this in once batteryLevel() returns the real values
     //return float(cube.batteryLevel()) / float(kMaxBatteryLevel);
@@ -68,20 +63,28 @@ static float getBatteryLevelCube(CubeID cube) {
     }
 }
 
+static float getBatteryLevelBase() {
+    // XXX: replace with real master battery API
+    //return float(CubeID(0).batteryLevel()) / float(kMaxBatteryLevel);
+    return 0.9f; // XXX: test code
+}
+
 MainMenuItem::Flags StatusApplet::getAssets(MenuItem &assets, MappedVolume &)
 {
     icon.init();
     icon.image(vec(0,0), Icon_Battery);
 
-    drawBattery(icon, getBatteryLevelCube(*CubeSet::connected().begin()), vec(1, 2));
-    drawText(icon, "Buddy", vec(5, 2));
+    drawBattery(icon, getBatteryLevelCube(*CubeSet::connected().begin()), vec(1, 2), BatteryCube);
+    drawText(icon, "Cube", vec(5, 2));
     
-    drawBattery(icon, getBatteryLevelMaster(), vec(1, 5));
-    drawText(icon, "Master", vec(5, 5));
+    drawBattery(icon, getBatteryLevelBase(), vec(1, 5), BatteryBase);
+    drawText(icon, "Base", vec(5, 5));
 
     String<8> bufferCubes;
-    bufferCubes << getNumCubes(CubeSet::connected()) << " cubes";
-    drawText(icon, bufferCubes.c_str(), vec(3, 8));
+    bufferCubes << getNumCubes(CubeSet::connected()) << "x";
+    drawText(icon, bufferCubes.c_str(), vec(2, 8));
+    
+    icon.image(vec(5, 6), Cube);
     
     String<16> bufferBlocks;
     bufferBlocks << getFreeBlocks() << " blocks";
@@ -106,7 +109,7 @@ void StatusApplet::arrive()
     }
 
     // Low Battery SFX
-    if (getBatteryLevelMaster() <= kBatteryLevelLow) {
+    if (getBatteryLevelBase() <= kBatteryLevelLow) {
         AudioChannel(0).play(Sound_BatteryLowBase);
     } else {
         for (CubeID cube : CubeSet::connected()) {
@@ -137,7 +140,7 @@ void StatusApplet::prepaint()
         if (cube != *CubeSet::connected().begin()) {
             auto &vid = Shared::video[cube];
             vid.bg0.image(vec(2,2), Icon_Battery);
-            drawBattery(vid.bg0, getBatteryLevelCube(cube), vec(4, 4));
+            drawBattery(vid.bg0, getBatteryLevelCube(cube), vec(4, 4), BatteryCube);
         }
     }
 }
