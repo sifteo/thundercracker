@@ -8,6 +8,7 @@
 
 #include "frontend_mc.h"
 #include "gl_renderer.h"
+#include "mc_led.h"
 
 FrontendMC::FrontendMC()
     : body(0) {}
@@ -56,9 +57,19 @@ void FrontendMC::exit()
 
 void FrontendMC::draw(GLRenderer &r)
 {
-    static const float dummyled[3] = { 1.0, 1.0, 1.0 };
+    STATIC_ASSERT(LED::OFF == 0);
+    STATIC_ASSERT(LED::RED == 1);
+    STATIC_ASSERT(LED::GREEN == 2);
+    STATIC_ASSERT(LED::ORANGE == 3);
 
-    r.drawMC(body->GetPosition(), body->GetAngle(), dummyled);
+    static const float ledColors[][3] = {
+        { 0.0, 0.0, 0.0 },
+        { 3.0, 0.3, 0.3 },
+        { 0.1, 3.0, 0.1 },
+        { 3.0, 0.9, 0.0 },
+    };
+
+    r.drawMC(body->GetPosition(), body->GetAngle(), ledColors[3 & LED::currentColor]);
 }
 
 void FrontendMC::setButtonPressed(bool isDown)
