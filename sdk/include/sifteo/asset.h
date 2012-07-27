@@ -823,7 +823,7 @@ struct AssetAudio {
             /* type        */  _SYS_PCM,
             /* volume      */  _SYS_AUDIO_DEFAULT_VOLUME,
             /* dataSize    */  numSamples * sizeof samples[0],
-            /* pData       */  reinterpret_cast<uint32_t>(samples),
+            /* pData       */  reinterpret_cast<uintptr_t>(samples),
         }};
         return result;
     }
