@@ -264,7 +264,7 @@ void TestJig::getUsbCurrentHandler(uint8_t argc, uint8_t *args)
     uint32_t sampleSum = 0;
 
     for (unsigned i = 0; i < NUM_CURRENT_SAMPLES; i++) {
-        sampleSum += adc.sample(V3_CURRENT_ADC_CH);
+        sampleSum += adc.sample(USB_CURRENT_ADC_CH);
     }
 
     uint16_t sampleAvg = sampleSum / NUM_CURRENT_SAMPLES;

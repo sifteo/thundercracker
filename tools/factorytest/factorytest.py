@@ -49,7 +49,7 @@ class UsbDevice(object):
     def txPacket(self, bytes):
         self._dev.write(OUT_EP, bytes)
 
-    def rxPacket(self, timeout = 1):
+    def rxPacket(self, timeout = 250):
         payload = self._dev.read(IN_EP, UsbDevice.MAX_PACKET, None ,timeout = timeout)
         return TestResponse(payload[0], payload[1:])
 
