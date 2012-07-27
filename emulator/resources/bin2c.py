@@ -37,6 +37,9 @@ INPUTS = [
     ('rb', None,        "resources/ui_font_data_0.png"),
     ('rb', None,        "resources/model_cube_body.bin"),
     ('rb', None,        "resources/model_cube_face.bin"),
+    ('rb', None,        "resources/model_mc_body.bin"),
+    ('rb', None,        "resources/model_mc_face.bin"),
+    ('rb', None,        "resources/model_mc_volume.bin"),
     ]
 
 OUTPUT = "resources/data.cpp"

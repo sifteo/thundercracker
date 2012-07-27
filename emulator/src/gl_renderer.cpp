@@ -70,9 +70,15 @@ bool GLRenderer::init()
 
     extern const uint8_t model_cube_body[];
     extern const uint8_t model_cube_face[];
+    extern const uint8_t model_mc_body[];
+    extern const uint8_t model_mc_face[];
+    extern const uint8_t model_mc_volume[];
 
     loadModel(model_cube_body, cubeBody);
     loadModel(model_cube_face, cubeFace);
+    loadModel(model_mc_body, mcBody);
+    loadModel(model_mc_face, mcFace);
+    loadModel(model_mc_volume, mcVolume);
 
     /*
      * Load textures

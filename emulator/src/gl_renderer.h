@@ -115,6 +115,9 @@ class GLRenderer {
 
     Model cubeBody;
     Model cubeFace;
+    Model mcBody;
+    Model mcFace;
+    Model mcVolume;
 
     GLhandleARB cubeFaceProgFiltered;
     GLhandleARB cubeFaceProgUnfiltered;

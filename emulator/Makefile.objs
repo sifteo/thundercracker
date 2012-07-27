@@ -60,6 +60,9 @@ GENERATED_FILES = \
 DATADEPS = \
     resources/model_cube_body.bin \
     resources/model_cube_face.bin \
+    resources/model_mc_body.bin \
+    resources/model_mc_face.bin \
+    resources/model_mc_volume.bin \
     resources/*.png \
     resources/*.glsl \
     resources/*.fnt \

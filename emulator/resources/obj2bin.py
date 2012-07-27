@@ -35,10 +35,15 @@ class OBJReader:
                 continue
 
             if tok[0] == 'f':
-                if len(tok) != 4:
+                if len(tok) > 4:
                     raise ValueError("Face is not triangular")
-                for v in tok[1:]:
-                    self.convertVertex(v)
+                elif len(tok) < 4:
+                    # Not sure what this means... WTF blender?
+                    pass
+                else:
+                    # Triangle!
+                    for v in tok[1:]:
+                        self.convertVertex(v)
 
             elif tok[0] == 'v':
                 x,y,z = map(float, tok[1:])
