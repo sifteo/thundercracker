@@ -39,7 +39,7 @@ void shutdown()
 void task()
 {
     static const SysTime::Ticks holdDuration = SysTime::sTicks(4);
-    static const SysTime::Ticks blinkPeriod = SysTime::msTicks(100);
+    static const SysTime::Ticks blinkPeriod = SysTime::msTicks(200);
     static SysTime::Ticks shutdownDeadline = 0;
     SysTime::Ticks now = SysTime::ticks();
 
