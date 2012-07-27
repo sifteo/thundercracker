@@ -30,27 +30,27 @@ class OBJReader:
 
     def read(self, f):
         for line in open(f, 'r'):
-            tok = line.split()
+            tok = line.split('#', 1)[0].split()
             if not tok:
                 continue
 
             if tok[0] == 'f':
                 if len(tok) != 4:
                     raise ValueError("Face is not triangular")
-
-                # Reverse vertex order
-                for v in reversed(tok[1:]):
+                for v in tok[1:]:
                     self.convertVertex(v)
 
             elif tok[0] == 'v':
-                self.vertices.append(map(float, tok[1:]))
+                x,y,z = map(float, tok[1:])
+                self.vertices.append((-x, y, z))
                 continue
 
             elif tok[0] == 'vn':
-                self.normals.append(map(float, tok[1:]))
+                x,y,z = map(float, tok[1:])
+                self.normals.append((-x, y, z))
                 continue
 
-            elif tok[0] in ('#', 's'):
+            elif tok[0] in ('s',):
                 # Ignored
                 pass
             else:
