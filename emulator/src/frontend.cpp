@@ -78,11 +78,11 @@ b2Vec2 Frontend::getCubeGridLoc(unsigned index, unsigned total, bool mc)
     unsigned gridW = std::min(3U, std::max(1U, total));
     unsigned gridH = (total + gridW - 1) / gridW;
 
-    int x, y;
+    float x, y;
 
     if (mc) {
-        // Just off the top edge, in the middle
-        x = 1;
+        // Just off the top edge, in the exact middle
+        x = (gridW - 1) / 2.0f;
         y = -2;
     } else {
         x = index % gridW;
