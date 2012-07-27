@@ -42,8 +42,9 @@ bool Frontend::init(System *_sys)
     isRunning = true;
     isRotationFixed = sys->opt_lockRotationByDefault;
 
-    // XXX
-    mc.init(world, -1,-1);
+    // Initial postiion for the MC
+    b2Vec2 mcLoc = getCubeGridLoc(0, instance->sys->opt_numCubes, true);
+    mc.init(world, mcLoc.x, mcLoc.y);
 
     /*
      * We need to first position our default set of cubes, then
@@ -70,15 +71,23 @@ bool Frontend::init(System *_sys)
     return true;
 }
 
-b2Vec2 Frontend::getCubeGridLoc(unsigned index, unsigned total)
+b2Vec2 Frontend::getCubeGridLoc(unsigned index, unsigned total, bool mc)
 {
     const float spacing = CubeConstants::SIZE * 2.7;
 
     unsigned gridW = std::min(3U, std::max(1U, total));
     unsigned gridH = (total + gridW - 1) / gridW;
 
-    unsigned x = index % gridW;
-    unsigned y = index / gridW;
+    float x, y;
+
+    if (mc) {
+        // Just off the top edge, in the exact middle
+        x = (gridW - 1) / 2.0f;
+        y = -2;
+    } else {
+        x = index % gridW;
+        y = index / gridW;
+    }
 
     return b2Vec2( ((gridW - 1) * -0.5 + x) * spacing,
                    ((gridH - 1) * -0.5 + y) * spacing );
@@ -156,14 +165,22 @@ void Frontend::moveWalls(bool immediate)
      * (unless changed by the user) but the vertical size changes
      * depending on the window aspect ratio. We'll try to move the
      * walls accordingly.
+     *
+     * We add a little bit of space beyond the actual viewport
+     * extent, to allow objects to get part of one cube-width
+     * off screen. This makes the whole area feel less cramped,
+     * and it lets you get items (like the base) out of the way
+     * without losing them.
      */
 
     float yRatio = renderer.getHeight() / (float)renderer.getWidth();
     if (yRatio < 0.1)
         yRatio = 0.1;
 
-    float x = maxViewExtent + normalViewExtent;
-    float y = maxViewExtent + normalViewExtent * yRatio;
+    const float padding = CubeConstants::SIZE * 1.5f;
+
+    float x = padding + maxViewExtent + normalViewExtent;
+    float y = padding + maxViewExtent + normalViewExtent * yRatio;
 
     if (immediate) {
         walls[0]->SetTransform(b2Vec2( x,  0), 0);
