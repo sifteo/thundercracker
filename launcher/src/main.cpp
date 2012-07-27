@@ -23,11 +23,8 @@ static Metadata M = Metadata()
 
 void main()
 {
-    // Wait a little bit to allow all cube connection events to process
-    SystemTime time = SystemTime::now();
-    while ((SystemTime::now() - time).milliseconds() < 500) {
+    while (SystemTime::now().uptimeMS() < 2000)
         System::yield();
-    }
 
     // In simulation, if exactly one game is installed, run it immediately.
     ELFMainMenuItem::autoexec();

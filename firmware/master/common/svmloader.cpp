@@ -32,6 +32,7 @@ using namespace Svm;
 
 FlashBlockRef SvmLoader::mapRefs[SvmMemory::NUM_FLASH_SEGMENTS];
 FlashVolume SvmLoader::mapVols[SvmMemory::NUM_FLASH_SEGMENTS];
+FlashVolume SvmLoader::previousVolume;
 uint8_t SvmLoader::runLevel;
 
 
@@ -166,6 +167,7 @@ void SvmLoader::exec(FlashVolume vol, RunLevel level)
     }
 
     runLevel = level;
+    previousVolume = mapVols[0];
     mapVols[0] = vol;
 
     SvmRuntime::StackInfo stack;

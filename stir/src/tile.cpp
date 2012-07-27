@@ -410,67 +410,50 @@ void TileStack::replace(TileRef t)
     cache = t;
 }
 
-TileRef TileStack::median()
+void TileStack::computeMedian()
 {
-    /*
-     * Create a new tile based on the per-pixel median of every tile in the set.
-     */
+    Tile::Identity median;
+    std::vector<RGB565> colors(tiles.size());
 
-    if (cache)
-        return cache;
-        
-    if (tiles.size() == 1) {
-        // Special-case for a single-tile stack. No copy, just add a reference
-        cache = TileRef(tiles[0]);
+    // The median algorithm repeats independently for every pixel in the tile.
+    for (unsigned i = 0; i < Tile::PIXELS; i++) {
 
-    } else {
-        // General-case median algorithm
+        // Collect possible colors for this pixel
+        for (unsigned j = 0; j < tiles.size(); j++)
+            colors[j] = tiles[j]->pixel(i);
 
-        Tile::Identity median;
-        std::vector<RGB565> colors(tiles.size());
+        // Sort along the major axis
+        int major = CIELab::findMajorAxis(&colors[0], colors.size());
+        std::sort(colors.begin(), colors.end(),
+                  CIELab::sortAxis(major));
 
-        // The median algorithm repeats independently for every pixel in the tile.
-        for (unsigned i = 0; i < Tile::PIXELS; i++) {
-
-            // Collect possible colors for this pixel
-            for (unsigned j = 0; j < tiles.size(); j++)
-                colors[j] = tiles[j]->pixel(i);
-
-            // Sort along the major axis
-            int major = CIELab::findMajorAxis(&colors[0], colors.size());
-            std::sort(colors.begin(), colors.end(),
-                      CIELab::sortAxis(major));
-
-            // Pick the median color
-            median.pixels[i] = colors[colors.size() >> 1];
-        }
-
-        cache = Tile::instance(median);
-
-        /*
-         * Some individual tiles will receive a huge number of references.
-         * This is a bit of a hack to prevent a single tile stack from growing
-         * boundlessly. If we just calculated a median for a stack over a preset
-         * maximum size, we replace the entire stack with copies of the median
-         * image, in order to give that median significant (but not absolute)
-         * statistical weight.
-         *
-         * The problem with this is that a tile's median is no longer
-         * computed globally across the entire asset group, but is instead
-         * more of a sliding window. But for the kinds of heavily repeated
-         * tiles that this algorithm will apply to, maybe this isn't an
-         * issue?
-         */
-
-        if (tiles.size() > MAX_SIZE) {
-            tiles = std::vector<TileRef>(MAX_SIZE / 2, cache);
-        }
+        // Pick the median color
+        median.pixels[i] = colors[colors.size() >> 1];
     }
 
-    return cache;
+    cache = Tile::instance(median);
+
+    /*
+     * Some individual tiles will receive a huge number of references.
+     * This is a bit of a hack to prevent a single tile stack from growing
+     * boundlessly. If we just calculated a median for a stack over a preset
+     * maximum size, we replace the entire stack with copies of the median
+     * image, in order to give that median significant (but not absolute)
+     * statistical weight.
+     *
+     * The problem with this is that a tile's median is no longer
+     * computed globally across the entire asset group, but is instead
+     * more of a sliding window. But for the kinds of heavily repeated
+     * tiles that this algorithm will apply to, maybe this isn't an
+     * issue?
+     */
+
+    if (tiles.size() > MAX_SIZE) {
+        tiles = std::vector<TileRef>(MAX_SIZE / 2, cache);
+    }
 }
 
-TileStack* TilePool::closest(TileRef t)
+TileStack* TilePool::closest(TileRef t, double distance)
 {
     /*
      * Search for the closest tile set for the provided tile image.
@@ -479,7 +462,6 @@ TileStack* TilePool::closest(TileRef t)
      */
 
     const double epsilon = 1e-3;
-    double distance = t->options().getMaxMSE();
     TileStack *closest = NULL;
 
     for (std::list<TileStack>::iterator i = stackList.begin(); i != stackList.end(); i++) {
@@ -526,10 +508,14 @@ void TilePool::optimize(Logger &log)
      * Global optimizations to apply after filling a tile pool.
      */
 
-    optimizePalette(log);
-    optimizeTiles(log);
-    optimizeTrueColorTiles(log);
-    optimizeOrder(log);
+    if (numFixed) {
+        optimizeFixedTiles(log);
+    } else {
+        optimizePalette(log);
+        optimizeTiles(log);
+        optimizeTrueColorTiles(log);
+        optimizeOrder(log);
+    }
 }
 
 void TilePool::optimizePalette(Logger &log)
@@ -558,7 +544,7 @@ void TilePool::optimizePalette(Logger &log)
                 reducer.add((*i)->pixel(j), maxMSE);
         }
     }
-    
+
     // Skip the rest if all tiles are lossless
     if (needReduction) {
  
@@ -572,6 +558,67 @@ void TilePool::optimizePalette(Logger &log)
                 *i = (*i)->reduce(reducer);
         }
     }
+}
+
+void TilePool::optimizeFixedTiles(Logger &log)
+{
+    /*
+     * This is an alternative optimization path for pools which contain
+     * 'fixed' tiles. This means that "numFixed" tiles at the beginning
+     * of the tiles[] vector are set in stone, and all other tiles
+     * must be removed and replaced with references to these fixed tiles.
+     *
+     * This is used to implement groups with the 'atlas' parameter.
+     */
+
+    /* 
+     * All fixed tiles go, in order, into the final data structures.
+     */
+
+    stackList.clear();
+    stackIndex.resize(numFixed);
+    stackArray.resize(numFixed);
+
+    for (unsigned i = 0; i < numFixed; ++i) {
+        stackList.push_back(TileStack());
+        TileStack *c = &stackList.back();
+        c->add(tiles[i]);
+        c->index = i;
+        stackArray[i] = c;
+        stackIndex[i] = c;
+    }
+
+    /*
+     * All remaining tile serials use closest() to find matches in the fixed stacks.
+     */
+
+    log.taskBegin("Matching fixed tiles");
+
+    for (unsigned serial = numFixed; serial < tiles.size(); ++serial) {
+
+        /*
+         * We have no specific upper limit on the error, so we could
+         * just start out by calling closest() with a distance of HUGE_VAL,
+         * but this breaks a lot of the early-out optimizations inside.
+         * It's more efficient if we increase the distance gradually.
+         */
+
+        double distance = 1.0f;
+        TileStack *c;
+        do {
+            c = closest(tiles[serial], distance);
+            distance *= 100;
+        } while (!c);
+
+        tiles[serial] = c->median();
+        stackIndex.push_back(c);
+
+        if (serial == tiles.size() - 1 || !(serial % 32)) {
+            log.taskProgress("%u of %u", serial - numFixed + 1, tiles.size() - numFixed);
+        }
+    }
+
+    log.taskEnd();
 }
 
 void TilePool::optimizeTiles(Logger &log)
@@ -651,7 +698,7 @@ void TilePool::optimizeTilesPass(Logger &log,
 
                 std::tr1::unordered_map<Tile *, TileStack *>::iterator i = memo.find(&*tr);
                 if (i == memo.end()) {
-                    c = closest(tr);
+                    c = closest(tr, tr->options().getMaxMSE());
                     memo[&*tr] = c;
                 } else {
                     c = memo[&*tr];

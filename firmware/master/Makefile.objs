@@ -2,8 +2,10 @@ MASTER_DIR := $(TC_DIR)/firmware/master
 
 # Sources common to both host and stm32 builds
 OBJS_COMMON = \
+    $(MASTER_DIR)/assets/assets.gen.o \
     $(MASTER_DIR)/common/syscall_asset.o \
     $(MASTER_DIR)/common/syscall_audio.o \
+    $(MASTER_DIR)/common/syscall_battery.o \
     $(MASTER_DIR)/common/syscall_cube.o \
     $(MASTER_DIR)/common/syscall_filesystem.o \
     $(MASTER_DIR)/common/syscall_prng.o \

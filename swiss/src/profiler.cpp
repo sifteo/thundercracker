@@ -25,9 +25,6 @@ int Profiler::run(int argc, char **argv, IODevice &_dev)
     Profiler profiler(_dev);
     bool success = profiler.profile(argv[1], argv[2]);
 
-    _dev.close();
-    _dev.processEvents();
-
     return success ? 0 : 1;
 }
 

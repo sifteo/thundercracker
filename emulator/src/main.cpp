@@ -67,6 +67,7 @@ static void usage()
             "  --radio-trace       Trace all radio packet contents\n"
             "  --paint-trace       Trace the state of the repaint controller\n"
             "  --white-bg          Force the UI to use a plain white background\n"
+            "  --window WxH        Initial window size (default 800x600)\n"
             "  --stdout FILENAME   Redirect output to FILENAME\n"
             "  --waveout FILE.wav  Log all audio output to LOG.wav\n"
             "\n"
@@ -266,7 +267,17 @@ int main(int argc, char **argv)
             sys.opt_whiteBackground = true;
             continue;
         }
-        
+
+        if (!strcmp(arg, "--window") && argv[c+1]) {
+            int result = sscanf(argv[c+1], "%dx%d", &(sys.opt_windowWidth), &(sys.opt_windowHeight));
+            if (result != 2 || sys.opt_windowWidth <= 0 || sys.opt_windowHeight <=0) {
+                message("Error: invalid window size argument \"%s\"", argv[c+1]);
+                return 1;
+            }
+            c++;
+            continue;
+        }
+
         if (!strcmp(arg, "--stdout") && argv[c+1]) {
             if(!freopen(argv[c+1], "w", stdout)) {
                 message("Error: opening file %s for write", argv[c+1]);

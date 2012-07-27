@@ -21,6 +21,7 @@ public:
     static void init();
     static void onTestDataReceived(uint8_t *buf, unsigned len);
     static void onI2cEvent();
+    static void task();
 
 private:
     static const unsigned I2C_SLAVE_ADDRESS = 0x55;

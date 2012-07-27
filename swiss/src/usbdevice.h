@@ -6,10 +6,11 @@
 
 #include <list>
 #include <stdint.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
 
-class UsbDevice : public IODevice {
-public:
-    UsbDevice();
+namespace Usb {
 
     static int init() {
         return libusb_init(0);
@@ -18,6 +19,13 @@ public:
     static void deinit() {
         libusb_exit(0);
     }
+
+} // namespace Usb
+
+
+class UsbDevice : public IODevice {
+public:
+    UsbDevice();
 
     void processEvents() {
         struct timeval tv = {
@@ -52,10 +60,9 @@ public:
     int writePacketSync(const uint8_t *buf, int maxlen, int *transferred, unsigned timeout = -1);
 
 private:
-
     static const unsigned NUM_CONCURRENT_IN_TRANSFERS = 16;
 
-    bool populateDeviceInfo(libusb_device *dev);
+    bool populateDeviceInfo(libusb_config_descriptor *cfg);
     bool submitINTransfer();
 
     static void LIBUSB_CALL onRxComplete(libusb_transfer *);
@@ -73,13 +80,20 @@ private:
     Endpoint mInEndpoint;
     Endpoint mOutEndpoint;
 
-    void removeTransfer(std::list<libusb_transfer*> &list, libusb_transfer *t);
+    void removeTransfer(Endpoint &ep, libusb_transfer *t);
+    void cancelTransfers(Endpoint &ep);
 
     libusb_device_handle *mHandle;
 
     struct Packet {
         uint8_t *buf;
         uint8_t len;
+
+        Packet(libusb_transfer *t) {
+            len = t->actual_length;
+            buf = (uint8_t*)malloc(len);
+            memcpy(buf, t->buffer, len);
+        }
     };
     std::list<Packet> mBufferedINPackets;
 };

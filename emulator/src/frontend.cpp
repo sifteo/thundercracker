@@ -10,12 +10,6 @@
 #include "ostime.h"
 #include <time.h>
 
-/*
- * NB: button handling should go through FrontendMothership once that
- * is resurrected.
- */
-#include "homebutton.h"
-
 Frontend *Frontend::instance = NULL;
 tthread::mutex Frontend::instanceLock;
 
@@ -48,13 +42,9 @@ bool Frontend::init(System *_sys)
     isRunning = true;
     isRotationFixed = sys->opt_lockRotationByDefault;
 
-#if MOTHERSHIP
-    mothershipCount = 1;
-    b2Vec2 p = cubes[0].getBody()->GetPosition();
-    motherships[0].init(0, world, p.x, p.y);
-#else
-    mothershipCount = 0;
-#endif
+    // Initial postiion for the MC
+    b2Vec2 mcLoc = getCubeGridLoc(0, instance->sys->opt_numCubes, true);
+    mc.init(world, mcLoc.x, mcLoc.y);
 
     /*
      * We need to first position our default set of cubes, then
@@ -73,7 +63,7 @@ bool Frontend::init(System *_sys)
 
     // Open our GUI window
     glfwInit();
-    if (!openWindow(800, 600))
+    if (!openWindow(sys->opt_windowWidth, sys->opt_windowHeight))
         return false;
 
     overlay.init(&renderer, sys);
@@ -81,15 +71,23 @@ bool Frontend::init(System *_sys)
     return true;
 }
 
-b2Vec2 Frontend::getCubeGridLoc(unsigned index, unsigned total)
+b2Vec2 Frontend::getCubeGridLoc(unsigned index, unsigned total, bool mc)
 {
     const float spacing = CubeConstants::SIZE * 2.7;
 
     unsigned gridW = std::min(3U, std::max(1U, total));
     unsigned gridH = (total + gridW - 1) / gridW;
 
-    unsigned x = index % gridW;
-    unsigned y = index / gridW;
+    float x, y;
+
+    if (mc) {
+        // Just off the top edge, in the exact middle
+        x = (gridW - 1) / 2.0f;
+        y = -2;
+    } else {
+        x = index % gridW;
+        y = index / gridW;
+    }
 
     return b2Vec2( ((gridW - 1) * -0.5 + x) * spacing,
                    ((gridH - 1) * -0.5 + y) * spacing );
@@ -167,14 +165,22 @@ void Frontend::moveWalls(bool immediate)
      * (unless changed by the user) but the vertical size changes
      * depending on the window aspect ratio. We'll try to move the
      * walls accordingly.
+     *
+     * We add a little bit of space beyond the actual viewport
+     * extent, to allow objects to get part of one cube-width
+     * off screen. This makes the whole area feel less cramped,
+     * and it lets you get items (like the base) out of the way
+     * without losing them.
      */
 
     float yRatio = renderer.getHeight() / (float)renderer.getWidth();
     if (yRatio < 0.1)
         yRatio = 0.1;
 
-    float x = maxViewExtent + normalViewExtent;
-    float y = maxViewExtent + normalViewExtent * yRatio;
+    const float padding = CubeConstants::SIZE * 1.5f;
+
+    float x = padding + maxViewExtent + normalViewExtent;
+    float y = padding + maxViewExtent + normalViewExtent * yRatio;
 
     if (immediate) {
         walls[0]->SetTransform(b2Vec2( x,  0), 0);
@@ -368,7 +374,7 @@ void GLFWCALL Frontend::onKey(int key, int state)
             break;
 
         case 'B':
-            HomeButton::onChange();
+            // XXX HomeButton::onChange();
             break;
 
         case 'Z':
@@ -408,7 +414,7 @@ void GLFWCALL Frontend::onKey(int key, int state)
             break;
         
         case GLFW_KEY_SPACE:
-            if (instance->mouseIsPulling)
+            if (instance->mouseIsPulling && instance->mousePicker.mCube)
                 instance->hoverOrRotate();
             break;
 
@@ -449,7 +455,7 @@ void GLFWCALL Frontend::onKey(int key, int state)
         switch (key) {
 
         case 'B':
-            HomeButton::onChange();
+            // XXX HomeButton::onChange();
             break;
 
         }
@@ -510,13 +516,29 @@ void Frontend::onMouseDown(int button)
 {
     idleFrames = 0;
     
-    if (button == GLFW_MOUSE_BUTTON_RIGHT && mouseIsPulling)
+    if (button == GLFW_MOUSE_BUTTON_RIGHT && mouseIsPulling && mousePicker.mCube)
         hoverOrRotate();
     
     if (!mouseBody) {
         mousePicker.test(world, mouseVec(normalViewExtent));
 
         isAnimatingNewCubeLayout = false;
+
+        if (mousePicker.mMC) {
+            // Pulling the MC with the mouse. Like pulling a cube, but much simpler!
+
+            b2BodyDef mouseDef;
+            mouseDef.type = b2_kinematicBody;
+            mouseDef.position = mousePicker.mPoint;
+            mouseDef.allowSleep = false;
+            mouseBody = world.CreateBody(&mouseDef);
+
+            mouseIsPulling = true;
+
+            b2RevoluteJointDef jointDef;
+            jointDef.Initialize(mousePicker.mMC->getBody(), mouseBody, mousePicker.mPoint);
+            mouseJoint = (b2RevoluteJoint*) world.CreateJoint(&jointDef);
+        }
 
         if (mousePicker.mCube) {
             // This body represents the mouse itself now as a physical object
@@ -551,10 +573,10 @@ void Frontend::onMouseDown(int button)
                  * lets us pull/push a cube, or by grabbing it at an
                  * edge or corner, rotate it intuitively.
                  */
-                
+
                 mouseIsPulling = true;
                 mousePicker.mCube->setHoverTarget(CubeConstants::HOVER_SLIGHT);
-                
+
                 /*
                  * Pick an attachment point. If we're close to the center,
                  * snap our attachment point to the center of mass, and
@@ -710,11 +732,6 @@ void Frontend::animate()
         }
     }
 
-    for (unsigned i = 0; i < mothershipCount; ++i) {
-        /* Mothership animations */
-        motherships[i].animate();
-    }
-
     for (unsigned i = 0; i < cubeCount; i++) {
         /* Grid layout animation */
         if (isAnimatingNewCubeLayout) {
@@ -801,9 +818,6 @@ void Frontend::draw()
         renderer.drawDefaultBackground(viewExtent * ratio * 50.0f, 0.2f);
     }
 
-    for (unsigned i = 0; i < mothershipCount; ++i) {
-        motherships[i].draw(renderer);
-    }
     for (unsigned i = 0; i < cubeCount; i++) {
         if (cubes[i].draw(renderer)) {
             // We found a cube that isn't idle.
@@ -811,6 +825,7 @@ void Frontend::draw()
         }
     }
 
+    mc.draw(renderer);
     renderer.beginOverlay();
 
     // Per-cube status overlays
@@ -943,6 +958,7 @@ void Frontend::MousePicker::test(b2World &world, b2Vec2 point)
 
     mPoint = point;
     mCube = NULL;
+    mMC = NULL;
 
     world.QueryAABB(this, aabb);
 }
@@ -953,6 +969,11 @@ bool Frontend::MousePicker::ReportFixture(b2Fixture *fixture)
 
     if (fdat && fdat->type == fdat->T_CUBE && fixture->TestPoint(mPoint)) {
         mCube = fdat->ptr.cube;
+        return false;
+    }
+
+    if (fdat && fdat->type == fdat->T_MC && fixture->TestPoint(mPoint)) {
+        mMC = fdat->ptr.mc;
         return false;
     }
 

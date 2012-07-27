@@ -207,12 +207,18 @@ void FactoryTest::ledHandler(uint8_t argc, const uint8_t *args)
 
 /*
  * No args - just return hw id.
+ * Special case: pass an extra argument to specify that the response should
+ *               be sent via USB.
  */
 void FactoryTest::uniqueIdHandler(uint8_t argc, const uint8_t *args)
 {
-    uint8_t response[2 + Board::UniqueIdNumBytes] = { sizeof(response), args[0] };
+    uint8_t response[2 + Board::UniqueIdNumBytes] = { sizeof response, args[0] };
     memcpy(response + 2, Board::UniqueId, Board::UniqueIdNumBytes);
-    Usart::Dbg.write(response, sizeof response);
+
+    if (argc >= 2)
+        UsbDevice::write(&response[1], sizeof response - 1);
+    else
+        Usart::Dbg.write(response, sizeof response);
 }
 
 /*

@@ -33,9 +33,6 @@ int Installer::run(int argc, char **argv, IODevice &_dev)
     bool success = installer.install(path,
         IODevice::SIFTEO_VID, IODevice::BASE_PID, launcher, rpc);
 
-    _dev.close();
-    _dev.processEvents();
-
     return success ? 0 : 1;
 }
 

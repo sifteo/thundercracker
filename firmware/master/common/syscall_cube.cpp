@@ -24,8 +24,8 @@ uint32_t _SYS_getConnectedCubes()
 
 void _SYS_setCubeRange(uint32_t minimum, uint32_t maximum)
 {
-    if (minimum >= _SYS_NUM_CUBE_SLOTS ||
-        maximum >= _SYS_NUM_CUBE_SLOTS ||
+    if (minimum > _SYS_NUM_CUBE_SLOTS ||
+        maximum > _SYS_NUM_CUBE_SLOTS ||
         minimum > maximum)
         return SvmRuntime::fault(F_SYSCALL_PARAM);
     
@@ -92,18 +92,6 @@ uint32_t _SYS_isTouching(_SYSCubeID cid)
     }
 
     return CubeSlots::instances[cid].isTouching();
-}
-
-uint32_t _SYS_getBatteryV(_SYSCubeID cid)
-{
-    if (!CubeSlots::validID(cid)) {
-        SvmRuntime::fault(F_SYSCALL_PARAM);
-        return 0;
-    }
-
-    // XXX: Temporary for testing. Instead of raw battery voltage, we should
-    //      be returning some cooked percentage-like value.
-    return CubeSlots::instances[cid].getRawBatteryV();
 }
 
 uint64_t _SYS_getCubeHWID(_SYSCubeID cid)

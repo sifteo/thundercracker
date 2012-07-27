@@ -54,15 +54,22 @@ public:
         return c;
     }
 
-    /// Copy from 'src' to 'this' until the source is empty or destination full.
+    /*
+     * Copy from 'src' to 'this' until the source is empty or destination
+     * has >= fillThreshold items in the queue.
+     */
     template <typename T>
-    void ALWAYS_INLINE pull(T &src)
+    void ALWAYS_INLINE pull(T &src, unsigned fillThreshold = tSize - 1)
     {
+        ASSERT(fillThreshold <= capacity());
         unsigned rCount = src.readAvailable();
-        unsigned wCount = writeAvailable();
-        unsigned count = MIN(rCount, wCount);
-        while (count--) {
-            enqueue(src.dequeue());
+        unsigned selfReadAvailable = readAvailable();
+        if (selfReadAvailable < fillThreshold) {
+            unsigned wCount = fillThreshold - selfReadAvailable;
+            unsigned count = MIN(rCount, wCount);
+            while (count--) {
+                enqueue(src.dequeue());
+            }
         }
     }
 

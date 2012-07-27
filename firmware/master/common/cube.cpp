@@ -16,6 +16,7 @@
 #include "neighborslot.h"
 #include "paintcontrol.h"
 #include "cubeslots.h"
+#include "assetslot.h"
 
 // Simulator headers, for simAssetLoaderBypass.
 #ifdef SIFTEO_SIMULATOR
@@ -51,7 +52,6 @@ void CubeSlot::connect(SysLFS::Key cubeRecord, const RadioAddress &addr, const R
     Event::setCubePending(Event::PID_CONNECTION, id());
 }
 
-
 void CubeSlot::disconnect()
 {
     LOG(("CUBE[%d]: Disconnected from system\n", id()));
@@ -70,10 +70,22 @@ void CubeSlot::disconnect()
     // Propagate this disconnection to userspace
     Event::setCubePending(Event::PID_CONNECTION, id());
 
+    setVideoBuffer(0);
     NeighborSlot::resetSlots(cv);
     NeighborSlot::resetPairs(cv);
 }
 
+void CubeSlot::userConnect()
+{
+    Atomic::Or(CubeSlots::userConnected, bit());
+    setVideoBuffer(0);
+    VirtAssetSlots::rebindCube(id());
+}
+
+void CubeSlot::userDisconnect()
+{
+    Atomic::And(CubeSlots::userConnected, ~bit());
+}
 
 void CubeSlot::startAssetLoad(SvmMemory::VirtAddr groupVA, uint16_t baseAddr)
 {
@@ -350,6 +362,13 @@ void CubeSlot::radioAcknowledge(const PacketBuffer &packet)
 
         // Trigger a rescan of all neighbors, during event dispatch
         Event::setCubePending(Event::PID_NEIGHBORS, id());
+    }
+
+    if (packet.len >= offsetof(RF_ACKType, battery_v) + sizeof ack->battery_v) {
+        // Packet has a valid battery voltage. Dispatch an event, if it's changed.
+
+        if (lastACK.battery_v != ack->battery_v)
+            Event::setCubePending(Event::PID_CUBE_BATTERY, id());
     }
 
     if (packet.len >= offsetof(RF_ACKType, hwid) + sizeof ack->hwid) {

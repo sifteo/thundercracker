@@ -230,6 +230,21 @@ public:
         return (_SYSVolumeHandle) _SYS_fs_runningVolume();
     }
 
+    /**
+     * @brief Return the Volume corresponding to the previously running program.
+     *
+     * This refers to the program that was running before the last exec().
+     * For normal games, this will always be the Volume associated with the
+     * system launcher.
+     *
+     * If there was no previously running program (the system booted directly
+     * into the current Volume) this returns a volume with the invalid value
+     * of zero.
+     */
+    static Volume previous() {
+        return (_SYSVolumeHandle) _SYS_fs_previousVolume();
+    }
+
     /// Equality comparison operator
     bool operator== (_SYSVolumeHandle other) const {
         return sys == other;
@@ -478,6 +493,130 @@ public:
         image.sys.frames = meta->frames;
         image.sys.format = meta->format;
         image.sys.pData = translate(meta->pData);
+    }
+};
+
+
+/**
+ * @brief Information about the composition of the filesystem
+ *
+ * This object contains global information about our filesystem,
+ * including its total size and amount of free space, as well as
+ * space usage totals separated out by category.
+ *
+ * The default constructor leaves FilesystemInfo uninitialized.
+ * Fill it in with up-to-date information by calling gather().
+ */
+
+class FilesystemInfo
+{
+public:
+    _SYSFilesystemInfo sys;
+
+    /**
+     * @brief Inspects the current state of the filesystem, and fills in the
+     * FilesystemInfo accordingly.
+     *
+     * This is a relatively heavyweight operation, similar to Volume::list()
+     */
+    void gather() {
+        _SYS_fs_info(&sys, sizeof sys);
+    }
+
+    /**
+     * @brief Return the size of one allocation unit.
+     *
+     * The filesystem allocates space to Volumes in relatively large units.
+     * This returns the size of that unit, in bytes.
+     */
+    uint32_t allocationUnitSize() {
+        return sys.unitSize;
+    }
+
+    /// Free space, in allocation units
+    uint32_t freeUnits() {
+        return sys.freeUnits;
+    }
+
+    /// Free space, in bytes
+    uint32_t freeBytes() {
+        return sys.freeUnits * sys.unitSize;
+    }
+
+    /**
+     * Space used by system data, in allocation units
+     *
+     * System data includes cube pairing information, asset caching data, and
+     * other internal storage used to implement basic system functionality.
+     * This is the same data which appears as 'system' space in `swiss manifest`.
+     */
+    uint32_t systemUnits() {
+        return sys.systemUnits;
+    }
+
+    /// Space used by system data, in bytes
+    uint32_t systemBytes() {
+        return sys.systemUnits * sys.unitSize;
+    }
+
+    /// Space used by the launcher's ELF binary, in allocation units
+    uint32_t launcherElfUnits() {
+        return sys.launcherElfUnits;
+    }
+
+    /// Space used by the launcher's ELF binary, in bytes
+    uint32_t launcherElfBytes() {
+        return sys.launcherElfUnits * sys.unitSize;
+    }
+
+    /// Space used by the launcher's StoredObjects, in allocation units
+    uint32_t launcherObjUnits() {
+        return sys.launcherObjUnits;
+    }
+
+    /// Space used by the launcher's StoredObjects, in bytes
+    uint32_t launcherObjBytes() {
+        return sys.launcherObjUnits * sys.unitSize;
+    }
+
+    /// Space used by all game ELF binaries, in allocation units
+    uint32_t gameElfUnits() {
+        return sys.gameElfUnits;
+    }
+
+    /// Space used by all game ELF binaries, in bytes
+    uint32_t gameElfBytes() {
+        return sys.gameElfUnits * sys.unitSize;
+    }
+
+    /// Space used by all game StoredObjects, in allocation units
+    uint32_t gameObjUnits() {
+        return sys.gameObjUnits;
+    }
+
+    /// Space used by all game StoredObjects, in bytes
+    uint32_t gameObjBytes() {
+        return sys.gameObjUnits * sys.unitSize;
+    }
+
+    /// Space used by the current volume's ELF binary, in allocation units
+    uint32_t selfElfUnits() {
+        return sys.selfElfUnits;
+    }
+
+    /// Space used by the current volume's ELF binary, in bytes
+    uint32_t selfElfBytes() {
+        return sys.selfElfUnits * sys.unitSize;
+    }
+
+    /// Space used by the current volume's StoredObjects, in allocation units
+    uint32_t selfObjUnits() {
+        return sys.selfObjUnits;
+    }
+
+    /// Space used by the current volume's StoredObjects, in bytes
+    uint32_t selfObjBytes() {
+        return sys.selfObjUnits * sys.unitSize;
     }
 };
 

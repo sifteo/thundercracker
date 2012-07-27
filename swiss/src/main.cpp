@@ -5,6 +5,7 @@
 #include "installer.h"
 #include "manifest.h"
 #include "delete.h"
+#include "paircube.h"
 #include "usbdevice.h"
 #include "macros.h"
 
@@ -41,7 +42,13 @@ static const Command commands[] = {
         "delete data from the Sifteo Base",
         "delete (--all | --sys | volume)",
         Delete::run
-    }
+    },
+    {
+        "pair",
+        "add a pairing record to the Sifteo Base",
+        "pair (--read | slotID hardwareID)",
+        PairCube::run
+    },
 };
 
 static void usage()
@@ -67,6 +74,22 @@ static void version()
     fprintf(stderr, "swiss, " TOSTRING(SDK_VERSION) "\n");
 }
 
+static int run(int argc, char **argv, UsbDevice &usbdev)
+{
+    const unsigned numCommands = sizeof(commands) / sizeof(commands[0]);
+    const char *commandName = argv[1];
+
+    for (unsigned i = 0; i < numCommands; ++i) {
+        if (!strcmp(commandName, commands[i].name))
+            return commands[i].run(argc - 1, argv + 1, usbdev);
+    }
+
+    fprintf(stderr, "no command named %s\n", commandName);
+    usage();
+
+    return 1;
+}
+
 int main(int argc, char **argv)
 {
     if (argc < 2 || !strcmp(argv[1], "-h")) {
@@ -82,23 +105,17 @@ int main(int argc, char **argv)
     /*
      * TODO: add support for specifying a TCP connection to siftulator.
      */
-    UsbDevice::init();
+    Usb::init();
     UsbDevice usbdev;
+    int rv = run(argc, argv, usbdev);
 
-    const unsigned numCommands = sizeof(commands) / sizeof(commands[0]);
-    const char *commandName = argv[1];
-
-    for (unsigned i = 0; i < numCommands; ++i) {
-        if (!strcmp(commandName, commands[i].name)) {
-            int r = commands[i].run(argc - 1, argv + 1, usbdev);
-            UsbDevice::deinit();
-            return r;
-        }
+    if (usbdev.isOpen()) {
+        usbdev.close();
+        while (usbdev.isOpen())
+            usbdev.processEvents();
     }
 
-    fprintf(stderr, "no command named %s\n", commandName);
-    usage();
-
-    return 1;
+    Usb::deinit();
+    return rv;
 }
 

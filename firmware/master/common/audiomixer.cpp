@@ -165,8 +165,12 @@ void AudioMixer::pullAudio()
         }
     #endif
 
-    if (samplesLeft < arraysize(blockBuffer))
+    if (samplesLeft < arraysize(blockBuffer)) {
+        // Need more room in the buffer before we can mix!
+        if (!headless)
+            AudioOutDevice::pullFromMixer();
         return;
+    }
 
     #ifndef SIFTEO_SIMULATOR
         SampleProfiler::SubSystem s = SampleProfiler::subsystem();
@@ -268,6 +272,10 @@ void AudioMixer::pullAudio()
         // Write back local copy of Countdown, only if it's real.
         AudioMixer::instance.trackerCallbackCountdown = trackerCountdown;
     }
+
+    // Give the output a chance to dequeue data immediately (Only used on Siftulator)
+    if (!headless)
+        AudioOutDevice::pullFromMixer();
 
     #ifndef SIFTEO_SIMULATOR
         SampleProfiler::setSubsystem(s);

@@ -36,6 +36,10 @@ void ELFMainMenuItem::autoexec()
 
     LOG("LAUNCHER: Automatically executing single game\n");
 
+    // Wait a little bit to allow all cube connection events to process
+    while (SystemTime::now().uptimeMS() < 500)
+        System::yield();
+
     AssetLoaderBypassDelegate delegate;
     inst.getCubeRange().set();
     inst.bootstrap(CubeSet::connected(), delegate);

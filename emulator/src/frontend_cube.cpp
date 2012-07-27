@@ -55,12 +55,11 @@ void FrontendCube::initBody(b2World &world, float x, float y)
     bodyDef.type = b2_dynamicBody;
     bodyDef.linearDamping = 30.0f;
     bodyDef.angularDamping = 5.0f;
-    //bodyDef.fixedRotation = true; // joshdb hax
     bodyDef.position.Set(x, y);
     body = world.CreateBody(&bodyDef);
 
     b2PolygonShape box;
-    const float boxSize = CubeConstants::SIZE * 0.96;    // Compensate for polygon 'skin'
+    const float boxSize = CubeConstants::SIZE * 0.96;   // Compensate for polygon 'skin'
     box.SetAsBox(boxSize, boxSize);
     
     bodyFixtureData.type = FixtureData::T_CUBE;
@@ -119,7 +118,7 @@ bool FrontendCube::draw(GLRenderer &r)
     bool framebufferChanged = cookie != lastLcdCookie;
     lastLcdCookie = cookie;
     
-    static const uint16_t blackness[hw->lcd.WIDTH * hw->lcd.HEIGHT] = { 0 };
+    static const uint16_t blackness[128 * 128] = { 0 };
     const uint16_t *framebuffer = hw->lcd.isVisible() ? hw->lcd.fb_mem : blackness;
 
     r.drawCube(id, body->GetPosition(), body->GetAngle(),

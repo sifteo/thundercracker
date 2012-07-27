@@ -40,6 +40,58 @@ struct Fixed {
 };
 
 /**
+ * @brief Format a floating point number using fixed precision.
+ *
+ * This is a type which can be used with String's << operator,
+ * to format floating point numbers with a fixed number of
+ * digits to the left and to the right of the decimal point.
+ *
+ * Note that this operates by converting both the left and right
+ * side into integers, and printing them separately.
+ */
+struct FixedFP {
+    /**
+     * @brief Format 'value' using exactly 'left' digits to the left of the decimal, and 'right' digits to the right.
+     *
+     * If 'leadingZeroes', extra leading characters will be '0',
+     * otherwise they will be spaces.
+     */
+    FixedFP(float value, unsigned left, unsigned right, bool leadingZeroes=false)
+        : widthL(left), widthR(right), leadingZeroes(leadingZeroes)
+    {
+        // Left side: truncate to integer
+        valueL = int(value);
+
+        /*
+         * Right side: We want to convert the right side to an integer by
+         * multiplying it by 10^right, then we can rely on String's
+         * field width truncation to do the rest. There aren't very many
+         * values of 'right' that won't overflow, so we can do this
+         * with a lookup table. Typically the field width is constant
+         * at compile-time, so this lookup table will optimize out.
+         */
+        switch (right) {
+            default:   ASSERT(0);
+            case 0:    valueR = value * 0; break;
+            case 1:    valueR = value * 10; break;
+            case 2:    valueR = value * 100; break;
+            case 3:    valueR = value * 1000; break;
+            case 4:    valueR = value * 10000; break;
+            case 5:    valueR = value * 100000; break;
+            case 6:    valueR = value * 1000000; break;
+            case 7:    valueR = value * 10000000; break;
+            case 8:    valueR = value * 100000000; break;
+            case 9:    valueR = value * 1000000000; break;
+        }
+    }
+
+    int valueL;
+    int valueR;
+    unsigned widthL, widthR;
+    bool leadingZeroes;
+};
+
+/**
  * @brief String formatting wrapper for fixed-width hexadecimal integers.
  *
  * This is a type which can be used with String's << operator,
@@ -259,6 +311,14 @@ public:
     /// STL-style formatting operator, append a fixed-width decimal integer
     String& operator<<(const Fixed &src) {
         _SYS_strlcat_int_fixed(buffer, src.value, src.width, src.leadingZeroes, tCapacity);
+        return *this;
+    }
+
+    /// STL-style formatting operator, append a fixed-width floating point number
+    String& operator<<(const FixedFP &src) {
+        _SYS_strlcat_int_fixed(buffer, src.valueL, src.widthL, src.leadingZeroes, tCapacity);
+        _SYS_strlcat(buffer, ".", tCapacity);
+        _SYS_strlcat_int_fixed(buffer, src.valueR, src.widthR, true, tCapacity);
         return *this;
     }
 

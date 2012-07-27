@@ -30,3 +30,8 @@ void AudioOutDevice::stop()
 {
     gPortAudio.stop();
 }
+
+void AudioOutDevice::pullFromMixer()
+{
+	gPortAudio.pullFromMixer();
+}
