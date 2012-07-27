@@ -214,7 +214,19 @@ class TileStack {
     void add(TileRef t);
     void replace(TileRef t);
 
-    TileRef median();
+    inline __attribute__ ((always_inline)) TileRef median()
+    {
+        if (!cache) {
+            if (tiles.size() == 1) {
+                // Special-case for a single-tile stack. No copy, just add a reference
+                cache = TileRef(tiles[0]);
+            } else {
+                // General-case median algorithm
+                computeMedian();
+            }
+        }
+        return cache;
+    }
 
     bool isPinned() const {
         return mPinned;
@@ -235,6 +247,8 @@ class TileStack {
     unsigned index;
     bool mPinned;
     bool mLossless;
+
+    void computeMedian();
 };
 
 
@@ -252,8 +266,16 @@ class TilePool {
     // Current value of SysLFS::TILES_PER_ASSET_SLOT from firmware
     static const unsigned MAX_SIZE = 4096;
 
+    TilePool() : numFixed(0) {}
+
+    // Normal optimization flow
     void optimize(Logger &log);
     void encode(std::vector<uint8_t>& out, Logger *log = NULL);
+
+    // All previous tiles are set in stone, no new tiles can be added
+    void makeFixed() {
+        numFixed = tiles.size();
+    }
 
     Serial add(TileRef t) {
         Serial s = (Serial)tiles.size();
@@ -277,11 +299,14 @@ class TilePool {
     }
 
  private:
+    unsigned numFixed;
+
     std::list<TileStack> stackList;       // Reorderable list of all stacked tiles
     std::vector<TileStack*> stackArray;   // Vector version of 'stackList', built after indices are known.
     std::vector<TileRef> tiles;           // Current best image for each tile, by Serial
     std::vector<TileStack*> stackIndex;   // Current optimized stack for each tile, by Serial
  
+    void optimizeFixedTiles(Logger &log);
     void optimizePalette(Logger &log);
     void optimizeOrder(Logger &log);
     void optimizeTiles(Logger &log);
@@ -290,7 +315,7 @@ class TilePool {
                            std::tr1::unordered_set<TileStack *> &activeStacks,
                            bool gather, bool pinned);
 
-    TileStack *closest(TileRef t);
+    TileStack *closest(TileRef t, double distance);
 };
 
 

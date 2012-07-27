@@ -9,11 +9,12 @@
 #ifndef _FRONTEND_CUBE_H
 #define _FRONTEND_CUBE_H
 
-#include "system.h"
 #include <Box2D/Box2D.h>
+#include "system.h"
+#include "frontend_fixture.h"
 
 class FrontendCube;
-class FrontendMothership;
+
 
 namespace CubeConstants {
 
@@ -28,9 +29,10 @@ namespace CubeConstants {
     const float SIZE = 0.5;
 
     /*
-     * Height of the cube, relative to its half-width
+     * Height of the cube, relative to its half-width.
+     * This MUST equal the Z coordinate of the cube face model.
      */
-    const float HEIGHT = 0.6;
+    const float HEIGHT = 0.908884;
 
     /*
      * Size of the portion of the cube we're calling the "center". Has
@@ -83,23 +85,6 @@ class AccelerationProbe {
     unsigned head;
     b2Vec2 velocitySamples[filterWidth];
 };
-
-
-struct FixtureData {
-    enum Type {
-        T_CUBE = 0,
-        T_NEIGHBOR,
-        T_MOTHERSHIP
-    };
-
-    Type type;
-    union {
-        FrontendCube *cube;
-        FrontendMothership *mothership;
-    } ptr;
-    Cube::Neighbors::Side side;
-};
-
 
 class FrontendCube {
  public:

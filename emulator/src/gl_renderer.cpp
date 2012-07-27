@@ -11,6 +11,8 @@
 #include "frontend.h"
 #include "lodepng.h"
 #include "cube_flash_model.h"
+#include "frontend_bmfont.h"
+#include "frontend_model.h"
 
 
 bool GLRenderer::init()
@@ -36,11 +38,21 @@ bool GLRenderer::init()
     cubeFaceProgFiltered = loadCubeFaceProgram("#define FILTER\n");
     cubeFaceProgUnfiltered = loadCubeFaceProgram("");
 
-    extern const uint8_t cube_side_fp[];
-    extern const uint8_t cube_side_vp[];
-    GLhandleARB cubeSideFP = loadShader(GL_FRAGMENT_SHADER, cube_side_fp);
-    GLhandleARB cubeSideVP = loadShader(GL_VERTEX_SHADER, cube_side_vp);
-    cubeSideProgram = linkProgram(cubeSideFP, cubeSideVP);
+    extern const uint8_t cube_body_fp[];
+    extern const uint8_t cube_body_vp[];
+    GLhandleARB cubeBodyFP = loadShader(GL_FRAGMENT_SHADER, cube_body_fp);
+    GLhandleARB cubeBodyVP = loadShader(GL_VERTEX_SHADER, cube_body_vp);
+    cubeBodyProgram = linkProgram(cubeBodyFP, cubeBodyVP);
+
+    extern const uint8_t mc_face_fp[];
+    extern const uint8_t mc_face_vp[];
+    GLhandleARB mcFaceFP = loadShader(GL_FRAGMENT_SHADER, mc_face_fp);
+    GLhandleARB mcFaceVP = loadShader(GL_VERTEX_SHADER, mc_face_vp);
+    mcFaceProgram = linkProgram(mcFaceFP, mcFaceVP);
+    glUseProgramObjectARB(mcFaceProgram);
+    glUniform1iARB(glGetUniformLocationARB(mcFaceProgram, "normalmap"), 0);
+    glUniform1iARB(glGetUniformLocationARB(mcFaceProgram, "lightmap"), 1);
+    mcFaceLEDLocation = glGetUniformLocationARB(mcFaceProgram, "led");
 
     extern const uint8_t background_fp[];
     extern const uint8_t background_vp[];
@@ -63,21 +75,37 @@ bool GLRenderer::init()
     scopeAlphaAttr = glGetUniformLocationARB(scopeProgram, "alphaAttr");
 
     /*
+     * Load models
+     */
+
+    extern const uint8_t model_cube_body[];
+    extern const uint8_t model_cube_face[];
+    extern const uint8_t model_mc_body[];
+    extern const uint8_t model_mc_face[];
+    extern const uint8_t model_mc_volume[];
+
+    loadModel(model_cube_body, cubeBody);
+    loadModel(model_cube_face, cubeFace);
+    loadModel(model_mc_body, mcBody);
+    loadModel(model_mc_face, mcFace);
+    loadModel(model_mc_volume, mcVolume);
+
+    /*
      * Load textures
      */
 
-    extern const uint8_t img_cube_face[];
     extern const uint8_t img_cube_face_hilight[];
-    extern const uint8_t img_cube_face_hilight_mask[];
+    extern const uint8_t img_mc_face_normals[];
+    extern const uint8_t img_mc_face_light[];
     extern const uint8_t img_wood[];
     extern const uint8_t img_bg_light[];
     extern const uint8_t img_scope_bg[];
     extern const uint8_t img_logo[];
     extern const uint8_t ui_font_data_0[];
 
-    cubeFaceTexture = loadTexture(img_cube_face);
     cubeFaceHilightTexture = loadTexture(img_cube_face_hilight);
-    cubeFaceHilightMaskTexture = loadTexture(img_cube_face_hilight_mask);
+    mcFaceNormalsTexture = loadTexture(img_mc_face_normals);
+    mcFaceLightTexture = loadTexture(img_mc_face_light);
     backgroundTexture = loadTexture(img_wood, GL_REPEAT);
     bgLightTexture = loadTexture(img_bg_light);
     fontTexture = loadTexture(ui_font_data_0, GL_CLAMP, GL_NEAREST);
@@ -87,13 +115,6 @@ bool GLRenderer::init()
     logoTexture = loadTexture(img_logo, GL_CLAMP, GL_LINEAR_MIPMAP_LINEAR);
     GLfloat logoBorder[4] = { 0.5f, 0.0f, 0.0f, 1.0f };
     glTexParameterfv(GL_TEXTURE_2D, GL_TEXTURE_BORDER_COLOR, logoBorder);
-
-    /*
-     * Procedural models
-     */
-
-    createRoundedRect(faceVA, 1.0f, CubeConstants::HEIGHT, 0.242f);
-    extrudePolygon(faceVA, sidesVA);
 
     /*
      * Per-cube initialization is lazy
@@ -132,10 +153,8 @@ GLhandleARB GLRenderer::loadCubeFaceProgram(const char *prefix)
 
     glUseProgramObjectARB(prog);
     glUniform1fARB(glGetUniformLocationARB(prog, "LCD_SIZE"), CubeConstants::LCD_SIZE);
-    glUniform1iARB(glGetUniformLocationARB(prog, "face"), 0);
-    glUniform1iARB(glGetUniformLocationARB(prog, "hilight"), 1);
-    glUniform1iARB(glGetUniformLocationARB(prog, "mask"), 2);
-    glUniform1iARB(glGetUniformLocationARB(prog, "lcd"), 3);
+    glUniform1iARB(glGetUniformLocationARB(prog, "hilight"), 0);
+    glUniform1iARB(glGetUniformLocationARB(prog, "lcd"), 1);
 
     return prog;
 }
@@ -215,7 +234,7 @@ void GLRenderer::beginFrame(float viewExtent, b2Vec2 viewCenter, unsigned pixelZ
 
     float zPlane = CubeConstants::SIZE * CubeConstants::HEIGHT;
     float zCamera = 5.0f;
-    float zNear = 0.1f;
+    float zNear = 1.0f;
     float zFar = 10.0f;
     float zDepth = zFar - zNear;
     
@@ -296,7 +315,7 @@ int GLRenderer::measureText(const char *str)
     uint32_t id;
     
     while ((id = (uint8_t) *(str++))) {
-        const Glyph *g = findGlyph(id);
+        const FrontendBMFont::Glyph *g = FrontendBMFont::findGlyph(id);
         if (g) {
             w = MAX(w, x + g->xOffset + g->width);
             x += g->xAdvance;
@@ -315,7 +334,7 @@ void GLRenderer::overlayText(int x, int y, const float color[4], const char *str
 
     uint32_t id;
     while ((id = (uint8_t) *(str++))) {
-        const Glyph *g = findGlyph(id);
+        const FrontendBMFont::Glyph *g = FrontendBMFont::findGlyph(id);
         if (g) {
             VertexT a, b, c, d;
             
@@ -662,23 +681,52 @@ void GLRenderer::drawCube(unsigned id, b2Vec2 center, float angle, float hover,
     drawCubeFace(id, framebufferChanged ? framebuffer : NULL);
 }
 
-void GLRenderer::drawMothership(unsigned id, b2Vec2 center, float angle)
+void GLRenderer::drawMC(b2Vec2 center, float angle, const float led[3])
 {
-    // TEMP just draw a blank cuuuuube
-    CubeTransformState tState;
-    b2Mat33 mat;
-    tState.modelMatrix = &mat;  
-    cubeTransform(center, angle, CubeConstants::HOVER_NONE, b2Vec2(0,0), tState);
-    drawCubeBody();
-    drawCubeFace(0, NULL);
-    // END TEMP
+    glLoadIdentity();
+    glTranslatef(center.x, center.y, 0.0f);
+    glRotatef(180 + angle * (180.0f / M_PI), 0,0,1);
+    glScalef(CubeConstants::SIZE, CubeConstants::SIZE, CubeConstants::SIZE);
+
+    /*
+     * Top surface, with normalmap and lightmap, and the current LED color.
+     */
+
+    glUseProgramObjectARB(mcFaceProgram);
+
+    glActiveTexture(GL_TEXTURE0);
+    glEnable(GL_TEXTURE_2D);
+    glBindTexture(GL_TEXTURE_2D, mcFaceNormalsTexture);
+
+    glActiveTexture(GL_TEXTURE1);
+    glEnable(GL_TEXTURE_2D);
+    glBindTexture(GL_TEXTURE_2D, mcFaceLightTexture);
+
+    glUniform3fv(mcFaceLEDLocation, 1, led);
+
+    drawModel(mcFace);
+
+    glActiveTexture(GL_TEXTURE1);
+    glDisable(GL_TEXTURE_2D);
+
+    glActiveTexture(GL_TEXTURE0);
+    glDisable(GL_TEXTURE_2D);
+
+    /*
+     * All the rest is static for now, and draws using the same plastic texture
+     * as the cube body. In the future we may move the mcVolume model separately
+     * in order to show the volume slider position.
+     */
+
+    glUseProgramObjectARB(cubeBodyProgram);
+    drawModel(mcBody);
+    drawModel(mcVolume);
 }
 
 void GLRenderer::drawCubeBody()
 {
-    glUseProgramObjectARB(cubeSideProgram);
-    glInterleavedArrays(GL_T2F_N3F_V3F, 0, &sidesVA[0]);
-    glDrawArrays(GL_TRIANGLE_STRIP, 0, (GLsizei) sidesVA.size());
+    glUseProgramObjectARB(cubeBodyProgram);
+    drawModel(cubeBody);
 }
 
 void GLRenderer::drawCubeFace(unsigned id, const uint16_t *framebuffer)
@@ -693,17 +741,9 @@ void GLRenderer::drawCubeFace(unsigned id, const uint16_t *framebuffer)
 
     glActiveTexture(GL_TEXTURE0);
     glEnable(GL_TEXTURE_2D);
-    glBindTexture(GL_TEXTURE_2D, cubeFaceTexture);
-
-    glActiveTexture(GL_TEXTURE1);
-    glEnable(GL_TEXTURE_2D);
     glBindTexture(GL_TEXTURE_2D, cubeFaceHilightTexture);
 
-    glActiveTexture(GL_TEXTURE2);
-    glEnable(GL_TEXTURE_2D);
-    glBindTexture(GL_TEXTURE_2D, cubeFaceHilightMaskTexture);
-    
-    glActiveTexture(GL_TEXTURE3);
+    glActiveTexture(GL_TEXTURE1);
     glEnable(GL_TEXTURE_2D);
 
     if (framebuffer) {
@@ -745,12 +785,11 @@ void GLRenderer::drawCubeFace(unsigned id, const uint16_t *framebuffer)
 
     /*
      * Just one draw. Our shader handles the rest. Drawing the LCD and
-     * face with one shader gives us a chance to do some nice
-     * filtering on the edges of the LCD.
+     * face with one shader gives us a chance to do some nice filtering
+     * on the edges of the LCD.
      */
 
-    glInterleavedArrays(GL_T2F_N3F_V3F, 0, &faceVA[0]);
-    glDrawArrays(GL_POLYGON, 0, (GLsizei) faceVA.size());
+    drawModel(cubeFace);
 
     /*
      * Clean up GL state.
@@ -760,10 +799,35 @@ void GLRenderer::drawCubeFace(unsigned id, const uint16_t *framebuffer)
     glDisable(GL_TEXTURE_2D);
     glActiveTexture(GL_TEXTURE1);
     glDisable(GL_TEXTURE_2D);
-    glActiveTexture(GL_TEXTURE2);
-    glDisable(GL_TEXTURE_2D);
-    glActiveTexture(GL_TEXTURE3);
-    glDisable(GL_TEXTURE_2D);
+}
+
+void GLRenderer::loadModel(const uint8_t *data, Model &model)
+{
+    model.data.init(data);
+
+    glGenBuffers(1, &model.vb);
+    glGenBuffers(1, &model.ib);
+
+    glBindBuffer(GL_ARRAY_BUFFER, model.vb);
+    glBufferData(GL_ARRAY_BUFFER, model.data.vertexDataSize(), model.data.vertexData(), GL_STATIC_DRAW);
+    glBindBuffer(GL_ARRAY_BUFFER, 0);
+
+    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, model.ib);
+    glBufferData(GL_ELEMENT_ARRAY_BUFFER, model.data.indexDataSize(), model.data.indexData(), GL_STATIC_DRAW);
+    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
+}
+
+void GLRenderer::drawModel(Model &model)
+{
+    glBindBuffer(GL_ARRAY_BUFFER, model.vb);
+    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, model.ib);
+    glShadeModel(GL_SMOOTH);
+
+    glInterleavedArrays(GL_N3F_V3F, 0, 0);
+    glDrawElements(GL_TRIANGLES, (GLsizei) 3 * model.data.header().numTriangles, GL_UNSIGNED_SHORT, 0);
+
+    glBindBuffer(GL_ARRAY_BUFFER, 0);
+    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
 }
 
 GLuint GLRenderer::loadTexture(const uint8_t *pngData, GLenum wrap, GLenum filter)
@@ -798,73 +862,6 @@ GLuint GLRenderer::loadTexture(const uint8_t *pngData, GLenum wrap, GLenum filte
     return texture;
 }
 
-void GLRenderer::createRoundedRect(std::vector<GLRenderer::VertexTN> &outPolygon,
-                                   float size, float height, float relRadius)
-{
-    const float step = M_PI / 32.0f;
-    float side = 1.0 - relRadius;
-
-    for (float angle = M_PI*2; angle > 0.0f; angle -= step) {
-        VertexTN v;
-
-        float x = cosf(angle) * relRadius;
-        float y = sinf(angle) * relRadius;
-
-        if (x < 0)
-            x -= side;
-        else
-            x += side;
-
-        if (y < 0)
-            y -= side;
-        else
-            y += side;
-
-        v.tx = (x + 1.0f) * 0.5f;
-        v.ty = (y + 1.0f) * 0.5f;
-
-        v.nx = 0.0f;
-        v.ny = 0.0f;
-        v.nz = 1.0f;
-
-        v.vx = x * size;
-        v.vy = y * size;
-        v.vz = height;
-
-        outPolygon.push_back(v);
-    }
-}
-
-void GLRenderer::extrudePolygon(const std::vector<GLRenderer::VertexTN> &inPolygon,
-                                std::vector<GLRenderer::VertexTN> &outTristrip)
-{
-    const VertexTN *prev = &inPolygon[inPolygon.size() - 1];
-
-    for (std::vector<VertexTN>::const_iterator i = inPolygon.begin();
-         i != inPolygon.end(); i++) {
-        const VertexTN *current = &*i;
-        VertexTN a, b;
-        
-        a = *current;
-
-        // Cross product (simplified)
-        a.nx = current->vy - prev->vy;
-        a.ny = current->vx - prev->vx;
-        a.nz = 0;
-
-        // Normalize
-        float n = sqrtf(a.nx * a.nx + a.ny * a.ny);
-        a.nx /= n;
-        a.ny /= n;
-
-        b = a;
-        b.vz = 0;
-
-        outTristrip.push_back(a);
-        outTristrip.push_back(b);
-        prev = current;
-    }
-}
 
 void GLRenderer::saveTexturePNG(std::string name, unsigned width, unsigned height)
 {
@@ -901,43 +898,6 @@ void GLRenderer::saveColorBufferPNG(std::string name)
     encoder.encode(png, swappedPixels, width, height);
     
     LodePNG::saveFile(png, name);
-}
-
-const GLRenderer::Glyph *GLRenderer::findGlyph(uint32_t id)
-{
-    /*
-     * Very simplistic- linear search, one font, one texture page.
-     * Nothing fancy going on. The BMFont format is pretty simple to
-     * begin with, and here we're ignoring most of it.
-     *
-     * This is also assuming we're on a little-endian CPU that's fine
-     * with unaligned accesses.
-     */
-     
-    struct __attribute__ ((packed)) Header {
-        uint8_t type;
-        uint32_t size;
-    };
-
-    extern const uint8_t ui_font_data[];
-    const uint8_t *p = ui_font_data + 4;
-    const Header *hdr;
-    
-    // Find the 'chars' block (type 4)
-    do {
-        hdr = (const Header *)p;
-        p += sizeof *hdr + hdr->size;
-    } while (hdr->type != 4);
-    
-    // Find the character we're looking for (linear scan)
-    const Glyph *chars = (const Glyph *) (hdr + 1);
-    while (chars < (const Glyph *) p) {
-        if (chars->id == id)
-            return chars;
-        chars++;
-    }
-
-    return NULL;
 }
 
 void GLRenderer::overlayCubeFlash(unsigned id, int x, int y, int w, int h,

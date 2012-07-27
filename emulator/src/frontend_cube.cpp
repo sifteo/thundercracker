@@ -16,9 +16,9 @@ void FrontendCube::init(unsigned _id, Cube::Hardware *_hw, b2World &world, float
     id = _id;
     hw = _hw;
     lastLcdCookie = 0;
-    
+
     initBody(world, x, y);
-    
+
     initNeighbor(Cube::Neighbors::TOP, 0, -1);
     initNeighbor(Cube::Neighbors::BOTTOM, 0, 1);
 
@@ -55,12 +55,11 @@ void FrontendCube::initBody(b2World &world, float x, float y)
     bodyDef.type = b2_dynamicBody;
     bodyDef.linearDamping = 30.0f;
     bodyDef.angularDamping = 5.0f;
-    //bodyDef.fixedRotation = true; // joshdb hax
     bodyDef.position.Set(x, y);
     body = world.CreateBody(&bodyDef);
 
     b2PolygonShape box;
-    const float boxSize = CubeConstants::SIZE * 0.96;    // Compensate for polygon 'skin'
+    const float boxSize = CubeConstants::SIZE * 0.96;   // Compensate for polygon 'skin'
     box.SetAsBox(boxSize, boxSize);
     
     bodyFixtureData.type = FixtureData::T_CUBE;

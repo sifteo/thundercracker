@@ -45,6 +45,9 @@ endif
 %.o: %.rc
 	$(WINDRES) -i $< -o $@
 
+%.bin: %.obj
+	$(PYTHON) resources/obj2bin.py $< $@
+
 resources/data.cpp: $(DATADEPS)
 	$(PYTHON) resources/bin2c.py
 

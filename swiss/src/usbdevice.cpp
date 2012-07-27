@@ -1,8 +1,6 @@
 
 #include "usbdevice.h"
 #include "libusb.h"
-#include <string.h>
-#include <stdlib.h>
 #include <assert.h>
 
 #if 0
@@ -41,17 +39,27 @@ bool UsbDevice::open(uint16_t vendorId, uint16_t productId, uint8_t interface)
         if (r < 0)
             continue;
 
-        if (desc.idVendor == vendorId && desc.idProduct == productId) {
-            USB_TRACE(("USB: Starting libusb_open()\n"));
-            r = libusb_open(dev, &mHandle);
-            if (r >= 0) {
-                 if (populateDeviceInfo(dev)) {
-                     // found!
-                     break;
-                 }
+        if (desc.idVendor != vendorId || desc.idProduct != productId)
+            continue;
+
+        USB_TRACE(("USB: Starting libusb_open()\n"));
+
+        libusb_device_handle *handle;
+        r = libusb_open(dev, &handle);
+        if (r < 0)
+            continue;
+
+        libusb_config_descriptor *cfg;
+        r = libusb_get_config_descriptor(dev, 0, &cfg);
+        if (r >= 0) {
+            bool found = populateDeviceInfo(cfg);
+            libusb_free_config_descriptor(cfg);
+            if (found) {
+                mHandle = handle;
+                break;
             }
-            mHandle = 0;
         }
+        libusb_close(handle);
     }
 
     libusb_free_device_list(devs, 1);
@@ -82,14 +90,9 @@ bool UsbDevice::open(uint16_t vendorId, uint16_t productId, uint8_t interface)
  * Verify this device looks like what we expect,
  * and retrieve its endpoint details.
  */
-bool UsbDevice::populateDeviceInfo(libusb_device *dev)
+bool UsbDevice::populateDeviceInfo(libusb_config_descriptor *cfg)
 {
     USB_TRACE(("USB: Begin populateDeviceInfo()\n"));
-
-    struct libusb_config_descriptor *cfg;
-    int r = libusb_get_config_descriptor(dev, 0, &cfg);
-    if (r < 0)
-        return false;
 
     // need at least 1 interface
     if (cfg->bNumInterfaces < 1 || cfg->interface->num_altsetting < 1)
@@ -151,14 +154,29 @@ void UsbDevice::close()
     if (!isOpen())
         return;
 
-    for (std::list<libusb_transfer*>::iterator i = mInEndpoint.pendingTransfers.begin();
-         i != mInEndpoint.pendingTransfers.end(); ++i) {
-        libusb_cancel_transfer(*i);
-    }
+    /*
+     * Cancel transfers and wait for them to complete.
+     * on OS X, libusb_close() appears to hang if we call it directly
+     * from within the completion handlers.
+     */
+    cancelTransfers(mInEndpoint);
+    cancelTransfers(mOutEndpoint);
 
-    for (std::list<libusb_transfer*>::iterator i = mOutEndpoint.pendingTransfers.begin();
-         i != mOutEndpoint.pendingTransfers.end(); ++i) {
-        libusb_cancel_transfer(*i);
+    while (!(mOutEndpoint.pendingTransfers.empty() && mInEndpoint.pendingTransfers.empty()))
+        processEvents();
+
+    libusb_close(mHandle);
+    mHandle = 0;
+}
+
+void UsbDevice::cancelTransfers(Endpoint &ep)
+{
+    for (std::list<libusb_transfer*>::iterator i = ep.pendingTransfers.begin();
+         i != ep.pendingTransfers.end(); ++i)
+    {
+        int r = libusb_cancel_transfer(*i);
+        if (r < 0)
+            fprintf(stderr, "failed to cancel transfer: %s\n", libusb_error_name(r));
     }
 }
 
@@ -233,28 +251,17 @@ void UsbDevice::handleRx(libusb_transfer *t)
     USB_TRACE(("USB: RX status %d\n", t->status));
 
     if (t->status == LIBUSB_TRANSFER_COMPLETED) {
-
-        Packet pkt;
-        pkt.len = t->actual_length;
-        pkt.buf = (uint8_t*)malloc(pkt.len);
-        memcpy(pkt.buf, t->buffer, pkt.len);
-        mBufferedINPackets.push_back(pkt);
+        mBufferedINPackets.push_back(Packet(t));
 
         // re-submit
-        // XXX: should we be re-submitting in other statuses as well?
         int r = libusb_submit_transfer(t);
-        if (r < 0)
-            removeTransfer(mInEndpoint.pendingTransfers, t);
+        if (r < 0) {
+            fprintf(stderr, "failed to re-submit: %s\n", libusb_error_name(r));
+            removeTransfer(mInEndpoint, t);
+        }
 
     } else {
-
-        /*
-         * Unless we cancelled it ourselves, open another request to replace it.
-         */
-        if (t->status != LIBUSB_TRANSFER_CANCELLED)
-            submitINTransfer();
-
-        removeTransfer(mInEndpoint.pendingTransfers, t);
+        removeTransfer(mInEndpoint, t);
     }
 }
 
@@ -265,7 +272,7 @@ void UsbDevice::handleTx(libusb_transfer *t)
 {
     USB_TRACE(("USB: TX status %d\n", t->status));
 
-    removeTransfer(mOutEndpoint.pendingTransfers, t);
+    removeTransfer(mOutEndpoint, t);
 
 #if 0
     libusb_transfer_status status = t->status;
@@ -280,20 +287,12 @@ void UsbDevice::handleTx(libusb_transfer *t)
  * A transfer has completed. Free its resources, and remove it from our queue.
  * If both endpoints queues are empty, it's time to close up shop.
  */
-void UsbDevice::removeTransfer(std::list<libusb_transfer*> &list, libusb_transfer *t)
+void UsbDevice::removeTransfer(Endpoint &ep, libusb_transfer *t)
 {
-    assert(!list.empty());
-    list.remove(t);
-
     free(t->buffer);
     libusb_free_transfer(t);
-
-    if (mInEndpoint.pendingTransfers.empty() &&
-        mOutEndpoint.pendingTransfers.empty())
-    {
-        libusb_close(mHandle);
-        mHandle = 0;
-    }
+    assert(!ep.pendingTransfers.empty());
+    ep.pendingTransfers.remove(t);
 }
 
 /*

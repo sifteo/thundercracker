@@ -37,6 +37,9 @@ $(MASTER_DIR)/common/syscall-table.def: $(TC_DIR)/sdk/include/sifteo/abi/syscall
 $(MASTER_DIR)/stm32/target.ld:
 	$(LDSCRIPT_GEN)
 
+$(MASTER_DIR)/assets/assets.gen.cpp: $(MASTER_DIR)/assets/*.lua $(MASTER_DIR)/assets/*.png
+	cd $(MASTER_DIR)/assets && $(STIR) -o assets.gen.cpp -o assets.gen.h -v assets.lua
+
 ocd:
 	openocd -f $(MASTER_DIR)/stm32/$(PROG_CONFIG) \
 		-c init \

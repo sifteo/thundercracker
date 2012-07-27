@@ -1,13 +1,10 @@
-uniform float LCD_SIZE;
 const float HILIGHT = 1.0;
 
-varying vec2 faceCoord;
+varying vec2 lcdCoord;
 varying vec2 hilightCoord;
 
 uniform sampler2D lcd;
-uniform sampler2D mask;
 uniform sampler2D hilight;
-uniform sampler2D face;
 
 vec4 lcdPixel(vec2 coord)
 {
@@ -34,13 +31,10 @@ vec4 lcdEdgeFilter(vec4 lcdColor, vec4 bgColor, float lcdDist)
 }
 
 void main() {
-     vec4 faceColor = texture2D(face, faceCoord);
-     float hilightMask = texture2D(mask, faceCoord).r;
-     vec4 hilight = texture2D(hilight, hilightCoord) * hilightMask * HILIGHT;
-   
-     vec2 lcdCoord = (faceCoord - 0.5) / LCD_SIZE;
+     vec4 hilight = texture2D(hilight, hilightCoord) * HILIGHT;
+
      vec2 lcdCoordAbs = abs(lcdCoord);
      float lcdDist = max(lcdCoordAbs.x, lcdCoordAbs.y);
 
-     gl_FragColor = lcdEdgeFilter(lcdPixel(lcdCoord + 0.5), faceColor + hilight, lcdDist);
+     gl_FragColor = lcdEdgeFilter(lcdPixel(lcdCoord + 0.5), hilight, lcdDist);
 }
