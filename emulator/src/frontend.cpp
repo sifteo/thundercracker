@@ -999,19 +999,29 @@ void Frontend::ContactListener::updateSensors(b2Contact *contact, bool touching)
     FixtureData *fdatA = (FixtureData *) contact->GetFixtureA()->GetUserData();
     FixtureData *fdatB = (FixtureData *) contact->GetFixtureB()->GetUserData();
 
-    if (fdatA && fdatB
-        && fdatA->type == fdatA->T_NEIGHBOR
-        && fdatB->type == fdatB->T_NEIGHBOR) {
+    if (!fdatA || !fdatB)
+        return;
 
-        /*
-         * Update interaction between two neighbor sensors
-         */
+    // Sort by type
+    if (fdatA->type > fdatB->type)
+        std::swap(fdatA, fdatB);
 
+    /*
+     * Interaction between two cube sensors
+     */
+    if (fdatA->type == fdatA->T_CUBE_NEIGHBOR && fdatB->type == fdatB->T_CUBE_NEIGHBOR) {
         unsigned cubeA = frontend.cubeID(fdatA->ptr.cube);
         unsigned cubeB = frontend.cubeID(fdatB->ptr.cube);
 
         fdatA->ptr.cube->updateNeighbor(touching, fdatA->side, fdatB->side, cubeB);
         fdatB->ptr.cube->updateNeighbor(touching, fdatB->side, fdatA->side, cubeA);
+    }
+
+    /*
+     * Interaction between MC and cube
+     */
+    if (fdatA->type == fdatA->T_CUBE_NEIGHBOR && fdatB->type == fdatB->T_MC_NEIGHBOR) {
+        fdatA->ptr.cube->updateNeighbor(touching, fdatA->side, fdatB->side, Cube::Neighbors::MC_ID);
     }
 }
 

@@ -10,7 +10,6 @@
 #define _FRONTEND_FIXTURE_H
 
 #include <Box2D/Box2D.h>
-#include "cube_hardware.h"
 
 class FrontendCube;
 class FrontendMC;
@@ -18,8 +17,9 @@ class FrontendMC;
 struct FixtureData {
     enum Type {
         T_CUBE = 0,
-        T_NEIGHBOR,
-        T_MC
+        T_MC,
+        T_CUBE_NEIGHBOR,
+        T_MC_NEIGHBOR,
     };
 
     Type type;
@@ -29,7 +29,7 @@ struct FixtureData {
         FrontendMC *mc;
     } ptr;
 
-    Cube::Neighbors::Side side;
+    unsigned side;
 };
 
 #endif

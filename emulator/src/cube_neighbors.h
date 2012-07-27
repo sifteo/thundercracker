@@ -54,6 +54,9 @@ class Neighbors {
         NUM_SIDES,
     };
 
+    // Used in place of a CubeID for the MC's neighbors
+    static const unsigned MC_ID = 31;
+
     void init() {
         memset(&mySides, 0, sizeof mySides);
     };
