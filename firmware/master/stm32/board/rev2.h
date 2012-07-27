@@ -6,6 +6,14 @@
 #ifndef _BOARD_REV2_H
 #define _BOARD_REV2_H
 
+/*
+ * Some boards have been reworked to move the flash's SPI peripheral
+ * to one that isn't multiplexed with JTAG, so we can debug more easily.
+ *
+ * Disabled by default
+ */
+//#define REV2_GDB_REWORK
+
 // C L O C K
 #define RCC_CFGR_PLLXTPRE   1
 
@@ -24,6 +32,21 @@
 #define RF_SPI_MOSI_GPIO    GPIOPin(&GPIOC, 12)
 
 // F L A S H
+#ifdef REV2_GDB_REWORK
+
+#define FLASH_SPI           SPI2
+#define FLASH_CS_GPIO       GPIOPin(&GPIOC, 3)
+#define FLASH_WP_GPIO       GPIOPin(&GPIOB, 6)
+#define FLASH_SCK_GPIO      GPIOPin(&GPIOB, 13)
+#define FLASH_MISO_GPIO     GPIOPin(&GPIOB, 14)
+#define FLASH_MOSI_GPIO     GPIOPin(&GPIOB, 15)
+#define FLASH_REG_EN_GPIO   GPIOPin(&GPIOC, 4)
+
+#define FLASH_DMA_CHAN_RX   DMA1_Channel4
+#define FLASH_DMA_CHAN_TX   DMA1_Channel5
+
+#else
+
 #define FLASH_SPI           SPI1
 #define FLASH_CS_GPIO       GPIOPin(&GPIOA, 15)
 #define FLASH_WP_GPIO       GPIOPin(&GPIOB, 6)
@@ -31,6 +54,11 @@
 #define FLASH_MISO_GPIO     GPIOPin(&GPIOB, 4)
 #define FLASH_MOSI_GPIO     GPIOPin(&GPIOB, 5)
 #define FLASH_REG_EN_GPIO   GPIOPin(&GPIOC, 4)
+
+#define FLASH_DMA_CHAN_RX   DMA1_Channel2
+#define FLASH_DMA_CHAN_TX   DMA1_Channel3
+
+#endif // ENABLE_GDB
 
 // N E I G H B O R
 #define NBR_OUT1_GPIO       GPIOPin(&GPIOB, 8)
