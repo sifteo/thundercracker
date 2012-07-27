@@ -2,7 +2,7 @@ LOCAL_OBJS = \
     src/ostime.o \
     src/frontend.o \
     src/frontend_cube.o \
-    src/frontend_mothership.o \
+    src/frontend_mc.o \
     src/frontend_overlay.o \
     src/frontend_bmfont.o \
     src/lua_script.o \

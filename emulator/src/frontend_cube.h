@@ -9,11 +9,12 @@
 #ifndef _FRONTEND_CUBE_H
 #define _FRONTEND_CUBE_H
 
-#include "system.h"
 #include <Box2D/Box2D.h>
+#include "system.h"
+#include "frontend_fixture.h"
 
 class FrontendCube;
-class FrontendMothership;
+
 
 namespace CubeConstants {
 
@@ -84,23 +85,6 @@ class AccelerationProbe {
     unsigned head;
     b2Vec2 velocitySamples[filterWidth];
 };
-
-
-struct FixtureData {
-    enum Type {
-        T_CUBE = 0,
-        T_NEIGHBOR,
-        T_MOTHERSHIP
-    };
-
-    Type type;
-    union {
-        FrontendCube *cube;
-        FrontendMothership *mothership;
-    } ptr;
-    Cube::Neighbors::Side side;
-};
-
 
 class FrontendCube {
  public:

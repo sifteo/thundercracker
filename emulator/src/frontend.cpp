@@ -10,12 +10,6 @@
 #include "ostime.h"
 #include <time.h>
 
-/*
- * NB: button handling should go through FrontendMothership once that
- * is resurrected.
- */
-#include "homebutton.h"
-
 Frontend *Frontend::instance = NULL;
 tthread::mutex Frontend::instanceLock;
 
@@ -48,13 +42,8 @@ bool Frontend::init(System *_sys)
     isRunning = true;
     isRotationFixed = sys->opt_lockRotationByDefault;
 
-#if MOTHERSHIP
-    mothershipCount = 1;
-    b2Vec2 p = cubes[0].getBody()->GetPosition();
-    motherships[0].init(0, world, p.x, p.y);
-#else
-    mothershipCount = 0;
-#endif
+    // XXX
+    mc.init(world, -1,-1);
 
     /*
      * We need to first position our default set of cubes, then
@@ -368,7 +357,7 @@ void GLFWCALL Frontend::onKey(int key, int state)
             break;
 
         case 'B':
-            HomeButton::onChange();
+            // XXX HomeButton::onChange();
             break;
 
         case 'Z':
@@ -408,7 +397,7 @@ void GLFWCALL Frontend::onKey(int key, int state)
             break;
         
         case GLFW_KEY_SPACE:
-            if (instance->mouseIsPulling)
+            if (instance->mouseIsPulling && instance->mousePicker.mCube)
                 instance->hoverOrRotate();
             break;
 
@@ -449,7 +438,7 @@ void GLFWCALL Frontend::onKey(int key, int state)
         switch (key) {
 
         case 'B':
-            HomeButton::onChange();
+            // XXX HomeButton::onChange();
             break;
 
         }
@@ -510,13 +499,29 @@ void Frontend::onMouseDown(int button)
 {
     idleFrames = 0;
     
-    if (button == GLFW_MOUSE_BUTTON_RIGHT && mouseIsPulling)
+    if (button == GLFW_MOUSE_BUTTON_RIGHT && mouseIsPulling && mousePicker.mCube)
         hoverOrRotate();
     
     if (!mouseBody) {
         mousePicker.test(world, mouseVec(normalViewExtent));
 
         isAnimatingNewCubeLayout = false;
+
+        if (mousePicker.mMC) {
+            // Pulling the MC with the mouse. Like pulling a cube, but much simpler!
+
+            b2BodyDef mouseDef;
+            mouseDef.type = b2_kinematicBody;
+            mouseDef.position = mousePicker.mPoint;
+            mouseDef.allowSleep = false;
+            mouseBody = world.CreateBody(&mouseDef);
+
+            mouseIsPulling = true;
+
+            b2RevoluteJointDef jointDef;
+            jointDef.Initialize(mousePicker.mMC->getBody(), mouseBody, mousePicker.mPoint);
+            mouseJoint = (b2RevoluteJoint*) world.CreateJoint(&jointDef);
+        }
 
         if (mousePicker.mCube) {
             // This body represents the mouse itself now as a physical object
@@ -551,10 +556,10 @@ void Frontend::onMouseDown(int button)
                  * lets us pull/push a cube, or by grabbing it at an
                  * edge or corner, rotate it intuitively.
                  */
-                
+
                 mouseIsPulling = true;
                 mousePicker.mCube->setHoverTarget(CubeConstants::HOVER_SLIGHT);
-                
+
                 /*
                  * Pick an attachment point. If we're close to the center,
                  * snap our attachment point to the center of mass, and
@@ -710,11 +715,6 @@ void Frontend::animate()
         }
     }
 
-    for (unsigned i = 0; i < mothershipCount; ++i) {
-        /* Mothership animations */
-        motherships[i].animate();
-    }
-
     for (unsigned i = 0; i < cubeCount; i++) {
         /* Grid layout animation */
         if (isAnimatingNewCubeLayout) {
@@ -801,9 +801,6 @@ void Frontend::draw()
         renderer.drawDefaultBackground(viewExtent * ratio * 50.0f, 0.2f);
     }
 
-    for (unsigned i = 0; i < mothershipCount; ++i) {
-        motherships[i].draw(renderer);
-    }
     for (unsigned i = 0; i < cubeCount; i++) {
         if (cubes[i].draw(renderer)) {
             // We found a cube that isn't idle.
@@ -811,6 +808,7 @@ void Frontend::draw()
         }
     }
 
+    mc.draw(renderer);
     renderer.beginOverlay();
 
     // Per-cube status overlays
@@ -943,6 +941,7 @@ void Frontend::MousePicker::test(b2World &world, b2Vec2 point)
 
     mPoint = point;
     mCube = NULL;
+    mMC = NULL;
 
     world.QueryAABB(this, aabb);
 }
@@ -953,6 +952,11 @@ bool Frontend::MousePicker::ReportFixture(b2Fixture *fixture)
 
     if (fdat && fdat->type == fdat->T_CUBE && fixture->TestPoint(mPoint)) {
         mCube = fdat->ptr.cube;
+        return false;
+    }
+
+    if (fdat && fdat->type == fdat->T_MC && fixture->TestPoint(mPoint)) {
+        mMC = fdat->ptr.mc;
         return false;
     }
 
