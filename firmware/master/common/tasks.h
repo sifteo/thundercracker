@@ -9,6 +9,9 @@
 #include "macros.h"
 #include "machine.h"
 
+#ifndef SIFTEO_SIMULATOR
+#include "board.h"
+#endif
 
 /*
  * Tasks are a simple form of cooperative multitasking, which operates
@@ -88,7 +91,9 @@ public:
     static void waitForInterrupt();
 #else
     static ALWAYS_INLINE void waitForInterrupt() {
+        #ifndef REV2_GDB_REWORK
         __asm__ __volatile__ ("wfi");
+        #endif
     }
 #endif
 
