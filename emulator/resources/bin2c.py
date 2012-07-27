@@ -21,6 +21,8 @@ def sizePrefix(data):
 INPUTS = [
     ('rb', sizePrefix,  "../launcher/launcher.elf"),
     ('rb', None,        "resources/img_cube_face_hilight.png"),
+    ('rb', None,        "resources/img_mc_face_light.png"),
+    ('rb', None,        "resources/img_mc_face_normals.png"),
     ('rb', None,        "resources/img_wood.png"),
     ('rb', None,        "resources/img_bg_light.png"),
     ('rb', None,        "resources/img_scope_bg.png"),

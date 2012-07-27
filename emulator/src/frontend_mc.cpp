@@ -56,7 +56,9 @@ void FrontendMC::exit()
 
 void FrontendMC::draw(GLRenderer &r)
 {
-    r.drawMC(body->GetPosition(), body->GetAngle());
+    static const float dummyled[3] = { 1.0, 1.0, 1.0 };
+
+    r.drawMC(body->GetPosition(), body->GetAngle(), dummyled);
 }
 
 void FrontendMC::setButtonPressed(bool isDown)

@@ -49,6 +49,10 @@ bool GLRenderer::init()
     GLhandleARB mcFaceFP = loadShader(GL_FRAGMENT_SHADER, mc_face_fp);
     GLhandleARB mcFaceVP = loadShader(GL_VERTEX_SHADER, mc_face_vp);
     mcFaceProgram = linkProgram(mcFaceFP, mcFaceVP);
+    glUseProgramObjectARB(mcFaceProgram);
+    glUniform1iARB(glGetUniformLocationARB(mcFaceProgram, "normalmap"), 0);
+    glUniform1iARB(glGetUniformLocationARB(mcFaceProgram, "lightmap"), 1);
+    mcFaceLEDLocation = glGetUniformLocationARB(mcFaceProgram, "led");
 
     extern const uint8_t background_fp[];
     extern const uint8_t background_vp[];
@@ -91,6 +95,8 @@ bool GLRenderer::init()
      */
 
     extern const uint8_t img_cube_face_hilight[];
+    extern const uint8_t img_mc_face_normals[];
+    extern const uint8_t img_mc_face_light[];
     extern const uint8_t img_wood[];
     extern const uint8_t img_bg_light[];
     extern const uint8_t img_scope_bg[];
@@ -98,6 +104,8 @@ bool GLRenderer::init()
     extern const uint8_t ui_font_data_0[];
 
     cubeFaceHilightTexture = loadTexture(img_cube_face_hilight);
+    mcFaceNormalsTexture = loadTexture(img_mc_face_normals);
+    mcFaceLightTexture = loadTexture(img_mc_face_light);
     backgroundTexture = loadTexture(img_wood, GL_REPEAT);
     bgLightTexture = loadTexture(img_bg_light);
     fontTexture = loadTexture(ui_font_data_0, GL_CLAMP, GL_NEAREST);
@@ -673,15 +681,42 @@ void GLRenderer::drawCube(unsigned id, b2Vec2 center, float angle, float hover,
     drawCubeFace(id, framebufferChanged ? framebuffer : NULL);
 }
 
-void GLRenderer::drawMC(b2Vec2 center, float angle)
+void GLRenderer::drawMC(b2Vec2 center, float angle, const float led[3])
 {
     glLoadIdentity();
     glTranslatef(center.x, center.y, 0.0f);
     glRotatef(180 + angle * (180.0f / M_PI), 0,0,1);
     glScalef(CubeConstants::SIZE, CubeConstants::SIZE, CubeConstants::SIZE);
 
+    /*
+     * Top surface, with normalmap and lightmap, and the current LED color.
+     */
+
     glUseProgramObjectARB(mcFaceProgram);
+
+    glActiveTexture(GL_TEXTURE0);
+    glEnable(GL_TEXTURE_2D);
+    glBindTexture(GL_TEXTURE_2D, mcFaceNormalsTexture);
+
+    glActiveTexture(GL_TEXTURE1);
+    glEnable(GL_TEXTURE_2D);
+    glBindTexture(GL_TEXTURE_2D, mcFaceLightTexture);
+
+    glUniform3fv(mcFaceLEDLocation, 1, led);
+
     drawModel(mcFace);
+
+    glActiveTexture(GL_TEXTURE1);
+    glDisable(GL_TEXTURE_2D);
+
+    glActiveTexture(GL_TEXTURE0);
+    glDisable(GL_TEXTURE_2D);
+
+    /*
+     * All the rest is static for now, and draws using the same plastic texture
+     * as the cube body. In the future we may move the mcVolume model separately
+     * in order to show the volume slider position.
+     */
 
     glUseProgramObjectARB(cubeBodyProgram);
     drawModel(mcBody);
