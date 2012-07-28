@@ -10,12 +10,15 @@
 #include "system.h"
 #include "ostime.h"
 #include "system_cubes.h"
+#include "mc_neighbor.h"
 
 
 bool SystemCubes::init(System *sys)
 {
     this->sys = sys;
     deadlineSync.init(&sys->time, &mThreadRunning);
+
+    MCNeighbor::cubeInit(&sys->time);
 
     if (sys->opt_cubeFirmware.empty() && (!sys->opt_cube0Profile.empty() || 
                                            sys->opt_cube0Debug)) {
@@ -203,6 +206,7 @@ void SystemCubes::threadFn(void *param)
 ALWAYS_INLINE void SystemCubes::tick(unsigned count)
 {
     sys->time.tick(count);
+    MCNeighbor::cubeTick();
     deadlineSync.tick();
 }
 
@@ -291,7 +295,9 @@ NEVER_INLINE void SystemCubes::tickLoopFastSBT()
         }
 
         tick(stepSize);
+
         stepSize = std::min(nextStep, (unsigned)deadlineSync.remaining());
+        stepSize = std::min(stepSize, (unsigned)MCNeighbor::cubeDeadlineRemaining());
     }
 }
 
@@ -311,6 +317,8 @@ NEVER_INLINE void SystemCubes::tickLoopEmpty()
         batch -= stepSize;
         nextStep = batch;
         tick(stepSize);
+
         stepSize = std::min(nextStep, (unsigned)deadlineSync.remaining());
+        stepSize = std::min(stepSize, (unsigned)MCNeighbor::cubeDeadlineRemaining());
     }
 }

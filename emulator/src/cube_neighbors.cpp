@@ -100,10 +100,9 @@ void Neighbors::ioTick(CPU::em8051 &cpu)
 
 void Neighbors::transmitPulse(CPU::em8051 &cpu, unsigned otherCube, uint8_t otherSide)
 {
-    uint8_t bit = 1 << otherSide;
     Hardware &dest = otherCubes[otherCube];
 
-    if (dest.neighbors.inputMask & bit) {
+    if (dest.neighbors.isSideReceiving(otherSide)) {
         Tracer::log(&cpu, "NEIGHBOR: Sending pulse to %d.%d", otherCube, otherSide);
         receivedPulse(dest.cpu);
     } else {

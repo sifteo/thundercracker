@@ -9,6 +9,7 @@
 #include "frontend.h"
 #include "ostime.h"
 #include "mc_homebutton.h"
+#include "mc_neighbor.h"
 #include <time.h>
 
 Frontend *Frontend::instance = NULL;
@@ -1021,7 +1022,8 @@ void Frontend::ContactListener::updateSensors(b2Contact *contact, bool touching)
      * Interaction between MC and cube
      */
     if (fdatA->type == fdatA->T_CUBE_NEIGHBOR && fdatB->type == fdatB->T_MC_NEIGHBOR) {
-        fdatA->ptr.cube->updateNeighbor(touching, fdatA->side, fdatB->side, Cube::Neighbors::MC_ID);
+        unsigned cubeA = frontend.cubeID(fdatA->ptr.cube);
+        MCNeighbor::updateNeighbor(touching, fdatB->side, cubeA, fdatA->side);
     }
 }
 

@@ -54,9 +54,6 @@ class Neighbors {
         NUM_SIDES,
     };
 
-    // Used in place of a CubeID for the MC's neighbors
-    static const unsigned MC_ID = 31;
-
     void init() {
         memset(&mySides, 0, sizeof mySides);
     };
@@ -86,6 +83,10 @@ class Neighbors {
 
         cpu.mSFR[PORT] |= PIN_IN;
         cpu.needTimerEdgeCheck = true;
+    }
+
+    bool isSideReceiving(unsigned side) {
+        return 1 & (inputMask >> side);
     }
 
     void ioTick(CPU::em8051 &cpu);
