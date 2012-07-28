@@ -126,7 +126,7 @@ void Frontend::updateCubeCount()
             if (instance->cubes[i].isInitialized())
                 instance->cubes[i].exit();
 
-        normalViewExtent = viewExtentForCubeCount(targetCubeCount);
+        normalViewExtent = std::max(normalViewExtent, viewExtentForCubeCount(targetCubeCount));
     }
 }
 
