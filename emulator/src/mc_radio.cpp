@@ -147,6 +147,8 @@ void SystemMC::doRadioPacket()
 
     if (RadioMC::active) {
 
+        --buf.triesRemaining;
+
         if (sys->opt_radioTrace)
             RadioMC::trace();
 
@@ -164,7 +166,7 @@ void SystemMC::doRadioPacket()
             return;
         }
 
-        if (!--buf.triesRemaining) {
+        if (!buf.triesRemaining) {
             // Out of retries
             RadioManager::timeout();
         }
