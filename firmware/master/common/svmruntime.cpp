@@ -282,11 +282,14 @@ void SvmRuntime::ret(unsigned actions)
         SvmCpu::setReg(REG_FP, reinterpret_cast<reg_t>(fpPA));
         setSP(reinterpret_cast<reg_t>(fp + 1));
 
-        // If we're returning from an event handler, see if we still need
-        // to dispatch any other pending events.
+        /*
+         * If we're returning from an event handler, see if we still need
+         * to dispatch any other pending events. Since we're not in a syscall,
+         * we can do the dispatch immediately rather than via dispatchEventsOnReturn().
+         */
         if (eventFrame == regFP) {
             eventFrame = 0;
-            dispatchEventsOnReturn();
+            Event::dispatch();
         }
     }
 }
