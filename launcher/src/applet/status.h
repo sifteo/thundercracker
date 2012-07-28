@@ -9,12 +9,9 @@
 
 class MainMenu;
 
-
 class StatusApplet : public MainMenuItem
 {
 public:
-    StatusApplet();
-    
     virtual MainMenuItem::Flags getAssets(Sifteo::MenuItem &assets, Sifteo::MappedVolume &);
     virtual bool autoRefreshIcon() { return true; }
 
@@ -32,5 +29,5 @@ private:
     
     Sifteo::Menu *menu;
     int menuItemIndex;
-    Sifteo::RelocatableTileBuffer<12,12> icon;
+    Sifteo::RelocatableTileBuffer<12,12> menuIcon;
 };

@@ -54,18 +54,11 @@ CubeID getMainCube()
     return *CubeSet::connected().begin();
 }
 
-StatusApplet::StatusApplet()
-    : menu(NULL)
-    , menuItemIndex(-1)
-    , icon()
-{
-}
-
 MainMenuItem::Flags StatusApplet::getAssets(MenuItem &assets, MappedVolume &)
 {
     drawIcon();
     
-    assets.icon = icon;
+    assets.icon = menuIcon;
     return NONE;
 }
 
@@ -114,30 +107,32 @@ void StatusApplet::depart(Sifteo::Menu &m, unsigned index)
 void StatusApplet::add(MainMenu &m)
 {
     static StatusApplet instance;
+    instance.menu = NULL;
+    instance.menuItemIndex = -1;
     Events::cubeBatteryLevelChange.set(&StatusApplet::onBatteryLevelChange, &instance);
     m.append(&instance);
 }
 
 void StatusApplet::drawIcon()
 {
-    icon.init();
-    icon.image(vec(0,0), Icon_Battery);
+    menuIcon.init();
+    menuIcon.image(vec(0,0), Icon_Battery);
 
-    drawBattery(icon, getMainCube().batteryLevel(), vec(1, 2), BatteryCube);
-    drawText(icon, "Cube", vec(5, 2));
+    drawBattery(menuIcon, getMainCube().batteryLevel(), vec(1, 2), BatteryCube);
+    drawText(menuIcon, "Cube", vec(5, 2));
     
-    drawBattery(icon, System::batteryLevel(), vec(1, 5), BatteryBase);
-    drawText(icon, "Base", vec(5, 5));
+    drawBattery(menuIcon, System::batteryLevel(), vec(1, 5), BatteryBase);
+    drawText(menuIcon, "Base", vec(5, 5));
 
     String<8> bufferCubes;
     bufferCubes << getNumCubes(CubeSet::connected()) << "x";
-    drawText(icon, bufferCubes.c_str(), vec(2, 8));
+    drawText(menuIcon, bufferCubes.c_str(), vec(2, 8));
     
-    icon.image(vec(5, 6), Cube);
+    menuIcon.image(vec(5, 6), Cube);
     
     String<16> bufferBlocks;
     bufferBlocks << getFreeBlocks() << "\% free";
-    drawText(icon, bufferBlocks.c_str(), vec(1, 10));
+    drawText(menuIcon, bufferBlocks.c_str(), vec(1, 10));
 }
 
 void StatusApplet::drawCube(CubeID cube)
@@ -154,7 +149,7 @@ void StatusApplet::onBatteryLevelChange(unsigned cid)
     if (menu != NULL && menuItemIndex >= 0) {
         if (cid == getMainCube()) {
             drawIcon();
-            menu->replaceIcon(menuItemIndex, icon);
+            menu->replaceIcon(menuItemIndex, menuIcon);
         } else {
             drawCube(CubeID(cid));
         }
