@@ -66,8 +66,7 @@ private:
     void updateAssets();
     void updateSound(Sifteo::Menu &menu);
     void updateMusic();
-    void updateIcons(Sifteo::Menu &menu);
-
+    
     bool canLaunchItem(unsigned index);
     void toggleCubeRangeAlert(unsigned index, Sifteo::Menu &menu);
     void updateAlerts(Sifteo::Menu &menu);
@@ -76,7 +75,6 @@ private:
     NOINLINE void loadAssets();
     NOINLINE void eventLoop(Sifteo::Menu &m);
     NOINLINE void execItem(unsigned index);
-    NOINLINE void arriveItem(unsigned index);
-    NOINLINE void departItem(unsigned index);
-    NOINLINE void prepaintItem(unsigned index);
+    NOINLINE void arriveItem(Sifteo::Menu &menu, unsigned index);
+    NOINLINE void departItem(Sifteo::Menu &menu, unsigned index);
 };

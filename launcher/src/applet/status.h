@@ -13,16 +13,24 @@ class MainMenu;
 class StatusApplet : public MainMenuItem
 {
 public:
+    StatusApplet();
+    
     virtual MainMenuItem::Flags getAssets(Sifteo::MenuItem &assets, Sifteo::MappedVolume &);
     virtual bool autoRefreshIcon() { return true; }
 
     virtual void exec();
-    virtual void arrive();
-    virtual void depart();
-    virtual void prepaint();
-
-    static void add(MainMenu &menu);
+    virtual void arrive(Sifteo::Menu &m, unsigned index);
+    virtual void depart(Sifteo::Menu &m, unsigned index);
+    
+    static void add(MainMenu &m);
 
 private:
+    void drawIcon();
+    void drawCube(Sifteo::CubeID cube);
+    
+    void onBatteryLevelChange(unsigned cid);
+    
+    Sifteo::Menu *menu;
+    int menuItemIndex;
     Sifteo::RelocatableTileBuffer<12,12> icon;
 };

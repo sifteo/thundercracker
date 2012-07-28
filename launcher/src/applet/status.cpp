@@ -20,8 +20,7 @@ static void drawBattery(T &canvas, float batteryLevel, Int2 pos, const AssetImag
 
     unsigned numBatteryLevels = ceil(batteryLevel * float(BatteryBars.numFrames()));
     
-    if (numBatteryLevels > 0)
-    {
+    if (numBatteryLevels > 0) {
         --numBatteryLevels;
         ASSERT(numBatteryLevels < BatteryBars.numFrames());
         canvas.image(pos, BatteryBars, numBatteryLevels);
@@ -47,7 +46,7 @@ static unsigned getNumCubes(CubeSet cubes)
 static unsigned getFreeBlocks()
 {
     // TODO: amount of free blocks
-    return 128;
+    return 90;
 }
 
 CubeID getMainCube()
@@ -55,7 +54,71 @@ CubeID getMainCube()
     return *CubeSet::connected().begin();
 }
 
+StatusApplet::StatusApplet()
+    : menu(NULL)
+    , menuItemIndex(-1)
+    , icon()
+{
+}
+
 MainMenuItem::Flags StatusApplet::getAssets(MenuItem &assets, MappedVolume &)
+{
+    drawIcon();
+    
+    assets.icon = icon;
+    return NONE;
+}
+
+void StatusApplet::exec()
+{
+}
+
+void StatusApplet::arrive(Sifteo::Menu &m, unsigned index)
+{
+    menu = &m;
+    menuItemIndex = index;
+    
+    // Draw Icon Background
+    for (CubeID cube : CubeSet::connected()) {
+        if (cube != getMainCube()) {
+            drawCube(cube);
+        }
+    }
+
+    // Low Battery SFX
+    if (System::batteryLevel() <= kBatteryLevelLow) {
+        AudioChannel(0).play(Sound_BatteryLowBase);
+    } else {
+        for (CubeID cube : CubeSet::connected()) {
+            if (cube.batteryLevel() <= kBatteryLevelLow) {
+                AudioChannel(0).play(Sound_BatteryLowCube);
+                break;
+            }
+        }
+    }
+}
+
+void StatusApplet::depart(Sifteo::Menu &m, unsigned index)
+{
+    // Display a background on all other cubes
+    for (CubeID cube : CubeSet::connected()) {
+        if (cube != getMainCube()) {
+            Shared::video[cube].bg0.erase(Menu_StripeTile);
+        }
+    }
+    
+    menu = NULL;
+    menuItemIndex = -1;
+}
+
+void StatusApplet::add(MainMenu &m)
+{
+    static StatusApplet instance;
+    Events::cubeBatteryLevelChange.set(&StatusApplet::onBatteryLevelChange, &instance);
+    m.append(&instance);
+}
+
+void StatusApplet::drawIcon()
 {
     icon.init();
     icon.image(vec(0,0), Icon_Battery);
@@ -73,66 +136,27 @@ MainMenuItem::Flags StatusApplet::getAssets(MenuItem &assets, MappedVolume &)
     icon.image(vec(5, 6), Cube);
     
     String<16> bufferBlocks;
-    bufferBlocks << getFreeBlocks() << " blocks";
+    bufferBlocks << getFreeBlocks() << "\% free";
     drawText(icon, bufferBlocks.c_str(), vec(1, 10));
-    
-    assets.icon = icon;
-    return NONE;
 }
 
-void StatusApplet::exec()
+void StatusApplet::drawCube(CubeID cube)
 {
+    auto &vid = Shared::video[cube];
+    vid.initMode(BG0);
+    vid.bg0.erase(Menu_StripeTile);
+    vid.bg0.image(vec(2,2), Icon_Battery);
+    drawBattery(vid.bg0, cube.batteryLevel(), vec(4, 4), BatteryCube);
 }
 
-void StatusApplet::arrive()
+void StatusApplet::onBatteryLevelChange(unsigned cid)
 {
-    // Draw Icon Background
-    for (CubeID cube : CubeSet::connected()) {
-        if (cube != getMainCube()) {
-            auto &vid = Shared::video[cube];
-            vid.bg0.image(vec(2, 2), Icon_Battery);
+    if (menu != NULL && menuItemIndex >= 0) {
+        if (cid == getMainCube()) {
+            drawIcon();
+            menu->replaceIcon(menuItemIndex, icon);
+        } else {
+            drawCube(CubeID(cid));
         }
     }
-
-    // Low Battery SFX
-    if (System::batteryLevel() <= kBatteryLevelLow) {
-        AudioChannel(0).play(Sound_BatteryLowBase);
-    } else {
-        for (CubeID cube : CubeSet::connected()) {
-            if (cube.batteryLevel() <= kBatteryLevelLow) {
-                AudioChannel(0).play(Sound_BatteryLowCube);
-                break;
-            }
-        }
-    }
-}
-
-void StatusApplet::depart()
-{
-    // Display a background on all other cubes
-    for (CubeID cube : CubeSet::connected()) {
-        if (cube != getMainCube()) {
-            auto &vid = Shared::video[cube];
-            vid.initMode(BG0);
-            vid.attach(cube);
-            vid.bg0.erase(Menu_StripeTile);
-        }
-    }
-}
-
-void StatusApplet::prepaint()
-{
-    for (CubeID cube : CubeSet::connected()) {
-        if (cube != getMainCube()) {
-            auto &vid = Shared::video[cube];
-            vid.bg0.image(vec(2,2), Icon_Battery);
-            drawBattery(vid.bg0, cube.batteryLevel(), vec(4, 4), BatteryCube);
-        }
-    }
-}
-
-void StatusApplet::add(MainMenu &menu)
-{
-    static StatusApplet instance;
-    menu.append(&instance);
 }
