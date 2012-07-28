@@ -148,9 +148,13 @@ void RadioManager::produce(PacketTransmission &tx)
              */
 
             static const RadioAddress dummy = { 0, { 0xFF, 0xFF, 0xFF, 0xFF, 0xFF } };
+
             tx.dest = &dummy;
             tx.packet.bytes[0] = 0xFF;
             tx.packet.len = 1;
+            tx.numSoftwareRetries = 0;
+            tx.numHardwareRetries = 0;
+
             nextPID = (thisPID + 1) & PID_MASK;
             fifo.enqueue(DUMMY_ID);
             return;
