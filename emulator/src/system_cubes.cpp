@@ -158,13 +158,11 @@ void SystemCubes::threadFn(void *param)
 
     SystemCubes *self = (SystemCubes *) param;
     System *sys = self->sys;
-    unsigned nCubes = sys->opt_numCubes;
-    bool debug = sys->opt_cube0Debug && nCubes;
 
     TimeGovernor gov;
     gov.start(&sys->time);
     
-    if (debug)
+    if (sys->opt_cube0Debug && sys->opt_numCubes)
         Cube::Debug::attach(&sys->cubes[0]);
 
     // Seed PRNG per-thread
@@ -180,9 +178,9 @@ void SystemCubes::threadFn(void *param)
          */
 
         self->mBigCubeLock.lock();
-        if (nCubes == 0) {
+        if (sys->opt_numCubes == 0) {
             self->tickLoopEmpty();
-        } else if (debug) {
+        } else if (sys->opt_cube0Debug) {
             self->tickLoopDebug();
         } else if (!sys->cubes[0].cpu.sbt || sys->cubes[0].cpu.mProfileData || Tracer::isEnabled()) {
             self->tickLoopGeneral();
