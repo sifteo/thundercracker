@@ -179,25 +179,7 @@ class Hardware {
             hwDeadlineWork();
     }
 
-    int16_t scaleAccelAxis(float g)
-    {
-        /*
-         * Scale a raw acceleration, in G's, and return the corresponding
-         * two's complement accelerometer reading. Saturates at either extreme.
-         */
-         
-        const int range = 1 << 15;
-        const float fullScale = 2.0f;
-        
-        int scaled = g * (range / fullScale);
-        int16_t truncated = scaled;
-        
-        if (scaled != truncated)
-            truncated = scaled > 0 ? range - 1 : -range;
-            
-        return truncated;
-    }
-
+    int16_t scaleAccelAxis(float g);
     void hwDeadlineWork();
     TickDeadline hwDeadline;
 

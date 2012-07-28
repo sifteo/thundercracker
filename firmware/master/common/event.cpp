@@ -154,7 +154,7 @@ bool Event::dispatchCubePID(PriorityID pid, _SYSCubeID cid)
         default:                    ASSERT(0);
     }
 
-    return true;
+    return false;
 }
 
 void Event::setBasePending(PriorityID pid, uint32_t param)

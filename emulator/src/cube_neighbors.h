@@ -85,6 +85,10 @@ class Neighbors {
         cpu.needTimerEdgeCheck = true;
     }
 
+    bool isSideReceiving(unsigned side) {
+        return 1 & (inputMask >> side);
+    }
+
     void ioTick(CPU::em8051 &cpu);
 
     static const unsigned PIN_0_TOP_IDX     = 4;

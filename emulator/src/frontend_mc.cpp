@@ -45,6 +45,10 @@ void FrontendMC::init(b2World& world, float x, float y)
     fixtureDef.friction = 0.8f;
     fixtureDef.userData = &bodyFixtureData;
     bodyFixture = body->CreateFixture(&fixtureDef);
+    
+    // Attach neighbor fixtures
+    initNeighbor(0, 1.0f);
+    initNeighbor(1, -1.0f);
 }
 
 void FrontendMC::exit()
@@ -72,7 +76,24 @@ void FrontendMC::draw(GLRenderer &r)
     r.drawMC(body->GetPosition(), body->GetAngle(), ledColors[3 & LED::currentColor]);
 }
 
-void FrontendMC::setButtonPressed(bool isDown)
+void FrontendMC::initNeighbor(unsigned id, float x)
 {
-    // TODO
+    /*
+     * Neighbor sensors are implemented using Box2D sensors. These are
+     * four additional fixtures attached to the same body.
+     */
+
+    b2CircleShape circle;
+    circle.m_p.Set(x * MCConstants::NEIGHBOR_X, 0);
+    circle.m_radius = MCConstants::NEIGHBOR_RADIUS;
+
+    neighborFixtureData[id].type = FixtureData::T_MC_NEIGHBOR;
+    neighborFixtureData[id].ptr.mc = this;
+    neighborFixtureData[id].side = id;
+
+    b2FixtureDef fixtureDef;
+    fixtureDef.shape = &circle;
+    fixtureDef.isSensor = true;
+    fixtureDef.userData = &neighborFixtureData[id];
+    body->CreateFixture(&fixtureDef);
 }

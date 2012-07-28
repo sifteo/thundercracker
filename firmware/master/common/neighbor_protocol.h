@@ -12,9 +12,12 @@
 namespace Neighbor {
 
     /*
-     * Timers are set to the neighbor transmission's bit width of 16us.
      * Units are in APB1 ticks, which has a rate of 36MHz.
-     *
+     */
+    static const unsigned TICK_HZ = 36000000;
+
+    /*
+     * Timers are set to the neighbor transmission's bit width of 16us.
      * Pulse duration is 2us.
      *
      * 2us  / (1 / 36000000) == 72 ticks
@@ -26,6 +29,7 @@ namespace Neighbor {
 
     // Number of bits to wait for during an RX sequence
     static const unsigned NUM_RX_BITS = 16;
+
 
     /*
      * Number of bit periods to wait between transmissions.

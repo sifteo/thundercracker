@@ -101,7 +101,7 @@ class Frontend {
     void pushBodyTowards(b2Body *b, b2Vec2 target, float gain);
 
     static float viewExtentForCubeCount(unsigned num);
-    static b2Vec2 getCubeGridLoc(unsigned index, unsigned total, bool mc=false);
+    static b2Vec2 getCubeGridLoc(unsigned index, unsigned total);
     b2Body *newKBox(float x, float y, float hw, float hh);
     unsigned cubeID(FrontendCube *cube);
 
@@ -109,6 +109,7 @@ class Frontend {
     float targetViewExtent();
     float pixelViewExtent();
     unsigned pixelZoomMode();
+    float getYRatio();
 
     b2Vec2 targetViewCenter();
     b2Vec2 mouseVec(float viewExtent);

@@ -16,9 +16,9 @@ void FrontendCube::init(unsigned _id, Cube::Hardware *_hw, b2World &world, float
     id = _id;
     hw = _hw;
     lastLcdCookie = 0;
-    
+
     initBody(world, x, y);
-    
+
     initNeighbor(Cube::Neighbors::TOP, 0, -1);
     initNeighbor(Cube::Neighbors::BOTTOM, 0, 1);
 
@@ -84,7 +84,7 @@ void FrontendCube::initNeighbor(Cube::Neighbors::Side side, float x, float y)
     circle.m_p.Set(x * CubeConstants::NEIGHBOR_CENTER * CubeConstants::SIZE, y * CubeConstants::NEIGHBOR_CENTER * CubeConstants::SIZE);
     circle.m_radius = CubeConstants::NEIGHBOR_RADIUS * CubeConstants::SIZE;
 
-    neighborFixtureData[side].type = FixtureData::T_NEIGHBOR;
+    neighborFixtureData[side].type = FixtureData::T_CUBE_NEIGHBOR;
     neighborFixtureData[side].ptr.cube = this;
     neighborFixtureData[side].side = side;
 
