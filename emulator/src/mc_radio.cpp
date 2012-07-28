@@ -30,6 +30,7 @@ namespace RadioMC {
     };
 
     static Buffer buf;
+    static bool active;
 
     void trace();
 
@@ -101,7 +102,7 @@ void SystemMC::doRadioPacket()
 
     RadioMC::Buffer &buf = RadioMC::buf;
 
-    if (buf.triesRemaining == 0) {
+    if (RadioMC::active && buf.triesRemaining == 0) {
         // Get a new packet
 
         memset(&buf, 0, sizeof buf);
@@ -134,46 +135,50 @@ void SystemMC::doRadioPacket()
      */
 
     sys->getCubeSync().beginEventAt(radioPacketDeadline, mThreadRunning);
-    {
+
+    if (RadioMC::active) {
         Cube::Hardware *cube = getCubeForAddress(buf.ptx.dest);
         buf.ack = cube && cube->spi.radio.handlePacket(buf.packet, buf.reply);
         buf.ackCube = cube ? cube->id() : -1;
-        radioPacketDeadline += MCTiming::TICKS_PER_PACKET;
     }
+
+    radioPacketDeadline += MCTiming::TICKS_PER_PACKET;
     sys->getCubeSync().endEvent(radioPacketDeadline);
 
-    if (sys->opt_radioTrace)
-        RadioMC::trace();
+    if (RadioMC::active) {
 
-    if (buf.ack) {
-        // Send response, and we're done
+        if (sys->opt_radioTrace)
+            RadioMC::trace();
 
-        if (buf.reply.len) {
-            buf.prx.len = buf.reply.len;
-            RadioManager::ackWithPacket(buf.prx);
-        } else {
-            RadioManager::ackEmpty();
+        if (buf.ack) {
+            // Send response, and we're done
+
+            if (buf.reply.len) {
+                buf.prx.len = buf.reply.len;
+                RadioManager::ackWithPacket(buf.prx);
+            } else {
+                RadioManager::ackEmpty();
+            }
+
+            buf.triesRemaining = 0;
+            return;
         }
 
-        buf.triesRemaining = 0;
-        return;
-    }
-
-    if (!--buf.triesRemaining) {
-        // Out of retries
-        RadioManager::timeout();
+        if (!--buf.triesRemaining) {
+            // Out of retries
+            RadioManager::timeout();
+        }
     }
 }
 
 void Radio::init()
 {
-    // Nothing to do in simulation
+    RadioMC::active = false;
 }
 
 void Radio::begin()
 {
-    // Nothing to do in simulation - hardware requires a delay between init
-    // and the beginning of transmissions.
+    RadioMC::active = true;
 }
 
 Cube::Hardware *SystemMC::getCubeForAddress(const RadioAddress *addr)

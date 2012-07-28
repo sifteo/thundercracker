@@ -183,11 +183,12 @@ void SystemMC::threadFn(void *param)
     }
 
     // Subsystem initialization
+    Radio::init();
     HomeButton::init();
     Volume::init();
     NeighborTX::init();
     CubeConnector::init();
-    Radio::init();
+    Radio::begin();
 
     // Start running userspace code!
     SvmLoader::runLauncher();
