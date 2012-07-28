@@ -237,7 +237,9 @@ void SystemMC::doRadioPacket()
         Cube::Radio::Packet reply;
         bool ack;
     } buf;
+    
     memset(&buf, 0, sizeof buf);
+    buf.ptx.init();
     buf.ptx.packet.bytes = buf.packet.payload;
     buf.prx.bytes = buf.reply.payload;
 
