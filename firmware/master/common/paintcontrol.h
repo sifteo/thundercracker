@@ -58,7 +58,7 @@ class PaintControl {
     bool pollForFinish(CubeSlot *cube, SysTime::Ticks now);
 
     // Two halves of _SYS_paint()
-    void waitForPaint(CubeSlot *cube);
+    void waitForPaint(CubeSlot *cube, uint32_t excludedTasks);
     void triggerPaint(CubeSlot *cube, SysTime::Ticks now);
 
     // Called in ISR context

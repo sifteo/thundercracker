@@ -132,8 +132,8 @@ class CubeSlot {
             return true;
     }
 
-    void waitForPaint() {
-        paintControl.waitForPaint(this);
+    void waitForPaint(uint32_t excludedTasks) {
+        paintControl.waitForPaint(this, excludedTasks);
     }
 
     void triggerPaint(SysTime::Ticks now) {

@@ -60,8 +60,9 @@ namespace CubeSlots {
 
     void setCubeRange(unsigned minimum, unsigned maximum);
 
-    void paintCubes(_SYSCubeIDVector cv, bool wait=true);
-    void finishCubes(_SYSCubeIDVector cv);
+    void paintCubes(_SYSCubeIDVector cv, bool wait=true, uint32_t excludedTasks=0);
+    void finishCubes(_SYSCubeIDVector cv, uint32_t excludedTasks=0);
+    void refreshCubes(_SYSCubeIDVector cv);
 
     void assetLoaderTask();
     void fetchAssetLoaderData(_SYSAssetLoaderCube *lc);
