@@ -743,6 +743,9 @@ void Frontend::animate()
         cubes[i].animate();
     }
 
+    // Local animation on the MC
+    mc.animate();
+
     /* Animated viewport centering/zooming */
     {
         const float gain = 0.1;

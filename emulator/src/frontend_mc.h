@@ -10,6 +10,7 @@
 #define _FRONTEND_MC_H_
 
 #include "frontend_fixture.h"
+#include "ledsequencer.h"
 
 class GLRenderer;
 
@@ -48,19 +49,28 @@ private:
     FixtureData bodyFixtureData; 
     FixtureData neighborFixtureData[2];
 
+    double nextLEDTick;
+    float ledColor[3];
+
 public:
     FrontendMC();
 
     void init(b2World &world, float x, float y);
     void exit();
 
+    void animate();
     void draw(GLRenderer &r);
 
     b2Body* getBody() { return body; }
     bool isInitialized() const { return body != 0; }
 
+    // Hook for LED::set()
+    static LEDSequencer led;
+
 private:
     void initNeighbor(unsigned id, float x);
+
+    static void accumulateLEDColor(LEDSequencer::LEDState state, float color[3]);
 };
 
 #endif

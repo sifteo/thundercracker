@@ -8,7 +8,10 @@
 
 #include "frontend_mc.h"
 #include "gl_renderer.h"
-#include "mc_led.h"
+#include "led.h"
+#include "ostime.h"
+
+LEDSequencer FrontendMC::led;
 
 FrontendMC::FrontendMC()
     : body(0) {}
@@ -59,21 +62,52 @@ void FrontendMC::exit()
     }
 }
 
+void FrontendMC::animate()
+{
+    // Simulate a fixed-rate IRQ for the LED sequencer
+
+    const double tickPeriod = 1.0 / LEDSequencer::TICK_HZ;
+    double now = OSTime::clock();
+    double dt = now - nextLEDTick;
+    unsigned numTicks = dt / tickPeriod;
+
+    if (numTicks > 10) {
+        // Lagging too far; Jump ahead.
+        numTicks = 1;
+        nextLEDTick = now;
+    }
+
+    if (numTicks) {
+        // Integrate the LED color over the duration of this frame
+
+        ledColor[0] = 0;
+        ledColor[1] = 0;
+        ledColor[2] = 0;
+
+        for (unsigned i = 0; i != numTicks; ++i) {
+            LEDSequencer::LEDState state;
+            led.tickISR(state);
+            accumulateLEDColor(state, ledColor);
+        }
+
+        ledColor[0] /= numTicks;
+        ledColor[1] /= numTicks;
+        ledColor[2] /= numTicks;
+
+        nextLEDTick += tickPeriod * numTicks;
+    }
+}
+
 void FrontendMC::draw(GLRenderer &r)
 {
-    STATIC_ASSERT(LED::OFF == 0);
-    STATIC_ASSERT(LED::RED == 1);
-    STATIC_ASSERT(LED::GREEN == 2);
-    STATIC_ASSERT(LED::ORANGE == 3);
+    r.drawMC(body->GetPosition(), body->GetAngle(), ledColor);
+}
 
-    static const float ledColors[][3] = {
-        { 0.0, 0.0, 0.0 },
-        { 3.0, 0.3, 0.3 },
-        { 0.1, 3.0, 0.1 },
-        { 3.0, 0.9, 0.0 },
-    };
-
-    r.drawMC(body->GetPosition(), body->GetAngle(), ledColors[3 & LED::currentColor]);
+void FrontendMC::accumulateLEDColor(LEDSequencer::LEDState state, float color[3])
+{
+    color[0] += state.red * (3.0f / 0xFFFF) + state.green * (0.1f / 0xFFFF);
+    color[1] += state.red * (0.3f / 0xFFFF) + state.green * (3.0f / 0xFFFF);
+    color[2] += state.red * (0.3f / 0xFFFF) + state.green * (0.1f / 0xFFFF);
 }
 
 void FrontendMC::initNeighbor(unsigned id, float x)
@@ -96,4 +130,14 @@ void FrontendMC::initNeighbor(unsigned id, float x)
     fixtureDef.isSensor = true;
     fixtureDef.userData = &neighborFixtureData[id];
     body->CreateFixture(&fixtureDef);
+}
+
+void LED::init()
+{
+    FrontendMC::led.init();
+}
+
+void LED::set(const LEDPattern *pattern, bool immediate)
+{
+    FrontendMC::led.setPattern(pattern, immediate);
 }
