@@ -24,6 +24,7 @@
 #include "bootloader.h"
 #include "cubeconnector.h"
 #include "neighbor_tx.h"
+#include "led.h"
 
 
 /*
@@ -60,12 +61,15 @@ int main()
     NVIC.irqPrioritize(IVT.FLASH_DMA_CHAN_TX, 0x75);
 
     NVIC.irqEnable(IVT.UsbOtg_FS);
-    NVIC.irqPrioritize(IVT.UsbOtg_FS, 0x70);        //  Lower prio than radio
+    NVIC.irqPrioritize(IVT.UsbOtg_FS, 0x70);        //  A little higher than radio
 
     NVIC.irqEnable(IVT.BTN_HOME_EXTI_VEC);          //  home button
 
     NVIC.irqEnable(IVT.AUDIO_SAMPLE_TIM);           // sample rate timer
     NVIC.irqPrioritize(IVT.AUDIO_SAMPLE_TIM, 0x50); //  pretty high priority! (would cause audio jitter)
+
+    NVIC.irqEnable(IVT.LED_SEQUENCER_TIM);          // LED sequencer timer
+    NVIC.irqPrioritize(IVT.LED_SEQUENCER_TIM, 0x75);
 
     NVIC.irqEnable(IVT.USART3);                     // factory test uart
     NVIC.irqPrioritize(IVT.USART3, 0x99);           //  loooooowest prio
@@ -113,6 +117,7 @@ int main()
                  (1 << 10);         // TIM1 ""
 #endif
 
+    LED::init();
     Tasks::init();
     FlashStack::init();
     HomeButton::init();
