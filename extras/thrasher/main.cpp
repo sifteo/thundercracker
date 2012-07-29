@@ -8,7 +8,7 @@
 static Sifteo::Metadata M = Sifteo::Metadata()
     .title("Flash Cache Thrasher")
     .package("com.sifteo.extras.thrasher", "1.0")
-    .cubeRange(0);
+    .cubeRange(0, CUBE_ALLOCATION);
 
 void main()
 {
