@@ -161,6 +161,7 @@ void SystemMC::threadFn(void *param)
     // Start the master at some point shortly after the cubes come up
     instance->ticks = instance->sys->time.clocks + MCTiming::STARTUP_DELAY;
     instance->radioPacketDeadline = instance->ticks + MCTiming::TICKS_PER_PACKET;
+    instance->heartbeatDeadline = instance->ticks;
 
     instance->sys->getCubeSync().beginEventAt(instance->ticks, instance->mThreadRunning);
     instance->sys->getCubeSync().endEvent(instance->radioPacketDeadline);
@@ -261,6 +262,12 @@ void SystemMC::elapseTicks(unsigned n)
     // Asynchronous radio packets
     while (self->ticks >= self->radioPacketDeadline)
         self->doRadioPacket();
+
+    // Asynchronous task heartbeat
+    while (self->ticks >= self->heartbeatDeadline) {
+        Tasks::heartbeatISR();
+        self->heartbeatDeadline += MCTiming::TICK_HZ / Tasks::HEARTBEAT_HZ;
+    }
 }
 
 unsigned SystemMC::suggestAudioSamplesToMix()

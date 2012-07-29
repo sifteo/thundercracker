@@ -30,3 +30,8 @@ Radio::TxPower Radio::txPower()
 {
     return NRF24L01::instance.txPower();
 }
+
+void Radio::heartbeat()
+{
+    // XXX implement me
+}

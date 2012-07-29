@@ -46,12 +46,14 @@ public:
         AssetLoader,
         HomeButton,
         CubeConnector,
+        Heartbeat,
         Profiler,
         TestJig
     };
 
     static void init() {
         pendingMask = 0;
+        watchdogCounter = 0;
     }
 
     /*
@@ -62,6 +64,14 @@ public:
 
     /// Block an idle caller. Runs pending tasks OR waits for a hardware event
     static void idle();
+
+    /*
+     * Heartbeat ISR handler, called at HEARTBEAT_HZ by a hardware timer.
+     * This triggers the Heartbeat task, and acts as a watchdog for Tasks::work().
+     */
+    static void heartbeatISR();
+    static const unsigned HEARTBEAT_HZ = 10;
+    static const unsigned WATCHDOG_DURATION = HEARTBEAT_HZ;
 
     /// One-shot, execute a task once at the next opportunity
     static void trigger(TaskID id) {
@@ -84,6 +94,16 @@ public:
     }
 
     /*
+     * Nominally this watchdog is only reset during work(), but rarely there will
+     * be an event that actually necessitates such a long delay; such as erasing
+     * flash memory. So in those rare cases, the watchdog may be reset from other
+     * modules.
+     */
+    static ALWAYS_INLINE void resetWatchdog() {
+        watchdogCounter = 0;
+    }
+
+    /*
      * Block until the next hardware event occurs.
      * (Emulated in siftulator, one instruction in hardware)
      */
@@ -98,8 +118,13 @@ public:
 #endif
 
 private:
+
     static uint32_t pendingMask;
     static uint32_t iterationMask;
+    static uint32_t watchdogCounter;
+
+    static void heartbeatTask();
+    static ALWAYS_INLINE void taskInvoke(unsigned id);
 };
 
 #endif // TASKS_H

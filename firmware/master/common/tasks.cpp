@@ -4,11 +4,13 @@
  */
 
 #include "tasks.h"
+#include "svmruntime.h"
 #include "audiomixer.h"
 #include "svmdebugger.h"
 #include "cubeslots.h"
 #include "homebutton.h"
 #include "cubeconnector.h"
+#include "radio.h"
 
 #ifdef SIFTEO_SIMULATOR
 #   include "mc_timing.h"
@@ -23,14 +25,12 @@
 #   endif
 #endif
 
-uint32_t Tasks::pendingMask;
-uint32_t Tasks::iterationMask;
 
 /*
  * Table of runnable tasks.
  */
 
-static ALWAYS_INLINE void taskInvoke(unsigned id)
+ALWAYS_INLINE void Tasks::taskInvoke(unsigned id)
 {
     switch (id) {
 
@@ -49,6 +49,7 @@ static ALWAYS_INLINE void taskInvoke(unsigned id)
         case Tasks::AssetLoader:    return CubeSlots::assetLoaderTask();
         case Tasks::HomeButton:     return HomeButton::task();
         case Tasks::CubeConnector:  return CubeConnector::task();
+        case Tasks::Heartbeat:      return heartbeatTask();
     #endif
 
     #if !defined(SIFTEO_SIMULATOR) && !defined(BOOTLOADER)
@@ -57,6 +58,25 @@ static ALWAYS_INLINE void taskInvoke(unsigned id)
 
     }
 }
+
+
+/*
+ * Table of heartbeat actions
+ */
+
+void Tasks::heartbeatTask()
+{
+    Radio::heartbeat();
+}
+
+
+/***********************************************************************************
+ ***********************************************************************************/
+
+uint32_t Tasks::pendingMask;
+uint32_t Tasks::iterationMask;
+uint32_t Tasks::watchdogCounter;
+
 
 bool Tasks::work()
 {
@@ -74,6 +94,8 @@ bool Tasks::work()
      * is also cancelled if we cancel a task, to handle the case where
      * the cancelled task was already pulled from pendingMask.
      */
+
+    resetWatchdog();
 
     // Quickest possible early-exit
     uint32_t tasks = pendingMask;
@@ -118,4 +140,14 @@ void Tasks::idle()
 
     if (!work())
         waitForInterrupt();
+}
+
+void Tasks::heartbeatISR()
+{
+    // Check the watchdog timer
+    if (++watchdogCounter >= WATCHDOG_DURATION)
+        SvmRuntime::fault(Svm::F_NOT_RESPONDING);
+
+    // Defer to a Task for everything else
+    trigger(Heartbeat);
 }

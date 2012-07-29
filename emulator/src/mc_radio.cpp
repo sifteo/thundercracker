@@ -183,6 +183,11 @@ void Radio::begin()
     RadioMC::active = true;
 }
 
+void Radio::heartbeat()
+{
+    // Nothing to do here in simulation yet
+}
+
 Cube::Hardware *SystemMC::getCubeForAddress(const RadioAddress *addr)
 {
     uint64_t packed = addr->pack();
