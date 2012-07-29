@@ -18,6 +18,8 @@ _SYSCubeIDVector CubeSlots::userConnected = 0;
 _SYSCubeIDVector CubeSlots::flashResetWait = 0;
 _SYSCubeIDVector CubeSlots::flashResetSent = 0;
 _SYSCubeIDVector CubeSlots::flashAddrPending = 0;
+_SYSCubeIDVector CubeSlots::sendShutdown = 0;
+_SYSCubeIDVector CubeSlots::sendStipple = 0;
 
 BitVector<SysLFS::NUM_PAIRINGS> CubeSlots::pairConnected;
 

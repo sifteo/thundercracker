@@ -184,18 +184,60 @@ void CubeSlot::requestFlashReset()
 
 bool CubeSlot::radioProduce(PacketTransmission &tx)
 {
+    _SYSCubeIDVector cv = bit();
     tx.dest = getRadioAddress();
     tx.packet.len = 0;
 
-    // First priority: Send video buffer updates
+    /* 
+     * First priority: Send VRAM data.
+     *
+     * Normally this comes from a general-purpose VideoBuffer, though we
+     * do have some special-purpose ways to send VRAM data without a
+     * VideoBuffer.
+     */
 
-    if (codec.encodeVRAM(tx.packet, vbuf))
-        if (paintControl.vramFlushed(this))
-            codec.encodeVRAM(tx.packet, vbuf);
+    if (UNLIKELY(CubeSlots::sendShutdown & cv)) {
+        // Tell this cube to power off, by sending it to _SYS_VM_SLEEP
 
-    // Second priority: Download assets to flash
+        codec.encodePoke(tx.packet, offsetof(_SYSVideoRAM, mode)/2,
+            _SYS_VM_SLEEP | (_SYS_VF_CONTINUOUS << 8));
 
-    if (CubeSlots::flashResetWait & bit()) {
+        ASSERT(!tx.packet.isFull());
+        Atomic::And(CubeSlots::sendShutdown, ~cv);
+
+    } else if (UNLIKELY(CubeSlots::sendStipple & cv)) {
+        /* 
+         * Show that this cube is paused, by having it draw a stipple pattern.
+         *
+         * Note, we expect this cube to have finished rendering already,
+         * or it may end up drawing a garbage frame behind the stipple!
+         */
+
+        codec.encodePoke(tx.packet, offsetof(_SYSVideoRAM, fb)/2,          0x0220);
+        codec.encodePoke(tx.packet, offsetof(_SYSVideoRAM, colormap[2])/2, 0x0000);
+        codec.encodePoke(tx.packet, offsetof(_SYSVideoRAM, stamp_pitch)/2, 0x0201);
+        codec.encodePoke(tx.packet, offsetof(_SYSVideoRAM, stamp_x)/2,     0x8000);
+        codec.encodePoke(tx.packet, offsetof(_SYSVideoRAM, stamp_key)/2,   0x0000);
+        codec.encodePoke(tx.packet, offsetof(_SYSVideoRAM, first_line)/2,  0x8000);
+        codec.encodePoke(tx.packet, offsetof(_SYSVideoRAM, mode)/2,
+            _SYS_VM_STAMP | (_SYS_VF_CONTINUOUS << 8));
+
+        ASSERT(!tx.packet.isFull());
+        Atomic::And(CubeSlots::sendStipple, ~cv);
+
+    } else {
+        // Normal updates from VideoBuffer
+
+        if (codec.encodeVRAM(tx.packet, vbuf))
+            if (paintControl.vramFlushed(this))
+                codec.encodeVRAM(tx.packet, vbuf);
+    }
+
+    /*
+     * Second priority: Download assets to flash
+     */
+
+    if (CubeSlots::flashResetWait & cv) {
         /*
          * We need to reset the flash decoder before we can send any data.
          *
@@ -210,7 +252,7 @@ bool CubeSlot::radioProduce(PacketTransmission &tx)
          * valid flash ACK from this cube.
          */
 
-        if (CubeSlots::flashResetSent & bit()) {
+        if (CubeSlots::flashResetSent & cv) {
             // Already sent the reset. Has it timed out?
 
             if (SysTime::ticks() > flashDeadline) {
@@ -321,8 +363,8 @@ void CubeSlot::radioAcknowledge(const PacketBuffer &packet)
 
         DEBUG_LOG(("FLASH[%d]: Valid ACK for %d bytes (resetWait=%d, resetSent=%d)\n",
             id(), loadACK,
-            !!(CubeSlots::flashResetWait & bit()),
-            !!(CubeSlots::flashResetSent & bit())));
+            !!(CubeSlots::flashResetWait & cv),
+            !!(CubeSlots::flashResetSent & cv)));
 
         /*
          * Acknowledge FIFO bytes

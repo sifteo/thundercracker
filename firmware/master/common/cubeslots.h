@@ -25,6 +25,8 @@ namespace CubeSlots {
     extern _SYSCubeIDVector flashResetWait;     /// We need to reset flash before writing to it
     extern _SYSCubeIDVector flashResetSent;     /// We've sent an unacknowledged flash reset    
     extern _SYSCubeIDVector flashAddrPending;   /// Need to send an addressing command to the flash codec
+    extern _SYSCubeIDVector sendShutdown;       /// Sending a shutdown command to these cubes
+    extern _SYSCubeIDVector sendStipple;        /// Sending a stipple pattern to these cubes
 
     extern BitVector<SysLFS::NUM_PAIRINGS> pairConnected;   /// Connected cubes, indexed by pairing ID
     
