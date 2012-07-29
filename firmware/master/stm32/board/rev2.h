@@ -30,6 +30,7 @@
 #define RF_SPI_SCK_GPIO     GPIOPin(&GPIOC, 10)
 #define RF_SPI_MISO_GPIO    GPIOPin(&GPIOC, 11)
 #define RF_SPI_MOSI_GPIO    GPIOPin(&GPIOC, 12)
+#define RF_EXTI_VEC         EXTI9_5
 
 // F L A S H
 #ifdef REV2_GDB_REWORK

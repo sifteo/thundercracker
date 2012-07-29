@@ -175,11 +175,6 @@ void SystemMC::doRadioPacket()
 
 void Radio::init()
 {
-    RadioMC::active = false;
-}
-
-void Radio::begin()
-{
     RadioMC::active = true;
 }
 
