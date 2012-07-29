@@ -59,11 +59,14 @@ public:
     /*
      * Run pending tasks until no tasks are pending. Returns 'true' if we did
      * any work, or 'false' of no tasks were pending when we checked.
+     *
+     * Nested task invocation is allowed. The supplied mask can be used
+     * to exclude specific tasks.
      */
-    static bool work();
+    static bool work(uint32_t exclude=0);
 
     /// Block an idle caller. Runs pending tasks OR waits for a hardware event
-    static void idle();
+    static void idle(uint32_t exclude=0);
 
     /*
      * Heartbeat ISR handler, called at HEARTBEAT_HZ by a hardware timer.

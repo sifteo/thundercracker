@@ -78,7 +78,7 @@ uint32_t Tasks::iterationMask;
 uint32_t Tasks::watchdogCounter;
 
 
-bool Tasks::work()
+bool Tasks::work(uint32_t exclude)
 {
     /*
      * We sample pendingMask exactly once, and use this to quickly make
@@ -98,7 +98,7 @@ bool Tasks::work()
     resetWatchdog();
 
     // Quickest possible early-exit
-    uint32_t tasks = pendingMask;
+    uint32_t tasks = pendingMask & ~exclude;
     if (LIKELY(!tasks))
         return false;
 
@@ -116,8 +116,25 @@ bool Tasks::work()
     // Clear only the bits we managed to capture above
     Atomic::And(pendingMask, ~tasks);
 
-    // Doesn't need to be atomic; we're not required to catch changes to
-    // iterationMask made outside of task handlers (i.e. in ISRs)
+    /*
+     * Merge the tasks captured above with any existing iterationMask.
+     * We need to be careful of edge cases introduced by running work()
+     * while already in a task handler. Tasks already in iterationMask
+     * but not yet run may need to be either kept or moved back
+     * to pendingMask, depending on whether they're excluded.
+     *
+     * Also note that iterationMask doesn't need to be atomic here, since
+     * we aren't required to catch changes to it made outside of task handlers.
+     */
+
+    tasks |= iterationMask;
+    uint32_t pendingExcluded = tasks & exclude;
+    if (pendingExcluded) {
+        Atomic::Or(pendingMask, pendingExcluded);
+        tasks ^= pendingExcluded;
+    }
+
+    ASSERT((tasks & exclude) == 0);
     iterationMask = tasks;
 
     do {
@@ -129,7 +146,7 @@ bool Tasks::work()
     return true;
 }
 
-void Tasks::idle()
+void Tasks::idle(uint32_t exclude)
 {
     /*
      * Run pending tasks, OR if no tasks are pending, wait for interrupts.
@@ -138,7 +155,7 @@ void Tasks::idle()
      * caller is waiting on something which requires Tasks to execute.
      */
 
-    if (!work())
+    if (!work(exclude))
         waitForInterrupt();
 }
 
