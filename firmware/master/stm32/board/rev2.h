@@ -89,7 +89,7 @@
 #define AUDIO_PWMB_PIN      8
 #define AUDIO_PWM_CHAN      1
 #define AUDIO_PWM_TIM       TIM1
-#define AUDIO_SAMPLE_TIM    TIM3
+#define AUDIO_SAMPLE_TIM    TIM7
 
 #define VOLUME_TIM          TIM5
 #define VOLUME_CHAN         2
