@@ -59,6 +59,23 @@ void SampleProfiler::reportHang()
     UART("HANG: Subsystem ");
     UART_HEX(subsys);
     UART("\r\n");
+
+    /*
+     * Stack dump is available for internal debugging, but disabled by
+     * default as a security precaution.
+     */
+
+    #ifdef STACK_DUMP_ON_HANG
+        volatile uint32_t sp;
+        for (unsigned i = 0; i < 64; i++) {
+            volatile uint32_t *p = &sp + i;
+            UART("[");
+            UART_HEX((uint32_t) p);
+            UART("] ");
+            UART_HEX(*p);
+            UART("\r\n");
+        }
+    #endif
 }
 
 /*

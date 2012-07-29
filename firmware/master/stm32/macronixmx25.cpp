@@ -8,6 +8,7 @@
 #include "board.h"
 #include "macros.h"
 #include "tasks.h"
+#include "sampleprofiler.h"
 
 
 void MacronixMX25::init()
@@ -175,6 +176,9 @@ void MacronixMX25::waitWhileBusy()
 
 void MacronixMX25::waitForDma()
 {
+    SampleProfiler::SubSystem s = SampleProfiler::subsystem();
+    SampleProfiler::setSubsystem(SampleProfiler::FlashDMA);
+
     while (spi.dmaInProgress()) {
         /*
          * Kill time.. not safe to execute tasks here. We can yield until
@@ -182,4 +186,6 @@ void MacronixMX25::waitForDma()
          */
         Tasks::waitForInterrupt();
     }
+
+    SampleProfiler::setSubsystem(s);
 }

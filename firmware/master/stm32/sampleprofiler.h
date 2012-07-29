@@ -10,7 +10,7 @@ public:
 
     enum SubSystem {
         None,
-        Reserved_1,
+        FlashDMA,
         AudioPull,
         SVCISR,
         RFISR,
