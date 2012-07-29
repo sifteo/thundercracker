@@ -16,6 +16,11 @@
 
 void PanicMessenger::init(SvmMemory::VirtAddr vbufVA)
 {
+    // Set up panic LED state very early on, in case some other part of the PanicMessenger
+    // hangs or otherwise fails to get the message across!
+
+    LED::set(LEDPatterns::panic, true);
+
     // Initialize, with vbuf memory stolen from userspace at the specified address.
 
     SvmMemory::PhysAddr vbufPA;
@@ -153,7 +158,7 @@ void PanicMessenger::haltForever()
     UART(("PANIC: System halted!\r\n"));
 
     while (1)
-        animateLED();
+        Tasks::idle();
 }
 
 void PanicMessenger::haltUntilButton()
@@ -163,11 +168,11 @@ void PanicMessenger::haltUntilButton()
 
     // Wait for press
     while (!HomeButton::isPressed())
-        animateLED();
+        Tasks::idle();
 
     // Wait for release
     while (HomeButton::isPressed())
-        animateLED();
+        Tasks::idle();
 }
 
 void PanicMessenger::paintAndWait()
@@ -191,15 +196,3 @@ void PanicMessenger::paintAndWait()
     }
 }
 
-void PanicMessenger::animateLED()
-{
-    static const uint8_t pattern[] = {
-        // OH NO!!!!
-        LED::RED, LED::GREEN, LED::OFF, LED::OFF,
-    };
-
-    STATIC_ASSERT(arraysize(pattern) == 4);
-    LED::set(LED::Color(pattern[(SysTime::ticks() >> 26) & 3]));
-
-    Tasks::idle();
-}

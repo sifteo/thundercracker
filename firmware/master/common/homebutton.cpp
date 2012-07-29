@@ -62,10 +62,9 @@ void task()
         // Start blinking as we get closer to the deadline
         SysTime::Ticks remaining = shutdownDeadline - now;
         if (remaining < holdDuration / 2) {
-            bool blink = (remaining % blinkPeriod) < (blinkPeriod / 2);
-            LED::set(blink ? LED::GREEN : LED::OFF);
+            LED::set(LEDPatterns::shutdown);
         } else {
-            LED::set(LED::GREEN);
+            LED::set(LEDPatterns::paused, true);
         }
 
     } else {
@@ -73,7 +72,7 @@ void task()
          * Cancel shutdown
          */
 
-        LED::set(LED::OFF);
+        LED::set(LEDPatterns::idle);
         shutdownDeadline = 0;
     }
 }

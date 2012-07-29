@@ -46,7 +46,6 @@ public:
 
 private:
     void dumpScreenToUART();
-    static void animateLED();
 };
 
 
