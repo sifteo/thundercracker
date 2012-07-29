@@ -78,8 +78,7 @@ void AudioOutDevice::init()
     // Initialize PRNG for audio dithering
     PRNG::init(&PwmAudioOut::dither, 0);
 
-    STATIC_ASSERT(AudioMixer::SAMPLE_HZ == 16000);
-    PwmAudioOut::sampleTimer.init(2200, 0);
+    PwmAudioOut::sampleTimer.init(36000000 / AudioMixer::SAMPLE_HZ, 0);
 
     // Init the timer, both PWM outputs inverted
     PwmAudioOut::pwmTimer.init(PwmAudioOut::PWM_PERIOD, 0);
