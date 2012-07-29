@@ -26,6 +26,7 @@ public:
 
     static void processSample(uint32_t pc);
     static void task();
+    static void reportHang();
 
     static ALWAYS_INLINE SubSystem subsystem() {
         return subsys;

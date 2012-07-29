@@ -49,6 +49,18 @@ void SampleProfiler::task()
     Tasks::trigger(Tasks::Profiler);
 }
 
+void SampleProfiler::reportHang()
+{
+    /*
+     * A hang was detected by the Tasks module. We're in the best
+     * position to dump info about the state of the system at the time.
+     */
+
+    UART("HANG: Subsystem ");
+    UART_HEX(subsys);
+    UART("\r\n");
+}
+
 /*
  * Take a peek at the stacked exception state to determine where we're
  * returning to.

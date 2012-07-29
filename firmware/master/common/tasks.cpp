@@ -145,8 +145,27 @@ void Tasks::idle()
 void Tasks::heartbeatISR()
 {
     // Check the watchdog timer
-    if (++watchdogCounter >= WATCHDOG_DURATION)
+    if (++watchdogCounter >= WATCHDOG_DURATION) {
+
+        /*
+         * Help diagnose the hang for internal firmware debugging
+         */
+        #ifndef SIFTEO_SIMULATOR
+        SampleProfiler::reportHang();
+        #endif
+
+        /*
+         * XXX: It's unlikely that we can recover from this fault currently.
+         *      If it's a system hang, we're hosed anyway. If it's a userspace
+         *      hang, we can log this message to the UART, but PanicMessenger
+         *      isn't going to work correctly inside the systick ISR, and we
+         *      can't yet regain control over the CPU from a runaway userspace
+         *      loop within one block. If this is a userspace hang, we should be
+         *      replacing all cached code pages with fields of BKPT instructions
+         *      or something equally heavyhanded.
+         */
         SvmRuntime::fault(Svm::F_NOT_RESPONDING);
+    }
 
     // Defer to a Task for everything else
     trigger(Heartbeat);
