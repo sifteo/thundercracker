@@ -14,10 +14,9 @@
 #include "svmdebugpipe.h"
 #include "radio.h"
 #include "tasks.h"
-#include "panic.h"
 #include "cubeslots.h"
 #include "cube.h"
-#include "panic.h"
+#include "ui_panic.h"
 #include "audiomixer.h"
 #include "event.h"
 #include "led.h"
@@ -225,6 +224,6 @@ void SvmLoader::exit(bool fault)
         SystemMC::exit(fault);
         #endif
 
-        PanicMessenger::haltForever();
+        UIPanic::haltForever();
     }
 }

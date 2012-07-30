@@ -7,7 +7,7 @@
 #include "flash_device.h"
 #include "flash_lfs.h"
 #include "svmdebugger.h"
-#include "panic.h"
+#include "ui_panic.h"
 #include <string.h>
 
 uint8_t FlashBlock::mem[NUM_CACHE_BLOCKS][BLOCK_SIZE] BLOCK_ALIGN;
@@ -171,7 +171,7 @@ FlashBlock *FlashBlock::recycleBlock(uint32_t blockAddr)
     }
 
     ASSERT(0 && "Oh no, all cache blocks are in use. Is there a reference leak?");
-    PanicMessenger::haltForever();
+    UIPanic::haltForever();
     return 0;
 }
 

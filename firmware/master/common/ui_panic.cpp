@@ -3,7 +3,7 @@
  * Copyright <c> 2012 Sifteo, Inc. All rights reserved.
  */
 
-#include "panic.h"
+#include "ui_panic.h"
 #include "vram.h"
 #include "svmmemory.h"
 #include "cubeslots.h"
@@ -14,9 +14,9 @@
 #include "homebutton.h"
 
 
-void PanicMessenger::init(SvmMemory::VirtAddr vbufVA)
+void UIPanic::init(SvmMemory::VirtAddr vbufVA)
 {
-    // Set up panic LED state very early on, in case some other part of the PanicMessenger
+    // Set up panic LED state very early on, in case some other part of the UIPanic
     // hangs or otherwise fails to get the message across!
 
     LED::set(LEDPatterns::panic, true);
@@ -30,14 +30,14 @@ void PanicMessenger::init(SvmMemory::VirtAddr vbufVA)
     erase();
 }
 
-void PanicMessenger::erase()
+void UIPanic::erase()
 {
     memset(avb, 0, sizeof *avb);
     avb->vbuf.vram.num_lines = 128;
     avb->vbuf.vram.mode = _SYS_VM_BG0_ROM;
 }
 
-void PanicMessenger::paint(_SYSCubeID cube)
+void UIPanic::paint(_SYSCubeID cube)
 {
     /*
      * _Synchronously_ paint this cube.
@@ -93,35 +93,35 @@ void PanicMessenger::paint(_SYSCubeID cube)
     slot.setVideoBuffer(NULL);
 }
 
-PanicMessenger &PanicMessenger::operator<< (char c)
+UIPanic &UIPanic::operator<< (char c)
 {
     unsigned index = c - ' ';
     avb->vbuf.vram.bg0_tiles[addr++] = _SYS_TILE77(index);
     return *this;
 }
 
-PanicMessenger &PanicMessenger::operator<< (const char *str)
+UIPanic &UIPanic::operator<< (const char *str)
 {
     while (char c = *(str++))
         *this << c;
     return *this;
 }
 
-PanicMessenger &PanicMessenger::operator<< (uint8_t byte)
+UIPanic &UIPanic::operator<< (uint8_t byte)
 {
     const char *digits = "0123456789ABCDEF";
     *this << digits[byte >> 4] << digits[byte & 0xf];
     return *this;
 }
 
-PanicMessenger &PanicMessenger::operator<< (uint32_t word)
+UIPanic &UIPanic::operator<< (uint32_t word)
 {
     *this << uint8_t(word >> 24) << uint8_t(word >> 16)
           << uint8_t(word >> 8) << uint8_t(word);
     return *this;
 }
 
-void PanicMessenger::dumpScreenToUART()
+void UIPanic::dumpScreenToUART()
 {
     //      0123456789ABCDEF
     UART(("+---- PANIC! ----+\r\n"));
@@ -152,7 +152,7 @@ void PanicMessenger::dumpScreenToUART()
     UART(("+----------------+\r\n"));
 }
 
-void PanicMessenger::haltForever()
+void UIPanic::haltForever()
 {
     LOG(("PANIC: System halted!\n"));
     UART(("PANIC: System halted!\r\n"));
@@ -161,7 +161,7 @@ void PanicMessenger::haltForever()
         Tasks::idle();
 }
 
-void PanicMessenger::haltUntilButton()
+void UIPanic::haltUntilButton()
 {
     LOG(("PANIC: Waiting for button press\n"));
     UART(("PANIC: Waiting for button press\r\n"));
@@ -175,7 +175,7 @@ void PanicMessenger::haltUntilButton()
         Tasks::idle();
 }
 
-void PanicMessenger::paintAndWait()
+void UIPanic::paintAndWait()
 {
     _SYSCubeIDVector cubes = CubeSlots::sysConnected;
     if (cubes) {
