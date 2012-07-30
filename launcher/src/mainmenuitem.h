@@ -37,9 +37,8 @@ public:
      */
     virtual Flags getAssets(Sifteo::MenuItem &assets, Sifteo::MappedVolume &map) = 0;
 
-    // XXX: would love to get rid of this, it's only here for dynamically updating the battery level
-    virtual bool autoRefreshIcon() { return false; }
-
+    virtual Sifteo::Volume getVolume() { return Sifteo::Volume(0); }
+    
     /**
      * How many cubes are required by this menu item, if any?
      */

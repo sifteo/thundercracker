@@ -57,8 +57,12 @@ void MainMenu::run()
     m.setIconYOffset(8);
     
     if (Volume::previous() != Volume(0)) {
-        // TODO: look up item based on previous volume()
-        m.anchor(0, true);
+        for (unsigned i = 0, e = items.count(); i != e; ++i) {
+            ASSERT(items[i] != NULL);
+            if (items[i]->getVolume() == Volume::previous()) {
+                m.anchor(i, true);
+            }
+        }
     }
     
     eventLoop(m);
