@@ -132,11 +132,11 @@ class CubeSlot {
             return true;
     }
 
-    void waitForPaint(uint32_t excludedTasks) {
+    ALWAYS_INLINE void waitForPaint(uint32_t excludedTasks) {
         paintControl.waitForPaint(this, excludedTasks);
     }
 
-    void triggerPaint(SysTime::Ticks now) {
+    ALWAYS_INLINE void triggerPaint(SysTime::Ticks now) {
         // Allow continuous rendering only when not loading assets
         paintControl.triggerPaint(this, now);
     }
