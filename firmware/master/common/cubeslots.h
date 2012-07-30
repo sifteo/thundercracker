@@ -27,6 +27,7 @@ namespace CubeSlots {
     extern _SYSCubeIDVector flashAddrPending;   /// Need to send an addressing command to the flash codec
     extern _SYSCubeIDVector sendShutdown;       /// Sending a shutdown command to these cubes
     extern _SYSCubeIDVector sendStipple;        /// Sending a stipple pattern to these cubes
+    extern _SYSCubeIDVector vramPaused;         /// Pause transmission of VRAM updates
 
     extern BitVector<SysLFS::NUM_PAIRINGS> pairConnected;   /// Connected cubes, indexed by pairing ID
     

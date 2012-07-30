@@ -32,9 +32,15 @@ void CubeSlot::connect(SysLFS::Key cubeRecord, const RadioAddress &addr, const R
 
     // Reset state
     NeighborSlot::resetSlots(cv);
+    setVideoBuffer(0);
     Atomic::And(CubeSlots::flashResetWait, ~cv);
     Atomic::And(CubeSlots::flashResetSent, ~cv);
     Atomic::And(CubeSlots::flashAddrPending, ~cv);
+    Atomic::And(CubeSlots::sendShutdown, ~cv);
+    Atomic::And(CubeSlots::sendStipple, ~cv);
+    Atomic::And(CubeSlots::vramPaused, ~cv);
+
+    // Store new identity
     lastACK = fullACK;
     address = addr;
     this->cubeRecord = cubeRecord;
@@ -197,13 +203,17 @@ bool CubeSlot::radioProduce(PacketTransmission &tx)
      */
 
     if (UNLIKELY(CubeSlots::sendShutdown & cv)) {
-        // Tell this cube to power off, by sending it to _SYS_VM_SLEEP
+        /*
+         * Tell this cube to power off, by sending it to _SYS_VM_SLEEP.
+         * We leave this bit set; if the cube doesn't go to sleep right
+         * away, keep telling it to. Once we succeed, the cube will
+         * disconnect.
+         */
 
         codec.encodePoke(tx.packet, offsetof(_SYSVideoRAM, mode)/2,
             _SYS_VM_SLEEP | (_SYS_VF_CONTINUOUS << 8));
 
         ASSERT(!tx.packet.isFull());
-        Atomic::And(CubeSlots::sendShutdown, ~cv);
 
     } else if (UNLIKELY(CubeSlots::sendStipple & cv)) {
         /* 
@@ -211,21 +221,36 @@ bool CubeSlot::radioProduce(PacketTransmission &tx)
          *
          * Note, we expect this cube to have finished rendering already,
          * or it may end up drawing a garbage frame behind the stipple!
+         *
+         * This does not require us to have a vbuf attached. But if we
+         * do, we'll use it to be a good citizen and avoid using continuous
+         * mode or causing an unintentional rotation change.
          */
 
+        _SYSVideoBuffer *localVBuf = vbuf;
+        unsigned modeFlagsWord = _SYS_VM_STAMP;
+        if (localVBuf) {
+            uint8_t flags = localVBuf->flags ^ _SYS_VF_TOGGLE;
+            localVBuf->flags = flags;
+            modeFlagsWord |= flags << 8;
+        } else {
+            modeFlagsWord |= _SYS_VF_CONTINUOUS << 8;
+        }
+ 
+        LOG(("cube %d flags %04x\n", id(), modeFlagsWord));
+ 
         codec.encodePoke(tx.packet, offsetof(_SYSVideoRAM, fb)/2,          0x0220);
         codec.encodePoke(tx.packet, offsetof(_SYSVideoRAM, colormap[2])/2, 0x0000);
         codec.encodePoke(tx.packet, offsetof(_SYSVideoRAM, stamp_pitch)/2, 0x0201);
         codec.encodePoke(tx.packet, offsetof(_SYSVideoRAM, stamp_x)/2,     0x8000);
         codec.encodePoke(tx.packet, offsetof(_SYSVideoRAM, stamp_key)/2,   0x0000);
         codec.encodePoke(tx.packet, offsetof(_SYSVideoRAM, first_line)/2,  0x8000);
-        codec.encodePoke(tx.packet, offsetof(_SYSVideoRAM, mode)/2,
-            _SYS_VM_STAMP | (_SYS_VF_CONTINUOUS << 8));
+        codec.encodePoke(tx.packet, offsetof(_SYSVideoRAM, mode)/2,        modeFlagsWord);
 
         ASSERT(!tx.packet.isFull());
         Atomic::And(CubeSlots::sendStipple, ~cv);
 
-    } else {
+    } else if (LIKELY(0 == (CubeSlots::vramPaused & cv))) {
         // Normal updates from VideoBuffer
 
         if (codec.encodeVRAM(tx.packet, vbuf))

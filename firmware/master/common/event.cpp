@@ -167,7 +167,7 @@ void Event::setBasePending(PriorityID pid, uint32_t param)
     Atomic::Store(params[pid].generic, param);
     pending.atomicMark(pid);
 }
-    
+
 void Event::setCubePending(PriorityID pid, _SYSCubeID cid)
 {
     ASSERT(cid < _SYS_NUM_CUBE_SLOTS);
