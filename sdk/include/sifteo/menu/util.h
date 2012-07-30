@@ -138,14 +138,12 @@ inline int Menu::stoppingPositionFor(int selected)
 
 inline float Menu::velocityMultiplier()
 {
-    return accel.y > kAccelThresholdOff ? (1.f + (accel.y * kMaxSpeedMultiplier / kOneG())) : 1.f;
+    return abs(accel.x) > kAccelThresholdStep ? (1.f * kMaxSpeedMultiplier) : 1.f;
 }
 
 inline float Menu::maxVelocity()
 {
-    // Tilt velocity increase to a faster amount if the acceleration is above
-    // a certain value. Tune the threshold and speed here...
-    const float kMaxNormalSpeed = abs(accel.x) > 11.5f ? 70.f : 40.f;
+    const float kMaxNormalSpeed = 40.f;
     return kMaxNormalSpeed *
         // x-axis linear limit
         (abs(accel.x) / kOneG()) *
