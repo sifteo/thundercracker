@@ -40,6 +40,7 @@ void MainMenu::init()
 
 void MainMenu::run()
 {
+    // TODO: play a "conncet me" SFX every few seconds if no cubes are connected
     // Wait for at least one cube to be connected, since we need that to display the menu.
     while (CubeSet::connected().empty())
         System::yield();
