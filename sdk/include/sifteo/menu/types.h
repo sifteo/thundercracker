@@ -168,6 +168,8 @@ class Menu {
     int finishIteration;
     // internal
     MenuNeighbor neighbors[NUM_SIDES]; // menu neighbours
+    //prevent rendering before everything is set up
+    bool hasBeenStarted;
 
     // states.h
     void changeState(MenuState);

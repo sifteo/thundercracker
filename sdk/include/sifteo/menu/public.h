@@ -19,7 +19,7 @@ namespace Sifteo {
  */
 
 inline Menu::Menu(VideoBuffer &vid, const MenuAssets *aAssets, MenuItem *aItems)
-    : vid(vid)
+    : vid(vid), hasBeenStarted(false)
 {
     currentEvent.type = MENU_UNEVENTFUL;
     items = aItems;
@@ -236,14 +236,16 @@ inline void Menu::setIconYOffset(uint8_t px)
 {
     ASSERT(px >= 0 || px < kNumTilesX * 8);
     kIconYOffset = -px;
-    updateBG0();
+    if (hasBeenStarted)
+        updateBG0();
 }
 
 inline void Menu::setPeekTiles(uint8_t numTiles)
 {
     ASSERT(numTiles >= 1 || numTiles * 2 < kNumTilesX);
     kPeekTiles = numTiles;
-    updateBG0();
+    if (hasBeenStarted)
+        updateBG0();
 }
 
 /**

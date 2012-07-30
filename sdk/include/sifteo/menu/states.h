@@ -111,13 +111,11 @@ inline void Menu::stateStart()
 inline void Menu::transFromStart()
 {
     if (stateFinished) {
+        hasBeenStarted = true;
+        
         position = stoppingPositionFor(startingItem);
         prev_ut = computeCurrentTile() + kNumTilesX;
         updateBG0();
-
-        // Placed here to fix the bug where some icons tiles appear missing when the menu is initialized.
-        // Open to other better ideas of where to stick the finish...
-        System::finish();
 
         for(int i = 0; i < NUM_SIDES; i++) {
             neighbors[i].neighborSide = NO_SIDE;

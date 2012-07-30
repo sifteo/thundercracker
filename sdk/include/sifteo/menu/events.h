@@ -70,7 +70,10 @@ inline void Menu::handleExit()
 
 inline void Menu::handlePrepaint()
 {
-    System::paint();
+    if (hasBeenStarted)
+    {
+        System::paint();
+    }
 }
 
 inline void Menu::performDefault()
