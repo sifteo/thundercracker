@@ -40,10 +40,7 @@ void MainMenu::init()
 
 void MainMenu::run()
 {
-    // TODO: play a "conncet me" SFX every few seconds if no cubes are connected
-    // Wait for at least one cube to be connected, since we need that to display the menu.
-    while (CubeSet::connected().empty())
-        System::yield();
+    waitForACube();
 
     // Pick one cube to be the 'main' cube, where we show the menu
     mainCube = *cubes().begin();
@@ -75,6 +72,7 @@ void MainMenu::eventLoop(Menu &m)
     struct MenuEvent e;
     while (m.pollEvent(&e)) {
 
+        waitForACube();
         updateAssets();
         updateSound(m);
         updateMusic();
@@ -147,6 +145,18 @@ void MainMenu::cubeDisconnect(unsigned cid)
     AudioTracker::play(Tracker_CubeDisconnect);
 
     cubesToLoad.clear(cid);
+}
+
+void MainMenu::waitForACube()
+{
+    SystemTime sfxTime = SystemTime::now();
+    while (CubeSet::connected().empty()) {
+        if ((SystemTime::now() - sfxTime).milliseconds() >= 5000) {
+            sfxTime = SystemTime::now();
+            AudioChannel(0).play(Sound_NoCubesConnected);
+        }
+        System::yield();
+    }
 }
 
 void MainMenu::updateAssets()
