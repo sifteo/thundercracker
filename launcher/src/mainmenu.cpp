@@ -54,6 +54,12 @@ void MainMenu::run()
     // Run the menu on our main cube
     Menu m(Shared::video[mainCube], &menuAssets, &menuItems[0]);
     m.setIconYOffset(8);
+    
+    if (Volume::previous() != Volume(0)) {
+        // TODO: look up item based on previous volume()
+        m.anchor(0, true);
+    }
+    
     eventLoop(m);
 }
 
