@@ -54,6 +54,12 @@ void MainMenu::run()
     // Run the menu on our main cube
     Menu m(Shared::video[mainCube], &menuAssets, &menuItems[0]);
     m.setIconYOffset(8);
+    
+    if (Volume::previous() != Volume(0)) {
+        // TODO: look up item based on previous volume()
+        m.anchor(0, true);
+    }
+    
     eventLoop(m);
 }
 
@@ -67,7 +73,6 @@ void MainMenu::eventLoop(Menu &m)
         updateAssets();
         updateSound(m);
         updateMusic();
-        updateIcons(m);
         updateAlerts(m);
 
         bool performDefault = true;
@@ -92,7 +97,7 @@ void MainMenu::eventLoop(Menu &m)
             case MENU_ITEM_ARRIVE:
                 itemIndexCurrent = e.item;
                 if (itemIndexCurrent >= 0) {
-                    arriveItem(itemIndexCurrent);
+                    arriveItem(m, itemIndexCurrent);
                 }
                 break;
             case MENU_ITEM_DEPART:
@@ -101,14 +106,9 @@ void MainMenu::eventLoop(Menu &m)
                         m.replaceIcon(itemIndexCurrent, cubeRangeSavedIcon);
                         cubeRangeSavedIcon = NULL;
                     }
-                    departItem(itemIndexCurrent);
+                    departItem(m, itemIndexCurrent);
                 }
                 itemIndexCurrent = -1;
-                break;
-            case MENU_PREPAINT:
-                if (itemIndexCurrent >= 0) {
-                    prepaintItem(itemIndexCurrent);
-                }
                 break;
             default:
                 break;
@@ -181,23 +181,6 @@ void MainMenu::updateMusic()
         AudioTracker::play(Tracker_MenuMusic);
 }
 
-void MainMenu::updateIcons(Menu &menu)
-{
-    // TODO: should this happen at longer intervals?
-    if (menu.getState() == MENU_STATE_STATIC) {
-        for (unsigned i = 0, e = items.count(); i != e; ++i) {
-            if (items[i]->autoRefreshIcon()) {
-                MenuItem &mi = menuItems[i];
-                
-                MappedVolume map;
-                auto flags = items[i]->getAssets(mi, map);
-                
-                menu.replaceIcon(i, mi.icon);
-            }
-        }
-    }
-}
-
 bool MainMenu::canLaunchItem(unsigned index)
 {
     ASSERT(index < arraysize(items));
@@ -262,25 +245,18 @@ void MainMenu::execItem(unsigned index)
     item->exec();
 }
 
-void MainMenu::arriveItem(unsigned index)
+void MainMenu::arriveItem(Menu &menu, unsigned index)
 {
     ASSERT(index < arraysize(items));
     MainMenuItem *item = items[index];
-    item->arrive();
+    item->arrive(menu, index);
 }
 
-void MainMenu::departItem(unsigned index)
+void MainMenu::departItem(Menu &menu, unsigned index)
 {
     ASSERT(index < arraysize(items));
     MainMenuItem *item = items[index];
-    item->depart();
-}
-
-void MainMenu::prepaintItem(unsigned index)
-{
-    ASSERT(index < arraysize(items));
-    MainMenuItem *item = items[index];
-    item->prepaint();
+    item->depart(menu, index);
 }
 
 void MainMenu::loadAssets()

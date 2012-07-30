@@ -8,6 +8,7 @@
 
 #include "cppwriter.h"
 #include "audioencoder.h"
+#include "wavedecoder.h"
 #include <assert.h>
 #include "sifteo/abi.h"
 
@@ -168,7 +169,14 @@ void CPPSourceWriter::writeSound(const Sound &sound)
     std::vector<uint8_t> raw;
     std::vector<uint8_t> data;
 
-    LodePNG::loadFile(raw, sound.getFile());
+    std::string filepath = sound.getFile();
+    unsigned sz = filepath.size();
+
+    if (sz >= 4 && filepath.substr(sz - 4) == ".wav")
+        WaveDecoder::loadFile(raw, filepath, mLog);
+    else
+        LodePNG::loadFile(raw, filepath);
+
     uint32_t numSamples = raw.size() / sizeof(int16_t);
 
     enc->encode(raw, data);

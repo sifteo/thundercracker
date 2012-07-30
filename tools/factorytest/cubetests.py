@@ -3,6 +3,7 @@ from factorytest_common import rangeHelper, AckPacket
 
 # cube test IDs
 SimulatedBatteryVoltage = 1
+GetBattSupplyCurrentID  = 2
 WriteToVramID           = 6
 SensorsReportEnabledID  = 7
 

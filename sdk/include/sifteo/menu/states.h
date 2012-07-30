@@ -111,13 +111,11 @@ inline void Menu::stateStart()
 inline void Menu::transFromStart()
 {
     if (stateFinished) {
+        hasBeenStarted = true;
+        
         position = stoppingPositionFor(startingItem);
         prev_ut = computeCurrentTile() + kNumTilesX;
         updateBG0();
-
-        // Placed here to fix the bug where some icons tiles appear missing when the menu is initialized.
-        // Open to other better ideas of where to stick the finish...
-        System::finish();
 
         for(int i = 0; i < NUM_SIDES; i++) {
             neighbors[i].neighborSide = NO_SIDE;
@@ -369,11 +367,6 @@ inline void Menu::transFromFinish()
  */
 inline void Menu::transToHopUp()
 {
-    // Prepare screen for item animation
-
-    // We're about to switch things up in VRAM, make sure the cubes are done drawing.
-    System::finish();
-
     // blank out the background layer
     vid.initMode(BG0_SPR_BG1);
     vid.bg0.setPanning(vec(0, 0));

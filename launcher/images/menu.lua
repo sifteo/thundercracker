@@ -27,11 +27,14 @@ Icon_GetGames = image{ "images/icon-getgames.png" }
 Icon_Battery = image{ "images/icon-battery.png" }
 Icon_CubeRange = image{ "images/icon-cuberange.png" }
 
--- Battery Gauge
-Battery = image{ "images/img-battery.png" }
+-- System Status
+BatteryBase = image{ "images/img-base.png" }
+BatteryCube = image{ "images/img-battery.png" }
 BatteryBars = image{ {
+    "images/img-battery-bars-0.png",
     "images/img-battery-bars-1.png",
     "images/img-battery-bars-2.png",
     "images/img-battery-bars-3.png",
     "images/img-battery-bars-4.png"
 } }
+Cube = image{ "images/img-cube02.png" }
