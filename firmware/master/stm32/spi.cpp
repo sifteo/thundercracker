@@ -9,7 +9,15 @@
 
 void SPIMaster::init()
 {
+    /*
+     * Note: As another countermeasure against the DMA hangs we've
+     *       seen (see SPIMaster::txDma() and MacronixMX25::waitForDma())
+     *       we're setting each SPI peripheral to a distinct DMA
+     *       priority level. This does seem to help a lot!
+     */
+    
     if (hw == &SPI1) {
+        dmaPriorityBits = (1 << 12);
         RCC.APB2ENR |= (1 << 12);
 
         dmaRxChan = &DMA1.channels[1];  // DMA1, channel 2
@@ -19,6 +27,7 @@ void SPIMaster::init()
         Dma::registerHandler(&DMA1, 2, dmaCallback, this);
     }
     else if (hw == &SPI2) {
+        dmaPriorityBits = (2 << 12);
         RCC.APB1ENR |= (1 << 14);
 
         dmaRxChan = &DMA1.channels[3];  // DMA1, channel 4
@@ -28,6 +37,7 @@ void SPIMaster::init()
         Dma::registerHandler(&DMA1, 4, dmaCallback, this);
     }
     else if (hw == &SPI3) {
+        dmaPriorityBits = (3 << 12);
         RCC.APB1ENR |= (1 << 15);
 
         dmaRxChan = &DMA2.channels[0];  // DMA2, channel 1
@@ -130,7 +140,7 @@ void SPIMaster::transferDma(const uint8_t *txbuf, uint8_t *rxbuf, unsigned len)
 {
     dmaRxChan->CNDTR = len;
     dmaRxChan->CMAR = (uint32_t)rxbuf;
-    dmaRxChan->CCR =    (2 << 12)|  // PL - priority level, 2 == HIGH
+    dmaRxChan->CCR =    dmaPriorityBits |
                         (1 << 7) |  // MINC - memory pointer increment
                         (0 << 4) |  // DIR - direction, 0 == read from peripheral
                         (1 << 3) |  // TEIE - transfer error ISR enable
@@ -140,7 +150,7 @@ void SPIMaster::transferDma(const uint8_t *txbuf, uint8_t *rxbuf, unsigned len)
 
     dmaTxChan->CNDTR = len;
     dmaTxChan->CMAR = (uint32_t)txbuf;
-    dmaTxChan->CCR =    (2 << 12)|  // PL - priority level, 2 == HIGH
+    dmaTxChan->CCR =    dmaPriorityBits |
                         (1 << 7) |  // MINC - memory pointer increment
                         (1 << 4) |  // DIR - direction, 1 == read from memory
                         (1 << 3) |  // TEIE - transfer error ISR enable
@@ -171,7 +181,7 @@ void SPIMaster::txDma(const uint8_t *txbuf, unsigned len)
     static uint8_t dummy;
     dmaRxChan->CNDTR = len;
     dmaRxChan->CMAR = (uint32_t)&dummy;
-    dmaRxChan->CCR =    (2 << 12)|  // PL - priority level, 2 == HIGH
+    dmaRxChan->CCR =    dmaPriorityBits |
                         (0 << 7) |  // MINC - memory pointer increment
                         (0 << 4) |  // DIR - direction, 0 == read from peripheral
                         (1 << 3) |  // TEIE - transfer error ISR enable
@@ -180,7 +190,7 @@ void SPIMaster::txDma(const uint8_t *txbuf, unsigned len)
 
     dmaTxChan->CNDTR = len;
     dmaTxChan->CMAR = (uint32_t)txbuf;
-    dmaTxChan->CCR =    (2 << 12)|  // PL - priority level, 2 == HIGH
+    dmaTxChan->CCR =    dmaPriorityBits |
                         (1 << 7) |  // MINC - memory pointer increment
                         (1 << 4) |  // DIR - direction, 1 == read from memory
                         (1 << 3) |  // TEIE - transfer error ISR enable

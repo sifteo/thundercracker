@@ -53,6 +53,7 @@ class SPIMaster {
     GPIOPin sck;
     GPIOPin miso;
     GPIOPin mosi;
+    uint32_t dmaPriorityBits;
 
     CompletionCallback completionCB;
     void *completionParam;
