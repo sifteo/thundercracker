@@ -2,6 +2,7 @@
 
 #include <stdio.h>
 #include <errno.h>
+#include <string.h>
 
 bool WaveDecoder::loadFile(std::vector<unsigned char>& buffer, const std::string& filename, Stir::Logger &log)
 {
