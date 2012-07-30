@@ -13,7 +13,8 @@ void SPIMaster::init()
      * Note: As another countermeasure against the DMA hangs we've
      *       seen (see SPIMaster::txDma() and MacronixMX25::waitForDma())
      *       we're setting each SPI peripheral to a distinct DMA
-     *       priority level. This does seem to help a lot!
+     *       priority level. This does seem to help a lot, though
+     *       the hangs aren't totally gone still.
      */
     
     if (hw == &SPI1) {
