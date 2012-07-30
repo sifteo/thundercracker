@@ -29,14 +29,17 @@ void LED::init()
     pwmTimer.configureChannelAsOutput(LED_PWM_RED_CHAN,
         HwTimer::ActiveLow, HwTimer::Pwm1, HwTimer::SingleOutput);
 
-    outRed.setControl(GPIOPin::OUT_ALT_2MHZ);
-    outGreen.setControl(GPIOPin::OUT_ALT_2MHZ);
-
     pwmTimer.enableChannel(LED_PWM_GREEN_CHAN);
     pwmTimer.enableChannel(LED_PWM_RED_CHAN);
 
+    pwmTimer.setDuty(LED_PWM_RED_CHAN, 0);
+    pwmTimer.setDuty(LED_PWM_GREEN_CHAN, 0);
+
     seqTimer.init(36000 / LEDSequencer::TICK_HZ, 1000);
     seqTimer.enableUpdateIsr();
+
+    outRed.setControl(GPIOPin::OUT_ALT_2MHZ);
+    outGreen.setControl(GPIOPin::OUT_ALT_2MHZ);
 }
 
 void LED::set(const LEDPattern *pattern, bool immediate)
