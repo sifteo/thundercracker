@@ -15,6 +15,9 @@
 #include "led.h"
 #include "systime.h"
 #include "tasks.h"
+#include "vram.h"
+#include "cube.h"
+#include "ui_coordinator.h"
 
 #ifdef SIFTEO_SIMULATOR
 #   include "system_mc.h"
@@ -38,43 +41,47 @@ void shutdown()
 
 void task()
 {
-    static const SysTime::Ticks holdDuration = SysTime::sTicks(4);
-    static const SysTime::Ticks blinkPeriod = SysTime::msTicks(200);
-    static SysTime::Ticks shutdownDeadline = 0;
-    SysTime::Ticks now = SysTime::ticks();
+    /*
+     * XXX: This is all just a testbed currently, none of this is intended to be final.
+     */
 
-    if (isPressed()) {
-        /*
-         * While button is held, poll for shutdown.
-         */
+    if (!isPressed())
+        return;
 
-        Tasks::trigger(Tasks::HomeButton);
+    LOG(("Entering home button task\n"));
 
-        if (!shutdownDeadline) {
-            // Require button to be held
-            shutdownDeadline = now + holdDuration;
+    UICoordinator uic( Intrinsic::LZ(Tasks::AudioPull)  |
+                       Intrinsic::LZ(Tasks::HomeButton) );
+
+    SysTime::Ticks shutdownWarning = SysTime::ticks() + SysTime::sTicks(2);
+    SysTime::Ticks shutdownDeadline = SysTime::ticks() + SysTime::sTicks(4);
+
+    LED::set(LEDPatterns::paused, true);
+
+    while (isPressed()) {
+
+        uic.stippleCubes(uic.connectCubes());
+
+        if (uic.pollForAttach()) {
+            // New primary cube attached
+            LOG(("Attached\n"));
+
+            VRAM::poke(uic.avb.vbuf, 0, _SYS_TILE77('x' - ' '));
         }
-        if (now >= shutdownDeadline) {
-            // Actually shutting down now!
-            shutdown();
-        }
 
-        // Start blinking as we get closer to the deadline
-        SysTime::Ticks remaining = shutdownDeadline - now;
-        if (remaining < holdDuration / 2) {
+        uic.paint();
+
+        if (SysTime::ticks() > shutdownWarning)
             LED::set(LEDPatterns::shutdown);
-        } else {
-            LED::set(LEDPatterns::paused, true);
-        }
 
-    } else {
-        /*
-         * Cancel shutdown
-         */
-
-        LED::set(LEDPatterns::idle);
-        shutdownDeadline = 0;
+        if (SysTime::ticks() > shutdownDeadline)
+            shutdown();
     }
+
+    uic.restoreCubes(uic.uiConnected);
+    LED::set(LEDPatterns::idle);
+
+    LOG(("Leaving home button task\n"));
 }
 
 

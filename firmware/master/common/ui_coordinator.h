@@ -7,6 +7,7 @@
 #define _UI_COORDINATOR_H
 
 #include <sifteo/abi.h>
+#include "systime.h"
 
 
 /**
@@ -32,6 +33,7 @@ public:
     void restoreCubes(_SYSCubeIDVector cv);
 
     // One-cube-at-a-time operations, using 'avb'
+    bool pollForAttach();
     void attachToCube(_SYSCubeID id);
     void paint();
     void finish();
@@ -39,12 +41,17 @@ public:
 
     void idle();
 
+    bool ALWAYS_INLINE isAttached() {
+        return _SYSCubeID(avb.cube) != _SYSCubeID(_SYS_CUBE_ID_INVALID);
+    }
+
     _SYSAttachedVideoBuffer avb;
     _SYSCubeIDVector uiConnected;
     uint32_t excludedTasks;
 
 private:
     _SYSVideoBuffer *savedVBuf;
+    SysTime::Ticks stippleDeadline;
 };
 
 
