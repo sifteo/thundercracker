@@ -230,15 +230,13 @@ bool CubeSlot::radioProduce(PacketTransmission &tx)
         _SYSVideoBuffer *localVBuf = vbuf;
         unsigned modeFlagsWord = _SYS_VM_STAMP;
         if (localVBuf) {
-            uint8_t flags = localVBuf->flags ^ _SYS_VF_TOGGLE;
+            uint8_t flags = localVBuf->vram.flags ^ _SYS_VF_TOGGLE;
             localVBuf->flags = flags;
             modeFlagsWord |= flags << 8;
         } else {
             modeFlagsWord |= _SYS_VF_CONTINUOUS << 8;
         }
- 
-        LOG(("cube %d flags %04x\n", id(), modeFlagsWord));
- 
+
         codec.encodePoke(tx.packet, offsetof(_SYSVideoRAM, fb)/2,          0x0220);
         codec.encodePoke(tx.packet, offsetof(_SYSVideoRAM, colormap[2])/2, 0x0000);
         codec.encodePoke(tx.packet, offsetof(_SYSVideoRAM, stamp_pitch)/2, 0x0201);
