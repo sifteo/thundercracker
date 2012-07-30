@@ -4,6 +4,7 @@
  */
 
 #include "flash_map.h"
+#include "tasks.h"
 #include <algorithm>
 
 
@@ -19,6 +20,10 @@ void FlashMapBlock::erase() const
 
     for (; I != E; I += FlashDevice::ERASE_BLOCK_SIZE) {
         ASSERT(I < E);
+
+        // This is currently the only operation that's allowed to take so
+        // long to complete that we need to reset the watchdog explicitly for it!
+        Tasks::resetWatchdog();
         FlashDevice::eraseBlock(I);
     }
 }

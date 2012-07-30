@@ -22,6 +22,7 @@
 #define RF_SPI_SCK_GPIO     GPIOPin(&GPIOC, 10)
 #define RF_SPI_MISO_GPIO    GPIOPin(&GPIOC, 11)
 #define RF_SPI_MOSI_GPIO    GPIOPin(&GPIOC, 12)
+#define RF_EXTI_VEC         EXTI9_5
 
 // F L A S H
 #define FLASH_SPI           SPI1
@@ -47,6 +48,10 @@
 // L E D
 #define LED_GREEN_GPIO      GPIOPin(&GPIOB, 0)
 #define LED_RED_GPIO        GPIOPin(&GPIOB, 1)
+#define LED_PWM_GREEN_CHAN  3
+#define LED_PWM_RED_CHAN    4
+#define LED_PWM_TIM         TIM3
+#define LED_SEQUENCER_TIM   TIM6
 
 // P O W E R
 #define VCC20_ENABLE_GPIO   GPIOPin(&GPIOC, 13)
@@ -59,7 +64,7 @@
 #define AUDIO_PWMB_PIN      8
 #define AUDIO_PWM_CHAN      1
 #define AUDIO_PWM_TIM       TIM1
-#define AUDIO_SAMPLE_TIM    TIM3
+#define AUDIO_SAMPLE_TIM    TIM7
 
 // M I S C
 #define BTN_HOME_GPIO       GPIOPin(&GPIOC, 0)

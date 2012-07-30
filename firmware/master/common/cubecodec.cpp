@@ -178,16 +178,14 @@ bool CubeCodec::encodeVRAMAddr(PacketBuffer &buf, uint16_t addr)
 
 bool CubeCodec::encodeVRAMData(PacketBuffer &buf, _SYSVideoBuffer *vb, uint16_t data)
 {
+    /*
+     * This version of encodeVRAMData() uses a VideoBuffer to do
+     * delta encoding if possible. Without a VideoBuffer, the data
+     * will be sent without the use of compressed delta codes
+     */
+
     if (buf.isFull())
         return false;
-
-    /*
-     * For debugging, the delta encoder can be disabled, forcing us to
-     * use only literal codes. This makes the compression code a lot
-     * simpler, but the resulting radio traffic will be extremely
-     * inefficient.
-     */
-#ifndef DISABLE_DELTAS
 
     /*
      * See if we can encode this word as a delta or copy from one of
@@ -245,11 +243,19 @@ bool CubeCodec::encodeVRAMData(PacketBuffer &buf, _SYSVideoBuffer *vb, uint16_t 
         return true;
     }
 
-#endif // !DISABLE_DELTAS
+    // No delta found. Try a literal encoding
+    return encodeVRAMData(buf, data);
+}
 
+bool CubeCodec::encodeVRAMData(PacketBuffer &buf, uint16_t data)
+{
     /*
-     * No delta found. Encode as a literal.
+     * This version does not require a VideoBuffer, but the data will be sent
+     * without using any delta encoding.
      */
+
+    if (buf.isFull())
+        return false;
 
     if (data & 0x0101) {
         // 16-bit literal

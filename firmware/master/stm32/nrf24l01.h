@@ -47,6 +47,8 @@ public:
     void isr();
     GPIOPin irq;
 
+    uint32_t irqCount;
+
  private:
     enum Command {
         CMD_R_REGISTER          = 0x00,

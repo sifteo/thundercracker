@@ -14,12 +14,12 @@
 #include "svmdebugpipe.h"
 #include "radio.h"
 #include "tasks.h"
-#include "panic.h"
 #include "cubeslots.h"
 #include "cube.h"
-#include "panic.h"
+#include "ui_panic.h"
 #include "audiomixer.h"
 #include "event.h"
+#include "led.h"
 
 #ifdef SIFTEO_SIMULATOR
 #   include "system_mc.h"
@@ -89,6 +89,9 @@ bool SvmLoader::loadRWData(const Elf::Program &program)
 
 bool SvmLoader::prepareToExec(const Elf::Program &program, SvmRuntime::StackInfo &stack)
 {
+    // Default LED behavior
+    LED::set(LEDPatterns::idle);
+
     // Reset all event vectors
     Event::clearVectors();
 
@@ -221,6 +224,6 @@ void SvmLoader::exit(bool fault)
         SystemMC::exit(fault);
         #endif
 
-        PanicMessenger::haltForever();
+        UIPanic::haltForever();
     }
 }

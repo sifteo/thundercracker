@@ -12,7 +12,7 @@ const float ambient = 0.16;
 
 void main() {
     vec4 light = texture2D(lightmap, texCoord);
-    vec3 normal = normalize((texture2D(normalmap, texCoord).rgb - vec3(0.5)) * vec3(2.0, 2.0, -2.0));
+    vec3 normal = normalize((texture2D(normalmap, texCoord).rgb - vec3(0.5)) * vec3(-2.0));
 
     float lambert = max(0.0, dot(normalize(lightVec), gl_NormalMatrix * normal));
     float luma = pow(lambert, hardness) * specular + light.b * ambient;

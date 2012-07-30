@@ -214,6 +214,9 @@ void NRF24L01::isr()
     // Acknowledge to the IRQ controller
     irq.irqAcknowledge();
 
+    // Let the radio watchdog know we're okay
+    irqCount++;
+
     /*
      * Read the NRF STATUS register, then write to clear. This tells
      * us which IRQ(s) occurred, and acknowledges them to the nRF

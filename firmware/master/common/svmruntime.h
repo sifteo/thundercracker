@@ -13,7 +13,7 @@
 #include "flash_blockcache.h"
 
 using namespace Svm;
-class PanicMessenger;
+class UIPanic;
 
 class SvmRuntime {
 public:
@@ -173,7 +173,7 @@ private:
     static void addrOp(uint8_t opnum, reg_t addr);
     static void breakpoint();
 
-    static void dumpRegister(PanicMessenger &msg, unsigned reg);
+    static void dumpRegister(UIPanic &msg, unsigned reg);
 
 #ifdef SIFTEO_SIMULATOR
     static SvmMemory::PhysAddr topOfStackPA;

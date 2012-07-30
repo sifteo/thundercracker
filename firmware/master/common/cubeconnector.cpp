@@ -464,21 +464,31 @@ void CubeConnector::radioAcknowledge(const PacketBuffer &packet)
          * finished connecting and we can hand it off to a CubeSlot.
          */
         case HopConfirm:
-            if (packet.len >= RF_ACK_LEN_HWID && !memcmp(hwid, ack->hwid, sizeof hwid)) {
+            if (packet.len < RF_ACK_LEN_HWID) {
+                /*
+                 * Need a full-length ACK. There may have been a shorter ACK already
+                 * in the cube's FIFO. Send another request, and keep waiting.
+                 */
+            } else {
+                // Success or fail, we go back to the first contact state
+                txState = PairingFirstContact;
 
-                // Mark this pairing as "recently used", so we don't recycle it
-                if (savedPairingMRU.access(cubeRecord - SysLFS::kCubeBase)) {
-                    taskWork.atomicMark(TaskSavePairingMRU);
-                    Tasks::trigger(Tasks::CubeConnector);
-                }
+                if (!memcmp(hwid, ack->hwid, sizeof hwid)) {
+                    // HWID matched!
 
-                // Connect the cube!
-                CubeSlot &cube = CubeSlots::instances[cubeID];
-                if (!cube.isSysConnected()) {
-                    cube.connect(cubeRecord, connectionAddr, *ack);
+                    // Mark this pairing as "recently used", so we don't recycle it
+                    if (savedPairingMRU.access(cubeRecord - SysLFS::kCubeBase)) {
+                        taskWork.atomicMark(TaskSavePairingMRU);
+                        Tasks::trigger(Tasks::CubeConnector);
+                    }
+
+                    // Connect the cube!
+                    CubeSlot &cube = CubeSlots::instances[cubeID];
+                    if (!cube.isSysConnected()) {
+                        cube.connect(cubeRecord, connectionAddr, *ack);
+                    }
                 }
             }
-            txState = PairingFirstContact;
             break;
     }
 }

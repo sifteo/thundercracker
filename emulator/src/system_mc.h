@@ -87,6 +87,7 @@ class SystemMC {
 
     uint64_t ticks;
     uint64_t radioPacketDeadline;
+    uint64_t heartbeatDeadline;
 
     System *sys;
     WaveWriter waveOut;

@@ -24,6 +24,7 @@
 #include "bootloader.h"
 #include "cubeconnector.h"
 #include "neighbor_tx.h"
+#include "led.h"
 
 
 /*
@@ -46,8 +47,8 @@ int main()
     NVIC.setVectorTable(NVIC.VectorTableFlash, Bootloader::SIZE);
 #endif
 
-    NVIC.irqEnable(IVT.EXTI9_5);                    // Radio interrupt
-    NVIC.irqPrioritize(IVT.EXTI9_5, 0x80);          //  Reduced priority
+    NVIC.irqEnable(IVT.RF_EXTI_VEC);                // Radio interrupt
+    NVIC.irqPrioritize(IVT.RF_EXTI_VEC, 0x80);      //  Reduced priority
 
     NVIC.irqEnable(IVT.DMA2_Channel1);              // Radio SPI DMA2 channels 1 & 2
     NVIC.irqPrioritize(IVT.DMA1_Channel1, 0x75);    //  higher than radio
@@ -60,12 +61,15 @@ int main()
     NVIC.irqPrioritize(IVT.FLASH_DMA_CHAN_TX, 0x75);
 
     NVIC.irqEnable(IVT.UsbOtg_FS);
-    NVIC.irqPrioritize(IVT.UsbOtg_FS, 0x70);        //  Lower prio than radio
+    NVIC.irqPrioritize(IVT.UsbOtg_FS, 0x70);        //  A little higher than radio
 
     NVIC.irqEnable(IVT.BTN_HOME_EXTI_VEC);          //  home button
 
     NVIC.irqEnable(IVT.AUDIO_SAMPLE_TIM);           // sample rate timer
     NVIC.irqPrioritize(IVT.AUDIO_SAMPLE_TIM, 0x50); //  pretty high priority! (would cause audio jitter)
+
+    NVIC.irqEnable(IVT.LED_SEQUENCER_TIM);          // LED sequencer timer
+    NVIC.irqPrioritize(IVT.LED_SEQUENCER_TIM, 0x75);
 
     NVIC.irqEnable(IVT.USART3);                     // factory test uart
     NVIC.irqPrioritize(IVT.USART3, 0x99);           //  loooooowest prio
@@ -113,18 +117,7 @@ int main()
                  (1 << 10);         // TIM1 ""
 #endif
 
-    /*
-     * NOTE: the radio has 2 100ms delays on a power on reset: one before
-     * we can talk to it at all, and one before we can start transmitting.
-     *
-     * TODO: make the delays async, such that runtime init can progress
-     * in parallel.
-     *
-     * For now, allow other initializations to run while we wait for the 2nd delay.
-     */
-    while (SysTime::ticks() < SysTime::msTicks(110));
-    Radio::init();
-
+    LED::init();
     Tasks::init();
     FlashStack::init();
     HomeButton::init();
@@ -138,16 +131,8 @@ int main()
     PowerManager::beginVbusMonitor();
     SampleProfiler::init();
 
-    /*
-     * Ensure we've been powered up long enough before beginning radio
-     * transmissions. This may change as we integrate some new code that
-     * tracks whether we're actively transmitting or not, since there's
-     * a lot of overlap between this issue and some much needed
-     * radio throttling / power management.
-     */
-
-    while (SysTime::ticks() < SysTime::msTicks(210));
-    Radio::begin();
+    // Includes radio power-on delay. Initialize this last.
+    Radio::init();
 
     /*
      * Start the game runtime, and execute the Launcher app.

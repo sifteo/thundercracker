@@ -5,7 +5,7 @@
 
 #include "svmcpu.h"
 #include "svmruntime.h"
-#include "panic.h"
+#include "ui_panic.h"
 
 #include "vectors.h"
 
@@ -53,7 +53,7 @@ void run(reg_t sp, reg_t pc)
     );
 
     // Cannot be reached unless we jumped into bad code that the validator failed to catch!
-    PanicMessenger::haltForever();
+    UIPanic::haltForever();
 }
 
 } // namespace SvmCpu

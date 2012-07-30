@@ -33,6 +33,7 @@ LOCAL_OBJS = \
     src/lsdec.o \
     src/tinythread.o \
     src/wavefile.o \
+    src/mc_radio.o \
     src/mc_crc.o \
     src/mc_audiooutdevice.o \
     src/mc_audiovisdata.o \
@@ -47,7 +48,6 @@ LOCAL_OBJS = \
     src/mc_elfdebuginfo.o \
     src/mc_logdecoder.o \
     src/mc_gdbserver.o \
-    src/mc_led.o \
     src/mc_syscall_math.o \
     src/mc_neighbor.o \
     resources/data.o \

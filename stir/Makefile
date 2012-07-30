@@ -30,6 +30,7 @@ OBJS = \
 	src/audioencoder.o \
 	src/dubencoder.o \
 	src/tracker.o \
+	src/wavedecoder.o \
 	$(OBJS_lua) \
 
 LDFLAGS += $(LIB_STDCPP)

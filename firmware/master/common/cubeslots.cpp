@@ -9,6 +9,7 @@
 #include "machine.h"
 #include "tasks.h"
 #include "radio.h"
+#include "event.h"
 
 CubeSlot CubeSlots::instances[_SYS_NUM_CUBE_SLOTS];
 
@@ -18,6 +19,9 @@ _SYSCubeIDVector CubeSlots::userConnected = 0;
 _SYSCubeIDVector CubeSlots::flashResetWait = 0;
 _SYSCubeIDVector CubeSlots::flashResetSent = 0;
 _SYSCubeIDVector CubeSlots::flashAddrPending = 0;
+_SYSCubeIDVector CubeSlots::sendShutdown = 0;
+_SYSCubeIDVector CubeSlots::sendStipple = 0;
+_SYSCubeIDVector CubeSlots::vramPaused = 0;
 
 BitVector<SysLFS::NUM_PAIRINGS> CubeSlots::pairConnected;
 
@@ -37,7 +41,7 @@ void CubeSlots::setCubeRange(unsigned minimum, unsigned maximum)
     maxUserCubes = maximum;
 }
 
-void CubeSlots::paintCubes(_SYSCubeIDVector cv, bool wait)
+void CubeSlots::paintCubes(_SYSCubeIDVector cv, bool wait, uint32_t excludedTasks)
 {
     /*
      * If a previous repaint is still in progress, wait for it to
@@ -58,7 +62,7 @@ void CubeSlots::paintCubes(_SYSCubeIDVector cv, bool wait)
         _SYSCubeIDVector waitVec = cv;
         while (waitVec) {
             _SYSCubeID id = Intrinsic::CLZ(waitVec);
-            CubeSlots::instances[id].waitForPaint();
+            CubeSlots::instances[id].waitForPaint(excludedTasks);
             waitVec ^= Intrinsic::LZ(id);
         }
     }
@@ -73,7 +77,7 @@ void CubeSlots::paintCubes(_SYSCubeIDVector cv, bool wait)
     }
 }
 
-void CubeSlots::finishCubes(_SYSCubeIDVector cv)
+void CubeSlots::finishCubes(_SYSCubeIDVector cv, uint32_t excludedTasks)
 {
     /*
      * Wait for rendering to finish on all cubes.
@@ -107,7 +111,28 @@ void CubeSlots::finishCubes(_SYSCubeIDVector cv)
         if (finished)
             break;
 
-        Tasks::idle();
+        Tasks::idle(excludedTasks);
+    }
+}
+
+void CubeSlots::refreshCubes(_SYSCubeIDVector cv)
+{
+    /*
+     * For a set of cubes that we've monkeyed with behind the back of whatever
+     * userspace app is running, go through and zap the change maps on their
+     * video buffers, if any, and queue up REFRESH events for userspace to handle.
+     */
+
+    while (cv) {
+        _SYSCubeID id = Intrinsic::CLZ(cv);
+        cv ^= Intrinsic::LZ(id);
+
+        _SYSVideoBuffer *vbuf = CubeSlots::instances[id].getVBuf();
+        if (vbuf) {
+            VRAM::init(*vbuf);
+        }
+
+        Event::setCubePending(Event::PID_CUBE_REFRESH, id);
     }
 }
 

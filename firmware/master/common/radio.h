@@ -141,6 +141,9 @@ class Radio {
     static void init();
     static void begin();
 
+    // Called at Tasks::HEARTBEAT_HZ, in task context
+    static void heartbeat();
+
     /*
      * Values for the L01's tx power register.
      */

@@ -6,18 +6,19 @@
 #ifndef _LED_H
 #define _LED_H
 
-#include <stdint.h>
+/*
+ * Hardware-independent LED abstraction.
+ *
+ * The hardware-specific implementation hooks into LEDSequencer,
+ * giving us a way to play back simple animations.
+ */
+
+#include "ledsequencer.h"
 
 namespace LED
 {
-    enum Color {
-        OFF     = 0,
-        RED     = 1,
-        GREEN   = 2,
-        ORANGE  = RED | GREEN,
-    };
-
-    void set(Color c);
+    void init();
+    void set(const LEDPattern *pattern, bool immediate=false);
 }
 
 #endif // _LED_H
