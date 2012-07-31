@@ -257,16 +257,14 @@ void MainMenu::toggleCubeRangeAlert(unsigned index, Sifteo::Menu &menu)
         cubeRangeSavedIcon = menuItems[index].icon;
         
         cubeRangeAlertIcon.init();
-        cubeRangeAlertIcon.image(vec(0,0), Icon_CubeRange);
+        cubeRangeAlertIcon.image(vec(0,0), Icon_MoreCubes);
 
-        drawText(cubeRangeAlertIcon, "You need", vec(1,3));
-
-        String<16> buffer;
-        buffer << item->getCubeRange().sys.minCubes << "-" << item->getCubeRange().sys.maxCubes;
-        drawText(cubeRangeAlertIcon, buffer.c_str(), vec(1,4));
-        drawText(cubeRangeAlertIcon, "cubes to", vec(1,5));
-        drawText(cubeRangeAlertIcon, "play this", vec(1,6));
-        drawText(cubeRangeAlertIcon, "game.", vec(1,7));
+        String<2> buffer;
+        buffer << item->getCubeRange().sys.minCubes;
+        drawText(
+            cubeRangeAlertIcon,
+            buffer.c_str(),
+            vec(item->getCubeRange().sys.minCubes < 10 ? 3 : 2, 3));
         
         menu.replaceIcon(index, cubeRangeAlertIcon);
     } else {

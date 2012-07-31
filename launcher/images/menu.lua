@@ -28,12 +28,11 @@ NineBlock_Shapes = image{ "images/nineblock-shapes.png", width=32, height=32 }
 -- Applet icons
 
 Icon_GetGames = image{ "images/icon-getgames.png" }
-Icon_Battery = image{ "images/icon-battery.png" }
-Icon_CubeRange = image{ "images/icon-cuberange.png" }
+Icon_Status = image{ "images/icon-status.png" }
+Icon_StatusOther = image{ "images/icon-status-other.png" }
+Icon_MoreCubes = image{ "images/icon-more-cubes.png" }
 
 -- System Status
-BatteryBase = image{ "images/img-base.png" }
-BatteryCube = image{ "images/img-battery.png" }
 BatteryBars = image{ {
     "images/img-battery-bars-0.png",
     "images/img-battery-bars-1.png",
@@ -41,4 +40,3 @@ BatteryBars = image{ {
     "images/img-battery-bars-3.png",
     "images/img-battery-bars-4.png"
 } }
-Cube = image{ "images/img-cube02.png" }
