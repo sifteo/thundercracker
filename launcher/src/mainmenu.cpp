@@ -13,6 +13,8 @@
 
 using namespace Sifteo;
 
+static const unsigned kDisplayBlueLogoTimeMS = 2000;
+
 static void drawText(RelocatableTileBuffer<12,12> &icon, const char *text, Int2 pos)
 {
     for (int i = 0; text[i] != 0; ++i) {
@@ -50,11 +52,6 @@ void MainMenu::run()
     }
     System::paint();
     
-    // TODO: Just wait a bit for now... but really we should begin loading assets first.
-    while (SystemTime::now().uptimeMS() < 2000) {
-        System::yield();
-    }
-
     AudioTracker::play(Tracker_Startup);
     
     // Pick one cube to be the 'main' cube, where we show the menu
@@ -297,10 +294,7 @@ void MainMenu::loadAssets()
     // is a new cube that gets connected during loading, we want to wait and
     // load that one in the next round.
     CubeSet cubesLoading = cubesToLoad;
-
-    DefaultLoadingAnimation anim;
-    anim.begin(cubesLoading);
-
+    
     // Bind the local volume's slots.
     _SYS_asset_bindSlots(Volume::running(), Shared::NUM_SLOTS);
 
@@ -379,6 +373,8 @@ void MainMenu::loadAssets()
      */
 
     // Keep count of progress from previous load operations.
+    DefaultLoadingAnimation anim;
+    bool animStarted = false;
     unsigned progress = 0;
 
     if (!MenuGroup.isInstalled(cubesLoading)) {
@@ -392,9 +388,16 @@ void MainMenu::loadAssets()
         }
 
         while (!loader.isComplete()) {
-            for (CubeID cube : cubesLoading) {
-                anim.paint(CubeSet(cube), clamp<int>(loader.progressBytes(cube)
-                    * 100 / uninstalledBytes, 0, 100));
+            if (!animStarted) {
+                if (SystemTime::now().uptimeMS() >= kDisplayBlueLogoTimeMS) {
+                    animStarted = true;
+                    anim.begin(cubesLoading);
+                }
+            } else {
+                for (CubeID cube : cubesLoading) {
+                    anim.paint(CubeSet(cube), clamp<int>(loader.progressBytes(cube)
+                        * 100 / uninstalledBytes, 0, 100));
+                }
             }
             System::paint();
         }
@@ -418,9 +421,16 @@ void MainMenu::loadAssets()
         loader.start(group, Shared::iconSlot, cubesLoading);
 
         while (!loader.isComplete()) {
-            for (CubeID cube : cubesLoading) {
-                anim.paint(CubeSet(cube), clamp<int>((progress + loader.progressBytes(cube))
-                    * 100 / uninstalledBytes, 0, 100));
+            if (!animStarted) {
+                if (SystemTime::now().uptimeMS() >= kDisplayBlueLogoTimeMS) {
+                    animStarted = true;
+                    anim.begin(cubesLoading);
+                }
+            } else {
+                for (CubeID cube : cubesLoading) {
+                    anim.paint(CubeSet(cube), clamp<int>((progress + loader.progressBytes(cube))
+                        * 100 / uninstalledBytes, 0, 100));
+                }
             }
             System::paint();
         }
@@ -429,7 +439,9 @@ void MainMenu::loadAssets()
         progress += group.compressedSize();
     }
 
-    anim.end(cubesLoading);
+    if (animStarted) {
+        anim.end(cubesLoading);
+    }
 
     for (CubeID cube : cubesLoading) {
         // Initialize the graphics on non-menu cubes
