@@ -41,7 +41,22 @@ void MainMenu::init()
 void MainMenu::run()
 {
     waitForACube();
+    
+    // Initialize to blue Sfiteo logo to match firmware.
+    for (CubeID cube : CubeSet::connected()) {
+        Shared::video[cube].attach(cube);
+        Shared::video[cube].initMode(BG0_ROM);
+        Shared::video[cube].bg0.image(vec(0,0), Logo);
+    }
+    System::paint();
+    
+    // TODO: Just wait a bit for now... but really we should begin loading assets first.
+    while (SystemTime::now().uptimeMS() < 2000) {
+        System::yield();
+    }
 
+    AudioTracker::play(Tracker_Startup);
+    
     // Pick one cube to be the 'main' cube, where we show the menu
     mainCube = *cubes().begin();
 
@@ -136,7 +151,9 @@ void MainMenu::cubeConnect(unsigned cid)
     AudioTracker::play(Tracker_CubeConnect);
 
     Shared::video[cid].attach(cid);
-
+    Shared::video[cid].initMode(BG0_ROM);
+    Shared::video[cid].bg0.image(vec(0,0), Logo);
+    
     cubesToLoad.mark(cid);
 }
 
@@ -248,8 +265,6 @@ void MainMenu::updateAlerts(Sifteo::Menu &menu)
 
 void MainMenu::execItem(unsigned index)
 {
-    /// XXX: Instead of a separate animation, integrate this animation with the menu itself
-
     DefaultLoadingAnimation anim;
 
     ASSERT(index < arraysize(items));
