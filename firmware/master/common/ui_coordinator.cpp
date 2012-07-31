@@ -127,10 +127,6 @@ void UICoordinator::attachToCube(_SYSCubeID id)
      */
 
     VRAM::init(avb.vbuf);
-    avb.vbuf.vram.mode = _SYS_VM_BG0_ROM;
-    avb.vbuf.vram.first_line = 32;
-    avb.vbuf.vram.num_lines = 64;
-
     savedVBuf = cube.getVBuf();
 
     if (savedVBuf) {
@@ -170,6 +166,18 @@ void UICoordinator::detach()
     CubeSlots::instances[avb.cube].setVideoBuffer(savedVBuf);
     avb.cube = _SYS_CUBE_ID_INVALID;
     savedVBuf = 0;
+}
+
+void UICoordinator::setPanX(int x)
+{
+    VRAM::pokeb(avb.vbuf, offsetof(_SYSVideoRAM, bg0_x),
+        umod(x, _SYS_VRAM_BG0_WIDTH * 8));
+}
+
+void UICoordinator::setPanY(int y)
+{
+    VRAM::pokeb(avb.vbuf, offsetof(_SYSVideoRAM, bg0_y),
+        umod(y, _SYS_VRAM_BG0_WIDTH * 8));
 }
 
 void UICoordinator::idle()

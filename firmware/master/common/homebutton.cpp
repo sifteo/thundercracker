@@ -18,12 +18,18 @@
 #include "vram.h"
 #include "cube.h"
 #include "ui_coordinator.h"
+#include "ui_menu.h"
 
 #ifdef SIFTEO_SIMULATOR
 #   include "system_mc.h"
 #else
 #   include "powermanager.h"
 #endif
+
+extern const uint16_t MenuBackground_data[];
+extern const uint16_t IconQuit_data[];
+extern const uint16_t IconRestart_data[];
+extern const uint16_t IconResume_data[];
 
 namespace HomeButton {
 
@@ -45,6 +51,19 @@ void task()
      * XXX: This is all just a testbed currently, none of this is intended to be final.
      */
 
+    static const UIMenu::Item menuItems[] = {
+        // Note: labels with an odd number of characters will center perfectly
+        { IconRestart_data,  "Restart" },
+        { IconResume_data,   "Continue Game" },
+        { IconQuit_data,     "Quit Game" },
+    };
+
+    enum MenuItems {
+        kRestart,
+        kContinue,
+        kQuit,
+    };
+
     if (!isPressed())
         return;
 
@@ -53,29 +72,39 @@ void task()
     UICoordinator uic( Intrinsic::LZ(Tasks::AudioPull)  |
                        Intrinsic::LZ(Tasks::HomeButton) );
 
+    UIMenu menu(uic, menuItems, arraysize(menuItems));
+
     SysTime::Ticks shutdownWarning = SysTime::ticks() + SysTime::sTicks(2);
     SysTime::Ticks shutdownDeadline = SysTime::ticks() + SysTime::sTicks(4);
 
     LED::set(LEDPatterns::paused, true);
 
-    while (isPressed()) {
+    uint32_t buttonStates = ~0;
+    int32_t scroll = 0;
 
+    while (1) {
         uic.stippleCubes(uic.connectCubes());
 
         if (uic.pollForAttach()) {
             // New primary cube attached
             LOG(("Attached\n"));
-
-            VRAM::poke(uic.avb.vbuf, 0, _SYS_TILE77('x' - ' '));
+            menu.init(kContinue);
         }
 
+        menu.animate();
+
+        // Menu done? Exit.
+        if (menu.isDone())
+            break;
+
+        // Another release/press/release on home button causes us to exit immediately
+        uint32_t button = isPressed();
+        if ((buttonStates ^ button) & 1) {
+            buttonStates = (buttonStates << 1) | button;
+            if ((buttonStates & 0x0F) == 0x0A)
+                break;
+        }
         uic.paint();
-
-        if (SysTime::ticks() > shutdownWarning)
-            LED::set(LEDPatterns::shutdown);
-
-        if (SysTime::ticks() > shutdownDeadline)
-            shutdown();
     }
 
     uic.restoreCubes(uic.uiConnected);
