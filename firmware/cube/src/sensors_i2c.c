@@ -377,6 +377,11 @@ fs_8:
         movx    @dptr, a
         sjmp    fs_6n
 
+        ; A. Read new neighbor ID from factory test packet
+fs_A:
+        mov     _nb_tx_id, _W2DAT
+        sjmp    fs_6n
+
         ; 9. Read flash loadstream byte from factory test packet.
 fs_9:
         mov     psw, #0                 ; Back to register bank 0
@@ -389,11 +394,6 @@ fs_9:
         mov     r0, #_flash_fifo        ; Wrap
 1$:     mov     _flash_fifo_head, r0
         mov     r0, DPL                 ; Restore R0
-        sjmp    fs_6n
-
-        ; A. Read new neighbor ID from factory test packet
-fs_A:
-        mov     _nb_tx_id, _W2DAT
         sjmp    fs_6n
 
     __endasm ;

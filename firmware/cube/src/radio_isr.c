@@ -451,7 +451,7 @@ rxs_diff_1:
         mov     a, R_INPUT
         anl     a, #0xF
         cjne    a, #7, rxs_diff_2
-        ajmp    rx_special              ; Redundant copy encoding, special meaning
+        ljmp    rx_special              ; Redundant copy encoding, special meaning
 
         ;-------------------------------------------
         ; Literal 14-bit index
@@ -684,7 +684,7 @@ rxs_wrdelta_1_fragment:
         add     a, #4           ; n+5  (rx_write_deltas already adds 1)
         mov     R_LOW, a
 
-        ajmp    _rx_write_deltas
+        ljmp    _rx_write_deltas
 
         ;--------------------------------------------------------------------
         ; Special escape codes (8-bit copy encoding)
