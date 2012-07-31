@@ -1,3 +1,6 @@
+TC_DIR := ../..
+include $(TC_DIR)/Makefile.platform
+
 BIN = cube.hex
 
 # Main segment
@@ -43,7 +46,6 @@ TC_DIR = ../..
 FIRMWARE_INC = ../include
 SDK_DIR = $(TC_DIR)/sdk
 
-SDCC = sdcc
 CDEPS = src/*.h $(FIRMWARE_INC)/*.h $(SDK_DIR)/include/sifteo/*.h
 override CFLAGS += -I$(FIRMWARE_INC) -I$(SDK_DIR)/include
 override CFLAGS += -DNOT_USERSPACE
