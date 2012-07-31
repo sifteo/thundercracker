@@ -167,7 +167,7 @@ void Tasks::heartbeatISR()
         /*
          * Help diagnose the hang for internal firmware debugging
          */
-        #ifndef SIFTEO_SIMULATOR
+        #if !defined(SIFTEO_SIMULATOR) && !defined(BOOTLOADER)
         SampleProfiler::reportHang();
         #endif
 
@@ -181,7 +181,9 @@ void Tasks::heartbeatISR()
          *      replacing all cached code pages with fields of BKPT instructions
          *      or something equally heavyhanded.
          */
+        #ifndef BOOTLOADER
         SvmRuntime::fault(Svm::F_NOT_RESPONDING);
+        #endif
     }
 
     // Defer to a Task for everything else
