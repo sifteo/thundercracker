@@ -41,6 +41,8 @@ void MainMenu::init()
     itemIndexCurrent = 0;
     cubeRangeSavedIcon = NULL;
 
+    menuDirty = false;
+    
     _SYS_setCubeRange(1, _SYS_NUM_CUBE_SLOTS-1); // XXX: eventually this will be the system default
 }
 
@@ -89,6 +91,7 @@ void MainMenu::eventLoop(Menu &m)
     while (m.pollEvent(&e)) {
 
         waitForACube();
+        updateAnchor(m);
         updateAssets();
         updateSound(m);
         updateMusic();
@@ -156,6 +159,10 @@ void MainMenu::cubeConnect(unsigned cid)
     Shared::video[cid].bg0.setPanning(vec(0,0));
     Shared::video[cid].bg0.image(vec(0,0), Logo);
     
+    if (cid == mainCube) {
+        menuDirty = true;
+    }
+    
     cubesToLoad.mark(cid);
 }
 
@@ -175,6 +182,18 @@ void MainMenu::waitForACube()
             AudioChannel(0).play(Sound_NoCubesConnected);
         }
         System::yield();
+    }
+}
+
+void MainMenu::updateAnchor(Menu &m)
+{
+    if (menuDirty) {
+        m.reset();
+        if (itemIndexCurrent != -1) {
+            m.anchor(itemIndexCurrent);
+        }
+        menuDirty = false;
+        System::paint();
     }
 }
 
