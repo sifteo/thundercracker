@@ -113,7 +113,7 @@ void spi_i2c_isr(void) __interrupt(VECTOR_SPI_I2C) __naked
         mov     _i2c_state, #(as_nop - _i2c_state_fn)
         sjmp    #1$
 
-        ; Static analysis NOTE dyn_branch i2c_j [atfb]s_[0-9]
+        ; Static analysis NOTE dyn_branch i2c_j [atfb]s_[0-9A-F]
 i2c_j:  jmp     @a+dptr
 
     __endasm ;
@@ -231,47 +231,15 @@ bs_5:
         orl     _W2CON0, #W2CON0_STOP
         NEXT    (bs_6)
 
-        ; 6. Read high byte, and store results
+        ; 6. Read high byte, and store results.
+        ;    Returns by entering the A21 state machine.
 bs_6:
-        ljmp    _i2c_battery_store_results
-i2c_battery_store_results_ret:
-
-        ; Fall through...
+        ljmp    _i2c_battery_store_results_begin_a21
 
         ;--------------------------------------------------------------------
         ; A21 States
         ;--------------------------------------------------------------------
         
-        ; Our flash memory is arranged as two banks, in order to address all
-        ; of the 4MB part with only 3x7=21 general purpose address lines.
-        ; This 22nd bit, A21, is wired up to what happened to be a convenient
-        ; free GPIO- the INT2 pin on our accelerometer. We control the A21
-        ; state by enabling or disabling an inverter on the LIS3DHs interrupt
-        ; controller.
-        ;
-        ; This is a relatvely expensive operation that needs to be synchronized
-        ; with the clients on our main thread who request it: the graphics
-        ; engine and the flash HAL.
-        ;
-        ; We do this with two bits which indicate the _target_ state requested
-        ; by the main thread, and the _current_ state that the A21 pin is in.
-        ;
-        ; This ISR polls both bits, and changes _current_ to match _target_
-        ; if there is a mismatch. The main thread always sets _target_ to the
-        ; desired state, and polls _current_ to wait for us.
-
-        setb    _i2c_a21_lock       ; Must set lock prior to sampling current/target
-
-        mov     c, _i2c_a21_target
-        rlc     a                   ; acc.0 = target, other bits undefined
-        mov     _i2c_temp_1, a      ; Latch the sampled target state in temp1
-        mov     c, _i2c_a21_current
-        addc    a, #0               ; Compare to current state using addc as an XOR
-        jnb     acc.0, #ts_4        ; Fall through if there is no change
-
-        mov     _W2DAT, #ACCEL_ADDR_TX
-        NEXT    (ts_1)
-
         ; 1. TX address finished, Send register address next
 ts_1:
         mov     _W2DAT, #ACCEL_CTRL_REG6
@@ -371,6 +339,10 @@ fs_6:
         ajmp    _read_factory_packet_header
 read_factory_packet_header_ret:
 
+        cjne    a, #0xfc, #fs_skip_fc   ; Check for neighbor ID [fc] packet
+        NEXT    (fs_A)
+fs_skip_fc:
+
         cjne    a, #0xfd, #fs_skip_fd   ; Check for flash data [fd] packet
         NEXT    (fs_9)
 fs_skip_fd:
@@ -417,7 +389,11 @@ fs_9:
         mov     r0, #_flash_fifo        ; Wrap
 1$:     mov     _flash_fifo_head, r0
         mov     r0, DPL                 ; Restore R0
+        sjmp    fs_6n
 
+        ; A. Read new neighbor ID from factory test packet
+fs_A:
+        mov     _nb_tx_id, _W2DAT
         sjmp    fs_6n
 
     __endasm ;
@@ -459,10 +435,10 @@ void i2c_a21_wait(void) __naked
     __endasm ;
 }
 
-void i2c_battery_store_results() __naked
+void i2c_battery_store_results_begin_a21() __naked
 {
     /*
-     * Store a battery voltage measurement.
+     * Store a battery voltage measurement, exiting via A21.
      *
      * The high byte is in W2DAT. The low byte is ignored. The ADC is only 10-bit,
      * and even the high 8 bits are pretty noisy. For battery voltage, we'd much
@@ -532,9 +508,46 @@ void i2c_battery_store_results() __naked
         clr     a
         mov     _i2c_battery_total+0, a
         mov     _i2c_battery_total+1, a
-
 1$:
-        ljmp    i2c_battery_store_results_ret
+    __endasm ;
+
+    /*
+     * Begin A21 update states.
+     *
+     * Our flash memory is arranged as two banks, in order to address all
+     * of the 4MB part with only 3x7=21 general purpose address lines.
+     * This 22nd bit, A21, is wired up to what happened to be a convenient
+     * free GPIO- the INT2 pin on our accelerometer. We control the A21
+     * state by enabling or disabling an inverter on the LIS3DHs interrupt
+     * controller.
+     *
+     * This is a relatvely expensive operation that needs to be synchronized
+     * with the clients on our main thread who request it: the graphics
+     * engine and the flash HAL.
+     *
+     * We do this with two bits which indicate the _target_ state requested
+     * by the main thread, and the _current_ state that the A21 pin is in.
+     *
+     * This ISR polls both bits, and changes _current_ to match _target_
+     * if there is a mismatch. The main thread always sets _target_ to the
+     * desired state, and polls _current_ to wait for us.
+     */
+
+    __asm
+
+        setb    _i2c_a21_lock       ; Must set lock prior to sampling current/target
+
+        mov     c, _i2c_a21_target
+        rlc     a                   ; acc.0 = target, other bits undefined
+        mov     _i2c_temp_1, a      ; Latch the sampled target state in temp1
+        mov     c, _i2c_a21_current
+        addc    a, #0               ; Compare to current state using addc as an XOR
+        jnb     acc.0, #5$          ; Fall through if there is no change
+
+        mov     _W2DAT, #ACCEL_ADDR_TX
+        NEXT    (ts_1)
+
+5$:     ljmp    ts_4                ; Release lock, fall through to factory test
 
     __endasm ;
 }

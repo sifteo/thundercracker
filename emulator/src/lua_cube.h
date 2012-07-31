@@ -26,7 +26,8 @@ private:
     int lcdFrameCount(lua_State *L);
     int lcdPixelCount(lua_State *L);
     int exceptionCount(lua_State *L);
-    
+    int getNeighborID(lua_State *L);
+
     /*
      * Radio
      */

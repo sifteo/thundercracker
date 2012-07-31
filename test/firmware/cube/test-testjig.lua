@@ -43,6 +43,29 @@ TestTestjig = {}
         jig:flashReset()
     end
 
+    function TestTestjig:test_neighbor_id()
+        -- Make sure we can set the cube's neighbor ID over the testjig
+
+        -- We start out with neighbors disabled
+        assertEquals(gx.cube:getNeighborID(), 0)
+
+        gx.cube:testWrite(packHex('fce5'))
+        gx.sys:vsleep(0.1)
+        assertEquals(gx.cube:getNeighborID(), 0xe5)
+
+        gx.cube:testWrite(packHex('fce0'))
+        gx.sys:vsleep(0.1)
+        assertEquals(gx.cube:getNeighborID(), 0xe0)
+
+        gx.cube:testWrite(packHex('fcff'))
+        gx.sys:vsleep(0.1)
+        assertEquals(gx.cube:getNeighborID(), 0xff)
+
+        gx.cube:testWrite(packHex('fc00'))
+        gx.sys:vsleep(0.1)
+        assertEquals(gx.cube:getNeighborID(), 0x00)
+    end
+
     function TestTestjig:test_flash_program()
         -- Queue up a bunch of flash loadstream data. This must be smaller
         -- than the FIFO buffer (63 bytes) plus it must be small enough to

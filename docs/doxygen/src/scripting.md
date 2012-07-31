@@ -262,6 +262,10 @@ Position    | Name      | Meaning
 4           | refPixel  | Reference pixel from the provided PNG, after conversion to 16-bit RGB565 format
 5           | errValue  | The actual error value for this pixel (greater than _tolerance_)
 
+### Cube(N):getNeighborID()
+
+Returns the low-level _neighbor ID_ for a cube. This is the 8-bit number used internally to identify a cube to its neighbors. The low 5 bits of this number will match the cube's CubeID in userspace. (The top three bits are reserved.) It will be zero if the cube is not sending any neighbor signal.
+
 ### Cube(N):xbPoke( _address_, _byte_ )
 
 Write one byte to the cube's Video RAM, at the specified byte address. Byte addresses must be in the range [0, 1023]. Out-of-range addresses will wrap around.
