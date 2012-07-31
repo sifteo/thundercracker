@@ -958,6 +958,30 @@ rx_ack:
 no_ack:
 
         ;--------------------------------------------------------------------
+        ; Touch sensing
+        ;--------------------------------------------------------------------
+
+        ; This complements the touch sensing code in TF0. There, we only SET the
+        ; touch bit, in order to stretch brief pulses that may not make it into
+        ; a radio packet otherwise. Here, we already sent the ACK buffer back to
+        ; the master, so we can finally unset any touch state that may have been
+        ; set by TF0.
+        ;
+        ; At this point, our job is as easy as copying the value of the
+        ; MISC_TOUCH pin to the NB0_FLAG_TOUCH bit in our ACK packet.
+        ;
+        ; Warning: This code assumes that (MISC_TOUCH >> 1) == NB0_FLAG_TOUCH.
+
+        mov     a, _MISC_PORT
+        rr      a
+        xrl     a, (_ack_data + RF_ACK_NEIGHBOR + 0)
+        anl     a, #NB0_FLAG_TOUCH
+        jz      1$
+        xrl     (_ack_data + RF_ACK_NEIGHBOR + 0), a
+        orl     _ack_bits, #RF_ACK_BIT_NEIGHBOR
+1$:
+
+        ;--------------------------------------------------------------------
         ; Cleanup
         ;--------------------------------------------------------------------
 

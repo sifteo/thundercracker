@@ -20,8 +20,6 @@ void sensors_init();
 extern volatile uint8_t sensor_tick_counter;
 extern volatile uint8_t sensor_tick_counter_high;
 
-extern __bit touch;
-
 /*
  * Interrupt declarations must be visible in main.c
  */
