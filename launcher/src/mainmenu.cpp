@@ -26,6 +26,15 @@ static void drawText(RelocatableTileBuffer<12,12> &icon, const char *text, Int2 
     }
 }
 
+static unsigned getNumCubes(CubeSet cubes)
+{
+    unsigned count = 0;
+    for (CubeID cube : cubes) {
+        ++count;
+    }
+    return count;
+}
+
 const MenuAssets MainMenu::menuAssets = {
     &Menu_BgTile, &Menu_Footer, NULL, {&Menu_Tip0, &Menu_Tip1, &Menu_Tip2, NULL}
 };
@@ -265,6 +274,24 @@ void MainMenu::toggleCubeRangeAlert(unsigned index, Sifteo::Menu &menu)
             cubeRangeAlertIcon,
             buffer.c_str(),
             vec(item->getCubeRange().sys.minCubes < 10 ? 3 : 2, 3));
+        
+        unsigned numCubes = getNumCubes(CubeSet::connected());
+        unsigned numIcons = 12;
+        
+        if (item->getCubeRange().sys.maxCubes <= numIcons) {
+            for (int i = 0; i < numIcons; ++i) {
+                Int2 pos = vec((i % 4) * 2 + 2, (i / 4) * 2 + 6);
+                if (i < numCubes) {
+                    cubeRangeAlertIcon.image(pos, MoreCubesStates, 3);
+                } else if (i < item->getCubeRange().sys.minCubes) {
+                    cubeRangeAlertIcon.image(pos, MoreCubesStates, 2);
+                } else if (i < item->getCubeRange().sys.maxCubes) {
+                    cubeRangeAlertIcon.image(pos, MoreCubesStates, 1);
+                } else {
+                    cubeRangeAlertIcon.image(pos, MoreCubesStates, 0);
+                }
+            }
+        }
         
         menu.replaceIcon(index, cubeRangeAlertIcon);
     } else {

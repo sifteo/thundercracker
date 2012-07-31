@@ -40,3 +40,6 @@ BatteryBars = image{ {
     "images/img-battery-bars-3.png",
     "images/img-battery-bars-4.png"
 } }
+
+-- More Cubes
+MoreCubesStates = image{ "images/more-cubes-states.png", height=8 }
