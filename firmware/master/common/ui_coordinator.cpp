@@ -141,6 +141,10 @@ void UICoordinator::attachToCube(_SYSCubeID id)
 
 void UICoordinator::paint()
 {
+    // We need to clear touch events manually, since we're
+    // intentionally suppressing userspace event dispatch.
+    CubeSlots::clearTouchEvents();
+
     if (isAttached())
         CubeSlots::paintCubes(Intrinsic::LZ(avb.cube), true, excludedTasks);
     else
@@ -157,6 +161,9 @@ void UICoordinator::detach()
 {
     if (avb.cube == _SYS_CUBE_ID_INVALID)
         return;
+
+    // Be a good citizen, make sure we finish painting before returning the cube
+    finish();
 
     if (savedVBuf) {
         savedVBuf->flags = avb.vbuf.flags;
@@ -182,10 +189,6 @@ void UICoordinator::setPanY(int y)
 
 void UICoordinator::idle()
 {
-    // We need to clear touch events manually, since we're
-    // intentionally suppressing userspace event dispatch.
-    CubeSlots::clearTouchEvents();
-
     Tasks::idle(excludedTasks);
 }
 

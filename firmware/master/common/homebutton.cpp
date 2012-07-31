@@ -19,6 +19,7 @@
 #include "cube.h"
 #include "ui_coordinator.h"
 #include "ui_menu.h"
+#include "svmloader.h"
 
 #ifdef SIFTEO_SIMULATOR
 #   include "system_mc.h"
@@ -28,7 +29,7 @@
 
 extern const uint16_t MenuBackground_data[];
 extern const uint16_t IconQuit_data[];
-extern const uint16_t IconRestart_data[];
+extern const uint16_t IconBack_data[];
 extern const uint16_t IconResume_data[];
 
 namespace HomeButton {
@@ -53,18 +54,21 @@ void task()
 
     static const UIMenu::Item menuItems[] = {
         // Note: labels with an odd number of characters will center perfectly
-        { IconRestart_data,  "Restart" },
+        { IconBack_data,  "Game Menu" },
         { IconResume_data,   "Continue Game" },
         { IconQuit_data,     "Quit Game" },
     };
 
     enum MenuItems {
-        kRestart,
+        kGameMenu,
         kContinue,
         kQuit,
     };
 
     if (!isPressed())
+        return;
+
+    if (SvmLoader::getRunLevel() == SvmLoader::RUNLEVEL_LAUNCHER)
         return;
 
     LOG(("Entering home button task\n"));
@@ -94,8 +98,11 @@ void task()
         menu.animate();
 
         // Menu done? Exit.
-        if (menu.isDone())
+        if (menu.isDone()) {
+            if (menu.getChosenItem() == kQuit)
+                SvmLoader::exit();
             break;
+        }
 
         // Another release/press/release on home button causes us to exit immediately
         uint32_t button = isPressed();

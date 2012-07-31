@@ -35,8 +35,7 @@ namespace {
 
     static const int kAccelHysteresisMin = 8;
     static const int kAccelHysteresisMax = 18;
-    static const float kAccelScale = -0.1f;
-    static const float kMaxVelocity = 4.0f;
+    static const float kAccelScale = -8.0f;
 
     static const unsigned kInactivePalette = (11 ^ 6) << 10;
     static const unsigned kTextPalette = 11 << 10;
@@ -69,8 +68,13 @@ void UIMenu::init(unsigned defaultItem)
 
 void UIMenu::animate()
 {
+    SysTime::Ticks now = SysTime::ticks();
+    float dt = (now - lastTime) * (1.0f / SysTime::sTicks(1));
+    lastTime = now;
+
     if (!uic.isAttached())
         return;
+
     CubeSlot &cube = CubeSlots::instances[uic.avb.cube];
 
     /*
@@ -91,7 +95,11 @@ void UIMenu::animate()
             // Settling: Pull toward and activate the nearest item, if the accelerometer is mostly centered
             if (isTilting) {
                 state = S_TILTING;
+            } else if (cube.isTouching()) {
+                // Allow selection even if we're still settling
+                beginFinishing();
             } else {
+                // Snap to selection (fixed timestep)
                 float distance = itemCenterPosition(activeItem) - position;
                 updatePosition(distance * 0.1f);
                 if (distance < 0.1f && distance > -0.1f && !cube.isTouching()) {
@@ -101,8 +109,8 @@ void UIMenu::animate()
             break;
 
         case S_TILTING:
-            // Tilting: Slide in the direction of the accelerometer
-            updatePosition(accel.x * kAccelScale);
+            // Tilting: Slide in the direction of the accelerometer (variable timestep)
+            updatePosition(accel.x * kAccelScale * dt);
             if (!isTilting) {
                 state = S_SETTLING;
             }
@@ -113,17 +121,7 @@ void UIMenu::animate()
             if (isTilting) {
                 state = S_TILTING;
             } else if (cube.isTouching()) {
-                /*
-                 * Entering 'finishing' state. We adjust the window so that the item
-                 * hops 'behind' the small border at the bottom of the menu, and we
-                 * force everything to redraw so we can hide the inactive icons.
-                 */
-                activeItem = -1;
-                hopFrame = 0;
-                state = S_FINISHING;
-                VRAM::pokeb(uic.avb.vbuf, offsetof(_SYSVideoRAM, first_line), kWindowBegin + kWindowBorder);
-                VRAM::pokeb(uic.avb.vbuf, offsetof(_SYSVideoRAM, num_lines), kWindowHeight - kWindowBorder*2);
-                updateHop();
+                beginFinishing();
             }
             break;
 
@@ -137,11 +135,18 @@ void UIMenu::animate()
     }
 
     /*
-     * Update graphics
+     * Update graphics.
+     *
+     * Note that we finish the previous frame before drawing columns
+     * for the next frame, in order to strictly avoid wrap-around artifacts
+     * and significantly decrease visible tearing. We can get away with this
+     * without causing any noticeable lag, since the rest of our render
+     * is so fast.
      */
 
-    unsigned newActiveItem = nearestItem();
+    uic.finish();
 
+    unsigned newActiveItem = nearestItem();
     if (newActiveItem == activeItem) {
         // Just draw the new portion of the screen that's scrolling in
         drawColumns();
@@ -152,6 +157,25 @@ void UIMenu::animate()
     }
 
     uic.setPanX(position);
+}
+
+void UIMenu::beginFinishing()
+{
+    /*
+     * Entering 'finishing' state. We adjust the window so that the item
+     * hops 'behind' the small border at the bottom of the menu, and we
+     * force everything to redraw so we can hide the inactive icons.
+     */
+
+    activeItem = -1;
+    hopFrame = 0;
+    state = S_FINISHING;
+
+    // Need to finsh rendering before adjusting the window and panning atomically like this
+    uic.finish();
+    VRAM::pokeb(uic.avb.vbuf, offsetof(_SYSVideoRAM, first_line), kWindowBegin + kWindowBorder);
+    VRAM::pokeb(uic.avb.vbuf, offsetof(_SYSVideoRAM, num_lines), kWindowHeight - kWindowBorder*2);
+    updateHop();
 }
 
 void UIMenu::setActiveItem(unsigned n)
@@ -174,8 +198,8 @@ unsigned UIMenu::nearestItem()
 
 void UIMenu::updatePosition(float velocity)
 {
-    if (velocity >  kMaxVelocity) velocity = kMaxVelocity;
-    if (velocity < -kMaxVelocity) velocity = -kMaxVelocity;
+    if (velocity >  float(TILE)) velocity = float(TILE);
+    if (velocity < -float(TILE)) velocity = -float(TILE);
 
     position += velocity;
 
@@ -191,9 +215,8 @@ void UIMenu::updateHop()
     // Update the vertical 'hop' animation (Y panning)
 
     static const int8_t hop[] = {
-        // [int(i*1.5 - i*i*0.1 + 0.5) for i in range(35)]
-        1, 3, 4, 4, 5, 5, 6, 6, 5, 5, 4, 4, 3, 1, 0, -1, -2, -4, -7,
-        -9, -12, -14, -17, -21, -24, -28, -31, -35, -40, -44, -49, -53, -58, -64
+        // [int(i*2.5 - i*i*0.3 + 0.5) for i in range(1, 22)]
+        2, 4, 5, 5, 5, 4, 3, 1, -1, -4, -8, -12, -17, -23, -29, -36, -43, -51, -60, -69, -79
     };
 
     ASSERT(hopFrame < arraysize(hop));

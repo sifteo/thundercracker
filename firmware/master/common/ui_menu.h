@@ -59,6 +59,7 @@ private:
         S_DONE,
     };
 
+    SysTime::Ticks lastTime;    // Timestamp for the last call to animate()
     float position;             // Panning offset in pixels
     uint16_t activeItem;        // If < numItems, this menu item is selected
     uint16_t labelWidth;        // Size of label associated with 
@@ -69,6 +70,7 @@ private:
 
     void updatePosition(float velocity);
     void updateHop();
+    void beginFinishing();
     void drawAll();
     void drawColumns();
     void drawColumn(int x);
