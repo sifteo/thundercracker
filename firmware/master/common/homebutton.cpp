@@ -20,6 +20,7 @@
 #include "ui_coordinator.h"
 #include "ui_menu.h"
 #include "svmloader.h"
+#include "svmclock.h"
 
 #ifdef SIFTEO_SIMULATOR
 #   include "system_mc.h"
@@ -72,6 +73,7 @@ void task()
         return;
 
     LOG(("Entering home button task\n"));
+    SvmClock::pause();
 
     UICoordinator uic( Intrinsic::LZ(Tasks::AudioPull)  |
                        Intrinsic::LZ(Tasks::HomeButton) );
@@ -118,6 +120,7 @@ void task()
     LED::set(LEDPatterns::idle);
 
     LOG(("Leaving home button task\n"));
+    SvmClock::resume();
 }
 
 

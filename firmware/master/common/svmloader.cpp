@@ -12,6 +12,7 @@
 #include "svmmemory.h"
 #include "svmfastlz.h"
 #include "svmdebugpipe.h"
+#include "svmclock.h"
 #include "radio.h"
 #include "tasks.h"
 #include "cubeslots.h"
@@ -89,6 +90,9 @@ bool SvmLoader::loadRWData(const Elf::Program &program)
 
 bool SvmLoader::prepareToExec(const Elf::Program &program, SvmRuntime::StackInfo &stack)
 {
+    // Resync userspace clock with system clock
+    SvmClock::init();
+
     // Default LED behavior
     LED::set(LEDPatterns::idle);
 

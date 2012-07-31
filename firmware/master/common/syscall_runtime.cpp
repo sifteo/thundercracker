@@ -14,6 +14,7 @@
 #include "svmdebugger.h"
 #include "svmruntime.h"
 #include "svmloader.h"
+#include "svmclock.h"
 #include "radio.h"
 #include "cubeslots.h"
 #include "event.h"
@@ -64,9 +65,7 @@ void _SYS_finish(void)
 
 int64_t _SYS_ticks_ns(void)
 {
-    int64_t ns = SysTime::ticks();
-    ASSERT(ns > 0);
-    return ns;
+    return SvmClock::ticks();
 }
 
 void _SYS_setVector(_SYSVectorID vid, void *handler, void *context)
