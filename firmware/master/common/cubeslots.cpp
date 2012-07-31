@@ -137,6 +137,16 @@ void CubeSlots::refreshCubes(_SYSCubeIDVector cv)
     }
 }
 
+void CubeSlots::clearTouchEvents()
+{
+    _SYSCubeIDVector cv = CubeSlots::touch;
+    while (cv) {
+        unsigned id = Intrinsic::CLZ(cv);
+        cv ^= Intrinsic::LZ(id);
+        CubeSlots::instances[id].clearTouchEvent();
+    }
+}
+
 void CubeSlots::assetLoaderTask()
 {
     /*

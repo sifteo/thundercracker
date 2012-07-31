@@ -172,21 +172,13 @@ ALWAYS_INLINE void Event::cubeEventsClear(PriorityID pid)
 
     switch (pid) {
 
-        case PID_CUBE_TOUCH: {
-            _SYSCubeIDVector cv = CubeSlots::touch;
-            while (cv) {
-                unsigned id = Intrinsic::CLZ(cv);
-                cv ^= Intrinsic::LZ(id);
-                CubeSlots::instances[id].clearTouchEvent();
-            }
-            break;
-        }
+        case PID_CUBE_TOUCH:
+            return CubeSlots::clearTouchEvents();
 
         default:
             break;
     }
 }
-
 
 void Event::setBasePending(PriorityID pid, uint32_t param)
 {

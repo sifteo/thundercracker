@@ -65,6 +65,7 @@ namespace CubeSlots {
     void paintCubes(_SYSCubeIDVector cv, bool wait=true, uint32_t excludedTasks=0);
     void finishCubes(_SYSCubeIDVector cv, uint32_t excludedTasks=0);
     void refreshCubes(_SYSCubeIDVector cv);
+    void clearTouchEvents();
 
     void assetLoaderTask();
     void fetchAssetLoaderData(_SYSAssetLoaderCube *lc);

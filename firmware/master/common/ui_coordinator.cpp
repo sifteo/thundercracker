@@ -182,6 +182,10 @@ void UICoordinator::setPanY(int y)
 
 void UICoordinator::idle()
 {
+    // We need to clear touch events manually, since we're
+    // intentionally suppressing userspace event dispatch.
+    CubeSlots::clearTouchEvents();
+
     Tasks::idle(excludedTasks);
 }
 
