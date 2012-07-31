@@ -23,13 +23,8 @@ static Metadata M = Metadata()
 
 void main()
 {
-    while (SystemTime::now().uptimeMS() < 2000)
-        System::yield();
-
     // In simulation, if exactly one game is installed, run it immediately.
     ELFMainMenuItem::autoexec();
-
-    AudioTracker::play(Tracker_Startup);
 
     while (1) {
         static MainMenu menu;

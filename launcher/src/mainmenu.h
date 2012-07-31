@@ -63,6 +63,7 @@ private:
     void cubeConnect(unsigned cid);
     void cubeDisconnect(unsigned cid);
 
+    void waitForACube();
     void updateAssets();
     void updateSound(Sifteo::Menu &menu);
     void updateMusic();

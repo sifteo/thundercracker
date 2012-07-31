@@ -13,8 +13,7 @@ class StatusApplet : public MainMenuItem
 {
 public:
     virtual MainMenuItem::Flags getAssets(Sifteo::MenuItem &assets, Sifteo::MappedVolume &);
-    virtual bool autoRefreshIcon() { return true; }
-
+    
     virtual void exec();
     virtual void arrive(Sifteo::Menu &m, unsigned index);
     virtual void depart(Sifteo::Menu &m, unsigned index);

@@ -1,7 +1,11 @@
+-- ROM Group
+TileROM = group{ atlas="../firmware/cube/tilerom/tilerom-atlas.png" }
+Logo = image{ "images/img-logo-white-on-blue.png" }
+
+-- Menu Group
 MenuGroup = group{ quality=9.8 }
 
 -- Main menu graphics
-
 Menu_BgTile = image{ "images/bg.png", pinned=1 }
 Menu_StripeTile = image{ "images/stripes.png", pinned=1 }
 

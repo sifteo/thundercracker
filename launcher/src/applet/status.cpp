@@ -43,10 +43,14 @@ static unsigned getNumCubes(CubeSet cubes)
     return count;
 }
 
-static unsigned getFreeBlocks()
+static unsigned getFreeMemory()
 {
-    // TODO: amount of free blocks
-    return 90;
+    FilesystemInfo info;
+    info.gather();
+    
+    float percentage = float(info.freeUnits()) / float(info.totalUnits());
+    
+    return unsigned(percentage * 100);
 }
 
 CubeID getMainCube()
@@ -131,7 +135,7 @@ void StatusApplet::drawIcon()
     menuIcon.image(vec(5, 6), Cube);
     
     String<16> bufferBlocks;
-    bufferBlocks << getFreeBlocks() << "\% free";
+    bufferBlocks << getFreeMemory() << "\% free";
     drawText(menuIcon, bufferBlocks.c_str(), vec(1, 10));
 }
 
