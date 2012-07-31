@@ -47,7 +47,7 @@ FIRMWARE_INC = ../include
 SDK_DIR = $(TC_DIR)/sdk
 
 CDEPS = src/*.h $(FIRMWARE_INC)/*.h $(SDK_DIR)/include/sifteo/*.h
-override CFLAGS += -I$(FIRMWARE_INC) -I$(SDK_DIR)/include
+override CFLAGS += -Isrc -I$(FIRMWARE_INC) -I$(SDK_DIR)/include
 override CFLAGS += -DNOT_USERSPACE
 
 # Define our CPU's memory limits
