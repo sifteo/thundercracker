@@ -150,6 +150,7 @@ int64_t _SYS_ticks_ns(void) _SC(21);  /// Return the monotonic system timer, in 
 void _SYS_setVector(_SYSVectorID vid, void *handler, void *context) _SC(122);
 void *_SYS_getVectorHandler(_SYSVectorID vid) _SC(123);
 void *_SYS_getVectorContext(_SYSVectorID vid) _SC(124);
+void _SYS_setGameMenuLabel(const char *label) _SC(174);
 
 // Sensors
 uint32_t _SYS_getAccel(_SYSCubeID cid) _SC(54);
