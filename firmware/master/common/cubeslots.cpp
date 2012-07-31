@@ -22,6 +22,7 @@ _SYSCubeIDVector CubeSlots::flashAddrPending = 0;
 _SYSCubeIDVector CubeSlots::sendShutdown = 0;
 _SYSCubeIDVector CubeSlots::sendStipple = 0;
 _SYSCubeIDVector CubeSlots::vramPaused = 0;
+_SYSCubeIDVector CubeSlots::touch = 0;
 
 BitVector<SysLFS::NUM_PAIRINGS> CubeSlots::pairConnected;
 

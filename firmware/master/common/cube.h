@@ -69,6 +69,9 @@ class CubeSlot {
         return !!(bit() & CubeSlots::userConnected);
     }
 
+    bool isTouching() const;
+    void clearTouchEvent() const;
+
     void ALWAYS_INLINE setVideoBuffer(_SYSVideoBuffer *v) {
         vbuf = v;
     }
@@ -86,8 +89,6 @@ class CubeSlot {
     ALWAYS_INLINE const uint8_t* getRawNeighbors() const {
         return lastACK.neighbors;
     }
-
-    bool isTouching() const;
 
     _SYSAssetGroupCube *assetGroupCube(struct _SYSAssetGroup *group) {
         _SYSAssetGroupCube *cube = reinterpret_cast<_SYSAssetGroupCube*>(group + 1) + id();

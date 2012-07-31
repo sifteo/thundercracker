@@ -91,6 +91,7 @@ class Event {
     static bool callCubeEvent(_SYSVectorID vid, _SYSCubeID cid);
 
     static bool dispatchCubePID(PriorityID pid, _SYSCubeID cid);
+    static void cubeEventsClear(PriorityID pid);
 
     static VectorInfo vectors[_SYS_NUM_VECTORS];
     static Params params[NUM_PIDS];
