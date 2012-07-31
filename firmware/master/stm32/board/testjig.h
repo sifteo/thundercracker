@@ -60,6 +60,10 @@
 // L E D
 #define LED_GREEN_GPIO      GPIOPin(&GPIOB, 0)
 #define LED_RED_GPIO        GPIOPin(&GPIOB, 1)
+#define LED_PWM_GREEN_CHAN  3
+#define LED_PWM_RED_CHAN    4
+#define LED_PWM_TIM         TIM3
+#define LED_SEQUENCER_TIM   TIM6
 
 // P O W E R
 #define VCC20_ENABLE_GPIO   GPIOPin(&GPIOC, 13)
