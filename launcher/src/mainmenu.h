@@ -50,6 +50,8 @@ private:
     int itemIndexCurrent;
     static const Sifteo::MenuAssets menuAssets;
 
+    bool menuDirty;
+    
     /**
      * A icon that we swap in if the user tries to launch a game that requires
      * an incompatible number of cubes
@@ -59,11 +61,12 @@ private:
 
     Sifteo::CubeSet cubes();
     Sifteo::CubeSet cubesToLoad;
-
+    
     void cubeConnect(unsigned cid);
     void cubeDisconnect(unsigned cid);
 
     void waitForACube();
+    void updateAnchor(Sifteo::Menu &m);
     void updateAssets();
     void updateSound(Sifteo::Menu &menu);
     void updateMusic();

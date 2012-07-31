@@ -14,16 +14,16 @@ using namespace Sifteo;
 static const float kBatteryLevelLow = 0.25f;
 
 template<typename T>
-static void drawBattery(T &canvas, float batteryLevel, Int2 pos, const AssetImage &battery)
+static void drawBattery(T &canvas, float batteryLevel, Int2 pos)
 {
-    canvas.image(vec(pos.x-1, pos.y-1), battery);
-
     unsigned numBatteryLevels = ceil(batteryLevel * float(BatteryBars.numFrames()));
     
     if (numBatteryLevels > 0) {
         --numBatteryLevels;
         ASSERT(numBatteryLevels < BatteryBars.numFrames());
         canvas.image(pos, BatteryBars, numBatteryLevels);
+    } else {
+        canvas.image(pos, BatteryBars, 0);
     }
 }
 
@@ -120,22 +120,19 @@ void StatusApplet::add(MainMenu &m)
 void StatusApplet::drawIcon()
 {
     menuIcon.init();
-    menuIcon.image(vec(0,0), Icon_Battery);
+    menuIcon.image(vec(0,0), Icon_Status);
 
-    drawBattery(menuIcon, getMainCube().batteryLevel(), vec(1, 2), BatteryCube);
-    drawText(menuIcon, "Cube", vec(5, 2));
+    drawBattery(menuIcon, getMainCube().batteryLevel(), vec(8, 1));
+    drawBattery(menuIcon, System::batteryLevel(), vec(7, 7));
     
-    drawBattery(menuIcon, System::batteryLevel(), vec(1, 5), BatteryBase);
-    drawText(menuIcon, "Base", vec(5, 5));
-
+    unsigned numCubes = getNumCubes(CubeSet::connected());
+    
     String<8> bufferCubes;
-    bufferCubes << getNumCubes(CubeSet::connected()) << "x";
-    drawText(menuIcon, bufferCubes.c_str(), vec(2, 8));
-    
-    menuIcon.image(vec(5, 6), Cube);
+    bufferCubes << getNumCubes(CubeSet::connected());
+    drawText(menuIcon, bufferCubes.c_str(), vec(numCubes < 10 ? 4 : 3, 4));
     
     String<16> bufferBlocks;
-    bufferBlocks << getFreeMemory() << "\% free";
+    bufferBlocks << getFreeMemory();
     drawText(menuIcon, bufferBlocks.c_str(), vec(1, 10));
 }
 
@@ -144,8 +141,8 @@ void StatusApplet::drawCube(CubeID cube)
     auto &vid = Shared::video[cube];
     vid.initMode(BG0);
     vid.bg0.erase(Menu_StripeTile);
-    vid.bg0.image(vec(2,2), Icon_Battery);
-    drawBattery(vid.bg0, cube.batteryLevel(), vec(4, 4), BatteryCube);
+    vid.bg0.image(vec(2,2), Icon_StatusOther);
+    drawBattery(vid.bg0, cube.batteryLevel(), vec(7, 9));
 }
 
 void StatusApplet::onBatteryLevelChange(unsigned cid)
