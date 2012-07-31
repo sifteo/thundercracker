@@ -13,7 +13,11 @@
 
 using namespace Sifteo;
 
+static const unsigned kFastClickAccelThreshold = 46;
+static const unsigned kClickSpeedNormal = 200;
+static const unsigned kClickSpeedFast = 300;
 static const unsigned kDisplayBlueLogoTimeMS = 2000;
+static const unsigned kNoCubesConnectedSfxMS = 5000;
 
 static void drawText(RelocatableTileBuffer<12,12> &icon, const char *text, Int2 pos)
 {
@@ -149,6 +153,7 @@ void MainMenu::cubeConnect(unsigned cid)
 
     Shared::video[cid].attach(cid);
     Shared::video[cid].initMode(BG0_ROM);
+    Shared::video[cid].bg0.setPanning(vec(0,0));
     Shared::video[cid].bg0.image(vec(0,0), Logo);
     
     cubesToLoad.mark(cid);
@@ -165,7 +170,7 @@ void MainMenu::waitForACube()
 {
     SystemTime sfxTime = SystemTime::now();
     while (CubeSet::connected().empty()) {
-        if ((SystemTime::now() - sfxTime).milliseconds() >= 5000) {
+        if ((SystemTime::now() - sfxTime).milliseconds() >= kNoCubesConnectedSfxMS) {
             sfxTime = SystemTime::now();
             AudioChannel(0).play(Sound_NoCubesConnected);
         }
@@ -185,7 +190,7 @@ void MainMenu::updateSound(Sifteo::Menu &menu)
     Sifteo::TimeDelta dt = Sifteo::SystemTime::now() - time;
     
     if (menu.getState() == MENU_STATE_TILTING) {
-        unsigned threshold = abs(Shared::video[mainCube].virtualAccel().x) > 46 ? 200 : 300;
+        unsigned threshold = abs(Shared::video[mainCube].virtualAccel().x) > kFastClickAccelThreshold ? kClickSpeedNormal : kClickSpeedFast;
         if (dt.milliseconds() >= threshold) {
             time += dt;
             AudioChannel(0).play(Sound_TiltClick);
