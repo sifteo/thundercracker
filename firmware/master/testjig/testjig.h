@@ -49,6 +49,7 @@ private:
 
     enum I2CProtocolType {
         I2CVramMax          = 0x44,
+        I2CSetNeighborID    = 0xfc,
         I2CFlashFifo        = 0xfd,
         I2CFlashReset       = 0xfe,
         I2CDone             = 0xff,

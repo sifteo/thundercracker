@@ -302,15 +302,18 @@ void TestJig::writeToCubeI2CHandler(uint8_t argc, uint8_t *args)
     uint8_t transactionsWritten = 0;
 
     argc--; // step past command
+    uint8_t *pArgs = args + 1;
 
     while (argc > 0) {
 
         uint8_t numBytes;
-        if (args[0] == I2CFlashFifo)
+        if (pArgs[0] == I2CSetNeighborID)
             numBytes = 2;
-        else if (args[0] == I2CFlashReset)
+        else if (pArgs[0] == I2CFlashFifo)
+            numBytes = 2;
+        else if (pArgs[0] == I2CFlashReset)
             numBytes = 1;
-        else if (args[0] < I2CVramMax)
+        else if (pArgs[0] < I2CVramMax)
             numBytes = 3;
         else
             break;
@@ -318,12 +321,12 @@ void TestJig::writeToCubeI2CHandler(uint8_t argc, uint8_t *args)
         if (numBytes > argc)
             break;
 
-        cubeWrite.data = args;
+        cubeWrite.data = pArgs;
         cubeWrite.remaining = numBytes;
 
         // step to the next transaction
         argc -= numBytes;
-        args += numBytes;
+        pArgs += numBytes;
         transactionsWritten++;
 
         // wait for previous vram transactions to complete.
