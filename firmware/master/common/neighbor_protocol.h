@@ -21,11 +21,20 @@ namespace Neighbor {
      * Pulse duration is 2us.
      *
      * 2us  / (1 / 36000000) == 72 ticks
-     * 12us / (1 / 36000000) == 432 ticks (this is the old bit period width, if you ever need it)
-     * 16us / (1 / 36000000) == 576 ticks
+     * 15.75us / (1 / 36000000) == 567 ticks
      */
     static const unsigned PULSE_LEN_TICKS = 72;
-    static const unsigned BIT_PERIOD_TICKS = 576;
+    static const unsigned BIT_PERIOD_TICKS = 567;
+
+    /*
+     * We want to start sampling pulses somewhere in the middle of the bit
+     * period, ideally as far towards the end of it as possible in order
+     * to allow for as much ringdown time as possible.
+     *
+     * This is basically (BIT_PERIOD_TICKS / 2) plus as much as we can
+     * get away with.
+     */
+    static const unsigned BIT_SAMPLE_PHASE = 300;
 
     // Number of bits to wait for during an RX sequence
     static const unsigned NUM_RX_BITS = 16;

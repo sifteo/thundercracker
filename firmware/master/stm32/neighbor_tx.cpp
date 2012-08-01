@@ -152,6 +152,11 @@ IRQ_HANDLER ISR_FN(NBR_TX_TIM)()
 
 void NeighborTX::floatSide(unsigned side)
 {
+#ifdef NBR_BUF_GPIO
+    GPIOPin bufferPin = NBR_BUF_GPIO;
+    bufferPin.setHigh();
+#endif
+
     pins[side].setControl(GPIOPin::IN_FLOAT);
 }
 
@@ -160,4 +165,9 @@ void NeighborTX::squelchSide(unsigned side)
     const GPIOPin &out = pins[side];
     out.setControl(GPIOPin::OUT_2MHZ);
     out.setLow();
+
+#ifdef NBR_BUF_GPIO
+    GPIOPin bufferPin = NBR_BUF_GPIO;
+    bufferPin.setLow();
+#endif
 }
