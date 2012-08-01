@@ -63,7 +63,7 @@ int PortAudioOutDevice::portAudioCallback(const void *inputBuffer, void *outputB
 
         self->resetWaterMark();
 
-        if (ring.readAvailable() >= self->bufferThreshold)
+        if (ring.readAvailable() >= FILL_THRESHOLD)
             self->bufferFilling = false;
 
     } else {
