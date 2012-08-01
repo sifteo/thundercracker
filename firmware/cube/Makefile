@@ -60,6 +60,7 @@ override CFLAGS +=  --opt-code-size
 LDFLAGS += -Wl-bBG1LINE=0x2000
 
 # Don't use any standard library code! (Size optimization)
+override CFLAGS += --nostdinc --Werror
 LDFLAGS += --nostdlib
 
 # Simple size profiler, based on the .rst parser used by our emulator's SBT.
