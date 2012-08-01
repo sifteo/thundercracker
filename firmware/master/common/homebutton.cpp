@@ -18,7 +18,7 @@
 #include "vram.h"
 #include "cube.h"
 #include "ui_coordinator.h"
-#include "ui_menu.h"
+#include "ui_pause.h"
 #include "svmloader.h"
 #include "svmclock.h"
 
@@ -28,10 +28,6 @@
 #   include "powermanager.h"
 #endif
 
-extern const uint16_t MenuBackground_data[];
-extern const uint16_t IconQuit_data[];
-extern const uint16_t IconBack_data[];
-extern const uint16_t IconResume_data[];
 
 namespace HomeButton {
 
@@ -53,58 +49,36 @@ void task()
      * XXX: This is all just a testbed currently, none of this is intended to be final.
      */
 
-    static const UIMenu::Item menuItems[] = {
-        // Note: labels with an odd number of characters will center perfectly
-        { IconBack_data,  "Game Menu" },
-        { IconResume_data,   "Continue Game" },
-        { IconQuit_data,     "Quit Game" },
-    };
-
-    enum MenuItems {
-        kGameMenu,
-        kContinue,
-        kQuit,
-    };
-
     if (!isPressed())
         return;
 
     if (SvmLoader::getRunLevel() == SvmLoader::RUNLEVEL_LAUNCHER)
         return;
 
-    LOG(("Entering home button task\n"));
     SvmClock::pause();
+    LED::set(LEDPatterns::paused, true);
 
     UICoordinator uic( Intrinsic::LZ(Tasks::AudioPull)  |
                        Intrinsic::LZ(Tasks::HomeButton) );
 
-    UIMenu menu(uic, menuItems, arraysize(menuItems));
+    UIPause ui(uic);
 
     SysTime::Ticks shutdownWarning = SysTime::ticks() + SysTime::sTicks(2);
     SysTime::Ticks shutdownDeadline = SysTime::ticks() + SysTime::sTicks(4);
 
-    LED::set(LEDPatterns::paused, true);
-
     uint32_t buttonStates = ~0;
-    int32_t scroll = 0;
 
     while (1) {
         uic.stippleCubes(uic.connectCubes());
 
-        if (uic.pollForAttach()) {
-            // New primary cube attached
-            LOG(("Attached\n"));
-            menu.init(kContinue);
-        }
+        if (uic.pollForAttach())
+            ui.init();
 
-        menu.animate();
+        ui.animate();
 
         // Menu done? Exit.
-        if (menu.isDone()) {
-            if (menu.getChosenItem() == kQuit)
-                SvmLoader::exit();
+        if (ui.isDone())
             break;
-        }
 
         // Another release/press/release on home button causes us to exit immediately
         uint32_t button = isPressed();
@@ -118,9 +92,8 @@ void task()
 
     uic.restoreCubes(uic.uiConnected);
     LED::set(LEDPatterns::idle);
-
-    LOG(("Leaving home button task\n"));
     SvmClock::resume();
+    ui.takeAction();
 }
 
 
