@@ -9,7 +9,7 @@ Random Game::random;
 
 Game::Game()
     : cube_0(0), cube_1(1), cube_2(2),
-      physicsClock(60)
+      physicsClock(60), running(true)
 {}
 
 void Game::title()
@@ -63,6 +63,14 @@ void Game::init()
 
     Events::neighborAdd.set(&Game::onNeighborAdd, this);
     Events::neighborRemove.set(&Game::onNeighborRemove, this);
+    Events::gameMenu.set(&Game::onRestart, this, "« Restart »");
+}
+
+void Game::cleanup()
+{
+    Events::neighborAdd.unset();
+    Events::neighborRemove.unset();
+    Events::gameMenu.unset();
 }
 
 void Game::animate(float dt)
@@ -118,6 +126,11 @@ void Game::onNeighborRemove(unsigned c0, unsigned s0, unsigned c1, unsigned s1)
     checkMatches();
 }
 
+void Game::onRestart()
+{
+    running = false;
+}
+
 void Game::draw()
 {
     for (unsigned i = 0; i < NUM_CUBES; i++) {
@@ -134,7 +147,7 @@ void Game::run()
 {
     TimeStep ts;
 
-    while (1) {
+    while (running) {
         ts.next();
         
         // Real-time for animations

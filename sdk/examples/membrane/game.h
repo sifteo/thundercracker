@@ -190,6 +190,7 @@ public:
     void title();
     void init();
     void run();
+    void cleanup();
 
     void animate(float dt);
     void doPhysics(float dt);
@@ -210,12 +211,14 @@ private:
     
     Particle particles[NUM_PARTICLES];
     TimeTicker physicsClock;
+    bool running;
 
     void checkMatches();
 
     // Event handlers
     void onNeighborAdd(unsigned c0, unsigned s0, unsigned c1, unsigned s1);
     void onNeighborRemove(unsigned c0, unsigned s0, unsigned c1, unsigned s1);
+    void onRestart();
 };
 
 #endif

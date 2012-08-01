@@ -17,7 +17,10 @@ void main()
 {
     static Game game;
 
-    game.title();
-    game.init();
-    game.run();
+    while (1) {
+	    game.title();
+	    game.init();
+	    game.run();
+	    game.cleanup();
+	}
 }
