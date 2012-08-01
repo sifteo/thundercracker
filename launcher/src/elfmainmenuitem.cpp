@@ -25,6 +25,9 @@ void ELFMainMenuItem::autoexec()
     if (!System::isSimDebug())
         return;
 
+    if (Volume::previous())
+        return;
+
     Array<Volume, 2> volumes;
     Volume::list(Volume::T_GAME, volumes);
     if (volumes.count() != 1)
