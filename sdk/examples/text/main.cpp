@@ -14,6 +14,8 @@ static Metadata M = Metadata()
     .icon(Icon)
     .cubeRange(1);
 
+static VideoBuffer vid;
+
 
 struct TextRenderer {
     FB128Drawable &fb;
@@ -99,19 +101,15 @@ static void fadeInAndOut(Colormap &cm)
     }
 }
 
-
-void main()
+void initDrawing()
 {
-    const CubeID cube(0);
-    static VideoBuffer vid;
-
     /*
      * Init framebuffer, paint a solid background.
      */
 
     vid.initMode(SOLID_MODE);
     vid.colormap[0] = makeColor(0);
-    vid.attach(cube);
+    vid.attach(0);
 
     System::paint();
 
@@ -124,7 +122,24 @@ void main()
 
     vid.initMode(FB128, 40, 48);
     vid.colormap[0] = makeColor(0);
+}
 
+void onRefresh(void*, unsigned cube)
+{
+    /*
+     * This is an event handler for cases where the system needs
+     * us to fully repaint a cube. Normally this can happen automatically,
+     * but if we're doing any fancy windowing effects (like we do in this
+     * example) the system can't do the repaint all on its own.
+     */
+
+    LOG("Refresh event on cube %d\n", cube);
+    if (cube == 0)
+        initDrawing();
+}
+
+void main()
+{
     /*
      * Draw some text!
      *
@@ -133,6 +148,8 @@ void main()
      */
 
     TextRenderer text(vid.fb128);
+    Events::cubeRefresh.set(onRefresh);
+    initDrawing();
 
     while (1) {
         text.position.y = 16;
