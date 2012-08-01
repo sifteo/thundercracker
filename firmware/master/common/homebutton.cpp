@@ -19,6 +19,7 @@
 #include "cube.h"
 #include "ui_coordinator.h"
 #include "ui_pause.h"
+#include "ui_shutdown.h"
 #include "svmloader.h"
 #include "svmclock.h"
 #include "shutdown.h"
@@ -26,27 +27,35 @@
 
 void HomeButtonPressDetector::update()
 {
-    switch (state) {
+    bool pressed = HomeButton::isPressed();
 
+    if (!pressed)
+        pressTimestamp = 0;
+    else if (!pressTimestamp)
+        pressTimestamp = SysTime::ticks();
+
+    switch (state) {
         case S_UNKNOWN:
-            if (!HomeButton::isPressed())
+            if (!pressed)
                 state = S_IDLE;
             break;
 
         case S_IDLE:
         case S_RELEASED:
-            if (HomeButton::isPressed()) {
+            if (pressed)
                 state = S_PRESSED;
-                pressTimestamp = SysTime::ticks();
-            }
             break;
 
         case S_PRESSED:
-            if (!HomeButton::isPressed()) {
+            if (!pressed)
                 state = S_RELEASED;
-            }
             break;
     }
+}
+
+SysTime::Ticks HomeButtonPressDetector::pressDuration() const
+{
+    return HomeButton::isPressed() ? (SysTime::ticks() - pressTimestamp) : 0;
 }
 
 
@@ -59,41 +68,40 @@ void HomeButton::task()
     if (!isPressed())
         return;
 
-    // Immediate shutdown if the button is pressed from the launcher
-    if (SvmLoader::getRunLevel() == SvmLoader::RUNLEVEL_LAUNCHER) {
-        ShutdownManager s(excludedTasks);
-        return s.shutdown();
-    }
-
     SvmClock::pause();
     LED::set(LEDPatterns::paused, true);
 
     UICoordinator uic(excludedTasks);
-    UIPause ui(uic);
+    UIPause uiPause(uic);
+    UIShutdown uiShutdown(uic);
     HomeButtonPressDetector press;
+
+    // Immediate shutdown if the button is pressed from the launcher
+    if (SvmLoader::getRunLevel() == SvmLoader::RUNLEVEL_LAUNCHER)
+        return uiShutdown.mainLoop();
 
     do {
 
         uic.stippleCubes(uic.connectCubes());
 
         if (uic.pollForAttach())
-            ui.init();
+            uiPause.init();
 
-        ui.animate();
+        uiPause.animate();
         uic.paint();
         press.update();
 
+        // Long press- shut down
         if (press.pressDuration() > SysTime::msTicks(1000)) {
-            // Long press- shut down
-            ShutdownManager s(excludedTasks);
-            return s.shutdown();
+            uiShutdown.init();
+            return uiShutdown.mainLoop();
         }
 
-    } while (!press.isReleased() && !ui.isDone());
+    } while (!press.isReleased() && !uiPause.isDone());
 
     uic.restoreCubes(uic.uiConnected);
     LED::set(LEDPatterns::idle);
     Tasks::cancel(Tasks::HomeButton);
     SvmClock::resume();
-    ui.takeAction();
+    uiPause.takeAction();
 }

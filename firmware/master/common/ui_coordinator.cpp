@@ -187,6 +187,15 @@ void UICoordinator::setPanY(int y)
         umod(y, _SYS_VRAM_BG0_WIDTH * 8));
 }
 
+bool UICoordinator::isTouching()
+{
+    if (!isAttached())
+        return false;
+
+    CubeSlot &cube = CubeSlots::instances[avb.cube];
+    return cube.isTouching();
+}
+
 void UICoordinator::idle()
 {
     Tasks::idle(excludedTasks);

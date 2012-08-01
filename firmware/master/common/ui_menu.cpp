@@ -52,6 +52,7 @@ void UIMenu::init(unsigned defaultItem)
         VRAM::poke(uic.avb.vbuf, i, bg);
 
     // Set up default video state
+    uic.finish();
     VRAM::pokeb(uic.avb.vbuf, offsetof(_SYSVideoRAM, mode), _SYS_VM_BG0_ROM);
     VRAM::pokeb(uic.avb.vbuf, offsetof(_SYSVideoRAM, first_line), kWindowBegin);
     VRAM::pokeb(uic.avb.vbuf, offsetof(_SYSVideoRAM, num_lines), kWindowHeight);
@@ -64,6 +65,7 @@ void UIMenu::init(unsigned defaultItem)
 
     drawAll();
     uic.setPanX(position);
+    uic.setPanY(0);
 }
 
 void UIMenu::animate()

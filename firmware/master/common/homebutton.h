@@ -36,7 +36,7 @@ public:
 		S_RELEASED,
 	};
 
-	HomeButtonPressDetector() : state(S_UNKNOWN) {}
+	HomeButtonPressDetector() : pressTimestamp(0), state(S_UNKNOWN) {}
 	void update();
 
 	/// Has button been pressed, after having been up?
@@ -49,10 +49,8 @@ public:
 		return state == S_RELEASED;
 	}
 
-	/// How long has the button been pressed for?
-	ALWAYS_INLINE SysTime::Ticks pressDuration() const {
-		return isPressed() ? (SysTime::ticks() - pressTimestamp) : 0;
-	}
+	/// How long has the button been pressed for? (Does not enforce prior released-ness)
+	SysTime::Ticks pressDuration() const;
 
 private:
 	SysTime::Ticks pressTimestamp;
