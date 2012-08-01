@@ -23,6 +23,8 @@ ShutdownManager::ShutdownManager(uint32_t excludedTasks)
 
 void ShutdownManager::shutdown()
 {
+	LOG(("SHUTDOWN: Beginning shutdown sequence\n"));
+
 	// Make sure the home button is released before we go on
 	while (HomeButton::isPressed())
 		Tasks::idle(excludedTasks);

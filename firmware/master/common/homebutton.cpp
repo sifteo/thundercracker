@@ -24,10 +24,33 @@
 #include "shutdown.h"
 
 
-namespace HomeButton {
+void HomeButtonPressDetector::update()
+{
+    switch (state) {
+
+        case S_UNKNOWN:
+            if (!HomeButton::isPressed())
+                state = S_IDLE;
+            break;
+
+        case S_IDLE:
+        case S_RELEASED:
+            if (HomeButton::isPressed()) {
+                state = S_PRESSED;
+                pressTimestamp = SysTime::ticks();
+            }
+            break;
+
+        case S_PRESSED:
+            if (!HomeButton::isPressed()) {
+                state = S_RELEASED;
+            }
+            break;
+    }
+}
 
 
-void task()
+void HomeButton::task()
 {
     const uint32_t excludedTasks =
         Intrinsic::LZ(Tasks::AudioPull)  |
@@ -36,6 +59,7 @@ void task()
     if (!isPressed())
         return;
 
+    // Immediate shutdown if the button is pressed from the launcher
     if (SvmLoader::getRunLevel() == SvmLoader::RUNLEVEL_LAUNCHER) {
         ShutdownManager s(excludedTasks);
         return s.shutdown();
@@ -46,37 +70,30 @@ void task()
 
     UICoordinator uic(excludedTasks);
     UIPause ui(uic);
+    HomeButtonPressDetector press;
 
-    uint32_t buttonStates = ~0;
+    do {
 
-    while (1) {
         uic.stippleCubes(uic.connectCubes());
 
         if (uic.pollForAttach())
             ui.init();
 
         ui.animate();
+        uic.paint();
+        press.update();
 
-        // Menu done? Exit.
-        if (ui.isDone())
-            break;
-
-        // Another release/press/release on home button causes us to exit immediately
-        uint32_t button = isPressed();
-        if ((buttonStates ^ button) & 1) {
-            buttonStates = (buttonStates << 1) | button;
-            if ((buttonStates & 0x0F) == 0x0A)
-                break;
+        if (press.pressDuration() > SysTime::msTicks(1000)) {
+            // Long press- shut down
+            ShutdownManager s(excludedTasks);
+            return s.shutdown();
         }
 
-        uic.paint();
-    }
+    } while (!press.isReleased() && !ui.isDone());
 
     uic.restoreCubes(uic.uiConnected);
     LED::set(LEDPatterns::idle);
+    Tasks::cancel(Tasks::HomeButton);
     SvmClock::resume();
     ui.takeAction();
 }
-
-
-} // namespace HomeButton
