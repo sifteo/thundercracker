@@ -42,13 +42,8 @@ void shutdown()
     while (1);
 }
 
-
 void task()
 {
-    /*
-     * XXX: This is all just a testbed currently, none of this is intended to be final.
-     */
-
     if (!isPressed())
         return;
 
@@ -87,6 +82,7 @@ void task()
             if ((buttonStates & 0x0F) == 0x0A)
                 break;
         }
+
         uic.paint();
     }
 

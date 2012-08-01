@@ -18,6 +18,7 @@
 #include "cubeslots.h"
 #include "cube.h"
 #include "ui_panic.h"
+#include "ui_pause.h"
 #include "audiomixer.h"
 #include "event.h"
 #include "led.h"
@@ -98,6 +99,7 @@ bool SvmLoader::prepareToExec(const Elf::Program &program, SvmRuntime::StackInfo
 
     // Reset all event vectors
     Event::clearVectors();
+    UIPause::disableGameMenu();
 
     // Detach any existing video buffers.
     for (unsigned i = 0; i < _SYS_NUM_CUBE_SLOTS; i++) {
