@@ -13,13 +13,26 @@
 
 using namespace Sifteo;
 
+static const unsigned kFastClickAccelThreshold = 46;
+static const unsigned kClickSpeedNormal = 200;
+static const unsigned kClickSpeedFast = 300;
 static const unsigned kDisplayBlueLogoTimeMS = 2000;
+static const unsigned kNoCubesConnectedSfxMS = 5000;
 
 static void drawText(RelocatableTileBuffer<12,12> &icon, const char *text, Int2 pos)
 {
     for (int i = 0; text[i] != 0; ++i) {
         icon.image(vec(pos.x + i, pos.y), Font, text[i]-32);
     }
+}
+
+static unsigned getNumCubes(CubeSet cubes)
+{
+    unsigned count = 0;
+    for (CubeID cube : cubes) {
+        ++count;
+    }
+    return count;
 }
 
 const MenuAssets MainMenu::menuAssets = {
@@ -37,6 +50,8 @@ void MainMenu::init()
     itemIndexCurrent = 0;
     cubeRangeSavedIcon = NULL;
 
+    menuDirty = false;
+    
     _SYS_setCubeRange(1, _SYS_NUM_CUBE_SLOTS-1); // XXX: eventually this will be the system default
 }
 
@@ -85,6 +100,7 @@ void MainMenu::eventLoop(Menu &m)
     while (m.pollEvent(&e)) {
 
         waitForACube();
+        updateAnchor(m);
         updateAssets();
         updateSound(m);
         updateMusic();
@@ -149,7 +165,12 @@ void MainMenu::cubeConnect(unsigned cid)
 
     Shared::video[cid].attach(cid);
     Shared::video[cid].initMode(BG0_ROM);
+    Shared::video[cid].bg0.setPanning(vec(0,0));
     Shared::video[cid].bg0.image(vec(0,0), Logo);
+    
+    if (cid == mainCube) {
+        menuDirty = true;
+    }
     
     cubesToLoad.mark(cid);
 }
@@ -165,11 +186,23 @@ void MainMenu::waitForACube()
 {
     SystemTime sfxTime = SystemTime::now();
     while (CubeSet::connected().empty()) {
-        if ((SystemTime::now() - sfxTime).milliseconds() >= 5000) {
+        if ((SystemTime::now() - sfxTime).milliseconds() >= kNoCubesConnectedSfxMS) {
             sfxTime = SystemTime::now();
             AudioChannel(0).play(Sound_NoCubesConnected);
         }
         System::yield();
+    }
+}
+
+void MainMenu::updateAnchor(Menu &m)
+{
+    if (menuDirty) {
+        m.reset();
+        if (itemIndexCurrent != -1) {
+            m.anchor(itemIndexCurrent);
+        }
+        menuDirty = false;
+        System::paint();
     }
 }
 
@@ -185,7 +218,7 @@ void MainMenu::updateSound(Sifteo::Menu &menu)
     Sifteo::TimeDelta dt = Sifteo::SystemTime::now() - time;
     
     if (menu.getState() == MENU_STATE_TILTING) {
-        unsigned threshold = abs(Shared::video[mainCube].virtualAccel().x) > 46 ? 200 : 300;
+        unsigned threshold = abs(Shared::video[mainCube].virtualAccel().x) > kFastClickAccelThreshold ? kClickSpeedNormal : kClickSpeedFast;
         if (dt.milliseconds() >= threshold) {
             time += dt;
             AudioChannel(0).play(Sound_TiltClick);
@@ -233,16 +266,32 @@ void MainMenu::toggleCubeRangeAlert(unsigned index, Sifteo::Menu &menu)
         cubeRangeSavedIcon = menuItems[index].icon;
         
         cubeRangeAlertIcon.init();
-        cubeRangeAlertIcon.image(vec(0,0), Icon_CubeRange);
+        cubeRangeAlertIcon.image(vec(0,0), Icon_MoreCubes);
 
-        drawText(cubeRangeAlertIcon, "You need", vec(1,3));
-
-        String<16> buffer;
-        buffer << item->getCubeRange().sys.minCubes << "-" << item->getCubeRange().sys.maxCubes;
-        drawText(cubeRangeAlertIcon, buffer.c_str(), vec(1,4));
-        drawText(cubeRangeAlertIcon, "cubes to", vec(1,5));
-        drawText(cubeRangeAlertIcon, "play this", vec(1,6));
-        drawText(cubeRangeAlertIcon, "game.", vec(1,7));
+        String<2> buffer;
+        buffer << item->getCubeRange().sys.minCubes;
+        drawText(
+            cubeRangeAlertIcon,
+            buffer.c_str(),
+            vec(item->getCubeRange().sys.minCubes < 10 ? 3 : 2, 3));
+        
+        unsigned numCubes = getNumCubes(CubeSet::connected());
+        unsigned numIcons = 12;
+        
+        if (item->getCubeRange().sys.maxCubes <= numIcons) {
+            for (int i = 0; i < numIcons; ++i) {
+                Int2 pos = vec((i % 4) * 2 + 2, (i / 4) * 2 + 6);
+                if (i < numCubes) {
+                    cubeRangeAlertIcon.image(pos, MoreCubesStates, 3);
+                } else if (i < item->getCubeRange().sys.minCubes) {
+                    cubeRangeAlertIcon.image(pos, MoreCubesStates, 2);
+                } else if (i < item->getCubeRange().sys.maxCubes) {
+                    cubeRangeAlertIcon.image(pos, MoreCubesStates, 1);
+                } else {
+                    cubeRangeAlertIcon.image(pos, MoreCubesStates, 0);
+                }
+            }
+        }
         
         menu.replaceIcon(index, cubeRangeAlertIcon);
     } else {
