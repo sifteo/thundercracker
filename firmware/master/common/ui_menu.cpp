@@ -277,7 +277,8 @@ void UIMenu::drawColumn(int x)
 
             unsigned labelX = x - kIconSpacing * activeItem + (labelWidth - kIconTileWidth) / 2;
             if (labelX < labelWidth) {
-                tile = (items[activeItem].label[labelX] - ' ') ^ kTextPalette;
+                // Note the uint8_t cast. This is important to avoid sign-extending non-ASCII characters!
+                tile = uint8_t(items[activeItem].label[labelX] - ' ') ^ kTextPalette;
             }
         }
 
