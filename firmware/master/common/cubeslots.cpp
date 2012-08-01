@@ -147,6 +147,15 @@ void CubeSlots::clearTouchEvents()
     }
 }
 
+void CubeSlots::disconnectCubes(_SYSCubeIDVector cv)
+{
+    while (cv) {
+        unsigned id = Intrinsic::CLZ(cv);
+        cv ^= Intrinsic::LZ(id);
+        CubeSlots::instances[id].disconnect();
+    }
+}
+
 void CubeSlots::assetLoaderTask()
 {
     /*

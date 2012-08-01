@@ -113,7 +113,7 @@ void PowerManager::setState(State s)
     lastState = s;
 }
 
-void PowerManager::shutdown()
+void PowerManager::batteryPowerOff()
 {
     // release the power supply enable
     GPIOPin vcc20 = VCC20_ENABLE_GPIO;

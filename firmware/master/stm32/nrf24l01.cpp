@@ -100,16 +100,6 @@ void NRF24L01::init()
     spi.transferTable(ptx_setup);
 }
 
-void NRF24L01::beginTransmitting()
-{
-    /*
-     * Transmit the first packet. Subsequent packets will be sent from
-     * within the isr().
-     */
-
-    beginTransmit();
-}
-
 /*
  * Test mode support for going to PRX-mode.
  * Mask Rx interrupt to skip any packet handling
@@ -242,7 +232,7 @@ void NRF24L01::isr()
     case TX_DS:
         // Successful transmit, no ACK data
         ackEmpty();
-        beginTransmit();
+        beginTransmitting();
         break;
 
     case TX_DS | RX_DR:
@@ -254,7 +244,7 @@ void NRF24L01::isr()
     default:
         // Other cases are not allowed. Do something non-fatal...
         UART("Unhandled nRF IRQ status!\r\n");
-        beginTransmit();
+        beginTransmitting();
         break;
     }
 
@@ -287,7 +277,7 @@ void NRF24L01::handleTimeout()
         spi.end();
 
         timeout();
-        beginTransmit();
+        beginTransmitting();
     }
 }
 
@@ -307,7 +297,7 @@ void NRF24L01::beginReceive()
     spi.transferDma(rxData, rxData, 2);
 }
  
-void NRF24L01::beginTransmit()
+void NRF24L01::beginTransmitting()
 {
     /*
      * This is an opportunity to transmit. Ask RadioManager to produce
@@ -317,6 +307,12 @@ void NRF24L01::beginTransmit()
      * for this function to be re-entered, but only in limited
      * ways. We assume that re-entry only occurs after ce.setHigh().
      */
+
+    if (!RadioManager::isRadioEnabled()) {
+        // Do nothing. This will break the cycle of transmit/irq,
+        // until the heartbeat task wakes us up again.
+        return;
+    }
 
     txBuffer.init();
     produce(txBuffer);
@@ -398,7 +394,7 @@ void NRF24L01::onSpiComplete()
 
             txnState = Idle;
             timeout();
-            beginTransmit();
+            beginTransmitting();
             break;
         }
 
@@ -410,7 +406,7 @@ void NRF24L01::onSpiComplete()
 
     case RXPayload:
         ackWithPacket(rxBuffer);
-        beginTransmit();
+        beginTransmitting();
         break;
 
     case TXChannel:

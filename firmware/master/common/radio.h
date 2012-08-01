@@ -139,7 +139,6 @@ struct PacketTransmission {
 class Radio {
  public:
     static void init();
-    static void begin();
 
     // Called at Tasks::HEARTBEAT_HZ, in task context
     static void heartbeat();
@@ -173,6 +172,19 @@ class Radio {
  
 class RadioManager {
  public:
+
+    static ALWAYS_INLINE bool isRadioEnabled() {
+        return enabled;
+    }
+
+    static ALWAYS_INLINE void enableRadio() {
+        enabled = true;
+    }
+
+    static ALWAYS_INLINE void disableRadio() {
+        enabled = false;
+    }
+
     /**
      * ISR Delegates, called by Radio's implementation. For every
      * produce()'d packet, we are guaranteed to respond in FIFO
@@ -199,6 +211,7 @@ class RadioManager {
  private:
     typedef RingBuffer<FIFO_DEPTH, uint8_t, uint8_t> fifo_t;
     static fifo_t fifo;
+    static bool enabled;
 
     // ID for the CubeConnector. Must not collide with any CubeSlot ID.
     static const unsigned CONNECTOR_ID = _SYS_NUM_CUBE_SLOTS;

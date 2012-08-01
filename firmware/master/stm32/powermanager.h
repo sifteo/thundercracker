@@ -21,7 +21,7 @@ public:
     }
 
     static void vbusDebounce();
-    static void shutdown();
+    static void batteryPowerOff();
 
     // only exposed for use via exti
     static GPIOPin vbus;

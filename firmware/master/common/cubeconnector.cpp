@@ -33,6 +33,7 @@ BitVector<SysLFS::NUM_PAIRINGS> CubeConnector::reconnectQueue;
 BitVector<SysLFS::NUM_PAIRINGS> CubeConnector::recycleQueue;
 BitVector<CubeConnector::NUM_WORK_ITEMS> CubeConnector::taskWork;
 
+bool CubeConnector::reconnectEnabled;
 uint8_t CubeConnector::neighborKey;
 uint8_t CubeConnector::txState;
 uint8_t CubeConnector::pairingPacketCounter;
@@ -58,6 +59,7 @@ void CubeConnector::init()
     savedPairingMRU.load();
 
     // State machine init
+    enableReconnect();
     txState = PairingFirstContact;
     rxState.init();
 }
@@ -196,6 +198,9 @@ void CubeConnector::refillReconnectQueue()
      * This queue includes all pairing slots which aren't associated with
      * currently-connected cubes, and which have plausibly valid HWIDs stored.
      */
+
+    if (!reconnectEnabled)
+        return;
 
     for (unsigned i = 0; i < SysLFS::NUM_PAIRINGS; ++i) {
 

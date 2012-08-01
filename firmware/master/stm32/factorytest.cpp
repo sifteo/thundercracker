@@ -261,7 +261,7 @@ void FactoryTest::shutdownHandler(uint8_t argc, const uint8_t *args)
     // write packet again so we know the first one was transmitted
     UsbDevice::write(response, sizeof response);
 
-    PowerManager::shutdown();
+    PowerManager::batteryPowerOff();
 }
 
 

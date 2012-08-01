@@ -21,45 +21,31 @@
 #include "ui_pause.h"
 #include "svmloader.h"
 #include "svmclock.h"
-
-#ifdef SIFTEO_SIMULATOR
-#   include "system_mc.h"
-#else
-#   include "powermanager.h"
-#endif
+#include "shutdown.h"
 
 
 namespace HomeButton {
 
 
-void shutdown()
-{
-    #ifdef SIFTEO_SIMULATOR
-        SystemMC::exit(false);
-    #else
-        PowerManager::shutdown();
-    #endif
-    while (1);
-}
-
 void task()
 {
+    const uint32_t excludedTasks =
+        Intrinsic::LZ(Tasks::AudioPull)  |
+        Intrinsic::LZ(Tasks::HomeButton);
+
     if (!isPressed())
         return;
 
-    if (SvmLoader::getRunLevel() == SvmLoader::RUNLEVEL_LAUNCHER)
-        return;
+    if (SvmLoader::getRunLevel() == SvmLoader::RUNLEVEL_LAUNCHER) {
+        ShutdownManager s(excludedTasks);
+        return s.shutdown();
+    }
 
     SvmClock::pause();
     LED::set(LEDPatterns::paused, true);
 
-    UICoordinator uic( Intrinsic::LZ(Tasks::AudioPull)  |
-                       Intrinsic::LZ(Tasks::HomeButton) );
-
+    UICoordinator uic(excludedTasks);
     UIPause ui(uic);
-
-    SysTime::Ticks shutdownWarning = SysTime::ticks() + SysTime::sTicks(2);
-    SysTime::Ticks shutdownDeadline = SysTime::ticks() + SysTime::sTicks(4);
 
     uint32_t buttonStates = ~0;
 

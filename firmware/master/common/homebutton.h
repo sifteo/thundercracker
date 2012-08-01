@@ -14,7 +14,6 @@ namespace HomeButton
 
     // Hardware-independent
     void task();
-    void shutdown();
 }
 
 #endif // HOMEBUTTON_H_

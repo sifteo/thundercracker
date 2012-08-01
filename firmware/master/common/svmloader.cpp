@@ -184,6 +184,11 @@ void SvmLoader::exec(FlashVolume vol, RunLevel level)
         SvmRuntime::exec(program.getEntry(), stack);
 }
 
+void SvmLoader::execLauncher()
+{
+    exec(findLauncher(), RUNLEVEL_LAUNCHER);
+}
+
 FlashMapSpan SvmLoader::secondaryMap(FlashVolume vol)
 {
     mapVols[1] = vol;
@@ -215,8 +220,7 @@ void SvmLoader::exit(bool fault)
     default:
     case RUNLEVEL_EXEC:
         // Back to the launcher
-        exec(findLauncher(), RUNLEVEL_LAUNCHER);
-        break;
+        return execLauncher();
 
     case RUNLEVEL_LAUNCHER:
         /*
@@ -230,6 +234,6 @@ void SvmLoader::exit(bool fault)
         SystemMC::exit(fault);
         #endif
 
-        UIPanic::haltForever();
+        return UIPanic::haltForever();
     }
 }
