@@ -115,6 +115,29 @@ bool SvmMemory::copyROData(FlashBlockRef &ref,
            flashSeg[1].copyBytes(ref, src - SEGMENT_1_VA, dest, length);
 }
 
+bool SvmMemory::strlcpyROData(FlashBlockRef &ref, char *dest, VirtAddr src, uint32_t destSize)
+{
+    char *last = dest + destSize - 1;
+
+    while (dest < last) {
+        uint8_t *p = peek<uint8_t>(ref, src);
+        if (!p)
+            return false;
+
+        char c = *p;
+        if (c) {
+            *(dest++) = c;
+            src++;
+        } else {
+            break;
+        }
+    }
+
+    // Guaranteed to NUL-terminate
+    *dest = '\0';
+    return true;
+}
+
 unsigned SvmMemory::reconstructCodeAddr(const FlashBlockRef &ref, uint32_t pc)
 {
     if (ref.isHeld()) {

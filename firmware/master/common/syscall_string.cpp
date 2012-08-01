@@ -171,26 +171,9 @@ void _SYS_strlcpy(char *dest, const char *src, uint32_t destSize)
 
     FlashBlockRef ref;
     SvmMemory::VirtAddr srcVA = reinterpret_cast<SvmMemory::VirtAddr>(src);
-    char *last = dest + destSize - 1;
 
-    while (dest < last) {
-        uint8_t *p = SvmMemory::peek<uint8_t>(ref, srcVA);
-        if (!p) {
-            SvmRuntime::fault(F_SYSCALL_ADDRESS);
-            break;
-        }
-
-        char c = *p;
-        if (c) {
-            *(dest++) = c;
-            srcVA++;
-        } else {
-            break;
-        }
-    }
-
-    // Guaranteed to NUL-terminate
-    *dest = '\0';
+    if (!SvmMemory::strlcpyROData(ref, dest, srcVA, destSize))
+        SvmRuntime::fault(F_SYSCALL_ADDRESS);
 }
 
 void _SYS_strlcat(char *dest, const char *src, uint32_t destSize)

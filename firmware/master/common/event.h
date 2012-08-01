@@ -47,10 +47,13 @@ class Event {
         // Screen refresh. Must be lower priority than connection
         PID_CUBE_REFRESH,
 
-        // Low-bandwidth events
+        // System state events (lower than refresh)
+        PID_BASE_GAME_MENU,
+        PID_CUBE_ASSETDONE,
+
+        // Low-bandwidth sensor events
         PID_NEIGHBORS,
         PID_CUBE_TOUCH,
-        PID_CUBE_ASSETDONE,
         PID_CUBE_TILT,
         PID_CUBE_SHAKE,
 
@@ -67,7 +70,7 @@ class Event {
 
     static void clearVectors();
 
-    static void setBasePending(PriorityID pid, uint32_t param);
+    static void setBasePending(PriorityID pid, uint32_t param=0);
     static void setCubePending(PriorityID pid, _SYSCubeID cid);
 
     static void setVector(_SYSVectorID vid, void *handler, void *context);

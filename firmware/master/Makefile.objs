@@ -52,6 +52,7 @@ OBJS_COMMON = \
     $(MASTER_DIR)/common/ui_panic.o \
     $(MASTER_DIR)/common/ui_coordinator.o \
     $(MASTER_DIR)/common/ui_menu.o \
+    $(MASTER_DIR)/common/ui_pause.o \
     $(MASTER_DIR)/common/imagedecoder.o \
     $(MASTER_DIR)/common/paintcontrol.o \
     $(MASTER_DIR)/common/usbvolumemanager.o \

@@ -53,6 +53,12 @@ void Event::dispatch()
                     return;
                 break;
 
+            case PID_BASE_GAME_MENU:
+                pending.clear(pid);
+                if (callBaseEvent(_SYS_BASE_GAME_MENU, param.generic))
+                    return;
+                break;
+
             /*
              * Per-cube Events. Try to dispatch to any pending cube.
              */
