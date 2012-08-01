@@ -187,7 +187,7 @@ void UIShutdown::mainLoop()
 {
     HomeButtonPressDetector press;
 
-    LED::set(LEDPatterns::shutdown);
+    LED::set(LEDPatterns::shutdown, true);
 
     while (1) {
 

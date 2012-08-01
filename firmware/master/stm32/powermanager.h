@@ -12,7 +12,6 @@ public:
         UsbPwr          = 1
     };
 
-    static void earlyInit();
     static void init();
     static void beginVbusMonitor();
 
@@ -21,6 +20,8 @@ public:
     }
 
     static void vbusDebounce();
+
+    static void batteryPowerOn();
     static void batteryPowerOff();
 
     // only exposed for use via exti

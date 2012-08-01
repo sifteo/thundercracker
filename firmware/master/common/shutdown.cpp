@@ -41,8 +41,11 @@ void ShutdownManager::shutdown()
 	while (CubeSlots::sendShutdown & CubeSlots::sysConnected)
 		Tasks::idle(excludedTasks);
 
-	// If we're on battery power, now's a good time to sign off.
-	hardwareShutdown();
+	/*
+	 * If we're on battery power, now's a good time to sign off.
+	 */
+
+	batteryPowerOff();
 
 	/*
 	 * Otherwise, keep serving USB requests, but without any radio traffic.
@@ -61,6 +64,7 @@ void ShutdownManager::shutdown()
 	 * since that would unnecessarily cause us to drop off the USB.
 	 */
 
+	batteryPowerOn();
 	Tasks::cancel(Tasks::HomeButton);
 	CubeConnector::enableReconnect();
 	RadioManager::enableRadio();
@@ -73,13 +77,31 @@ void ShutdownManager::housekeeping()
 	// XXX: Pre-erase flash blocks
 }
 
-void ShutdownManager::hardwareShutdown()
+void ShutdownManager::batteryPowerOff()
 {
-	// On hardware only, and on battery power only, turn the system off.
-	// Has no effect in simulation, or while we're running on USB power.
+	/*
+	 * On hardware only, and on battery power only, turn the system off.
+     *
+	 * Has no effect in simulation.
+	 *
+	 * If we're on USB power this does not immediately turn us off,
+	 * but it ensures we will turn off when USB power disappears.
+	 * To make sure we don't worry about rail transition after this,
+	 * add PowerManager to our excluded tasks.
+	 */
+
+	excludedTasks |= Intrinsic::LZ(Tasks::PowerManager);
 
 	#ifndef SIFTEO_SIMULATOR
-	    if (PowerManager::state() == PowerManager::BatteryPwr)
-	        return PowerManager::batteryPowerOff();
+	return PowerManager::batteryPowerOff();
+	#endif
+}
+
+void ShutdownManager::batteryPowerOn()
+{
+	excludedTasks &= ~Intrinsic::LZ(Tasks::PowerManager);
+
+	#ifndef SIFTEO_SIMULATOR
+	return PowerManager::batteryPowerOn();
 	#endif
 }

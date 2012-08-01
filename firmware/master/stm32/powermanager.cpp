@@ -10,14 +10,24 @@ PowerManager::State PowerManager::lastState;
 GPIOPin PowerManager::vbus = USB_VBUS_GPIO;
 SysTime::Ticks PowerManager::debounceDeadline;
 
-/*
- * Early initialization that can (and must) run before global ctors have been run.
- */
-void PowerManager::earlyInit()
+void PowerManager::batteryPowerOn()
 {
+    /*
+     * Keep battery power on. Must happen before the
+     * user releases our home button, if we're on battery power,
+     * so this runs during very early init.
+     */
     GPIOPin vcc20 = VCC20_ENABLE_GPIO;
     vcc20.setControl(GPIOPin::OUT_2MHZ);
     vcc20.setHigh();
+}
+
+void PowerManager::batteryPowerOff()
+{
+    // release the power supply enable
+    GPIOPin vcc20 = VCC20_ENABLE_GPIO;
+    vcc20.setControl(GPIOPin::OUT_2MHZ);
+    vcc20.setLow();
 }
 
 /*
@@ -111,12 +121,4 @@ void PowerManager::setState(State s)
 #endif
 
     lastState = s;
-}
-
-void PowerManager::batteryPowerOff()
-{
-    // release the power supply enable
-    GPIOPin vcc20 = VCC20_ENABLE_GPIO;
-    vcc20.setControl(GPIOPin::OUT_2MHZ);
-    vcc20.setLow();
 }

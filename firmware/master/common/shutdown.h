@@ -30,7 +30,8 @@ private:
 	uint32_t excludedTasks;
 
     void housekeeping();
-    void hardwareShutdown();
+    void batteryPowerOff();
+    void batteryPowerOn();
 };
 
 #endif
