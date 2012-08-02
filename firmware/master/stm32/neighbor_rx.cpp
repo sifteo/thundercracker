@@ -39,6 +39,9 @@ namespace {
 
 }
 
+// config option
+#define DISABLE_SQUELCH
+
 void NeighborRX::init()
 {
     #ifdef NBR_BUF_GPIO
@@ -117,7 +120,7 @@ void NeighborRX::pulseISR(unsigned side)
      *
      * OR a 1 into our rxDataBuffer for this bit period.
      *
-     * NOTE: rxDataBuffer gets shifted at the bit period boundary (rxPeriodIsr())
+     * NOTE: rxDataBuffer gets shifted at the bit period boundary: ISR_FN(NBR_RX_TIM)
      */
 
     const GPIOPin &in = pins[side];
@@ -126,20 +129,17 @@ void NeighborRX::pulseISR(unsigned side)
 
     in.irqAcknowledge();
 
+#ifndef DISABLE_SQUELCH
     NeighborTX::squelchSide(side);
+#endif
 
     /*
      * Start of a new sequence?
      * Record which side we're listening to and disable the others.
      */
     if (rxState == WaitingForStart) {
-        /*
-         * Treat this as though we're at the end of our first bit period,
-         * during which we received a pulse. We're now just starting our
-         * second bit period to listen for the next pulse.
-         */
-        rxBitCounter = 1;
-        rxDataBuf.halfword = 1 << 1;     // init bit 0 to 1 - we're here because we received a pulse after all
+        rxBitCounter = 0;
+        rxDataBuf.halfword = 0;
 
         receivingSide = side;
         rxState = ReceivingData;
@@ -150,14 +150,14 @@ void NeighborRX::pulseISR(unsigned side)
          * as far into the bit period as possible
          */
         HwTimer rxPeriodTimer(&NBR_RX_TIM);
-        rxPeriodTimer.setCount(0);
+        rxPeriodTimer.setCount(Neighbor::BIT_SAMPLE_PHASE);
         rxPeriodTimer.enableUpdateIsr();
 
-    } else {
-        // Otherwise, record the new bit that has arrived.
-        if (int(side) == receivingSide) {
-            rxDataBuf.halfword |= 0x1;
-        }
+    }
+
+    // record the new bit that has arrived.
+    if (int(side) == receivingSide) {
+        rxDataBuf.halfword |= 0x1;
     }
 }
 
@@ -179,7 +179,9 @@ IRQ_HANDLER ISR_FN(NBR_RX_TIM)()
 
     // update event
     if (status & 0x1) {
+        #ifndef DISABLE_SQUELCH
         NeighborTX::floatSide(receivingSide);
+        #endif
 
         // if we haven't gotten a start bit, nothing to do here
         if (rxState == WaitingForStart)

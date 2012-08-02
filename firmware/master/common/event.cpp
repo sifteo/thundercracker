@@ -53,6 +53,12 @@ void Event::dispatch()
                     return;
                 break;
 
+            case PID_BASE_GAME_MENU:
+                pending.clear(pid);
+                if (callBaseEvent(_SYS_BASE_GAME_MENU, param.generic))
+                    return;
+                break;
+
             /*
              * Per-cube Events. Try to dispatch to any pending cube.
              */
@@ -64,6 +70,9 @@ void Event::dispatch()
                         return;
                 }
                 pending.clear(pid);
+
+                // Must do this AFTER clearing the 'pending' bit. This may re-raise the event.
+                cubeEventsClear(PriorityID(pid));
                 break;
 
         }
@@ -155,6 +164,26 @@ bool Event::dispatchCubePID(PriorityID pid, _SYSCubeID cid)
     }
 
     return false;
+}
+
+ALWAYS_INLINE void Event::cubeEventsClear(PriorityID pid)
+{
+    /*
+     * We had some nonzero set of events for 'pid', and we just finished dispatching
+     * them all, for all cubes.
+     *
+     * We use this opportunity to reset the state for stretched 'touch' events, now
+     * that we know userspace has seen them.
+     */
+
+    switch (pid) {
+
+        case PID_CUBE_TOUCH:
+            return CubeSlots::clearTouchEvents();
+
+        default:
+            break;
+    }
 }
 
 void Event::setBasePending(PriorityID pid, uint32_t param)

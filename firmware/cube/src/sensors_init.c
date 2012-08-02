@@ -26,7 +26,6 @@ __bit nb_rx_mask_state0;
 __bit nb_rx_mask_state1;
 __bit nb_rx_mask_state2;
 __bit nb_rx_mask_bit0;
-__bit touch;
 
 
 static void i2c_tx_byte() __naked

@@ -12,11 +12,13 @@
 #include "svmmemory.h"
 #include "svmfastlz.h"
 #include "svmdebugpipe.h"
+#include "svmclock.h"
 #include "radio.h"
 #include "tasks.h"
 #include "cubeslots.h"
 #include "cube.h"
 #include "ui_panic.h"
+#include "ui_pause.h"
 #include "audiomixer.h"
 #include "event.h"
 #include "led.h"
@@ -89,11 +91,15 @@ bool SvmLoader::loadRWData(const Elf::Program &program)
 
 bool SvmLoader::prepareToExec(const Elf::Program &program, SvmRuntime::StackInfo &stack)
 {
+    // Resync userspace clock with system clock
+    SvmClock::init();
+
     // Default LED behavior
     LED::set(LEDPatterns::idle);
 
     // Reset all event vectors
     Event::clearVectors();
+    UIPause::disableGameMenu();
 
     // Detach any existing video buffers.
     for (unsigned i = 0; i < _SYS_NUM_CUBE_SLOTS; i++) {
@@ -178,6 +184,11 @@ void SvmLoader::exec(FlashVolume vol, RunLevel level)
         SvmRuntime::exec(program.getEntry(), stack);
 }
 
+void SvmLoader::execLauncher()
+{
+    exec(findLauncher(), RUNLEVEL_LAUNCHER);
+}
+
 FlashMapSpan SvmLoader::secondaryMap(FlashVolume vol)
 {
     mapVols[1] = vol;
@@ -209,8 +220,7 @@ void SvmLoader::exit(bool fault)
     default:
     case RUNLEVEL_EXEC:
         // Back to the launcher
-        exec(findLauncher(), RUNLEVEL_LAUNCHER);
-        break;
+        return execLauncher();
 
     case RUNLEVEL_LAUNCHER:
         /*
@@ -224,6 +234,6 @@ void SvmLoader::exit(bool fault)
         SystemMC::exit(fault);
         #endif
 
-        UIPanic::haltForever();
+        return UIPanic::haltForever();
     }
 }

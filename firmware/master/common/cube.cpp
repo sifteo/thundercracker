@@ -39,6 +39,7 @@ void CubeSlot::connect(SysLFS::Key cubeRecord, const RadioAddress &addr, const R
     Atomic::And(CubeSlots::sendShutdown, ~cv);
     Atomic::And(CubeSlots::sendStipple, ~cv);
     Atomic::And(CubeSlots::vramPaused, ~cv);
+    Atomic::And(CubeSlots::touch, ~cv);
 
     // Store new identity
     lastACK = fullACK;
@@ -91,6 +92,35 @@ void CubeSlot::userConnect()
 void CubeSlot::userDisconnect()
 {
     Atomic::And(CubeSlots::userConnected, ~bit());
+}
+
+bool CubeSlot::isTouching() const
+{
+    /*
+     * For pulse-stretching, we need to register a touch if either
+     * the current ACK response indicates a touch, OR if we're holding
+     * onto a touch in CubeSlots::touch.
+     */
+
+    return (bit() & CubeSlots::touch) || (lastACK.neighbors[0] & NB0_FLAG_TOUCH);
+}
+
+void CubeSlot::clearTouchEvent() const
+{
+    /*
+     * Clear the pulse-stretched version of our 'touch' state, once we've
+     * sent a touch event to userspace. Note that this may require sending
+     * another touch event so that userspace can see the cleared state, in
+     * case both a press and release happened before userspace got to see
+     * the press.
+     */
+
+    ASSERT(CubeSlots::touch & bit());
+    Atomic::ClearLZ(CubeSlots::touch, id());
+
+    if (!isTouching()) {
+        Event::setCubePending(Event::PID_CUBE_TOUCH, id());
+    }
 }
 
 void CubeSlot::startAssetLoad(SvmMemory::VirtAddr groupVA, uint16_t baseAddr)
@@ -415,8 +445,18 @@ void CubeSlot::radioAcknowledge(const PacketBuffer &packet)
     if (packet.len >= offsetof(RF_ACKType, neighbors) + sizeof ack->neighbors) {
         // Has valid neighbor/flag data
 
-        // Look for valid touch up/down events, signified by any edge on the touch toggle bit
+        /*
+         * Look for valid touch up/down events, signified by any edge on the touch toggle bit.
+         * We maintain a pulse-stretched version in CubeSlots::touch, which we can set here but
+         * which is never cleared until userspace has a chance to see the event.
+         *
+         * We never clear CubeSlots::touch here. That's done by clearTouchEvent(), after
+         * we finish dispatching events to userspace.
+         */
         if ((lastACK.neighbors[0] ^ ack->neighbors[0]) & NB0_FLAG_TOUCH) {
+            if (ack->neighbors[0] & NB0_FLAG_TOUCH) {
+                Atomic::SetLZ(CubeSlots::touch, id());
+            }
             Event::setCubePending(Event::PID_CUBE_TOUCH, id());
         }
 
@@ -447,14 +487,6 @@ void CubeSlot::radioAcknowledge(const PacketBuffer &packet)
 
     // Store the mutable parts of the ACK packet (Prior to the HWID)
     memcpy(&lastACK, ack, MIN(offsetof(RF_ACKType, hwid), packet.len));
-}
-
-// Are we being touched right now?
-bool CubeSlot::isTouching() const
-{
-    // touch state is transmitted in the NB0_FLAG_TOUCH bit
-    // of the first neighbor value
-    return !!(lastACK.neighbors[0] & NB0_FLAG_TOUCH);
 }
 
 void CubeSlot::radioTimeout()

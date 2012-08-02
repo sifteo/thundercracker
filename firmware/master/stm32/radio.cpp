@@ -42,6 +42,7 @@ void Radio::init()
     radioWatchdog = 0;
 
     NRF24L01::instance.init();
+    RadioManager::enableRadio();
 }
 
 void Radio::setTxPower(TxPower pwr)
@@ -74,6 +75,9 @@ void Radio::heartbeat()
         radioStartup++;
         return;
     }
+
+    if (!RadioManager::isRadioEnabled())
+        return;
 
     /*
      * If no IRQs have happened since the last heartbeat, something

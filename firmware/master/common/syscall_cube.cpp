@@ -44,6 +44,25 @@ void _SYS_setVideoBuffer(_SYSCubeID cid, struct _SYSVideoBuffer *vbuf)
     CubeSlots::instances[cid].setVideoBuffer(vbuf);
 }
 
+void _SYS_setMotionBuffer(_SYSCubeID cid, _SYSMotionBuffer *mbuf)
+{
+    if (!isAligned(mbuf))
+        return SvmRuntime::fault(F_SYSCALL_ADDR_ALIGN);
+
+    /*
+     * Note: Because the buffer's actual size is dynamic, we enforce
+     *       that even a maximally-large motion buffer is mappable
+     *       at this address before we'll accept the pointer.
+     */
+    if (!SvmMemory::mapRAM(mbuf, sizeof *mbuf, true))
+        return SvmRuntime::fault(F_SYSCALL_ADDRESS);
+
+    if (!CubeSlots::validID(cid))
+        return SvmRuntime::fault(F_SYSCALL_PARAM);
+
+    // XXX: Do stuff
+}
+
 uint32_t _SYS_getAccel(_SYSCubeID cid)
 {
     if (!CubeSlots::validID(cid)) {

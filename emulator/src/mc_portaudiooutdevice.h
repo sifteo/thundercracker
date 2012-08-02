@@ -64,6 +64,12 @@ private:
      */
     static const unsigned NUM_WATERMARK_SAMPLES = 100000;
 
+    /*
+     * How many samples do we need before starting a stream? (bufferFilling==true)
+     * We don't want to wait for the full bufferThreshold, since that may be nontrivially large.
+     */
+    static const unsigned FILL_THRESHOLD = 128;
+
     SimBuffer_t simBuffer;
     uint32_t bufferFilling;     // Must be 32-bit (atomic access)
     uint32_t bufferThreshold;   // Number of samples we'd like to keep buffered

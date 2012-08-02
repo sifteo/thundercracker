@@ -38,6 +38,9 @@ public:
     void paint();
     void finish();
     void detach();
+    void setPanX(int x);
+    void setPanY(int y);
+    bool isTouching();
 
     void idle();
 

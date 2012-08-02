@@ -30,7 +30,6 @@ namespace RadioMC {
     };
 
     static Buffer buf;
-    static bool active;
 
     void trace();
 
@@ -102,7 +101,7 @@ void SystemMC::doRadioPacket()
 
     RadioMC::Buffer &buf = RadioMC::buf;
 
-    if (RadioMC::active && buf.triesRemaining == 0) {
+    if (RadioManager::isRadioEnabled() && buf.triesRemaining == 0) {
         // Get a new packet
 
         memset(&buf, 0, sizeof buf);
@@ -136,7 +135,7 @@ void SystemMC::doRadioPacket()
 
     sys->getCubeSync().beginEventAt(radioPacketDeadline, mThreadRunning);
 
-    if (RadioMC::active) {
+    if (RadioManager::isRadioEnabled()) {
         Cube::Hardware *cube = getCubeForAddress(buf.ptx.dest);
         buf.ack = cube && cube->spi.radio.handlePacket(buf.packet, buf.reply);
         buf.ackCube = cube ? cube->id() : -1;
@@ -145,7 +144,7 @@ void SystemMC::doRadioPacket()
     radioPacketDeadline += MCTiming::TICKS_PER_PACKET;
     sys->getCubeSync().endEvent(radioPacketDeadline);
 
-    if (RadioMC::active) {
+    if (RadioManager::isRadioEnabled()) {
 
         --buf.triesRemaining;
 
@@ -175,7 +174,7 @@ void SystemMC::doRadioPacket()
 
 void Radio::init()
 {
-    RadioMC::active = true;
+    RadioManager::enableRadio();
 }
 
 void Radio::heartbeat()

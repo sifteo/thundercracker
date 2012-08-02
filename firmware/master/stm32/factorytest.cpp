@@ -16,6 +16,7 @@
 #include "bootloader.h"
 #include "cube.h"
 #include "tasks.h"
+#include "radioaddrfactory.h"
 
 extern unsigned     __data_start;
 
@@ -24,6 +25,8 @@ uint8_t FactoryTest::commandLen;
 
 uint16_t FactoryTest::rfSuccessCount;
 volatile uint16_t FactoryTest::rfTransmissionsRemaining;
+RadioAddress FactoryTest::rfTestAddr;
+uint8_t FactoryTest::rfTestAddrPrimaryChannel;
 
 FactoryTest::TestHandler const FactoryTest::handlers[] = {
     nrfCommsHandler,            // 0
@@ -103,11 +106,17 @@ void FactoryTest::usbHandler(const USBProtocolMsg &m)
 void FactoryTest::produce(PacketTransmission &tx)
 {
     /*
-     * XXX: since pairing/connection handling is not yet available, assume
-     *      that all cubes being tested are hardcoded with ID 0.
+     * The cube is listening on one of 2 addresses.
+     * Since we don't have a good way of determining which one it's
+     * listening on, send to both and treat a timeout on both as
+     * a failure.
      */
-    CubeSlot &slot = CubeSlot::getInstance(0);
-    tx.dest = slot.getRadioAddress();
+    if (rfTestAddr.channel == rfTestAddrPrimaryChannel)
+        RadioAddrFactory::convertPrimaryToAlternateChannel(rfTestAddr);
+    else
+        rfTestAddr.channel = rfTestAddrPrimaryChannel;
+
+    tx.dest = &rfTestAddr;
     tx.packet.len = 0;
     tx.numSoftwareRetries = 0;
     tx.numHardwareRetries = 0;
@@ -261,7 +270,7 @@ void FactoryTest::shutdownHandler(uint8_t argc, const uint8_t *args)
     // write packet again so we know the first one was transmitted
     UsbDevice::write(response, sizeof response);
 
-    PowerManager::shutdown();
+    PowerManager::batteryPowerOff();
 }
 
 
@@ -281,30 +290,21 @@ void FactoryTest::audioTestHandler(uint8_t argc, const uint8_t *args)
          * (assuming nothing is running there)
          */
 
-        const short TriangleData[] = { 0x7FFF, 0x8000 };
+        const int16_t TriangleData[] = { 0x7FFF, 0x8000 };
+        const void *userTriangleData = SvmMemory::copyToUserRAM(0, TriangleData, sizeof TriangleData);
 
         const _SYSAudioModule Triangle = {
-            /* sampleRate */ 262, // near enough to C-4 (261.626Hz)
+            /* sampleRate */ 262,   // near enough to C-4 (261.626Hz)
             /* loopStart  */ 0,
-            /* loopEnd    */ 1,
+            /* loopEnd    */ arraysize(TriangleData),
             /* loopType   */ _SYS_LOOP_REPEAT,
             /* type       */ _SYS_PCM,
-            /* volume     */ 128,
-            /* dataSize   */ 4,
-            /* pData      */ 0, // gets set appropriately below
+            /* volume     */ _SYS_AUDIO_MAX_VOLUME,
+            /* dataSize   */ sizeof TriangleData,
+            /* pData      */ reinterpret_cast<uintptr_t>(userTriangleData),
         };
 
-        /*
-         * copy AudioModule data, followed by sample data, into user RAM
-         */
-        uint8_t *userram = (uint8_t*)SvmMemory::copyToUserRAM(0, &Triangle, sizeof Triangle);
-        SvmMemory::copyToUserRAM(sizeof Triangle, &TriangleData, sizeof TriangleData);
-
-        // must update sample data pointer to its new location in user RAM!
-        _SYSAudioModule* userTriangle = reinterpret_cast<_SYSAudioModule*>(userram);
-        userTriangle->pData = reinterpret_cast<uint32_t>(userram + sizeof Triangle);
-
-        AudioMixer::instance.play(userTriangle, 0, _SYS_LOOP_REPEAT);
+        AudioMixer::instance.play(&Triangle, 0, _SYS_LOOP_REPEAT);
     }
 
     // no real response - just indicate that we've taken the requested action
@@ -327,16 +327,24 @@ void FactoryTest::bootloadRequestHandler(uint8_t argc, const uint8_t *args)
 
 /*
  * args[1:2] -- uint16 transmission count
+ * args[3:10] -- uint64_t hwid of cube to test
  */
 void FactoryTest::rfPacketTestHandler(uint8_t argc, const uint8_t *args)
 {
+    uint64_t hwid;
+    memcpy(&hwid, &args[3], sizeof hwid);
+    RadioAddrFactory::fromHardwareID(rfTestAddr, hwid);
+    rfTestAddrPrimaryChannel = rfTestAddr.channel;
+
     NRF24L01::setRfTestEnabled(true);
 
     rfSuccessCount = 0;
-    rfTransmissionsRemaining = *reinterpret_cast<const uint16_t*>(&args[1]);
+    // multiply transmission count by 2 since we're sending
+    // each attempt to both channels a cube might be listening on
+    rfTransmissionsRemaining = *reinterpret_cast<const uint16_t*>(&args[1]) * 2;
 
     while (rfTransmissionsRemaining)
-        Tasks::waitForInterrupt();
+        Tasks::work(Intrinsic::LZ(Tasks::UsbOUT)); // don't process more USB traffic until we're out of this handler
 
     NRF24L01::setRfTestEnabled(false);
 

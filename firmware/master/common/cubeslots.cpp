@@ -22,6 +22,7 @@ _SYSCubeIDVector CubeSlots::flashAddrPending = 0;
 _SYSCubeIDVector CubeSlots::sendShutdown = 0;
 _SYSCubeIDVector CubeSlots::sendStipple = 0;
 _SYSCubeIDVector CubeSlots::vramPaused = 0;
+_SYSCubeIDVector CubeSlots::touch = 0;
 
 BitVector<SysLFS::NUM_PAIRINGS> CubeSlots::pairConnected;
 
@@ -133,6 +134,25 @@ void CubeSlots::refreshCubes(_SYSCubeIDVector cv)
         }
 
         Event::setCubePending(Event::PID_CUBE_REFRESH, id);
+    }
+}
+
+void CubeSlots::clearTouchEvents()
+{
+    _SYSCubeIDVector cv = CubeSlots::touch;
+    while (cv) {
+        unsigned id = Intrinsic::CLZ(cv);
+        cv ^= Intrinsic::LZ(id);
+        CubeSlots::instances[id].clearTouchEvent();
+    }
+}
+
+void CubeSlots::disconnectCubes(_SYSCubeIDVector cv)
+{
+    while (cv) {
+        unsigned id = Intrinsic::CLZ(cv);
+        cv ^= Intrinsic::LZ(id);
+        CubeSlots::instances[id].disconnect();
     }
 }
 

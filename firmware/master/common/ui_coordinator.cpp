@@ -127,10 +127,6 @@ void UICoordinator::attachToCube(_SYSCubeID id)
      */
 
     VRAM::init(avb.vbuf);
-    avb.vbuf.vram.mode = _SYS_VM_BG0_ROM;
-    avb.vbuf.vram.first_line = 32;
-    avb.vbuf.vram.num_lines = 64;
-
     savedVBuf = cube.getVBuf();
 
     if (savedVBuf) {
@@ -145,6 +141,10 @@ void UICoordinator::attachToCube(_SYSCubeID id)
 
 void UICoordinator::paint()
 {
+    // We need to clear touch events manually, since we're
+    // intentionally suppressing userspace event dispatch.
+    CubeSlots::clearTouchEvents();
+
     if (isAttached())
         CubeSlots::paintCubes(Intrinsic::LZ(avb.cube), true, excludedTasks);
     else
@@ -162,6 +162,9 @@ void UICoordinator::detach()
     if (avb.cube == _SYS_CUBE_ID_INVALID)
         return;
 
+    // Be a good citizen, make sure we finish painting before returning the cube
+    finish();
+
     if (savedVBuf) {
         savedVBuf->flags = avb.vbuf.flags;
         VRAM::pokeb(*savedVBuf, offsetof(_SYSVideoRAM, flags), avb.vbuf.vram.flags);
@@ -170,6 +173,27 @@ void UICoordinator::detach()
     CubeSlots::instances[avb.cube].setVideoBuffer(savedVBuf);
     avb.cube = _SYS_CUBE_ID_INVALID;
     savedVBuf = 0;
+}
+
+void UICoordinator::setPanX(int x)
+{
+    VRAM::pokeb(avb.vbuf, offsetof(_SYSVideoRAM, bg0_x),
+        umod(x, _SYS_VRAM_BG0_WIDTH * 8));
+}
+
+void UICoordinator::setPanY(int y)
+{
+    VRAM::pokeb(avb.vbuf, offsetof(_SYSVideoRAM, bg0_y),
+        umod(y, _SYS_VRAM_BG0_WIDTH * 8));
+}
+
+bool UICoordinator::isTouching()
+{
+    if (!isAttached())
+        return false;
+
+    CubeSlot &cube = CubeSlots::instances[avb.cube];
+    return cube.isTouching();
 }
 
 void UICoordinator::idle()

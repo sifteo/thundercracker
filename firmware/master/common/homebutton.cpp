@@ -18,71 +18,90 @@
 #include "vram.h"
 #include "cube.h"
 #include "ui_coordinator.h"
-
-#ifdef SIFTEO_SIMULATOR
-#   include "system_mc.h"
-#else
-#   include "powermanager.h"
-#endif
-
-namespace HomeButton {
+#include "ui_pause.h"
+#include "ui_shutdown.h"
+#include "svmloader.h"
+#include "svmclock.h"
+#include "shutdown.h"
 
 
-void shutdown()
+void HomeButtonPressDetector::update()
 {
-    #ifdef SIFTEO_SIMULATOR
-        SystemMC::exit(false);
-    #else
-        PowerManager::shutdown();
-    #endif
-    while (1);
+    bool pressed = HomeButton::isPressed();
+
+    if (!pressed)
+        pressTimestamp = 0;
+    else if (!pressTimestamp)
+        pressTimestamp = SysTime::ticks();
+
+    switch (state) {
+        case S_UNKNOWN:
+            if (!pressed)
+                state = S_IDLE;
+            break;
+
+        case S_IDLE:
+        case S_RELEASED:
+            if (pressed)
+                state = S_PRESSED;
+            break;
+
+        case S_PRESSED:
+            if (!pressed)
+                state = S_RELEASED;
+            break;
+    }
+}
+
+SysTime::Ticks HomeButtonPressDetector::pressDuration() const
+{
+    return HomeButton::isPressed() ? (SysTime::ticks() - pressTimestamp) : 0;
 }
 
 
-void task()
+void HomeButton::task()
 {
-    /*
-     * XXX: This is all just a testbed currently, none of this is intended to be final.
-     */
+    const uint32_t excludedTasks =
+        Intrinsic::LZ(Tasks::AudioPull)  |
+        Intrinsic::LZ(Tasks::HomeButton);
 
     if (!isPressed())
         return;
 
-    LOG(("Entering home button task\n"));
-
-    UICoordinator uic( Intrinsic::LZ(Tasks::AudioPull)  |
-                       Intrinsic::LZ(Tasks::HomeButton) );
-
-    SysTime::Ticks shutdownWarning = SysTime::ticks() + SysTime::sTicks(2);
-    SysTime::Ticks shutdownDeadline = SysTime::ticks() + SysTime::sTicks(4);
-
+    SvmClock::pause();
     LED::set(LEDPatterns::paused, true);
 
-    while (isPressed()) {
+    UICoordinator uic(excludedTasks);
+    UIPause uiPause(uic);
+    UIShutdown uiShutdown(uic);
+    HomeButtonPressDetector press;
+
+    // Immediate shutdown if the button is pressed from the launcher
+    if (SvmLoader::getRunLevel() == SvmLoader::RUNLEVEL_LAUNCHER)
+        return uiShutdown.mainLoop();
+
+    do {
 
         uic.stippleCubes(uic.connectCubes());
 
-        if (uic.pollForAttach()) {
-            // New primary cube attached
-            LOG(("Attached\n"));
+        if (uic.pollForAttach())
+            uiPause.init();
 
-            VRAM::poke(uic.avb.vbuf, 0, _SYS_TILE77('x' - ' '));
+        uiPause.animate();
+        uic.paint();
+        press.update();
+
+        // Long press- shut down
+        if (press.pressDuration() > SysTime::msTicks(1000)) {
+            uiShutdown.init();
+            return uiShutdown.mainLoop();
         }
 
-        uic.paint();
-
-        if (SysTime::ticks() > shutdownWarning)
-            LED::set(LEDPatterns::shutdown);
-
-        if (SysTime::ticks() > shutdownDeadline)
-            shutdown();
-    }
+    } while (!press.isReleased() && !uiPause.isDone());
 
     uic.restoreCubes(uic.uiConnected);
     LED::set(LEDPatterns::idle);
-
-    LOG(("Leaving home button task\n"));
+    Tasks::cancel(Tasks::HomeButton);
+    SvmClock::resume();
+    uiPause.takeAction();
 }
-
-
-} // namespace HomeButton

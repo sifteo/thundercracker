@@ -32,6 +32,13 @@ public:
     // During program execution, load a new program
     static void exec(FlashVolume vol, RunLevel level = RUNLEVEL_EXEC);
 
+    // Exec the launcher in place of whatever's currently running. Does return.
+    static void execLauncher();
+
+    static ALWAYS_INLINE RunLevel getRunLevel() {
+        return RunLevel(runLevel);
+    }
+
     /**
      * Map a full volume in the secondary flash segment.
      * Returns a span, whose map point is valid until the next secondaryMap()

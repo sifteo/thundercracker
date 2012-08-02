@@ -173,22 +173,28 @@ nb_filter:
         ; Touch sensing
         ;--------------------------------------------------------------------
 
+        ; We want to perform some basic pulse-stretching, so that the base
+        ; can reliably detect even touches that are shorter than the duration
+        ; between radio ACK packets.
+        ;
+        ; So, any time we are in this ISR and happen to detect a touch, we
+        ; OR in the touch bit with our ACK buffer. This bit will not be cleared
+        ; until *after* the packet has been sent, when the radio ISR will
+        ; set NB0_FLAG_TOUCH according to the current status of the touch pin.
+        ;
+        ; ALSO: Note that we ALWAYS set RF_ACK_BIT_NEIGHBOR while the touch is
+        ;       being detected. This effectively spams out our ACK packet as long
+        ;       as the finger is against our screen, reducing the possibility that
+        ;       a dropped ACK packet will lead to a dropped touch.
+
         mov     a, _MISC_PORT
         anl     a, #MISC_TOUCH
         jz      6$
 
-        jb      _touch, 8$
-        setb    _touch
-        sjmp    7$
-6$:
-        jnb     _touch, 8$
-        clr     _touch
-7$: 
-
-        xrl     (_ack_data + RF_ACK_NEIGHBOR + 0), #(NB0_FLAG_TOUCH)
+        orl     (_ack_data + RF_ACK_NEIGHBOR + 0), #(NB0_FLAG_TOUCH)
         orl     _ack_bits, #RF_ACK_BIT_NEIGHBOR
-        
-8$:
+6$:
+
         ;--------------------------------------------------------------------
         ; Tick tock.. this is not latency-critical at all, it goes last.
         

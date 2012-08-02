@@ -16,6 +16,7 @@
 #include "cubecodec.h"
 #include "paintcontrol.h"
 #include "flash_syslfs.h"
+#include "motion.h"
 
 
 /**
@@ -69,25 +70,20 @@ class CubeSlot {
         return !!(bit() & CubeSlots::userConnected);
     }
 
+    bool isTouching() const;
+    void clearTouchEvent() const;
+
     void ALWAYS_INLINE setVideoBuffer(_SYSVideoBuffer *v) {
         vbuf = v;
     }
 
     ALWAYS_INLINE const _SYSByte4 getAccelState() {
-        // All bytes in protocol happen to be inverted relative to the SDK
-        _SYSByte4 state;
-        state.x = -lastACK.accel[0];
-        state.y = -lastACK.accel[1];
-        state.z = -lastACK.accel[2];
-        state.w = 0;
-        return state;
+        return MotionUtil::captureAccelState(lastACK);
     }
 
     ALWAYS_INLINE const uint8_t* getRawNeighbors() const {
         return lastACK.neighbors;
     }
-
-    bool isTouching() const;
 
     _SYSAssetGroupCube *assetGroupCube(struct _SYSAssetGroup *group) {
         _SYSAssetGroupCube *cube = reinterpret_cast<_SYSAssetGroupCube*>(group + 1) + id();
@@ -175,6 +171,7 @@ class CubeSlot {
 
     // Other aligned data
     _SYSVideoBuffer *vbuf;
+    MotionWriter motionWriter;
     CubeCodec codec;
     uint16_t timeSyncState;
 

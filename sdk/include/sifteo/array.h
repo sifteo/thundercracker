@@ -269,7 +269,7 @@ public:
     }
 
     /// Is a particular bit marked?
-    bool test(unsigned index)
+    bool test(unsigned index) const
     {
         const unsigned NUM_WORDS = (tSize + 31) / 32;
 
@@ -329,7 +329,7 @@ public:
      * If any marked bits exist, returns true and puts the bit's index
      * in "index". Iff the entire array is zero, returns false.
      */
-    bool findFirst(unsigned &index)
+    bool findFirst(unsigned &index) const
     {
         const unsigned NUM_WORDS = (tSize + 31) / 32;
 

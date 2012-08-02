@@ -6,7 +6,6 @@
  * Copyright <c> 2011 Sifteo, Inc. All rights reserved.
  */
 
-#include <string.h>
 #include "graphics.h"
 
 /*

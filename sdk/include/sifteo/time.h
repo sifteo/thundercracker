@@ -216,6 +216,10 @@ inline float operator-= (float &a, TimeDelta b) { return a -= b.seconds(); }
  * This clock is high resolution, guaranteed to never go backwards,
  * and it will not roll over in any reasonable amount of time.
  *
+ * This clock will pause when the application is paused by the system,
+ * such as when the app falls outside of its registered Metadata::cubeRange()
+ * or when it is explicitly paused by the user.
+ *
  * SystemTimes are represented internally as a 64-bit count of nanoseconds
  * since system boot. Applications should never rely on any particular absolute
  * time having a particular meaning, and there isn't necessarily a reliable

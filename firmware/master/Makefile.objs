@@ -40,6 +40,7 @@ OBJS_COMMON = \
     $(MASTER_DIR)/common/flash_lfs.o \
     $(MASTER_DIR)/common/flash_syslfs.o \
     $(MASTER_DIR)/common/flash_stack.o \
+    $(MASTER_DIR)/common/svmclock.o \
     $(MASTER_DIR)/common/svmloader.o \
     $(MASTER_DIR)/common/svmruntime.o \
     $(MASTER_DIR)/common/svmvalidator.o \
@@ -50,10 +51,15 @@ OBJS_COMMON = \
     $(MASTER_DIR)/common/elfprogram.o \
     $(MASTER_DIR)/common/ui_panic.o \
     $(MASTER_DIR)/common/ui_coordinator.o \
+    $(MASTER_DIR)/common/ui_menu.o \
+    $(MASTER_DIR)/common/ui_shutdown.o \
+    $(MASTER_DIR)/common/ui_pause.o \
     $(MASTER_DIR)/common/imagedecoder.o \
     $(MASTER_DIR)/common/paintcontrol.o \
     $(MASTER_DIR)/common/usbvolumemanager.o \
-    $(MASTER_DIR)/common/ledsequencer.o
+    $(MASTER_DIR)/common/ledsequencer.o \
+    $(MASTER_DIR)/common/shutdown.o \
+    $(MASTER_DIR)/common/motion.o
 
 # Sources common to all stm32 builds (currently master & testjig)
 OBJS_STM32 = \

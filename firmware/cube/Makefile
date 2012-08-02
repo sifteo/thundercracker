@@ -1,3 +1,6 @@
+TC_DIR := ../..
+include $(TC_DIR)/Makefile.platform
+
 BIN = cube.hex
 
 # Main segment
@@ -43,9 +46,8 @@ TC_DIR = ../..
 FIRMWARE_INC = ../include
 SDK_DIR = $(TC_DIR)/sdk
 
-SDCC = sdcc
 CDEPS = src/*.h $(FIRMWARE_INC)/*.h $(SDK_DIR)/include/sifteo/*.h
-override CFLAGS += -I$(FIRMWARE_INC) -I$(SDK_DIR)/include
+override CFLAGS += -Isrc -I$(FIRMWARE_INC) -I$(SDK_DIR)/include
 override CFLAGS += -DNOT_USERSPACE
 
 # Define our CPU's memory limits
@@ -58,6 +60,7 @@ override CFLAGS +=  --opt-code-size
 LDFLAGS += -Wl-bBG1LINE=0x2000
 
 # Don't use any standard library code! (Size optimization)
+override CFLAGS += --nostdinc --Werror
 LDFLAGS += --nostdlib
 
 # Simple size profiler, based on the .rst parser used by our emulator's SBT.

@@ -163,7 +163,7 @@ static uint8_t bitcount16_x2(uint16_t x) __naked
         
         mov     r0, dpl
         mov     r1, dph
-        mov     dptr, #_bitcount16_x2_lut_1_1
+        mov     dptr, #_bitcount16_x2_lut_1_27
 
         mov     a, #0x0F
         anl     a, r0

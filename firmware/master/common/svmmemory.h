@@ -118,6 +118,13 @@ public:
     static bool copyROData(FlashBlockRef &ref, PhysAddr dest, VirtAddr src, uint32_t length);
 
     /**
+     * Copy out read-only data into arbitrary physical RAM, stopping when we hit
+     * a NUL terminator. Guaranteed to NUL-terminate the destination string
+     * unless a fault occurs.
+     */
+    static bool strlcpyROData(FlashBlockRef &ref, char *dest, VirtAddr src, uint32_t destSize);
+
+    /**
      * Perform a 32-bit CRC over read-only data in virtual memory.
      * The address does not need to be aligned at all, and the length
      * can be any arbitrary number of bytes.

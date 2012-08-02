@@ -175,7 +175,9 @@ void UsbDevice::cancelTransfers(Endpoint &ep)
          i != ep.pendingTransfers.end(); ++i)
     {
         int r = libusb_cancel_transfer(*i);
-        if (r < 0)
+
+        // Complain if this isn't an expected error.
+        if (r < 0 && r != LIBUSB_ERROR_OTHER && r != LIBUSB_ERROR_NO_DEVICE)
             fprintf(stderr, "failed to cancel transfer: %s\n", libusb_error_name(r));
     }
 }

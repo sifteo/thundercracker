@@ -6,11 +6,9 @@
  * Copyright <c> 2011 Sifteo, Inc. All rights reserved.
  */
 
-#include <string.h>
 #include "cube_hardware.h"
 #include "lcd.h"
 #include "flash.h"
-#include "time.h"
 #include "lcd_model.h"
 #include "sensors.h"
 #include "radio.h"

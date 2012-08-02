@@ -35,7 +35,8 @@ namespace LEDPatterns {
     extern const LEDPattern idle[];
     extern const LEDPattern panic[];
     extern const LEDPattern paused[];
-    extern const LEDPattern shutdown[];
+    extern const LEDPattern shutdownSlow[];
+    extern const LEDPattern shutdownFast[];
 }
 
 /**

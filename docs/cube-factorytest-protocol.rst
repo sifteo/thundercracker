@@ -18,6 +18,7 @@ entire sequence, and return to a normal sensor polling schedule.
 4. Read a packet. Defined formats:
 
     * [HH LL BB], with H < 4 -- Write 0xBB to VRAM address 0xHHLL
+    * [fc BB] -- Set neighbor ID to 0xBB (Should be OR'ed with 0xE0 already)
     * [fd BB] -- Write 0xBB to Flash FIFO
     * [fe] -- Begin Flash FIFO reset sequence
     * [ff] -- No more packets. Stop polling.

@@ -14,10 +14,12 @@
 #include "svmdebugger.h"
 #include "svmruntime.h"
 #include "svmloader.h"
+#include "svmclock.h"
 #include "radio.h"
 #include "cubeslots.h"
 #include "event.h"
 #include "tasks.h"
+#include "ui_pause.h"
 
 extern "C" {
 
@@ -64,9 +66,7 @@ void _SYS_finish(void)
 
 int64_t _SYS_ticks_ns(void)
 {
-    int64_t ns = SysTime::ticks();
-    ASSERT(ns > 0);
-    return ns;
+    return SvmClock::ticks();
 }
 
 void _SYS_setVector(_SYSVectorID vid, void *handler, void *context)
@@ -93,6 +93,16 @@ void *_SYS_getVectorContext(_SYSVectorID vid)
 
     SvmRuntime::fault(F_SYSCALL_PARAM);
     return NULL;
+}
+
+void _SYS_setGameMenuLabel(const char *label)
+{
+    if (label) {
+        if (!UIPause::setGameMenuLabel(reinterpret_cast<SvmMemory::VirtAddr>(label)))
+            SvmRuntime::fault(F_SYSCALL_ADDRESS);
+    } else {
+        UIPause::disableGameMenu();
+    }
 }
 
 void _SYS_log(uint32_t t, uintptr_t v1, uintptr_t v2, uintptr_t v3,

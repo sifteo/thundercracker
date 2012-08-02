@@ -115,7 +115,7 @@ extern "C" void _start()
     /*
      * Enable VCC SYS asap.
      */
-    PowerManager::earlyInit();
+    PowerManager::batteryPowerOn();
 
 #endif // BOOTLOADABLE
 

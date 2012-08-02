@@ -144,7 +144,6 @@ public:
 
     void handleTimeout();
     void beginReceive();
-    void beginTransmit();
     void pulseCE();
 
     /*

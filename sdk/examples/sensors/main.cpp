@@ -77,7 +77,7 @@ private:
     {
         CubeID cube(id);
         counters[id].touch++;
-        LOG("Touched cube #%d\n", id);
+        LOG("Touch event on cube #%d, state=%d\n", id, cube.isTouching());
 
         String<32> str;
         str << "touch: " << cube.isTouching() <<

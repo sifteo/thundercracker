@@ -24,6 +24,7 @@ Lunar<LuaCube>::RegType LuaCube::methods[] = {
     LUNAR_DECLARE_METHOD(LuaCube, lcdFrameCount),
     LUNAR_DECLARE_METHOD(LuaCube, lcdPixelCount),
     LUNAR_DECLARE_METHOD(LuaCube, exceptionCount),
+    LUNAR_DECLARE_METHOD(LuaCube, getNeighborID),
     LUNAR_DECLARE_METHOD(LuaCube, getRadioAddress),
     LUNAR_DECLARE_METHOD(LuaCube, handleRadioPacket),
     LUNAR_DECLARE_METHOD(LuaCube, saveScreenshot),
@@ -88,6 +89,12 @@ int LuaCube::lcdPixelCount(lua_State *L)
 int LuaCube::exceptionCount(lua_State *L)
 {
     lua_pushinteger(L, LuaSystem::sys->cubes[id].getExceptionCount());
+    return 1;
+}
+
+int LuaCube::getNeighborID(lua_State *L)
+{
+    lua_pushinteger(L, LuaSystem::sys->cubes[id].getNeighborID());
     return 1;
 }
 

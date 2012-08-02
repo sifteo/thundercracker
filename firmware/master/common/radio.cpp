@@ -17,6 +17,7 @@
 #endif
 
 RadioManager::fifo_t RadioManager::fifo;
+bool RadioManager::enabled;
 uint8_t RadioManager::nextPID;
 uint32_t RadioManager::schedule[RadioManager::PID_COUNT];
 uint32_t RadioManager::nextSchedule[RadioManager::PID_COUNT];

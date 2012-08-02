@@ -451,7 +451,7 @@ rxs_diff_1:
         mov     a, R_INPUT
         anl     a, #0xF
         cjne    a, #7, rxs_diff_2
-        ajmp    rx_special              ; Redundant copy encoding, special meaning
+        ljmp    rx_special              ; Redundant copy encoding, special meaning
 
         ;-------------------------------------------
         ; Literal 14-bit index
@@ -684,7 +684,7 @@ rxs_wrdelta_1_fragment:
         add     a, #4           ; n+5  (rx_write_deltas already adds 1)
         mov     R_LOW, a
 
-        ajmp    _rx_write_deltas
+        ljmp    _rx_write_deltas
 
         ;--------------------------------------------------------------------
         ; Special escape codes (8-bit copy encoding)
@@ -956,6 +956,30 @@ rx_ack:
         mov     a, _SPIRDAT
         setb    _RF_CSN                                 ; End SPI transaction
 no_ack:
+
+        ;--------------------------------------------------------------------
+        ; Touch sensing
+        ;--------------------------------------------------------------------
+
+        ; This complements the touch sensing code in TF0. There, we only SET the
+        ; touch bit, in order to stretch brief pulses that may not make it into
+        ; a radio packet otherwise. Here, we already sent the ACK buffer back to
+        ; the master, so we can finally unset any touch state that may have been
+        ; set by TF0.
+        ;
+        ; At this point, our job is as easy as copying the value of the
+        ; MISC_TOUCH pin to the NB0_FLAG_TOUCH bit in our ACK packet.
+        ;
+        ; Warning: This code assumes that (MISC_TOUCH >> 1) == NB0_FLAG_TOUCH.
+
+        mov     a, _MISC_PORT
+        rr      a
+        xrl     a, (_ack_data + RF_ACK_NEIGHBOR + 0)
+        anl     a, #NB0_FLAG_TOUCH
+        jz      1$
+        xrl     (_ack_data + RF_ACK_NEIGHBOR + 0), a
+        orl     _ack_bits, #RF_ACK_BIT_NEIGHBOR
+1$:
 
         ;--------------------------------------------------------------------
         ; Cleanup

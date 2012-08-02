@@ -32,6 +32,14 @@ class CubeConnector {
 public:
     static void init();
 
+    static ALWAYS_INLINE void enableReconnect() {
+        reconnectEnabled = true;
+    }
+
+    static ALWAYS_INLINE void disableReconnect() {
+        reconnectEnabled = false;
+    }
+
     // RadioManager callbacks
     static void radioProduce(PacketTransmission &tx);
     static void radioAcknowledge(const PacketBuffer &packet);
@@ -62,6 +70,7 @@ private:
     };
 
     static uint8_t neighborKey;
+    static bool reconnectEnabled;
     static _SYSPseudoRandomState prng;
 
     static SysLFS::PairingIDRecord savedPairingID;

@@ -36,6 +36,7 @@ typedef enum {
     _SYS_BASE_TRACKER,
     _SYS_CUBE_BATTERY,
     _SYS_CUBE_REFRESH,
+    _SYS_BASE_GAME_MENU,
 
     _SYS_NUM_VECTORS,   // Must be last
 } _SYSVectorID;
