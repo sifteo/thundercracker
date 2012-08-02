@@ -69,9 +69,36 @@ union _SYSByte4 {
     };
 };
 
+/*
+ * Neighbors
+ */
+
 union _SYSNeighborState {
     uint32_t value;
     _SYSCubeID sides[4];
+};
+
+/*
+ * Motion reporting
+ */
+
+#define _SYS_MOTION_MAX_ENTRIES     256     // Max size of motion buffer
+#define _SYS_MOTION_TIMESTAMP_NS    250000  // Nanoseconds per timestamp unit (0.25 ms)
+
+struct _SYSMotionBufferHeader {
+    uint8_t tail;           /// Index of the next empty slot to write into
+    uint8_t size;           /// Number of buffer slots in use. If tail==size, tail wraps to 0
+    uint8_t reserved[2];    /// Initialize to zero
+    /*
+     * Followed by variable-size array of _SYSByte4.
+     * The 'w' field is used for a timestamp, encoded as a delta since
+     * the last mesurement, in units of _SYS_MOTION_TIMESTAMP_NS.
+     */
+};
+
+struct _SYSMotionBuffer {
+    _SYSMotionBufferHeader header;
+    _SYSByte4 buf[_SYS_MOTION_MAX_ENTRIES];
 };
 
 /*
