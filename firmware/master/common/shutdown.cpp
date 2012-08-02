@@ -54,6 +54,7 @@ void ShutdownManager::shutdown()
 
 	RadioManager::disableRadio();
 	CubeSlots::disconnectCubes(CubeSlots::sysConnected);
+	LOG(("SHUTDOWN: Entering USB-sleep state\n"));
 
 	while (!HomeButton::isPressed())
 		Tasks::idle(excludedTasks);
@@ -69,6 +70,7 @@ void ShutdownManager::shutdown()
 	CubeConnector::enableReconnect();
 	RadioManager::enableRadio();
 	SvmLoader::execLauncher();
+	LOG(("SHUTDOWN: Resuming from USB-sleep state\n"));
 }
 
 void ShutdownManager::housekeeping()

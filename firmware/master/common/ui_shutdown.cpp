@@ -41,10 +41,12 @@ namespace {
     static const int kSlideOrigin = -kSlideWidth + (kDigitWidth * TILE / 2) + 6;
 }
 
+UIShutdown::UIShutdown(UICoordinator &uic)
+    : uic(uic), digit(kFirstDigit), done(false)
+{}
+
 void UIShutdown::init()
 {
-    done = false;
-
     if (!uic.isAttached())
         return;
 
@@ -61,7 +63,7 @@ void UIShutdown::init()
     uic.setPanY(0);
     uic.paint();
 
-    beginDigit(kFirstDigit);
+    beginDigit(digit);
 }
 
 void UIShutdown::beginDigit(unsigned number)
@@ -78,7 +80,14 @@ void UIShutdown::beginDigit(unsigned number)
 
 void UIShutdown::animate()
 {
-    if (done || !uic.isAttached())
+    /*
+     * NB: We do want to continue animating even if we aren't attached to a cube.
+     *     Shutdown should work the same even when no cubes are attached, using the
+     *     LED for visual feedback. In that case, this animation sequence (even though
+     *     it isn't visible) still times the shutdown process.
+     */
+
+    if (done)
         return;
 
     CubeSlot &cube = CubeSlots::instances[uic.avb.cube];
@@ -86,10 +95,18 @@ void UIShutdown::animate()
 
     if (t > 1.0f) {
         if (digit == 1) {
+            // Finished the last digit!
             done = true;
             drawLogo();
+
         } else {
+            // Next digit
             beginDigit(digit - 1);
+
+            if (digit == 1) {
+                // Beginning the last digit, blink faster
+                LED::set(LEDPatterns::shutdownFast);
+            }
         }
         return;
     }
@@ -187,7 +204,7 @@ void UIShutdown::mainLoop()
 {
     HomeButtonPressDetector press;
 
-    LED::set(LEDPatterns::shutdown, true);
+    LED::set(LEDPatterns::shutdownSlow, true);
 
     while (1) {
 

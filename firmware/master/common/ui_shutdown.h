@@ -19,7 +19,7 @@ class UICoordinator;
 
 class UIShutdown {
 public:
-    UIShutdown(UICoordinator &uic) : uic(uic) {}
+    UIShutdown(UICoordinator &uic);
 
     // Default main loop
     void mainLoop();

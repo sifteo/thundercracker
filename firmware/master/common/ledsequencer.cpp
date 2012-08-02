@@ -36,7 +36,13 @@ const LEDPattern LEDPatterns::paused[] = {
     { 0 }
 };
 
-const LEDPattern LEDPatterns::shutdown[] = {
+const LEDPattern LEDPatterns::shutdownSlow[] = {
+    { 5, 0xFF, 0x00 },
+    { 40, 0x00, 0x00 },
+    { 0 }
+};
+
+const LEDPattern LEDPatterns::shutdownFast[] = {
     { 5, 0xFF, 0x00 },
     { 20, 0x00, 0x00 },
     { 0 }
