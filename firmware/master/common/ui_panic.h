@@ -3,8 +3,8 @@
  * Copyright <c> 2012 Sifteo, Inc. All rights reserved.
  */
 
-#ifndef _PANIC_H
-#define _PANIC_H
+#ifndef _UI_PANIC_H
+#define _UI_PANIC_H
 
 #include <sifteo/abi.h>
 #include "svmmemory.h"
@@ -16,9 +16,14 @@
  * This can be used to display messages when nothing else is available:
  * for example, in the case of an unhandled fault in the loader, or
  * during debugging.
+ *
+ * In order to make this runnable at any time, even deep in interrupts,
+ * we opt to steal memory from userspace instead of the stack.
+ * This means it's impossible to continue executing userspace code
+ * after using UIPanic.
  */
 
-class PanicMessenger {
+class UIPanic {
 public:
     _SYSAttachedVideoBuffer *avb;
     uint16_t addr;
@@ -34,19 +39,18 @@ public:
     /// Like haltForever(), but allow resuming on home button press/release
     static void haltUntilButton();
 
-    PanicMessenger &at(int x, int y) {
+    UIPanic &at(int x, int y) {
         addr = x + _SYS_VRAM_BG0_WIDTH * y;
         return *this;
     }
 
-    PanicMessenger &operator<< (char c);
-    PanicMessenger &operator<< (const char *str);
-    PanicMessenger &operator<< (uint8_t byte);
-    PanicMessenger &operator<< (uint32_t word);
+    UIPanic &operator<< (char c);
+    UIPanic &operator<< (const char *str);
+    UIPanic &operator<< (uint8_t byte);
+    UIPanic &operator<< (uint32_t word);
 
 private:
     void dumpScreenToUART();
-    static void animateLED();
 };
 
 

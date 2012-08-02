@@ -9,30 +9,16 @@
 
 void HwTimer::init(uint16_t period, uint16_t prescaler) const
 {
-    if (tim == &TIM2) {
-        RCC.APB1ENR |= (1 << 0); // TIM2 enable
-        RCC.APB1RSTR = (1 << 0); // TIM2 reset
-        RCC.APB1RSTR = 0;
-    }
-    else if (tim == &TIM3) {
-        RCC.APB1ENR |= (1 << 1); // TIM3 enable
-        RCC.APB1RSTR = (1 << 1); // TIM3 reset
-        RCC.APB1RSTR = 0;
-    }
-    else if (tim == &TIM4) {
-        RCC.APB1ENR |= (1 << 2); // TIM4 enable
-        RCC.APB1RSTR = (1 << 2); // TIM4 reset
-        RCC.APB1RSTR = 0;
-    }
-    else if (tim == &TIM5) {
-        RCC.APB1ENR |= (1 << 3); // TIM5 enable
-        RCC.APB1RSTR = (1 << 3); // TIM5 reset
-        RCC.APB1RSTR = 0;
-    }
-    else if (tim == &TIM1) {
+    if (tim == &TIM1) {
         RCC.APB2ENR |= (1 << 11); // TIM1 enable
         RCC.APB2RSTR = (1 << 11); // TIM1 reset
         RCC.APB2RSTR = 0;
+
+    } else if (tim >= &TIM2 && tim <= &TIM7) {
+        unsigned bit = 1 << ((((uintptr_t)tim) >> 10) & 7);
+        RCC.APB1ENR |= bit; // TIM2-TIM7 enable
+        RCC.APB1RSTR = bit; // TIM2-TIM7 reset
+        RCC.APB1RSTR = 0;
     }
 
     // Timer configuration

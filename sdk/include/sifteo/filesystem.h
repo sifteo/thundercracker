@@ -543,6 +543,16 @@ public:
         return sys.freeUnits * sys.unitSize;
     }
 
+    /// Total space, in allocation units
+    uint32_t totalUnits() {
+        return sys.totalUnits;
+    }
+
+    /// Total space, in bytes
+    uint32_t totalBytes() {
+        return sys.totalUnits * sys.unitSize;
+    }
+
     /**
      * Space used by system data, in allocation units
      *

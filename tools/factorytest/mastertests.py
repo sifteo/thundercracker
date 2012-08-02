@@ -102,41 +102,49 @@ def UniqueIdTest(devMgr):
 def VBattCurrentDrawTest(devMgr):
     jig = devMgr.testjig();
     _setUsbEnabled(jig, False)
-
-    # Master Power Iteration - cycles from 3.2V down to 2.0V and then back up
-    # TODO: tune windows for success criteria
-    measurements = ( (3.2, 0, 0xfff),
-                     (2.9, 0, 0xfff),
-                     (2.6, 0, 0xfff),
-                     (2.3, 0, 0xfff),
-                     (2.0, 0, 0xfff) )
-    for m in measurements:
-        voltage = m[0]
-        minCurrent = m[1]
-        maxCurrent = m[2]
-
-        # set voltage
-        # scale voltages to the 12-bit DAC output, and send them LSB first
-        bit12 = int(rangeHelper(voltage, 0.0, 3.3, 0, 0xfff))
-        pkt = [SimulatedBatteryVoltageID, bit12 & 0xff, (bit12 >> 8) & 0xff]
-        jig.txPacket(pkt)
-        resp = jig.rxPacket()
-        if resp.opcode != SimulatedBatteryVoltageID:
-            return False
-
-        time.sleep(1)
-
-        # read current & verify against window
-        jig.txPacket([GetBattSupplyCurrentID])
-        resp = jig.rxPacket()
-        if resp.opcode != GetBattSupplyCurrentID or len(resp.payload) < 2:
-            return False
-        current = resp.payload[0] | resp.payload[1] << 8
-        print "current draw @ %.2fV: 0x%x" % (voltage, current)
-        if current < minCurrent or current > maxCurrent:
-            return False
-
+    
+    time.sleep(1)
+    
+    _setUsbEnabled(jig, True)
+    
+    time.sleep(1)
+    
     return True
+
+    # # Master Power Iteration - cycles from 3.2V down to 2.0V and then back up
+    # # TODO: tune windows for success criteria
+    # measurements = ( (3.2, 0, 0xfff),
+    #                  (2.9, 0, 0xfff),
+    #                  (2.6, 0, 0xfff),
+    #                  (2.3, 0, 0xfff),
+    #                  (2.0, 0, 0xfff) )
+    # for m in measurements:
+    #     voltage = m[0]
+    #     minCurrent = m[1]
+    #     maxCurrent = m[2]
+    # 
+    #     # set voltage
+    #     # scale voltages to the 12-bit DAC output, and send them LSB first
+    #     bit12 = int(rangeHelper(voltage, 0.0, 3.3, 0, 0xfff))
+    #     pkt = [SimulatedBatteryVoltageID, bit12 & 0xff, (bit12 >> 8) & 0xff]
+    #     jig.txPacket(pkt)
+    #     resp = jig.rxPacket()
+    #     if resp.opcode != SimulatedBatteryVoltageID:
+    #         return False
+    # 
+    #     time.sleep(1)
+    # 
+    #     # read current & verify against window
+    #     jig.txPacket([GetBattSupplyCurrentID])
+    #     resp = jig.rxPacket()
+    #     if resp.opcode != GetBattSupplyCurrentID or len(resp.payload) < 2:
+    #         return False
+    #     current = resp.payload[0] | resp.payload[1] << 8
+    #     print "current draw @ %.2fV: 0x%x" % (voltage, current)
+    #     if current < minCurrent or current > maxCurrent:
+    #         return False
+    # 
+    # return True
 
 def ListenForNeighborsTest(devMgr):
     jig = devMgr.testjig()

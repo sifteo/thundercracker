@@ -10,12 +10,15 @@
 #include "system.h"
 #include "ostime.h"
 #include "system_cubes.h"
+#include "mc_neighbor.h"
 
 
 bool SystemCubes::init(System *sys)
 {
     this->sys = sys;
     deadlineSync.init(&sys->time, &mThreadRunning);
+
+    MCNeighbor::cubeInit(&sys->time);
 
     if (sys->opt_cubeFirmware.empty() && (!sys->opt_cube0Profile.empty() || 
                                            sys->opt_cube0Debug)) {
@@ -155,13 +158,11 @@ void SystemCubes::threadFn(void *param)
 
     SystemCubes *self = (SystemCubes *) param;
     System *sys = self->sys;
-    unsigned nCubes = sys->opt_numCubes;
-    bool debug = sys->opt_cube0Debug && nCubes;
 
     TimeGovernor gov;
     gov.start(&sys->time);
     
-    if (debug)
+    if (sys->opt_cube0Debug && sys->opt_numCubes)
         Cube::Debug::attach(&sys->cubes[0]);
 
     // Seed PRNG per-thread
@@ -177,9 +178,9 @@ void SystemCubes::threadFn(void *param)
          */
 
         self->mBigCubeLock.lock();
-        if (nCubes == 0) {
+        if (sys->opt_numCubes == 0) {
             self->tickLoopEmpty();
-        } else if (debug) {
+        } else if (sys->opt_cube0Debug) {
             self->tickLoopDebug();
         } else if (!sys->cubes[0].cpu.sbt || sys->cubes[0].cpu.mProfileData || Tracer::isEnabled()) {
             self->tickLoopGeneral();
@@ -203,6 +204,7 @@ void SystemCubes::threadFn(void *param)
 ALWAYS_INLINE void SystemCubes::tick(unsigned count)
 {
     sys->time.tick(count);
+    MCNeighbor::cubeTick();
     deadlineSync.tick();
 }
 
@@ -291,7 +293,9 @@ NEVER_INLINE void SystemCubes::tickLoopFastSBT()
         }
 
         tick(stepSize);
+
         stepSize = std::min(nextStep, (unsigned)deadlineSync.remaining());
+        stepSize = std::min(stepSize, (unsigned)MCNeighbor::cubeDeadlineRemaining());
     }
 }
 
@@ -311,6 +315,8 @@ NEVER_INLINE void SystemCubes::tickLoopEmpty()
         batch -= stepSize;
         nextStep = batch;
         tick(stepSize);
+
         stepSize = std::min(nextStep, (unsigned)deadlineSync.remaining());
+        stepSize = std::min(stepSize, (unsigned)MCNeighbor::cubeDeadlineRemaining());
     }
 }

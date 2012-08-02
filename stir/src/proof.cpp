@@ -131,7 +131,8 @@ void ProofWriter::writeGroup(const Group &group)
 
     defineTiles(group.getPool());
 
-    tileRange(0, group.getPool().size(), Tile::SIZE, 96);
+    if (!group.isFixed())
+        tileRange(0, group.getPool().size(), Tile::SIZE, 96);
 
     for (std::set<Image*>::iterator i = group.getImages().begin();
          i != group.getImages().end(); i++) {

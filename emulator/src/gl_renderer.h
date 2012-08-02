@@ -37,6 +37,7 @@
 #include <vector>
 #include <string>
 #include "system.h"
+#include "frontend_model.h"
 
 
 class GLRenderer {
@@ -53,7 +54,7 @@ class GLRenderer {
     void drawCube(unsigned id, b2Vec2 center, float angle, float hover,
                   b2Vec2 tilt, const uint16_t *framebuffer, bool framebufferChanged,
                   b2Mat33 &modelMatrix);
-    void drawMothership(unsigned id, b2Vec2 center, float angle);
+    void drawMC(b2Vec2 center, float angle, const float led[3]);
 
     void beginOverlay();
     void overlayRect(int x, int y, int w, int h, const float color[4], GLhandleARB program = 0);
@@ -78,39 +79,19 @@ class GLRenderer {
     }
 
  private:
-    struct VertexTN {
-        GLfloat tx, ty;
-        GLfloat nx, ny, nz;
-        GLfloat vx, vy, vz;
-    };
 
-    struct VertexT {
-        GLfloat tx, ty;
-        GLfloat vx, vy, vz;
-    };
-    
-    struct Glyph {
-        // From the BMFont file format
-        uint32_t id;
-        uint16_t x;
-        uint16_t y;
-        uint16_t width;
-        uint16_t height;
-        int16_t xOffset;
-        int16_t yOffset;
-        int16_t xAdvance;
-        uint8_t page;
-        uint8_t channel;
-    };
-    
     struct CubeTransformState {
         b2Mat33 *modelMatrix;
         bool isTilted;
         bool nonPixelAccurate;
     };
     
-    const Glyph *findGlyph(uint32_t id);
-    
+    struct Model {
+        FrontendModel data;
+        GLuint vb;
+        GLuint ib;
+    };
+
     void initCubeFB(unsigned id);
     void initCubeTexture(GLuint name, bool pixelAccurate);
     void cubeTransform(b2Vec2 center, float angle, float hover,
@@ -118,27 +99,36 @@ class GLRenderer {
 
     void drawCubeBody();
     void drawCubeFace(unsigned id, const uint16_t *framebuffer);
+
+    void loadModel(const uint8_t *data, Model &model);
+    void drawModel(Model &model);
     
     GLuint loadTexture(const uint8_t *pngData, GLenum wrap=GL_CLAMP, GLenum filter=GL_LINEAR);
     GLhandleARB loadShader(GLenum type, const uint8_t *source, const char *prefix="");
     GLhandleARB linkProgram(GLhandleARB fp, GLhandleARB vp);
     GLhandleARB loadCubeFaceProgram(const char *prefix);
     
-    void createRoundedRect(std::vector<VertexTN> &outPolygon, float size, float height, float relRadius);
-    void extrudePolygon(const std::vector<VertexTN> &inPolygon, std::vector<VertexTN> &outTristrip);
-
     void saveTexturePNG(std::string name, unsigned width, unsigned height);
-	void saveColorBufferPNG(std::string name);
-	
+    void saveColorBufferPNG(std::string name);
+
     int viewportWidth, viewportHeight;
-    
+
+    Model cubeBody;
+    Model cubeFace;
+    Model mcBody;
+    Model mcFace;
+    Model mcVolume;
+
     GLhandleARB cubeFaceProgFiltered;
     GLhandleARB cubeFaceProgUnfiltered;
-    GLuint cubeFaceTexture;
     GLuint cubeFaceHilightTexture;
-    GLuint cubeFaceHilightMaskTexture;
 
-    GLhandleARB cubeSideProgram;
+    GLhandleARB cubeBodyProgram;
+
+    GLhandleARB mcFaceProgram;
+    GLuint mcFaceNormalsTexture;
+    GLuint mcFaceLightTexture;
+    GLuint mcFaceLEDLocation;
 
     GLhandleARB backgroundProgram;
     GLuint backgroundTexture;
@@ -157,8 +147,6 @@ class GLRenderer {
         unsigned pixelZoomMode;
     } currentFrame;
 
-    std::vector<VertexTN> faceVA;
-    std::vector<VertexTN> sidesVA;
     std::vector<VertexT> overlayVA;
 
     // To reduce graphics pipeline stalls, we have a small round-robin buffer of textures.

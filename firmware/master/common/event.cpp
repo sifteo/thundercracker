@@ -154,7 +154,7 @@ bool Event::dispatchCubePID(PriorityID pid, _SYSCubeID cid)
         default:                    ASSERT(0);
     }
 
-    return true;
+    return false;
 }
 
 void Event::setBasePending(PriorityID pid, uint32_t param)
@@ -167,7 +167,7 @@ void Event::setBasePending(PriorityID pid, uint32_t param)
     Atomic::Store(params[pid].generic, param);
     pending.atomicMark(pid);
 }
-    
+
 void Event::setCubePending(PriorityID pid, _SYSCubeID cid)
 {
     ASSERT(cid < _SYS_NUM_CUBE_SLOTS);

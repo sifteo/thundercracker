@@ -6,6 +6,7 @@
 #include "systime.h"
 #include "hardware.h"
 #include "gpio.h"
+#include "tasks.h"
 
 static const unsigned SYSTICK_HZ = (72000000 / 8);
 static const unsigned SYSTICK_IRQ_HZ = 10;
@@ -48,6 +49,9 @@ void SysTime::init()
 IRQ_HANDLER ISR_SysTick()
 {
     tickBase += SysTime::hzTicks(SYSTICK_IRQ_HZ);
+
+    STATIC_ASSERT(SYSTICK_IRQ_HZ == Tasks::HEARTBEAT_HZ);
+    Tasks::heartbeatISR();
 }
 
 SysTime::Ticks SysTime::ticks()

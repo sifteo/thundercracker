@@ -2,8 +2,9 @@ LOCAL_OBJS = \
     src/ostime.o \
     src/frontend.o \
     src/frontend_cube.o \
-    src/frontend_mothership.o \
+    src/frontend_mc.o \
     src/frontend_overlay.o \
+    src/frontend_bmfont.o \
     src/lua_script.o \
     src/lua_system.o \
     src/lua_frontend.o \
@@ -32,6 +33,7 @@ LOCAL_OBJS = \
     src/lsdec.o \
     src/tinythread.o \
     src/wavefile.o \
+    src/mc_radio.o \
     src/mc_crc.o \
     src/mc_audiooutdevice.o \
     src/mc_audiovisdata.o \
@@ -46,7 +48,6 @@ LOCAL_OBJS = \
     src/mc_elfdebuginfo.o \
     src/mc_logdecoder.o \
     src/mc_gdbserver.o \
-    src/mc_led.o \
     src/mc_syscall_math.o \
     src/mc_neighbor.o \
     resources/data.o \
@@ -57,6 +58,11 @@ GENERATED_FILES = \
     resources/firmware-sbt.cpp
 
 DATADEPS = \
+    resources/model_cube_body.bin \
+    resources/model_cube_face.bin \
+    resources/model_mc_body.bin \
+    resources/model_mc_face.bin \
+    resources/model_mc_volume.bin \
     resources/*.png \
     resources/*.glsl \
     resources/*.fnt \

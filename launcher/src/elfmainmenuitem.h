@@ -21,6 +21,8 @@ public:
     virtual MainMenuItem::Flags getAssets(Sifteo::MenuItem &assets, Sifteo::MappedVolume &map);
     virtual void bootstrap(Sifteo::CubeSet cubes, ProgressDelegate &progress);
 
+    virtual Sifteo::Volume getVolume() { return volume; }
+
     virtual void exec() {
         volume.exec();
     }

@@ -8,13 +8,9 @@
 
 #include "frontend.h"
 #include "ostime.h"
+#include "mc_homebutton.h"
+#include "mc_neighbor.h"
 #include <time.h>
-
-/*
- * NB: button handling should go through FrontendMothership once that
- * is resurrected.
- */
-#include "homebutton.h"
 
 Frontend *Frontend::instance = NULL;
 tthread::mutex Frontend::instanceLock;
@@ -43,18 +39,10 @@ bool Frontend::init(System *_sys)
     instance = this;
     sys = _sys;
     frameCount = 0;
-    cubeCount = 0;
+    cubeCount = -1;
     toggleZoom = false;
     isRunning = true;
     isRotationFixed = sys->opt_lockRotationByDefault;
-
-#if MOTHERSHIP
-    mothershipCount = 1;
-    b2Vec2 p = cubes[0].getBody()->GetPosition();
-    motherships[0].init(0, world, p.x, p.y);
-#else
-    mothershipCount = 0;
-#endif
 
     /*
      * We need to first position our default set of cubes, then
@@ -68,12 +56,15 @@ bool Frontend::init(System *_sys)
     // Zoom in from a slightly wider default view
     viewExtent = targetViewExtent() * 3.0;
 
+    // Initial postiion for the MC, center bottom
+    mc.init(world, 0, targetViewExtent());
+
     // Listen for collisions. This is how we update our neighbor matrix.
     world.SetContactListener(&contactListener);
 
     // Open our GUI window
     glfwInit();
-    if (!openWindow(800, 600))
+    if (!openWindow(sys->opt_windowWidth, sys->opt_windowHeight))
         return false;
 
     overlay.init(&renderer, sys);
@@ -135,7 +126,7 @@ void Frontend::updateCubeCount()
             if (instance->cubes[i].isInitialized())
                 instance->cubes[i].exit();
 
-        normalViewExtent = viewExtentForCubeCount(targetCubeCount);
+        normalViewExtent = std::max(normalViewExtent, viewExtentForCubeCount(targetCubeCount));
     }
 }
 
@@ -167,14 +158,18 @@ void Frontend::moveWalls(bool immediate)
      * (unless changed by the user) but the vertical size changes
      * depending on the window aspect ratio. We'll try to move the
      * walls accordingly.
+     *
+     * We add a little bit of space beyond the actual viewport
+     * extent, to allow objects to get part of one cube-width
+     * off screen. This makes the whole area feel less cramped,
+     * and it lets you get items (like the base) out of the way
+     * without losing them.
      */
 
-    float yRatio = renderer.getHeight() / (float)renderer.getWidth();
-    if (yRatio < 0.1)
-        yRatio = 0.1;
+    const float padding = CubeConstants::SIZE * 1.5f;
 
-    float x = maxViewExtent + normalViewExtent;
-    float y = maxViewExtent + normalViewExtent * yRatio;
+    float x = padding + maxViewExtent + normalViewExtent;
+    float y = padding + maxViewExtent + normalViewExtent * getYRatio();
 
     if (immediate) {
         walls[0]->SetTransform(b2Vec2( x,  0), 0);
@@ -368,7 +363,7 @@ void GLFWCALL Frontend::onKey(int key, int state)
             break;
 
         case 'B':
-            HomeButton::onChange();
+            HomeButton::setPressed(true);
             break;
 
         case 'Z':
@@ -408,7 +403,7 @@ void GLFWCALL Frontend::onKey(int key, int state)
             break;
         
         case GLFW_KEY_SPACE:
-            if (instance->mouseIsPulling)
+            if (instance->mouseIsPulling && instance->mousePicker.mCube)
                 instance->hoverOrRotate();
             break;
 
@@ -449,7 +444,7 @@ void GLFWCALL Frontend::onKey(int key, int state)
         switch (key) {
 
         case 'B':
-            HomeButton::onChange();
+            HomeButton::setPressed(false);
             break;
 
         }
@@ -510,13 +505,36 @@ void Frontend::onMouseDown(int button)
 {
     idleFrames = 0;
     
-    if (button == GLFW_MOUSE_BUTTON_RIGHT && mouseIsPulling)
+    if (button == GLFW_MOUSE_BUTTON_RIGHT && mouseIsPulling && mousePicker.mCube)
         hoverOrRotate();
     
     if (!mouseBody) {
         mousePicker.test(world, mouseVec(normalViewExtent));
 
         isAnimatingNewCubeLayout = false;
+
+        if (mousePicker.mMC) {
+            // Pulling the MC with the mouse. Like pulling a cube, but much simpler!
+
+            b2BodyDef mouseDef;
+            mouseDef.type = b2_kinematicBody;
+            mouseDef.position = mousePicker.mPoint;
+            mouseDef.allowSleep = false;
+            mouseBody = world.CreateBody(&mouseDef);
+
+            mouseIsPulling = true;
+
+            b2Vec2 anchor = mousePicker.mPoint;
+            b2Vec2 center = mousePicker.mMC->getBody()->GetWorldCenter();
+            float centerDist = b2Distance(anchor, center);
+
+            if (centerDist < MCConstants::CENTER_SIZE)
+                HomeButton::setPressed(true);
+
+            b2RevoluteJointDef jointDef;
+            jointDef.Initialize(mousePicker.mMC->getBody(), mouseBody, anchor);
+            mouseJoint = (b2RevoluteJoint*) world.CreateJoint(&jointDef);
+        }
 
         if (mousePicker.mCube) {
             // This body represents the mouse itself now as a physical object
@@ -551,10 +569,10 @@ void Frontend::onMouseDown(int button)
                  * lets us pull/push a cube, or by grabbing it at an
                  * edge or corner, rotate it intuitively.
                  */
-                
+
                 mouseIsPulling = true;
                 mousePicker.mCube->setHoverTarget(CubeConstants::HOVER_SLIGHT);
-                
+
                 /*
                  * Pick an attachment point. If we're close to the center,
                  * snap our attachment point to the center of mass, and
@@ -624,6 +642,10 @@ void Frontend::onMouseUp(int button)
             mousePicker.mCube->setTiltTarget(b2Vec2(0.0f, 0.0f));
             mousePicker.mCube->setTouch(false);
             mousePicker.mCube->setHoverTarget(CubeConstants::HOVER_NONE);                
+        }
+
+        if (mousePicker.mMC) {
+            HomeButton::setPressed(glfwGetKey('B') == GLFW_PRESS);
         }
 
         /* Mouse state reset */
@@ -710,11 +732,6 @@ void Frontend::animate()
         }
     }
 
-    for (unsigned i = 0; i < mothershipCount; ++i) {
-        /* Mothership animations */
-        motherships[i].animate();
-    }
-
     for (unsigned i = 0; i < cubeCount; i++) {
         /* Grid layout animation */
         if (isAnimatingNewCubeLayout) {
@@ -725,6 +742,9 @@ void Frontend::animate()
         /* Local per-cube animations */
         cubes[i].animate();
     }
+
+    // Local animation on the MC
+    mc.animate();
 
     /* Animated viewport centering/zooming */
     {
@@ -785,6 +805,11 @@ void Frontend::scaleViewExtent(float ratio)
                                       CubeConstants::SIZE * 0.1, maxViewExtent);
 }
 
+float Frontend::getYRatio()
+{
+    return std::max(0.1f, renderer.getHeight() / (float)renderer.getWidth());
+}
+
 void Frontend::draw()
 {
     // Pixel zoom mode, with respect to current view rather than target view.
@@ -801,9 +826,6 @@ void Frontend::draw()
         renderer.drawDefaultBackground(viewExtent * ratio * 50.0f, 0.2f);
     }
 
-    for (unsigned i = 0; i < mothershipCount; ++i) {
-        motherships[i].draw(renderer);
-    }
     for (unsigned i = 0; i < cubeCount; i++) {
         if (cubes[i].draw(renderer)) {
             // We found a cube that isn't idle.
@@ -811,6 +833,7 @@ void Frontend::draw()
         }
     }
 
+    mc.draw(renderer);
     renderer.beginOverlay();
 
     // Per-cube status overlays
@@ -943,6 +966,7 @@ void Frontend::MousePicker::test(b2World &world, b2Vec2 point)
 
     mPoint = point;
     mCube = NULL;
+    mMC = NULL;
 
     world.QueryAABB(this, aabb);
 }
@@ -953,6 +977,11 @@ bool Frontend::MousePicker::ReportFixture(b2Fixture *fixture)
 
     if (fdat && fdat->type == fdat->T_CUBE && fixture->TestPoint(mPoint)) {
         mCube = fdat->ptr.cube;
+        return false;
+    }
+
+    if (fdat && fdat->type == fdat->T_MC && fixture->TestPoint(mPoint)) {
+        mMC = fdat->ptr.mc;
         return false;
     }
 
@@ -974,19 +1003,30 @@ void Frontend::ContactListener::updateSensors(b2Contact *contact, bool touching)
     FixtureData *fdatA = (FixtureData *) contact->GetFixtureA()->GetUserData();
     FixtureData *fdatB = (FixtureData *) contact->GetFixtureB()->GetUserData();
 
-    if (fdatA && fdatB
-        && fdatA->type == fdatA->T_NEIGHBOR
-        && fdatB->type == fdatB->T_NEIGHBOR) {
+    if (!fdatA || !fdatB)
+        return;
 
-        /*
-         * Update interaction between two neighbor sensors
-         */
+    // Sort by type
+    if (fdatA->type > fdatB->type)
+        std::swap(fdatA, fdatB);
 
+    /*
+     * Interaction between two cube sensors
+     */
+    if (fdatA->type == fdatA->T_CUBE_NEIGHBOR && fdatB->type == fdatB->T_CUBE_NEIGHBOR) {
         unsigned cubeA = frontend.cubeID(fdatA->ptr.cube);
         unsigned cubeB = frontend.cubeID(fdatB->ptr.cube);
 
         fdatA->ptr.cube->updateNeighbor(touching, fdatA->side, fdatB->side, cubeB);
         fdatB->ptr.cube->updateNeighbor(touching, fdatB->side, fdatA->side, cubeA);
+    }
+
+    /*
+     * Interaction between MC and cube
+     */
+    if (fdatA->type == fdatA->T_CUBE_NEIGHBOR && fdatB->type == fdatB->T_MC_NEIGHBOR) {
+        unsigned cubeA = frontend.cubeID(fdatA->ptr.cube);
+        MCNeighbor::updateNeighbor(touching, fdatB->side, cubeA, fdatA->side);
     }
 }
 

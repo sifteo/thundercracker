@@ -218,6 +218,36 @@ void Hardware::setAcceleration(float xG, float yG, float zG)
     i2c.accel.setVector(scaleAccelAxis(xG), scaleAccelAxis(yG), scaleAccelAxis(zG));
 }
 
+int16_t Hardware::scaleAccelAxis(float g)
+{
+    /*
+     * Scale a raw acceleration, in G's, and return the corresponding
+     * two's complement accelerometer reading.
+     *
+     * Simulates some of our non-ideal behavior, such as saturation at
+     * the extremes, and a little bit of noise.
+     */
+
+    const int range = 1 << 15;
+    const float fullScale = 2.0f;
+    const int noiseAmount = 0x180;  // 1.5 LSB after truncation to 8-bit
+
+    unsigned randomBits = rand();
+    int noise = ((randomBits & 0xFFFF) * noiseAmount) >> 16;
+    if ((randomBits >> 16) & 1)
+        noise = -noise;
+
+    int scaled = g * (range / fullScale) + noise;
+    int16_t truncated = scaled;
+
+    if (scaled != truncated)
+        truncated = scaled > 0 ? range - 1 : -range;
+        
+    return truncated;
+}
+
+
+
 NEVER_INLINE void Hardware::hwDeadlineWork() 
 {
     cpu.needHardwareTick = false;

@@ -4,11 +4,13 @@
  */
 
 #include "tasks.h"
+#include "svmruntime.h"
 #include "audiomixer.h"
 #include "svmdebugger.h"
 #include "cubeslots.h"
 #include "homebutton.h"
 #include "cubeconnector.h"
+#include "radio.h"
 
 #ifdef SIFTEO_SIMULATOR
 #   include "mc_timing.h"
@@ -23,14 +25,12 @@
 #   endif
 #endif
 
-uint32_t Tasks::pendingMask;
-uint32_t Tasks::iterationMask;
 
 /*
  * Table of runnable tasks.
  */
 
-static ALWAYS_INLINE void taskInvoke(unsigned id)
+ALWAYS_INLINE void Tasks::taskInvoke(unsigned id)
 {
     switch (id) {
 
@@ -49,6 +49,7 @@ static ALWAYS_INLINE void taskInvoke(unsigned id)
         case Tasks::AssetLoader:    return CubeSlots::assetLoaderTask();
         case Tasks::HomeButton:     return HomeButton::task();
         case Tasks::CubeConnector:  return CubeConnector::task();
+        case Tasks::Heartbeat:      return heartbeatTask();
     #endif
 
     #if !defined(SIFTEO_SIMULATOR) && !defined(BOOTLOADER)
@@ -58,7 +59,26 @@ static ALWAYS_INLINE void taskInvoke(unsigned id)
     }
 }
 
-bool Tasks::work()
+
+/*
+ * Table of heartbeat actions
+ */
+
+void Tasks::heartbeatTask()
+{
+    Radio::heartbeat();
+}
+
+
+/***********************************************************************************
+ ***********************************************************************************/
+
+uint32_t Tasks::pendingMask;
+uint32_t Tasks::iterationMask;
+uint32_t Tasks::watchdogCounter;
+
+
+bool Tasks::work(uint32_t exclude)
 {
     /*
      * We sample pendingMask exactly once, and use this to quickly make
@@ -75,8 +95,10 @@ bool Tasks::work()
      * the cancelled task was already pulled from pendingMask.
      */
 
+    resetWatchdog();
+
     // Quickest possible early-exit
-    uint32_t tasks = pendingMask;
+    uint32_t tasks = pendingMask & ~exclude;
     if (LIKELY(!tasks))
         return false;
 
@@ -94,8 +116,25 @@ bool Tasks::work()
     // Clear only the bits we managed to capture above
     Atomic::And(pendingMask, ~tasks);
 
-    // Doesn't need to be atomic; we're not required to catch changes to
-    // iterationMask made outside of task handlers (i.e. in ISRs)
+    /*
+     * Merge the tasks captured above with any existing iterationMask.
+     * We need to be careful of edge cases introduced by running work()
+     * while already in a task handler. Tasks already in iterationMask
+     * but not yet run may need to be either kept or moved back
+     * to pendingMask, depending on whether they're excluded.
+     *
+     * Also note that iterationMask doesn't need to be atomic here, since
+     * we aren't required to catch changes to it made outside of task handlers.
+     */
+
+    tasks |= iterationMask;
+    uint32_t pendingExcluded = tasks & exclude;
+    if (pendingExcluded) {
+        Atomic::Or(pendingMask, pendingExcluded);
+        tasks ^= pendingExcluded;
+    }
+
+    ASSERT((tasks & exclude) == 0);
     iterationMask = tasks;
 
     do {
@@ -107,7 +146,7 @@ bool Tasks::work()
     return true;
 }
 
-void Tasks::idle()
+void Tasks::idle(uint32_t exclude)
 {
     /*
      * Run pending tasks, OR if no tasks are pending, wait for interrupts.
@@ -116,6 +155,35 @@ void Tasks::idle()
      * caller is waiting on something which requires Tasks to execute.
      */
 
-    if (!work())
+    if (!work(exclude))
         waitForInterrupt();
+}
+
+void Tasks::heartbeatISR()
+{
+    // Check the watchdog timer
+    if (++watchdogCounter >= WATCHDOG_DURATION) {
+
+        /*
+         * Help diagnose the hang for internal firmware debugging
+         */
+        #ifndef SIFTEO_SIMULATOR
+        SampleProfiler::reportHang();
+        #endif
+
+        /*
+         * XXX: It's unlikely that we can recover from this fault currently.
+         *      If it's a system hang, we're hosed anyway. If it's a userspace
+         *      hang, we can log this message to the UART, but PanicMessenger
+         *      isn't going to work correctly inside the systick ISR, and we
+         *      can't yet regain control over the CPU from a runaway userspace
+         *      loop within one block. If this is a userspace hang, we should be
+         *      replacing all cached code pages with fields of BKPT instructions
+         *      or something equally heavyhanded.
+         */
+        SvmRuntime::fault(Svm::F_NOT_RESPONDING);
+    }
+
+    // Defer to a Task for everything else
+    trigger(Heartbeat);
 }

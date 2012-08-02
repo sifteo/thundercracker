@@ -1,6 +1,7 @@
+uniform float LCD_SIZE;
 const float HEIGHT = 0.6;
 
-varying vec2 faceCoord;
+varying vec2 lcdCoord;
 varying vec2 hilightCoord;
 
 void main() {
@@ -12,6 +13,6 @@ void main() {
      vec2 hl = (transformed.xy - center.xy) / size * 0.25;
 
      gl_Position = transformed;
-     faceCoord = gl_MultiTexCoord0.xy;
+     lcdCoord = gl_Vertex.xy * (0.5 / LCD_SIZE);
      hilightCoord = vec2(hl.x + 0.5, -hl.y + 0.5);
 }

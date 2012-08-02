@@ -103,7 +103,7 @@ static const int8_t fpMax = 5;
 static const int8_t fpMin = -8;
 
 
-void PaintControl::waitForPaint(CubeSlot *cube)
+void PaintControl::waitForPaint(CubeSlot *cube, uint32_t excludedTasks)
 {
     /*
      * Wait until we're allowed to do another paint. Since our
@@ -126,11 +126,15 @@ void PaintControl::waitForPaint(CubeSlot *cube)
             break;
         }
 
+        // Cube disconnected? Give up.
+        if (!cube->isSysConnected())
+            break;
+
         // Wait for minimum frame rate AND for pending renders
         if (now > paintTimestamp + fpsHigh && pendingFrames <= fpMax)
             break;
 
-        Tasks::idle();
+        Tasks::idle(excludedTasks);
     }
 
     /*
@@ -161,6 +165,8 @@ void PaintControl::triggerPaint(CubeSlot *cube, SysTime::Ticks now)
     paintTimestamp = now;
 
     if (!vbuf)
+        return;
+    if (!cube->isSysConnected())
         return;
 
     int32_t pending = Atomic::Load(pendingFrames);
@@ -243,7 +249,10 @@ void PaintControl::beginFinish(CubeSlot *cube)
      */
 
     _SYSVideoBuffer *vbuf = cube->getVBuf();
-    ASSERT(vbuf);
+    if (!vbuf)
+        return;
+    if (!cube->isSysConnected())
+        return;
 
     PAINT_LOG((LOG_PREFIX "+finish\n", LOG_PARAMS));
 
@@ -268,7 +277,10 @@ bool PaintControl::pollForFinish(CubeSlot *cube, SysTime::Ticks now)
      */
 
     _SYSVideoBuffer *vbuf = cube->getVBuf();
-    ASSERT(vbuf);
+    if (!vbuf)
+        return true;
+    if (!cube->isSysConnected())
+        return true;
 
     // Things to wait for...
     const uint32_t mask = _SYS_VBF_TRIGGER_ON_FLUSH | _SYS_VBF_DIRTY_RENDER;

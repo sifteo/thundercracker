@@ -5,14 +5,18 @@
  */
 
 #pragma once
-#ifdef NOT_USERSPACE
-#   error This is a userspace-only header, not allowed by the current build.
-#endif
 
 #include <sifteo/abi.h>
-#include <sifteo/limits.h>      // For CUBE_ALLOCATION
-#include <sifteo/math.h>        // For vector types
-#include <sifteo/macros.h>      // For ASSERT
+
+/*
+ * This header needs to work in both userspace and non-userspace
+ * builds, though the latter have a greatly reduced feature set.
+ */
+#ifndef NOT_USERSPACE
+#   include <sifteo/limits.h>      // For CUBE_ALLOCATION
+#   include <sifteo/math.h>        // For vector types
+#   include <sifteo/macros.h>      // For ASSERT
+#endif
 
 namespace Sifteo {
 
@@ -22,6 +26,8 @@ namespace Sifteo {
  * Assets overview blurb here...
  * @{
  */
+
+#ifndef NOT_USERSPACE   // Begin userspace-only objects
 
 /**
  * @brief A bundle of compressed tile data, for use by AssetImages
@@ -465,6 +471,9 @@ public:
 };
 
 
+#endif   // End userspace-only objects
+
+
 /**
  * @brief Any kind of asset image, as defined in your `stir` script.
  *
@@ -487,14 +496,10 @@ public:
 struct AssetImage {
     _SYSAssetImage sys;
 
+#ifndef NOT_USERSPACE   // Begin userspace-only members
+
     /// Access the AssetGroup instance associated with this AssetImage
     AssetGroup &assetGroup() const { return *reinterpret_cast<AssetGroup*>(sys.pAssetGroup); }
-
-    /// The width of this image, in tiles
-    int tileWidth() const { return sys.width; }
-
-    /// The height of this image, in tiles
-    int tileHeight() const { return sys.height; }
 
     /// The (width, height) vector of this image, in tiles
     Int2 tileSize() const { return vec<int>(sys.width, sys.height); }
@@ -502,17 +507,25 @@ struct AssetImage {
     /// Half the size of this image, in tiles
     Int2 tileExtent() const { return tileSize() / 2; }
 
-    /// The width of this image, in pixels
-    int pixelWidth() const { return sys.width << 3; }
-
-    /// The height of this image, in pixels
-    int pixelHeight() const { return sys.height << 3; }
-
     /// The (width, height) vector of this image, in pixels
     Int2 pixelSize() const { return vec<int>(sys.width << 3, sys.height << 3); }
 
     /// Half the size of this image, in pixels
     Int2 pixelExtent() const { return pixelSize() / 2; }
+
+#endif   // End userspace-only members
+
+    /// The width of this image, in tiles
+    int tileWidth() const { return sys.width; }
+
+    /// The height of this image, in tiles
+    int tileHeight() const { return sys.height; }
+
+    /// The width of this image, in pixels
+    int pixelWidth() const { return sys.width << 3; }
+
+    /// The height of this image, in pixels
+    int pixelHeight() const { return sys.height << 3; }
 
     /// Access the number of 'frames' in this image
     int numFrames() const { return sys.frames; }
@@ -550,14 +563,10 @@ struct AssetImage {
 struct PinnedAssetImage {
     _SYSAssetImage sys;
 
+#ifndef NOT_USERSPACE   // Begin userspace-only members
+
     /// Access the AssetGroup instance associated with this AssetImage
     AssetGroup &assetGroup() const { return *reinterpret_cast<AssetGroup*>(sys.pAssetGroup); }
-
-    /// The width of this image, in tiles
-    int tileWidth() const { return sys.width; }
-
-    /// The height of this image, in tiles
-    int tileHeight() const { return sys.height; }
 
     /// The (width, height) vector of this image, in tiles
     Int2 tileSize() const { return vec<int>(sys.width, sys.height); }
@@ -565,38 +574,11 @@ struct PinnedAssetImage {
     /// Half the size of this image, in tiles
     Int2 tileExtent() const { return tileSize() / 2; }
 
-    /// The width of this image, in pixels
-    int pixelWidth() const { return sys.width << 3; }
-
-    /// The height of this image, in pixels
-    int pixelHeight() const { return sys.height << 3; }
-
     /// The (width, height) vector of this image, in pixels
     Int2 pixelSize() const { return vec<int>(sys.width << 3, sys.height << 3); }
 
     /// Half the size of this image, in pixels
     Int2 pixelExtent() const { return pixelSize() / 2; }
-
-    /// Access the number of 'frames' in this image
-    int numFrames() const { return sys.frames; }
-
-    /// Compute the total number of tiles per frame (tileWidth * tileHeight)
-    int numTilesPerFrame() const { return tileWidth() * tileHeight(); }
-
-    /// Compute the total number of tiles in the image
-    int numTiles() const { return numFrames() * numTilesPerFrame(); }
-
-    /// Implicit conversion to AssetImage base class
-    operator const AssetImage& () const { return *reinterpret_cast<const AssetImage*>(this); }
-    operator AssetImage& () { return *reinterpret_cast<AssetImage*>(this); }
-    operator const AssetImage* () const { return reinterpret_cast<const AssetImage*>(this); }
-    operator AssetImage* () { return reinterpret_cast<AssetImage*>(this); }
-
-    /// Implicit conversion to system object
-    operator const _SYSAssetImage& () const { return sys; }
-    operator _SYSAssetImage& () { return sys; }
-    operator const _SYSAssetImage* () const { return &sys; }
-    operator _SYSAssetImage* () { return &sys; }
 
     /**
      * @brief Returns the index of the tile at linear position 'i' in the image.
@@ -642,25 +624,8 @@ struct PinnedAssetImage {
         return assetGroup().baseAddress(cube) + sys.pData
             + pos.x + pos.y * tileHeight() + frame * numTilesPerFrame();
     }
-};
 
-
-/**
- * @brief An AssetImage in which all tile indices are stored in a flat array,
- * without any additional compression.
- *
- * Flat assets are usually less efficient than compressed AssetImages,
- * but they allow you to have cheap random access to any tile in the image.
- *
- * Generate a FlatAssetImage by passing the `flat=1` option to image{}
- * in your STIR script.
- */
- 
-struct FlatAssetImage {
-    _SYSAssetImage sys;
-
-    /// Access the AssetGroup instance associated with this AssetImage
-    AssetGroup &assetGroup() const { return *reinterpret_cast<AssetGroup*>(sys.pAssetGroup); }
+#endif   // End userspace-only members
 
     /// The width of this image, in tiles
     int tileWidth() const { return sys.width; }
@@ -668,23 +633,11 @@ struct FlatAssetImage {
     /// The height of this image, in tiles
     int tileHeight() const { return sys.height; }
 
-    /// The (width, height) vector of this image, in tiles
-    Int2 tileSize() const { return vec<int>(sys.width, sys.height); }
-
-    /// Half the size of this image, in tiles
-    Int2 tileExtent() const { return tileSize() / 2; }
-
     /// The width of this image, in pixels
     int pixelWidth() const { return sys.width << 3; }
 
     /// The height of this image, in pixels
     int pixelHeight() const { return sys.height << 3; }
-
-    /// The (width, height) vector of this image, in pixels
-    Int2 pixelSize() const { return vec<int>(sys.width << 3, sys.height << 3); }
-
-    /// Half the size of this image, in pixels
-    Int2 pixelExtent() const { return pixelSize() / 2; }
 
     /// Access the number of 'frames' in this image
     int numFrames() const { return sys.frames; }
@@ -706,6 +659,39 @@ struct FlatAssetImage {
     operator _SYSAssetImage& () { return sys; }
     operator const _SYSAssetImage* () const { return &sys; }
     operator _SYSAssetImage* () { return &sys; }
+};
+
+
+/**
+ * @brief An AssetImage in which all tile indices are stored in a flat array,
+ * without any additional compression.
+ *
+ * Flat assets are usually less efficient than compressed AssetImages,
+ * but they allow you to have cheap random access to any tile in the image.
+ *
+ * Generate a FlatAssetImage by passing the `flat=1` option to image{}
+ * in your STIR script.
+ */
+ 
+struct FlatAssetImage {
+    _SYSAssetImage sys;
+
+#ifndef NOT_USERSPACE   // Begin userspace-only members
+
+    /// Access the AssetGroup instance associated with this AssetImage
+    AssetGroup &assetGroup() const { return *reinterpret_cast<AssetGroup*>(sys.pAssetGroup); }
+
+    /// The (width, height) vector of this image, in tiles
+    Int2 tileSize() const { return vec<int>(sys.width, sys.height); }
+
+    /// Half the size of this image, in tiles
+    Int2 tileExtent() const { return tileSize() / 2; }
+
+    /// The (width, height) vector of this image, in pixels
+    Int2 pixelSize() const { return vec<int>(sys.width << 3, sys.height << 3); }
+
+    /// Half the size of this image, in pixels
+    Int2 pixelExtent() const { return pixelSize() / 2; }
 
     /**
      * @brief Get a pointer to the raw tile data.
@@ -761,6 +747,41 @@ struct FlatAssetImage {
         return assetGroup().baseAddress(cube) + tileArray()[
             pos.x + pos.y * tileHeight() + frame * numTilesPerFrame()];
     }
+
+#endif   // End userspace-only members
+
+    /// The width of this image, in tiles
+    int tileWidth() const { return sys.width; }
+
+    /// The height of this image, in tiles
+    int tileHeight() const { return sys.height; }
+
+    /// The width of this image, in pixels
+    int pixelWidth() const { return sys.width << 3; }
+
+    /// The height of this image, in pixels
+    int pixelHeight() const { return sys.height << 3; }
+
+    /// Access the number of 'frames' in this image
+    int numFrames() const { return sys.frames; }
+
+    /// Compute the total number of tiles per frame (tileWidth * tileHeight)
+    int numTilesPerFrame() const { return tileWidth() * tileHeight(); }
+
+    /// Compute the total number of tiles in the image
+    int numTiles() const { return numFrames() * numTilesPerFrame(); }
+
+    /// Implicit conversion to AssetImage base class
+    operator const AssetImage& () const { return *reinterpret_cast<const AssetImage*>(this); }
+    operator AssetImage& () { return *reinterpret_cast<AssetImage*>(this); }
+    operator const AssetImage* () const { return reinterpret_cast<const AssetImage*>(this); }
+    operator AssetImage* () { return reinterpret_cast<AssetImage*>(this); }
+
+    /// Implicit conversion to system object
+    operator const _SYSAssetImage& () const { return sys; }
+    operator _SYSAssetImage& () { return sys; }
+    operator const _SYSAssetImage* () const { return &sys; }
+    operator _SYSAssetImage* () { return &sys; }
 };
 
 
@@ -802,7 +823,7 @@ struct AssetAudio {
             /* type        */  _SYS_PCM,
             /* volume      */  _SYS_AUDIO_DEFAULT_VOLUME,
             /* dataSize    */  numSamples * sizeof samples[0],
-            /* pData       */  reinterpret_cast<uint32_t>(samples),
+            /* pData       */  reinterpret_cast<uintptr_t>(samples),
         }};
         return result;
     }

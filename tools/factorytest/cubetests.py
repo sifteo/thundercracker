@@ -3,6 +3,7 @@ from factorytest_common import rangeHelper, AckPacket
 
 # cube test IDs
 SimulatedBatteryVoltage = 1
+GetBattSupplyCurrentID  = 2
 WriteToVramID           = 6
 SensorsReportEnabledID  = 7
 
@@ -90,6 +91,7 @@ def AccelerometerTest(devMgr):
 
     count = 0
     while count < 1000:
+        print "Recieving payload!"
         resp = jig.rxPacket(timeout = -1)
         
         print "%d : Payload: %s" % (count, resp.payload)
@@ -99,6 +101,10 @@ def AccelerometerTest(devMgr):
             pkt = AckPacket(resp.payload)
             # print "x:y:z - %d:%d:%d" % (pkt.accelX, pkt.accelY, pkt.accelZ)
             count = count + 1
+        
+        # add delay. Will this fix our problem?
+        # from time import sleep
+        # sleep(0.01);
 
     setSimulatedBatteryVoltageOff(devMgr)
     SetSensorReportingEnabled(devMgr, 0)

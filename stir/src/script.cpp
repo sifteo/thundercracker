@@ -95,17 +95,18 @@ bool Script::run(const char *filename)
         TilePool &pool = group->getPool();
 
         log.heading(group->getName().c_str());
-
         pool.optimize(log);
 
-        if (pool.size() > pool.MAX_SIZE) {
-            log.error("Error: Group '%s' with %d tiles is too large (%.02f%% of %d-tile slot)",
-                group->getName().c_str(), pool.size(), pool.size() * (100.0 / pool.MAX_SIZE),
-                pool.MAX_SIZE);
-            return false;
-        }
+        if (!group->isFixed()) {
+            if (pool.size() > pool.MAX_SIZE) {
+                log.error("Error: Group '%s' with %d tiles is too large (%.02f%% of %d-tile slot)",
+                    group->getName().c_str(), pool.size(), pool.size() * (100.0 / pool.MAX_SIZE),
+                    pool.MAX_SIZE);
+                return false;
+            }
 
-        pool.encode(group->getLoadstream(), &log);
+            pool.encode(group->getLoadstream(), &log);
+        }
 
         proof.writeGroup(*group);
         header.writeGroup(*group);
@@ -115,7 +116,6 @@ bool Script::run(const char *filename)
     for (std::vector<ImageList>::iterator i = imageLists.begin(); i!=imageLists.end(); ++i) {
         header.writeImageList(*i);
         source.writeImageList(*i);
-
     }
 
     if (!sounds.empty()) {
@@ -445,8 +445,44 @@ Group::Group(lua_State *L)
     if (!Script::argBegin(L, className))
         return;
 
+    if (Script::argMatch(L, "atlas")) {
+        // This is a 'fixed' group, with an externally specified tile atlas.
+        // Load the atlas into our pool and mark this group as 'fixed'.
+
+        ImageStack image;
+        const char *filename = lua_tostring(L, -1);
+        if (!image.load(filename)) {      
+            luaL_error(L, "Not a valid PNG image file: '%s'", filename);
+            return;
+        }
+
+        image.finishLoading();
+
+        if (!image.divisibleBy(Tile::SIZE)) {
+            luaL_error(L, "Image size %dx%d is not divisible by %d-pixel tile size",
+                       image.getWidth(), image.getHeight(), Tile::SIZE);
+            return;
+        }
+    
+        TileGrid grid(&pool);
+        TileOptions opt(10.0f, true);   // Pinned
+
+        image.storeFrame(0, grid, opt);
+        pool.makeFixed();
+
+        fixed = true;
+    } else {
+        fixed = false;
+    }
+
     if (Script::argMatch(L, "quality")) {
         quality = lua_tonumber(L, -1);
+        if (fixed) {
+            luaL_error(L, "Quality may not be specified for a Fixed asset group");
+            return;
+        }
+    } else if (fixed) {
+        quality = 10.0f;
     } else {
         lua_getglobal(L, GLOBAL_QUALITY);
         quality = lua_tonumber(L, -1);

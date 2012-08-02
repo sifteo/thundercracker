@@ -12,7 +12,7 @@
 #include "svmloader.h"
 #include "event.h"
 #include "tasks.h"
-#include "panic.h"
+#include "ui_panic.h"
 #include "cubeslots.h"
 
 #include <math.h>
@@ -83,7 +83,7 @@ void SvmRuntime::initStack(const StackInfo &stack)
 #endif
 }
 
-ALWAYS_INLINE void SvmRuntime::dumpRegister(PanicMessenger &msg, unsigned reg)
+ALWAYS_INLINE void SvmRuntime::dumpRegister(UIPanic &msg, unsigned reg)
 {
     reg_t value = SvmCpu::reg(reg);
     SvmMemory::squashPhysicalAddr(value);
@@ -109,7 +109,7 @@ void SvmRuntime::fault(FaultCode code)
      * Draw a message to one enabled cube, and exit after a home-button press.
      */
 
-    PanicMessenger msg;
+    UIPanic msg;
     msg.init(0x10000);
 
     // User-facing description
@@ -282,11 +282,14 @@ void SvmRuntime::ret(unsigned actions)
         SvmCpu::setReg(REG_FP, reinterpret_cast<reg_t>(fpPA));
         setSP(reinterpret_cast<reg_t>(fp + 1));
 
-        // If we're returning from an event handler, see if we still need
-        // to dispatch any other pending events.
+        /*
+         * If we're returning from an event handler, see if we still need
+         * to dispatch any other pending events. Since we're not in a syscall,
+         * we can do the dispatch immediately rather than via dispatchEventsOnReturn().
+         */
         if (eventFrame == regFP) {
             eventFrame = 0;
-            dispatchEventsOnReturn();
+            Event::dispatch();
         }
     }
 }

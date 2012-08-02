@@ -10,7 +10,7 @@
 static Sifteo::Metadata M = Sifteo::Metadata()
     .title("Infinite Loop")
     .package("com.sifteo.extras.loopy", "1.0")
-    .cubeRange(0);
+    .cubeRange(0, CUBE_ALLOCATION);
 
 void main()
 {

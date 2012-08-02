@@ -12,7 +12,7 @@
 #include "gl_renderer.h"
 #include "system.h"
 #include "frontend_cube.h"
-#include "frontend_mothership.h"
+#include "frontend_mc.h"
 #include "frontend_overlay.h"
 #include "tinythread.h"
 
@@ -64,6 +64,7 @@ class Frontend {
         bool ReportFixture(b2Fixture *fixture);
         b2Vec2 mPoint;
         FrontendCube *mCube;
+        FrontendMC *mMC;
     };
 
     class ContactListener : public b2ContactListener {
@@ -108,6 +109,7 @@ class Frontend {
     float targetViewExtent();
     float pixelViewExtent();
     unsigned pixelZoomMode();
+    float getYRatio();
 
     b2Vec2 targetViewCenter();
     b2Vec2 mouseVec(float viewExtent);
@@ -124,10 +126,9 @@ class Frontend {
     unsigned idleFrames;
 
     // Object counts, local to the Frontend. (May lag the simulation thread)
-    unsigned mothershipCount;
     unsigned cubeCount;
 
-    FrontendMothership motherships[1];
+    FrontendMC mc;
     FrontendCube cubes[System::MAX_CUBES];
 
     bool toggleZoom;

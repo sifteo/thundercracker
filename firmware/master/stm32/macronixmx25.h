@@ -86,7 +86,7 @@ private:
 
     void ensureWriteEnabled();
     void waitWhileBusy();
-    void waitForDma();
+    bool waitForDma();
 
     uint8_t readReg(Command cmd);
 };

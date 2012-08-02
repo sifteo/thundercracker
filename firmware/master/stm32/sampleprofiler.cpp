@@ -49,6 +49,35 @@ void SampleProfiler::task()
     Tasks::trigger(Tasks::Profiler);
 }
 
+void SampleProfiler::reportHang()
+{
+    /*
+     * A hang was detected by the Tasks module. We're in the best
+     * position to dump info about the state of the system at the time.
+     */
+
+    UART("HANG: Subsystem ");
+    UART_HEX(subsys);
+    UART("\r\n");
+
+    /*
+     * Stack dump is available for internal debugging, but disabled by
+     * default as a security precaution.
+     */
+
+    #ifdef STACK_DUMP_ON_HANG
+        volatile uint32_t sp;
+        for (unsigned i = 0; i < 64; i++) {
+            volatile uint32_t *p = &sp + i;
+            UART("[");
+            UART_HEX((uint32_t) p);
+            UART("] ");
+            UART_HEX(*p);
+            UART("\r\n");
+        }
+    #endif
+}
+
 /*
  * Take a peek at the stacked exception state to determine where we're
  * returning to.

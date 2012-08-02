@@ -111,14 +111,15 @@ class Menu {
     
  private:
     static const float kTimeDilator = 13.1f;
-    static const float kMaxSpeedMultiplier = 3.f;
+    static const float kMaxSpeedMultiplier = 2.f;
     static const float kAccelScalingFactor = -0.25f;
     static const uint8_t kNumTilesX = 18;
     static const uint8_t kNumVisibleTilesX = 16;
     static const uint8_t kNumTilesY = 18;
     static const uint8_t kNumVisibleTilesY = 16;
-    static const float kAccelThresholdOn = 7.15f;
+    static const float kAccelThresholdOn = 4.15f;
     static const float kAccelThresholdOff = 0.85f;
+    static const float kAccelThresholdStep = 9.5f;
     static const uint8_t kDefaultIconYOffset = 16;
     static const uint8_t kDefaultPeekTiles = 1;
 
@@ -168,6 +169,8 @@ class Menu {
     int finishIteration;
     // internal
     MenuNeighbor neighbors[NUM_SIDES]; // menu neighbours
+    //prevent rendering before everything is set up
+    bool hasBeenStarted;
 
     // states.h
     void changeState(MenuState);
