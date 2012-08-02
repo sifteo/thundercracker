@@ -20,7 +20,7 @@ public:
 
     static void random(RadioAddress &addr, _SYSPseudoRandomState &prng);
     static void fromHardwareID(RadioAddress &addr, uint64_t hwid);
-    static void channelToggle(RadioAddress &addr);
+    static void convertPrimaryToAlternateChannel(RadioAddress &addr);
 
 private:
     static const uint8_t gf84[0x100];

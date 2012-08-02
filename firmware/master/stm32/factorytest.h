@@ -21,6 +21,10 @@ public:
      *
      * Since we're not sending meaningful protocol data, we treat any ACK,
      * with payload or not, as a success.
+     *
+     * Because the cube is toggling between 2 channels in its default
+     * disconnected state, we send a packet on each, and count it as a
+     * failure if we don't get an ACK from either one.
      */
     static void produce(PacketTransmission &tx);
     static void ALWAYS_INLINE ackWithPacket(const PacketBuffer &packet) {
@@ -44,6 +48,8 @@ private:
 
     static volatile uint16_t rfTransmissionsRemaining;
     static uint16_t rfSuccessCount;
+    static RadioAddress rfTestAddr;
+    static uint8_t rfTestAddrPrimaryChannel;
     static const uint8_t RF_TEST_BYTE = 0x11;
 
     static void handleRfPacketComplete();

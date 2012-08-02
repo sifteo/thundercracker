@@ -336,7 +336,7 @@ void CubeConnector::radioProduce(PacketTransmission &tx)
             goto case_PairingFirstContact;
 
         case ReconnectAltFirstContact:
-            RadioAddrFactory::channelToggle(reconnectAddr);
+            RadioAddrFactory::convertPrimaryToAlternateChannel(reconnectAddr);
             tx.dest = &reconnectAddr;
             tx.packet.len = 1;
             tx.packet.bytes[0] = 0xff;
