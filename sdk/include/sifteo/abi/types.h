@@ -97,8 +97,8 @@ struct _SYSMotionBufferHeader {
 };
 
 struct _SYSMotionBuffer {
-    _SYSMotionBufferHeader header;
-    _SYSByte4 buf[_SYS_MOTION_MAX_ENTRIES];
+    struct _SYSMotionBufferHeader header;
+    union _SYSByte4 buf[_SYS_MOTION_MAX_ENTRIES];
 };
 
 /*
