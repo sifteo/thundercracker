@@ -353,7 +353,7 @@ void FactoryTest::rfPacketTestHandler(uint8_t argc, const uint8_t *args)
     rfTransmissionsRemaining = *reinterpret_cast<const uint16_t*>(&args[1]) * 2;
 
     while (rfTransmissionsRemaining)
-        Tasks::work();
+        Tasks::work(Tasks::UsbOUT); // don't process more USB traffic until we're out of this handler
 
     NRF24L01::setRfTestEnabled(false);
 
