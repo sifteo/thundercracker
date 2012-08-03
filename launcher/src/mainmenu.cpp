@@ -59,8 +59,9 @@ void MainMenu::run()
 {
     waitForACube();
     
-    // Initialize to blue Sfiteo logo to match firmware.
+    // Initialize to blue Sifteo logo to match firmware.
     for (CubeID cube : CubeSet::connected()) {
+        Shared::motion[cube].attach(cube);
         Shared::video[cube].attach(cube);
         Shared::video[cube].initMode(BG0_ROM);
         Shared::video[cube].bg0.image(vec(0,0), Logo);
@@ -162,6 +163,8 @@ CubeSet MainMenu::cubes()
 void MainMenu::cubeConnect(unsigned cid)
 {
     AudioTracker::play(Tracker_CubeConnect);
+
+    Shared::motion[cid].attach(cid);
 
     Shared::video[cid].attach(cid);
     Shared::video[cid].initMode(BG0_ROM);
@@ -302,8 +305,12 @@ void MainMenu::toggleCubeRangeAlert(unsigned index, Sifteo::Menu &menu)
 
 void MainMenu::updateAlerts(Sifteo::Menu &menu)
 {
+    // XXX: Is this really needed here?
+    auto& motion = Shared::motion[mainCube];
+    motion.update();
+
     if (cubeRangeSavedIcon != NULL && itemIndexCurrent != -1) {
-        if (mainCube.isShaking() || mainCube.tilt().x != 0 || mainCube.tilt().y != 0) {
+        if (motion.shake || motion.tilt.x != 0 || motion.tilt.y != 0) {
             toggleCubeRangeAlert(itemIndexCurrent, menu);
         }
     }
@@ -497,7 +504,6 @@ void MainMenu::loadAssets()
         if (cube != mainCube) {
             auto& vid = Shared::video[cube];
             vid.initMode(BG0);
-            vid.attach(cube);
             vid.bg0.erase(Menu_StripeTile);
         }
         // Mark this cube as having been loaded

@@ -14,6 +14,7 @@ using namespace Sifteo;
 namespace Shared {
 
     extern Sifteo::VideoBuffer video[CUBE_ALLOCATION];
+	extern Sifteo::TiltShakeRecognizer motion[CUBE_ALLOCATION];
 
     extern Sifteo::Random random;
 

@@ -9,6 +9,7 @@ using namespace Sifteo;
 
 
 VideoBuffer Shared::video[CUBE_ALLOCATION];
+TiltShakeRecognizer Shared::motion[CUBE_ALLOCATION];
 
 Random Shared::random;
 
