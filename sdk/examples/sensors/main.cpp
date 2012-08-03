@@ -92,8 +92,11 @@ private:
             << Fixed(accel.y, 3)
             << Fixed(accel.z, 3) << "\n";
 
-        if (motion[id].update()) {
+        unsigned changeFlags = motion[id].update();
+        if (changeFlags) {
             // Tilt/shake changed
+
+            LOG("Tilt/shake changed, flags=%08x\n", changeFlags);
 
             auto tilt = motion[id].tilt;
             str << "tilt:"

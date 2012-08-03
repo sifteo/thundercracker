@@ -280,6 +280,32 @@ public:
     }
 
     /**
+     * @brief Change flags, returned by update() to indicate what just changed
+     */
+    enum ChangeFlags {
+        Shake_Begin      = 1 << 0,
+        Shake_End        = 1 << 1,
+        Shake_Change     = Shake_Begin | Shake_End,
+
+        Tilt_XNeg        = 1 << 2,
+        Tilt_XZero       = 1 << 3,
+        Tilt_XPos        = 1 << 4,
+        Tilt_XChange     = Tilt_XNeg | Tilt_XZero | Tilt_XPos,
+
+        Tilt_YNeg        = 1 << 5,
+        Tilt_YZero       = 1 << 6,
+        Tilt_YPos        = 1 << 7,
+        Tilt_YChange     = Tilt_YNeg | Tilt_YZero | Tilt_YPos,
+
+        Tilt_ZNeg        = 1 << 8,
+        Tilt_ZZero       = 1 << 9,
+        Tilt_ZPos        = 1 << 10,
+        Tilt_ZChange     = Tilt_ZNeg | Tilt_ZZero | Tilt_ZPos,
+
+        Tilt_Change      = Tilt_XChange | Tilt_YChange | Tilt_ZChange,
+    };
+
+    /**
      * @brief Update the state of the TiltShakeRecognizer
      *
      * Using data captured in our MotionBuffer, this updates the state of
@@ -287,11 +313,11 @@ public:
      * the attached cube. After this call, the `tilt` and `shake` members
      * will contain the latest state.
      *
-     * Returns 'true' if the tilt or shake state have changed, 'false' if not.
+     * Returns a bitmap of ChangeFlags which describe which changes just occurred.
      */
-    bool update()
+    unsigned update()
     {
-        bool changed = false;
+        unsigned changed = 0;
 
         median.calculate(buffer, kFilterLatency);
         auto m = median.median();
@@ -299,48 +325,46 @@ public:
 
         // Shake hysteresis
         if (wobble >= kShakeThresholdMax) {
-
-            changed = changed || shake == true;
+            if (!shake) changed |= Shake_Begin;
             shake = true;
 
         } else if (wobble < kShakeThresholdMin) {
-
-            changed = changed || shake != false;
+            if (shake) changed |= Shake_End;
             shake = false;
 
             // Only update tilt state when wobble is low.
             // Each tilt axis has hysteresis.
 
             if (m.x <= -kTiltThresholdMax) {
-                changed = changed || tilt.x != -1;
+                if (tilt.x != -1) changed |= Tilt_XNeg;
                 tilt.x = -1;
             } else if (m.x >= kTiltThresholdMax) {
-                changed = changed || tilt.x != 1;
+                if (tilt.x != 1) changed |= Tilt_XPos;
                 tilt.x = 1;
             } else if (abs(m.x) < kTiltThresholdMin) {
-                changed = changed || tilt.x != 0;
+                if (tilt.x != 0) changed |= Tilt_XZero;
                 tilt.x = 0;
             }
 
             if (m.y <= -kTiltThresholdMax) {
-                changed = changed || tilt.y != -1;
+                if (tilt.y != -1) changed |= Tilt_YNeg;
                 tilt.y = -1;
             } else if (m.y >= kTiltThresholdMax) {
-                changed = changed || tilt.y != 1;
+                if (tilt.y != 1) changed |= Tilt_YPos;
                 tilt.y = 1;
             } else if (abs(m.y) < kTiltThresholdMin) {
-                changed = changed || tilt.y != 0;
+                if (tilt.y != 0) changed |= Tilt_YZero;
                 tilt.y = 0;
             }
 
             if (m.z <= -kTiltThresholdMax) {
-                changed = changed || tilt.z != -1;
+                if (tilt.z != -1) changed |= Tilt_ZNeg;
                 tilt.z = -1;
             } else if (m.z >= kTiltThresholdMax) {
-                changed = changed || tilt.z != 1;
+                if (tilt.z != 1) changed |= Tilt_ZPos;
                 tilt.z = 1;
             } else if (abs(m.z) < kTiltThresholdMin) {
-                changed = changed || tilt.z != 0;
+                if (tilt.z != 0) changed |= Tilt_ZZero;
                 tilt.z = 0;
             }
         }
