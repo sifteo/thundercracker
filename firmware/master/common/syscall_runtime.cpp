@@ -19,7 +19,10 @@
 #include "cubeslots.h"
 #include "event.h"
 #include "tasks.h"
+#include "shutdown.h"
 #include "ui_pause.h"
+#include "ui_coordinator.h"
+#include "ui_shutdown.h"
 
 extern "C" {
 
@@ -103,6 +106,24 @@ void _SYS_setGameMenuLabel(const char *label)
     } else {
         UIPause::disableGameMenu();
     }
+}
+
+void _SYS_shutdown(uint32_t flags)
+{
+    const uint32_t excludedTasks =
+        Intrinsic::LZ(Tasks::AudioPull)  |
+        Intrinsic::LZ(Tasks::HomeButton);
+
+    SvmClock::pause();
+
+    if (flags & _SYS_SHUTDOWN_WITH_UI) {
+        UICoordinator uic(excludedTasks);
+        UIShutdown uiShutdown(uic);
+        return uiShutdown.mainLoop();
+    }
+
+    ShutdownManager s(excludedTasks);
+    return s.shutdown();
 }
 
 void _SYS_log(uint32_t t, uintptr_t v1, uintptr_t v2, uintptr_t v3,

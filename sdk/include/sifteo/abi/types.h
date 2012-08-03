@@ -217,6 +217,12 @@ struct _SYSUUID {
 #define _SYS_EINVAL     -22     // Invalid argument
 #define _SYS_ENOSPC     -28     // No space left on device
 
+/*
+ * Flags for _SYS_shutdown()
+ */
+
+#define _SYS_SHUTDOWN_WITH_UI       (1 << 0)    // Present shutdown user interface, allow cancellation
+
 
 #ifdef __cplusplus
 }  // extern "C"

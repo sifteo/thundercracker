@@ -45,6 +45,8 @@ extern "C" {
 void _SYS_abort(void) _SC(0) _NORET;
 void _SYS_exit(void) _SC(64) _NORET;
 
+void _SYS_shutdown(uint32_t flags) _SC(178);
+
 uint32_t _SYS_getFeatures() _SC(65);   /// ABI compatibility feature bits
 
 void _SYS_yield(void) _SC(66);   /// Temporarily cede control to the firmware

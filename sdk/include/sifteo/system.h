@@ -173,6 +173,22 @@ class System {
         return _SYS_sysBatteryLevel() / float(_SYS_BATTERY_MAX);
     }
 
+    /**
+     * @brief Shut down the system.
+     *
+     * This initiates a shutdown sequence. By default, this will pause the game and
+     * present the system's standard shutdown UI. If shutdown is cancelled, this
+     * function returns. Otherwise, the base shuts down immediately and this function
+     * will not return.
+     *
+     * Games may elect to use this to shut down during periods of inactivity, such as if
+     * the user leaves a menu idle for a while.
+     *
+     * If the 'now' flag is true, the UI is bypassed and we shut down immediately.
+     */
+    static void shutdown(bool now = false) {
+        return _SYS_shutdown(now ? 0 : _SYS_SHUTDOWN_WITH_UI);
+    }
 };
 
 
