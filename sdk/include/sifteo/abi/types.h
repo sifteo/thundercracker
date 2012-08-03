@@ -87,12 +87,15 @@ union _SYSNeighborState {
 
 struct _SYSMotionBufferHeader {
     uint8_t tail;           /// Index of the next empty slot to write into
-    uint8_t size;           /// Number of buffer slots in use. If tail==size, tail wraps to 0
+    uint8_t last;           /// Index of last buffer slot. If tail > size, tail wraps to 0
     uint8_t reserved[2];    /// Initialize to zero
     /*
      * Followed by variable-size array of _SYSByte4.
-     * The 'w' field is used for a timestamp, encoded as a delta since
-     * the last mesurement, in units of _SYS_MOTION_TIMESTAMP_NS.
+     *
+     * The 'w' field is used for a timestamp, encoded as a (delta - 1) since
+     * the last mesurement, in units of _SYS_MOTION_TIMESTAMP_NS. This means
+     * the maximum representable delta is exactly 64 milliseconds. Deltas of
+     * longer than this will be represented by duplicating samples in the buffer.
      */
 };
 
