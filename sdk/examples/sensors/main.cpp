@@ -13,21 +13,18 @@ static Metadata M = Metadata()
     .cubeRange(0, CUBE_ALLOCATION);
 
 static VideoBuffer vid[CUBE_ALLOCATION];
-
+static TiltShakeRecognizer motion[CUBE_ALLOCATION];
 
 class SensorListener {
 public:
     struct Counter {
         unsigned touch;
-        unsigned shake;
         unsigned neighborAdd;
         unsigned neighborRemove;
     } counters[CUBE_ALLOCATION];
 
     void install()
     {
-        Events::cubeTouch.set(&SensorListener::onTouch, this);
-        Events::cubeShake.set(&SensorListener::onShake, this);
         Events::neighborAdd.set(&SensorListener::onNeighborAdd, this);
         Events::neighborRemove.set(&SensorListener::onNeighborRemove, this);
         Events::cubeAccelChange.set(&SensorListener::onAccelChange, this);
@@ -50,6 +47,7 @@ private:
 
         vid[id].initMode(BG0_ROM);
         vid[id].attach(id);
+        motion[id].attach(id);
 
         // Draw the cube's identity
         String<128> str;
@@ -58,8 +56,6 @@ private:
         vid[cube].bg0rom.text(vec(1,2), str);
 
         // Draw initial state for all sensors
-        onTouch(cube);
-        onShake(cube);
         onAccelChange(cube);
         onBatteryChange(cube);
         drawNeighbors(cube);
@@ -85,16 +81,6 @@ private:
         vid[cube].bg0rom.text(vec(1,8), str);
     }
 
-    void onShake(unsigned cube)
-    {
-        counters[cube].shake++;
-        LOG("Shaking cube #%d\n", cube);
-
-        String<16> str;
-        str << "shake: " << counters[cube].shake;
-        vid[cube].bg0rom.text(vec(1,12), str);
-    }
-
     void onAccelChange(unsigned id)
     {
         CubeID cube(id);
@@ -106,11 +92,18 @@ private:
             << Fixed(accel.y, 3)
             << Fixed(accel.z, 3) << "\n";
 
-        auto tilt = cube.tilt();
-        str << "tilt:"
-            << Fixed(tilt.x, 3)
-            << Fixed(tilt.y, 3)
-            << Fixed(tilt.z, 3) << "\n";
+        if (motion[id].update()) {
+            // Tilt/shake changed
+
+            auto tilt = motion[id].tilt;
+            str << "tilt:"
+                << Fixed(tilt.x, 3)
+                << Fixed(tilt.y, 3)
+                << Fixed(tilt.z, 3) << "\n";
+
+            str << "shake: " << motion[id].shake;
+        }
+
         vid[cube].bg0rom.text(vec(1,10), str);
     }
 
