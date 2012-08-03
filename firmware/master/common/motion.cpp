@@ -44,13 +44,14 @@ void MotionUtil::integrate(const _SYSMotionBuffer *mbuf, unsigned duration, _SYS
     head = MIN(head, last);
 
     // Keep a two-sample buffer, representing the two edges of our trapezoid
+    ASSERT(head <= last);
     _SYSByte4 sampleNext;
-    _SYSByte4 samplePrev = mbuf->buf[head];
+    _SYSByte4 samplePrev = mbuf->samples[head];
 
     int x = 0, y = 0, z = 0;
 
     while (duration) {
-        unsigned ticks;
+        int ticks;
 
         if (head == tail) {
             /*
@@ -69,12 +70,13 @@ void MotionUtil::integrate(const _SYSMotionBuffer *mbuf, unsigned duration, _SYS
             head = MIN(head, last);
 
             // Shift new sample into buffer
+            ASSERT(head <= last);
             sampleNext.value = samplePrev.value;
-            samplePrev.value = mbuf->buf[head].value;
+            samplePrev.value = mbuf->samples[head].value;
 
             // Width of our trapezoid is the distance from prev to next, conveniently
             // already encoded in next's timestamp byte.
-            ticks = unsigned(uint8_t(sampleNext.w)) + 1;
+            ticks = int(uint8_t(sampleNext.w)) + 1;
         }
 
         int pX = samplePrev.x;
@@ -85,7 +87,7 @@ void MotionUtil::integrate(const _SYSMotionBuffer *mbuf, unsigned duration, _SYS
         int nY = sampleNext.y;
         int nZ = sampleNext.z;
 
-        if (ticks <= duration) {
+        if (unsigned(ticks) <= duration) {
             /*
              * The Trapezoidal rule is equivalent to taking an average of the current
              * and the last sample, and weighting that average according to the distance
@@ -107,9 +109,9 @@ void MotionUtil::integrate(const _SYSMotionBuffer *mbuf, unsigned duration, _SYS
              * sampleNext.
              */
 
-            int interpX = nX + (pX - nX) * duration / ticks;
-            int interpY = nY + (pY - nY) * duration / ticks;
-            int interpZ = nZ + (pZ - nZ) * duration / ticks;
+            int interpX = nX + (pX - nX) * int(duration) / ticks;
+            int interpY = nY + (pY - nY) * int(duration) / ticks;
+            int interpZ = nZ + (pZ - nZ) * int(duration) / ticks;
 
             x += duration * (nX + interpX);
             y += duration * (nY + interpY);
@@ -158,7 +160,7 @@ void MotionWriter::write(_SYSByte4 reading, SysTime::Ticks timestamp)
          */
 
         uint8_t previous = tail ? (tail - 1) : last;
-        _SYSByte4 &prevSlot = buffer->buf[previous];
+        _SYSByte4 &prevSlot = buffer->samples[previous];
 
         // Copy timestamp byte from previous slot
         reading.w = prevSlot.w;
@@ -189,7 +191,8 @@ void MotionWriter::write(_SYSByte4 reading, SysTime::Ticks timestamp)
         tickDelta -= eventDelta;
         reading.w = eventDelta - 1;
 
-        buffer->buf[tail].value = reading.value;
+        ASSERT(tail <= last);
+        buffer->samples[tail].value = reading.value;
         tail++;
         if (tail > last)
             tail = 0;
