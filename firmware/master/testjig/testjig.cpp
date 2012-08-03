@@ -239,6 +239,9 @@ void TestJig::setUsbEnabledHandler(uint8_t argc, uint8_t *args)
 void TestJig::setSimulatedBatteryVoltageHandler(uint8_t argc, uint8_t *args)
 {
     uint16_t val = (args[1] | args[2] << 8);
+    
+    //Have to divide the targeted voltage by two. 
+    //Gets multiplied by the gain stage of the external opamp (gain == 2)
     val /= 2;
     Dac::write(BATTERY_SIM_DAC_CH, val);
 
