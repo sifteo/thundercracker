@@ -9,7 +9,8 @@ SUBDIRS = \
 	trackycat \
 	tinytracker \
 	lfsmunch \
-	numbers
+	numbers \
+	accelchart
 
 .PHONY: clean subdirs $(SUBDIRS)
 
