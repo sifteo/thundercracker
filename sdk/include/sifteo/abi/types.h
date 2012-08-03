@@ -88,11 +88,13 @@ union _SYSNeighborState {
 
 #define _SYS_MOTION_MAX_ENTRIES     256     // Max size of motion buffer
 #define _SYS_MOTION_TIMESTAMP_NS    250000  // Nanoseconds per timestamp unit (0.25 ms)
+#define _SYS_MOTION_TIMESTAMP_HZ    4000    // Reciprocal of _SYS_MOTION_TIMESTAMP_NS
 
 struct _SYSMotionBufferHeader {
     uint8_t tail;           /// Index of the next empty slot to write into
     uint8_t last;           /// Index of last buffer slot. If tail > size, tail wraps to 0
-    uint8_t reserved[2];    /// Initialize to zero
+    uint8_t rate;           /// Requested capture rate, in timestamp units per sample
+    uint8_t reserved;       /// Initialize to zero
     /*
      * Followed by variable-size array of _SYSByte4.
      *
@@ -105,7 +107,7 @@ struct _SYSMotionBufferHeader {
 
 struct _SYSMotionBuffer {
     struct _SYSMotionBufferHeader header;
-    union _SYSByte4 buf[_SYS_MOTION_MAX_ENTRIES];
+    union _SYSByte4 samples[_SYS_MOTION_MAX_ENTRIES];
 };
 
 /*

@@ -29,14 +29,14 @@ void testIntegrate()
 
     mbuf.header.last = 7;
     mbuf.header.tail = 0;
-    mbuf.buf[0].value = 0x00010203;
-    mbuf.buf[1].value = 0x00010204;
-    mbuf.buf[2].value = 0x00010207;
-    mbuf.buf[3].value = 0x000102FF;
-    mbuf.buf[4].value = 0x00010203;
-    mbuf.buf[5].value = 0x00010210;
-    mbuf.buf[6].value = 0x000102FE;
-    mbuf.buf[7].value = 0x00010203;
+    mbuf.samples[0].value = 0x00010203;
+    mbuf.samples[1].value = 0x00010204;
+    mbuf.samples[2].value = 0x00010207;
+    mbuf.samples[3].value = 0x000102FF;
+    mbuf.samples[4].value = 0x00010203;
+    mbuf.samples[5].value = 0x00010210;
+    mbuf.samples[6].value = 0x000102FE;
+    mbuf.samples[7].value = 0x00010203;
 
     _SYS_motion_integrate(&mbuf, 8, &result);
     ASSERT(result.x == 2 * (3 + 4 + 7 - 1 + 3 + 16 - 2 + 3));
@@ -52,10 +52,10 @@ void testIntegrate()
 
     mbuf.header.last = 255;
     mbuf.header.tail = 100;
-    mbuf.buf[96].value = 0x0101027F;
-    mbuf.buf[97].value = 0x0F0102FF;
-    mbuf.buf[98].value = 0x01010203;
-    mbuf.buf[99].value = 0x02010210;
+    mbuf.samples[96].value = 0x0101027F;
+    mbuf.samples[97].value = 0x0F0102FF;
+    mbuf.samples[98].value = 0x01010203;
+    mbuf.samples[99].value = 0x02010210;
 
     // Start just after sample [97]
     _SYS_motion_integrate(&mbuf, 5, &result);
