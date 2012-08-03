@@ -304,6 +304,10 @@ do { \
 /// @hideinitializer
 #define LOG_INT2(_x)    LOG("%s = (%d, %d)\n", #_x, (_x).x, (_x).y);
 
+/// Convenience macro for tracing the name and value of an integer 3-vector expression
+/// @hideinitializer
+#define LOG_INT3(_x)    LOG("%s = (%d, %d, %d)\n", #_x, (_x).x, (_x).y, (_x).z);
+
 /// Convenience macro for tracing the name and value of a floating point 2-vector expression
 /// @hideinitializer
 #define LOG_FLOAT2(_x)  LOG("%s = (%f, %f)\n", #_x, (_x).x, (_x).y);
