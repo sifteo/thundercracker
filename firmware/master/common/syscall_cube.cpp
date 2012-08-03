@@ -13,7 +13,6 @@
 #include "cubeslots.h"
 #include "cube.h"
 #include "neighborslot.h"
-#include "accel.h"
 
 extern "C" {
 
@@ -117,26 +116,6 @@ uint32_t _SYS_getNeighbors(_SYSCubeID cid)
     }
 
     return NeighborSlot::instances[cid].getNeighborState().value;
-}
-
-uint32_t _SYS_getTilt(_SYSCubeID cid)
-{
-    if (!CubeSlots::validID(cid)) {
-        SvmRuntime::fault(F_SYSCALL_PARAM);
-        return 0;
-    }
-
-    return AccelState::instances[cid].getTiltState().value;
-}
-
-uint32_t _SYS_getShake(_SYSCubeID cid)
-{
-    if (!CubeSlots::validID(cid)) {
-        SvmRuntime::fault(F_SYSCALL_PARAM);
-        return 0;
-    }
-
-    return AccelState::instances[cid].getShakeState();
 }
 
 uint32_t _SYS_isTouching(_SYSCubeID cid)

@@ -54,8 +54,6 @@ class Event {
         // Low-bandwidth sensor events
         PID_NEIGHBORS,
         PID_CUBE_TOUCH,
-        PID_CUBE_TILT,
-        PID_CUBE_SHAKE,
 
         // High-bandwidth / low-priority events
         PID_CUBE_BATTERY,

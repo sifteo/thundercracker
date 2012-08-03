@@ -362,12 +362,6 @@ namespace Events {
     /// A cube's touch state has changed (touch began or ended).
     const EventVector<_SYS_CUBE_TOUCH>       cubeTouch;
 
-    /// A cube's tilt state has changed.
-    const EventVector<_SYS_CUBE_TILT>        cubeTilt;
-
-    /// A shake gesture was recognized on one cube.
-    const EventVector<_SYS_CUBE_SHAKE>       cubeShake;
-
     /// A cube's battery level has changed measurably
     const EventVector<_SYS_CUBE_BATTERY>     cubeBatteryLevelChange;
 

@@ -455,27 +455,6 @@ struct VideoBuffer {
     }
 
     /**
-     * @brief Return the physical tilt reading for this cube.
-     *
-     * The resulting vector is oriented with respect to the cube hardware.
-     *
-     * This is equivalent to calling tilt() on the cube() object.
-     */
-    Byte3 physicalTilt() const {
-        return cube().tilt();
-    }
-
-    /**
-     * @brief Return the virtual tilt reading for this cube.
-     *
-     * The resulting vector is oriented with respect to the current
-     * LCD rotation.
-     */
-    Byte3 virtualTilt() const {
-        return cube().tilt().zRotateI(orientation());
-    }
-
-    /**
      * @brief Change the video mode.
      *
      8 This affects subsequent rendering only.

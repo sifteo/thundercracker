@@ -156,8 +156,6 @@ bool Event::dispatchCubePID(PriorityID pid, _SYSCubeID cid)
         case PID_CUBE_REFRESH:      return callCubeEvent(_SYS_CUBE_REFRESH, cid);
         case PID_CUBE_TOUCH:        return callCubeEvent(_SYS_CUBE_TOUCH, cid);
         case PID_CUBE_ASSETDONE:    return callCubeEvent(_SYS_CUBE_ASSETDONE, cid);
-        case PID_CUBE_TILT:         return callCubeEvent(_SYS_CUBE_TILT, cid);
-        case PID_CUBE_SHAKE:        return callCubeEvent(_SYS_CUBE_SHAKE, cid);
         case PID_CUBE_BATTERY:      return callCubeEvent(_SYS_CUBE_BATTERY, cid);
         case PID_CUBE_ACCELCHANGE:  return callCubeEvent(_SYS_CUBE_ACCELCHANGE, cid);
         default:                    ASSERT(0);

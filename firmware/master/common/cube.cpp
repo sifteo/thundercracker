@@ -8,7 +8,6 @@
 #include "machine.h"
 #include "cube.h"
 #include "vram.h"
-#include "accel.h"
 #include "event.h"
 #include "flash_blockcache.h"
 #include "svmdebugpipe.h"
@@ -447,10 +446,6 @@ void CubeSlot::radioAcknowledge(const PacketBuffer &packet)
                 motionWriter.write(MotionUtil::captureAccelState(*ack),
                                    SysTime::ticks());
             }
-
-            // XXX: Old accel filter. Remove this!
-            AccelState &accel = AccelState::getInstance( id() );
-            accel.update(ack->accel[0], ack->accel[1]);
         }
     }
 

@@ -122,20 +122,6 @@ struct CubeID {
     }
 
     /**
-     * @brief Return the 'tilt' state, derived from the raw accelerometer data
-     * by a built-in filter.
-     *
-     * Tilt is a vector, where each component is
-     * in the set (-1, 0, +1).
-     */
-    Byte3 tilt() const {
-        ASSERT(sys < NUM_SLOTS);
-        _SYSByte4 v;
-        v.value = _SYS_getTilt(*this);
-        return vec(v.x, v.y, v.z);
-    }
-
-    /**
      * @brief Is this cube being touched right now? Return the current state
      * of the touch sensor.
      */
@@ -144,14 +130,6 @@ struct CubeID {
         return _SYS_isTouching(*this);
     }
     
-    /**
-     * @brief Is a shake event being detected on this cube?
-     */
-    bool isShaking() const {
-        ASSERT(sys < NUM_SLOTS);
-        return _SYS_getShake(*this);
-    }
-
     /**
      * @brief Return the cube's unique 64-bit hardware ID. This ID uniquely
      * identifies the cube that this slot is paired with.
