@@ -117,7 +117,7 @@ struct _SYSMotionMedianAxis {
 };
 
 struct _SYSMotionMedian {
-    _SYSMotionMedianAxis axes[3];
+    struct _SYSMotionMedianAxis axes[3];
 };
 
 /*
