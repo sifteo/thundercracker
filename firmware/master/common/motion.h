@@ -22,6 +22,9 @@ public:
     /// Convert a raw ACK buffer to a packed _SYSByte4 accelerometer reading.
     static _SYSByte4 captureAccelState(const RF_ACKType &ack);
 
+    /// Numeric integral using the trapezoidal rule. Result is scaled by 2.
+    static void integrate(const _SYSMotionBuffer *mbuf, unsigned duration, _SYSInt3 *result);
+
 private:
     MotionUtil();    // Do not implement
 };

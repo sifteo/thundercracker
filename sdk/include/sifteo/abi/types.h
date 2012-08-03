@@ -62,6 +62,10 @@ struct _SYSInt2 {
     int32_t x, y;
 };
 
+struct _SYSInt3 {
+    int32_t x, y, z;
+};
+
 union _SYSByte4 {
     uint32_t value;
     struct {

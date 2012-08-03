@@ -63,6 +63,25 @@ void _SYS_setMotionBuffer(_SYSCubeID cid, _SYSMotionBuffer *mbuf)
     CubeSlots::instances[cid].setMotionBuffer(mbuf);
 }
 
+void _SYS_motion_integrate(const struct _SYSMotionBuffer *mbuf, unsigned duration, struct _SYSInt3 *result)
+{
+    if (!isAligned(mbuf))
+        return SvmRuntime::fault(F_SYSCALL_ADDR_ALIGN);
+
+    // Even though these are read-only, we don't bother allowing them to be in flash memory.
+    // Also, the same note about sizing applies from _SYS_setMotionBuffer().
+    if (!SvmMemory::mapRAM(mbuf, sizeof *mbuf))
+        return SvmRuntime::fault(F_SYSCALL_ADDRESS);
+
+    if (!isAligned(result))
+        return SvmRuntime::fault(F_SYSCALL_ADDR_ALIGN);
+
+    if (!SvmMemory::mapRAM(result, sizeof *result))
+        return SvmRuntime::fault(F_SYSCALL_ADDRESS);
+
+    MotionUtil::integrate(mbuf, duration, result);
+}
+
 uint32_t _SYS_getAccel(_SYSCubeID cid)
 {
     if (!CubeSlots::validID(cid)) {

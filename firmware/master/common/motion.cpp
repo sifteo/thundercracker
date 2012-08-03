@@ -21,6 +21,109 @@ _SYSByte4 MotionUtil::captureAccelState(const RF_ACKType &ack)
     return state;
 }
 
+void MotionUtil::integrate(const _SYSMotionBuffer *mbuf, unsigned duration, _SYSInt3 *result)
+{
+    /*
+     * Integrate the last 'duration' ticks worth of data from the motion buffer,
+     * returning the sum of these ticks in 'result'. If 'now' is the current time,
+     * this integrates from (now - duration) to (now).
+     *
+     * Since we have a set of discrete timestamped samples, we need to approximate
+     * the value of samples that lie in-between our buffer's actual samples. To do
+     * this efficiently, we use the trapezoidal rule. Each buffered sample is treated
+     * as a trapezoid which extends from the previous sample to itself.
+     */
+
+    // Work backwards from the current position
+    uint8_t tail = mbuf->header.tail;
+    uint8_t last = mbuf->header.last;
+    uint8_t head = tail;
+
+    // Point to the last stored sample
+    head--;
+    head = MIN(head, last);
+
+    // Keep a two-sample buffer, representing the two edges of our trapezoid
+    _SYSByte4 sampleNext;
+    _SYSByte4 samplePrev = mbuf->buf[head];
+
+    int x = 0, y = 0, z = 0;
+
+    while (duration) {
+        unsigned ticks;
+
+        if (head == tail) {
+            /*
+             * Out of samples! Use a duplicate of the next sample, with
+             * an arbitrarily long time delta. This effectively assumes that
+             * prior to the beginning of the buffer, we were stuck with the
+             * same sample forever.
+             */
+
+            sampleNext.value = samplePrev.value;
+            ticks = duration;
+
+        } else {
+            // Roll back by one sample
+            head--;
+            head = MIN(head, last);
+
+            // Shift new sample into buffer
+            sampleNext.value = samplePrev.value;
+            samplePrev.value = mbuf->buf[head].value;
+
+            // Width of our trapezoid is the distance from prev to next, conveniently
+            // already encoded in next's timestamp byte.
+            ticks = unsigned(uint8_t(sampleNext.w)) + 1;
+        }
+
+        int pX = samplePrev.x;
+        int pY = samplePrev.y;
+        int pZ = samplePrev.z;
+
+        int nX = sampleNext.x;
+        int nY = sampleNext.y;
+        int nZ = sampleNext.z;
+
+        if (ticks <= duration) {
+            /*
+             * The Trapezoidal rule is equivalent to taking an average of the current
+             * and the last sample, and weighting that average according to the distance
+             * between the two samples divided by two. To avoid discarding precision,
+             * we skip this division by two.
+             */
+
+            x += ticks * (nX + pX);
+            y += ticks * (nY + pY);
+            z += ticks * (nZ + pZ);
+
+            duration -= ticks;
+
+        } else {
+            /*
+             * This trapezoid is larger than the remainder of our integration window.
+             * We need to slice it, effectively using linear interpolation to calculate
+             * a substitute for samplePrev which is exactly 'duration' ticks prior to
+             * sampleNext.
+             */
+
+            int interpX = nX + (pX - nX) * duration / ticks;
+            int interpY = nY + (pY - nY) * duration / ticks;
+            int interpZ = nZ + (pZ - nZ) * duration / ticks;
+
+            x += duration * (nX + interpX);
+            y += duration * (nY + interpY);
+            z += duration * (nZ + interpZ);
+
+            break;
+        }
+    }
+
+    result->x = x;
+    result->y = y;
+    result->z = z;
+}
+
 void MotionWriter::write(_SYSByte4 reading, SysTime::Ticks timestamp)
 {
     /*

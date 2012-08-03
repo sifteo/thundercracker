@@ -213,6 +213,9 @@ void _SYS_vbuf_wrect(struct _SYSVideoBuffer *vbuf, uint16_t addr, const uint16_t
 void _SYS_vbuf_spr_resize(struct _SYSVideoBuffer *vbuf, unsigned id, unsigned width, unsigned height) _SC(155);
 void _SYS_vbuf_spr_move(struct _SYSVideoBuffer *vbuf, unsigned id, int x, int y) _SC(156);
 
+// Motion buffers
+void _SYS_motion_integrate(const struct _SYSMotionBuffer *mbuf, unsigned duration, struct _SYSInt3 *result) _SC(176);
+
 // Asset images
 void _SYS_image_memDraw(uint16_t *dest, _SYSCubeID destCID, const struct _SYSAssetImage *im, unsigned dest_stride, unsigned frame) _SC(157);
 void _SYS_image_memDrawRect(uint16_t *dest, _SYSCubeID destCID, const struct _SYSAssetImage *im, unsigned dest_stride, unsigned frame, struct _SYSInt2 *srcXY, struct _SYSInt2 *size) _SC(158);
