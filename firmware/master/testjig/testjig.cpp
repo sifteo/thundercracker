@@ -239,6 +239,7 @@ void TestJig::setUsbEnabledHandler(uint8_t argc, uint8_t *args)
 void TestJig::setSimulatedBatteryVoltageHandler(uint8_t argc, uint8_t *args)
 {
     uint16_t val = (args[1] | args[2] << 8);
+    val /= 2;
     Dac::write(BATTERY_SIM_DAC_CH, val);
 
     // no response data - just indicate that we're done
