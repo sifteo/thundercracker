@@ -180,6 +180,18 @@ struct CubeID {
     }
 
     /**
+     * @brief Detach any motion buffer which was previously attached to this cube.
+     *
+     * After this point, we'll refrain from capturing high-frequency motion
+     * data from this cube. The latest motion sample will still be available
+     * from accel().
+     */
+    void detachMotionBuffer() const {
+        ASSERT(sys < NUM_SLOTS);
+        _SYS_setMotionBuffer(*this, 0);
+    }
+
+    /**
      * @brief Get this cube's battery level.
      *
      * The battery level has already been converted into a "fuel gauge"

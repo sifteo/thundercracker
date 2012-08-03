@@ -21,6 +21,7 @@
 #include <sifteo/math.h>
 #include <sifteo/memory.h>
 #include <sifteo/metadata.h>
+#include <sifteo/motion.h>
 #include <sifteo/string.h>
 #include <sifteo/system.h>
 #include <sifteo/time.h>
