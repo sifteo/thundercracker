@@ -1,4 +1,4 @@
-const float HILIGHT = 1.0;
+const float HILIGHT = 1.6;
 
 varying vec2 lcdCoord;
 varying vec2 hilightCoord;
