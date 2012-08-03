@@ -28,6 +28,7 @@ public:
         Events::neighborAdd.set(&SensorListener::onNeighborAdd, this);
         Events::neighborRemove.set(&SensorListener::onNeighborRemove, this);
         Events::cubeAccelChange.set(&SensorListener::onAccelChange, this);
+        Events::cubeTouch.set(&SensorListener::onTouch, this);
         Events::cubeBatteryLevelChange.set(&SensorListener::onBatteryChange, this);
         Events::cubeConnect.set(&SensorListener::onConnect, this);
 
@@ -58,6 +59,7 @@ private:
         // Draw initial state for all sensors
         onAccelChange(cube);
         onBatteryChange(cube);
+        onTouch(cube);
         drawNeighbors(cube);
     }
 
@@ -78,7 +80,7 @@ private:
         String<32> str;
         str << "touch: " << cube.isTouching() <<
             " (" << counters[cube].touch << ")\n";
-        vid[cube].bg0rom.text(vec(1,8), str);
+        vid[cube].bg0rom.text(vec(1,9), str);
     }
 
     void onAccelChange(unsigned id)
