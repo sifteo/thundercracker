@@ -283,26 +283,26 @@ public:
      * @brief Change flags, returned by update() to indicate what just changed
      */
     enum ChangeFlags {
-        Shake_Begin      = 1 << 0,
-        Shake_End        = 1 << 1,
-        Shake_Change     = Shake_Begin | Shake_End,
+        Shake_Begin      = 1 << 0,                                          ///< 'shake' has changed to 'true'
+        Shake_End        = 1 << 1,                                          ///< 'shake' has changed to 'false'
+        Shake_Change     = Shake_Begin | Shake_End,                         ///< 'shake' has changed
 
-        Tilt_XNeg        = 1 << 2,
-        Tilt_XZero       = 1 << 3,
-        Tilt_XPos        = 1 << 4,
-        Tilt_XChange     = Tilt_XNeg | Tilt_XZero | Tilt_XPos,
+        Tilt_XNeg        = 1 << 2,                                          ///< 'tilt.x' has changed to -1
+        Tilt_XZero       = 1 << 3,                                          ///< 'tilt.x' has changed to 0
+        Tilt_XPos        = 1 << 4,                                          ///< 'tilt.x' has changed to +1
+        Tilt_XChange     = Tilt_XNeg | Tilt_XZero | Tilt_XPos,              ///< 'tilt.x' has changed
 
-        Tilt_YNeg        = 1 << 5,
-        Tilt_YZero       = 1 << 6,
-        Tilt_YPos        = 1 << 7,
-        Tilt_YChange     = Tilt_YNeg | Tilt_YZero | Tilt_YPos,
+        Tilt_YNeg        = 1 << 5,                                          ///< 'tilt.y' has changed to -1
+        Tilt_YZero       = 1 << 6,                                          ///< 'tilt.y' has changed to 0
+        Tilt_YPos        = 1 << 7,                                          ///< 'tilt.y' has changed to +1
+        Tilt_YChange     = Tilt_YNeg | Tilt_YZero | Tilt_YPos,              ///< 'tilt.y' has changed
 
-        Tilt_ZNeg        = 1 << 8,
-        Tilt_ZZero       = 1 << 9,
-        Tilt_ZPos        = 1 << 10,
-        Tilt_ZChange     = Tilt_ZNeg | Tilt_ZZero | Tilt_ZPos,
+        Tilt_ZNeg        = 1 << 8,                                          ///< 'tilt.z' has changed to -1
+        Tilt_ZZero       = 1 << 9,                                          ///< 'tilt.z' has changed to 0
+        Tilt_ZPos        = 1 << 10,                                         ///< 'tilt.z' has changed to +1
+        Tilt_ZChange     = Tilt_ZNeg | Tilt_ZZero | Tilt_ZPos,              ///< 'tilt.z' has changed
 
-        Tilt_Change      = Tilt_XChange | Tilt_YChange | Tilt_ZChange,
+        Tilt_Change      = Tilt_XChange | Tilt_YChange | Tilt_ZChange,      ///< 'tilt' has changed
     };
 
     /**
