@@ -28,7 +28,7 @@ static GPIOPin usbCurrentSign = USB_CURRENT_DIR_GPIO;
 static GPIOPin v3CurrentSign = V3_CURRENT_DIR_GPIO;
 
 TestJig::I2CWriteTransaction TestJig::cubeWrite;
-TestJig::SensorsTransaction TestJig::sensorsTransaction;
+TestJig::AckPacket TestJig::ackPacket;
 
 /*
  * Table of test handlers.
@@ -94,8 +94,8 @@ void TestJig::init()
     testUsbEnable.setControl(GPIOPin::OUT_2MHZ);
     testUsbEnable.setHigh();    // default to enabled
 
-    sensorsTransaction.enabled = false;
-    sensorsTransaction.byteIdx = 0;
+    ackPacket.enabled = false;
+    ackPacket.len = 0;
     cubeWrite.remaining = 0;
 
     i2c.init(JIG_SCL_GPIO, JIG_SDA_GPIO, I2C_SLAVE_ADDRESS);
@@ -151,8 +151,16 @@ void TestJig::onI2cEvent()
      *       This is generally fine, since we're not tracking any specific packet.
      */
     if (status & I2CSlave::AddressMatch) {
-        if (sensorsTransaction.enabled && sensorsTransaction.byteIdx > 0)
-            Tasks::trigger(Tasks::TestJig);
+        if (ackPacket.startCondState == StartInitial) {
+            ackPacket.startCondState = StartRepeated;
+            if (ackPacket.full() && ackPacket.enabled) {
+                ackPacket.usbWritePending = true;
+                Tasks::trigger(Tasks::TestJig);
+            }
+        } else {
+            ackPacket.len = 0;
+            ackPacket.startCondState = StartInitial;
+        }
     }
 
     /*
@@ -180,12 +188,13 @@ void TestJig::onI2cEvent()
 
     i2c.isrEV(status, &byte);
 
-    // we received a byte
+    /*
+     * We received a byte. Capture it if we won't overwrite any
+     * pending USB writes, and it won't overflow our buffer.
+     */
     if (status & I2CSlave::RxNotEmpty) {
-        if (sensorsTransaction.byteIdx < sizeof sensorsTransaction.cubeAck) {
-            sensorsTransaction.cubeAck.bytes[sensorsTransaction.byteIdx] = byte;
-            sensorsTransaction.byteIdx++;
-        }
+        if (!ackPacket.usbWritePending && !ackPacket.full())
+            ackPacket.append(byte);
     }
 }
 
@@ -196,11 +205,9 @@ void TestJig::onI2cEvent()
  */
 void TestJig::task()
 {
-    uint8_t resp[1 + sizeof sensorsTransaction.cubeAck] = { EventAckPacket };
-    memcpy(resp + 1, &sensorsTransaction.cubeAck, sizeof sensorsTransaction.cubeAck);
-    // clear this as soon as we've copied the appropriate data
-    sensorsTransaction.byteIdx = 0;
-
+    uint8_t resp[1 + sizeof(ackPacket.payload)] = { EventAckPacket };
+    memcpy(resp + 1, &ackPacket.payload, sizeof ackPacket.payload);
+    ackPacket.usbWritePending = false;
     UsbDevice::write(resp, sizeof resp);
 }
 
@@ -232,6 +239,10 @@ void TestJig::setUsbEnabledHandler(uint8_t argc, uint8_t *args)
 void TestJig::setSimulatedBatteryVoltageHandler(uint8_t argc, uint8_t *args)
 {
     uint16_t val = (args[1] | args[2] << 8);
+    
+    //Have to divide the targeted voltage by two. 
+    //Gets multiplied by the gain stage of the external opamp (gain == 2)
+    val /= 2;
     Dac::write(BATTERY_SIM_DAC_CH, val);
 
     // no response data - just indicate that we're done
@@ -345,7 +356,7 @@ void TestJig::writeToCubeI2CHandler(uint8_t argc, uint8_t *args)
  */
 void TestJig::setCubeSensorsEnabledHandler(uint8_t argc, uint8_t *args)
 {
-    sensorsTransaction.enabled = args[1];
+    ackPacket.enabled = args[1];
 
     const uint8_t response[] = { args[0] };
     UsbDevice::write(response, sizeof response);

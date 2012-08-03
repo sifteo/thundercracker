@@ -8,6 +8,7 @@
 
 #include <stdint.h>
 #include "protocol.h"
+#include "macros.h"
 
 class TestJig
 {
@@ -41,10 +42,25 @@ private:
     static void beginNeighborTxHandler(uint8_t argc, uint8_t *args);
     static void stopNeighborTxHandler(uint8_t argc, uint8_t *args);
 
-    struct SensorsTransaction {
+    enum SensorsTransactionState {
+        StartInitial,
+        StartRepeated,
+    };
+
+    struct AckPacket {
+        RF_ACKType payload;
+        SensorsTransactionState startCondState;
         bool enabled;
-        RF_ACKType cubeAck;
-        uint8_t byteIdx;
+        bool usbWritePending;
+        uint8_t len;
+
+        bool ALWAYS_INLINE full() const {
+            return len == sizeof payload;
+        }
+
+        void ALWAYS_INLINE append(uint8_t b) {
+            payload.bytes[len++] = b;
+        }
     };
 
     enum I2CProtocolType {
@@ -63,7 +79,7 @@ private:
         uint8_t *data;
     };
 
-    static SensorsTransaction sensorsTransaction;
+    static AckPacket ackPacket;
     static I2CWriteTransaction cubeWrite;
 };
 
