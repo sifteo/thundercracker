@@ -9,6 +9,7 @@
 #include <sifteo/abi.h>
 #include <protocol.h>
 #include "macros.h"
+#include "systime.h"
 
 
 /**
@@ -34,8 +35,20 @@ private:
 
 class MotionWriter {
 public:
-    _SYSMotionBuffer *mbuf;
+	ALWAYS_INLINE void setBuffer(_SYSMotionBuffer *m) {
+		mbuf = m;
+	}
 
+	ALWAYS_INLINE bool hasBuffer() {
+		return mbuf != 0;
+	}
+
+	// Safe to call from ISR context
+    void write(_SYSByte4 reading, SysTime::Ticks timestamp);
+
+private:
+    SysTime::Ticks lastTimestamp;		// Accessed by ISR only
+    _SYSMotionBuffer *mbuf;				// Pointer written on main thread, read on ISR
 };
 
 

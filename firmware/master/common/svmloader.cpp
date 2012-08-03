@@ -101,9 +101,10 @@ bool SvmLoader::prepareToExec(const Elf::Program &program, SvmRuntime::StackInfo
     Event::clearVectors();
     UIPause::disableGameMenu();
 
-    // Detach any existing video buffers.
+    // Detach any existing cube buffers.
     for (unsigned i = 0; i < _SYS_NUM_CUBE_SLOTS; i++) {
         CubeSlots::instances[i].setVideoBuffer(0);
+        CubeSlots::instances[i].setMotionBuffer(0);
     }
 
     // Reset any audio left playing by the previous tenant

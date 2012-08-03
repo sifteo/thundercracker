@@ -43,8 +43,7 @@ namespace LEDPatterns {
  * The LEDSequencer plays back an animation sequence from
  * an LEDPattern, in an event-driven way. We accept a hardware
  * specific ISR callback which advances the state of the sequencer
- * by one tick. The hardware-specific ISR should query the current
- * state afterward, and adjust the PWM controller accordingly.
+ * by one tick and emits new PWM values for each LED.
  */
 
 class LEDSequencer {

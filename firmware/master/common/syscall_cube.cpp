@@ -60,7 +60,7 @@ void _SYS_setMotionBuffer(_SYSCubeID cid, _SYSMotionBuffer *mbuf)
     if (!CubeSlots::validID(cid))
         return SvmRuntime::fault(F_SYSCALL_PARAM);
 
-    // XXX: Do stuff
+    CubeSlots::instances[cid].setMotionBuffer(mbuf);
 }
 
 uint32_t _SYS_getAccel(_SYSCubeID cid)

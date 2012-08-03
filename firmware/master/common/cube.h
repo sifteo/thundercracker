@@ -77,6 +77,10 @@ class CubeSlot {
         vbuf = v;
     }
 
+    void ALWAYS_INLINE setMotionBuffer(_SYSMotionBuffer *m) {
+        motionWriter.setBuffer(m);
+    }
+
     ALWAYS_INLINE const _SYSByte4 getAccelState() {
         return MotionUtil::captureAccelState(lastACK);
     }

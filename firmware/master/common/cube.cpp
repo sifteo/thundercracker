@@ -33,6 +33,7 @@ void CubeSlot::connect(SysLFS::Key cubeRecord, const RadioAddress &addr, const R
     // Reset state
     NeighborSlot::resetSlots(cv);
     setVideoBuffer(0);
+    setMotionBuffer(0);
     Atomic::And(CubeSlots::flashResetWait, ~cv);
     Atomic::And(CubeSlots::flashResetSent, ~cv);
     Atomic::And(CubeSlots::flashAddrPending, ~cv);
@@ -78,6 +79,7 @@ void CubeSlot::disconnect()
     Event::setCubePending(Event::PID_CONNECTION, id());
 
     setVideoBuffer(0);
+    setMotionBuffer(0);
     NeighborSlot::resetSlots(cv);
     NeighborSlot::resetPairs(cv);
 }
@@ -432,14 +434,24 @@ void CubeSlot::radioAcknowledge(const PacketBuffer &packet)
     }
 
     if (packet.len >= offsetof(RF_ACKType, accel) + sizeof ack->accel) {
-        // Has valid accelerometer data. Is it different from our previous state?
+        // Has valid accelerometer data.
 
-        // Test for gestures
-        AccelState &accel = AccelState::getInstance( id() );
-        accel.update(ack->accel[0], ack->accel[1]);
+        // Has the state changed at all? If not, don't bother storing it.
+        if (memcmp(lastACK.accel, ack->accel, sizeof lastACK.accel)) {
 
-        if (memcmp(lastACK.accel, ack->accel, sizeof lastACK.accel))
+            // Notify userspace about the immediate update
             Event::setCubePending(Event::PID_CUBE_ACCELCHANGE, id());
+
+            // If userspace has subscribed to high-frequency updates, write to its MotionBuffer
+            if (motionWriter.hasBuffer()) {
+                motionWriter.write(MotionUtil::captureAccelState(*ack),
+                                   SysTime::ticks());
+            }
+
+            // XXX: Old accel filter. Remove this!
+            AccelState &accel = AccelState::getInstance( id() );
+            accel.update(ack->accel[0], ack->accel[1]);
+        }
     }
 
     if (packet.len >= offsetof(RF_ACKType, neighbors) + sizeof ack->neighbors) {
