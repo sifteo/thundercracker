@@ -159,6 +159,9 @@ void MotionUtil::medianAxis(const _SYSMotionBuffer *mbuf, unsigned duration, uns
      * since we don't yet know its duration. (It has a weight of zero)
      */
 
+    // Duration must be clamped to the max value our histogram can hold
+    duration = MIN(duration, 0xFFFF);
+
     // Note, the histogram buffer is zeroed lazily.
     unsigned histMin;
     unsigned histMax;
