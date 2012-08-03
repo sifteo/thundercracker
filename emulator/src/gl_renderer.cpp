@@ -273,6 +273,7 @@ void GLRenderer::beginFrame(float viewExtent, b2Vec2 viewCenter, unsigned pixelZ
     glShadeModel(GL_SMOOTH);
 
     glClear(GL_DEPTH_BUFFER_BIT);
+    glEnable(GL_DEPTH_TEST);
 }
 
 void GLRenderer::endFrame()
