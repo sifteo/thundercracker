@@ -681,7 +681,7 @@ template <typename T> struct Vector3 {
      * default C++ truncation or extension rules.
      */
     template <typename R> Vector3<R> cast() const {
-        Vector3<R> result = { x, y };
+        Vector3<R> result = { x, y, z };
         return result;
     }
     
