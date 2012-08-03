@@ -82,6 +82,23 @@ void _SYS_motion_integrate(const struct _SYSMotionBuffer *mbuf, unsigned duratio
     MotionUtil::integrate(mbuf, duration, result);
 }
 
+void _SYS_motion_median(const struct _SYSMotionBuffer *mbuf, unsigned duration, struct _SYSMotionMedian *result)
+{
+    if (!isAligned(mbuf))
+        return SvmRuntime::fault(F_SYSCALL_ADDR_ALIGN);
+
+    // Even though these are read-only, we don't bother allowing them to be in flash memory.
+    // Also, the same note about sizing applies from _SYS_setMotionBuffer().
+    if (!SvmMemory::mapRAM(mbuf, sizeof *mbuf))
+        return SvmRuntime::fault(F_SYSCALL_ADDRESS);
+
+    // Note: _SYSMotionMedian does NOT require word alignment.
+    if (!SvmMemory::mapRAM(result, sizeof *result))
+        return SvmRuntime::fault(F_SYSCALL_ADDRESS);
+
+    MotionUtil::median(mbuf, duration, result);
+}
+
 uint32_t _SYS_getAccel(_SYSCubeID cid)
 {
     if (!CubeSlots::validID(cid)) {

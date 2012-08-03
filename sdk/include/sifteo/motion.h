@@ -25,6 +25,7 @@ namespace Sifteo {
  * @{
  */
 
+
 /**
  * @brief A memory buffer which holds captured motion data.
  *
@@ -106,6 +107,11 @@ struct MotionBuffer {
      * The result will be scaled by (2 * duration), meaning you'll need to divide
      * by this number to take an average. However, avoiding this division is both faster
      * and preserves precision, so we recommend using the scaled values as-is if possible.
+     *
+     * This integration can be used as a very simple "boxcar" or moving-average
+     * low pass filter, with a fixed temporal window size. This kind of filter will
+     * feel like it's "slowing" or "blurring" motions, but for short durations the
+     * filtered results can feel very natural.
      */
     Int3 integrate(unsigned duration)
     {
@@ -114,6 +120,69 @@ struct MotionBuffer {
         return vec(result.x, result.y, result.z);
     }
 };
+
+
+/**
+ * @brief Calculate median, minimum, and maximum statistics from a MotionBuffer
+ *
+ * This structure contains the results of a median
+ * calculation, including the median vector itself as well as min/max
+ * stats that we get "for free" as a result of the median calculation.
+ */
+
+class MotionMedian {
+public:
+    _SYSMotionMedian sys;
+
+    // Implicit conversions
+    operator _SYSMotionMedian* () { return &sys; }
+    operator const _SYSMotionMedian* () const { return &sys; }
+
+    /**
+     * @brief Calculate the component-wise median of recent motion data
+     *
+     * The duration is specified in units as defined by TICK_NS, TICK_US, and TICK_HZ.
+     * The median accelerometer sample over this duration is calculated and returned.
+     * Medians are calculated independently for each of the three channels. No
+     * scaling is applied.
+     *
+     * The result is written to the supplied MotionMedian buffer. This includes
+     * the median itself, as well as the maximum and minimum values, which we
+     * get 'for free' as a result of the median calculation.
+     *
+     * Unlike the moving-average filter that can be built with integrate(), this
+     * algorithm provides a way of filtering data which is very good at eliminating
+     * brief spikes but preserving hard edges. The 'duration' parameter will set
+     * the latency at which we detect these edges. Spikes up to half this duration
+     * can be completely eliminated from the output, unlike in a typical low-pass
+     * filter where such spikes just end up 'smeared' into your data.
+     */
+    MotionMedian(_SYSMotionBuffer *mbuf, unsigned duration)
+    {
+        _SYS_motion_median(mbuf, duration, *this);
+    }
+
+    /// Return the median itself, as a vector
+    Byte3 median() const {
+        return vec(sys.axes[0].median, sys.axes[1].median, sys.axes[2].median);
+    }
+
+    /// Return the minimum values for each axis, as a vector
+    Byte3 minimum() const {
+        return vec(sys.axes[0].minimum, sys.axes[1].minimum, sys.axes[2].minimum);
+    }
+
+    /// Return the maximum values for each axis, as a vector
+    Byte3 maximum() const {
+        return vec(sys.axes[0].maximum, sys.axes[1].maximum, sys.axes[2].maximum);
+    }
+
+    /// Return the difference between maximum and minimum, as a vector
+    Int3 range() const {
+        return Int3(maximum()) - Int3(minimum());
+    }
+};
+
 
 /**
  * @} endgroup motion

@@ -3,6 +3,7 @@
  * Copyright <c> 2012 Sifteo, Inc. All rights reserved.
  */
 
+#include <string.h>
 #include "motion.h"
 
 
@@ -124,6 +125,126 @@ void MotionUtil::integrate(const _SYSMotionBuffer *mbuf, unsigned duration, _SYS
     result->x = x;
     result->y = y;
     result->z = z;
+}
+
+void MotionUtil::median(const _SYSMotionBuffer *mbuf, unsigned duration, _SYSMotionMedian *result)
+{
+    // Break out the components per-axis
+    medianAxis(mbuf, duration, 0, result->axes[0]);
+    medianAxis(mbuf, duration, 8, result->axes[1]);
+    medianAxis(mbuf, duration, 16, result->axes[2]);
+}
+
+void MotionUtil::medianAxis(const _SYSMotionBuffer *mbuf, unsigned duration, unsigned shift, _SYSMotionMedianAxis &result)
+{
+    /*
+     * Since the range of possible values is small, and we need to be able
+     * to efficiently weight each sample, we calculate the median using
+     * a histogram based approach.
+     *
+     * The histogram is 512 bytes large, and allocated on the stack. This
+     * is less than the size of the VideoBuffer used by UICoordinator,
+     * so it's effectively "free" as long as we never use this code within
+     * an ISR or within a system UI.
+     *
+     * To reduce the amount of the histogram which must be scanned, we
+     * also keep track of the minimum and maximum values we encounter.
+     *
+     * Since this is already a bit heavy, we simplify a bit by using a
+     * rectangular weighting function rather than trapezoidal. Each sample
+     * is weighted according to the timestamp of the next sample, indicating
+     * how long that sample was current for.
+     *
+     * Note that this means the most recent sample is not used at all,
+     * since we don't yet know its duration. (It has a weight of zero)
+     */
+
+    // Note, the histogram buffer is zeroed lazily.
+    unsigned histMin;
+    unsigned histMax;
+    uint16_t histogram[256];
+    const unsigned bias = 128;
+
+    // Work backwards from the current position
+    uint8_t tail = mbuf->header.tail;
+    uint8_t last = mbuf->header.last;
+    uint8_t head = tail;
+
+    // Point to the last stored sample
+    head--;
+    head = MIN(head, last);
+
+    // Initialize with the last sample
+    _SYSByte4 packed = mbuf->samples[head];
+    unsigned sample = int8_t(packed.value >> shift) + bias;
+    unsigned weight = int(uint8_t(packed.w)) + 1;
+
+    // Init histogram, clear the very first slot
+    histMin = sample;
+    histMax = sample;
+    histogram[sample] = 0;
+
+    unsigned remaining = duration;
+    while (remaining) {
+        unsigned nextWeight;
+
+        if (head == tail) {
+            // Out of samples. Duplicate the oldest sample indefinitely.
+            nextWeight = -1;
+
+        } else {
+            // Get current sample and next weight
+            head--;
+            head = MIN(head, last);
+            packed.value = mbuf->samples[head].value;
+            sample = int8_t(packed.value >> shift) + bias;
+            nextWeight = int(uint8_t(packed.w)) + 1;
+        }
+
+        // Truncate if this sample is too long
+        weight = MIN(weight, remaining);
+
+        // Grow the histogram buffer if necessary
+        ASSERT(sample < arraysize(histogram));
+        if (sample < histMin) {
+            memset(&histogram[sample], 0, sizeof(*histogram) * (histMin - sample));
+            histMin = sample;
+        }
+        if (sample > histMax) {
+            memset(&histogram[histMax+1], 0, sizeof(*histogram) * (sample - histMax));
+            histMax = sample;
+        }
+
+        // Add to histogram
+        histogram[sample] += weight;
+
+        // Next...
+        ASSERT(weight <= remaining);
+        remaining -= weight;
+        weight = nextWeight;
+    }
+
+    // Now scan the histogram. The total of all weights in the histogram should equal
+    // "duration", and the median is the sample we hit after accumulating half this weight.
+
+    unsigned accumulator = 0;
+    const unsigned middle = duration >> 1;
+
+    for (unsigned i = histMin; i <= histMax; ++i) {    
+        accumulator += histogram[i];
+
+        if (accumulator >= middle) {
+            result.minimum = histMin - bias;
+            result.maximum = histMax - bias;
+            result.median = i - bias;
+            return;
+        }
+    }
+
+    ASSERT(remaining == 0);
+    result.minimum = 0;
+    result.maximum = 0;
+    result.median = 0;
 }
 
 void MotionWriter::write(_SYSByte4 reading, SysTime::Ticks timestamp)

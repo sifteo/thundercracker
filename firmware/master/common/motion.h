@@ -25,8 +25,13 @@ public:
     /// Numeric integral using the trapezoidal rule. Result is scaled by 2.
     static void integrate(const _SYSMotionBuffer *mbuf, unsigned duration, _SYSInt3 *result);
 
+    /// Compute a component-wise time-weighted median of the acceleration data, over the specified duration
+    static void median(const _SYSMotionBuffer *mbuf, unsigned duration, _SYSMotionMedian *result);
+
 private:
     MotionUtil();    // Do not implement
+
+    static void medianAxis(const _SYSMotionBuffer *mbuf, unsigned duration, unsigned shift, _SYSMotionMedianAxis &result);
 };
 
 

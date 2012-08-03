@@ -110,6 +110,16 @@ struct _SYSMotionBuffer {
     union _SYSByte4 samples[_SYS_MOTION_MAX_ENTRIES];
 };
 
+struct _SYSMotionMedianAxis {
+    int8_t median;
+    int8_t minimum;
+    int8_t maximum;
+};
+
+struct _SYSMotionMedian {
+    _SYSMotionMedianAxis axes[3];
+};
+
 /*
  * Type bits, for use in the 'tag' for the low-level _SYS_log() handler.
  * Normally these don't need to be used in usermode code, they're inserted

@@ -70,9 +70,76 @@ void testIntegrate()
     ASSERT(result.z == 1 * 13 * 2);
 }
 
+void testMedian()
+{
+    _SYSMotionMedian result;
+    _SYSMotionBuffer mbuf;
+    bzero(mbuf);
+
+    // Any length median over an empty buffer should yield zero.
+
+    _SYS_motion_median(&mbuf, 0, &result);
+    ASSERT(result.axes[0].median == 0);
+    ASSERT(result.axes[1].median == 0);
+    ASSERT(result.axes[2].median == 0);
+    ASSERT(result.axes[0].minimum == 0);
+    ASSERT(result.axes[1].minimum == 0);
+    ASSERT(result.axes[2].minimum == 0);
+    ASSERT(result.axes[0].maximum == 0);
+    ASSERT(result.axes[1].maximum == 0);
+    ASSERT(result.axes[2].maximum == 0);
+
+    _SYS_motion_median(&mbuf, 1, &result);
+    ASSERT(result.axes[0].median == 0);
+    ASSERT(result.axes[1].median == 0);
+    ASSERT(result.axes[2].median == 0);
+    ASSERT(result.axes[0].minimum == 0);
+    ASSERT(result.axes[1].minimum == 0);
+    ASSERT(result.axes[2].minimum == 0);
+    ASSERT(result.axes[0].maximum == 0);
+    ASSERT(result.axes[1].maximum == 0);
+    ASSERT(result.axes[2].maximum == 0);
+
+    _SYS_motion_median(&mbuf, -1, &result);
+    ASSERT(result.axes[0].median == 0);
+    ASSERT(result.axes[1].median == 0);
+    ASSERT(result.axes[2].median == 0);
+    ASSERT(result.axes[0].minimum == 0);
+    ASSERT(result.axes[1].minimum == 0);
+    ASSERT(result.axes[2].minimum == 0);
+    ASSERT(result.axes[0].maximum == 0);
+    ASSERT(result.axes[1].maximum == 0);
+    ASSERT(result.axes[2].maximum == 0);
+
+    // Same simple test case from above, equal weights
+
+    mbuf.header.last = 7;
+    mbuf.header.tail = 0;
+    mbuf.samples[0].value = 0x00010203;
+    mbuf.samples[1].value = 0x00010204;
+    mbuf.samples[2].value = 0x00010207;
+    mbuf.samples[3].value = 0x000102FF;
+    mbuf.samples[4].value = 0x00010203;
+    mbuf.samples[5].value = 0x00010210;
+    mbuf.samples[6].value = 0x000102FE;
+    mbuf.samples[7].value = 0x00010203;
+
+    _SYS_motion_median(&mbuf, 8, &result);
+    ASSERT(result.axes[0].median == 3);
+    ASSERT(result.axes[1].median == 2);
+    ASSERT(result.axes[2].median == 1);
+    ASSERT(result.axes[0].minimum == -2);
+    ASSERT(result.axes[1].minimum == 2);
+    ASSERT(result.axes[2].minimum == 1);
+    ASSERT(result.axes[0].maximum == 16);
+    ASSERT(result.axes[1].maximum == 2);
+    ASSERT(result.axes[2].maximum == 1);
+}
+
 void main()
 {
     testIntegrate();
+    testMedian();
     
     LOG("Success.\n");
 }
