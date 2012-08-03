@@ -27,7 +27,7 @@ void main()
 
     while (1) {
         while (head != buf.header.tail) {
-            _SYSByte4 sample = buf.buf[head++];
+            _SYSByte4 sample = buf.samples[head++];
             ticks += uint8_t(sample.w);
 
             while (ticks >= ticksPerPixel) {
