@@ -216,6 +216,7 @@ void MotionUtil::medianAxis(const _SYSMotionBuffer *mbuf, unsigned duration, uns
         }
 
         // Add to histogram
+        ASSERT(unsigned(histogram[sample]) + weight < 0x10000);
         histogram[sample] += weight;
 
         // Next...
@@ -229,6 +230,14 @@ void MotionUtil::medianAxis(const _SYSMotionBuffer *mbuf, unsigned duration, uns
 
     unsigned accumulator = 0;
     const unsigned middle = duration >> 1;
+
+    DEBUG_ONLY({
+        for (unsigned i = histMin; i <= histMax; ++i) {    
+            accumulator += histogram[i];
+        }
+        ASSERT(accumulator == duration);
+        accumulator = 0;
+    });
 
     for (unsigned i = histMin; i <= histMax; ++i) {    
         accumulator += histogram[i];
