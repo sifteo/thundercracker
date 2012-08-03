@@ -157,9 +157,16 @@ public:
      * can be completely eliminated from the output, unlike in a typical low-pass
      * filter where such spikes just end up 'smeared' into your data.
      */
-    MotionMedian(_SYSMotionBuffer *mbuf, unsigned duration)
-    {
+    void calculate(_SYSMotionBuffer *mbuf, unsigned duration) {
         _SYS_motion_median(mbuf, duration, *this);
+    }
+
+    /// Construct an uninitialized MotionMedian
+    MotionMedian() {}
+
+    /// Construct a MotionMedian with data calculated from the supplied MotionBuffer
+    MotionMedian(_SYSMotionBuffer *mbuf, unsigned duration) {
+        calculate(mbuf, duration);
     }
 
     /// Return the median itself, as a vector
@@ -180,6 +187,165 @@ public:
     /// Return the difference between maximum and minimum, as a vector
     Int3 range() const {
         return Int3(maximum()) - Int3(minimum());
+    }
+};
+
+
+/**
+ * @brief A standard recognizer for shake and tilt gestures
+ *
+ * This class contains a MotionBuffer as well as other state which is necessary
+ * to detect the standard tilt and shake gestures. This filter can be updated
+ * as a result of an Events::cubeAccelChange event, or once per frame, or even
+ * less often. We provide median statistics, as well as simple binary tilt and
+ * shake outputs with hysteresis.
+ */
+
+class TiltShakeRecognizer {
+public:
+    static const int kFilterLatency = MotionBuffer<>::TICK_HZ / 10;
+    static const int kTiltThresholdMin = 15;
+    static const int kTiltThresholdMax = 30;
+    static const int kShakeThresholdMin = 1000;
+    static const int kShakeThresholdMax = 50000;
+
+    /**
+     * @brief The MotionBuffer used by this TiltShakeRecognizer
+     *
+     * This is part of the TiltShakeRecognizer class in order to make the
+     * common use case convenient, but it may also be used directly if your
+     * application must process raw motion data as well as these standard
+     * gestures.
+     */
+    MotionBuffer<> buffer;
+
+    /**
+     * @brief The most recent median data calculated by the TiltShakeRecognizer
+     *
+     * This contains the results of the intermediate median, minimum, and
+     * maximum statistics as calculated during update(). If your application
+     * needs to perform additional processing on the motion data, these results
+     * are available at no extra cost.
+     */
+    MotionMedian median;
+
+    /**
+     * @brief The most recent tilt value.
+     *
+     * Each axis is -1, 0, or +1. The coordinate system is identical to
+     * that used by CubeID::accel().
+     */
+    Byte3 tilt;
+
+    /// The most recent binary shake state.
+    bool shake;
+
+    /**
+     * @brief Initialize this TiltShakeRecognizer and attach it to a cube.
+     *
+     * This invokes MotionBuffer::attach(), and resets the state 
+     * of the TiltShakeRecognizer itself.
+     */
+    void attach(_SYSCubeID id)
+    {
+        buffer.attach(id);
+        bzero(median);
+        bzero(tilt);
+        shake = false;
+    }
+
+    /**
+     * @brief Return the physical tilt reading for the attached cube.
+     *
+     * The resulting vector is oriented with respect to the cube hardware.
+     * The underlying tilt state is only updated after an explicit call
+     * to update().
+     */
+    Byte3 physicalTilt() const {
+        return tilt;
+    }
+
+    /**
+     * @brief Return the virtual tilt reading for the attached cube.
+     *
+     * The resulting vector is oriented with respect to the current
+     * LCD rotation. The underlying tilt state is only updated after
+     * an explicit call to update().
+     *
+     * Requires the orientation of the attached cube, which can
+     * be obtained via VideoBuffer::orientation().
+     */
+    Byte3 virtualTilt(Side orientation) const {
+        return tilt.zRotateI(orientation);
+    }
+
+    /**
+     * @brief Update the state of the TiltShakeRecognizer
+     *
+     * Using data captured in our MotionBuffer, this updates the state of
+     * the `median` filter, and calculates a new tilt and shake state for
+     * the attached cube. After this call, the `tilt` and `shake` members
+     * will contain the latest state.
+     *
+     * Returns 'true' if the tilt or shake state have changed, 'false' if not.
+     */
+    bool update()
+    {
+        bool changed = false;
+
+        median.calculate(buffer, kFilterLatency);
+        auto m = median.median();
+        int wobble = median.range().len2();
+
+        // Shake hysteresis
+        if (wobble >= kShakeThresholdMax) {
+
+            changed = changed || shake == true;
+            shake = true;
+
+        } else if (wobble < kShakeThresholdMin) {
+
+            changed = changed || shake != false;
+            shake = false;
+
+            // Only update tilt state when wobble is low.
+            // Each tilt axis has hysteresis.
+
+            if (m.x <= -kTiltThresholdMax) {
+                changed = changed || tilt.x != -1;
+                tilt.x = -1;
+            } else if (m.x >= kTiltThresholdMax) {
+                changed = changed || tilt.x != 1;
+                tilt.x = 1;
+            } else if (abs(m.x) < kTiltThresholdMin) {
+                changed = changed || tilt.x != 0;
+                tilt.x = 0;
+            }
+
+            if (m.y <= -kTiltThresholdMax) {
+                changed = changed || tilt.y != -1;
+                tilt.y = -1;
+            } else if (m.y >= kTiltThresholdMax) {
+                changed = changed || tilt.y != 1;
+                tilt.y = 1;
+            } else if (abs(m.y) < kTiltThresholdMin) {
+                changed = changed || tilt.y != 0;
+                tilt.y = 0;
+            }
+
+            if (m.z <= -kTiltThresholdMax) {
+                changed = changed || tilt.z != -1;
+                tilt.z = -1;
+            } else if (m.z >= kTiltThresholdMax) {
+                changed = changed || tilt.z != 1;
+                tilt.z = 1;
+            } else if (abs(m.z) < kTiltThresholdMin) {
+                changed = changed || tilt.z != 0;
+                tilt.z = 0;
+            }
+        }
+
+        return changed;
     }
 };
 
