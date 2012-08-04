@@ -112,26 +112,32 @@ private:
         vid[cube].bg0rom.text(vec(1,10), str);
     }
 
-    void onNeighborRemove(unsigned firstCube, unsigned firstSide,
-        unsigned secondCube, unsigned secondSide)
+    void onNeighborRemove(unsigned firstID, unsigned firstSide, unsigned secondID, unsigned secondSide)
     {
-        counters[firstCube].neighborRemove++;
-        counters[secondCube].neighborRemove++;
-        LOG("Neighbor Remove: %d:%d - %d:%d\n",
-            firstCube, firstSide, secondCube, secondSide);
-        drawNeighbors(firstCube);
-        drawNeighbors(secondCube);
+        LOG("Neighbor Remove: %02x:%d - %02x:%d\n", firstID, firstSide, secondID, secondSide);
+
+        if (firstID < arraysize(counters)) {
+            counters[firstID].neighborRemove++;
+            drawNeighbors(firstID);
+        }
+        if (secondID < arraysize(counters)) {
+            counters[secondID].neighborRemove++;
+            drawNeighbors(secondID);
+        }
     }
 
-    void onNeighborAdd(unsigned firstCube, unsigned firstSide,
-        unsigned secondCube, unsigned secondSide)
+    void onNeighborAdd(unsigned firstID, unsigned firstSide, unsigned secondID, unsigned secondSide)
     {
-        counters[firstCube].neighborAdd++;
-        counters[secondCube].neighborAdd++;
-        LOG("Neighbor Add: %d:%d - %d:%d\n",
-            firstCube, firstSide, secondCube, secondSide);
-        drawNeighbors(firstCube);
-        drawNeighbors(secondCube);
+        LOG("Neighbor Add: %02x:%d - %02x:%d\n", firstID, firstSide, secondID, secondSide);
+
+        if (firstID < arraysize(counters)) {
+            counters[firstID].neighborAdd++;
+            drawNeighbors(firstID);
+        }
+        if (secondID < arraysize(counters)) {
+            counters[secondID].neighborAdd++;
+            drawNeighbors(secondID);
+        }
     }
 
     void drawNeighbors(CubeID cube)
