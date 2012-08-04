@@ -1,11 +1,14 @@
 #!/usr/bin/env python
 #
-# A simple size profiler. Takes all your *.rst files as input, and
-# generates a basic report on where your program bytes are going.
+# A simple size profiler and static analyzer.
+#
+# Takes all your *.rst files as input, and generates a basic
+# report on where your program bytes are going and any potential
+# validation problems.
 #
 # M. Elizabeth Scott <beth@sifteo.com>
 # 
-# Copyright (c) 2011 Sifteo, Inc.
+# Copyright (c) 2011-2012 Sifteo, Inc.
 #
 
 import FirmwareLib
@@ -119,7 +122,7 @@ def stackAnalysis(p):
         for node in path:
             print "    %s" % p.lines[node].strip().expandtabs()
 
-    print "\n  Total RAM: 0x%02x bytes\n" % total
+    print "\n  Total RAM: 0x%02x bytes" % total
     if total >= 0x100:
         raise ValueError("Oh no, stack overflow is possible!")
 
@@ -143,6 +146,31 @@ def jumpShorteningList(p):
                 elif bytes[0] == 0x02 and diff >= -128 and diff <= 127:
                     print "\tljmp  -> sjmp     %s" % p.lines[addr].strip()
 
+def findCriticalGadgets(p):
+    # Try to defend against ROP attacks which could write to OTP memory
+
+    print "\nCritical gadgets:\n"
+    rom = ''.join(map(chr, p.rom))
+    opTable = FirmwareLib.opcodeTable()
+
+    # Critical addresses
+    CRITICAL_ADDRS = [
+        0xA7,   # MEMCON (allows executing code from RAM)
+        0x87,   # PCON (allows read/write of program memory)
+    ]
+
+    for op in FirmwareLib.IRAM_WRITE_OPCODES:
+        for ramaddr in CRITICAL_ADDRS:
+            pattern = chr(op) + chr(ramaddr)
+            start = 0
+            while start < len(rom):
+                addr = rom.find(pattern, start)
+                if addr < 0:
+                    break
+                else:
+                    start = addr + 1
+                    print "\t@%04x: %02x %02x   %s" % (addr, op, ramaddr, opTable[op])
+
 
 if __name__ == '__main__':
     p = FirmwareLib.RSTParser()
@@ -154,4 +182,6 @@ if __name__ == '__main__':
     profileSymbolSizes(p)
     jumpShorteningList(p)
     stackAnalysis(p)
+    findCriticalGadgets(p)
 
+    print

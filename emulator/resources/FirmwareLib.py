@@ -14,6 +14,12 @@ import struct
 
 ROM_SIZE = 1024 * 16
 
+# Opcodes which write to indirect RAM
+IRAM_WRITE_OPCODES = [
+    0x52, 0x53, 0x15, 0xd5, 0x05, 0x75, 0x86, 0x87, 0x88, 0x89, 0x8A,
+    0x8B, 0x8C, 0x8D, 0x8E, 0x8F, 0xF5, 0x85, 0x42, 0x43, 0xD0, 0x62,
+    0x63 ]
+
 
 class RSTParser:
     """Read one or more .rst files, and separate their contents out into
@@ -22,6 +28,7 @@ class RSTParser:
     def __init__(self,):
         self.area = None
         self.dataMemory = [0] * ROM_SIZE
+        self.rom = [0] * ROM_SIZE
         self.instructions = {}      # List of instructions, keyed by address of opcode
         self.branchTargets = {}     # Tracks addresses that may be branched to
         self.symbols = {}           # Map symbol name to address
@@ -143,6 +150,7 @@ class RSTParser:
         for byte in data:
             self.byteModule[address] = module
             self.dataMemory[address] = ord(byte)
+            self.rom[address] = ord(byte)
             address += 1
 
     def storeCode(self, address, data, source, module=None):
@@ -175,6 +183,7 @@ class RSTParser:
         # Module size accounting, per-byte rather than per-instruction
         for byte in data:
             self.byteModule[address] = module
+            self.rom[address] = ord(byte)
             address += 1
 
 
