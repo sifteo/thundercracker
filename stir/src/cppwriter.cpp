@@ -113,6 +113,10 @@ CPPSourceWriter::CPPSourceWriter(Logger &log, const char *filename)
 void CPPSourceWriter::writeGroup(const Group &group)
 {
     if (!group.isFixed()) {
+
+        std::vector<uint8_t> crc;
+        group.getFlashCRC(crc);
+
         char hash[32];
 
         #ifdef __MINGW32__
@@ -138,7 +142,12 @@ void CPPSourceWriter::writeGroup(const Group &group)
             indent << "/* ordinal   */ " << nextGroupOrdinal++ << ",\n" <<
             indent << "/* numTiles  */ " << group.getPool().size() << ",\n" <<
             indent << "/* dataSize  */ " << group.getLoadstream().size() << ",\n" <<
-            indent << "/* hash      */ " << hash << ",\n"
+            indent << "/* hash      */ " << hash << ",\n" <<
+            indent << "/* crc       */ {\n" <<
+            indent;
+                writeArray(crc);
+        mStream <<
+            indent << "},\n" <<
             "}, {\n";
 
         writeArray(group.getLoadstream());
