@@ -94,6 +94,9 @@ void Game::doPhysics(float dt)
 
 void Game::onNeighborAdd(unsigned c0, unsigned s0, unsigned c1, unsigned s1)
 {
+    if (c0 >= NUM_CUBES || c1 >= NUM_CUBES)
+        return;
+
     GameCube &gc0 = getGameCube(c0);
     GameCube &gc1 = getGameCube(c1);
 
@@ -115,6 +118,9 @@ void Game::onNeighborAdd(unsigned c0, unsigned s0, unsigned c1, unsigned s1)
 
 void Game::onNeighborRemove(unsigned c0, unsigned s0, unsigned c1, unsigned s1)
 {
+    if (c0 >= NUM_CUBES || c1 >= NUM_CUBES)
+        return;
+
     // Animate the portals closing
     getGameCube(c0).getPortal(s0).setOpen(false);
     getGameCube(c1).getPortal(s1).setOpen(false);
