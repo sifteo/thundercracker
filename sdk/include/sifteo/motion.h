@@ -149,6 +149,14 @@ public:
     /// Reciprocal of the MotionBuffer's timestamp unit, in Hertz
     static const unsigned TICK_HZ = MotionBuffer<>::TICK_HZ;
 
+    /**
+     * @brief Construct a new MotionIterator, attached to the provided MotionBuffer.
+     *
+     * The read pointer is initialized to be equal to the system's write pointer,
+     * meaning that next() will return false until the first new acceleration sample
+     * is collected after this iterator has been constructed.
+     */
+
     MotionIterator(_SYSMotionBuffer *buffer)
         : buffer(buffer), tickCounter(0), lastAccel(vec(0,0,0)),
           head(buffer->header.tail) {}
