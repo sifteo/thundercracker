@@ -50,6 +50,7 @@ extern "C" {
 #define _SYS_BATTERY_MAX        0x10000 // Battery levels are 16.16 fixed point
 
 typedef uint8_t _SYSCubeID;             // Cube slot index
+typedef uint8_t _SYSNeighborID;         // Neighbored object ID (superset of _SYSCubeID)
 typedef int8_t _SYSSideID;              // Cube side index
 typedef uint32_t _SYSCubeIDVector;      // One bit for each cube slot, MSB-first
 typedef uint8_t _SYSAssetSlot;          // Ordinal for one of the game's asset slots
@@ -77,9 +78,17 @@ union _SYSByte4 {
  * Neighbors
  */
 
+#define _SYS_NEIGHBOR_TYPE_MASK     0xE0    // Mask for neighbor type bits
+#define _SYS_NEIGHBOR_ID_MASK       0x1F    // Mask for neighbor ID bits
+
+#define _SYS_NEIGHBOR_CUBE          0x00    // Neighbored to normal cube
+#define _SYS_NEIGHBOR_BASE          0x20    // Neighbored to base
+
+#define _SYS_NEIGHBOR_NONE          0xFF    // No neighbor
+
 union _SYSNeighborState {
     uint32_t value;
-    _SYSCubeID sides[4];
+    _SYSNeighborID sides[4];
 };
 
 /*
