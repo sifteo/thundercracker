@@ -41,12 +41,14 @@ public:
     }
     
 private:
-    bool addNeighborToSide(_SYSCubeID id, _SYSSideID side);
-    bool clearSide(_SYSSideID side);
-    bool removeNeighborFromSide(_SYSCubeID id, _SYSSideID side);
+    static unsigned hardwareNeighborToABI(unsigned byte);
 
-    uint8_t prevNeighbors[4];       // this is in the format the raw neighbors -- it's more than just a cubeID
-    _SYSNeighborState neighbors;    // these are just cubeIDs
+    bool addNeighborToSide(_SYSNeighborID id, _SYSSideID side);
+    bool clearSide(_SYSSideID side);
+    bool removeNeighborFromSide(_SYSNeighborID id, _SYSSideID side);
+
+    uint8_t prevNeighbors[4];       // in the raw RF ACK format
+    _SYSNeighborState neighbors;    // these are ABI NeighborIDs.
 };
 
 
