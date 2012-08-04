@@ -244,8 +244,11 @@ struct NeighborEventVector {
      * Requires a closure consisting of an arbitrary
      * pointer-sized context value, and a function pointer of the form:
      *
-     *   void handler(ContextType c, unsigned firstCube, unsigned firstSide,
-     *       unsigned secondCube, unsigned secondSide);
+     *   void handler(ContextType c, unsigned firstID, unsigned firstSide,
+     *       unsigned secondID, unsigned secondSide);
+     *
+     * The IDs here are castable to NeighborID objects, and the Sides are
+     * using the standard Side enumeration.
      */
     template <typename tContext>
     void set(void (*handler)(tContext, unsigned, unsigned, unsigned, unsigned), tContext context) const {
@@ -258,8 +261,11 @@ struct NeighborEventVector {
      * Set this event vector to a bare function which requires no context.
      * It must still take a dummy void* placeholder argument:
      *
-     *   void handler(void*, unsigned firstCube, unsigned firstSide,
-     *       unsigned secondCube, unsigned secondSide);
+     *   void handler(void*, unsigned firstID, unsigned firstSide,
+     *       unsigned secondID, unsigned secondSide);
+     *
+     * The IDs here are castable to NeighborID objects, and the Sides are
+     * using the standard Side enumeration.
      */
     void set(void (*handler)(void*, unsigned, unsigned, unsigned, unsigned)) const {
         _SYS_setVector(tID, (void*) handler, 0);

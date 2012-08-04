@@ -239,6 +239,60 @@ public:
 
 
 /**
+ * @brief A lightweight identifier for one neighbored object.
+ *
+ * Neighbor IDs represent anything that can be detected by one of a cube's
+ * four neighbor sensors. Currently this could be another cube, a base,
+ * or nothing at all.
+ */
+
+struct NeighborID {
+    _SYSNeighborID sys;
+
+    /**
+     * @brief Default constructor. Initializes an empty NeighborID.
+     */
+    NeighborID() : sys(_SYS_NEIGHBOR_NONE) {}
+
+    /**
+     * @brief Initialize a NeighborID with a concrete value.
+     */
+    NeighborID(_SYSNeighborID sys) : sys(sys) {}
+
+    /**
+     * @brief Implicit conversion to _SYSNeighborID, for use in low-level system calls.
+     */
+    operator _SYSNeighborID() const {
+        return sys;
+    }
+
+    /// Is this neighbor a cube?
+    bool isCube() const {
+        return sys < _SYS_NUM_CUBE_SLOTS;
+    }
+
+    /// Is this neighbor a base?
+    bool isBase() const {
+        return (sys & _SYS_NEIGHBOR_TYPE_MASK) == _SYS_NEIGHBOR_BASE;
+    }
+
+    /// Is there nothing neighbored at all?
+    bool isEmpty() const {
+        return sys == _SYS_NEIGHBOR_NONE;
+    }
+
+    /**
+     * @brief Convert this NeighborID to a CubeID
+     *
+     * If the neighbor is not a cube, returns an 'undefined' CubeID.
+     */
+    CubeID cube() const {
+        return isCube() ? CubeID(sys) : CubeID();
+    }
+};
+
+
+/**
  * @brief A Neighborhood is a description of all neighbors for a single cube,
  * packed into a small value.
  *
@@ -280,21 +334,37 @@ struct Neighborhood {
     }
 
     /**
-     * @brief Return the neighbor at a particular side.
-     *
-     * If no neighbor exists at that side, we return an undefined CubeID.
+     * @brief Return the neighbor at a particular side, as a NeighborID
      */
-    CubeID neighborAt(Side side) const {
+    NeighborID neighborAt(Side side) const {
         ASSERT(side >= 0 && side < NUM_SIDES);
         return sys.sides[side];
     }
 
     /**
+     * @brief Return the neighbor at a particular side, as a CubeID.
+     *
+     * If no neighbor exists at that side OR if the neighbor is not a cube,
+     * we return an undefined CubeID.
+     */
+    CubeID cubeAt(Side side) const {
+        return neighborAt(side).cube();
+    }
+
+    /**
      * @brief Is there a neighbor at this side? This is equivalent to calling
-     * isDefined() on the result of neighborAt().
+     * !isEmpty() on the result of neighborAt().
      */
     bool hasNeighborAt(Side side) const {
-        return neighborAt(side).isDefined();
+        return !neighborAt(side).isEmpty();
+    }
+
+    /**
+     * @brief Is there a cube at this side? This is equivalent to calling
+     * isCube() on the result of neighborAt().
+     */
+    bool hasCubeAt(Side side) const {
+        return neighborAt(side).isCube();
     }
 
     /**
