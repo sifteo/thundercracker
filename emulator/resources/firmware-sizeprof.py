@@ -159,6 +159,8 @@ def findCriticalGadgets(p):
         0x87,   # PCON (allows read/write of program memory)
     ]
 
+    numResults = 0
+
     for op in FirmwareLib.IRAM_WRITE_OPCODES:
         for ramaddr in CRITICAL_ADDRS:
             pattern = chr(op) + chr(ramaddr)
@@ -170,6 +172,12 @@ def findCriticalGadgets(p):
                 else:
                     start = addr + 1
                     print "\t@%04x: %02x %02x   %s" % (addr, op, ramaddr, opTable[op])
+                    numResults = numResults + 1
+
+    if numResults:
+        raise ValueError("Found potential security holes")
+    else:
+        print "\tNone found"
 
 
 if __name__ == '__main__':
