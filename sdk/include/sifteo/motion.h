@@ -121,6 +121,125 @@ struct MotionBuffer {
     }
 };
 
+/**
+ * @brief Utility for reading low-level motion events from a MotionBuffer
+ *
+ * This object keeps track of the state necessary to extract a stream
+ * of motion events from a MotionBuffer. It manages the FIFO head pointer,
+ * and keeps track of the current time.
+ *
+ * After it is created, the iterator has an indeterminate state. It may be
+ * advanced to the next available motion sample with next().
+ */
+
+class MotionIterator {
+private:
+    _SYSMotionBuffer *buffer;
+    uint32_t tickCounter;
+    Byte3 lastAccel;
+    uint8_t head;
+
+public:
+    /// Duration of the MotionBuffer's timestamp unit, in nanoseconds
+    static const unsigned TICK_NS = MotionBuffer<>::TICK_NS;
+
+    /// Duration of the MotionBuffer's timestamp unit, in microseconds
+    static const unsigned TICK_US = MotionBuffer<>::TICK_US;
+
+    /// Reciprocal of the MotionBuffer's timestamp unit, in Hertz
+    static const unsigned TICK_HZ = MotionBuffer<>::TICK_HZ;
+
+    MotionIterator(_SYSMotionBuffer *buffer)
+        : buffer(buffer), tickCounter(0), lastAccel(vec(0,0,0)),
+          head(buffer->header.tail) {}
+
+    /**
+     * @brief Advance to the next motion sample, if possible
+     *
+     * If another sample is available, advances to it and returns true.
+     * If no more samples are ready, returns false.
+     */
+
+    bool next()
+    {
+        unsigned tail = buffer->header.tail;
+        unsigned last = buffer->header.last;
+        unsigned head = this->head;
+
+        if (head > last)
+            head = 0;
+
+        if (head == tail)
+            return false;
+
+        _SYSByte4 sample = buffer->samples[head];
+        this->head = head + 1;
+
+        lastAccel = vec(sample.x, sample.y, sample.z);
+        tickCounter += unsigned(uint8_t(sample.w)) + 1;
+
+        return true;
+    }
+
+    /**
+     * @brief Return the acceleration sample at the iterator's current position.
+     *
+     * The units and coordinate system are identical to that of CubeID::accel().
+     */
+
+    Byte3 accel() const {
+        return lastAccel;
+    }
+
+    /**
+     * @brief Return the timestamp at the iterator's current position, in ticks.
+     *
+     * This timestamp starts out at zero, and increases at each call to next().
+     * It is a 32-bit counter, in units of ticks as described by TICK_NS, TICK_US,
+     * and TICK_HZ.
+     *
+     * This timestamp counter will roll over after approximately 12 days.
+     */
+
+    uint32_t ticks() const {
+        return tickCounter;
+    }
+
+    /**
+     * @brief Return the timestamp at the iterator's current position, in seconds.
+     *
+     * This is like ticks(), except we scale the result to seconds, and return
+     * it as a floating point number. Note that this has less precision than ticks(),
+     * and there is no good way to handle roll-over, so it should only be used
+     * if you know you won't be sampling data for a very long period of time.
+     */
+
+    float seconds() const {
+        return ticks() * (1.0f / TICK_HZ);
+    }
+
+    /**
+     * @brief Modify the tick counter
+     */
+
+    void setTicks(uint32_t value) {
+        tickCounter = value;
+    }
+
+    /**
+     * @brief Add a value to the tick counter
+     *
+     * This helps with use cases where you'd like to use the tick counter as
+     * an accumulator for sample rate conversion. If you want to collect
+     * a sample every N ticks, for example, you can wait until ticks() is
+     * at least N, then use adjustTicks(-N) to remove that span of time from
+     * the accumulator.
+     */
+
+    void adjustTicks(int32_t value) {
+        tickCounter += value;
+    }
+};
 
 /**
  * @brief Calculate median, minimum, and maximum statistics from a MotionBuffer

@@ -9,31 +9,26 @@ static Metadata M = Metadata()
 void main()
 {
     static VideoBuffer vid;
-    static _SYSMotionBuffer buf;
+    static MotionBuffer<256> buf;
+    MotionIterator iter(buf);
 
+    buf.attach(0);
     vid.attach(0);
     vid.initMode(FB64);
     vid.colormap[0] = 0xdddddd;
     vid.colormap[1] = 0x000088;
 
-    buf.header.last = 0xFF;
-    _SYS_setMotionBuffer(0, &buf);
-
     int y = 0;
     int prevX = 32;
-    uint8_t head = 0;
-    unsigned ticks = 0;
     const unsigned ticksPerPixel = 50;
 
     while (1) {
-        while (head != buf.header.tail) {
-            _SYSByte4 sample = buf.samples[head++];
-            ticks += uint8_t(sample.w);
 
-            while (ticks >= ticksPerPixel) {
-                ticks -= ticksPerPixel;
+        while (iter.next()) {
+            while (iter.ticks() >= ticksPerPixel) {
+                iter.adjustTicks(-ticksPerPixel);
 
-                int x = clamp(32 + sample.x / 2, 0, 63);
+                int x = clamp(32 + iter.accel().x / 2, 0, 63);
 
                 // Draw a line from old X to new X
                 int x1 = MIN(x, prevX+1);
