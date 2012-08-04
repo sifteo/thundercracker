@@ -5,8 +5,6 @@ Getting Started     {#getting_started}
 # Requirements
 If you don't have it already, grab the latest version of the SDK at https://www.sifteo.com/developers
 
-Check the requirements for @ref setup_osx, @ref setup_win, or @ref setup_linux to make sure you have everything you need.
-
 # Installation
 
 The Sifteo SDK is distributed as a zip archive, and can be unpacked anywhere on your machine.
