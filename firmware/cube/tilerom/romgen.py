@@ -160,11 +160,23 @@ class Tiler:
         else:
             # 2-color
             if address < self.numDefinedTiles:
-                for i in xrange(TILE*TILE):
-                    x = i % TILE
-                    y = i / TILE
-                    index = self.tiles[address][i]
-                    tile.putpixel((x, y), self.reconstructedPalette[palBase + index])    
+
+                blah = False
+                for y in range(TILE):
+                    byte = 0
+                    for x in range(TILE):
+                        if self.tiles[address][x + y*TILE]:
+                            byte |= 1 << x
+                    if byte == 0x87:
+                        blah = True
+                
+                if not blah:
+
+                    for i in xrange(TILE*TILE):
+                        x = i % TILE
+                        y = i / TILE
+                        index = self.tiles[address][i]
+                        tile.putpixel((x, y), self.reconstructedPalette[palBase + index])    
 
         return tile
 
