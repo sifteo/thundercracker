@@ -46,6 +46,8 @@ private:
     Sifteo::SystemTime connectSfxDelayTimestamp;
     Sifteo::SystemTime time;
     Sifteo::CubeID mainCube;
+    Sifteo::CubeSet connectingCubes;    // Displaying logo OR still loading
+    Sifteo::CubeSet loadingCubes;       // Cubes *displaying* a loading animation
 
     Sifteo::Menu menu;
     Sifteo::Array<MainMenuItem*, Shared::MAX_ITEMS> items;
@@ -76,6 +78,7 @@ private:
 
     void updateSound();
     void updateMusic();
+    void updateConnecting();
 
     void prepareAssets();
     

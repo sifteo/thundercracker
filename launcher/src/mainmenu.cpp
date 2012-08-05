@@ -46,6 +46,7 @@ void MainMenu::init()
     bzero(cubeJoinTimestamps);
     time = SystemTime::now();
     connectSfxDelayTimestamp = time;
+    connectingCubes.clear();
 
     items.clear();
     itemIndexCurrent = 0;
@@ -87,11 +88,31 @@ void MainMenu::eventLoop()
         // Need to bind the menu to a new cube?
         if (!mainCube.isDefined()) {
 
-            // Make sure we have at least one cube
+            /*
+             * Make sure we have at least one cube. Until we do, there's nothing
+             * we can do, so just play our "cube missing" sound periodically.
+             *
+             * This exits as soon as at least one cube is in CubeSet::connected(),
+             * but that cube may still be busy loading assets or showing the logo.
+             */
             waitForACube();
 
-            // Pick a new cube for the menu
-            mainCube = *CubeSet::connected().begin();
+            /*
+             * Wait until we have a cube that's usable for our menu
+             */
+            while (1) {
+                CubeSet usable = CubeSet::connected() & ~connectingCubes;
+
+                if (usable.empty()) {
+                    updateMusic();
+                    updateConnecting();
+                    System::paint();
+                    continue;
+                } else {
+                    mainCube = *usable.begin();
+                    break;
+                }
+            }
 
             // (Re)initialize the menu on that cube
             menu.init(Shared::video[mainCube], &menuAssets, &menuItems[0]);
@@ -105,6 +126,7 @@ void MainMenu::eventLoop()
 
         // Keep running until a choice is made or the menu cube disconnects
         while (mainCube.isDefined() && menu.pollEvent(&e)) {
+            updateConnecting();
             updateSound();
             updateMusic();
             updateAlerts();
@@ -190,11 +212,21 @@ void MainMenu::cubeConnect(unsigned cid)
     // Reset this cube's connection timestamp. We won't use it until it has shown the logo for a while.
     cubeJoinTimestamps[cid] = now;
 
+    // This cube will be in 'connectingCubes' until it's done showing the logo and loading assets
+    loadingCubes.clear(cid);
+    connectingCubes.mark(cid);
+
+    // Start loading assets
+    loader.start(menuAssetConfig, CubeSet(cid));
+
     // Attach buffers
     Shared::motion[cid].attach(cid);
     Shared::video[cid].attach(cid);
 
-    // Initialize to blue Sifteo logo to match firmware.
+    /*
+     * Initialize to blue Sifteo logo to match firmware.
+     * This is in the cube's ROM, so we can show it even before asset loading.
+     */
     Shared::video[cid].initMode(BG0_ROM);
     Shared::video[cid].bg0.setPanning(vec(0,0));
     Shared::video[cid].bg0.image(vec(0,0), Logo);
@@ -204,9 +236,65 @@ void MainMenu::cubeDisconnect(unsigned cid)
 {
     AudioTracker::play(Tracker_CubeDisconnect);
 
+    connectingCubes.clear(cid);
+
     // Were we using this cube? Not any more.
     if (mainCube == cid)
         mainCube = CubeID();
+}
+
+void MainMenu::updateConnecting()
+{
+    /*
+     * Cubes are in the 'connectingCubes' set between when they first connect
+     * and when they become usable for the menu. They go through three states:
+     *
+     *   1. Displaying the Sifteo logo. This starts in cubeConnect(), and runs on a timer.
+     *
+     *   2. Loading assets. We start the load itself in cubeConnect(). After the logo
+     *      finishes, we switch to displaying a progress animation.
+     *
+     *   3. When loading finishes, we draw an idle screen on the cube and remove it
+     *      form connectingCubes.
+     */
+
+    SystemTime now = SystemTime::now();
+
+    /*
+     * Look for state transitions from (1) to (2)
+     */
+
+    CubeSet beginLoadingAnim;
+    beginLoadingAnim.clear();
+
+    for (CubeID cube : connectingCubes & ~loadingCubes) {
+        if ((now - cubeJoinTimestamps[cube]).milliseconds() >= kDisplayBlueLogoTimeMS) {
+            loadingCubes.mark(cube);
+            beginLoadingAnim.mark(cube);
+        }
+    }
+
+    if (!beginLoadingAnim.empty())
+        loadingAnimation.begin(beginLoadingAnim);
+
+    /*
+     * Let cubes participate in the loading animation until the whole load is done
+     */
+
+    if (!loadingCubes.empty() && loader.isComplete()) {
+        loadingAnimation.end(loadingCubes);
+
+        // Draw an idle screen on each cube, and remove it from connectingCubes
+        for (CubeID cube : loadingCubes) {
+            auto& vid = Shared::video[cube];
+            vid.initMode(BG0);
+            vid.bg0.erase(Menu_StripeTile);
+
+            connectingCubes.clear(cube);
+        }
+
+        loadingCubes.clear();
+    }
 }
 
 void MainMenu::updateSound()
