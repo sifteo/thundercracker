@@ -20,14 +20,14 @@ namespace Sifteo {
 
 inline void Menu::detectNeighbors()
 {
-    Neighborhood nbr(vid.cube());
+    Neighborhood nbr(vid->cube());
 
     for (Side i = Side(0); i < NUM_SIDES; i++) {
         MenuNeighbor n;
 
         if (nbr.hasNeighborAt(i)) {
             CubeID c(nbr.neighborAt(i));
-            n.neighborSide = Neighborhood(c).sideOf(vid.cube());
+            n.neighborSide = Neighborhood(c).sideOf(vid->cube());
             n.neighbor = c;
             n.masterSide = i;
         } else {
@@ -74,7 +74,7 @@ inline uint8_t Menu::computeSelected()
 
 inline void Menu::checkForPress()
 {
-    bool touch = vid.cube().isTouching();
+    bool touch = vid->cube().isTouching();
 
     if (touch && !prevTouch) {
         currentEvent.type = MENU_ITEM_PRESS;
@@ -97,17 +97,17 @@ inline void Menu::drawColumn(int x)
         // drawing an icon column
         const AssetImage &img = *items[itemAtCol(x)].icon;
         Int2 srcXY = { ((x % kItemTileWidth()) % img.tileWidth()), 0 };
-        vid.bg0.image(topLeft, size, img, srcXY);
+        vid->bg0.image(topLeft, size, img, srcXY);
     } else {
         if (assets->overflowIcon && umod(x,kIconTileWidth) < kItemTileWidth()) {
             // drawing the overflow icon
             x = umod(x, kItemTileWidth());
             const AssetImage &img = *assets->overflowIcon;
             Int2 srcXY = { ((x % kItemTileWidth()) % img.tileWidth()), 0 };
-            vid.bg0.image(topLeft, size, img, srcXY);
+            vid->bg0.image(topLeft, size, img, srcXY);
         } else {
             // drawing a blank column
-            vid.bg0.fill(topLeft, size, *assets->background);
+            vid->bg0.fill(topLeft, size, *assets->background);
         }
     }
 }
@@ -127,7 +127,7 @@ inline void Menu::drawFooter(bool force)
         }
 
         Int2 topLeft = { 0, kNumVisibleTilesY - footer.tileHeight() };
-        vid.bg1.image(topLeft, footer);
+        vid->bg1.image(topLeft, footer);
     }
 }
 
@@ -169,7 +169,7 @@ inline void Menu::updateBG0()
 
     {
         Int2 vec = {(position - kEndCapPadding), kIconYOffset};
-        vid.bg0.setPanning(vec);
+        vid->bg0.setPanning(vec);
     }
 }
 

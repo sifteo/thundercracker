@@ -19,8 +19,15 @@ namespace Sifteo {
  */
 
 inline Menu::Menu(VideoBuffer &vid, const MenuAssets *aAssets, MenuItem *aItems)
-    : vid(vid), hasBeenStarted(false)
 {
+    init(vid, aAssets, aItems);
+}
+
+inline void Menu::init(VideoBuffer &vid, const MenuAssets *aAssets, MenuItem *aItems)
+{
+    this->vid = &vid;
+    hasBeenStarted = false;
+
     currentEvent.type = MENU_UNEVENTFUL;
     items = aItems;
     assets = aAssets;
@@ -134,7 +141,7 @@ inline bool Menu::pollEvent(struct MenuEvent *ev)
 
     // update commonly-used data
     const float kAccelScalingFactor = -0.25f;
-    accel = kAccelScalingFactor * vid.virtualAccel().xy();
+    accel = kAccelScalingFactor * vid->virtualAccel().xy();
 
     // state changes
     switch (currentState) {
@@ -217,7 +224,7 @@ inline void Menu::replaceIcon(uint8_t item, const AssetImage *icon, const AssetI
             const AssetImage& label = items[currentItem].label
                                     ? *items[currentItem].label
                                     : *assets->header;
-            vid.bg1.image(vec(0,0), label);
+            vid->bg1.image(vec(0,0), label);
         }
     }
 }
