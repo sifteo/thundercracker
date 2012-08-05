@@ -82,22 +82,22 @@ inline void Menu::stateStart()
 {
     // initialize video state
 
-    vid.initMode(BG0_SPR_BG1);
-    vid.bg0.erase(*assets->background);
+    vid->initMode(BG0_SPR_BG1);
+    vid->bg0.erase(*assets->background);
 
     // Allocate tiles for the static upper label, and draw it.
     if (kHeaderHeight) {
         const AssetImage& label = items[startingItem].label ? *items[startingItem].label : *assets->header;
-        vid.bg1.fillMask(vec(0,0), label.tileSize());
-        vid.bg1.image(vec(0,0), label);
+        vid->bg1.fillMask(vec(0,0), label.tileSize());
+        vid->bg1.image(vec(0,0), label);
     }
 
     // Allocate tiles for the footer, and draw it.
     if (kFooterHeight) {
         const AssetImage& footer = assets->tips[0] ? *assets->tips[0] : *assets->footer;
         Int2 topLeft = { 0, kNumVisibleTilesY - footer.tileHeight() };
-        vid.bg1.fillMask(topLeft, footer.tileSize());
-        vid.bg1.image(topLeft, footer);
+        vid->bg1.fillMask(topLeft, footer.tileSize());
+        vid->bg1.image(topLeft, footer);
     }
 
     currentTip = 0;
@@ -142,7 +142,7 @@ inline void Menu::transFromStart()
 inline void Menu::transToStatic()
 {
     velocity = 0;
-    prevTouch = vid.cube().isTouching();
+    prevTouch = vid->cube().isTouching();
 
     currentEvent.type = MENU_ITEM_ARRIVE;
     currentEvent.item = computeSelected();
@@ -150,7 +150,7 @@ inline void Menu::transToStatic()
     // show the title of the item
     if (kHeaderHeight) {
         const AssetImage& label = items[currentEvent.item].label ? *items[currentEvent.item].label : *assets->header;
-        vid.bg1.image(vec(0,0), label);
+        vid->bg1.image(vec(0,0), label);
     }
 }
 
@@ -170,7 +170,7 @@ inline void Menu::transFromStatic()
         // hide header
         if (kHeaderHeight) {
             const AssetImage& label = *assets->header;
-            vid.bg1.image(vec(0,0), label);
+            vid->bg1.image(vec(0,0), label);
         }
     }
 }
@@ -300,22 +300,22 @@ inline void Menu::transToFinish()
     System::finish();
 
     // blank out the background layer
-    vid.bg0.setPanning(vec(0, 0));
-    vid.bg0.erase(*assets->background);
+    vid->bg0.setPanning(vec(0, 0));
+    vid->bg0.erase(*assets->background);
 
     if (assets->header) {
         Int2 vec = {0, 0};
-        vid.bg0.image(vec, *assets->header);
+        vid->bg0.image(vec, *assets->header);
     }
     if (assets->footer) {
         Int2 vec = { 0, kNumVisibleTilesY - assets->footer->tileHeight() };
-        vid.bg0.image(vec, *assets->footer);
+        vid->bg0.image(vec, *assets->footer);
     }
     {
         const AssetImage* icon = items[computeSelected()].icon;
-        vid.bg1.eraseMask();
-        vid.bg1.fillMask(vec(0,0), icon->tileSize());
-        vid.bg1.image(vec(0,0), *icon);
+        vid->bg1.eraseMask();
+        vid->bg1.fillMask(vec(0,0), icon->tileSize());
+        vid->bg1.image(vec(0,0), *icon);
     }
     finishIteration = 0;
     currentEvent.type = MENU_PREPAINT;
@@ -330,7 +330,7 @@ inline void Menu::stateFinish()
     float u = finishIteration/33.f;
     u = (1.f-k*u);
     offset = int(12*(1.f-u*u));
-    vid.bg1.setPanning(vec(-kEndCapPadding, offset + kIconYOffset));
+    vid->bg1.setPanning(vec(-kEndCapPadding, offset + kIconYOffset));
     currentEvent.type = MENU_PREPAINT;
 
     if (offset <= -128) {
@@ -368,23 +368,23 @@ inline void Menu::transFromFinish()
 inline void Menu::transToHopUp()
 {
     // blank out the background layer
-    vid.initMode(BG0_SPR_BG1);
-    vid.bg0.setPanning(vec(0, 0));
-    vid.bg0.erase(*assets->background);
+    vid->initMode(BG0_SPR_BG1);
+    vid->bg0.setPanning(vec(0, 0));
+    vid->bg0.erase(*assets->background);
     
     if (assets->header) {
         Int2 vec = {0, 0};
-        vid.bg0.image(vec, *assets->header);
+        vid->bg0.image(vec, *assets->header);
     }
     if (assets->footer) {
         Int2 vec = { 0, kNumVisibleTilesY - assets->footer->tileHeight() };
-        vid.bg0.image(vec, *assets->footer);
+        vid->bg0.image(vec, *assets->footer);
     }
     {
         const AssetImage* icon = items[computeSelected()].icon;
-        vid.bg1.eraseMask();
-        vid.bg1.fillMask(vec(0,0), icon->tileSize());
-        vid.bg1.image(vec(0,0), *icon);
+        vid->bg1.eraseMask();
+        vid->bg1.fillMask(vec(0,0), icon->tileSize());
+        vid->bg1.image(vec(0,0), *icon);
     }
     finishIteration = 30;
 }
@@ -398,7 +398,7 @@ inline void Menu::stateHopUp()
     float u = finishIteration/33.f;
     u = (1.f-k*u);
     offset = int(12*(1.f-u*u));
-    vid.bg1.setPanning(vec(-kEndCapPadding, offset + kIconYOffset));
+    vid->bg1.setPanning(vec(-kEndCapPadding, offset + kIconYOffset));
     currentEvent.type = MENU_PREPAINT;
 
     if (offset >= 0) {

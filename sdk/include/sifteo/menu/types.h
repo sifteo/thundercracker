@@ -98,7 +98,15 @@ typedef enum {
 
 class Menu {
  public:
+    /// Construct an uninitialized Menu
+    Menu() {}
+
+    /// Construct an initialized Menu, using the provided VideoBuffer, assets, and items
     Menu(VideoBuffer&, const MenuAssets*, MenuItem*);
+
+    /// Initialize or reinitialize a Menu using the provided VideoBuffer, assets, and items
+    void init(VideoBuffer&, const MenuAssets*, MenuItem*);
+
     bool pollEvent(struct MenuEvent *);
     void performDefault();
     void reset();
@@ -140,7 +148,7 @@ class Menu {
     float kOneG() const { return abs(64 * kAccelScalingFactor); }
 
     // external parameters and metadata
-    VideoBuffer &vid;               // videobuffer and its attached cube
+    VideoBuffer *vid;               // videobuffer and its attached cube
     const struct MenuAssets *assets; // theme assets of the menu
     uint8_t numTips;                // number of tips in the theme
     struct MenuItem *items;         // items in the strip
