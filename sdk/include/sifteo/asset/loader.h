@@ -162,6 +162,11 @@ struct AssetLoader {
      *
      * An AssetConfiguration which is invalid or which does not match the
      * corresponding AssetGroup header will cause a fault.
+     *
+     * The system does not copy the AssetConfiguration, it refers to it by address.
+     * As a consequence, it is vital that your AssetConfiguration instance stays
+     * in scope until you call AssetLoader::finish(), or until after your
+     * ScopedAssetLoader goes out of scope.
      */
     template < typename T >
     void start(T& configuration, _SYSCubeIDVector cubes = -1) {
