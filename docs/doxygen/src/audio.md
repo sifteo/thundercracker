@@ -17,9 +17,13 @@ By default `stir` will compress your audio data to ADPCM, an efficient format th
 
 Compressed audio data fetched from external storage remains compressed in the cache, and is decompressed for playback.
 
+@note We use a variant of ADPCM which includes a "fast start" feature, to help the codec quickly adapt to the initial conditions at the beginning of a sample. If you've experienced problems with using other forms of ADPCM with looped or very short samples, rest assured that our codec has been designed with these cases in mind.
+
 ### PCM (uncompressed)
 
 Audio assets may also be stored uncompressed, resulting in larger binaries, but avoiding the small amount of work required to decompress the audio.
+
+Typically PCM audio is only useful if you will be generating the audio data programmatically, if you expect your data to have a highly nonlinear access pattern, or if your application cannot tolerate the small amount of distortion introduced by the lossy ADPCM compression.
 
 ## Channels
 
