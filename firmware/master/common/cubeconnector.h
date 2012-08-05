@@ -46,6 +46,8 @@ public:
     static void radioEmptyAcknowledge();
     static void radioTimeout();
 
+    static void unpair(_SYSCubeID cid);
+
     // Callback for Tasks::CubeConnector
     static void task();
 

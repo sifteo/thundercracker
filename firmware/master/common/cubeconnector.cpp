@@ -64,6 +64,35 @@ void CubeConnector::init()
     rxState.init();
 }
 
+void CubeConnector::unpair(_SYSCubeID cid)
+{
+    /*
+     * Look up this cube's pairing slot and clear it out.
+     *
+     * Pend the actual writing of the work to be done in our task
+     * so we can accommodate being called from Task or ISR context.
+     */
+
+    STATIC_ASSERT(SysLFS::NUM_PAIRINGS == arraysize(savedPairingID.hwid));
+    ASSERT(cid < _SYS_NUM_CUBE_SLOTS);
+
+    uint64_t hwid64 = CubeSlots::instances[cid].getHWID();
+    for (int i = SysLFS::NUM_PAIRINGS - 1; i >= 0; --i) {
+        if (savedPairingID.hwid[i] == hwid64) {
+
+            uint64_t invalidID = SysLFS::PairingIDRecord::INVALID_HWID;
+            memcpy(&savedPairingID.hwid[i], &invalidID, HWID_LEN);
+            taskWork.atomicMark(TaskSavePairingID);
+
+            recycleQueue.atomicMark(i);
+            taskWork.atomicMark(TaskRecyclePairings);
+
+            Tasks::trigger(Tasks::CubeConnector);
+            break;
+        }
+    }
+}
+
 void CubeConnector::task()
 {
     /*

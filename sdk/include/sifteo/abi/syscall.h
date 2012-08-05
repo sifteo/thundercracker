@@ -168,6 +168,7 @@ uint32_t _SYS_sysBatteryLevel() _SC(173);
 // Cube management
 uint32_t _SYS_getConnectedCubes() _SC(16);
 void _SYS_setCubeRange(uint32_t minimum, uint32_t maximum) _SC(125);
+void _SYS_unpair(_SYSCubeID cid) _SC(126);
 
 // Audio
 uint32_t _SYS_audio_play(const struct _SYSAudioModule *mod, _SYSAudioChannelID ch, enum _SYSAudioLoopType loop) _SC(35);

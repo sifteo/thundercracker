@@ -13,6 +13,7 @@
 #include "cubeslots.h"
 #include "cube.h"
 #include "neighborslot.h"
+#include "cubeconnector.h"
 
 extern "C" {
 
@@ -136,6 +137,17 @@ uint64_t _SYS_getCubeHWID(_SYSCubeID cid)
     }
 
     return CubeSlots::instances[cid].getHWID();
+}
+
+void _SYS_unpair(_SYSCubeID cid)
+{
+    if (!CubeSlots::validID(cid)) {
+        SvmRuntime::fault(F_SYSCALL_PARAM);
+        return;
+    }
+
+    CubeConnector::unpair(cid);
+    Atomic::Or(CubeSlots::sendShutdown, Intrinsic::LZ(cid));
 }
 
 }  // extern "C"
