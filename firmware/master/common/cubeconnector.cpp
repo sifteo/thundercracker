@@ -80,8 +80,7 @@ void CubeConnector::unpair(_SYSCubeID cid)
     for (int i = SysLFS::NUM_PAIRINGS - 1; i >= 0; --i) {
         if (savedPairingID.hwid[i] == hwid64) {
 
-            uint64_t invalidID = SysLFS::PairingIDRecord::INVALID_HWID;
-            memcpy(&savedPairingID.hwid[i], &invalidID, HWID_LEN);
+            savedPairingID.hwid[i] = SysLFS::PairingIDRecord::INVALID_HWID;
             taskWork.atomicMark(TaskSavePairingID);
 
             recycleQueue.atomicMark(i);
