@@ -15,6 +15,7 @@
 #ifndef NOT_USERSPACE
 #   include <sifteo/limits.h>      // For CUBE_ALLOCATION
 #   include <sifteo/math.h>        // For vector types
+#   include <sifteo/array.h>       // For AssetConfiguration array
 #   include <sifteo/macros.h>      // For ASSERT
 #endif
 
@@ -58,7 +59,8 @@ struct AssetGroup {
      * link failure if the header cannot be determined to be constant at
      * compile time.
      */
-    ALWAYS_INLINE const _SYSAssetGroupHeader *sysHeader(bool requireConst=false) const {
+    ALWAYS_INLINE const _SYSAssetGroupHeader *sysHeader(bool requireConst=false) const
+    {
         // AssetGroups are typically in RAM, but we want the static
         // initializer data so that our return value is known at compile time.
         _SYSAssetGroup *G = (_SYSAssetGroup*)
@@ -189,9 +191,13 @@ public:
 
     /**
      * @brief How much space is remaining in this slot, measured in tiles?
+     *
+     * By default, this measures the space remaining on all cubes, and
+     * returns the smallest of all results. A CubeSet may be explicitly
+     * specified, to limit the measurement to those cubes.
      */
-    unsigned tilesFree() const {
-        return _SYS_asset_slotTilesFree(*this);
+    unsigned tilesFree(_SYSCubeIDVector cubes = -1) const {
+        return _SYS_asset_slotTilesFree(*this, cubes);
     }
 
     /**
@@ -199,9 +205,12 @@ public:
      * without erasing the slot?
      *
      * This does not check whether the specified group has already been installed.
+     *
+     * By default, this checks whether _all_ cubes have room for the group.
+     * A CubeSet may be explicitly specified, to limit the check to those cubes. 
      */
-    bool hasRoomFor(const AssetGroup &group) const {
-        return tilesFree() >= group.tileAllocation();
+    bool hasRoomFor(const AssetGroup &group, _SYSCubeIDVector cubes = -1) const {
+        return tilesFree(cubes) >= group.tileAllocation();
     }
 
     /**
@@ -213,9 +222,12 @@ public:
      * After this call, any AssetGroups that were installed here
      * will now return 'false' from isInstalled(). Any tiles rendered
      * from this AssetGroup will now have undefined contents on-screen.
+     *
+     * By default, the slot will be erased on all cubes. A CubeSet may be
+     * explicitly specified, to limit the erasure to those cubes.
      */
-    void erase() const {
-        _SYS_asset_slotErase(*this);
+    void erase(_SYSCubeIDVector cubes = -1) const {
+        _SYS_asset_slotErase(*this, cubes);
     }
 
     /**
@@ -246,14 +258,62 @@ public:
 
 
 /**
- * @brief AssetLoaders install an AssetGroup into an AssetSlot on one or more cubes.
+ * @brief An AssetConfiguration represents an arrangement of AssetGroups to load
+ *
+ * This object provides instructions to an AssetLoader about which AssetGroups
+ * to load into which slots. A single AssetConfiguration may be applied to
+ * all cubes, or different AssetConfigurations may be used for different subsets
+ * of cubes during a single load event.
+ *
+ * An AssetConfiguration is stored as an array of nodes, each of which associates
+ * an AssetGroup with an AssetSlot. The AssetLoader is responsible for making this
+ * entire configuration current on the cube, even if this requires erasing AssetSlots,
+ * and even if new cubes arrive partway through the loading process.
+ */
+
+template <unsigned tCapacity>
+class AssetConfiguration : public Array <_SYSAssetConfiguration, tCapacity, uint8_t> {
+public:
+
+    /**
+     * @brief Add an AssetGroup to this configuration
+     *
+     * This appends a new load instruction to the AssetConfiguration, instructing
+     * the AssetLoader to make sure the AssetGroup 'group' is available in the AssetSlot
+     * 'slot' by the time the load finishes.
+     *
+     * If the AssetGroup is part of a different Volume, you must provide that volume
+     * handle as the 'volume' parameter, and the 'group' must be mapped via MappedVolume.
+     * If you are loading assets packaged with your own game, you do not need to provide
+     * a volume.
+     */
+    void append(_SYSAssetSlot slot, AssetGroup &group, _SYSVolumeHandle volume = 0)
+    {
+        uint32_t pGroup = reinterpret_cast<uintptr_t>(&group);
+        ASSERT((pGroup >= 0xc0000000) == (volume != 0));
+
+        _SYSAssetConfiguration &cfg = append();
+        cfg.pGroup = pGroup;
+        cfg.volume = volume;
+        cfg.numTiles = group.numTiles();
+        cfg.ordinal = group.sysHeader()->ordinal;
+        cfg.slot = slot;
+    }
+};
+
+
+/**
+ * @brief An AssetLoader coordinates asset loading operations on one or more cubes.
  *
  * The AssetLoader is a transient object; it can exist only when an actual
  * asset loading operation is taking place, and be deleted or recycled
  * afterwards. Your game can allocate AssetLoaders on the stack, or as part of a union.
  *
- * Assets can be installed onto any number of cubes concurrently, and each
- * cube can be loading a different AssetGroup.
+ * A single AssetLoader can support any combination of concurrent asset loading
+ * operations on any number of cubes, up to the defined CUBE_ALLOCATION. Individual
+ * asset loading operations on these cubes are sequenced via AssetConfiguration objects.
+ * Each cube may share the same AssetConfiguration, or a different AssetConfiguration
+ * may be loaded on each cube, or any combination in-between.
  */
 
 struct AssetLoader {
@@ -275,22 +335,15 @@ struct AssetLoader {
      * Must be called once, prior to any calls to start().
      */
     void init() {
-        sys.cubeVec = 0;
-        sys.complete = 0;
+        bzero(*this);
     }
 
     /**
      * @brief Ensure that the system is no longer using this AssetLoader object.
      *
      * If any loads are still in progress, this function blocks until they complete.
-     * After finish() returns, the loaded AssetGroup has been finalized, and it will
-     * be ready for use.
-     *
      * This must be called after an asset load is done, before the AssetLoader
-     * object itself is deallocated or recycled. If the asset loading process
-     * is interrupted between start() and finish(), the state of the remote
-     * flash memory associated with this Asset Slot may be indeterminate,
-     * requiring the entire slot to be erased and reloaded.
+     * object itself is deallocated or recycled.
      *
      * If finish() has already been called, has no effect.
      */
@@ -305,127 +358,137 @@ struct AssetLoader {
      * operations do not finish. Instead, any asset slots written to since the last
      * finish() will be in an indeterminate state, and the slot must be erased before
      * any further loading may be attempted.
+     *
+     * By default, this cancels all in-progress load operations. A CubeSet may
+     * be specified, to cancel only the indicated cubes.
+     *
+     * If a load is cancelled, the group that was being loaded will not be available,
+     * but pre-existing groups will still be usable. However, further load operations
+     * on that AssetSlot will not be possible until the slot is erased. It is said
+     * that a slot in this post-cancellation state is _indeterminate_ until it is
+     * erased.
      */
-    void cancel() {
-        _SYS_asset_loadCancel(*this);
+    void cancel(_SYSCubeIDVector cubes = -1) {
+        _SYS_asset_loadCancel(*this, cubes);
     }
 
     /**
-     * @brief Start installing group "group" into slot "slot" on some set of cubes,
-     * identified by the "cubes" bitvector.
-     * 
-     * See the single-cube version of start() for a detailed explanation.
-     * This function is identical, except that the asset is broadcast to
-     * multiple cubes simultaneously.
+     * @brief Start installing an AssetConfiguration
      *
-     * We return 'true' if the asset download started and/or we found a cached
-     * asset for every one of the specified cubes. If one or more of the
-     * specified cubes has no room in "slot", we return false.
+     * This uses an AssetConfiguration object to describe a set of AssetGroups
+     * which should be made available, and the slots to install each into.
+     * The AssetLoader object will automatically erase any slots that need to be
+     * erased before starting, and it will calculate progress.
      *
-     * If another asynchronous asset installation is already in progress,
-     * this call will automatically block until that load has finished.
+     * By default, the AssetConfiguration is installed on to all cubes that
+     * are currently connected, and any cubes which connect prior to the
+     * other cubes completing their loads. This will load the same AssetConfiguration
+     * on all cubes.
+     *
+     * A CubeSet can be specified to restrict this load to only some of the
+     * available cubes. This can also be used to load different AssetConfigurations
+     * on different subsets of the available cubes.
+     *
+     * The provided AssetConfiguration must be valid, in that it must be possible
+     * to load all indicated AssetGroups in the indicated slots. If space is
+     * exhausted due to groups not mentioned in the AssetConfiguration, the
+     * AssetLoader will automatically erase the slot and reload only necessary
+     * groups. However, if space is exhausted solely due to groups mentioned in
+     * the AssetConfiguration, this indicates that the AssetConfiguration is invalid.
+     *
+     * An AssetConfiguration which is invalid or which does not match the
+     * corresponding AssetGroup header will cause a fault.
      */
-    bool start(AssetGroup &group, AssetSlot slot, _SYSCubeIDVector cubes) {
-        if (!_SYS_asset_loadStart(*this, group, slot, cubes))
-            return false;
-
-        return true;
+    template < typename T >
+    void start(T& configuration, _SYSCubeIDVector cubes = -1) {
+        _SYS_asset_loadStart(*this, &configuration[0], configuration.count(), cubes);
     }
 
     /**
-     * @brief Start intalling group "group" into slot "slot" on a single cube.
+     * @brief Measures progress on a single cube, as an integer
      *
-     * The asset group may already be cached in "slot" by the system. If
-     * so, this function returns 'true' and the asset will immediately be
-     * marked as "installed". Note that, even though no installation actually
-     * takes place over-the-air in this case, games must still call start()
-     * in order to establish a base address for the AssetGroup, and the
-     * AssetLoader will still be necessary in the event that the group was
-     * not cached.
+     * This measures just the loading progress for a single cube, returning
+     * a number between 0 and 'max'. If the cube is done loading, this returns
+     * 'max'. If the cube hasn't started loading or has no need to load assets,
+     * returns zero.
      *
-     * If there is room to install this AssetGroup in "slot", we return 'true'
-     * and start asynchronously installing the asset. This AssetLoader object
-     * must remain in existence until the download is complete. Progress can
-     * be monitored with this object's other methods.
-     *
-     * If there is no remaining space in AssetSlot, this function returns
-     * 'false' immediately, without starting an asset download.
-     *
-     * This typically would indicate a logic error in the game's asset
-     * management. When start() fails, the Asset Slot data for this cube
-     * will be left in a "loading in progress" state, which can only be cleared
-     * by erasing the asset slot.
+     * This calculates using 32-bit integer math, and 'max' multiplied
+     * by the number of bytes of uncompressed asset data must not overflow
+     * the 32-bit type.
      */
-    bool start(AssetGroup &group, AssetSlot slot, _SYSCubeID cube) {
-        return start(group, slot, _SYSCubeIDVector(0x80000000 >> cube));
-    }
+    unsigned cubeProgress(_SYSCubeID cubeID, unsigned max) const
+    {
+        ASSERT(cubeID < CUBE_ALLOCATION);
+        // NB: Division by zero on ARM (udiv) yields zero.
+        return cubes[cubeID].progress * max / cubes[cubeID].total;
+    };
 
     /**
-     * @brief Which AssetGroup is being installed on the given cube during
-     * this load session?
+     * @brief Measures progress on a single cube, as a floating point value
      *
-     * Requires that start() was called at some point on this AssetLoader
-     * and with this 'cube'.
+     * This measures just the loading progress for a single cube, returning
+     * a number between 0.0f and 1.0f. If the cube is done loading, this returns
+     * 1.0f. If the cube hasn't started loading, returns 0.0f. If the cube
+     * has no need to load assets, returns NaN.
      */
-    AssetGroup &group(_SYSCubeID cubeID) const {
-        ASSERT((0x80000000 >> cubeID) & sys.cubeVec);
-        const _SYSAssetLoaderCube &cube = cubes[cubeID];
-        return *reinterpret_cast<AssetGroup*>(cube.pAssetGroup);
-    }
+    float cubeProgress(_SYSCubeID cubeID) const
+    {
+        ASSERT(cubeID < CUBE_ALLOCATION);
+        return cubes[cubeID].progress / float(cubes[cubeID].total);
+    };
 
     /**
-     * @brief How much progress has been made on the indicated cube's
-     * asset install, in bytes?
+     * @brief Measures total progress on all cubes, as an integer
      *
-     * Returns the number of bytes of compressed data that have been sent.
+     * This measures loading progress for all cubes, returning
+     * a number between 0 and 'max'. If all cubes are done loading, this returns
+     * 'max'. If the loading has not yet made any progress or no loading
+     * was necessary, returns zero.
      *
-     * Note that this measures the number of compressed bytes sent to the cube.
-     * There will be some lag between when the bytes are sent, and when they
-     * are actually acknowledged as written. Also, the progress may be
-     * a bit nonlinear due to the difference between compressed and
-     * decompressed size.
+     * This calculates using 32-bit integer math, and 'max' multiplied
+     * by the number of bytes of uncompressed asset data must not overflow
+     * the 32-bit type.
      */
-    unsigned progressBytes(_SYSCubeID cubeID) const {
-        ASSERT((0x80000000 >> cubeID) & sys.cubeVec);
-        const _SYSAssetLoaderCube &cube = cubes[cubeID];
-        return cube.progress;
-    }
+    unsigned averageProgress(unsigned max) const
+    {
+        unsigned progress = 0, total = 0;
+        for (unsigned i = 0; i < CUBE_ALLOCATION; ++i) {
+            progress += cubes[i].progress;
+            total += cubes[i].total;
+        }
+        return progress * max / total;
+    };
 
     /**
-     * @brief How much progress has been made on the indicated cube's
-     * asset install, in arbitrary units?
+     * @brief Measures total progress on all cubes, as a floating point value
      *
-     * Returns a value between 0 and 'max'. The default value of 100 for
-     * 'max' will have us return percent completion.
-     *
-     * Note that this measures the number of compressed bytes sent to the cube.
-     * There will be some lag between when the bytes are sent, and when they
-     * are actually acknowledged as written. Also, the progress may be
-     * a bit nonlinear due to the difference between compressed and
-     * decompressed size.
-     *
-     * Callers should not interpret progress() == 100 as an indication that
-     * the asset group is complete and ready to use. Callers must use
-     * AssetGroup::isInstalled() or AssetLoader::isComplete() to determine
-     * this.
+     * This measures loading progress for all cubes, returning
+     * a number between 0.0f and 1.0f. If all cubes are done loading, this returns
+     * 1.0f. If the loading has not yet made any progress, returns 0.0f. If no
+     * loading was necessary, returns NaN.
      */
-    int progress(_SYSCubeID cubeID, int max = 100) const {
-        return progressBytes(cubeID) * max / group(cubeID).compressedSize();
-    }
+    float averageProgress() const
+    {
+        unsigned progress = 0, total = 0;
+        for (unsigned i = 0; i < CUBE_ALLOCATION; ++i) {
+            progress += cubes[i].progress;
+            total += cubes[i].total;
+        }
+        return progress / float(total);
+    };
 
     /**
-     * @brief How much progress has been made? This is a version of progress()
-     * that returns a value scaled between 'min' and 'max'.
+     * @brief Which cubes are still busy loading?
      */
-    int progress(_SYSCubeID cubeID, int min, int max) const {
-        return min + progress(cubeID, max - min);
+    _SYSCubeIDVector busyCubes() const {
+        return sys.busyCubes;
     }
 
     /**
      * @brief Is the asset install finished for all cubes in the specified vector?
      *
      * This only returns 'true' when the install is completely done on all
-     * of these cubes, and the AssetGroup is fully available for use in drawing.
+     * of these cubes.
      *
      * Note that this is more efficient than calling AssetGroup::isInstalled.
      * Whereas isInstalled() needs to look for the AssetGroup in the system's
@@ -433,14 +496,13 @@ struct AssetLoader {
      * session has completed.
      */
     bool isComplete(_SYSCubeIDVector vec) const {
-        return (sys.complete & vec) == vec;
+        return (sys.busyCubes & vec) == 0;
     }
     
     /**
      * @brief Is the asset install for "cubeID" finished?
      * 
-     * This will return true only when the install is completely done,
-     * and the AssetGroup is fully available for use in drawing.
+     * Returns true only when the install is completely done on this cube.
      */
     bool isComplete(_SYSCubeID cubeID) const {
         return isComplete(_SYSCubeIDVector(0x80000000 >> cubeID));
@@ -450,7 +512,7 @@ struct AssetLoader {
      * @brief Are all asset installations from this asset loading session complete?
      */
     bool isComplete() const {
-        return isComplete(sys.cubeVec);
+        return sys.busyCubes == 0;
     }
 };
 
