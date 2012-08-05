@@ -58,6 +58,14 @@ struct _SYSAssetLoader {
     // Followed by a _SYSAssetLoaderCube array
 };
 
+struct _SYSAssetConfiguration {
+    uint32_t pGroup;
+    _SYSVolumeHandle volume;
+    uint16_t numTiles;
+    uint8_t ordinal;
+    _SYSAssetSlot slot;
+};
+
 enum _SYSAssetImageFormat {
     _SYS_AIF_PINNED = 0,        /// All tiles are linear. "data" is index of the first tile
     _SYS_AIF_FLAT,              /// "data" points to a flat array of 16-bit tile indices
