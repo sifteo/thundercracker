@@ -7,6 +7,7 @@
 #include <sifteo.h>
 #include <sifteo/menu.h>
 #include "cuberange.h"
+#include "shared.h"
 
 class ProgressDelegate;
 
@@ -20,24 +21,19 @@ class ProgressDelegate;
 class MainMenuItem
 {
 public:
-    enum Flags {
-        NONE = 0,
-        LOAD_ASSETS = 1 << 0,       // Asset groups may need to be loaded before use
-    };
+    /**
+     * Retrieve pointers to the AssetImages for this menu item, and set up any
+     * AssetConfiguration nodes required by the menu item. These may
+     * be local assets in our own binary, or they may be copied from a game.
+     */
+    virtual void getAssets(Sifteo::MenuItem &assets, Shared::AssetConfiguration &config) = 0;
 
     /**
-     * Retrieve pointers to the AssetImages for this menu item. These may
-     * be local items in our own binary, or they may be copied from a game.
-     *
-     * If this data has been copied from elsewhere, they will point to
-     * a constructed AssetGroup that the caller must load before using these
-     * assets. The provided MappedVolume must be used to map this data.
-     *
-     * Returns a set of Flags bits.
+     * Which Volume is associated with this item, if any?
      */
-    virtual Flags getAssets(Sifteo::MenuItem &assets, Sifteo::MappedVolume &map) = 0;
-
-    virtual Sifteo::Volume getVolume() { return Sifteo::Volume(0); }
+    virtual Sifteo::Volume getVolume() {
+        return Sifteo::Volume(0);
+    }
     
     /**
      * How many cubes are required by this menu item, if any?

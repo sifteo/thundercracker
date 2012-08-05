@@ -34,15 +34,6 @@ static void drawText(RelocatableTileBuffer<12,12> &icon, const char* text, Int2 
     }
 }
 
-static unsigned getNumCubes(CubeSet cubes)
-{
-    unsigned count = 0;
-    for (CubeID cube : cubes) {
-        ++count;
-    }
-    return count;
-}
-
 static unsigned getFreeMemory()
 {
     FilesystemInfo info;
@@ -58,12 +49,10 @@ CubeID getMainCube()
     return *CubeSet::connected().begin();
 }
 
-MainMenuItem::Flags StatusApplet::getAssets(MenuItem &assets, MappedVolume &)
+void StatusApplet::getAssets(Sifteo::MenuItem &assets, Shared::AssetConfiguration &config)
 {
-    drawIcon();
-    
+    drawIcon();    
     assets.icon = menuIcon;
-    return NONE;
 }
 
 void StatusApplet::exec()
@@ -125,10 +114,10 @@ void StatusApplet::drawIcon()
     drawBattery(menuIcon, getMainCube().batteryLevel(), vec(8, 1));
     drawBattery(menuIcon, System::batteryLevel(), vec(7, 7));
     
-    unsigned numCubes = getNumCubes(CubeSet::connected());
+    unsigned numCubes = CubeSet::connected().count();
     
     String<8> bufferCubes;
-    bufferCubes << getNumCubes(CubeSet::connected());
+    bufferCubes << numCubes;
     drawText(menuIcon, bufferCubes.c_str(), vec(numCubes < 10 ? 4 : 3, 4));
     
     String<16> bufferBlocks;

@@ -13,7 +13,7 @@ class MainMenu;
 class GetGamesApplet : public MainMenuItem
 {
 public:
-    virtual MainMenuItem::Flags getAssets(Sifteo::MenuItem &assets, Sifteo::MappedVolume&);
+    virtual void getAssets(Sifteo::MenuItem &assets, Shared::AssetConfiguration &config);
     virtual void exec();
 
     static void add(MainMenu &menu);

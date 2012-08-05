@@ -8,8 +8,8 @@
  * loading animations, and any built-in applets.
  */
 
+#pragma once
 #include <sifteo.h>
-using namespace Sifteo;
 
 namespace Shared {
 
@@ -21,5 +21,10 @@ namespace Shared {
     static const unsigned NUM_SLOTS = 2;
     extern Sifteo::AssetSlot primarySlot;   // General purpose
     extern Sifteo::AssetSlot iconSlot;      // Used only for main menu icons
+
+    static const unsigned MAX_ITEMS = 32;
+
+    // Enough room for all menu items, and for our own single AssetGroup
+    typedef Sifteo::AssetConfiguration<MAX_ITEMS + 1> AssetConfiguration;
 
 }

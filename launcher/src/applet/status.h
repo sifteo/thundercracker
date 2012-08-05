@@ -12,7 +12,7 @@ class MainMenu;
 class StatusApplet : public MainMenuItem
 {
 public:
-    virtual MainMenuItem::Flags getAssets(Sifteo::MenuItem &assets, Sifteo::MappedVolume &);
+    virtual void getAssets(Sifteo::MenuItem &assets, Shared::AssetConfiguration &config);
     
     virtual void exec();
     virtual void arrive(Sifteo::Menu &m, unsigned index);

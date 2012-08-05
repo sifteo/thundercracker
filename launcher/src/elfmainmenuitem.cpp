@@ -87,7 +87,7 @@ bool ELFMainMenuItem::init(Volume volume)
      * lightweight resources from the volume. No assets are stored yet.
      */
 
-    STATIC_ASSERT(MAX_INSTANCES < MainMenu::MAX_ITEMS);
+    STATIC_ASSERT(MAX_INSTANCES < Shared::MAX_ITEMS);
 
     this->volume = volume;
     MappedVolume map(volume);
@@ -152,13 +152,14 @@ bool ELFMainMenuItem::checkIcon(MappedVolume &map)
     return true;
 }
 
-MainMenuItem::Flags ELFMainMenuItem::getAssets(Sifteo::MenuItem &assets, Sifteo::MappedVolume &map)
+void ELFMainMenuItem::getAssets(Sifteo::MenuItem &assets, Shared::AssetConfiguration &config)
 {
     if (hasValidIcon) {
         /*
          * Gather an icon from this volume.
          */
 
+        MappedVolume map;
         map.attach(volume);
 
         // We already validated the icon metadata
@@ -177,7 +178,8 @@ MainMenuItem::Flags ELFMainMenuItem::getAssets(Sifteo::MenuItem &assets, Sifteo:
         icon.image.image(vec(0,0), iconSrc);
         assets.icon = icon.image;
 
-        return LOAD_ASSETS;
+        // Remember to load this asset group later
+        config.append(Shared::iconSlot, icon.group, volume);
 
     } else {
         /*
@@ -187,8 +189,6 @@ MainMenuItem::Flags ELFMainMenuItem::getAssets(Sifteo::MenuItem &assets, Sifteo:
         icon.image.init();
         NineBlock::generate(crc32(uuid), icon.image);
         assets.icon = icon.image;
-
-        return NONE;
     }
 }
 
@@ -200,11 +200,9 @@ void ELFMainMenuItem::bootstrap(Sifteo::CubeSet cubes, ProgressDelegate &progres
      * After this point, we can't access any of the launcher's
      * AssetGroups without reverting to our own binding.
      *
-     * XXX: Currently the firmware requires cubes to be enabled before bindSlots.
-     *      It needs to support cubes dynamically coming and going.
-     *
-     * XXX: Need a separate way to control which A21 bank we use for drawing.
-     *      That shouldn't change until just before we exec.
+     * Note that our VideoBuffer stay in the orignal A21 bank, for the
+     * time being. They won't switch immediately after bindSlots; not
+     * til the next time they're attach()'ed to a cube.
      */
 
     _SYS_asset_bindSlots(volume, numAssetSlots);

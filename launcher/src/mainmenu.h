@@ -6,6 +6,8 @@
 #pragma once
 #include <sifteo.h>
 #include <sifteo/menu.h>
+#include "shared.h"
+#include "defaultloadinganimation.h"
 
 class MainMenuItem;
 
@@ -20,7 +22,6 @@ class MainMenuItem;
 class MainMenu
 {
 public:
-    static const unsigned MAX_ITEMS = 32;
 
     /**
      * Set up the Main Menu's data structures, and empty its lists of items.
@@ -45,8 +46,8 @@ private:
     Sifteo::SystemTime time;
     Sifteo::CubeID mainCube;
 
-    Sifteo::Array<MainMenuItem*, MAX_ITEMS> items;
-    Sifteo::MenuItem menuItems[MAX_ITEMS + 1];
+    Sifteo::Array<MainMenuItem*, Shared::MAX_ITEMS> items;
+    Sifteo::MenuItem menuItems[Shared::MAX_ITEMS + 1];
     int itemIndexCurrent;
     static const Sifteo::MenuAssets menuAssets;
 
@@ -60,23 +61,30 @@ private:
     const Sifteo::AssetImage *cubeRangeSavedIcon;
 
     Sifteo::CubeSet cubes();
-    Sifteo::CubeSet cubesToLoad;
-    
+
+    /**
+     * We hold onto our AssetLoader and AssetConfiguration persistently,
+     * since asset loading may happen at any time while the menu is running.
+     */
+    Sifteo::AssetLoader loader;
+    Shared::AssetConfiguration menuAssetConfig;
+    DefaultLoadingAnimation loadingAnimation;
+
     void cubeConnect(unsigned cid);
     void cubeDisconnect(unsigned cid);
 
     void waitForACube();
     void updateAnchor(Sifteo::Menu &m);
-    void updateAssets();
     void updateSound(Sifteo::Menu &menu);
     void updateMusic();
+
+    void prepareAssets();
     
     bool canLaunchItem(unsigned index);
     void toggleCubeRangeAlert(unsigned index, Sifteo::Menu &menu);
     void updateAlerts(Sifteo::Menu &menu);
 
     // Note: these functions are marked NOINLINE as a cache usage optimization.
-    NOINLINE void loadAssets();
     NOINLINE void eventLoop(Sifteo::Menu &m);
     NOINLINE void execItem(unsigned index);
     NOINLINE void arriveItem(Sifteo::Menu &menu, unsigned index);
