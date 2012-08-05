@@ -526,6 +526,32 @@ public:
         return result;
     }
 
+    /// Negate a BitArray, returning a new array in which each bit is inverted
+    BitArray<tSize> operator ~ () const
+    {
+        const unsigned NUM_WORDS = (tSize + 31) / 32;
+        const unsigned NUM_FULL_WORDS = tSize / 32;
+        const unsigned REMAINDER_BITS = tSize & 31;
+        BitArray<tSize> result;
+
+        STATIC_ASSERT(NUM_FULL_WORDS + 1 == NUM_WORDS ||
+                      NUM_FULL_WORDS == NUM_WORDS);
+
+        // Trivial inversion for fully-utilized words
+        #pragma clang diagnostic push
+        #pragma clang diagnostic ignored "-Wtautological-compare"
+        for (unsigned w = 0; w < NUM_FULL_WORDS; w++)
+            result.words[w] = ~words[w];
+        #pragma clang diagnostic pop
+
+        if (NUM_FULL_WORDS != NUM_WORDS) {
+            // Set only bits < tSize in the last word.
+            uint32_t mask = ((uint32_t)-1) << ((32 - REMAINDER_BITS) & 31);
+            result.words[NUM_FULL_WORDS] = mask & ~words[NUM_FULL_WORDS];
+        }
+
+        return result;
+    }
 };
 
 
