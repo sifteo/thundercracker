@@ -8,8 +8,7 @@
 #include <sifteo/menu.h>
 #include "shared.h"
 #include "defaultloadinganimation.h"
-
-class MainMenuItem;
+#include "mainmenuitem.h"
 
 
 /**
@@ -43,24 +42,25 @@ public:
     void run();
 
 private:
+    Sifteo::SystemTime cubeJoinTimestamps[CUBE_ALLOCATION];
+    Sifteo::SystemTime connectSfxDelayTimestamp;
     Sifteo::SystemTime time;
     Sifteo::CubeID mainCube;
 
+    Sifteo::Menu menu;
     Sifteo::Array<MainMenuItem*, Shared::MAX_ITEMS> items;
     Sifteo::MenuItem menuItems[Shared::MAX_ITEMS + 1];
     int itemIndexCurrent;
+    int itemIndexChoice;
+
     static const Sifteo::MenuAssets menuAssets;
 
-    bool menuDirty;
-    
     /**
      * A icon that we swap in if the user tries to launch a game that requires
      * an incompatible number of cubes
      */
-    Sifteo::RelocatableTileBuffer<12,12> cubeRangeAlertIcon;
+    MainMenuItem::IconBuffer cubeRangeAlertIcon;
     const Sifteo::AssetImage *cubeRangeSavedIcon;
-
-    Sifteo::CubeSet cubes();
 
     /**
      * We hold onto our AssetLoader and AssetConfiguration persistently,
@@ -72,21 +72,22 @@ private:
 
     void cubeConnect(unsigned cid);
     void cubeDisconnect(unsigned cid);
-
     void waitForACube();
-    void updateAnchor(Sifteo::Menu &m);
-    void updateSound(Sifteo::Menu &menu);
+
+    void updateSound();
     void updateMusic();
 
     void prepareAssets();
     
     bool canLaunchItem(unsigned index);
-    void toggleCubeRangeAlert(unsigned index, Sifteo::Menu &menu);
-    void updateAlerts(Sifteo::Menu &menu);
+    void toggleCubeRangeAlert(unsigned index);
+    void updateAlerts();
+
+    void handleEvent(Sifteo::MenuEvent &e);
 
     // Note: these functions are marked NOINLINE as a cache usage optimization.
-    NOINLINE void eventLoop(Sifteo::Menu &m);
+    NOINLINE void eventLoop();
     NOINLINE void execItem(unsigned index);
-    NOINLINE void arriveItem(Sifteo::Menu &menu, unsigned index);
-    NOINLINE void departItem(Sifteo::Menu &menu, unsigned index);
+    NOINLINE void arriveItem(unsigned index);
+    NOINLINE void departItem(unsigned index);
 };

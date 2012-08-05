@@ -16,14 +16,16 @@ using namespace Sifteo;
 static const unsigned kFastClickAccelThreshold = 46;
 static const unsigned kClickSpeedNormal = 200;
 static const unsigned kClickSpeedFast = 300;
+
+static const unsigned kConnectSfxDelayMS = 2000;
 static const unsigned kDisplayBlueLogoTimeMS = 2000;
 static const unsigned kNoCubesConnectedSfxMS = 5000;
 
 
-static void drawText(RelocatableTileBuffer<12,12> &icon, const char *text, Int2 pos)
+static void drawText(MainMenuItem::IconBuffer &icon, const char *text, Int2 pos)
 {
     for (int i = 0; text[i] != 0; ++i) {
-        icon.image(vec(pos.x + i, pos.y), Font, text[i]-32);
+        icon.image(vec(pos.x + i, pos.y), Font, uint8_t(text[i] - ' '));
     }
 }
 
@@ -33,145 +35,85 @@ const MenuAssets MainMenu::menuAssets = {
 
 void MainMenu::init()
 {
+    // Play the startup sound as early as possible
+    AudioTracker::play(Tracker_Startup);
+
     Events::cubeConnect.set(&MainMenu::cubeConnect, this);
     Events::cubeDisconnect.set(&MainMenu::cubeDisconnect, this);
 
     loader.init();
 
+    bzero(cubeJoinTimestamps);
     time = SystemTime::now();
+    connectSfxDelayTimestamp = time;
 
     items.clear();
     itemIndexCurrent = 0;
     cubeRangeSavedIcon = NULL;
 
-    menuDirty = false;
-    
     _SYS_setCubeRange(1, _SYS_NUM_CUBE_SLOTS);
     _SYS_asset_bindSlots(Volume::running(), Shared::NUM_SLOTS);
 }
 
 void MainMenu::run()
 {
+    // Using our now-final list of items, build our AssetConfiguration
     prepareAssets();
-    waitForACube();
-    
-    // Initialize to blue Sifteo logo to match firmware.
-    for (CubeID cube : CubeSet::connected()) {
-        Shared::motion[cube].attach(cube);
-        Shared::video[cube].attach(cube);
-        Shared::video[cube].initMode(BG0_ROM);
-        Shared::video[cube].bg0.image(vec(0,0), Logo);
-    }
-    System::paint();
-    
-    AudioTracker::play(Tracker_Startup);
-    
-    // Pick one cube to be the 'main' cube, where we show the menu
-    mainCube = *cubes().begin();
 
-    // Run the menu on our main cube
-    Menu m(Shared::video[mainCube], &menuAssets, &menuItems[0]);
-    m.setIconYOffset(8);
-    
+    // Connect initial cubes
+    for (CubeID cube : CubeSet::connected())
+        cubeConnect(cube);
+
+    // Find a default item, based on whatever volume was running last    
     if (Volume::previous() != Volume(0)) {
         for (unsigned i = 0, e = items.count(); i != e; ++i) {
             ASSERT(items[i] != NULL);
             if (items[i]->getVolume() == Volume::previous()) {
-                m.anchor(i, true);
+                itemIndexCurrent = i;
+                break;
             }
         }
     }
-    
-    eventLoop(m);
+
+    // Start with the menu on no cube. We'll update this during the main loop.
+    mainCube = CubeID();
+
+    eventLoop();
 }
 
-void MainMenu::eventLoop(Menu &m)
+void MainMenu::eventLoop()
 {
-    int itemChoice = -1;
+    while (1) {
+        // Need to bind the menu to a new cube?
+        if (!mainCube.isDefined()) {
 
-    struct MenuEvent e;
-    while (m.pollEvent(&e)) {
+            // Make sure we have at least one cube
+            waitForACube();
 
-        waitForACube();
-        updateAnchor(m);
-        updateSound(m);
-        updateMusic();
-        updateAlerts(m);
+            // Pick a new cube for the menu
+            mainCube = *CubeSet::connected().begin();
 
-        bool performDefault = true;
-
-        switch(e.type) {
-
-            case MENU_ITEM_PRESS:
-                if (canLaunchItem(e.item)) {
-                    AudioChannel(0).play(Sound_ConfirmClick);
-                    itemChoice = e.item;
-                } else {
-                    ASSERT(e.item < arraysize(items));
-                    if (items[e.item]->getCubeRange().isEmpty()) {
-                        AudioChannel(0).play(Sound_NonPossibleAction);
-                        performDefault = false;
-                    } else {
-                        toggleCubeRangeAlert(e.item, m);
-                        performDefault = false;
-                    }
-                }
-                break;
-            case MENU_ITEM_ARRIVE:
-                itemIndexCurrent = e.item;
-                if (itemIndexCurrent >= 0) {
-                    arriveItem(m, itemIndexCurrent);
-                }
-                break;
-            case MENU_ITEM_DEPART:
-                if (itemIndexCurrent >= 0) {
-                    if (cubeRangeSavedIcon != NULL) {
-                        m.replaceIcon(itemIndexCurrent, cubeRangeSavedIcon);
-                        cubeRangeSavedIcon = NULL;
-                    }
-                    departItem(m, itemIndexCurrent);
-                }
-                itemIndexCurrent = -1;
-                break;
-            default:
-                break;
-
+            // (Re)initialize the menu on that cube
+            menu.init(Shared::video[mainCube], &menuAssets, &menuItems[0]);
+            menu.setIconYOffset(8);
+            if (itemIndexCurrent >= 0)
+                menu.anchor(itemIndexCurrent);
         }
 
-        if (performDefault)
-            m.performDefault();
+        MenuEvent e;
+        itemIndexChoice = -1;
+
+        // Keep running until a choice is made or the menu cube disconnects
+        while (mainCube.isDefined() && menu.pollEvent(&e)) {
+            updateSound();
+            updateMusic();
+            updateAlerts();
+            handleEvent(e);
+        }
+
+        if (itemIndexChoice >= 0)
+            return execItem(itemIndexChoice);
     }
-
-    if (itemChoice != -1)
-        execItem(itemChoice);
-}
-
-CubeSet MainMenu::cubes()
-{
-    return CubeSet::connected();
-}
-
-void MainMenu::cubeConnect(unsigned cid)
-{
-    AudioTracker::play(Tracker_CubeConnect);
-
-    Shared::motion[cid].attach(cid);
-
-    Shared::video[cid].attach(cid);
-    Shared::video[cid].initMode(BG0_ROM);
-    Shared::video[cid].bg0.setPanning(vec(0,0));
-    Shared::video[cid].bg0.image(vec(0,0), Logo);
-
-    loader.start(menuAssetConfig, CubeSet(cid));
-
-    if (cid == mainCube) {
-        menuDirty = true;
-    }
-}
-
-void MainMenu::cubeDisconnect(unsigned cid)
-{
-    AudioTracker::play(Tracker_CubeDisconnect);
 }
 
 void MainMenu::waitForACube()
@@ -186,19 +128,88 @@ void MainMenu::waitForACube()
     }
 }
 
-void MainMenu::updateAnchor(Menu &m)
+void MainMenu::handleEvent(MenuEvent &e)
 {
-    if (menuDirty) {
-        m.reset();
-        if (itemIndexCurrent != -1) {
-            m.anchor(itemIndexCurrent);
-        }
-        menuDirty = false;
-        System::paint();
+    bool performDefault = true;
+
+    switch (e.type) {
+
+        case MENU_ITEM_PRESS:
+            if (canLaunchItem(e.item)) {
+                AudioChannel(0).play(Sound_ConfirmClick);
+                itemIndexChoice = e.item;
+            } else {
+                ASSERT(e.item < arraysize(items));
+                if (items[e.item]->getCubeRange().isEmpty()) {
+                    AudioChannel(0).play(Sound_NonPossibleAction);
+                    performDefault = false;
+                } else {
+                    toggleCubeRangeAlert(e.item);
+                    performDefault = false;
+                }
+            }
+            break;
+
+        case MENU_ITEM_ARRIVE:
+            itemIndexCurrent = e.item;
+            if (itemIndexCurrent >= 0) {
+                arriveItem(itemIndexCurrent);
+            }
+            break;
+
+        case MENU_ITEM_DEPART:
+            if (itemIndexCurrent >= 0) {
+                if (cubeRangeSavedIcon != NULL) {
+                    menu.replaceIcon(itemIndexCurrent, cubeRangeSavedIcon);
+                    cubeRangeSavedIcon = NULL;
+                }
+                departItem(itemIndexCurrent);
+            }
+            itemIndexCurrent = -1;
+            break;
+
+        default:
+            break;
+
     }
+
+    if (performDefault)
+        menu.performDefault();
 }
 
-void MainMenu::updateSound(Sifteo::Menu &menu)
+void MainMenu::cubeConnect(unsigned cid)
+{
+    SystemTime now = SystemTime::now();
+
+    // Only play a connect sfx if it's been a while since the last one (or since boot)
+    if ((now - connectSfxDelayTimestamp).milliseconds() >= kConnectSfxDelayMS) {
+        connectSfxDelayTimestamp = now;
+        AudioTracker::play(Tracker_CubeConnect);
+    }
+
+    // Reset this cube's connection timestamp. We won't use it until it has shown the logo for a while.
+    cubeJoinTimestamps[cid] = now;
+
+    // Attach buffers
+    Shared::motion[cid].attach(cid);
+    Shared::video[cid].attach(cid);
+
+    // Initialize to blue Sifteo logo to match firmware.
+    Shared::video[cid].initMode(BG0_ROM);
+    Shared::video[cid].bg0.setPanning(vec(0,0));
+    Shared::video[cid].bg0.image(vec(0,0), Logo);
+}
+
+void MainMenu::cubeDisconnect(unsigned cid)
+{
+    AudioTracker::play(Tracker_CubeDisconnect);
+
+    // Were we using this cube? Not any more.
+    if (mainCube == cid)
+        mainCube = CubeID();
+}
+
+void MainMenu::updateSound()
 {
     Sifteo::TimeDelta dt = Sifteo::SystemTime::now() - time;
     
@@ -236,11 +247,11 @@ bool MainMenu::canLaunchItem(unsigned index)
     unsigned minCubes = item->getCubeRange().sys.minCubes;
     unsigned maxCubes = item->getCubeRange().sys.maxCubes;
 
-    unsigned numCubes = cubes().count();
+    unsigned numCubes = CubeSet::connected().count();
     return numCubes >= minCubes && numCubes <= maxCubes;
 }
 
-void MainMenu::toggleCubeRangeAlert(unsigned index, Sifteo::Menu &menu)
+void MainMenu::toggleCubeRangeAlert(unsigned index)
 {
     if (cubeRangeSavedIcon == NULL) {
         AudioChannel(0).play(Sound_NonPossibleAction);
@@ -285,7 +296,7 @@ void MainMenu::toggleCubeRangeAlert(unsigned index, Sifteo::Menu &menu)
     }
 }
 
-void MainMenu::updateAlerts(Sifteo::Menu &menu)
+void MainMenu::updateAlerts()
 {
     // XXX: Is this really needed here?
     auto& motion = Shared::motion[mainCube];
@@ -293,7 +304,7 @@ void MainMenu::updateAlerts(Sifteo::Menu &menu)
 
     if (cubeRangeSavedIcon != NULL && itemIndexCurrent != -1) {
         if (motion.shake || motion.tilt.x != 0 || motion.tilt.y != 0) {
-            toggleCubeRangeAlert(itemIndexCurrent, menu);
+            toggleCubeRangeAlert(itemIndexCurrent);
         }
     }
 }
@@ -310,14 +321,14 @@ void MainMenu::execItem(unsigned index)
     item->exec();
 }
 
-void MainMenu::arriveItem(Menu &menu, unsigned index)
+void MainMenu::arriveItem(unsigned index)
 {
     ASSERT(index < arraysize(items));
     MainMenuItem *item = items[index];
     item->arrive(menu, index);
 }
 
-void MainMenu::departItem(Menu &menu, unsigned index)
+void MainMenu::departItem(unsigned index)
 {
     ASSERT(index < arraysize(items));
     MainMenuItem *item = items[index];
