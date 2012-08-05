@@ -27,7 +27,7 @@ static void drawBattery(T &canvas, float batteryLevel, Int2 pos)
     }
 }
 
-static void drawText(RelocatableTileBuffer<12,12> &icon, const char* text, Int2 pos)
+static void drawText(MainMenuItem::IconBuffer &icon, const char* text, Int2 pos)
 {
     for (int i = 0; text[i] != 0; i++) {
         icon.image(vec(pos.x + i, pos.y), Font, text[i]-32);

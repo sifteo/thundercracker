@@ -28,5 +28,5 @@ private:
     
     Sifteo::Menu *menu;
     int menuItemIndex;
-    Sifteo::RelocatableTileBuffer<12,12> menuIcon;
+    IconBuffer menuIcon;
 };

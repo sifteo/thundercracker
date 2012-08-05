@@ -76,7 +76,7 @@ private:
      * information about the load address of this icon's assets on each cube.
      */
     struct {
-        Sifteo::RelocatableTileBuffer<12,12> image;
+        IconBuffer image;
         Sifteo::AssetGroup group;
     } icon;
 

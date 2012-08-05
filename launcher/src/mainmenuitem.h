@@ -21,6 +21,8 @@ class ProgressDelegate;
 class MainMenuItem
 {
 public:
+    typedef Sifteo::RelocatableTileBuffer<12,12> IconBuffer;
+
     /**
      * Retrieve pointers to the AssetImages for this menu item, and set up any
      * AssetConfiguration nodes required by the menu item. These may
