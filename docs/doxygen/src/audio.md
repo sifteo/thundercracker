@@ -3,7 +3,7 @@ Audio      {#audio}
 
 The Sifteo Base provides audio from a single speaker, and global volume can be controlled by the slider on the Sifteo Base. 
 
-TODO: image here
+![](@ref base-render-512.png)
 
 ## Audio Format
 
