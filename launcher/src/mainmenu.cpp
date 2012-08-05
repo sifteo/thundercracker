@@ -281,19 +281,27 @@ void MainMenu::updateConnecting()
      * Let cubes participate in the loading animation until the whole load is done
      */
 
-    if (!loadingCubes.empty() && loader.isComplete()) {
-        loadingAnimation.end(loadingCubes);
+    if (loadingCubes.empty()) {
+        if (loader.isComplete()) {
+            // Loading is done!
 
-        // Draw an idle screen on each cube, and remove it from connectingCubes
-        for (CubeID cube : loadingCubes) {
-            auto& vid = Shared::video[cube];
-            vid.initMode(BG0);
-            vid.bg0.erase(Menu_StripeTile);
+            loadingAnimation.end(loadingCubes);
 
-            connectingCubes.clear(cube);
+            // Draw an idle screen on each cube, and remove it from connectingCubes
+            for (CubeID cube : loadingCubes) {
+                auto& vid = Shared::video[cube];
+                vid.initMode(BG0);
+                vid.bg0.erase(Menu_StripeTile);
+
+                connectingCubes.clear(cube);
+            }
+
+            loadingCubes.clear();
+
+        } else {
+            // Still loading, update progress
+            loadingAnimation.paint(loadingCubes, loader.averageProgress(100));
         }
-
-        loadingCubes.clear();
     }
 }
 
