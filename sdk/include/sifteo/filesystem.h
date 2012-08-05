@@ -9,6 +9,7 @@
 #endif
 
 #include <sifteo/array.h>
+#include <sifteo/asset/loader.h>
 #include <sifteo/abi.h>
 
 namespace Sifteo {
@@ -296,7 +297,15 @@ public:
     typedef _SYSUUID UUID;
     typedef _SYSMetadataCubeRange CubeRange;
 
-   /**
+    static const unsigned MAX_BOOTSTRAP_GROUPS = _SYS_MAX_METADATA_ITEM_BYTES / sizeof(_SYSMetadataBootAsset);
+
+    /// An AssetConfiguration large enough to hold all bootstrap groups
+    typedef AssetConfiguration<MAX_BOOTSTRAP_GROUPS> BootstrapAssetConfiguration;
+
+    /// An array large enough to hold all bototstrap AssetGroups
+    typedef Array<AssetGroup, MAX_BOOTSTRAP_GROUPS> BootstrapAssetGroups;
+
+    /**
      * @brief Construct a detached MappedVolume
      *
      * You must call attach() to connect this to a Volume.
@@ -493,6 +502,27 @@ public:
         image.sys.frames = meta->frames;
         image.sys.format = meta->format;
         image.sys.pData = translate(meta->pData);
+    }
+
+    /**
+     * @brief Get the bootstrap assets for this Volume, returning the result in
+     * the provided BootstrapAssetConfiguration array.
+     */
+    void getBootstrap(BootstrapAssetGroups &groups, BootstrapAssetConfiguration &config)
+    {
+        uint32_t actual;
+        auto vec = metadata<_SYSMetadataBootAsset>(_SYS_METADATA_BOOT_ASSET, &actual);
+        if (!vec)
+            return;
+
+        unsigned count = actual / sizeof *vec;
+        for (unsigned i = 0; i != count; ++i) {
+
+            AssetGroup &group = groups.append();
+            translate(vec[i], group);
+
+            config.append(vec[i].slot, group, volume());
+        }
     }
 };
 

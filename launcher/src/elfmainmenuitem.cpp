@@ -212,176 +212,23 @@ void ELFMainMenuItem::bootstrap(Sifteo::CubeSet cubes, ProgressDelegate &progres
      */
 
     MappedVolume map(volume);
+    MappedVolume::BootstrapAssetGroups groups;
+    MappedVolume::BootstrapAssetConfiguration config;
+    map.getBootstrap(groups, config);
 
-    // Look up BootAsset array
-    uint32_t actual;
-    auto vec = map.metadata<_SYSMetadataBootAsset>(_SYS_METADATA_BOOT_ASSET, &actual);
-    if (!vec) {
+    if (config.empty()) {
         LOG(("LAUNCHER: No bootstrap assets found\n"));
         return;
     }
-    unsigned count = actual / sizeof *vec;
-
-    if (cubes.empty()) {
-        LOG(("LAUNCHER: No cubes to load bootstrap assets on\n"));
-        return;
-    }
-
-    /*
-     * First pass, size accounting.
-     *
-     * This calculates a total size of all unloaded asset groups, and keeps track
-     * of which groups and which slots are participating in bootstrapping. This
-     * gives us enough information to calculate a global progress amount, plus
-     * to determine ahead-of-time whether we need to clear any AssetSlots.
-     *
-     * We have to keep track of separate counts for installed vs. total asset
-     * groups, since at this point we don't know which slots, if any, will need
-     * to be erased.
-     */
-
-    bool needAnyInstall = false;
-
-    BitArray<MAX_BOOTSTRAP_GROUPS> installedGroups;
-    installedGroups.clear();
-
-    BitArray<MAX_ASSET_SLOTS> bootstrapSlots;
-    bootstrapSlots.clear();
-
-    SlotInfo slotInfo[MAX_ASSET_SLOTS];
-    bzero(slotInfo);
-
-    for (unsigned i = 0; i != count; ++i) {
-        AssetGroup group;
-        map.translate(vec[i], group);
-        AssetSlot slot(vec[i].slot);
-
-        ASSERT(numAssetSlots <= MAX_ASSET_SLOTS);
-        if (slot.sys >= numAssetSlots) {
-            LOG("LAUNCHER: Bootstrap group has invalid slot ID %d\n", slot.sys);
-            return;
-        }
-
-        auto &info = slotInfo[slot.sys];
-        bootstrapSlots.mark(slot.sys);
-
-        if (group.isInstalled(cubes)) {
-            installedGroups.mark(i);
-            LOG("LAUNCHER: Bootstrap asset group %P already installed\n",
-                group.sysHeader());
-        } else {
-            info.uninstalledBytes += group.compressedSize();
-            info.uninstalledTiles += group.tileAllocation();
-            needAnyInstall = true;
-        }
-
-        info.totalBytes += group.compressedSize();
-        info.totalTiles += group.tileAllocation();
-    }
-
-    if (!needAnyInstall) {
-        // All groups already installed. We're done!
-        return;
-    }
-
-    /*
-     * Second pass, clear asset slots.
-     *
-     * At this point, we know which slots won't be able to hold the
-     * required assets without being erased first. Erase them
-     * all up-front if necessary.
-     *
-     * At this point we can also calculate a total estimate for how
-     * much compressed data we'll be sending.
-     */
-
-    unsigned totalBytes = 0;
-
-    for (unsigned slot : bootstrapSlots) {
-        auto &info = slotInfo[slot];
-
-        if (info.totalTiles > TILES_PER_ASSET_SLOT) {
-            LOG("LAUNCHER: Bootstrap groups in slot %d are too large (%d tiles)\n",
-                slot, info.totalTiles);
-            return;
-        }
-
-        if (info.uninstalledTiles == 0 || info.uninstalledTiles < AssetSlot(slot).tilesFree()) {
-            // Everything fits in this slot!
-            totalBytes += info.uninstalledBytes;
-            continue;
-        }
-
-        LOG("LAUNCHER: Erasing asset slot %d\n", slot);
-        AssetSlot(slot).erase();
-
-        /*
-         * If we had to erase any slots, disregard any prior knowledge of which
-         * groups were already installed. (We don't know which groups were just erased!)
-         *
-         * Instead, we'll try to install everything, and rely on the asset loader to detect
-         * already-installed groups during start().
-         */
-        installedGroups.clear();
-
-        // Nothing is installed in this slot now, we'll need to install everything.
-        totalBytes += info.totalBytes;
-    }
-
-    /*
-     * Final pass: Asset loading!
-     *
-     * As we load each group, calculate a global progress estimate for all groups.
-     */
 
     progress.begin(cubes);
     ScopedAssetLoader loader;
+    loader.start(config, cubes);
 
-    unsigned previousBytes = 0;
-    for (unsigned i = 0; i != count; ++i) {
-
-        // Skip known-installed groups
-        if (installedGroups.test(i))
-            continue;
-
-        AssetGroup group;
-        map.translate(vec[i], group);
-        AssetSlot slot(vec[i].slot);
-
-        LOG("LAUNCHER: Bootstrapping asset group %P in slot %d\n",
-            group.sysHeader(), slot.sys);
-
-        if (!loader.start(group, slot, cubes)) {
-            LOG("LAUNCHER: Asset loading failed!\n");
-            continue;
-        }
-
-        while (!loader.isComplete()) {
-            /*
-             * Calculate a new progress value, using the average number of
-             * bytes sent to all cubes participating in this load.
-             */
-            progress.paint(cubes, (previousBytes + averageProgressBytes(loader, cubes)) * 100 / totalBytes);
-            System::paint();
-        }
-
-        loader.finish();
-        previousBytes += group.compressedSize();
+    while (!loader.isComplete()) {
+        progress.paint(cubes, loader.averageProgress(100));
+        System::paint();
     }
 
     progress.end(cubes);
-}
-
-unsigned ELFMainMenuItem::averageProgressBytes(const Sifteo::AssetLoader &loader, Sifteo::CubeSet cubes)
-{
-    unsigned totalBytes = 0;
-    unsigned totalCubes = 0;
-
-    for (CubeID cube : cubes) {
-        totalBytes += loader.progressBytes(cube);
-        totalCubes++;
-    }
-
-    ASSERT(totalCubes != 0);
-    return totalBytes / totalCubes;
 }
