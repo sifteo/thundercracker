@@ -213,7 +213,7 @@ void PaintControl::triggerPaint(CubeSlot *cube, SysTime::Ticks now)
         if (newPending >= fpMax && allowContinuous(cube)) {
             if (!vf.test(_SYS_VF_CONTINUOUS)) {
                 enterContinuous(cube, vbuf, vf, now);
-                vf.apply(vbuf, cube->id());
+                vf.apply(vbuf);
             }
             newPending = fpMax;
         }
@@ -259,7 +259,7 @@ void PaintControl::beginFinish(CubeSlot *cube)
     // Disable continuous rendering now, if it was on. No effect otherwise.
     VRAMFlags vf(vbuf);
     exitContinuous(cube, vbuf, vf);
-    vf.apply(vbuf, cube->id());
+    vf.apply(vbuf);
 }
 
 bool PaintControl::pollForFinish(CubeSlot *cube, SysTime::Ticks now)
@@ -346,7 +346,7 @@ void PaintControl::ackFrames(CubeSlot *cube, int32_t count)
         // Too few pending frames? Disable continuous mode.
         if (pendingFrames < fpMin) {
             exitContinuous(cube, vbuf, vf);
-            vf.apply(vbuf, cube->id());
+            vf.apply(vbuf);
         }
 
         PAINT_LOG((LOG_PREFIX "ACK(%d)\n", LOG_PARAMS, count));
@@ -406,7 +406,7 @@ bool PaintControl::vramFlushed(CubeSlot *cube)
                 enterContinuous(cube, vbuf, vf, now);
         }
 
-        vf.apply(vbuf, cube->id());
+        vf.apply(vbuf);
 
         // Propagate the bits...
         Atomic::Or(vbuf->flags, _SYS_VBF_DIRTY_RENDER);
@@ -499,11 +499,8 @@ bool PaintControl::canMakeSynchronous(CubeSlot *cube, _SYSVideoBuffer *vbuf,
         && timestamp > asyncTimestamp + fpsLow;
 }
 
-void VRAMFlags::apply(_SYSVideoBuffer *vbuf, _SYSCubeID cube)
+void VRAMFlags::apply(_SYSVideoBuffer *vbuf)
 {
-    // Update this cube's flash bank, if necessary
-    setTo(_SYS_VF_A21, VirtAssetSlots::getCubeBank(cube));
-
     // Atomic update via XOR.
     uint8_t x = vf ^ vfPrev;
 

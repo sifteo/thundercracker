@@ -73,9 +73,7 @@ class CubeSlot {
     bool isTouching() const;
     void clearTouchEvent() const;
 
-    void ALWAYS_INLINE setVideoBuffer(_SYSVideoBuffer *v) {
-        vbuf = v;
-    }
+    void setVideoBuffer(_SYSVideoBuffer *v);
 
     void ALWAYS_INLINE setMotionBuffer(_SYSMotionBuffer *m) {
         motionWriter.setBuffer(m);
