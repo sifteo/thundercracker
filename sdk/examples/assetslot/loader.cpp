@@ -46,12 +46,11 @@ void MyLoader::load(AssetGroup &group, AssetSlot slot)
     // Start drawing the background
     System::paint();
 
+    AssetConfiguration<1> config;
+    config.append(slot, group);
+
     // Immediately start asynchronously loading the group our caller requested
-    if (!assetLoader.start(group, slot, cubes)) {
-        // No room? Erase the asset slot.
-        slot.erase();
-        assetLoader.start(group, slot, cubes);
-    }
+    assetLoader.start(config, cubes);
 
     /*
      * Animate the loading process, using STAMP mode to draw an animated progress bar.
@@ -76,7 +75,7 @@ void MyLoader::load(AssetGroup &group, AssetSlot slot)
 
         for (CubeID cube : cubes) {
             // Animate the horizontal window, to show progress
-            vid[cube].stamp.setHWindow(0, assetLoader.progress(cube, 1, LCD_width ));
+            vid[cube].stamp.setHWindow(0, assetLoader.cubeProgress(cube, LCD_width));
 
             // Animate the colormap at a steady rate
             const RGB565 bg = RGB565::fromRGB(0xff7000);

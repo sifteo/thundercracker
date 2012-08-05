@@ -25,11 +25,14 @@ void Game::title()
      */
 
     const float titleTime = 4.0f;
+
     ScopedAssetLoader loader;
+    AssetConfiguration<1> config;
+    config.append(MainSlot, GameAssets);
+    loader.start(config);
 
     for (CubeID i = 0; i < NUM_CUBES; ++i) {
         getGameCube(i).vid.initMode(BG0);
-        loader.start(GameAssets, MainSlot, i);
     }
 
     Random r;
