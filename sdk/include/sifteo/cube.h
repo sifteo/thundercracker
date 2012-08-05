@@ -215,17 +215,17 @@ public:
     }
 
     /// Create an empty CubeSet
-    CubeSet() : BitArray<_SYS_NUM_CUBE_SLOTS>() {}
+    explicit CubeSet() : BitArray<_SYS_NUM_CUBE_SLOTS>() {}
 
     /// Create a CubeSet with a single CubeID in it.
-    CubeSet(CubeID cube) : BitArray<_SYS_NUM_CUBE_SLOTS>(cube) {}
+    explicit CubeSet(CubeID cube) : BitArray<_SYS_NUM_CUBE_SLOTS>(cube) {}
 
     /**
      * @brief Create a new CubeSet with a range of cubes.
      *
      * This is a half-open interval. All IDs >= 'begin' and < 'end' are in the set.
      */
-    CubeSet(CubeID begin, CubeID end) : BitArray<_SYS_NUM_CUBE_SLOTS>(begin, end) {}
+    explicit CubeSet(CubeID begin, CubeID end) : BitArray<_SYS_NUM_CUBE_SLOTS>(begin, end) {}
 
     /**
      * @brief Return a CubeSet containing all connected cubes which are visible to the
