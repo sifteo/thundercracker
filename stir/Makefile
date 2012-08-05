@@ -26,7 +26,6 @@ OBJS = \
 	src/command.o \
 	src/logger.o \
 	src/lodepng.o \
-	src/sha1.o \
 	src/audioencoder.o \
 	src/dubencoder.o \
 	src/tracker.o \
