@@ -73,7 +73,7 @@ Tracker modules can be a very efficient format, but they can also be terrificall
 
 * __High Sample Rates__: Samples in XM are traditionally 8363 Hz at C-4. This provides a wide range of timbre options while providing a compact sample. The instrument's Relative Note changes the sampling rate by a constant amount, so that an instrument with a higher Relative Note will sample it's audio much faster than an instrument with a lower Relative Note. Higher sampling rates mean higher-quality samples, but also more storage space required in flash, and more flash bus usage during playback. Samples with a Relative Note greater than 0 should be carefully scrutinized. Usually they indicate a 44.1kHz sample that was imported directly into the tracker without resampling.
 
-* __Ping Pong Loops__: The ADPCM encoding does not support random access, and is monotonic. So, to support ping pong loops on the Base, `stir` converts the ping pong loop into a linear loop, doubling the loop's size. While ping pong loops can be incredibly useful, they can take up significantly more space in flash and should be used sparingly.
+* __Ping Pong Loops__: The ADPCM encoding does not provide random access, and is monotonic. So, to provide ping pong loops, `stir` converts the ping pong loop into a linear loop, doubling the loop's size. While ping pong loops can be incredibly useful, they can take up significantly more space in flash and should be used sparingly.
 
 * __Empty Space__: Samples containing empty space are samples that are wasting space. Many samples lead in with some silence or lead out with a long fade. Consider using effect __ED__ (Note delay) instead of leading a sample with silence, and trimming the silence from the end of your sample to save storage space.
 
@@ -81,11 +81,11 @@ Tracker modules can be a very efficient format, but they can also be terrificall
 
 ### Effects
 
-Practically all XM features are supported by the tracker. Unfortunately, this does not mean that all XM features will run __well__ on the Base. Due to the unique constraints of our hardware, the following features should be avoided when possible:
+Practically all XM features are available. Unfortunately, this does not mean that all XM features will run __well__ on the Base. Due to the unique constraints of our hardware, the following features should be avoided when possible:
 
-__9xx (Sample offset)__: Samples on the Base do not support random access, so jumping to an offset in a sample requires fetching the rest of the sample before the offset as well. In cases where the offset is large and the effect is used on multiple channels at the same time, this can noticeably affect performance.
+__9xx (Sample offset)__: Samples on the Base do not provide random access, so jumping to an offset in a sample requires fetching the rest of the sample before the offset as well. In cases where the offset is large and the effect is used on multiple channels at the same time, this can noticeably affect performance.
 
-__Dxx (Pattern break)__: Patterns, like samples, do not support random access and must be read from the beginning of the pattern to the requested offset. As such, executing a pattern break and jumping more than a few rows into the next pattern can be expensive.
+__Dxx (Pattern break)__: Patterns, like samples, do not provide random access and must be read from the beginning of the pattern to the requested offset. As such, executing a pattern break and jumping more than a few rows into the next pattern can be expensive.
 
 __E6x (Pattern loop)__: It is possible to use pattern loops in an efficient manner, but due to the linear access nature of patterns they can also be very inefficient. Where possible, pattern loops should start as near to the beginning of the pattern as possible—looping to the very beginning of a pattern is as cheap as stepping to the next row in the same pattern.
 
@@ -93,14 +93,14 @@ The least efficient pattern loop would begin the loop on the second to last row 
 
 ### Channels
 
-The Base Cube supports 8 channels of audio, and all of them can be used for tracker playback, but before creating a song using all 8 channels, there are a few reasons why fewer is better:
+The Base Cube provides 8 channels of audio, and all of them can be used for tracker playback, but before creating a song using all 8 channels, there are a few reasons why fewer is better:
 
 * Channels being used to play your song are channels that are not available to be used for sound effects. A song with 8 channels leaves you with no free channels for dynamic sound effects when a user interacts with your game.
 * Patterns are the second largest consumers of flash after samples (potentially the largest, if you're taking advantage of sample deduplication across modules), and their size increases linearly with the number of channels.
 
 Lastly, editing tools do not appear to have a way to add or remove channels after a song has been created. While `stir` should handle this in the future, it does not today and your songs will be larger and have the potential to conflict with standard sound effects. To mitigate this, the tracker allocates channels from the top down in the mixer, so a song that has eight channels but only uses channels one through four (trackers like to one-index their numbering) will leave channels zero through three (we use zero-indexing) free on the Base.
 
-### Limitations and Unsupported Effects
+### Limitations and Unavailable Effects
 
 The following constraints are imposed on tracker modules:
 
