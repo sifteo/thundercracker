@@ -446,7 +446,7 @@ public:
     }
 
     /// Create a new BitArray with a single bit marked
-    BitArray(unsigned index) {
+    explicit BitArray(unsigned index) {
         const unsigned NUM_WORDS = (tSize + 31) / 32;
 
         ASSERT(index < tSize);
@@ -467,7 +467,7 @@ public:
      *
      * This is a half-open interval. All bits >= 'begin' and < 'end' are marked.
      */
-    BitArray(unsigned begin, unsigned end) {
+    explicit BitArray(unsigned begin, unsigned end) {
         const unsigned NUM_WORDS = (tSize + 31) / 32;
 
         ASSERT(begin < tSize);
