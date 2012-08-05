@@ -59,6 +59,7 @@ public:
         _SYSAssetConfiguration &cfg = append();
         cfg.pGroup = pGroup;
         cfg.volume = volume;
+        cfg.dataSize = group.compressedSize();
         cfg.numTiles = group.numTiles();
         cfg.ordinal = group.sysHeader()->ordinal;
         cfg.slot = slot;

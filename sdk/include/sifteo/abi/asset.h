@@ -58,11 +58,12 @@ struct _SYSAssetLoader {
 };
 
 struct _SYSAssetConfiguration {
-    uint32_t pGroup;
-    _SYSVolumeHandle volume;
-    uint16_t numTiles;
-    uint8_t ordinal;
-    _SYSAssetSlot slot;
+    uint32_t pGroup;            /// Address of _SYSAssetGroup
+    _SYSVolumeHandle volume;    /// Mapped volume, or 0 if the group is local
+    uint32_t dataSize;          /// Copy of group header's dataSize
+    uint16_t numTiles;          /// Copy of group header's numTiles
+    uint8_t ordinal;            /// Copy of group header's ordinal
+    _SYSAssetSlot slot;         /// Which slot to load into?
 };
 
 enum _SYSAssetImageFormat {
