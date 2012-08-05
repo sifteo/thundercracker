@@ -36,7 +36,8 @@ namespace Sifteo {
  */
 
 template <unsigned tCapacity>
-class AssetConfiguration : public Array <_SYSAssetConfiguration, tCapacity, uint8_t> {
+class AssetConfiguration : public Array<_SYSAssetConfiguration, tCapacity, uint8_t> {
+    typedef Array<_SYSAssetConfiguration, tCapacity, uint8_t> super;
 public:
 
     /**
@@ -56,7 +57,7 @@ public:
         uint32_t pGroup = reinterpret_cast<uintptr_t>(&group);
         ASSERT((pGroup >= 0xc0000000) == (volume != 0));
 
-        _SYSAssetConfiguration &cfg = append();
+        _SYSAssetConfiguration &cfg = super::append();
         cfg.pGroup = pGroup;
         cfg.volume = volume;
         cfg.dataSize = group.compressedSize();
