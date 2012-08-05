@@ -62,8 +62,11 @@ private:
     Sifteo::CubeSet cubes();
     Sifteo::CubeSet cubesToLoad;
     
+    // event handlers
     void cubeConnect(unsigned cid);
     void cubeDisconnect(unsigned cid);
+    void neighborAdded(unsigned firstID, unsigned firstSide,
+                       unsigned secondID, unsigned secondSide);
 
     void waitForACube();
     void updateAnchor(Sifteo::Menu &m);

@@ -43,6 +43,7 @@ void MainMenu::init()
 {
     Events::cubeConnect.set(&MainMenu::cubeConnect, this);
     Events::cubeDisconnect.set(&MainMenu::cubeDisconnect, this);
+    Events::neighborAdd.set(&MainMenu::neighborAdded, this);
     
     time = SystemTime::now();
 
@@ -164,6 +165,7 @@ void MainMenu::cubeConnect(unsigned cid)
 {
     AudioTracker::play(Tracker_CubeConnect);
 
+    Shared::connectTime[cid] = SystemTime::now();
     Shared::motion[cid].attach(cid);
 
     Shared::video[cid].attach(cid);
@@ -183,6 +185,31 @@ void MainMenu::cubeDisconnect(unsigned cid)
     AudioTracker::play(Tracker_CubeDisconnect);
 
     cubesToLoad.clear(cid);
+}
+
+void MainMenu::neighborAdded(unsigned firstID, unsigned firstSide,
+                             unsigned secondID, unsigned secondSide)
+{
+    /*
+     * If a connected cube has been neighbored to the base,
+     * toggle its pairing state (ie, unpair it).
+     *
+     * Ensure a cube has been connected to the system for at
+     * least 2 seconds to avoid unpairing cubes based on a neighbor
+     * event that was generated for a cube being newly paired.
+     */
+
+    CubeID cid;
+    if (NeighborID(firstID).isBase())
+        cid = secondID;
+    else if (NeighborID(secondID).isBase())
+        cid = firstID;
+    else
+        return;
+
+    ASSERT(Shared::connectTime[cid].isValid());
+    if (SystemTime::now() - Shared::connectTime[cid] > TimeDelta::fromMillisec(2000))
+        cid.unpair();
 }
 
 void MainMenu::waitForACube()
