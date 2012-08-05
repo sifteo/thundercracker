@@ -3,11 +3,7 @@ Asset Workflow      {#asset_workflow}
 
 @b stir is a tool that formats your visual and audio assets to the compact formats used on Sifteo Cubes. It accepts configuration files written in [Lua](http://www.lua.org), and generates C++ code that should be built into your project.
 
-Proofs of your image assets are also generated, so you can easily inspect them after the formatting process.
-
-# Overview
-
-@b stir is driven by a config file within your project written in [Lua](http://www.lua.org), typically named `assets.lua`. Don't worry if you're not familiar with Lua - the simplest stir configurations are essentially declarative lists of assets, and you can easily adapt the SDK examples to fit your needs.
+Proofs of your image assets are also generated, formatted as HTML documents, so you can easily inspect them in your browser after the formatting process.
 
 # Asset Images
 
@@ -64,7 +60,7 @@ Option              | Meaning
 `height=16`         | Specify the height of a frame of your image, defaults to source image's native height.
 `group=MyGroup`     | Specify that this image is a member of the `group` element `MyGroup`
 
-# Asset Image Lists
+## Asset Image Lists
 
 It is occasionally desirable to export images as an array.
 
@@ -88,9 +84,26 @@ PlayerSprite = image{ { "player-sitting.png", "player-standing.png"}, pinned=tru
 
 @note If you have the choice between using a single Asset Image with multiple frames, instead of an Asset Image List, the single Asset Image can be more efficient.
 
-# Asset Audio     {#asset_audio}
+# Audio     {#asset_audio}
+
+The Sifteo audio system supports both sample and tracker module playback. Tracker audio is great for longer, sequenced audio, like background music. Samples are typically used for shorter assets, like sound effects, or for audio that is not easily sequenced, like speech.
+
+If you haven't already, see @ref audio for details of the Sifteo audio system.
 
 ## Samples
+
+Here's an assets.lua snippet that creates two samples:
+
+~~~~~~~~~~~~~
+Click = sound{ "click.wav" }
+Bloop = sound{ "bloop.wav", encode="pcm" }
+~~~~~~~~~~~~~
+
+Each @b sound element specifies that a Sifteo::AssetAudio object should be generated, which can be played by a Sifteo::AudioChannel.
+
+`stir` treats `sound` files whose name ends in `.wav` as WAV files, which are widely supported in most audio editing and authoring environments. When processing WAV files, `stir` ensures that the sample rate and sample format of your audio is correct - 16kHz sample rate and signed 16-bit samples. Any other `sound` files are treated as headerless raw PCM16 data.
+
+The default encoding for audio data in external storage is ADPCM, which compresses your source audio to 25% of its original size. To specify that your sample be stored uncompressed, add the `encode="pcm"` option to your `sound` object, as in the `Bloop` entry above.
 
 ## Tracker
 
@@ -101,19 +114,18 @@ Bubbles = tracker{"bubbles.xm"}
 Slumberjack = tracker{"slumberjack.xm", loop=false}
 ~~~~~~~~~~~~~
 
-Each @b tracker element specifies that an AssetTracker module should be generated.
+Each @b tracker element specifies that a Sifteo::AssetTracker module should be generated, which can be played by a Sifteo::AudioTracker.
 
 By default, tracker modules loop using the restart point defined in the XM file. Modules play only once if the restart point is not valid. You may specify the `loop=false` option to forcibly disable looping.
 
-
 # stir Options
-@b stir provides several options to configure its execution. These options are integrated into the default Makefiles that ship with the SDK, but you may wish to integrate @b stir into your workflow in additional ways.
+@b stir provides several options to configure its execution. These options are integrated into the default Makefiles that ship with the SDK, but you may wish to integrate @b stir into your workflow in other ways.
 
 Option                  | Meaning
 -------                 | -------------
 `-h`                    | Show a help message and exit
 `-v`                    | Enable verbose output
-`-o <myproof>.html`     | Writes an HTML image proof to `myproof.html` - open this up in your web browser
+`-o <myproof>.html`     | Writes an HTML image proof to `<myproof>.html` - open this up in your web browser
 `-o <assets.gen>.cpp`   | Generates C++ source data for your assets to `<assets.gen>.cpp` - include this file in your build
 `-o <assets.gen>.h`     | Generates C++ header data for your assets to `<assets.gen>.h` - include this file in your build
 `VAR=VALUE`             | Define a Lua script variable, prior to parsing the script
