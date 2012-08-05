@@ -148,6 +148,8 @@ public:
     void setDefault(lua_State *L);
     static Group *getDefault(lua_State *L);
     uint64_t getHash() const;
+    void getFlashCRC(std::vector<uint8_t> &crcbuf,
+                     unsigned addr = 0, unsigned numBlocks = 1) const;
 
 private:
     lua_Number quality;
@@ -156,6 +158,8 @@ private:
     std::string mName;
     std::set<Image*> mImages;
     std::vector<uint8_t> mLoadstream;
+
+    static const uint8_t gf84[];
 };
 
 

@@ -20,14 +20,16 @@ extern "C" {
 #define _SYS_ASSET_GROUPS_PER_SLOT  24      // Number of AssetGroups we can track per-slot
 #define _SYS_ASSET_SLOTS_PER_BANK   4       // Number of AssetSlots maximum per-program
 #define _SYS_ASSET_GROUP_SIZE_UNIT  16      // Basic unit of AssetGroup allocation, in tiles
+#define _SYS_ASSET_GROUP_CRC_SIZE   16      // Number of bytes of AssetGroup CRC
 
 
 struct _SYSAssetGroupHeader {
-    uint8_t reserved;           /// OUT    Reserved, must be zero
-    uint8_t ordinal;            /// OUT    Small integer, unique within an ELF
-    uint16_t numTiles;          /// OUT    Uncompressed size, in tiles
-    uint32_t dataSize;          /// OUT    Size of compressed data, in bytes
-    uint64_t hash;              /// OUT    Hash of this asset group's data
+    uint8_t reserved;                       /// OUT     Reserved, must be zero
+    uint8_t ordinal;                        /// OUT     Small integer, unique within an ELF
+    uint16_t numTiles;                      /// OUT     Uncompressed size, in tiles
+    uint32_t dataSize;                      /// OUT     Size of compressed data, in bytes
+    uint64_t hash;                          /// OUT     Hash of this asset group's data
+    uint8_t crc[_SYS_ASSET_GROUP_CRC_SIZE]; /// OUT     CRC of this asset group's data
     // Followed by compressed data
 };
 
