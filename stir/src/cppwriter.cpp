@@ -117,14 +117,6 @@ void CPPSourceWriter::writeGroup(const Group &group)
         std::vector<uint8_t> crc;
         group.getFlashCRC(crc);
 
-        char hash[32];
-
-        #ifdef __MINGW32__
-            sprintf(hash, "0x%016I64x", (long long unsigned int) group.getHash());
-        #else
-            sprintf(hash, "0x%016llx", (long long unsigned int) group.getHash());
-        #endif
-
         /*
          * XXX: This method of generating the group Ordinal only works within
          *      a single Stir run. Ideally we'd be able to use _SYS_lti_counter
@@ -142,7 +134,6 @@ void CPPSourceWriter::writeGroup(const Group &group)
             indent << "/* ordinal   */ " << nextGroupOrdinal++ << ",\n" <<
             indent << "/* numTiles  */ " << group.getPool().size() << ",\n" <<
             indent << "/* dataSize  */ " << group.getLoadstream().size() << ",\n" <<
-            indent << "/* hash      */ " << hash << ",\n" <<
             indent << "/* crc       */ {\n" <<
             indent;
                 writeArray(crc);
