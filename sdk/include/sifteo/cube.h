@@ -214,6 +214,9 @@ public:
         return words[0];
     }
 
+    /// Implicit conversion from a BitArray of the correct size
+    CubeSet(const BitArray<_SYS_NUM_CUBE_SLOTS> &bits) : BitArray<_SYS_NUM_CUBE_SLOTS>(bits) {}
+
     /// Create an empty CubeSet
     explicit CubeSet() : BitArray<_SYS_NUM_CUBE_SLOTS>() {}
 
