@@ -180,7 +180,7 @@ public:
             RadioManager::produce(tx);
     }
 
-    static void staticSpiCompletionHandler(void *p);
+    static void staticSpiCompletionHandler();
     void onSpiComplete();
 };
 

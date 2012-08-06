@@ -353,7 +353,7 @@ void NRF24L01::pulseCE()
     spi.txDma(txData, 10);
 }
 
-void NRF24L01::staticSpiCompletionHandler(void *p)
+void NRF24L01::staticSpiCompletionHandler()
 {
     NRF24L01::instance.onSpiComplete();
 }

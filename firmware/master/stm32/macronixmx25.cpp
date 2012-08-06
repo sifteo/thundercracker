@@ -11,6 +11,7 @@
 #include "sampleprofiler.h"
 #include "systime.h"
 
+volatile bool MacronixMX25::dmaInProgress = false;
 
 void MacronixMX25::init()
 {
@@ -51,12 +52,14 @@ void MacronixMX25::read(uint32_t address, uint8_t *buf, unsigned len)
 
         spi.begin();
 
+        dmaInProgress = true;
         spi.txDma(cmd, sizeof(cmd));
         if (!waitForDma()) {
             spi.end();
             continue;
         }
 
+        dmaInProgress = true;
         spi.transferDma(buf, buf, len);
         if (!waitForDma()) {
             spi.end();
@@ -90,12 +93,14 @@ void MacronixMX25::write(uint32_t address, const uint8_t *buf, unsigned len)
         while (1) {
 
             spi.begin();
+            dmaInProgress = true;
             spi.txDma(cmd, sizeof(cmd));
             if (!waitForDma()) {
                 spi.end();
                 continue;
             }
 
+            dmaInProgress = true;
             spi.txDma(buf, pagelen);
             if (!waitForDma()) {
                 spi.end();
@@ -242,7 +247,7 @@ bool MacronixMX25::waitForDma()
     SysTime::Ticks deadline = SysTime::ticks() + SysTime::msTicks(5);
     bool success = true;
 
-    while (spi.dmaInProgress() && success) {
+    while (dmaInProgress && success) {
         /*
          * Kill time.. not safe to execute tasks here. We can yield until
          * the DMA IRQ comes back, to give the DMA controller more bus bandwidth.
@@ -261,4 +266,9 @@ bool MacronixMX25::waitForDma()
 
     SampleProfiler::setSubsystem(s);
     return success;
+}
+
+void MacronixMX25::dmaCompletionCallback()
+{
+    dmaInProgress = false;
 }

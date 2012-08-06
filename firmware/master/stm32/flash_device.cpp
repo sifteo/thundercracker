@@ -11,7 +11,8 @@ static MacronixMX25 flash(SPIMaster(&FLASH_SPI,
                                     FLASH_CS_GPIO,
                                     FLASH_SCK_GPIO,
                                     FLASH_MISO_GPIO,
-                                    FLASH_MOSI_GPIO));
+                                    FLASH_MOSI_GPIO,
+                                    MacronixMX25::dmaCompletionCallback));
 
 /* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
     Routines to implement the Flash interface in flash.h

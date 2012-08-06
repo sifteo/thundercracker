@@ -38,6 +38,9 @@ public:
     void deepSleep();
     void wakeFromDeepSleep();
 
+    // should only be called from flash_device.cpp
+    static void dmaCompletionCallback();
+
 private:
     enum Command {
         Read                        = 0x03,
@@ -87,6 +90,7 @@ private:
     void ensureWriteEnabled();
     void waitWhileBusy();
     bool waitForDma();
+    static volatile bool dmaInProgress;
 
     uint8_t readReg(Command cmd);
 };
