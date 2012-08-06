@@ -14,25 +14,24 @@
 class SPIMaster {
  public:
 
-    typedef void (*CompletionCallback)(void *p);
+    typedef void (*CompletionCallback)();
 
     SPIMaster(volatile SPI_t *_hw,
               GPIOPin _csn,
               GPIOPin _sck,
               GPIOPin _miso,
               GPIOPin _mosi,
-              CompletionCallback cb = 0,
-              void *param = 0)
+              CompletionCallback cb = 0)
         : hw(_hw), csn(_csn), sck(_sck), miso(_miso), mosi(_mosi),
-          completionCB(cb), completionParam(param) {}
+          completionCB(cb) {}
 
     void init();
 
-    inline void begin() {
+    ALWAYS_INLINE void begin() {
         csn.setLow();
     }
 
-    inline void end() {
+    ALWAYS_INLINE void end() {
         csn.setHigh();
     }
 
@@ -42,8 +41,6 @@ class SPIMaster {
 
     void transferDma(const uint8_t *txbuf, uint8_t *rxbuf, unsigned len);
     void txDma(const uint8_t *txbuf, unsigned len);
-
-    bool dmaInProgress() const;
 
  private:
     volatile SPI_t *hw;
@@ -56,7 +53,6 @@ class SPIMaster {
     uint32_t dmaPriorityBits;
 
     CompletionCallback completionCB;
-    void *completionParam;
     static void dmaCallback(void *p, uint8_t flags);
 };
 
