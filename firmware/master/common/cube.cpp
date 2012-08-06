@@ -16,13 +16,7 @@
 #include "paintcontrol.h"
 #include "cubeslots.h"
 #include "assetslot.h"
-
-// Simulator headers, for simAssetLoaderBypass.
-#ifdef SIFTEO_SIMULATOR
-#   include "system_mc.h"
-#   include "cube_hardware.h"
-#   include "lsdec.h"
-#endif
+#include "assetloader.h"
 
 
 void CubeSlot::connect(SysLFS::Key cubeRecord, const RadioAddress &addr, const RF_ACKType &fullACK)
@@ -33,9 +27,6 @@ void CubeSlot::connect(SysLFS::Key cubeRecord, const RadioAddress &addr, const R
     NeighborSlot::resetSlots(cv);
     setVideoBuffer(0);
     setMotionBuffer(0);
-    Atomic::And(CubeSlots::flashResetWait, ~cv);
-    Atomic::And(CubeSlots::flashResetSent, ~cv);
-    Atomic::And(CubeSlots::flashAddrPending, ~cv);
     Atomic::And(CubeSlots::sendShutdown, ~cv);
     Atomic::And(CubeSlots::sendStipple, ~cv);
     Atomic::And(CubeSlots::vramPaused, ~cv);
@@ -57,6 +48,7 @@ void CubeSlot::connect(SysLFS::Key cubeRecord, const RadioAddress &addr, const R
 
     // Propagate this connection to userspace
     Event::setCubePending(Event::PID_CONNECTION, id());
+    AssetLoader::cubeConnect(id());
 }
 
 void CubeSlot::disconnect()
@@ -76,6 +68,7 @@ void CubeSlot::disconnect()
 
     // Propagate this disconnection to userspace
     Event::setCubePending(Event::PID_CONNECTION, id());
+    AssetLoader::cubeDisconnect(id());
 
     setVideoBuffer(0);
     setMotionBuffer(0);
@@ -134,101 +127,6 @@ void CubeSlot::setVideoBuffer(_SYSVideoBuffer *v)
     }
 
     vbuf = v;
-}
-
-void CubeSlot::startAssetLoad(SvmMemory::VirtAddr groupVA, uint16_t baseAddr)
-{
-    /*
-     * Trigger the beginning of an asset group installation for this cube.
-     * There must be a SYSAssetLoader currently set.
-     */
-
-    // Translate and verify addresses
-    SvmMemory::PhysAddr groupPA;
-    if (!SvmMemory::mapRAM(groupVA, sizeof(_SYSAssetGroup), groupPA))
-        return;
-    _SYSAssetGroup *G = reinterpret_cast<_SYSAssetGroup*>(groupPA);
-    _SYSAssetLoader *L = CubeSlots::assetLoader;
-    if (!L) return;
-    _SYSAssetLoaderCube *LC = assetLoaderCube(L);
-    if (!LC) return;
-    _SYSAssetGroupCube *GC = assetGroupCube(G);
-    if (!GC) return;
-
-    // Read (cached) asset group header. Must be valid.
-    const _SYSAssetGroupHeader *headerVA =
-        reinterpret_cast<const _SYSAssetGroupHeader*>(G->pHdr);
-    _SYSAssetGroupHeader header;
-    if (!SvmMemory::copyROData(header, headerVA))
-        return;
-
-    // Because we're storing this in a 32-bit struct field, squash groupVA
-    SvmMemory::squashPhysicalAddr(groupVA);
-
-    // Initialize state
-    Atomic::ClearLZ(L->complete, id());
-    GC->baseAddr = baseAddr;
-    LC->pAssetGroup = groupVA;
-    LC->progress = 0;
-    LC->dataSize = header.dataSize;
-    LC->reserved = 0;
-    LC->head = 0;
-    LC->tail = 0;
-
-    #ifdef SIFTEO_SIMULATOR
-    if (CubeSlots::simAssetLoaderBypass) {
-        /*
-         * Asset loader bypass mode: Instead of actually sending this
-         * loadstream over the radio, instantaneously decompress it into
-         * the cube's flash memory.
-         */
-
-        // Use our reference implementation of the Loadstream decoder
-        Cube::Hardware *simCube = SystemMC::getCubeForSlot(this);
-        if (simCube) {
-            FlashStorage::CubeRecord *storage = simCube->flash.getStorage();
-            LoadstreamDecoder lsdec(storage->ext, sizeof storage->ext);
-
-            lsdec.setAddress(baseAddr << 7);
-            lsdec.handleSVM(G->pHdr + sizeof header, header.dataSize);
-
-            LOG(("FLASH[%d]: Installed asset group %s at base address "
-                "0x%08x (loader bypassed)\n",
-                id(), SvmDebugPipe::formatAddress(G->pHdr).c_str(), baseAddr));
-
-            // Mark this as done already.
-            LC->progress = header.dataSize;
-            Atomic::SetLZ(L->complete, id());
-
-            return;
-        }
-    }
-    #endif
-
-    LOG(("FLASH[%d]: Sending asset group %s, at base address 0x%08x\n",
-        id(), SvmDebugPipe::formatAddress(G->pHdr).c_str(), baseAddr));
-
-    DEBUG_ONLY({
-        // In debug builds, we log the asset download time
-        assetLoadTimestamp = SysTime::ticks();
-    });
-
-    // Start by resetting the flash decoder.
-    requestFlashReset();
-    Atomic::SetLZ(CubeSlots::flashAddrPending, id());
-
-    // Only _after_ triggering the reset, start the actual download
-    // by marking cubeVec as valid.
-    Atomic::SetLZ(L->cubeVec, id());
-
-    // Start filling our asset data FIFOs.
-    Tasks::trigger(Tasks::AssetLoader);
-}
-
-void CubeSlot::requestFlashReset()
-{
-    Atomic::And(CubeSlots::flashResetSent, ~bit());
-    Atomic::Or(CubeSlots::flashResetWait, bit());
 }
 
 bool CubeSlot::radioProduce(PacketTransmission &tx)
@@ -301,68 +199,28 @@ bool CubeSlot::radioProduce(PacketTransmission &tx)
 
     /*
      * Second priority: Download assets to flash
+     *
+     * If the loader is asking for a flash escape, this means the rest of the packet
+     * is owned by the asset loader. We can't write any non-flash data after the
+     * flashEscape.
      */
 
-    if (CubeSlots::flashResetWait & cv) {
-        /*
-         * We need to reset the flash decoder before we can send any data.
-         *
-         * We can only do this if a reset is needed, hasn't already
-         * been sent. Send the reset token, and synchronously reset
-         * any flash-related IRQ state.
-         *
-         * Note the flash reset's dual purpose, of both resetting the
-         * cube's flash state machine and triggering the cube to send
-         * us an ACK packet with a valid flash byte count. So, we
-         * actually end up sending two resets if we haven't yet seen a
-         * valid flash ACK from this cube.
-         */
+    if (AssetLoader::getActiveCubes() & cv) {
+        // Loading is in progress
 
-        if (CubeSlots::flashResetSent & cv) {
-            // Already sent the reset. Has it timed out?
-
-            if (SysTime::ticks() > flashDeadline) {
-                DEBUG_LOG(("FLASH[%d]: Reset timeout\n", id()));
-                Atomic::ClearLZ(CubeSlots::flashResetSent, id());
-            }
-
-        } else if (codec.flashReset(tx.packet)) {
-            // Okay, we sent a reset. Remember to wait for the ACK.
-
-            DEBUG_LOG(("FLASH[%d]: Sending reset token\n", id()));
-            Atomic::SetLZ(CubeSlots::flashResetSent, id());
-            flashDeadline = SysTime::ticks() + SysTime::msTicks(RTT_DEADLINE_MS);
+        if (AssetLoader::needFlashPacket(id())) {
+            // Loader has data to send. Send an escape, and be done with this packet.
+            codec.flashEscape(tx.packet);
+            AssetLoader::produceFlashPacket(id(), tx.packet);
+            return true;
         }
 
-    } else {
-        // Not waiting on a reset. See if we need to send asset data.
-        // Since we can't read external flash pages in our ISR, we're
-        // restricted to accessing user RAM only. So, we send data from
-        // a small user-ram buffer, and use a Task to refill that buffer.
-
-        _SYSAssetLoader *L = CubeSlots::assetLoader;
-        if (isAssetLoading(L)) {
-            _SYSAssetLoaderCube *LC = assetLoaderCube(L);
-            if (LC) {
-                bool done = false;
-                bool escape = codec.flashSend(tx.packet, LC, id(), done);
-
-                if (done) {
-                    /* Finished sending the group, and the cube finished writing it. */
-                    Atomic::SetLZ(L->complete, id());
-                    Event::setCubePending(Event::PID_CUBE_ASSETDONE, id());
-
-                    DEBUG_ONLY({
-                        // In debug builds only, we log the asset download time
-                        float seconds = (SysTime::ticks() - assetLoadTimestamp) * (1.0f / SysTime::sTicks(1));
-                        LOG(("FLASH[%d]: Finished loading in %.3f seconds\n", id(), seconds));
-                    });
-                }
-
-                // We can't put anything else in this packet if an escape was written
-                if (escape)
-                    return true;
-            }
+        // Otherwise, maybe the loader needs a full ACK before it can make progress?
+        if (AssetLoader::needFullACK(id()) && codec.explicitAckRequest(tx.packet)) {
+            // This is also an escape. End of packet!
+            if (!tx.packet.isFull())
+                codec.stateReset();
+            return true;
         }
     }
 
@@ -383,6 +241,7 @@ bool CubeSlot::radioProduce(PacketTransmission &tx)
         timeSyncState = 1000;
         codec.timeSync(tx.packet, calculateTimeSync());
         tx.noAck = true;    // just throw it out there UDP style
+        codec.stateReset();
         return true;
     }
 
@@ -441,7 +300,7 @@ void CubeSlot::radioAcknowledge(const PacketBuffer &packet)
          * a pipeline bubble and/or multiple ACKs drop in a row, we need to
          * intervene)
          */
-        codec.flashAckBytes(loadACK);
+        AssetLoader::ackData(id(), loadACK);
     }
 
     if (packet.len >= offsetof(RF_ACKType, accel) + sizeof ack->accel) {
@@ -481,7 +340,7 @@ void CubeSlot::radioAcknowledge(const PacketBuffer &packet)
 
         // Is this a flash reset ACK?
         if ((lastACK.neighbors[1] ^ ack->neighbors[1]) & NB1_FLAG_FLS_RESET) {
-            Atomic::ClearLZ(CubeSlots::flashResetWait, id());
+            AssetLoader::ackReset(id());
         }
 
         // Trigger a rescan of all neighbors, during event dispatch

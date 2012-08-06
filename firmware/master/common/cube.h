@@ -87,34 +87,6 @@ class CubeSlot {
         return lastACK.neighbors;
     }
 
-    _SYSAssetGroupCube *assetGroupCube(struct _SYSAssetGroup *group) {
-        _SYSAssetGroupCube *cube = reinterpret_cast<_SYSAssetGroupCube*>(group + 1) + id();
-        if (SvmMemory::mapRAM(cube, sizeof *cube))
-            return cube;
-        else
-            return 0;
-    }
-
-    _SYSAssetLoaderCube *assetLoaderCube(struct _SYSAssetLoader *loader) {
-        _SYSAssetLoaderCube *cube = reinterpret_cast<_SYSAssetLoaderCube*>(loader + 1) + id();
-        if (SvmMemory::mapRAM(cube, sizeof *cube))
-            return cube;
-        else
-            return 0;
-    }
-
-    bool isAssetLoading(_SYSAssetLoader *L) const {
-        // Caller-provided SYSAssetLoader, to support cases when we
-        // must read "assetLoader" exactly once.
-        return L && (L->cubeVec & ~L->complete & bit());
-    }
-
-    bool isAssetLoading() const {
-        return isAssetLoading(CubeSlots::assetLoader);
-    }
-
-    void startAssetLoad(SvmMemory::VirtAddr groupVA, uint16_t baseAddr);
-
     void beginFinish() {
         if (vbuf)
             return paintControl.beginFinish(this);
@@ -182,9 +154,6 @@ class CubeSlot {
     SysLFS::Key cubeRecord;
     RF_ACKType lastACK;
 
-    DEBUG_ONLY(SysTime::Ticks assetLoadTimestamp);
-
-    void requestFlashReset();
     uint16_t calculateTimeSync();
 
     void queryResponse(const PacketBuffer &packet);

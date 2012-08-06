@@ -249,7 +249,8 @@ bool VirtAssetSlots::locateGroup(MappedAssetGroup &map,
             }
 
             // Map the cube-specific data for this group and this cube.
-            _SYSAssetGroupCube *agc = CubeSlots::instances[cube].assetGroupCube(map.group);
+            _SYSAssetGroupCube *agc = 0; // XXX
+
             if (!agc) {
                 // Bad pointer from userspace! Give up completely.
                 return false;

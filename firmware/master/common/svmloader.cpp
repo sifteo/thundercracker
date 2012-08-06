@@ -22,6 +22,7 @@
 #include "audiomixer.h"
 #include "event.h"
 #include "led.h"
+#include "assetloader.h"
 
 #ifdef SIFTEO_SIMULATOR
 #   include "system_mc.h"
@@ -100,6 +101,9 @@ bool SvmLoader::prepareToExec(const Elf::Program &program, SvmRuntime::StackInfo
     // Reset all event vectors
     Event::clearVectors();
     UIPause::disableGameMenu();
+
+    // Cancel and detach the AssetLoader if necessary
+    AssetLoader::init();
 
     // Detach any existing cube buffers.
     for (unsigned i = 0; i < _SYS_NUM_CUBE_SLOTS; i++) {
