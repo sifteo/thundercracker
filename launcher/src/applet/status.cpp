@@ -44,14 +44,9 @@ static unsigned getFreeMemory()
     return unsigned(percentage * 100);
 }
 
-CubeID getMainCube()
-{
-    return *CubeSet::connected().begin();
-}
-
 void StatusApplet::getAssets(Sifteo::MenuItem &assets, Shared::AssetConfiguration &config)
 {
-    drawIcon();    
+    drawIcon(CubeID());
     assets.icon = menuIcon;
 }
 
@@ -66,7 +61,7 @@ void StatusApplet::arrive(Sifteo::Menu &m, unsigned index)
     
     // Draw Icon Background
     for (CubeID cube : CubeSet::connected()) {
-        if (cube != getMainCube()) {
+        if (cube != m.cube()) {
             drawCube(cube);
         }
     }
@@ -88,7 +83,7 @@ void StatusApplet::depart(Sifteo::Menu &m, unsigned index)
 {
     // Display a background on all other cubes
     for (CubeID cube : CubeSet::connected()) {
-        if (cube != getMainCube()) {
+        if (cube != m.cube()) {
             Shared::video[cube].bg0.erase(Menu_StripeTile);
         }
     }
@@ -106,12 +101,14 @@ void StatusApplet::add(MainMenu &m)
     m.append(&instance);
 }
 
-void StatusApplet::drawIcon()
+void StatusApplet::drawIcon(Sifteo::CubeID menuCube)
 {
     menuIcon.init();
     menuIcon.image(vec(0,0), Icon_Status);
 
-    drawBattery(menuIcon, getMainCube().batteryLevel(), vec(8, 1));
+    if (menuCube.isDefined()) {
+        drawBattery(menuIcon, menuCube.batteryLevel(), vec(8, 1));
+    }
     drawBattery(menuIcon, System::batteryLevel(), vec(7, 7));
     
     unsigned numCubes = CubeSet::connected().count();
@@ -137,8 +134,10 @@ void StatusApplet::drawCube(CubeID cube)
 void StatusApplet::onBatteryLevelChange(unsigned cid)
 {
     if (menu != NULL && menuItemIndex >= 0) {
-        if (cid == getMainCube()) {
-            drawIcon();
+        CubeID menuCube = menu->cube();
+
+        if (cid == menuCube) {
+            drawIcon(menuCube);
             menu->replaceIcon(menuItemIndex, menuIcon);
         } else {
             drawCube(CubeID(cid));

@@ -21,7 +21,7 @@ public:
     static void add(MainMenu &m);
 
 private:
-    void drawIcon();
+    void drawIcon(Sifteo::CubeID menuCube);
     void drawCube(Sifteo::CubeID cube);
     
     void onBatteryLevelChange(unsigned cid);
