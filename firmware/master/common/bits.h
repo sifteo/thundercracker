@@ -97,21 +97,22 @@ public:
         #ifdef __clang__
         #   pragma clang diagnostic push
         #   pragma clang diagnostic ignored "-Wtautological-compare"
+        #   pragma clang diagnostic ignored "-Warray-bounds"
         #endif
 
         // Set fully-utilized words only
         for (unsigned i = 0; i < NUM_FULL_WORDS; ++i)
             words[i] = -1;
 
-        #ifdef __clang__
-        #   pragma clang diagnostic pop
-        #endif
-
         if (NUM_FULL_WORDS != NUM_WORDS) {
             // Set only bits < tSize in the last word.
             uint32_t mask = ((uint32_t)-1) << ((32 - REMAINDER_BITS) & 31);
             words[NUM_FULL_WORDS] = mask;
         }
+
+        #ifdef __clang__
+        #   pragma clang diagnostic pop
+        #endif
     }
 
     /// Invert all bits in the vector
