@@ -42,7 +42,6 @@ public:
     void run();
 
 private:
-    Sifteo::SystemTime cubeJoinTimestamps[CUBE_ALLOCATION];
     Sifteo::SystemTime connectSfxDelayTimestamp;
     Sifteo::SystemTime time;
     Sifteo::CubeID mainCube;
@@ -72,8 +71,12 @@ private:
     Shared::AssetConfiguration menuAssetConfig;
     DefaultLoadingAnimation loadingAnimation;
 
+    // event handlers
     void cubeConnect(unsigned cid);
     void cubeDisconnect(unsigned cid);
+    void neighborAdded(unsigned firstID, unsigned firstSide,
+                       unsigned secondID, unsigned secondSide);
+
     void waitForACube();
 
     void updateSound();

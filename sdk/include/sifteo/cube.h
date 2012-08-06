@@ -183,6 +183,16 @@ struct CubeID {
         return _SYS_cubeBatteryLevel(*this) / float(_SYS_BATTERY_MAX);
     }
 
+    /**
+     * @brief Remove the persistent pairing association between this cube and the current Base.
+     *
+     * This cube will also be shutdown and disconnected.
+     */
+    void unpair() const {
+        ASSERT(sys < NUM_SLOTS);
+        _SYS_unpair(*this);
+    }
+
     CubeID operator ++() { return ++sys; }
     CubeID operator ++(int) { return sys++; }
     CubeID operator --() { return --sys; }

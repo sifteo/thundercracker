@@ -40,10 +40,10 @@ void MainMenu::init()
 
     Events::cubeConnect.set(&MainMenu::cubeConnect, this);
     Events::cubeDisconnect.set(&MainMenu::cubeDisconnect, this);
+    Events::neighborAdd.set(&MainMenu::neighborAdded, this);
 
     loader.init();
 
-    bzero(cubeJoinTimestamps);
     time = SystemTime::now();
     connectSfxDelayTimestamp = time;
     connectingCubes.clear();
@@ -204,13 +204,13 @@ void MainMenu::cubeConnect(unsigned cid)
     SystemTime now = SystemTime::now();
 
     // Only play a connect sfx if it's been a while since the last one (or since boot)
-    if ((now - connectSfxDelayTimestamp).milliseconds() >= kConnectSfxDelayMS) {
+    if (now - connectSfxDelayTimestamp > TimeDelta::fromMillisec(kConnectSfxDelayMS)) {
         connectSfxDelayTimestamp = now;
         AudioTracker::play(Tracker_CubeConnect);
     }
 
     // Reset this cube's connection timestamp. We won't use it until it has shown the logo for a while.
-    cubeJoinTimestamps[cid] = now;
+    Shared::connectTime[cid] = now;
 
     // This cube will be in 'connectingCubes' until it's done showing the logo and loading assets
     loadingCubes.clear(cid);
@@ -243,6 +243,31 @@ void MainMenu::cubeDisconnect(unsigned cid)
         mainCube = CubeID();
 }
 
+void MainMenu::neighborAdded(unsigned firstID, unsigned firstSide,
+                             unsigned secondID, unsigned secondSide)
+{
+    /*
+     * If a connected cube has been neighbored to the base,
+     * toggle its pairing state (ie, unpair it).
+     *
+     * Ensure a cube has been connected to the system for at
+     * least 2 seconds to avoid unpairing cubes based on a neighbor
+     * event that was generated for a cube being newly paired.
+     */
+
+    CubeID cid;
+    if (NeighborID(firstID).isBase())
+        cid = secondID;
+    else if (NeighborID(secondID).isBase())
+        cid = firstID;
+    else
+        return;
+
+    ASSERT(Shared::connectTime[cid].isValid());
+    if (SystemTime::now() - Shared::connectTime[cid] > TimeDelta::fromMillisec(2000))
+        cid.unpair();
+}
+
 void MainMenu::updateConnecting()
 {
     /*
@@ -268,7 +293,7 @@ void MainMenu::updateConnecting()
     beginLoadingAnim.clear();
 
     for (CubeID cube : connectingCubes & ~loadingCubes) {
-        if ((now - cubeJoinTimestamps[cube]).milliseconds() >= kDisplayBlueLogoTimeMS) {
+        if ((now - Shared::connectTime[cube]).milliseconds() >= kDisplayBlueLogoTimeMS) {
             loadingCubes.mark(cube);
             beginLoadingAnim.mark(cube);
         }
