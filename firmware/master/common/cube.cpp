@@ -129,7 +129,7 @@ void CubeSlot::setVideoBuffer(_SYSVideoBuffer *v)
     if (v) {
         // Update this VideoBuffer's flash bank, if necessary
         VRAMFlags vf(v);
-        vf.setTo(_SYS_VF_A21, VirtAssetSlots::getCubeBank(id());
+        vf.setTo(_SYS_VF_A21, VirtAssetSlots::getCubeBank(id()));
         vf.apply(v);
     }
 
