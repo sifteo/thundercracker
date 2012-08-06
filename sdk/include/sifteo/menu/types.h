@@ -117,6 +117,9 @@ class Menu {
     void anchor(uint8_t item, bool hopUp = false);
     MenuState getState();
     
+    VideoBuffer *videoBuffer() const;
+    CubeID cube() const;
+
  private:
     static const float kTimeDilator = 13.1f;
     static const float kMaxSpeedMultiplier = 2.f;

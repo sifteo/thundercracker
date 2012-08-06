@@ -114,6 +114,16 @@ inline void Menu::init(VideoBuffer &vid, const MenuAssets *aAssets, MenuItem *aI
     setPeekTiles(kDefaultPeekTiles);
 }
 
+inline VideoBuffer * Menu::videoBuffer() const
+{
+    return vid;
+}
+
+inline CubeID Menu::cube() const
+{
+    return vid ? vid->cube() : CubeID();
+}
+
 inline bool Menu::pollEvent(struct MenuEvent *ev)
 {
     // Events not handled at this point are discarded
