@@ -278,11 +278,7 @@ bool MainMenu::canLaunchItem(unsigned index)
     ASSERT(index < arraysize(items));
     MainMenuItem *item = items[index];
 
-    unsigned minCubes = item->getCubeRange().sys.minCubes;
-    unsigned maxCubes = item->getCubeRange().sys.maxCubes;
-
-    unsigned numCubes = cubes().count();
-    return numCubes >= minCubes && numCubes <= maxCubes;
+    return cubes().count() >= item->getCubeRange().sys.minCubes;
 }
 
 void MainMenu::toggleCubeRangeAlert(unsigned index, Sifteo::Menu &menu)
