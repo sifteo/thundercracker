@@ -6,10 +6,15 @@
 #include <protocol.h>
 #include "assetloader.h"
 #include "machine.h"
+#include "tasks.h"
 
 
 void AssetLoader::fsmEnterState(_SYSCubeID id, TaskState s)
 {
+    /*
+     * Enter a new specified TaskState.
+     */
+
     cubeTaskState[id] = s;
     switch (s) {
 
@@ -20,19 +25,24 @@ void AssetLoader::fsmEnterState(_SYSCubeID id, TaskState s)
             Atomic::ClearLZ(resetAckCubes, id);
             Atomic::SetLZ(resetPendingCubes, id);
             cubeDeadline[id] = SysTime::ticks() + SysTime::msTicks(350);
+            Tasks::trigger(Tasks::AssetLoader);
             break;
 
         /*
-         * Reset is done, loading not yet started.
+         * Done loading! This cube is no longer active.
          */
-        case S_IDLE:
-            cubeBufferAvail[id] = FLS_FIFO_USABLE;
+        case S_COMPLETE:
+            Atomic::ClearLZ(activeCubes, id);
             break;
     }
 }
 
 void AssetLoader::fsmTaskState(_SYSCubeID id, TaskState s)
 {
+    /*
+     * Perform the Task work for a particular cube and state.
+     */
+
     _SYSCubeIDVector bit = Intrinsic::LZ(id);
     switch (s) {
 
@@ -42,15 +52,40 @@ void AssetLoader::fsmTaskState(_SYSCubeID id, TaskState s)
          */
         case S_RESET:
             if (resetAckCubes & bit) {
-                fsmEnterState(id, S_IDLE);
+                // Done with reset! We know the device's FIFO is empty now.
+                cubeBufferAvail[id] = FLS_FIFO_USABLE;
+                fsmNextConfigurationStep(id);
+                ASSERT(cubeTaskState[id] != S_RESET);
+
             } else if (SysTime::ticks() > cubeDeadline[id]) {
                 LOG(("FLASH[%d]: Reset timeout\n", id));
                 fsmEnterState(id, S_RESET);
+
+            } else {
+                // Keep waiting
+                Tasks::trigger(Tasks::AssetLoader);
             }
             break;
 
-        case S_IDLE:
+        /*
+         * Cube is done. This should never be called, since completed
+         * cubes are removed from activeCubes.
+         */
+        case S_COMPLETE:
+            ASSERT(0);
             break;
 
     }
+}
+
+void AssetLoader::fsmNextConfigurationStep(_SYSCubeID id)
+{
+    /*
+     * Begin the next step in trying to apply the chosen AssetConfiguration on one cube.
+     *
+     * This scans the AssetConfiguration and the current state of the cube, and takes
+     * the appropriate combination of immediate action and state transitions.
+     */
+
+
 }

@@ -458,10 +458,7 @@ void CubeSlot::startAssetLoad(SvmMemory::VirtAddr groupVA, uint16_t baseAddr)
     if (!map.init(group))
         return false;
 
-
     const VirtAssetSlot &vSlot = VirtAssetSlots::getInstance(slot);
-
-    cv = CubeSlots::truncateVector(cv);
 
     /*
      * In one step, scan the SysLFS to the indicated group.

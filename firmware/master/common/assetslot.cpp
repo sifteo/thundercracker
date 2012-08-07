@@ -16,37 +16,6 @@ uint8_t VirtAssetSlots::numBoundSlots;
 _SYSCubeIDVector VirtAssetSlots::cubeBanks;
 
 
-bool MappedAssetGroup::init(_SYSAssetGroup *userPtr)
-{
-    if (!isAligned(userPtr)) {
-        SvmRuntime::fault(F_SYSCALL_ADDR_ALIGN);
-        return false;
-    }
-    if (!SvmMemory::mapRAM(userPtr, sizeof *group)) {
-        SvmRuntime::fault(F_SYSCALL_ADDRESS);
-        return false;
-    }
-    
-    SvmMemory::VirtAddr hdrVA = userPtr->pHdr;
-    group = userPtr;
-
-    if (!SvmMemory::copyROData(header, hdrVA)) {
-        SvmRuntime::fault(F_SYSCALL_ADDRESS);
-        return false;
-    }
-
-    // Determine the systemwide unique ID for this asset group
-    id.ordinal = header.ordinal;
-    id.volume = SvmLoader::volumeForVA(hdrVA).block.code;
-
-    if (!id.volume) {
-        SvmRuntime::fault(F_SYSCALL_PARAM);
-        return false;
-    }
-
-    return true;
-}
-
 void VirtAssetSlots::bind(FlashVolume volume, unsigned numSlots)
 {
     ASSERT(volume.isValid());
@@ -162,10 +131,12 @@ bool VirtAssetSlots::physSlotIsBound(_SYSCubeID cube, unsigned physSlot)
     return false;
 }
 
-bool VirtAssetSlots::locateGroup(MappedAssetGroup &map,
-    _SYSCubeIDVector searchCV, _SYSCubeIDVector &foundCV,
-    const VirtAssetSlot *vSlot,
-    FlashLFSIndexRecord::KeyVector_t *allocVec)
+bool VirtAssetSlots::locateGroup(const _SYSAssetGroupHeader &groupHeader,
+                                 const SysLFS::AssetGroupIdentity &groupID,
+                                 _SYSCubeIDVector searchCV,
+                                 _SYSCubeIDVector &foundCV,
+                                 const VirtAssetSlot *vSlot,
+                                 FlashLFSIndexRecord::KeyVector_t *allocVec)
 {
     /*
      * Iterate through SysLFS until we find the indicated group
@@ -258,7 +229,7 @@ bool VirtAssetSlots::locateGroup(MappedAssetGroup &map,
 
             // Is this group present already?
             unsigned offset;
-            if (asr.findGroup(map.id, offset)) {
+            if (asr.findGroup(groupID, offset)) {
                 agc->baseAddr = offset + slot * PhysAssetSlot::SLOT_SIZE;
                 foundCV |= Intrinsic::LZ(cube);
                 searchCV ^= Intrinsic::LZ(cube);
@@ -274,7 +245,7 @@ bool VirtAssetSlots::locateGroup(MappedAssetGroup &map,
 
             if (allocVec) {
                 // Try to allocate the group
-                if (!asr.allocGroup(map.id, map.header.numTiles, offset)) {
+                if (!asr.allocGroup(groupID, groupHeader.numTiles, offset)) {
                     // We know for sure that there isn't any room left. Abort!
                     return false;
                 }

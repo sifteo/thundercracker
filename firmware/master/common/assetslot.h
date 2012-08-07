@@ -10,21 +10,7 @@
 #include "macros.h"
 #include "flash_syslfs.h"
 
-
-/**
- * Mapped information about a userspace _SYSAssetGroup.
- */
-
-struct MappedAssetGroup
-{
-    _SYSAssetGroup *group;              // Physical address
-    _SYSAssetGroupHeader header;
-    SysLFS::AssetGroupIdentity id;
-
-    // Given a userspace _SYSAssetGroup pointer, fill in the info struct.
-    // On error, returns 'false' and raises an SVM fault.
-    bool init(_SYSAssetGroup *userPtr);
-};
+struct MappedAssetGroup;
 
 
 /**
@@ -177,9 +163,12 @@ public:
      * Changes may have been already made by the time we discover the failure.
      */
 
-    static bool locateGroup(MappedAssetGroup &map, _SYSCubeIDVector searchCV,
-        _SYSCubeIDVector &foundCV, const VirtAssetSlot *vSlot = 0,
-        FlashLFSIndexRecord::KeyVector_t *allocVec = 0);
+    static bool locateGroup(const _SYSAssetGroupHeader &groupHeader,
+                            const SysLFS::AssetGroupIdentity &groupID,
+                            _SYSCubeIDVector searchCV,
+                            _SYSCubeIDVector &foundCV,
+                            const VirtAssetSlot *vSlot = 0,
+                            FlashLFSIndexRecord::KeyVector_t *allocVec = 0);
 
     // Finalize any in-progress slots left over after locateGroup().
     // As a side-effect, this clears all bits from 'vec'.

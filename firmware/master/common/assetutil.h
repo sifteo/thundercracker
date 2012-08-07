@@ -51,9 +51,12 @@ public:
 		: sys(sys), head(sys.head), tail(sys.tail)
 	{
 		// Must clamp the head and tail pointer, since we can't trust userspace.
+		ASSERT(head < _SYS_ASSETLOAD_BUF_SIZE);
+		ASSERT(tail < _SYS_ASSETLOAD_BUF_SIZE);
 		head = MIN(head, _SYS_ASSETLOAD_BUF_SIZE - 1);
 		tail = MIN(tail, _SYS_ASSETLOAD_BUF_SIZE - 1);
 		count = umod(tail - head, _SYS_ASSETLOAD_BUF_SIZE);
+		ASSERT(count < _SYS_ASSETLOAD_BUF_SIZE);
 	}
 
 	ALWAYS_INLINE unsigned readAvailable() const {

@@ -76,12 +76,13 @@ private:
 
     enum TaskState {
         S_RESET,       // Send and wait for the cube's state machine to reset
-        S_IDLE,        // Flash state machine is idle
+        S_COMPLETE,    // Done loading, nothing to do.
     };
 
     // State machine (in assetloader_fsm.cpp)
     static void fsmEnterState(_SYSCubeID id, TaskState s);
     static void fsmTaskState(_SYSCubeID id, TaskState s);
+    static void fsmNextConfigurationStep(_SYSCubeID id);
 
     // Data from userspace
     static _SYSAssetLoader *userLoader;

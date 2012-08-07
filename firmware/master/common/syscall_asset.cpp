@@ -17,6 +17,7 @@
 #include "assetloader.h"
 #include "assetutil.h"
 #include "tasks.h"
+#include "svmloader.h"
 
 
 extern "C" {
@@ -112,15 +113,37 @@ uint32_t _SYS_asset_findInCache(_SYSAssetGroup *group, _SYSCubeIDVector cv)
      * baseAddr is updated.
      */
 
-    MappedAssetGroup map;
-    if (!map.init(group))
+    if (!isAligned(group)) {
+        SvmRuntime::fault(F_SYSCALL_ADDR_ALIGN);
         return 0;
+    }
+    if (!SvmMemory::mapRAM(group)) {
+        SvmRuntime::fault(F_SYSCALL_ADDRESS);
+        return 0;
+    }
+    
+    SvmMemory::VirtAddr hdrVA = group->pHdr;
+    _SYSAssetGroupHeader header;
+
+    if (!SvmMemory::copyROData(header, hdrVA)) {
+        SvmRuntime::fault(F_SYSCALL_ADDRESS);
+        return 0;
+    }
+
+    SysLFS::AssetGroupIdentity id;
+    id.ordinal = header.ordinal;
+    id.volume = SvmLoader::volumeForVA(hdrVA).block.code;
+
+    if (!id.volume) {
+        SvmRuntime::fault(F_SYSCALL_PARAM);
+        return 0;
+    }
 
     cv = CubeSlots::truncateVector(cv);
 
     _SYSCubeIDVector cachedCV;
-    if (!VirtAssetSlots::locateGroup(map, cv, cachedCV))
-        cachedCV = 0;
+    if (!VirtAssetSlots::locateGroup(header, id, cv, cachedCV))
+        return 0;
 
     return cachedCV;
 }

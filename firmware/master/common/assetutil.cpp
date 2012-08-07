@@ -61,6 +61,11 @@ bool AssetUtil::isValidConfig(const _SYSAssetConfiguration *cfg, unsigned cfgSiz
 	while (cfgSize) {
 		unsigned numTiles = roundup<_SYS_ASSET_GROUP_SIZE_UNIT>(cfg->numTiles);
 		unsigned slot = cfg->slot;
+		SvmMemory::VirtAddr groupVA = cfg->pGroup;
+		SvmMemory::PhysAddr groupPA;
+
+		if (!SvmMemory::mapRAM(groupVA, sizeof(_SYSAssetGroup), groupPA))
+			return false;
 
 		if (slot >= _SYS_ASSET_SLOTS_PER_BANK)
 			return false;
