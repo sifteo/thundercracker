@@ -4,6 +4,7 @@
  */
 
 #include "assetutil.h"
+#include "assetslot.h"
 
 
 _SYSAssetGroupCube *AssetUtil::mapGroupCube(SvmMemory::VirtAddr group, _SYSCubeID cid)
@@ -63,6 +64,9 @@ bool AssetUtil::isValidConfig(const _SYSAssetConfiguration *cfg, unsigned cfgSiz
 
 		if (slot >= _SYS_ASSET_SLOTS_PER_BANK)
 			return false;
+
+	    if (!VirtAssetSlots::isSlotBound(slot))
+	    	return false;
 
 		if (count.slotGroups[slot] >= _SYS_ASSET_GROUPS_PER_SLOT)
 			return false;

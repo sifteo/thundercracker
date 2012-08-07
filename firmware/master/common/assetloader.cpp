@@ -266,14 +266,6 @@ void CubeSlots::fetchAssetLoaderData(_SYSAssetLoaderCube *lc)
      * try to top off the FIFO buffer with data from flash memory.
      */
 
-    // Sample the FIFO state exactly once, and validate it.
-    int head = lc->head;
-    int tail = lc->tail;
-    if (head >= _SYS_ASSETLOAD_BUF_SIZE || tail >= _SYS_ASSETLOAD_BUF_SIZE)
-        return;
-    unsigned fifoCount = umod(tail - head, _SYS_ASSETLOAD_BUF_SIZE);
-    unsigned fifoAvail = _SYS_ASSETLOAD_BUF_SIZE - 1 - fifoCount;
-
     /*
      * Sample the progress state exactly once, and figure out how much
      * data can be copied into the FIFO right now.
@@ -422,126 +414,7 @@ void CubeSlot::startAssetLoad(SvmMemory::VirtAddr groupVA, uint16_t baseAddr)
         ASSERT(loadBufferAvail <= FLS_FIFO_USABLE);
     }
 
-bool CubeCodec::flashSend(PacketBuffer &buf, _SYSAssetLoaderCube *lc, _SYSCubeID cube, bool &done)
-{
-    /*
-     * Since we're dealing with asset loader state in untrusted memory,
-     * this code has to be carefully written to read each user value exactly
-     * once, and check it before use.
-     *
-     * We only send if we have asset data buffered, obviously, but also
-     * if the cube has enough buffer space to accept it, and if
-     * there's enough room in the packet for both the escape code
-     * and at least one byte of flash data.
-     *
-     * This function MUST NOT access flash memory or the cache, since it's
-     * running in interrupt context. All of our state must come from the
-     * _SYSAssetLoaderCube object in RAM.
-     *
-     * Returns 'true' if and only if we sent an escape which ends the packet.
-     * Sets 'done' to 'true' if and only if the assset group is fully written.
-     */
-
-    ASSERT(lc);
-
-    // Sample the FIFO state exactly once, and validate it.
-    int head = lc->head;
-    int tail = lc->tail;
-    if (head >= _SYS_ASSETLOAD_BUF_SIZE || tail >= _SYS_ASSETLOAD_BUF_SIZE)
-        return false;
-    unsigned fifoCount = umod(tail - head, _SYS_ASSETLOAD_BUF_SIZE);
-
-    /*
-     * We have a state bit in CubeSlots to keep track of whether we
-     * need to send an addressing command to the decoder, so that it
-     * knows this asset group's load address. Addressing commands are
-     * part of the loadstream that we send over the radio, but they're
-     * created dynamically rather than coming straight from flash.
-     */
-    _SYSCubeIDVector cubeBit = Intrinsic::LZ(cube);
-    bool flashAddrPending = (CubeSlots::flashAddrPending & cubeBit) != 0;
-
-    /*
-     * If and only if we may need to send an address, prepare that address.
-     * It's in user RAM, so this mapping may fail.
-     */
-    uint16_t baseAddr = 0;
-    if (flashAddrPending) {
-        SvmMemory::PhysAddr groupCubePA;
-        SvmMemory::VirtAddr groupCubeVA =
-            lc->pAssetGroup + sizeof(_SYSAssetGroup) + sizeof(_SYSAssetGroupCube) * cube;
-        
-        if (!SvmMemory::mapRAM(groupCubeVA, sizeof(_SYSAssetGroupCube), groupCubePA))
-            return false;
-
-        baseAddr = reinterpret_cast<_SYSAssetGroupCube*>(groupCubePA)->baseAddr;
-    }
-
-    /*
-     * How much space do we need? The minimum unit of asset data is
-     * just a byte, but an addressing command is three bytes. If we don't
-     * have enough, we need to be able to determine this before sending a
-     * flash escape. Once we send the escape, we're committed.
-     */
-    const unsigned escapeSizeInBits = 12;
-    unsigned dataSizeInBytes = flashAddrPending ? 3 : 1;
-    unsigned dataSizeInBits = dataSizeInBytes << 3;
-    if (!txBits.hasRoomForFlush(buf, escapeSizeInBits + dataSizeInBits))
-        return false;
-
-    /*
-     * The cube also must have enough buffer space to receive our minimum data.
-     * If the cube appears to have too little buffer space left, this may mean
-     * the cube is actually out of buffer (flow control) or it may just be that
-     * we dropped ACK packets. If we get into this state, try to restart the
-     * pipeline by requesting an explicit ACK from the cube.
-     */
-    if (loadBufferAvail < dataSizeInBytes) {
-        explicitAckRequest(buf);
-        return true;
-    }
-
-    /*
-     * Read 'progress' from untrusted memory only once. See if we're done.
-     * Note that this tracks how many bytes have been enqueued into the FIFO,
-     * not how many bytes were sent over the radio.
-     *
-     * We require that 'progress' is only updated after enqueueing data into
-     * the FIFO and updating the FIFO!
-     */
-
-    uint32_t progress = lc->progress;
-    uint32_t dataSize = lc->dataSize;
-    if (progress >= dataSize && fifoCount == 0) {
-        if (loadBufferAvail == FLS_FIFO_USABLE)
-            done = true;
-
-        // Poll for dropped ACKs here too
-        explicitAckRequest(buf);
-        return true;
-    }
-
-    /*
-     * If we don't need to send the address, make sure we at least have one
-     * byte of data in the FIFO to send. Must happen after the done-ness
-     * check above.
-     */
-
-    if (!flashAddrPending && fifoCount == 0) {
-        Tasks::trigger(Tasks::AssetLoader);
-        return false;
-    }
-
-    /*
-     * The escape command indicates that the entire remainder of 'buf' is
-     * data for the flash codec. We can figure out how much data to send
-     * now. We're limited by the size of the packet buffer, the size of
-     * the data left to send, and the amount of space in the cube's FIFO.
-     */
-
-    flashEscape(buf);
-    uint32_t count = MIN(buf.bytesFree(), loadBufferAvail);
-    ASSERT(count >= dataSizeInBytes);
+//////////////////////////
 
     /*
      * If we need to send an address command, send that first. If we can
@@ -567,39 +440,7 @@ bool CubeCodec::flashSend(PacketBuffer &buf, _SYSAssetLoaderCube *lc, _SYSCubeID
             return true;
     }
 
-    /*
-     * Stream flash data, as it becomes available from the FIFO
-     */
-
-    // May have reached this point after sending an addr, but without any FIFO data
-    if (!fifoCount)
-        return true;
-
-    count = MIN(count, fifoCount);
-    ASSERT(count > 0);
-    ASSERT(loadBufferAvail >= count);
-    loadBufferAvail -= count;
-
-    while (count--) {
-        buf.append(lc->buf[head++]);
-        if (head == _SYS_ASSETLOAD_BUF_SIZE)
-            head = 0;
-    }
-
-    // Update FIFO state
-    lc->head = head;
-
-    // If we're done, remember that. If not, make sure we fetch more data.
-    if (progress >= dataSize && head == tail) {
-        if (loadBufferAvail == FLS_FIFO_USABLE)
-            done = true;
-    } else {
-        Tasks::trigger(Tasks::AssetLoader);
-    }
-
-    return true;
-}
-
+////////////////////////
 
                     /* Finished sending the group, and the cube finished writing it. */
                     Atomic::SetLZ(L->complete, id());
@@ -611,16 +452,13 @@ bool CubeCodec::flashSend(PacketBuffer &buf, _SYSAssetLoaderCube *lc, _SYSCubeID
                         LOG(("FLASH[%d]: Finished loading in %.3f seconds\n", id(), seconds));
                     });
 
-static FlashLFSIndexRecord::KeyVector_t gSlotsInProgress;
+/////////////////////
 
     MappedAssetGroup map;
     if (!map.init(group))
         return false;
 
-    if (!VirtAssetSlots::isSlotBound(slot)) {
-        SvmRuntime::fault(F_BAD_ASSETSLOT);
-        return false;
-    }
+
     const VirtAssetSlot &vSlot = VirtAssetSlots::getInstance(slot);
 
     cv = CubeSlots::truncateVector(cv);
@@ -667,22 +505,11 @@ static FlashLFSIndexRecord::KeyVector_t gSlotsInProgress;
 
 /////////////
 
-    /*
-     * Block until the load operation is finished, if it isn't already.
-     * We can't rely on userspace to do this before we mark the in-progress
-     * slots as no-longer in progress.
-     */
-
-    while ((loader->complete & loader->cubeVec) != loader->cubeVec)
-        Tasks::idle();
-
-    // No more current load operation
-    CubeSlots::assetLoader = NULL;
-
     // Finalize the SysLFS state for any slots we're loading to
     VirtAssetSlots::finalizeGroup(gSlotsInProgress);
     ASSERT(gSlotsInProgress.empty());
 
+////////////////
 
 // Simulator headers, for simAssetLoaderBypass.
 #ifdef SIFTEO_SIMULATOR
