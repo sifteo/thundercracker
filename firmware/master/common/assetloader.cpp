@@ -3,6 +3,84 @@
  * Copyright <c> 2012 Sifteo, Inc. All rights reserved.
  */
 
+
+#include "assetloader.h"
+#include "radio.h"
+
+_SYSAssetLoader *AssetLoader::userLoader;
+_SYSAssetConfiguration *AssetLoader::userConfig[_SYS_NUM_CUBE_SLOTS];
+uint8_t AssetLoader::userConfigSize[_SYS_NUM_CUBE_SLOTS];
+_SYSCubeIDVector AssetLoader::activeCubes;
+_SYSCubeIDVector AssetLoader::startedCubes;
+
+#ifdef SIFTEO_SIMULATOR
+bool AssetLoader::simBypass;
+#endif
+
+
+
+bool AssetLoader::isValidConfig(const _SYSAssetConfiguration *cfg, unsigned cfgSize)
+{
+    return false;
+}
+
+void AssetLoader::start(_SYSAssetLoader *userLoader, const _SYSAssetConfiguration *cfg,
+    unsigned cfgSize, _SYSCubeIDVector cv)
+{
+}
+
+void AssetLoader::cancel(_SYSCubeIDVector cv)
+{
+}
+
+void AssetLoader::finish()
+{
+}
+
+void AssetLoader::init()
+{
+}
+
+void AssetLoader::cubeConnect(_SYSCubeID id)
+{
+}
+
+void AssetLoader::cubeDisconnect(_SYSCubeID id)
+{
+}
+
+bool AssetLoader::needFlashPacket(_SYSCubeID id)
+{
+    return false;
+}
+
+bool AssetLoader::needFullACK(_SYSCubeID id)
+{
+    return false;
+}
+
+void AssetLoader::produceFlashPacket(_SYSCubeID id, PacketBuffer &buf)
+{
+}
+
+void AssetLoader::ackReset(_SYSCubeID id)
+{
+}
+
+void AssetLoader::ackData(_SYSCubeID id, unsigned bytes)
+{
+}
+
+void AssetLoader::task()
+{
+}
+
+
+
+
+
+
+
 #if 0
 
 class AssetLoader

@@ -33,6 +33,7 @@ class AssetLoader
 public:
 
     // Userspace-visible operations
+    static bool isValidConfig(const _SYSAssetConfiguration *cfg, unsigned cfgSize);
     static void start(_SYSAssetLoader *userLoader, const _SYSAssetConfiguration *cfg,
         unsigned cfgSize, _SYSCubeIDVector cv);
     static void cancel(_SYSCubeIDVector cv);
@@ -58,7 +59,7 @@ public:
         return userLoader;
     }
 
-    /// Which cubes are we loading assets to?
+    /// Which cubes might be busy loading assets right now?
     static ALWAYS_INLINE _SYSCubeIDVector getActiveCubes() {
         return activeCubes;
     }
@@ -78,6 +79,7 @@ private:
     static _SYSAssetConfiguration *userConfig[_SYS_NUM_CUBE_SLOTS];
     static uint8_t userConfigSize[_SYS_NUM_CUBE_SLOTS];
     static _SYSCubeIDVector activeCubes;
+    static _SYSCubeIDVector startedCubes;
 };
 
 #endif

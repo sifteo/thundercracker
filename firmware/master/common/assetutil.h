@@ -20,7 +20,10 @@ class AssetUtil
 {
 public:
 
-    unsigned loadedBaseAddr(SvmMemory::VirtAddr assetGroup, _SYSCubeId cid);
+    static _SYSAssetGroupCube *mapGroupCube(SvmMemory::VirtAddr group, _SYSCubeID cid);
+    static _SYSAssetLoaderCube *mapLoaderCube(SvmMemory::VirtAddr loader, _SYSCubeID cid);
+
+    static unsigned loadedBaseAddr(SvmMemory::VirtAddr group, _SYSCubeID cid);
 
 private:
     AssetUtil();  // Do not implement

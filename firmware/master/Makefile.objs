@@ -20,6 +20,7 @@ OBJS_COMMON = \
     $(MASTER_DIR)/common/radioaddrfactory.o \
     $(MASTER_DIR)/common/assetslot.o \
     $(MASTER_DIR)/common/assetloader.o \
+    $(MASTER_DIR)/common/assetutil.o \
     $(MASTER_DIR)/common/cubeslots.o \
     $(MASTER_DIR)/common/cube.o \
     $(MASTER_DIR)/common/cubeconnector.o \
