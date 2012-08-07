@@ -83,6 +83,8 @@ enum FaultCode {
     F_BAD_ASSETSLOT,        // (0x1C) Invalid or unbound AssetSlot
     F_RWDATA_SEG,           // (0x1D) Failed to initialize read-write data segment
     F_NOT_RESPONDING,       // (0x1E) Main thread is not responding
+    F_BAD_ASSET_CONFIG,     // (0x1F) Bad AssetConfiguration
+    F_BAD_ASSET_LOADER,     // (0x20) Incorrect AssetLoader
 };
 
 inline const char* faultString(FaultCode code)
@@ -119,6 +121,8 @@ inline const char* faultString(FaultCode code)
     case F_BAD_ASSETSLOT:       return "Invalid or unbound AssetSlot";
     case F_RWDATA_SEG:          return "Failed to initialize read-write data segment";
     case F_NOT_RESPONDING:      return "Main thread is not responding";
+    case F_BAD_ASSET_CONFIG:    return "Bad AssetConfiguration";
+    case F_BAD_ASSET_LOADER:    return "Incorrect AssetLoader";
     default:                    return "Unknown error";
     }
 }
@@ -158,6 +162,8 @@ inline const char* faultString14(FaultCode code)
     case F_BAD_ASSETSLOT:       return "Bad AssetSlot";    
     case F_RWDATA_SEG:          return "RWDATA error";
     case F_NOT_RESPONDING:      return "Not responding";
+    case F_BAD_ASSET_CONFIG:    return "Bad AssetCfg";
+    case F_BAD_ASSET_LOADER:    return "Bad AssetLdr";
     default:                    return "Unknown";
     }
 }

@@ -14,6 +14,7 @@
 #include "svmruntime.h"
 #include "flash_syslfs.h"
 #include "assetslot.h"
+#include "assetloader.h"
 #include "tasks.h"
 
 
@@ -25,7 +26,6 @@ void _SYS_asset_bindSlots(_SYSVolumeHandle volHandle, unsigned numSlots)
     FlashVolume vol(volHandle);
     if (!vol.isValid())
         return SvmRuntime::fault(F_BAD_VOLUME_HANDLE);
-
     if (numSlots > VirtAssetSlots::NUM_SLOTS)
         return SvmRuntime::fault(F_SYSCALL_PARAM);
 
@@ -38,7 +38,6 @@ uint32_t _SYS_asset_slotTilesFree(_SYSAssetSlot slot, _SYSCubeIDVector cv)
         SvmRuntime::fault(F_BAD_ASSETSLOT);
         return 0;
     }
-
     cv = CubeSlots::truncateVector(cv);
 
     return VirtAssetSlots::getInstance(slot).tilesFree(cv);
@@ -48,7 +47,6 @@ void _SYS_asset_slotErase(_SYSAssetSlot slot, _SYSCubeIDVector cv)
 {
     if (!VirtAssetSlots::isSlotBound(slot))
         return SvmRuntime::fault(F_BAD_ASSETSLOT);
-
     cv = CubeSlots::truncateVector(cv);
 
     VirtAssetSlots::getInstance(slot).erase(cv);
@@ -61,6 +59,21 @@ void _SYS_asset_loadStart(_SYSAssetLoader *loader,
         return SvmRuntime::fault(F_SYSCALL_ADDR_ALIGN);
     if (!SvmMemory::mapRAM(loader))
         return SvmRuntime::fault(F_SYSCALL_ADDRESS);
+
+    if (!isAligned(cfg))
+        return SvmRuntime::fault(F_SYSCALL_ADDR_ALIGN);
+    if (!SvmMemory::mapRAM(cfg, mulsat16x16(cfgSize, sizeof *cfg)))
+        return SvmRuntime::fault(F_SYSCALL_ADDRESS);
+    if (!AssetLoader::isValidConfig(cfg, cfgSize))
+        return SvmRuntime::fault(F_BAD_ASSET_CONFIG);
+
+    _SYSAssetLoader *prevLoader = AssetLoader::getUserLoader();
+    if (prevLoader && prevLoader != loader)
+        return SvmRuntime::fault(F_BAD_ASSET_LOADER);
+
+    cv = CubeSlots::truncateVector(cv);
+
+    AssetLoader::start(loader, cfg, cfgSize, cv);
 }
 
 void _SYS_asset_loadFinish(_SYSAssetLoader *loader)
@@ -69,6 +82,10 @@ void _SYS_asset_loadFinish(_SYSAssetLoader *loader)
         return SvmRuntime::fault(F_SYSCALL_ADDR_ALIGN);
     if (!SvmMemory::mapRAM(loader))
         return SvmRuntime::fault(F_SYSCALL_ADDRESS);
+    if (AssetLoader::getUserLoader() != loader)
+        return SvmRuntime::fault(F_BAD_ASSET_LOADER);
+
+    AssetLoader::finish();
 }
 
 void _SYS_asset_loadCancel(_SYSAssetLoader *loader, _SYSCubeIDVector cv)
@@ -77,8 +94,12 @@ void _SYS_asset_loadCancel(_SYSAssetLoader *loader, _SYSCubeIDVector cv)
         return SvmRuntime::fault(F_SYSCALL_ADDR_ALIGN);
     if (!SvmMemory::mapRAM(loader))
         return SvmRuntime::fault(F_SYSCALL_ADDRESS);
+    if (AssetLoader::getUserLoader() != loader)
+        return SvmRuntime::fault(F_BAD_ASSET_LOADER);
     
     cv = CubeSlots::truncateVector(cv);
+
+    AssetLoader::cancel(cv);
 }
 
 uint32_t _SYS_asset_findInCache(_SYSAssetGroup *group, _SYSCubeIDVector cv)
