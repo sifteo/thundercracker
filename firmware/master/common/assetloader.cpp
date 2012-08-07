@@ -259,28 +259,6 @@ void AssetLoader::task()
 #if 0
 
 
-void CubeSlots::assetLoaderTask()
-{
-    /*
-     * Pump data from flash memory into the current _SYSAssetLoader as needed.
-     * This lets us install assets from ISR context without accessing flash
-     * directly. The _SYSAssetLoader includes a tiny FIFO buffer for each cube.
-     */
-
-    _SYSAssetLoader *L = assetLoader;
-    _SYSAssetLoaderCube *cubeArray = reinterpret_cast<_SYSAssetLoaderCube*>(L + 1);
-    if (!L) return;
-
-    _SYSCubeIDVector cubeVec = L->cubeVec & ~L->complete;
-    while (cubeVec) {
-        _SYSCubeID id = Intrinsic::CLZ(cubeVec);
-        cubeVec ^= Intrinsic::LZ(id);
-        _SYSAssetLoaderCube *cube = cubeArray + id;
-        if (SvmMemory::mapRAM(cube, sizeof *cube))
-            fetchAssetLoaderData(cube);
-    }
-}
-
 void CubeSlots::fetchAssetLoaderData(_SYSAssetLoaderCube *lc)
 {
     /*
@@ -623,51 +601,6 @@ bool CubeCodec::flashSend(PacketBuffer &buf, _SYSAssetLoaderCube *lc, _SYSCubeID
 }
 
 
-    if (CubeSlots::flashResetWait & cv) {
-        /*
-         * We need to reset the flash decoder before we can send any data.
-         *
-         * We can only do this if a reset is needed, hasn't already
-         * been sent. Send the reset token, and synchronously reset
-         * any flash-related IRQ state.
-         *
-         * Note the flash reset's dual purpose, of both resetting the
-         * cube's flash state machine and triggering the cube to send
-         * us an ACK packet with a valid flash byte count. So, we
-         * actually end up sending two resets if we haven't yet seen a
-         * valid flash ACK from this cube.
-         */
-
-        if (CubeSlots::flashResetSent & cv) {
-            // Already sent the reset. Has it timed out?
-
-            if (SysTime::ticks() > flashDeadline) {
-                DEBUG_LOG(("FLASH[%d]: Reset timeout\n", id()));
-                Atomic::ClearLZ(CubeSlots::flashResetSent, id());
-            }
-
-        } else if (codec.flashReset(tx.packet)) {
-            // Okay, we sent a reset. Remember to wait for the ACK.
-
-            DEBUG_LOG(("FLASH[%d]: Sending reset token\n", id()));
-            Atomic::SetLZ(CubeSlots::flashResetSent, id());
-            flashDeadline = SysTime::ticks() + SysTime::msTicks(RTT_DEADLINE_MS);
-        }
-
-    } else {
-        // Not waiting on a reset. See if we need to send asset data.
-        // Since we can't read external flash pages in our ISR, we're
-        // restricted to accessing user RAM only. So, we send data from
-        // a small user-ram buffer, and use a Task to refill that buffer.
-
-        _SYSAssetLoader *L = CubeSlots::assetLoader;
-        if (isAssetLoading(L)) {
-            _SYSAssetLoaderCube *LC = assetLoaderCube(L);
-            if (LC) {
-                bool done = false;
-                bool escape = codec.flashSend(tx.packet, LC, id(), done);
-
-                if (done) {
                     /* Finished sending the group, and the cube finished writing it. */
                     Atomic::SetLZ(L->complete, id());
                     Event::setCubePending(Event::PID_CUBE_ASSETDONE, id());
@@ -677,27 +610,8 @@ bool CubeCodec::flashSend(PacketBuffer &buf, _SYSAssetLoaderCube *lc, _SYSCubeID
                         float seconds = (SysTime::ticks() - assetLoadTimestamp) * (1.0f / SysTime::sTicks(1));
                         LOG(("FLASH[%d]: Finished loading in %.3f seconds\n", id(), seconds));
                     });
-                }
-
-            }
-        }
-    }
 
 static FlashLFSIndexRecord::KeyVector_t gSlotsInProgress;
-
-    /*
-     * Finish first, if a different load is in progress.
-     *
-     * We must be able to support separate 'start' calls on the same loader
-     * for different cubes. (Not all callers will know to combine all cubes
-     * into a single CubeIDVector)
-     */
-    _SYSAssetLoader *prevLoader = CubeSlots::assetLoader;
-    if (prevLoader && prevLoader != loader) {
-        _SYS_asset_loadFinish(prevLoader);
-        ASSERT(CubeSlots::assetLoader == 0);
-        ASSERT(gSlotsInProgress.empty());
-    }
 
     MappedAssetGroup map;
     if (!map.init(group))

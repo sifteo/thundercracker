@@ -10,8 +10,6 @@
 
 void AssetLoader::fsmEnterState(_SYSCubeID id, TaskState s)
 {
-    LOG(("FLASH[%d]: Enter State %d\n", id, s));
-
     cubeTaskState[id] = s;
     switch (s) {
 
@@ -21,6 +19,7 @@ void AssetLoader::fsmEnterState(_SYSCubeID id, TaskState s)
         case S_RESET:
             Atomic::ClearLZ(resetAckCubes, id);
             Atomic::SetLZ(resetPendingCubes, id);
+            cubeDeadline[id] = SysTime::ticks() + SysTime::msTicks(350);
             break;
 
         /*
@@ -34,10 +33,20 @@ void AssetLoader::fsmEnterState(_SYSCubeID id, TaskState s)
 
 void AssetLoader::fsmTaskState(_SYSCubeID id, TaskState s)
 {
-    LOG(("FLASH[%d]: Poll state %d\n", id, s));
+    _SYSCubeIDVector bit = Intrinsic::LZ(id);
     switch (s) {
 
+        /*
+         * Waiting for a flash reset, as acknowledged by resetAckCubes bits.
+         * If we time out, re-enter the S_RESET state to try again.
+         */
         case S_RESET:
+            if (resetAckCubes & bit) {
+                fsmEnterState(id, S_IDLE);
+            } else if (SysTime::ticks() > cubeDeadline[id]) {
+                LOG(("FLASH[%d]: Reset timeout\n", id));
+                fsmEnterState(id, S_RESET);
+            }
             break;
 
         case S_IDLE:
@@ -45,4 +54,3 @@ void AssetLoader::fsmTaskState(_SYSCubeID id, TaskState s)
 
     }
 }
-
