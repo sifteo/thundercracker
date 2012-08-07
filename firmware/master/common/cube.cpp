@@ -208,9 +208,8 @@ bool CubeSlot::radioProduce(PacketTransmission &tx)
     if (AssetLoader::getActiveCubes() & cv) {
         // Loading is in progress
 
-        if (AssetLoader::needFlashPacket(id())) {
+        if (AssetLoader::needFlashPacket(id()) && codec.flashEscape(tx.packet)) {
             // Loader has data to send. Send an escape, and be done with this packet.
-            codec.flashEscape(tx.packet);
             AssetLoader::produceFlashPacket(id(), tx.packet);
             return true;
         }

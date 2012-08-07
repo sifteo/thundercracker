@@ -139,17 +139,22 @@ class CubeCodec {
         return false;
     }
 
-    void flashEscape(PacketBuffer &buf)
+    bool flashEscape(PacketBuffer &buf)
     {
         /*
-         * Escape to flash mode (two-nybble code 33) plus one extra
-         * dummy nybble to force a byte flush if necessary.
+         * If the buffer has room for the escape and at least one data byte,
+         * adds a "Flash Escape" command to the buffer, (two-nybble code 33)
+         * plus one extra dummy nybble to force a byte flush if necessary.
          *
          * This implies an encoder state reset.
          */
-        txBits.append(0xF33, 12);
-        txBits.flush(buf);
-        stateReset();
+
+        if (txBits.hasRoomForFlush(buf, 20)) {
+            txBits.append(0xF33, 12);
+            txBits.flush(buf);
+            return true;
+        }
+        return false;
     }
 
  private:

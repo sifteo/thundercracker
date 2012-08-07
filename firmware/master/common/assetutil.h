@@ -22,6 +22,14 @@ public:
     static _SYSAssetGroupCube *mapGroupCube(SvmMemory::VirtAddr group, _SYSCubeID cid);
     static _SYSAssetLoaderCube *mapLoaderCube(SvmMemory::VirtAddr loader, _SYSCubeID cid);
 
+    static ALWAYS_INLINE _SYSAssetGroupCube *mapGroupCube(_SYSAssetGroup *group, _SYSCubeID cid) {
+    	return mapGroupCube(reinterpret_cast<SvmMemory::VirtAddr>(group), cid);
+    }
+
+    static ALWAYS_INLINE _SYSAssetLoaderCube *mapLoaderCube(_SYSAssetLoader *loader, _SYSCubeID cid) {
+    	return mapLoaderCube(reinterpret_cast<SvmMemory::VirtAddr>(loader), cid);
+    }
+
     static unsigned loadedBaseAddr(SvmMemory::VirtAddr group, _SYSCubeID cid);
 
 	static bool isValidConfig(const _SYSAssetConfiguration *cfg, unsigned cfgSize);

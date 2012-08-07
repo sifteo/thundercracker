@@ -8,6 +8,7 @@
 
 #include <sifteo/abi.h>
 #include "macros.h"
+#include "systime.h"
 
 struct PacketBuffer;
 
@@ -32,7 +33,7 @@ class AssetLoader
 {
 public:
     // Userspace-visible operations
-    static void start(_SYSAssetLoader *userLoader, const _SYSAssetConfiguration *cfg,
+    static void start(_SYSAssetLoader *loader, const _SYSAssetConfiguration *cfg,
         unsigned cfgSize, _SYSCubeIDVector cv);
     static void cancel(_SYSCubeIDVector cv);
     static void finish();
@@ -73,11 +74,34 @@ public:
 private:
     AssetLoader();  // Do not implement
 
+    enum TaskState {
+        S_RESET,       // Send and wait for the cube's state machine to reset
+        S_IDLE,        // Flash state machine is idle
+    };
+
+    // State machine (in assetloader_fsm.cpp)
+    static void fsmEnterState(_SYSCubeID id, TaskState s);
+    static void fsmTaskState(_SYSCubeID id, TaskState s);
+
+    // Data from userspace
     static _SYSAssetLoader *userLoader;
-    static _SYSAssetConfiguration *userConfig[_SYS_NUM_CUBE_SLOTS];
+    static const _SYSAssetConfiguration *userConfig[_SYS_NUM_CUBE_SLOTS];
     static uint8_t userConfigSize[_SYS_NUM_CUBE_SLOTS];
-    static _SYSCubeIDVector activeCubes;
-    static _SYSCubeIDVector startedCubes;
+
+    // Aggregate cube state, set up by high-level entry points
+    static _SYSCubeIDVector activeCubes;        // Cubes that are currently loading
+    static _SYSCubeIDVector startedCubes;       // Started, and restartable on cubeConnect()
+
+    // Task-owned cube state. Read-only from ISR.
+    static uint8_t cubeTaskState[_SYS_NUM_CUBE_SLOTS];
+    static SysTime::Ticks cubeDeadline[_SYS_NUM_CUBE_SLOTS];
+
+    // ISR-owned cube state. Read-only from tasks.
+    static uint8_t cubeBufferAvail[_SYS_NUM_CUBE_SLOTS];
+
+    // Atomic shared state
+    static _SYSCubeIDVector resetPendingCubes;
+    static _SYSCubeIDVector resetAckCubes;
 };
 
 #endif

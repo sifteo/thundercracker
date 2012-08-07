@@ -3,108 +3,261 @@
  * Copyright <c> 2012 Sifteo, Inc. All rights reserved.
  */
 
-
+#include <protocol.h>
 #include "assetloader.h"
+#include "assetutil.h"
 #include "radio.h"
+#include "cubeslots.h"
+#include "tasks.h"
 
 _SYSAssetLoader *AssetLoader::userLoader;
-_SYSAssetConfiguration *AssetLoader::userConfig[_SYS_NUM_CUBE_SLOTS];
+const _SYSAssetConfiguration *AssetLoader::userConfig[_SYS_NUM_CUBE_SLOTS];
 uint8_t AssetLoader::userConfigSize[_SYS_NUM_CUBE_SLOTS];
+uint8_t AssetLoader::cubeTaskState[_SYS_NUM_CUBE_SLOTS];
+uint8_t AssetLoader::cubeBufferAvail[_SYS_NUM_CUBE_SLOTS];
+SysTime::Ticks AssetLoader::cubeDeadline[_SYS_NUM_CUBE_SLOTS];
 _SYSCubeIDVector AssetLoader::activeCubes;
 _SYSCubeIDVector AssetLoader::startedCubes;
+_SYSCubeIDVector AssetLoader::resetPendingCubes;
+_SYSCubeIDVector AssetLoader::resetAckCubes;
 
 #ifdef SIFTEO_SIMULATOR
 bool AssetLoader::simBypass;
 #endif
 
 
-void AssetLoader::start(_SYSAssetLoader *userLoader, const _SYSAssetConfiguration *cfg,
-    unsigned cfgSize, _SYSCubeIDVector cv)
+void AssetLoader::init()
 {
-}
+    /*
+     * Reset the state of the AssetLoader before a new userspace Volume starts.
+     * This is similar to finish(), but we never wait.
+     */
 
-void AssetLoader::cancel(_SYSCubeIDVector cv)
-{
+    // This is sufficient to invalidate all other state
+    userLoader = NULL;
+    activeCubes = 0;
 }
 
 void AssetLoader::finish()
 {
+    // Wait until loads finish and/or cubes disconnect
+    while (activeCubes)
+        Tasks::idle();
+
+    // Reset user state, disconnecting the AssetLoader
+    init();
 }
 
-void AssetLoader::init()
+void AssetLoader::cancel(_SYSCubeIDVector cv)
 {
+    // Undo the effects of 'start'. Make this cube inactive, and don't auto-restart it.
+    Atomic::And(startedCubes, ~cv);
+    Atomic::And(activeCubes, ~cv);
 }
 
 void AssetLoader::cubeConnect(_SYSCubeID id)
 {
+    // Restart loading on this cube, if we aren't done loading yet
+
+    ASSERT(id < _SYS_NUM_CUBE_SLOTS);
+    _SYSCubeIDVector bit = Intrinsic::LZ(id);
+    ASSERT(0 == (activeCubes & bit));
+
+    if (!activeCubes) {
+        /*
+         * Load is already done! If we added a new cube now,
+         * there wouldn't be a non-racy way for userspace to
+         * finish the loading process. We have to stay done.
+         */
+        return;
+    }
+
+    if (startedCubes & bit) {
+        // Re-start this cube
+        fsmEnterState(id, S_RESET);
+        Atomic::Or(startedCubes, bit);
+        Tasks::trigger(Tasks::AssetLoader);
+    }
 }
 
 void AssetLoader::cubeDisconnect(_SYSCubeID id)
 {
+    // Disconnected cubes immediately become inactive, but we can restart them.
+    ASSERT(id < _SYS_NUM_CUBE_SLOTS);
+    _SYSCubeIDVector bit = Intrinsic::LZ(id);
+    Atomic::And(activeCubes, ~bit);
+}
+
+void AssetLoader::start(_SYSAssetLoader *loader, const _SYSAssetConfiguration *cfg,
+    unsigned cfgSize, _SYSCubeIDVector cv)
+{
+    ASSERT(loader);
+    ASSERT(userLoader == loader || !userLoader);
+    userLoader = loader;
+
+    ASSERT(cfg);
+    ASSERT(cfgSize < 0x100);
+
+    // If these cubes were already loading, temporarily cancel them
+    cancel(cv);
+
+    // Update per-cube state
+    _SYSCubeIDVector iterCV = cv;
+    while (iterCV) {
+        _SYSCubeID id = Intrinsic::CLZ(iterCV);
+        _SYSCubeIDVector bit = Intrinsic::LZ(id);
+        iterCV ^= bit;
+
+        userConfig[id] = cfg;
+        userConfigSize[id] = cfgSize;
+
+        fsmEnterState(id, S_RESET);
+    }
+
+    // Atomically enable these cubes
+    Atomic::Or(startedCubes, cv);
+    Atomic::Or(activeCubes, cv);
+
+    // Poke our task, if necessary
+    Tasks::trigger(Tasks::AssetLoader);
+}
+
+void AssetLoader::ackReset(_SYSCubeID id)
+{
+    /*
+     * Reset ACKs affect the Task state machine, but we can't safely edit
+     * the task state directly because we're in ISR context. So, set a bit
+     * in resetAckCubes that our Task will poll for.
+     */
+
+    Atomic::SetLZ(resetAckCubes, id);
+    Tasks::trigger(Tasks::AssetLoader);
+}
+
+void AssetLoader::ackData(_SYSCubeID id, unsigned bytes)
+{
+    /*
+     * FIFO Data acknowledged. We can update cubeBufferAvail directly.
+     */
+
+    unsigned buffer = cubeBufferAvail[id];
+    buffer += bytes;
+
+    if (buffer > FLS_FIFO_USABLE) {
+        LOG(("FLASH[%d]: Acknowledged more data than sent (%d + %d > %d)\n",
+            id, buffer - bytes, bytes, FLS_FIFO_USABLE));
+        buffer = FLS_FIFO_USABLE;
+    }
+
+    cubeBufferAvail[id] = buffer;
 }
 
 bool AssetLoader::needFlashPacket(_SYSCubeID id)
 {
+    /*
+     * If we return 'true' we're committed to sending a flash packet. So, we'll only do this
+     * if we definitely either need a flash reset, or we have FIFO data to send right away.
+     */
+
+    ASSERT(userLoader);
+    ASSERT(id < _SYS_NUM_CUBE_SLOTS);
+    _SYSCubeIDVector bit = Intrinsic::LZ(id);
+    ASSERT(bit & activeCubes);
+
+    if (bit & resetPendingCubes)
+        return true;
+
+    if (cubeBufferAvail[id] != 0) {
+        _SYSAssetLoaderCube *lc = AssetUtil::mapLoaderCube(userLoader, id);
+        if (lc) {
+            AssetFIFO fifo(*lc);
+            if (fifo.readAvailable())
+                return true;
+        }
+    }
+
     return false;
 }
 
 bool AssetLoader::needFullACK(_SYSCubeID id)
 {
+    /*
+     * We'll take a full ACK if we're waiting on the cube to finish something:
+     * Either a reset, or some flash programming.
+     */
+
+    ASSERT(userLoader);
+    ASSERT(Intrinsic::LZ(id) & activeCubes);
+    ASSERT(id < _SYS_NUM_CUBE_SLOTS);
+
+    if (cubeTaskState[id] == S_RESET)
+        return true;
+
+    if (cubeBufferAvail[id] == 0)
+        return true;
+
     return false;
 }
 
 void AssetLoader::produceFlashPacket(_SYSCubeID id, PacketBuffer &buf)
 {
-}
+    /*
+     * We should only end up here if needFlashPacket() returns true,
+     * meaning we either (1) need a reset, or (2) have FIFO data to send.
+     */
 
-void AssetLoader::ackReset(_SYSCubeID id)
-{
-}
+    ASSERT(userLoader);
+    ASSERT(id < _SYS_NUM_CUBE_SLOTS);
+    _SYSCubeIDVector bit = Intrinsic::LZ(id);
+    ASSERT(bit & activeCubes);
 
-void AssetLoader::ackData(_SYSCubeID id, unsigned bytes)
-{
+    if (bit & resetPendingCubes) {
+        // An empty flash packet is a flash reset
+        Atomic::And(resetPendingCubes, ~bit);
+        return;
+    }
+
+    /*
+     * Send data that was generated by our task, and stored in the AssetFIFO.
+     */
+
+    _SYSAssetLoaderCube *lc = AssetUtil::mapLoaderCube(userLoader, id);
+    if (lc) {
+        AssetFIFO fifo(*lc);
+        unsigned avail = cubeBufferAvail[id];
+        unsigned count = MIN(fifo.readAvailable(), buf.bytesFree());
+        count = MIN(count, avail);
+        avail -= count;
+        ASSERT(count);
+
+        while (count) {
+            buf.append(fifo.read());
+            count--;
+        }
+
+        fifo.commitReads();
+        cubeBufferAvail[id] = avail;
+    }
 }
 
 void AssetLoader::task()
 {
+    /*
+     * Pump the state machine, on each active cube.
+     */
+
+    _SYSCubeIDVector cv = activeCubes;
+    while (cv) {
+        _SYSCubeID id = Intrinsic::CLZ(cv);
+        cv ^= Intrinsic::LZ(id);
+
+        fsmTaskState(id, TaskState(cubeTaskState[id]));
+    }
 }
-
-
-
-
-
 
 
 #if 0
 
-class AssetLoader
-{
-public:
-
-    static void start(_SYSAssetLoader *userLoader, const _SYSAssetConfiguration *cfg,
-        unsigned cfgSize, _SYSCubeIDVector cv);
-    static void cancel(_SYSCubeIDVector cv);
-    static void finish();
-
-    /// Per-process initialization
-    static void init();
-
-    /// Tasks::AssetLoader callback
-    static void task();
-
-    /// Return the current _SYSAssetLoader, if any is attached, or NULL if we're unattached.
-    static _SYSAssetLoader *getUserLoader() const {
-        return userLoader;
-    }
-
-private:
-    AssetLoader();  // Do not implement
-
-    static _SYSAssetLoader *userLoader;
-    static _SYSAssetConfiguration *userConfig[_SYS_NUM_CUBE_SLOTS];
-    static uint8_t userConfigSize[_SYS_NUM_CUBE_SLOTS];
-    static _SYSCubeIDVector activeCubes;
-};
 
 void CubeSlots::assetLoaderTask()
 {
@@ -626,3 +779,4 @@ static FlashLFSIndexRecord::KeyVector_t gSlotsInProgress;
 
 
 #endif
+
