@@ -42,7 +42,8 @@ public:
     void run();
 
 private:
-    Sifteo::SystemTime time;
+    Sifteo::SystemTime soundTime;
+    Sifteo::SystemTime shutdownTime;
     Sifteo::CubeID mainCube;
 
     Sifteo::Array<MainMenuItem*, MAX_ITEMS> items;
@@ -51,6 +52,7 @@ private:
     static const Sifteo::MenuAssets menuAssets;
 
     bool menuDirty;
+    bool shuttingDown;
     
     /**
      * A icon that we swap in if the user tries to launch a game that requires
@@ -65,6 +67,7 @@ private:
     // event handlers
     void cubeConnect(unsigned cid);
     void cubeDisconnect(unsigned cid);
+    void cubeTouch(unsigned cid);
     void neighborAdded(unsigned firstID, unsigned firstSide,
                        unsigned secondID, unsigned secondSide);
 
@@ -73,6 +76,7 @@ private:
     void updateAssets();
     void updateSound(Sifteo::Menu &menu);
     void updateMusic();
+    void updateShutdown(Sifteo::Menu &menu);
     
     bool canLaunchItem(unsigned index);
     void toggleCubeRangeAlert(unsigned index, Sifteo::Menu &menu);

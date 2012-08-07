@@ -18,6 +18,7 @@ static const unsigned kClickSpeedNormal = 200;
 static const unsigned kClickSpeedFast = 300;
 static const unsigned kDisplayBlueLogoTimeMS = 2000;
 static const unsigned kNoCubesConnectedSfxMS = 5000;
+static const unsigned kShutdownTimerMS = 60 * 2 * 1000; // 2 minutes
 
 static void drawText(RelocatableTileBuffer<12,12> &icon, const char *text, Int2 pos)
 {
@@ -44,14 +45,17 @@ void MainMenu::init()
     Events::cubeConnect.set(&MainMenu::cubeConnect, this);
     Events::cubeDisconnect.set(&MainMenu::cubeDisconnect, this);
     Events::neighborAdd.set(&MainMenu::neighborAdded, this);
+    Events::cubeTouch.set(&MainMenu::cubeTouch, this);
     
-    time = SystemTime::now();
+    soundTime = SystemTime::now();
+    shutdownTime = SystemTime::now();
 
     items.clear();
     itemIndexCurrent = 0;
     cubeRangeSavedIcon = NULL;
 
     menuDirty = false;
+    shuttingDown = false;
     
     _SYS_setCubeRange(1, _SYS_NUM_CUBE_SLOTS-1); // XXX: eventually this will be the system default
 }
@@ -106,23 +110,28 @@ void MainMenu::eventLoop(Menu &m)
         updateAssets();
         updateSound(m);
         updateMusic();
+        updateShutdown(m);
         updateAlerts(m);
 
         bool performDefault = true;
-
+        
         switch(e.type) {
 
             case MENU_ITEM_PRESS:
-                ASSERT(e.item < arraysize(items));
-                if (items[e.item]->getCubeRange().isEmpty()) {
-                    AudioChannel(0).play(Sound_NonPossibleAction);
-                    performDefault = false;
-                } else if (!canLaunchItem(e.item)) {
-                    toggleCubeRangeAlert(e.item, m);
+                if (shuttingDown) {
                     performDefault = false;
                 } else {
-                    AudioChannel(0).play(Sound_ConfirmClick);
-                    itemChoice = e.item;
+                    ASSERT(e.item < arraysize(items));
+                    if (items[e.item]->getCubeRange().isEmpty()) {
+                        AudioChannel(0).play(Sound_NonPossibleAction);
+                        performDefault = false;
+                    } else if (!canLaunchItem(e.item)) {
+                        toggleCubeRangeAlert(e.item, m);
+                        performDefault = false;
+                    } else {
+                        AudioChannel(0).play(Sound_ConfirmClick);
+                        itemChoice = e.item;
+                    }
                 }
                 break;
             case MENU_ITEM_ARRIVE:
@@ -145,7 +154,7 @@ void MainMenu::eventLoop(Menu &m)
                 break;
 
         }
-
+        
         if (performDefault)
             m.performDefault();
     }
@@ -161,6 +170,8 @@ CubeSet MainMenu::cubes()
 
 void MainMenu::cubeConnect(unsigned cid)
 {
+    shutdownTime = SystemTime::now();
+    
     AudioTracker::play(Tracker_CubeConnect);
 
     Shared::connectTime[cid] = SystemTime::now();
@@ -185,9 +196,19 @@ void MainMenu::cubeDisconnect(unsigned cid)
     cubesToLoad.clear(cid);
 }
 
+void MainMenu::cubeTouch(unsigned cid)
+{
+    if (shuttingDown && !CubeID(cid).isTouching()) {
+        shutdownTime = SystemTime::now();
+        shuttingDown = false;
+    }
+}
+
 void MainMenu::neighborAdded(unsigned firstID, unsigned firstSide,
                              unsigned secondID, unsigned secondSide)
 {
+    shutdownTime = SystemTime::now();
+    
     /*
      * If a connected cube has been neighbored to the base,
      * toggle its pairing state (ie, unpair it).
@@ -243,18 +264,18 @@ void MainMenu::updateAssets()
 
 void MainMenu::updateSound(Sifteo::Menu &menu)
 {
-    Sifteo::TimeDelta dt = Sifteo::SystemTime::now() - time;
+    Sifteo::TimeDelta dt = Sifteo::SystemTime::now() - soundTime;
     
     if (menu.getState() == MENU_STATE_TILTING) {
         unsigned threshold = abs(Shared::video[mainCube].virtualAccel().x) > kFastClickAccelThreshold ? kClickSpeedNormal : kClickSpeedFast;
         if (dt.milliseconds() >= threshold) {
-            time += dt;
+            soundTime += dt;
             AudioChannel(0).play(Sound_TiltClick);
         }
     } else if (menu.getState() == MENU_STATE_INERTIA) {
         unsigned threshold = 400;
         if (dt.milliseconds() >= threshold) {
-            time += dt;
+            soundTime += dt;
             AudioChannel(0).play(Sound_TiltClick);
         }
     }
@@ -269,6 +290,19 @@ void MainMenu::updateMusic()
 
     if (AudioTracker::isStopped())
         AudioTracker::play(Tracker_MenuMusic);
+}
+
+void MainMenu::updateShutdown(Sifteo::Menu &menu)
+{
+    if (!shuttingDown) {
+        Sifteo::TimeDelta dt = Sifteo::SystemTime::now() - shutdownTime;
+        if (dt.milliseconds() >= kShutdownTimerMS) {
+            shuttingDown = true;
+            System::shutdown();
+        } else if (menu.getState() != MENU_STATE_STATIC) {
+            shutdownTime = SystemTime::now();
+        }
+    }
 }
 
 bool MainMenu::canLaunchItem(unsigned index)
@@ -530,4 +564,6 @@ void MainMenu::loadAssets()
         // Mark this cube as having been loaded
         cubesToLoad.clear(cube);
     }
+    
+    shutdownTime = SystemTime::now();
 }
