@@ -139,7 +139,11 @@ uint32_t _SYS_asset_findInCache(_SYSAssetGroup *group, _SYSCubeIDVector cv)
         return 0;
     }
 
-    cv = CubeSlots::truncateVector(cv);
+    // We can only trust the cache if the AssetLoader has verified it.
+    // (The process of querying this state requires AssetLoader's FIFO and Task)
+    cv = cv & AssetLoader::getCacheCoherentCubes();
+    if (!cv)
+        return 0;
 
     _SYSCubeIDVector cachedCV;
     if (!VirtAssetSlots::locateGroup(header, id, cv, cachedCV))

@@ -18,6 +18,7 @@ uint8_t AssetLoader::cubeBufferAvail[_SYS_NUM_CUBE_SLOTS];
 SysTime::Ticks AssetLoader::cubeDeadline[_SYS_NUM_CUBE_SLOTS];
 _SYSCubeIDVector AssetLoader::activeCubes;
 _SYSCubeIDVector AssetLoader::startedCubes;
+_SYSCubeIDVector AssetLoader::cacheCoherentCubes;
 _SYSCubeIDVector AssetLoader::resetPendingCubes;
 _SYSCubeIDVector AssetLoader::resetAckCubes;
 
@@ -86,6 +87,7 @@ void AssetLoader::cubeDisconnect(_SYSCubeID id)
     ASSERT(id < _SYS_NUM_CUBE_SLOTS);
     _SYSCubeIDVector bit = Intrinsic::LZ(id);
     Atomic::And(activeCubes, ~bit);
+    Atomic::And(cacheCoherentCubes, ~bit);
 }
 
 void AssetLoader::start(_SYSAssetLoader *loader, const _SYSAssetConfiguration *cfg,

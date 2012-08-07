@@ -63,6 +63,11 @@ public:
         return activeCubes;
     }
 
+    /// Which cubes have we validated the cache on?
+    static ALWAYS_INLINE _SYSCubeIDVector getCacheCoherentCubes() {
+        return cacheCoherentCubes;
+    }
+
     /**
      * In simulation only: We can opt to bypass the actual asset loader, and
      * instead decompress loadstream data directly into cube flash.
@@ -90,8 +95,9 @@ private:
     static uint8_t userConfigSize[_SYS_NUM_CUBE_SLOTS];
 
     // Aggregate cube state, set up by high-level entry points
-    static _SYSCubeIDVector activeCubes;        // Cubes that are currently loading
-    static _SYSCubeIDVector startedCubes;       // Started, and restartable on cubeConnect()
+    static _SYSCubeIDVector activeCubes;            // Cubes that are currently loading
+    static _SYSCubeIDVector startedCubes;           // Started, and restartable on cubeConnect()
+    static _SYSCubeIDVector cacheCoherentCubes;     // We're sure SysLFS state matches actual cube flash mem
 
     // Task-owned cube state. Read-only from ISR.
     static uint8_t cubeTaskState[_SYS_NUM_CUBE_SLOTS];
