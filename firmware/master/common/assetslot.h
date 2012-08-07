@@ -100,8 +100,8 @@ public:
     }
 
     _SYSCubeIDVector validCubeVector();
-    uint32_t tilesFree();
-    void erase();
+    uint32_t tilesFree(_SYSCubeIDVector cv);
+    void erase(_SYSCubeIDVector cv);
 
 private:
     // Which physical slot does this map to, on each cube?

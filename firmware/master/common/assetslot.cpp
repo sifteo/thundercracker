@@ -372,19 +372,19 @@ _SYSCubeIDVector VirtAssetSlot::validCubeVector()
     return cv;
 }
 
-uint32_t VirtAssetSlot::tilesFree()
+uint32_t VirtAssetSlot::tilesFree(_SYSCubeIDVector cv)
 {
     /*
      * Iterate through SysLFS, looking for records that apply to this
      * asset slot. We should see one for every cube the slot has been
      * bound on. Our result is the minimum amount of free space from
-     * any of these records.
+     * any of these records which are present in 'cv.
      */
 
-    _SYSCubeIDVector cv = validCubeVector();
     unsigned minTilesFree = SysLFS::TILES_PER_ASSET_SLOT;
     FlashLFS &lfs = SysLFS::get();
     FlashLFSObjectIter iter(lfs);
+    cv &= validCubeVector();
 
     while (cv && minTilesFree && iter.previous(FlashLFSKeyQuery())) {
         _SYSCubeID cube;
@@ -423,16 +423,18 @@ uint32_t VirtAssetSlot::tilesFree()
     return minTilesFree;
 }
 
-void VirtAssetSlot::erase()
+void VirtAssetSlot::erase(_SYSCubeIDVector cv)
 {
     /*
-     * Empty out this AssetSlot. This marks the slot as erased in our
-     * CubeAssetsRecord, and deletes any AssetSlotRecords for this slot.
+     * Empty out this AssetSlot, on the indicated cubes.
+     *
+     * This marks the slot as erased in our CubeAssetsRecord, and
+     * deletes any AssetSlotRecords for this slot.
      *
      * Iterates over SysLFS only once, doing this all in one step, if possible.
      */
 
-    _SYSCubeIDVector pendingOverview = validCubeVector();
+    _SYSCubeIDVector pendingOverview = cv & validCubeVector();
     _SYSCubeIDVector pendingSlots = pendingOverview;
 
     FlashLFS &lfs = SysLFS::get();

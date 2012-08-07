@@ -41,8 +41,7 @@ uint32_t _SYS_asset_slotTilesFree(_SYSAssetSlot slot, _SYSCubeIDVector cv)
 
     cv = CubeSlots::truncateVector(cv);
 
-    //return VirtAssetSlots::getInstance(slot).tilesFree(cv);
-    return 0;
+    return VirtAssetSlots::getInstance(slot).tilesFree(cv);
 }
 
 void _SYS_asset_slotErase(_SYSAssetSlot slot, _SYSCubeIDVector cv)
@@ -52,7 +51,7 @@ void _SYS_asset_slotErase(_SYSAssetSlot slot, _SYSCubeIDVector cv)
 
     cv = CubeSlots::truncateVector(cv);
 
-    //VirtAssetSlots::getInstance(slot).erase(cv);
+    VirtAssetSlots::getInstance(slot).erase(cv);
 }
 
 void _SYS_asset_loadStart(_SYSAssetLoader *loader,
