@@ -153,8 +153,7 @@ void SPIMaster::transferDma(const uint8_t *txbuf, uint8_t *rxbuf, unsigned len)
                         (0 << 4) |  // DIR - direction, 0 == read from peripheral
                         (1 << 3) |  // TEIE - transfer error ISR enable
                         (0 << 2) |  // HTIE - half complete ISR enable
-                        (1 << 1) |  // TCIE - transfer complete ISR enable
-                        (1 << 0);   // EN - enable DMA channel
+                        (1 << 1);   // TCIE - transfer complete ISR enable
 
     dmaTxChan->CNDTR = len;
     dmaTxChan->CMAR = (uint32_t)txbuf;
@@ -164,6 +163,8 @@ void SPIMaster::transferDma(const uint8_t *txbuf, uint8_t *rxbuf, unsigned len)
                         (1 << 3) |  // TEIE - transfer error ISR enable
                         (0 << 1);   // TCIE - transfer complete ISR enable
 
+    // enable both channels
+    dmaRxChan->CCR |= 0x1;
     dmaTxChan->CCR |= 0x1;
 }
 
@@ -184,8 +185,7 @@ void SPIMaster::txDma(const uint8_t *txbuf, unsigned len)
                         (0 << 7) |  // MINC - memory pointer increment
                         (0 << 4) |  // DIR - direction, 0 == read from peripheral
                         (1 << 3) |  // TEIE - transfer error ISR enable
-                        (1 << 1) |  // TCIE - transfer complete ISR enable
-                        (1 << 0);   // EN - enable DMA channel
+                        (1 << 1);   // TCIE - transfer complete ISR enable
 
     dmaTxChan->CNDTR = len;
     dmaTxChan->CMAR = (uint32_t)txbuf;
@@ -195,6 +195,8 @@ void SPIMaster::txDma(const uint8_t *txbuf, unsigned len)
                         (1 << 3) |  // TEIE - transfer error ISR enable
                         (0 << 1);   // TCIE - transfer complete ISR enable
 
+    // enable both channels
+    dmaRxChan->CCR |= 0x1;
     dmaTxChan->CCR |= 0x1;
 }
 
