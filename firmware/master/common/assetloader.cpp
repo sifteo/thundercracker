@@ -18,12 +18,6 @@ bool AssetLoader::simBypass;
 #endif
 
 
-
-bool AssetLoader::isValidConfig(const _SYSAssetConfiguration *cfg, unsigned cfgSize)
-{
-    return false;
-}
-
 void AssetLoader::start(_SYSAssetLoader *userLoader, const _SYSAssetConfiguration *cfg,
     unsigned cfgSize, _SYSCubeIDVector cv)
 {

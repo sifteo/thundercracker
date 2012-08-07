@@ -15,6 +15,7 @@
 #include "flash_syslfs.h"
 #include "assetslot.h"
 #include "assetloader.h"
+#include "assetutil.h"
 #include "tasks.h"
 
 
@@ -64,7 +65,7 @@ void _SYS_asset_loadStart(_SYSAssetLoader *loader,
         return SvmRuntime::fault(F_SYSCALL_ADDR_ALIGN);
     if (!SvmMemory::mapRAM(cfg, mulsat16x16(cfgSize, sizeof *cfg)))
         return SvmRuntime::fault(F_SYSCALL_ADDRESS);
-    if (!AssetLoader::isValidConfig(cfg, cfgSize))
+    if (!AssetUtil::isValidConfig(cfg, cfgSize))
         return SvmRuntime::fault(F_BAD_ASSET_CONFIG);
 
     _SYSAssetLoader *prevLoader = AssetLoader::getUserLoader();

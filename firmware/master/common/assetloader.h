@@ -32,7 +32,6 @@ class AssetLoader
 {
 public:
     // Userspace-visible operations
-    static bool isValidConfig(const _SYSAssetConfiguration *cfg, unsigned cfgSize);
     static void start(_SYSAssetLoader *userLoader, const _SYSAssetConfiguration *cfg,
         unsigned cfgSize, _SYSCubeIDVector cv);
     static void cancel(_SYSCubeIDVector cv);
