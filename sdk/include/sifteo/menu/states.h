@@ -387,6 +387,8 @@ inline void Menu::transToHopUp()
         vid->bg1.image(vec(0,0), *icon);
     }
     finishIteration = 30;
+    
+    hasBeenStarted = true;
 }
 
 inline void Menu::stateHopUp()
