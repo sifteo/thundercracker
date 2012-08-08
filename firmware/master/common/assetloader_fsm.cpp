@@ -126,12 +126,21 @@ void AssetLoader::fsmNextConfigurationStep(_SYSCubeID id)
 
     ASSERT(id < _SYS_NUM_CUBE_SLOTS);
     _SYSCubeIDVector bit = Intrinsic::LZ(id);
+    const _SYSAssetConfiguration *config = userConfig[id];
+    unsigned configSize = userConfigSize[id];
 
     // Cache not consistent? Check it out first.
     if (0 == (bit & cacheCoherentCubes)) {
         cubeTaskSubstate[id] = 0xFFFFFFFF << (32 - SysLFS::ASSET_SLOTS_PER_CUBE);
         return fsmEnterState(id, S_CRC_COMMAND);
     }
+
+    /*
+     * First step: See if we need to erase any slots. This is a self-contained
+     * synchronous operation, we just need SysLFS and the Configuration.
+     */
+
+    AssetUtil::eraseSlotsForConfig(config, configSize);
 
     LOG(("XXX\n"));
 }

@@ -84,6 +84,7 @@ private:
         S_CRC_COMMAND,    // Waiting to send a CRC query for one slot (substate = slot bitmap)
         S_CRC_RESPONSE,   // Waiting for a CRC query response
         S_COMPLETE,       // Done loading, nothing to do.
+        S_ERROR,          // Internal consistency error; loading will stall.
     };
 
     // State machine (in assetloader_fsm.cpp)
