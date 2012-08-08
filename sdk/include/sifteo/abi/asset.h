@@ -52,8 +52,6 @@ struct _SYSAssetLoaderCube {
 
 struct _SYSAssetLoader {
     _SYSCubeIDVector busyCubes; /// OUT   Which cubes are still busy loading?
-    uint8_t numCubes;           /// IN    Number of valid _SYSAssetLoaderCubes
-    uint8_t reserved[3];        /// -
     // Followed by a _SYSAssetLoaderCube array
 };
 
