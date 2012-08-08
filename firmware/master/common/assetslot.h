@@ -11,7 +11,7 @@
 #include "flash_syslfs.h"
 #include "svmmemory.h"
 
-struct MappedAssetGroup;
+struct AssetGroupInfo;
 
 
 /**
@@ -164,9 +164,7 @@ public:
      * Changes may have been already made by the time we discover the failure.
      */
 
-    static bool locateGroup(const _SYSAssetGroupHeader &groupHeader,
-                            const SysLFS::AssetGroupIdentity &groupID,
-                            SvmMemory::VirtAddr groupVA,
+    static bool locateGroup(const AssetGroupInfo &group,
                             _SYSCubeIDVector searchCV,
                             _SYSCubeIDVector &foundCV,
                             const VirtAssetSlot *vSlot = 0,

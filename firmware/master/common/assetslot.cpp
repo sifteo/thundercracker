@@ -132,9 +132,7 @@ bool VirtAssetSlots::physSlotIsBound(_SYSCubeID cube, unsigned physSlot)
     return false;
 }
 
-bool VirtAssetSlots::locateGroup(const _SYSAssetGroupHeader &groupHeader,
-                                 const SysLFS::AssetGroupIdentity &groupID,
-                                 SvmMemory::VirtAddr groupVA,
+bool VirtAssetSlots::locateGroup(const AssetGroupInfo &group,
                                  _SYSCubeIDVector searchCV,
                                  _SYSCubeIDVector &foundCV,
                                  const VirtAssetSlot *vSlot,
@@ -222,7 +220,7 @@ bool VirtAssetSlots::locateGroup(const _SYSAssetGroupHeader &groupHeader,
             }
 
             // Map the cube-specific data for this group and this cube.
-            _SYSAssetGroupCube *agc = AssetUtil::mapGroupCube(groupVA, cube);
+            _SYSAssetGroupCube *agc = AssetUtil::mapGroupCube(group.va, cube);
             if (!agc) {
                 // Bad pointer from userspace! Give up completely.
                 return false;
@@ -230,7 +228,7 @@ bool VirtAssetSlots::locateGroup(const _SYSAssetGroupHeader &groupHeader,
 
             // Is this group present already?
             unsigned offset;
-            if (asr.findGroup(groupID, offset)) {
+            if (asr.findGroup(group.identity(), offset)) {
                 agc->baseAddr = offset + slot * PhysAssetSlot::SLOT_SIZE;
                 foundCV |= Intrinsic::LZ(cube);
                 searchCV ^= Intrinsic::LZ(cube);
@@ -246,7 +244,7 @@ bool VirtAssetSlots::locateGroup(const _SYSAssetGroupHeader &groupHeader,
 
             if (allocVec) {
                 // Try to allocate the group
-                if (!asr.allocGroup(groupID, groupHeader.numTiles, offset)) {
+                if (!asr.allocGroup(group.identity(), group.header.numTiles, offset)) {
                     // We know for sure that there isn't any room left. Abort!
                     return false;
                 }

@@ -9,6 +9,7 @@
 #include <sifteo/abi.h>
 #include "macros.h"
 #include "svmmemory.h"
+#include "flash_syslfs.h"
 
 
 /**
@@ -105,6 +106,35 @@ private:
 	unsigned head;
 	unsigned tail;
 	unsigned count;
+};
+
+
+/**
+ * This object holds critical AssetGroup data which requires some
+ * context-specific help to gather: A local copy of its header,
+ * the full AssetGroupIdentity, and the virtual address of the
+ * usermode SYSAssetGroup structure.
+ *
+ * This is a parameter to VirtAssetSlots::locateGroup()
+ */
+
+struct AssetGroupInfo {
+    SvmMemory::VirtAddr va;
+    SvmMemory::VirtAddr headerVA;
+    _SYSAssetGroupHeader header;
+    FlashVolume volume;
+    bool remapToVolume;
+
+    bool fromUserPointer(_SYSAssetGroup *group);
+    bool fromAssetConfiguration(_SYSAssetConfiguration *config);
+
+    SysLFS::AssetGroupIdentity identity() const
+    {
+    	SysLFS::AssetGroupIdentity result;
+    	result.ordinal = header.ordinal;
+    	result.volume = volume.block.code;
+    	return result;
+    }
 };
 
 

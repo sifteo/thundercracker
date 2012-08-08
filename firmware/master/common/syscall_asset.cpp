@@ -114,34 +114,11 @@ uint32_t _SYS_asset_findInCache(_SYSAssetGroup *group, _SYSCubeIDVector cv)
      * baseAddr is updated.
      */
 
-    // Capture user pointer prior to mapRAM
-    SvmMemory::VirtAddr groupVA = reinterpret_cast<SvmMemory::VirtAddr>(group);
+    AssetGroupInfo groupInfo;
 
-    if (!isAligned(group)) {
-        SvmRuntime::fault(F_SYSCALL_ADDR_ALIGN);
+    // Validates the user pointer, raises a fault on error.
+    if (!groupInfo.fromUserPointer(group))
         return 0;
-    }
-    if (!SvmMemory::mapRAM(group)) {
-        SvmRuntime::fault(F_SYSCALL_ADDRESS);
-        return 0;
-    }
-    
-    SvmMemory::VirtAddr hdrVA = group->pHdr;
-    _SYSAssetGroupHeader header;
-
-    if (!SvmMemory::copyROData(header, hdrVA)) {
-        SvmRuntime::fault(F_SYSCALL_ADDRESS);
-        return 0;
-    }
-
-    SysLFS::AssetGroupIdentity id;
-    id.ordinal = header.ordinal;
-    id.volume = SvmLoader::volumeForVA(hdrVA).block.code;
-
-    if (!id.volume) {
-        SvmRuntime::fault(F_SYSCALL_PARAM);
-        return 0;
-    }
 
     // We can only trust the cache if the AssetLoader has verified it.
     // (The process of querying this state requires AssetLoader's FIFO and Task)
@@ -150,7 +127,7 @@ uint32_t _SYS_asset_findInCache(_SYSAssetGroup *group, _SYSCubeIDVector cv)
         return 0;
 
     _SYSCubeIDVector cachedCV;
-    if (!VirtAssetSlots::locateGroup(header, id, groupVA, cv, cachedCV))
+    if (!VirtAssetSlots::locateGroup(groupInfo, cv, cachedCV))
         return 0;
 
     ASSERT((cachedCV & cv) == cachedCV);
