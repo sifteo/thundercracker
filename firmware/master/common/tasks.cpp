@@ -68,7 +68,9 @@ ALWAYS_INLINE void Tasks::taskInvoke(unsigned id)
 void Tasks::heartbeatTask()
 {
     Radio::heartbeat();
+#ifndef SIFTEO_SIMULATOR
     BatteryLevel::heartbeat();
+#endif
 }
 
 
