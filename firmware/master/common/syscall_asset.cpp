@@ -31,6 +31,7 @@ void _SYS_asset_bindSlots(_SYSVolumeHandle volHandle, unsigned numSlots)
     if (numSlots > VirtAssetSlots::NUM_SLOTS)
         return SvmRuntime::fault(F_SYSCALL_PARAM);
 
+    AssetLoader::init();
     VirtAssetSlots::bind(vol, numSlots);
 }
 
