@@ -17,9 +17,9 @@ char UIPause::gameMenuLabel[MAX_LABEL_CHARS + 1];
 
 const UIMenu::Item UIPause::items[NUM_ITEMS] = {
     // Note: labels with an odd number of characters will center perfectly
-    { IconBack_data,    gameMenuLabel},
-    { IconResume_data,  "Continue Game" },
-    { IconQuit_data,    "Quit Game" },
+    { IconBack_data,    gameMenuLabel, true },
+    { IconResume_data,  "Continue Game", true },
+    { IconQuit_data,    "Quit Game", true },
 };
 
 
