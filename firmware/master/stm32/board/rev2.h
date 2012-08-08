@@ -99,6 +99,12 @@
 #define VOLUME_CHAN         2
 #define VOLUME_GPIO         GPIOPin(&GPIOA, 1)
 
+// B A T T E R Y
+#define BATT_LVL_TIM        TIM3    // note, same as LED_PWM, ISR only used for battery
+#define BATT_LVL_CHAN       1
+#define BATT_MEAS_GPIO      GPIOPin(&GPIOA,6)
+#define BATT_MEAS_GND_GPIO  GPIOPin(&GPIOA,5)
+
 // M I S C
 #define BTN_HOME_GPIO       GPIOPin(&GPIOD, 2)
 #define BTN_HOME_EXTI_VEC   EXTI2
