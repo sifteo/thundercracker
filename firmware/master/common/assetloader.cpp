@@ -17,16 +17,13 @@ uint8_t AssetLoader::userConfigSize[_SYS_NUM_CUBE_SLOTS];
 uint8_t AssetLoader::cubeTaskState[_SYS_NUM_CUBE_SLOTS];
 uint8_t AssetLoader::cubeBufferAvail[_SYS_NUM_CUBE_SLOTS];
 SysTime::Ticks AssetLoader::cubeDeadline[_SYS_NUM_CUBE_SLOTS];
-uint32_t AssetLoader::cubeTaskSubstate[_SYS_NUM_CUBE_SLOTS];
+AssetLoader::SubState AssetLoader::cubeTaskSubstate[_SYS_NUM_CUBE_SLOTS];
 _SYSCubeIDVector AssetLoader::activeCubes;
 _SYSCubeIDVector AssetLoader::startedCubes;
 _SYSCubeIDVector AssetLoader::cacheCoherentCubes;
 _SYSCubeIDVector AssetLoader::resetPendingCubes;
 _SYSCubeIDVector AssetLoader::resetAckCubes;
-
-#ifdef SIFTEO_SIMULATOR
-bool AssetLoader::simBypass;
-#endif
+FlashLFSIndexRecord::KeyVector_t AssetLoader::slotsInProgress;
 
 
 void AssetLoader::init()
@@ -372,6 +369,7 @@ void AssetLoader::prepareCubeForLoading(_SYSCubeID id)
     }
 }
 
+
 #if 0
 
 
@@ -475,35 +473,7 @@ void CubeSlot::startAssetLoad(SvmMemory::VirtAddr groupVA, uint16_t baseAddr)
     LC->head = 0;
     LC->tail = 0;
 
-    #ifdef SIFTEO_SIMULATOR
-    if (CubeSlots::simAssetLoaderBypass) {
-        /*
-         * Asset loader bypass mode: Instead of actually sending this
-         * loadstream over the radio, instantaneously decompress it into
-         * the cube's flash memory.
-         */
-
-        // Use our reference implementation of the Loadstream decoder
-        Cube::Hardware *simCube = SystemMC::getCubeForSlot(this);
-        if (simCube) {
-            FlashStorage::CubeRecord *storage = simCube->flash.getStorage();
-            LoadstreamDecoder lsdec(storage->ext, sizeof storage->ext);
-
-            lsdec.setAddress(baseAddr << 7);
-            lsdec.handleSVM(G->pHdr + sizeof header, header.dataSize);
-
-            LOG(("FLASH[%d]: Installed asset group %s at base address "
-                "0x%08x (loader bypassed)\n",
-                id(), SvmDebugPipe::formatAddress(G->pHdr).c_str(), baseAddr));
-
-            // Mark this as done already.
-            LC->progress = header.dataSize;
-            Atomic::SetLZ(L->complete, id());
-
-            return;
-        }
-    }
-    #endif
+ 
 
     LOG(("FLASH[%d]: Sending asset group %s, at base address 0x%08x\n",
         id(), SvmDebugPipe::formatAddress(G->pHdr).c_str(), baseAddr));
@@ -570,51 +540,6 @@ void CubeSlot::startAssetLoad(SvmMemory::VirtAddr groupVA, uint16_t baseAddr)
 
 /////////////////////
 
-    MappedAssetGroup map;
-    if (!map.init(group))
-        return false;
-
-    const VirtAssetSlot &vSlot = VirtAssetSlots::getInstance(slot);
-
-    /*
-     * In one step, scan the SysLFS to the indicated group.
-     *
-     * If the group is cached, it's written to 'cachedCV'. If not,
-     * space is allocated for it. In either case, this updates the
-     * address of this group on each of the indicated cubes.
-     *
-     * For any cubes where this group needs to be loaded, we'll mark
-     * the relevant AssetSlots as 'in progress'. A set of these
-     * in-progress keys are written to gSlotsInProgress, so that
-     * we can finalize them after the loading has finished.
-     *
-     * If this fails to allocate space, we return unsuccessfully.
-     * Affected groups may be left in the indeterminate state.
-     */
-
-    _SYSCubeIDVector cachedCV;
-    if (!VirtAssetSlots::locateGroup(map, cv, cachedCV, &vSlot, &gSlotsInProgress))
-        return false;
-
-    cv &= ~cachedCV;
-    loader->complete |= cachedCV;
-
-    /*
-     * Begin the asset loading itself
-     */
-
-    CubeSlots::assetLoader = loader;
-
-    while (cv) {
-        _SYSCubeID id = Intrinsic::CLZ(cv);
-        cv ^= Intrinsic::LZ(id);
-
-        CubeSlot &cube = CubeSlots::instances[id];
-        _SYSAssetGroupCube *gc = cube.assetGroupCube(map.group);
-        if (gc) {
-            cube.startAssetLoad(reinterpret_cast<SvmMemory::VirtAddr>(map.group), gc->baseAddr);
-        }
-    }
 
 /////////////
 

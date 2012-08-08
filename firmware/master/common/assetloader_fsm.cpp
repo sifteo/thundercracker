@@ -63,6 +63,7 @@ void AssetLoader::fsmTaskState(_SYSCubeID id, TaskState s)
          * preparation work.
          */
         case S_RESET:
+            fsmEnterState(id, S_RESET_WAIT);
             return prepareCubeForLoading(id);
 
         /*
@@ -73,8 +74,16 @@ void AssetLoader::fsmTaskState(_SYSCubeID id, TaskState s)
             if (resetAckCubes & bit) {
                 // Done with reset! We know the device's FIFO is empty now.
                 cubeBufferAvail[id] = FLS_FIFO_USABLE;
-                fsmNextConfigurationStep(id);
-                ASSERT(cubeTaskState[id] != S_RESET);
+
+                // Cache not consistent? Check it out first.
+                if (0 == (bit & cacheCoherentCubes)) {
+                    cubeTaskSubstate[id].crc.remaining = 0xFFFFFFFF << (32 - SysLFS::ASSET_SLOTS_PER_CUBE);
+                    return fsmEnterState(id, S_CRC_COMMAND);
+                }
+
+                // Otherwise, begin allocating the first configuration
+                cubeTaskSubstate[id].value = 0;
+                fsmEnterState(id, S_CONFIG_INIT);
 
             } else if (SysTime::ticks() > cubeDeadline[id]) {
                 LOG(("ASSET[%d]: Flash state reset timeout\n", id));
@@ -98,51 +107,97 @@ void AssetLoader::fsmTaskState(_SYSCubeID id, TaskState s)
          */
         case S_CRC_COMMAND:
             while (1) {
-                uint32_t remaining = cubeTaskSubstate[id];
+                uint32_t remaining = cubeTaskSubstate[id].crc.remaining;
                 ASSERT(remaining);
                 unsigned slot = Intrinsic::CLZ(remaining);
                 unsigned tiles = AssetUtil::totalTilesForPhysicalSlot(id, slot);
                 if (!tiles) {
                     // Empty slot? Consider this successful, try the next.
                     remaining ^= Intrinsic::LZ(slot);
-                    cubeTaskSubstate[id] = remaining;
+                    cubeTaskSubstate[id].crc.remaining = remaining;
                     if (remaining)
                         continue;
 
-                    // Done!
+                    // Done! Start allocating the first configuration.
                     Atomic::Or(cacheCoherentCubes, bit);
-                    fsmNextConfigurationStep(id);
-                    return;
+                    cubeTaskSubstate[id].value = 0;
+                    return fsmEnterState(id, S_CONFIG_INIT);
                 }
 
                 // XXX: Send query
                 ASSERT(0);
             }
 
-        default:
-            break;
+        /*
+         * After all loading has finished, finalize any SysLFS state associated
+         * with this cube. This marks any in-progress groups as complete.
+         */
+        case S_FINALIZE:
+            // XXX
+            return fsmEnterState(id, S_COMPLETE);
+
+        /*
+         * Begin work on a new AssetConfiguration step, identified by
+         * the substate config.index.
+         *
+         * Here, we actually allocate the group if it isn't already present
+         * in SysLFS. If it is already present, we immediately skip to the
+         * next group.
+         */
+        case S_CONFIG_INIT:
+            while (1) {
+                unsigned index = cubeTaskSubstate[id].config.index;
+                unsigned configSize = userConfigSize[id];
+
+                if (index >= configSize) {
+                    // No more groups. Done loading this cube!
+                    return fsmEnterState(id, S_FINALIZE);
+                }
+
+                // Validate and load Configuration info
+                const _SYSAssetConfiguration *cfg = userConfig[id] + index;
+
+                AssetGroupInfo group;
+                if (!group.fromAssetConfiguration(cfg)) {
+                    // Bad Asset Group, skip this config
+                    cubeTaskSubstate[id].config.index = index + 1;
+                    continue;
+                }
+
+                _SYSAssetSlot slot = cfg->slot;
+                if (!VirtAssetSlots:isSlotBound(slot)) {
+                    // Bad slot, skip this config
+                    cubeTaskSubstate[id].config.index = index + 1;
+                    continue;
+                }
+                VirtAssetSlot &vSlot = VirtAssetSlots::getInstance(slot);
+
+                // Now search for the group, allocating it if it wasn't found.
+                _SYSCubeIDVector foundCV;
+                if (!VirtAssetSlots::locateGroup(group, bit, foundCV, &vSlot, &slotsInProgress)) {
+                    LOG(("ASSET[%d]: Unexpected allocation failure for Configuration index %d\n", id, index));
+                    cubeTaskSubstate[id].config.index = index + 1;
+                    continue;
+                }
+
+                // Was it already installed? Skip to the next.
+                if (foundCV) {
+                    ASSERT(foundCV == bit);
+                    cubeTaskSubstate[id].config.index = index + 1;
+                    continue;
+                }
+
+                // Can we install it instantly, via Asset Loader Bypass?
+                #ifdef SIFTEO_SIMULATOR
+                    if (loaderBypass(id, group)) {
+                        cubeTaskSubstate[id].config.index = index + 1;
+                        continue;
+                    }
+                #endif
+
+                // Okay, we have a group ready to install, and we know the base address!
+                return fsmEnterState(id, S_CONFIG_ADDR);
+            }
     }
 }
 
-void AssetLoader::fsmNextConfigurationStep(_SYSCubeID id)
-{
-    /*
-     * Begin the next step in trying to apply the chosen AssetConfiguration on one cube.
-     *
-     * This scans the AssetConfiguration and the current state of the cube, and takes
-     * the appropriate combination of immediate action and state transitions.
-     */
-
-    ASSERT(id < _SYS_NUM_CUBE_SLOTS);
-    _SYSCubeIDVector bit = Intrinsic::LZ(id);
-    const _SYSAssetConfiguration *config = userConfig[id];
-    unsigned configSize = userConfigSize[id];
-
-    // Cache not consistent? Check it out first.
-    if (0 == (bit & cacheCoherentCubes)) {
-        cubeTaskSubstate[id] = 0xFFFFFFFF << (32 - SysLFS::ASSET_SLOTS_PER_CUBE);
-        return fsmEnterState(id, S_CRC_COMMAND);
-    }
-
-    LOG(("XXX\n"));
-}

@@ -82,19 +82,41 @@ private:
     enum TaskState {
         S_RESET,          // Send a state machine reset token, and begin loading preparations
         S_RESET_WAIT,     // Wait for the cube's state machine to finish resetting
-        S_CRC_COMMAND,    // Waiting to send a CRC query for one slot (substate = slot bitmap)
-        S_CRC_RESPONSE,   // Waiting for a CRC query response
+
+        S_FINALIZE,       // Finalize SysLFS state after all loading is done
         S_COMPLETE,       // Done loading, nothing to do.
         S_ERROR,          // Internal consistency error; loading will stall.
+ 
+        S_CRC_COMMAND,    // Waiting to send a CRC query for one slot (substate = slot bitmap)
+        S_CRC_RESPONSE,   // Waiting for a CRC query response
+
+        S_CONFIG_INIT,    // Begin work on a Configuration step
+    };
+
+    // State-specific data
+    union SubState {
+        uint32_t value;
+
+        struct {
+            uint32_t remaining;
+        } crc;
+
+        struct {
+            uint8_t index;
+        } config;
     };
 
     // State machine (in assetloader_fsm.cpp)
     static void fsmEnterState(_SYSCubeID id, TaskState s);
     static void fsmTaskState(_SYSCubeID id, TaskState s);
-    static void fsmNextConfigurationStep(_SYSCubeID id);
 
     // Synchronous preparations (Happens while we're waiting for reset)
     static void prepareCubeForLoading(_SYSCubeID id);
+
+    // Simulation-only asset loader bypass hook
+    #ifdef SIFTEO_SIMULATOR
+    static bool loaderBypass(_SYSCubeID id, AssetGroupInfo &group);
+    #endif
 
     // Copy activeCubes to read-only userspace 'busyCubes' value.
     static ALWAYS_INLINE void updateActiveCubes()
@@ -116,8 +138,9 @@ private:
 
     // Task-owned cube state. Read-only from ISR.
     static uint8_t cubeTaskState[_SYS_NUM_CUBE_SLOTS];
-    static uint32_t cubeTaskSubstate[_SYS_NUM_CUBE_SLOTS];
+    static SubState cubeTaskSubstate[_SYS_NUM_CUBE_SLOTS];
     static SysTime::Ticks cubeDeadline[_SYS_NUM_CUBE_SLOTS];
+    static FlashLFSIndexRecord::KeyVector_t slotsInProgress;
 
     // ISR-owned cube state. Read-only from tasks.
     static uint8_t cubeBufferAvail[_SYS_NUM_CUBE_SLOTS];

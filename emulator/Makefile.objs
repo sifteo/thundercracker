@@ -33,6 +33,7 @@ LOCAL_OBJS = \
     src/lsdec.o \
     src/tinythread.o \
     src/wavefile.o \
+    src/mc_assetloader.o \
     src/mc_radio.o \
     src/mc_crc.o \
     src/mc_audiooutdevice.o \
