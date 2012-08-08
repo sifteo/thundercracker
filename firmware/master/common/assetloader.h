@@ -80,8 +80,10 @@ private:
     AssetLoader();  // Do not implement
 
     enum TaskState {
-        S_RESET,       // Send and wait for the cube's state machine to reset
-        S_COMPLETE,    // Done loading, nothing to do.
+        S_RESET,          // Send and wait for the cube's state machine to reset
+        S_CRC_COMMAND,    // Waiting to send a CRC query for one slot (substate = slot bitmap)
+        S_CRC_RESPONSE,   // Waiting for a CRC query response
+        S_COMPLETE,       // Done loading, nothing to do.
     };
 
     // State machine (in assetloader_fsm.cpp)
@@ -101,6 +103,7 @@ private:
 
     // Task-owned cube state. Read-only from ISR.
     static uint8_t cubeTaskState[_SYS_NUM_CUBE_SLOTS];
+    static uint32_t cubeTaskSubstate[_SYS_NUM_CUBE_SLOTS];
     static SysTime::Ticks cubeDeadline[_SYS_NUM_CUBE_SLOTS];
 
     // ISR-owned cube state. Read-only from tasks.

@@ -31,8 +31,8 @@ public:
     }
 
     static unsigned loadedBaseAddr(SvmMemory::VirtAddr group, _SYSCubeID cid);
-
 	static bool isValidConfig(const _SYSAssetConfiguration *cfg, unsigned cfgSize);
+	static unsigned totalTilesForPhysicalSlot(_SYSCubeID cid, unsigned slot);
 
 private:
     AssetUtil();  // Do not implement

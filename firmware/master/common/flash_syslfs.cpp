@@ -651,10 +651,10 @@ bool SysLFS::AssetSlotRecord::allocGroup(AssetGroupIdentity identity,
     return false;
 }
 
-unsigned SysLFS::AssetSlotRecord::tilesFree() const
+unsigned SysLFS::AssetSlotRecord::totalTiles() const
 {
     /*
-     * How much space is free in this slot, measuring in tiles?
+     * How much space is used in this slot, measuring in tiles?
      */
 
     // Refuse to allocate if a load was in progress.
@@ -676,7 +676,7 @@ unsigned SysLFS::AssetSlotRecord::tilesFree() const
         return 0;
     }
 
-    return TILES_PER_ASSET_SLOT - currentOffset;
+    return currentOffset;
 }
 
 bool SysLFS::AssetSlotRecord::isEmpty() const

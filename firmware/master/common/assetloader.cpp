@@ -16,6 +16,7 @@ uint8_t AssetLoader::userConfigSize[_SYS_NUM_CUBE_SLOTS];
 uint8_t AssetLoader::cubeTaskState[_SYS_NUM_CUBE_SLOTS];
 uint8_t AssetLoader::cubeBufferAvail[_SYS_NUM_CUBE_SLOTS];
 SysTime::Ticks AssetLoader::cubeDeadline[_SYS_NUM_CUBE_SLOTS];
+uint32_t AssetLoader::cubeTaskSubstate[_SYS_NUM_CUBE_SLOTS];
 _SYSCubeIDVector AssetLoader::activeCubes;
 _SYSCubeIDVector AssetLoader::startedCubes;
 _SYSCubeIDVector AssetLoader::cacheCoherentCubes;

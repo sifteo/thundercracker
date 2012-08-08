@@ -5,6 +5,8 @@
 
 #include "assetutil.h"
 #include "assetslot.h"
+#include "cubeslots.h"
+#include "cube.h"
 
 
 _SYSAssetGroupCube *AssetUtil::mapGroupCube(SvmMemory::VirtAddr group, _SYSCubeID cid)
@@ -87,4 +89,20 @@ bool AssetUtil::isValidConfig(const _SYSAssetConfiguration *cfg, unsigned cfgSiz
 	}
 
 	return true;
+}
+
+unsigned AssetUtil::totalTilesForPhysicalSlot(_SYSCubeID cid, unsigned slot)
+{
+	ASSERT(cid < _SYS_NUM_CUBE_SLOTS);
+	ASSERT(slot < SysLFS::ASSET_SLOTS_PER_CUBE);
+
+    SysLFS::Key cubeKey = CubeSlots::instances[cid].getCubeRecordKey();
+    SysLFS::Key slotKey = SysLFS::AssetSlotRecord::makeKey(cubeKey, slot);
+    SysLFS::AssetSlotRecord slotRecord;
+
+    if (SysLFS::read(slotKey, slotRecord))
+        return slotRecord.totalTiles();
+
+    // Slot not allocated
+    return 0;
 }

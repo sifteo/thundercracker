@@ -199,12 +199,16 @@ namespace SysLFS {
 
         bool findGroup(AssetGroupIdentity identity, unsigned &offset) const;
         bool allocGroup(AssetGroupIdentity identity, unsigned numTiles, unsigned &offset);
-        unsigned tilesFree() const;
+        unsigned totalTiles() const;
         bool isEmpty() const;
 
         void init();
         bool load(const FlashLFSObjectIter &iter);
         unsigned writeableSize() const;
+
+        unsigned ALWAYS_INLINE tilesFree() const {
+            return TILES_PER_ASSET_SLOT - totalTiles();
+        }
     };
 
     /*
