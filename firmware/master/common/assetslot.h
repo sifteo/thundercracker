@@ -9,6 +9,7 @@
 #include <sifteo/abi.h>
 #include "macros.h"
 #include "flash_syslfs.h"
+#include "svmmemory.h"
 
 struct MappedAssetGroup;
 
@@ -165,6 +166,7 @@ public:
 
     static bool locateGroup(const _SYSAssetGroupHeader &groupHeader,
                             const SysLFS::AssetGroupIdentity &groupID,
+                            SvmMemory::VirtAddr groupVA,
                             _SYSCubeIDVector searchCV,
                             _SYSCubeIDVector &foundCV,
                             const VirtAssetSlot *vSlot = 0,

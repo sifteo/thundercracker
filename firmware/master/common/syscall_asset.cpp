@@ -114,6 +114,9 @@ uint32_t _SYS_asset_findInCache(_SYSAssetGroup *group, _SYSCubeIDVector cv)
      * baseAddr is updated.
      */
 
+    // Capture user pointer prior to mapRAM
+    SvmMemory::VirtAddr groupVA = reinterpret_cast<SvmMemory::VirtAddr>(group);
+
     if (!isAligned(group)) {
         SvmRuntime::fault(F_SYSCALL_ADDR_ALIGN);
         return 0;
@@ -147,9 +150,10 @@ uint32_t _SYS_asset_findInCache(_SYSAssetGroup *group, _SYSCubeIDVector cv)
         return 0;
 
     _SYSCubeIDVector cachedCV;
-    if (!VirtAssetSlots::locateGroup(header, id, cv, cachedCV))
+    if (!VirtAssetSlots::locateGroup(header, id, groupVA, cv, cachedCV))
         return 0;
 
+    ASSERT((cachedCV & cv) == cachedCV);
     return cachedCV;
 }
 

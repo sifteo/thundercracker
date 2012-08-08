@@ -4,6 +4,7 @@
  */
 
 #include "assetslot.h"
+#include "assetutil.h"
 #include "cube.h"
 #include "cubeslots.h"
 #include "machine.h"
@@ -133,6 +134,7 @@ bool VirtAssetSlots::physSlotIsBound(_SYSCubeID cube, unsigned physSlot)
 
 bool VirtAssetSlots::locateGroup(const _SYSAssetGroupHeader &groupHeader,
                                  const SysLFS::AssetGroupIdentity &groupID,
+                                 SvmMemory::VirtAddr groupVA,
                                  _SYSCubeIDVector searchCV,
                                  _SYSCubeIDVector &foundCV,
                                  const VirtAssetSlot *vSlot,
@@ -220,8 +222,7 @@ bool VirtAssetSlots::locateGroup(const _SYSAssetGroupHeader &groupHeader,
             }
 
             // Map the cube-specific data for this group and this cube.
-            _SYSAssetGroupCube *agc = 0; // XXX
-
+            _SYSAssetGroupCube *agc = AssetUtil::mapGroupCube(groupVA, cube);
             if (!agc) {
                 // Bad pointer from userspace! Give up completely.
                 return false;
