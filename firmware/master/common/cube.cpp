@@ -284,21 +284,6 @@ void CubeSlot::radioAcknowledge(const PacketBuffer &packet)
         // This ACK includes a valid flash_fifo_bytes counter
 
         uint8_t loadACK = ack->flash_fifo_bytes - lastACK.flash_fifo_bytes;
-
-        DEBUG_LOG(("FLASH[%d]: Valid ACK for %d bytes (resetWait=%d, resetSent=%d)\n",
-            id(), loadACK,
-            !!(CubeSlots::flashResetWait & cv),
-            !!(CubeSlots::flashResetSent & cv)));
-
-        /*
-         * Acknowledge FIFO bytes
-         *
-         * Note that these ACKs may get lost; CubeCodec will explicitly request
-         * a resend if it's out of buffer space! (Normally dropped ACKs aren't
-         * an issue, since we'll have other ACKs in the pipeline. But if we hit
-         * a pipeline bubble and/or multiple ACKs drop in a row, we need to
-         * intervene)
-         */
         AssetLoader::ackData(id(), loadACK);
     }
 
