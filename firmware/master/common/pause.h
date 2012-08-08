@@ -3,13 +3,13 @@
 
 #include <stdint.h>
 #include "bits.h"
+#include "ui_coordinator.h"
 
 class Pause {
 public:
     enum WorkItems {
         ButtonPress,
         LowBattery,
-        CubeRange,
 
         NUM_WORK_ITEMS,         // Must be last
     };
@@ -17,13 +17,11 @@ public:
     static BitVector<NUM_WORK_ITEMS> taskWork;
 
     static void task();
-
-private:
-
-    static void buttonPress();
-    static void lowBattery();
     static void cubeRange();
 
+private:
+    static void buttonPress(UICoordinator &uic);
+    static void lowBattery();
 };
 
 #endif // PAUSE_H

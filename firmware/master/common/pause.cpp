@@ -5,11 +5,13 @@
 #include "homebutton.h"
 #include "led.h"
 #include "ledsequencer.h"
+#include "cube.h"
 
 #include "svmloader.h"
 #include "svmclock.h"
 
 #include "ui_pause.h"
+#include "ui_cuberange.h"
 #include "ui_shutdown.h"
 #include "ui_coordinator.h"
 
@@ -29,46 +31,49 @@ void Pause::task()
         switch (index) {
 
         case ButtonPress:
-            buttonPress();
+            // only want to execute on press, not release
+            if (HomeButton::isPressed()) {
+
+                const uint32_t excludedTasks =
+                    Intrinsic::LZ(Tasks::AudioPull) |
+                    Intrinsic::LZ(Tasks::Pause);
+                UICoordinator uic(excludedTasks);
+                buttonPress(uic);
+            }
             break;
 
         case LowBattery:
             lowBattery();
             break;
 
-        case CubeRange:
-            cubeRange();
-            break;
-
         }
     }
 }
 
-void Pause::buttonPress()
+void Pause::buttonPress(UICoordinator &uic)
 {
     /*
      * Long running button press handler.
-     * Execute the pause menu (UIPause).
+     * We may be running here as a result of one of several actions:
+     * - homebutton press during gameplay
+     * - cubes were reconnected while the cubeRange pause menu was being displayed
+     *
+     * The passed in UICoordinator should be configured based on system state
+     * when we initially entered any pause state.
      */
 
-    const uint32_t excludedTasks =
-        Intrinsic::LZ(Tasks::AudioPull)  |
-        Intrinsic::LZ(Tasks::Pause);
+    if (!SvmClock::isPaused())
+        SvmClock::pause();
 
-    if (!HomeButton::isPressed())
-        return;
-
-    SvmClock::pause();
-    LED::set(LEDPatterns::paused, true);
-
-    UICoordinator uic(excludedTasks);
-    UIPause uiPause(uic);
     UIShutdown uiShutdown(uic);
-    HomeButtonPressDetector press;
 
     // Immediate shutdown if the button is pressed from the launcher
     if (SvmLoader::getRunLevel() == SvmLoader::RUNLEVEL_LAUNCHER)
         return uiShutdown.mainLoop();
+
+    UIPause uiPause(uic);
+    LED::set(LEDPatterns::paused, true);
+    HomeButtonPressDetector press;
 
     do {
 
@@ -103,5 +108,49 @@ void Pause::lowBattery()
 
 void Pause::cubeRange()
 {
+    /*
+     * A disconnection event has brought the number of cubes connected
+     * to the system below the game's specified cube range.
+     *
+     * Pause until the user either connects enough cubes,
+     * or quits back to the launcher.
+     */
 
+    const uint32_t excludedTasks =
+        Intrinsic::LZ(Tasks::AudioPull)  |
+        Intrinsic::LZ(Tasks::Pause);
+
+    SvmClock::pause();
+    LED::set(LEDPatterns::paused, true);
+
+    UICoordinator uic(excludedTasks);
+    UICubeRange uiCubeRange(uic);
+
+    do {
+
+        uic.stippleCubes(uic.connectCubes());
+
+        if (uic.pollForAttach())
+            uiCubeRange.init();
+
+        uiCubeRange.animate();
+        uic.paint();
+
+    } while (CubeSlots::belowCubeRange() && !uiCubeRange.quitWasSelected());
+
+    /*
+     * 2 options: enough cubes were reconnected, or user selected quit.
+     *
+     * If cubes were reconnected, we transition to the pause menu.
+     * If quit, then quit :)
+     */
+
+    if (uiCubeRange.quitWasSelected()) {
+        uic.restoreCubes(uic.uiConnected);
+        LED::set(LEDPatterns::idle);
+        SvmClock::resume();
+        SvmLoader::exit();
+    } else {
+        buttonPress(uic);
+    }
 }
