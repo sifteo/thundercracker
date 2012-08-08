@@ -73,4 +73,4 @@ void UIPause::disableGameMenu()
 {
     gameMenuLabel[0] = '\0';
     ASSERT(!hasGameMenu());
-};
+}
