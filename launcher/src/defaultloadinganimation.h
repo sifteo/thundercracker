@@ -15,6 +15,8 @@
 class DefaultLoadingAnimation : public ProgressDelegate
 {
 public:
+    DefaultLoadingAnimation();
+
     virtual void begin(Sifteo::CubeSet cubes);
     virtual void paint(Sifteo::CubeSet cubes, int percent);
 

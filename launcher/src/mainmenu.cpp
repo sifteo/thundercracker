@@ -306,7 +306,7 @@ void MainMenu::updateConnecting()
      * Let cubes participate in the loading animation until the whole load is done
      */
 
-    if (loadingCubes.empty()) {
+    if (!loadingCubes.empty()) {
         if (loader.isComplete()) {
             // Loading is done!
 
