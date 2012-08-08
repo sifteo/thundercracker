@@ -35,7 +35,6 @@ public:
 	static unsigned totalTilesForPhysicalSlot(_SYSCubeID cid, unsigned slot);
 
 	static bool isValidConfig(const _SYSAssetConfiguration *cfg, unsigned cfgSize);
-	static void eraseSlotsForConfig(const _SYSAssetConfiguration *cfg, unsigned cfgSize);
 
 private:
     AssetUtil();  // Do not implement
@@ -121,17 +120,19 @@ private:
 struct AssetGroupInfo {
     SvmMemory::VirtAddr va;
     SvmMemory::VirtAddr headerVA;
-    _SYSAssetGroupHeader header;
+    uint32_t dataSize;
+    uint16_t numTiles;
+    uint8_t ordinal;
     FlashVolume volume;
     bool remapToVolume;
 
-    bool fromUserPointer(_SYSAssetGroup *group);
-    bool fromAssetConfiguration(_SYSAssetConfiguration *config);
+    bool fromUserPointer(const _SYSAssetGroup *group);
+    bool fromAssetConfiguration(const _SYSAssetConfiguration *config);
 
     SysLFS::AssetGroupIdentity identity() const
     {
     	SysLFS::AssetGroupIdentity result;
-    	result.ordinal = header.ordinal;
+    	result.ordinal = ordinal;
     	result.volume = volume.block.code;
     	return result;
     }

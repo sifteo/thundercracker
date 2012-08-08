@@ -80,7 +80,8 @@ private:
     AssetLoader();  // Do not implement
 
     enum TaskState {
-        S_RESET,          // Send and wait for the cube's state machine to reset
+        S_RESET,          // Send a state machine reset token, and begin loading preparations
+        S_RESET_WAIT,     // Wait for the cube's state machine to finish resetting
         S_CRC_COMMAND,    // Waiting to send a CRC query for one slot (substate = slot bitmap)
         S_CRC_RESPONSE,   // Waiting for a CRC query response
         S_COMPLETE,       // Done loading, nothing to do.
@@ -91,6 +92,17 @@ private:
     static void fsmEnterState(_SYSCubeID id, TaskState s);
     static void fsmTaskState(_SYSCubeID id, TaskState s);
     static void fsmNextConfigurationStep(_SYSCubeID id);
+
+    // Synchronous preparations (Happens while we're waiting for reset)
+    static void prepareCubeForLoading(_SYSCubeID id);
+
+    // Copy activeCubes to read-only userspace 'busyCubes' value.
+    static ALWAYS_INLINE void updateActiveCubes()
+    {
+        _SYSAssetLoader *localUserLoader = userLoader;
+        if (localUserLoader)
+            localUserLoader->busyCubes = activeCubes;
+    }
 
     // Data from userspace
     static _SYSAssetLoader *userLoader;

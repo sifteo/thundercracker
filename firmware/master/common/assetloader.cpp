@@ -6,6 +6,7 @@
 #include <protocol.h>
 #include "assetloader.h"
 #include "assetutil.h"
+#include "assetslot.h"
 #include "radio.h"
 #include "cubeslots.h"
 #include "tasks.h"
@@ -55,6 +56,7 @@ void AssetLoader::cancel(_SYSCubeIDVector cv)
     // Undo the effects of 'start'. Make this cube inactive, and don't auto-restart it.
     Atomic::And(startedCubes, ~cv);
     Atomic::And(activeCubes, ~cv);
+    updateActiveCubes();
 }
 
 void AssetLoader::cubeConnect(_SYSCubeID id)
@@ -89,6 +91,7 @@ void AssetLoader::cubeDisconnect(_SYSCubeID id)
     _SYSCubeIDVector bit = Intrinsic::LZ(id);
     Atomic::And(activeCubes, ~bit);
     Atomic::And(cacheCoherentCubes, ~bit);
+    updateActiveCubes();
 }
 
 void AssetLoader::start(_SYSAssetLoader *loader, const _SYSAssetConfiguration *cfg,
@@ -115,11 +118,22 @@ void AssetLoader::start(_SYSAssetLoader *loader, const _SYSAssetConfiguration *c
         userConfigSize[id] = cfgSize;
 
         fsmEnterState(id, S_RESET);
+
+        // Zero out the _SYSAssetLoaderCube.
+        _SYSAssetLoaderCube *lc = AssetUtil::mapLoaderCube(loader, id);
+        if (lc) {
+            memset(lc, 0, sizeof *lc);
+        } else {
+            // Complain just via logging. We're too far in to stop now,
+            // though this will obviously prevent the load from making progress.
+            LOG(("ASSET[%d]: Cannot map _SYSAssetLoaderCube. Bad _SYSAssetLoader address.\n", id));
+        }
     }
 
     // Atomically enable these cubes
     Atomic::Or(startedCubes, cv);
     Atomic::Or(activeCubes, cv);
+    updateActiveCubes();
 
     // Poke our task, if necessary
     Tasks::trigger(Tasks::AssetLoader);
@@ -147,7 +161,7 @@ void AssetLoader::ackData(_SYSCubeID id, unsigned bytes)
     buffer += bytes;
 
     if (buffer > FLS_FIFO_USABLE) {
-        LOG(("FLASH[%d]: Acknowledged more data than sent (%d + %d > %d)\n",
+        LOG(("ASSET[%d]: Acknowledged more data than sent (%d + %d > %d)\n",
             id, buffer - bytes, bytes, FLS_FIFO_USABLE));
         buffer = FLS_FIFO_USABLE;
     }
@@ -258,6 +272,105 @@ void AssetLoader::task()
     }
 }
 
+void AssetLoader::prepareCubeForLoading(_SYSCubeID id)
+{
+    /*
+     * This is called in Task context, while we're waiting for a state machine reset.
+     *
+     * Here, our job is to do all of the preparation work necessary prior to asset
+     * loading, without actually sending any data to the cubes yet. This work will
+     * be re-done if the cube reconnects.
+     *
+     * Work we do here:
+     *
+     *   1. Erase asset slots, if necessary
+     *   2. Reset the cube's progress meter, calculating a fresh total
+     *
+     * Note that the _SYSAssetLoaderCube was already zero'ed in start().
+     */
+
+    unsigned dataSizeWithoutErase[_SYS_ASSET_SLOTS_PER_BANK];
+    unsigned dataSizeWithErase[_SYS_ASSET_SLOTS_PER_BANK];
+    int tilesFree[_SYS_ASSET_SLOTS_PER_BANK];
+    unsigned numSlots = VirtAssetSlots::getNumBoundSlots();
+    _SYSCubeIDVector bit = Intrinsic::LZ(id);
+
+    for (unsigned slot = 0; slot < numSlots; ++slot) {
+        tilesFree[slot] = VirtAssetSlots::getInstance(slot).tilesFree(bit);
+        dataSizeWithoutErase[slot] = 0;
+        dataSizeWithErase[slot] = 0;
+    }
+
+    /*
+     * Simulate how much space would be free in each asset slot if we started
+     * loading the Configuration, and simulate how much total data transfer
+     * would occur both with and without erasing the slot.
+     *
+     * As we track the free tiles, we'll eventually know whether the slot needs
+     * to be erased or not. This will determine which dataSize totals we'll use
+     * for the progress calculations.
+     *
+     * Note: We find out, during this process, about which groups are loaded
+     * already and which aren't. We could store that information for later, but
+     * it would be quite large in the worst-case: hundreds of bytes just for
+     * a bitmap. The bottom line is that AssetConfigurations are large objects
+     * from our point of view, and we can't afford to store anything that scales
+     * at the same rate. So we're stuck doing this load test twice.
+     */
+
+    const _SYSAssetConfiguration *cfg = userConfig[id];
+    const _SYSAssetConfiguration *cfgEnd = cfg + userConfigSize[id];
+    for (; cfg != cfgEnd; ++cfg) {
+
+        AssetGroupInfo group;
+        if (!group.fromAssetConfiguration(cfg))
+            continue;
+
+        unsigned slot = cfg->slot;
+        if (slot >= numSlots) {
+            LOG(("ASSET: Bad slot number %d in _SYSAssetConfiguration\n", slot));
+            continue;
+        }
+
+        _SYSCubeIDVector cachedCV;
+        if (VirtAssetSlots::locateGroup(group, bit, cachedCV) && cachedCV == bit) {
+            // This group is already loaded; only need to resend if we're erasing.
+
+            dataSizeWithErase[slot] += group.dataSize;
+
+        } else {
+            // Not already loaded. We need to send it unconditionally, and it counts
+            // against our tilesFree total.
+
+            dataSizeWithErase[slot] += group.dataSize;
+            dataSizeWithoutErase[slot] += group.dataSize;
+            tilesFree[slot] -= roundup<_SYS_ASSET_GROUP_SIZE_UNIT>(group.numTiles);
+        }
+    }
+
+    /*
+     * Now iterate over slots, erasing if necessary, and setting up
+     * the progress totals.
+     */
+
+    for (unsigned slot = 0; slot < numSlots; ++slot) {
+        unsigned dataSize;
+
+        if (tilesFree[slot] < 0) {
+            // Underflow! Erase the slot.
+            VirtAssetSlots::getInstance(slot).erase(bit);
+            dataSize = dataSizeWithErase[slot];
+        } else {
+            dataSize = dataSizeWithoutErase[slot];
+        }
+
+        _SYSAssetLoaderCube *lc = AssetUtil::mapLoaderCube(userLoader, id);
+        if (lc) {
+            lc->progress = 0;
+            lc->total = dataSize;
+        }
+    }
+}
 
 #if 0
 

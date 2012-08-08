@@ -244,7 +244,7 @@ bool VirtAssetSlots::locateGroup(const AssetGroupInfo &group,
 
             if (allocVec) {
                 // Try to allocate the group
-                if (!asr.allocGroup(group.identity(), group.header.numTiles, offset)) {
+                if (!asr.allocGroup(group.identity(), group.numTiles, offset)) {
                     // We know for sure that there isn't any room left. Abort!
                     return false;
                 }

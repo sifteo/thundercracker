@@ -16,6 +16,7 @@ void AssetLoader::fsmEnterState(_SYSCubeID id, TaskState s)
 {
     /*
      * Enter a new specified TaskState.
+     * Can run either from ISR or Task context!
      */
 
     ASSERT(id < _SYS_NUM_CUBE_SLOTS);
@@ -57,10 +58,18 @@ void AssetLoader::fsmTaskState(_SYSCubeID id, TaskState s)
     switch (s) {
 
         /*
+         * Just sent a reset token. Before we go to S_RESET_WAIT state,
+         * take advantage of this otherwise-wasted time to do some local
+         * preparation work.
+         */
+        case S_RESET:
+            return prepareCubeForLoading(id);
+
+        /*
          * Waiting for a flash reset, as acknowledged by resetAckCubes bits.
          * If we time out, re-enter the S_RESET state to try again.
          */
-        case S_RESET:
+        case S_RESET_WAIT:
             if (resetAckCubes & bit) {
                 // Done with reset! We know the device's FIFO is empty now.
                 cubeBufferAvail[id] = FLS_FIFO_USABLE;
@@ -68,7 +77,7 @@ void AssetLoader::fsmTaskState(_SYSCubeID id, TaskState s)
                 ASSERT(cubeTaskState[id] != S_RESET);
 
             } else if (SysTime::ticks() > cubeDeadline[id]) {
-                LOG(("FLASH[%d]: Reset timeout\n", id));
+                LOG(("ASSET[%d]: Flash state reset timeout\n", id));
                 fsmEnterState(id, S_RESET);
 
             } else {
@@ -134,13 +143,6 @@ void AssetLoader::fsmNextConfigurationStep(_SYSCubeID id)
         cubeTaskSubstate[id] = 0xFFFFFFFF << (32 - SysLFS::ASSET_SLOTS_PER_CUBE);
         return fsmEnterState(id, S_CRC_COMMAND);
     }
-
-    /*
-     * First step: See if we need to erase any slots. This is a self-contained
-     * synchronous operation, we just need SysLFS and the Configuration.
-     */
-
-    AssetUtil::eraseSlotsForConfig(config, configSize);
 
     LOG(("XXX\n"));
 }

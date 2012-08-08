@@ -122,6 +122,11 @@ public:
         return slot < numBoundSlots;
     }
 
+    static unsigned getNumBoundSlots() {
+        ASSERT(numBoundSlots <= NUM_SLOTS);
+        return numBoundSlots;
+    }
+
     // Rebind all slots to a different volume, and change the number of active slots
     static void bind(FlashVolume volume, unsigned numSlots);
 

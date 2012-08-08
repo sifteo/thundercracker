@@ -73,24 +73,31 @@ bool AssetUtil::isValidConfig(const _SYSAssetConfiguration *cfg, unsigned cfgSiz
 		if (volHandle) {
 			// Make sure the handle is signed and this is a real volume
 			FlashVolume volume(volHandle);
-			if (!volume.isValid())
+			if (!volume.isValid()) {
+				LOG(("ASSET: Bad volume handle 0x%08x in _SYSAssetConfiguration\n", volHandle));
 				return false;
+			}
 		}
 
-		if (!SvmMemory::mapRAM(groupVA, sizeof(_SYSAssetGroup), groupPA))
+		if (!SvmMemory::mapRAM(groupVA, sizeof(_SYSAssetGroup), groupPA)) {
+			LOG(("ASSET: Bad _SYSAssetGroup pointer 0x%08x in _SYSAssetConfiguration\n", unsigned(groupVA)));
 			return false;
+		}
 
-		if (slot >= _SYS_ASSET_SLOTS_PER_BANK)
-			return false;
-
-	    if (!VirtAssetSlots::isSlotBound(slot))
+		if (slot >= _SYS_ASSET_SLOTS_PER_BANK || !VirtAssetSlots::isSlotBound(slot)) {
+			LOG(("ASSET: Bad slot number %d in _SYSAssetConfiguration\n", slot));
 	    	return false;
+	    }
 
-		if (count.slotGroups[slot] >= _SYS_ASSET_GROUPS_PER_SLOT)
+		if (count.slotGroups[slot] >= _SYS_ASSET_GROUPS_PER_SLOT) {
+			LOG(("ASSET: Bad _SYSAssetConfiguration, too many groups in slot %d\n", slot));
 			return false;
+		}
 
-		if (unsigned(count.slotTiles[slot]) + numTiles >= _SYS_TILES_PER_ASSETSLOT)
+		if (unsigned(count.slotTiles[slot]) + numTiles >= _SYS_TILES_PER_ASSETSLOT) {
+			LOG(("ASSET: Bad _SYSAssetConfiguration, too many tiles in slot %d\n", slot));
 			return false;
+		}
 
 		count.slotGroups[slot]++;
 		count.slotTiles[slot] += numTiles;
@@ -118,51 +125,13 @@ unsigned AssetUtil::totalTilesForPhysicalSlot(_SYSCubeID cid, unsigned slot)
     return 0;
 }
 
-void AssetUtil::eraseSlotsForConfig(const _SYSAssetConfiguration *cfg, unsigned cfgSize)
-{
-	// Simulate the amount of free space after loading each group
-	unsigned tilesFree[_SYS_ASSET_SLOTS_PER_BANK];
-
-	for (unsigned i = 0; i < arraysize(tilesFree); ++i)
-		tilesFree[i] = _SYS_TILES_PER_ASSETSLOT;
-
-	while (cfgSize) {
-		#if 0
-		unsigned numTiles = roundup<_SYS_ASSET_GROUP_SIZE_UNIT>(cfg->numTiles);
-		unsigned slot = cfg->slot;
-
-		SvmMemory::VirtAddr groupVA = cfg->pGroup;
-		SvmMemory::PhysAddr groupPA;
-
-		if (!SvmMemory::mapRAM(groupVA, sizeof(_SYSAssetGroup), groupPA))
-			return false;
-
-		if (slot >= _SYS_ASSET_SLOTS_PER_BANK)
-			return false;
-
-	    if (!VirtAssetSlots::isSlotBound(slot))
-	    	return false;
-
-		if (count.slotGroups[slot] >= _SYS_ASSET_GROUPS_PER_SLOT)
-			return false;
-
-		if (unsigned(count.slotTiles[slot]) + numTiles >= _SYS_TILES_PER_ASSETSLOT)
-			return false;
-
-		count.slotGroups[slot]++;
-		count.slotTiles[slot] += numTiles;
-		#endif
-
-		cfg++;
-		cfgSize--;
-	}
-}
-
-bool AssetGroupInfo::fromUserPointer(_SYSAssetGroup *group)
+bool AssetGroupInfo::fromUserPointer(const _SYSAssetGroup *group)
 {
 	/*
 	 * 'group' is a userspace pointer, in the current volume.
 	 * We raise a fault and return false on error.
+	 *
+	 * Here we map the group header from flash and read metadata out of it.
 	 */
 
 	// These groups never use volume remapping
@@ -183,10 +152,15 @@ bool AssetGroupInfo::fromUserPointer(_SYSAssetGroup *group)
     SvmMemory::VirtAddr localHeaderVA = group->pHdr;
     headerVA = localHeaderVA;
 
+    _SYSAssetGroupHeader header;
     if (!SvmMemory::copyROData(header, localHeaderVA)) {
         SvmRuntime::fault(F_SYSCALL_ADDRESS);
         return false;
     }
+
+    dataSize = header.dataSize;
+    numTiles = header.numTiles;
+    ordinal = header.ordinal;
 
 	volume = SvmLoader::volumeForVA(localHeaderVA);
     if (!volume.block.isValid()) {
@@ -197,7 +171,7 @@ bool AssetGroupInfo::fromUserPointer(_SYSAssetGroup *group)
     return true;
 }
 
-bool AssetGroupInfo::fromAssetConfiguration(_SYSAssetConfiguration *config)
+bool AssetGroupInfo::fromAssetConfiguration(const _SYSAssetConfiguration *config)
 {
 	/*
 	 * The 'config' here has already been validated and mapped, but none of
@@ -217,7 +191,7 @@ bool AssetGroupInfo::fromAssetConfiguration(_SYSAssetConfiguration *config)
 	 * it doesn't need to be particularly friendly, since at this point we should
 	 * only be hitting very obscure bugs or intentionally malicious code.
 	 *
-	 * On error, we return 'false' but do NOT raise any faults.
+	 * On error, we return 'false' but do NOT raise any faults. We just log them.
 	 */
 
 	// Must read these userspace fields exactly once
@@ -229,8 +203,15 @@ bool AssetGroupInfo::fromAssetConfiguration(_SYSAssetConfiguration *config)
 
 	// Local copy of _SYSAssetGroup itself
 	_SYSAssetGroup group;
-	if (!SvmMemory::copyROData(group, groupVA))
+	if (!SvmMemory::copyROData(group, groupVA)) {
+		LOG(("ASSET: Bad group pointer 0x%08x in _SYSAssetConfiguration\n", unsigned(groupVA)));
 		return false;
+	}
+
+	// Save information originally from the header, copied to 'config' by userspace
+	dataSize = config->dataSize;
+	numTiles = config->numTiles;
+	ordinal = config->ordinal;
 
 	// Save header VA, from the _SYSAssetGroup
 	SvmMemory::VirtAddr localHeaderVA = group.pHdr;
@@ -244,19 +225,20 @@ bool AssetGroupInfo::fromAssetConfiguration(_SYSAssetConfiguration *config)
 	     */
 
 	    FlashVolume localVolume(volHandle);
-
-	    if (!localVolume.isValid())
+	    if (!localVolume.isValid()) {
+	    	LOG(("ASSET: Bad volume handle 0x%08x in _SYSAssetConfiguration\n", volHandle));
 	    	return false;
+	    }
+
+	    uint32_t offset = localHeaderVA - SvmMemory::SEGMENT_1_VA;
+	    if (offset >= FlashMap::NUM_BYTES - sizeof(_SYSAssetGroupHeader)) {
+	    	LOG(("ASSET: Header VA 0x%08x in _SYSAssetConfiguration not in SEGMENT_1\n",
+	    		 unsigned(localHeaderVA)));
+	    	return false;
+	    }
 
 	    volume = localVolume;
 	    remapToVolume = true;
-
-		// Read the header using lower-level FlashVolume primitives.
-	   	uint32_t offset = localHeaderVA - SvmMemory::SEGMENT_1_VA;
-	    FlashBlockRef mapRef;
-	    FlashMapSpan span = localVolume.getPayload(mapRef);
-	    if (!span.copyBytes(offset, (uint8_t*) &header, sizeof header))
-	    	return false;
 
 	} else {
 		/*
@@ -267,14 +249,15 @@ bool AssetGroupInfo::fromAssetConfiguration(_SYSAssetConfiguration *config)
 		 * fake mapping :)
 		 */
 
-		remapToVolume = false;
+	    FlashVolume localVolume = SvmLoader::volumeForVA(localHeaderVA);
+	    if (!localVolume.block.isValid()) {
+	       	LOG(("ASSET: Bad local header VA 0x%08x in _SYSAssetConfiguration\n",
+	       		unsigned(localHeaderVA)));
+	    	return false;
+	    }
 
-		volume = SvmLoader::volumeForVA(localHeaderVA);
-	    if (!volume.block.isValid())
-	        return false;
-
-	 	if (!SvmMemory::copyROData(header, localHeaderVA))
-	 		return false;
+	    volume = localVolume;
+	    remapToVolume = false;
 	}
 
 	return true;
