@@ -164,6 +164,7 @@ void AssetLoader::ackData(_SYSCubeID id, unsigned bytes)
     }
 
     cubeBufferAvail[id] = buffer;
+    Tasks::trigger(Tasks::AssetLoader);
 }
 
 bool AssetLoader::needFlashPacket(_SYSCubeID id)
@@ -267,6 +268,20 @@ void AssetLoader::task()
 
         fsmTaskState(id, TaskState(cubeTaskState[id]));
     }
+}
+
+void AssetLoader::heartbeat()
+{
+    /*
+     * If any loads are still active, trigger the task so that
+     * we can check for timeouts. Normally our task is only triggered
+     * when meaningful external inputs (syscalls or ACKs) happen, but
+     * we do need to poll occasionally to check for timeouts. We can
+     * do this at a low rate, thanks to the heartbeat timer.
+     */
+
+    if (userLoader && activeCubes)
+        Tasks::trigger(Tasks::AssetLoader);
 }
 
 void AssetLoader::prepareCubeForLoading(_SYSCubeID id)
@@ -373,31 +388,6 @@ void AssetLoader::prepareCubeForLoading(_SYSCubeID id)
 #if 0
 
 
-//////////////////////////
-
-    /*
-     * If we need to send an address command, send that first. If we can
-     * still cram in some actual loadstream data, awesome, but this is
-     * the only part that must succeed.
-     */
-
-    if (flashAddrPending) {
-        ASSERT(buf.bytesFree() >= 3);
-
-        // Opcode, lat1, lat2:a21
-        ASSERT(baseAddr < 0x8000);
-        buf.append(0xe1);
-        buf.append(baseAddr << 1);
-        buf.append(((baseAddr >> 6) & 0xfe) | ((baseAddr >> 14) & 1));
-
-        Atomic::And(CubeSlots::flashAddrPending, ~cubeBit);
-        ASSERT(count >= 3);
-        ASSERT(loadBufferAvail >= 3);
-        count -= 3;
-        loadBufferAvail -= 3;
-        if (!count)
-            return true;
-    }
 
 ////////////////////////
 

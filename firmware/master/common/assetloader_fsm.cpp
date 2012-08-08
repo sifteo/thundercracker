@@ -89,10 +89,6 @@ void AssetLoader::fsmTaskState(_SYSCubeID id, TaskState s)
             } else if (SysTime::ticks() > cubeDeadline[id]) {
                 LOG(("ASSET[%d]: Flash state reset timeout\n", id));
                 fsmEnterState(id, S_RESET);
-
-            } else {
-                // Keep waiting
-                Tasks::trigger(Tasks::AssetLoader);
             }
             return;
 
@@ -199,6 +195,13 @@ void AssetLoader::fsmTaskState(_SYSCubeID id, TaskState s)
                 // Okay, we have a group ready to install, and we know the base address!
                 return fsmEnterState(id, S_CONFIG_ADDR);
             }
+
+        /*
+         * Send an Address command for the current group, if there's space in the FIFO.
+         */
+        case S_CONFIG_ADDR:
+
+
 
         default:
             return;

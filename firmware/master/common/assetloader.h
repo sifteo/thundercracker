@@ -52,8 +52,9 @@ public:
     static void ackReset(_SYSCubeID id);
     static void ackData(_SYSCubeID id, unsigned bytes);
 
-    /// Tasks::AssetLoader callback
+    /// Tasks callbacks
     static void task();
+    static void heartbeat();
 
     /// Return the current _SYSAssetLoader, if any is attached, or NULL if we're unattached.
     static ALWAYS_INLINE _SYSAssetLoader *getUserLoader() {
