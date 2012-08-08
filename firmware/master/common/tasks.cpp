@@ -8,7 +8,7 @@
 #include "audiomixer.h"
 #include "svmdebugger.h"
 #include "cubeslots.h"
-#include "homebutton.h"
+#include "pause.h"
 #include "cubeconnector.h"
 #include "radio.h"
 #include "batterylevel.h"
@@ -48,7 +48,7 @@ ALWAYS_INLINE void Tasks::taskInvoke(unsigned id)
         case Tasks::AudioPull:      return AudioMixer::pullAudio();
         case Tasks::Debugger:       return SvmDebugger::messageLoop();
         case Tasks::AssetLoader:    return CubeSlots::assetLoaderTask();
-        case Tasks::HomeButton:     return HomeButton::task();
+        case Tasks::Pause:          return Pause::task();
         case Tasks::CubeConnector:  return CubeConnector::task();
         case Tasks::Heartbeat:      return heartbeatTask();
     #endif

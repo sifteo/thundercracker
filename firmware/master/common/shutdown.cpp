@@ -66,7 +66,7 @@ void ShutdownManager::shutdown()
 	 */
 
 	batteryPowerOn();
-	Tasks::cancel(Tasks::HomeButton);
+    Tasks::cancel(Tasks::Pause);
 	CubeConnector::enableReconnect();
 	RadioManager::enableRadio();
 	SvmLoader::execLauncher();

@@ -2,6 +2,7 @@
 #include <glfw.h>
 #include "tasks.h"
 #include "macros.h"
+#include "pause.h"
 
 namespace HomeButton
 {
@@ -18,7 +19,8 @@ void setPressed(bool value)
 {
     if (state != value) {
         state = value;
-        Tasks::trigger(Tasks::HomeButton);
+        Pause::taskWork.atomicMark(Pause::ButtonPress);
+        Tasks::trigger(Tasks::Pause);
     }
 }
 
@@ -27,6 +29,4 @@ bool isPressed()
     return state;
 }
 
-
 } // namespace HomeButton
-

@@ -112,7 +112,7 @@ void _SYS_shutdown(uint32_t flags)
 {
     const uint32_t excludedTasks =
         Intrinsic::LZ(Tasks::AudioPull)  |
-        Intrinsic::LZ(Tasks::HomeButton);
+        Intrinsic::LZ(Tasks::Pause);
 
     SvmClock::pause();
 
