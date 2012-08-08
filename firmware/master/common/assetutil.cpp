@@ -262,3 +262,77 @@ bool AssetGroupInfo::fromAssetConfiguration(const _SYSAssetConfiguration *config
 
 	return true;
 }
+
+unsigned AssetFIFO::fetchFromGroup(_SYSAssetLoaderCube &sys, AssetGroupInfo &group, unsigned offset)
+{
+	/*
+	 * Fetch asset data from an AssetGroupInfo. If 'remapToVolume' is set,
+	 * the supplied VA is relative to SEGMENT_1, and we interpret it as an
+	 * offset into a specified volume which may not be mapped into SVM's
+	 * virtual address space.
+	 *
+	 * If 'remapToVolume' is not set, we treat headerVA as a normal SVM
+	 * virtual address.
+	 *
+	 * Starts reading from the group at 'offset'. Returns the actual number
+	 * of bytes transferred into the FIFO, which may be limited either by
+	 * available FIFO space or by running out of asset data.
+	 */
+
+	/*
+	 * For better optimization, we keep a local AssetFIFO instance on the stack.
+	 * Most uses of 'head' and 'count' should totally optimize out.
+	 */
+	AssetFIFO fifo(sys);
+
+	unsigned dataSize = group.dataSize;
+	if (offset >= dataSize)
+		return 0;
+
+	unsigned actualSize = MIN(dataSize - offset, fifo.writeAvailable());
+	if (!actualSize)
+		return 0;
+
+	SvmMemory::VirtAddr va = group.headerVA + sizeof(_SYSAssetGroupHeader) + offset;
+
+	if (group.remapToVolume) {
+		// Copy using low-level FlashMap primitives, without using the SVM address space
+
+		FlashBlockRef mapRef, dataRef;
+		FlashMapSpan span = group.volume.getPayload(mapRef);		
+		va -= SvmMemory::SEGMENT_1_VA;
+	    unsigned remaining = actualSize;
+
+		do {
+			unsigned chunk = MIN(remaining, _SYS_ASSETLOAD_BUF_SIZE - fifo.tail);
+			span.copyBytes(dataRef, va, &fifo.sys.buf[fifo.tail], chunk);
+			remaining -= chunk;
+			va += chunk;
+			fifo.tail += chunk;
+			ASSERT(fifo.tail <= _SYS_ASSETLOAD_BUF_SIZE);
+	        if (++fifo.tail == _SYS_ASSETLOAD_BUF_SIZE)
+	            fifo.tail = 0;
+	    } while (remaining);
+
+	} else {
+		// Treat the source as a normal SVM virtual address
+
+	    FlashBlockRef dataRef;
+	    unsigned remaining = actualSize;
+
+		do {
+			unsigned chunk = MIN(remaining, _SYS_ASSETLOAD_BUF_SIZE - fifo.tail);
+			SvmMemory::copyROData(dataRef, &fifo.sys.buf[fifo.tail], va, chunk);
+			remaining -= chunk;
+			va += chunk;
+			fifo.tail += chunk;
+			ASSERT(fifo.tail <= _SYS_ASSETLOAD_BUF_SIZE);
+	        if (++fifo.tail == _SYS_ASSETLOAD_BUF_SIZE)
+	            fifo.tail = 0;
+	    } while (remaining);
+	}
+
+	fifo.commitWrites();
+	return actualSize;
+}
+

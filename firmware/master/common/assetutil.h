@@ -42,73 +42,6 @@ private:
 
 
 /**
- * This is an access utility for _SYSAssetLoaderCube FIFOs. It's a short-lived
- * object which holds a consistent local copy of the FIFO's state, and provides
- * safe accessors for reading and writing it.
- */
-
-class AssetFIFO {
-public:
-	ALWAYS_INLINE AssetFIFO(_SYSAssetLoaderCube &sys)
-		: sys(sys), head(sys.head), tail(sys.tail)
-	{
-		// Must clamp the head and tail pointer, since we can't trust userspace.
-		ASSERT(head < _SYS_ASSETLOAD_BUF_SIZE);
-		ASSERT(tail < _SYS_ASSETLOAD_BUF_SIZE);
-		head = MIN(head, _SYS_ASSETLOAD_BUF_SIZE - 1);
-		tail = MIN(tail, _SYS_ASSETLOAD_BUF_SIZE - 1);
-		count = umod(tail - head, _SYS_ASSETLOAD_BUF_SIZE);
-		ASSERT(count < _SYS_ASSETLOAD_BUF_SIZE);
-	}
-
-	ALWAYS_INLINE unsigned readAvailable() const {
-		return count;
-	}
-
-	ALWAYS_INLINE unsigned writeAvailable() const {
-		return (_SYS_ASSETLOAD_BUF_SIZE - 1) - count;
-	}
-
-	ALWAYS_INLINE uint8_t read()
-	{
-		ASSERT(head < _SYS_ASSETLOAD_BUF_SIZE);
-		ASSERT(count > 0);
-		uint8_t byte = sys.buf[head];
-		head++;
-        if (head == _SYS_ASSETLOAD_BUF_SIZE)
-            head = 0;
-        count--;
-        return byte;
-    }
-
-    ALWAYS_INLINE void write(uint8_t byte)
-    {
-		ASSERT(tail < _SYS_ASSETLOAD_BUF_SIZE);
-		ASSERT(count < (_SYS_ASSETLOAD_BUF_SIZE - 1));
-		sys.buf[tail] = byte;
-		tail++;
-        if (tail == _SYS_ASSETLOAD_BUF_SIZE)
-            tail = 0;
-        count++;
-    }
-
-    ALWAYS_INLINE void commitReads() const {
-    	sys.head = head;
-    }
-
-    ALWAYS_INLINE void commitWrites() const {
-    	sys.tail = tail;
-    }
-
-private:
-	_SYSAssetLoaderCube &sys;
-	unsigned head;
-	unsigned tail;
-	unsigned count;
-};
-
-
-/**
  * This object holds critical AssetGroup data which requires some
  * context-specific help to gather: A local copy of its header,
  * the full AssetGroupIdentity, and the virtual address of the
@@ -136,6 +69,73 @@ struct AssetGroupInfo {
     	result.volume = volume.block.code;
     	return result;
     }
+};
+
+
+/**
+ * This is an access utility for _SYSAssetLoaderCube FIFOs. It's a short-lived
+ * object which holds a consistent local copy of the FIFO's state, and provides
+ * safe accessors for reading and writing it.
+ */
+
+class AssetFIFO {
+public:
+	ALWAYS_INLINE AssetFIFO(_SYSAssetLoaderCube &sys)
+		: sys(sys), head(sys.head), tail(sys.tail)
+	{
+		// Must clamp the head and tail pointer, since we can't trust userspace.
+		ASSERT(head < _SYS_ASSETLOAD_BUF_SIZE);
+		ASSERT(tail < _SYS_ASSETLOAD_BUF_SIZE);
+		head = MIN(head, _SYS_ASSETLOAD_BUF_SIZE - 1);
+		tail = MIN(tail, _SYS_ASSETLOAD_BUF_SIZE - 1);
+		count = umod(tail - head, _SYS_ASSETLOAD_BUF_SIZE);
+		ASSERT(count < _SYS_ASSETLOAD_BUF_SIZE);
+	}
+
+	static unsigned fetchFromGroup(_SYSAssetLoaderCube &sys, AssetGroupInfo &group, unsigned offset);
+
+	ALWAYS_INLINE unsigned readAvailable() const {
+		return count;
+	}
+
+	ALWAYS_INLINE unsigned writeAvailable() const {
+		return (_SYS_ASSETLOAD_BUF_SIZE - 1) - count;
+	}
+
+	ALWAYS_INLINE uint8_t read()
+	{
+		ASSERT(head < _SYS_ASSETLOAD_BUF_SIZE);
+		ASSERT(count > 0);
+		uint8_t byte = sys.buf[head];
+        if (++head == _SYS_ASSETLOAD_BUF_SIZE)
+            head = 0;
+        count--;
+        return byte;
+    }
+
+    ALWAYS_INLINE void write(uint8_t byte)
+    {
+		ASSERT(tail < _SYS_ASSETLOAD_BUF_SIZE);
+		ASSERT(count < (_SYS_ASSETLOAD_BUF_SIZE - 1));
+		sys.buf[tail] = byte;
+        if (++tail == _SYS_ASSETLOAD_BUF_SIZE)
+            tail = 0;
+        count++;
+    }
+
+    ALWAYS_INLINE void commitReads() const {
+    	sys.head = head;
+    }
+
+    ALWAYS_INLINE void commitWrites() const {
+    	sys.tail = tail;
+    }
+
+private:
+	_SYSAssetLoaderCube &sys;
+	unsigned head;
+	unsigned tail;
+	unsigned count;
 };
 
 

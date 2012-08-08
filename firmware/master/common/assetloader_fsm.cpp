@@ -39,6 +39,7 @@ void AssetLoader::fsmEnterState(_SYSCubeID id, TaskState s)
          */
         case S_COMPLETE:
             Atomic::ClearLZ(activeCubes, id);
+            updateActiveCubes();
             return;
 
         default:
@@ -165,7 +166,7 @@ void AssetLoader::fsmTaskState(_SYSCubeID id, TaskState s)
                 }
 
                 _SYSAssetSlot slot = cfg->slot;
-                if (!VirtAssetSlots:isSlotBound(slot)) {
+                if (!VirtAssetSlots::isSlotBound(slot)) {
                     // Bad slot, skip this config
                     cubeTaskSubstate[id].config.index = index + 1;
                     continue;
@@ -198,6 +199,9 @@ void AssetLoader::fsmTaskState(_SYSCubeID id, TaskState s)
                 // Okay, we have a group ready to install, and we know the base address!
                 return fsmEnterState(id, S_CONFIG_ADDR);
             }
+
+        default:
+            return;
     }
 }
 

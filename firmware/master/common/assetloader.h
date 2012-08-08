@@ -9,8 +9,10 @@
 #include <sifteo/abi.h>
 #include "macros.h"
 #include "systime.h"
+#include "flash_syslfs.h"
 
 struct PacketBuffer;
+struct AssetGroupInfo;
 
 
 /**
@@ -91,6 +93,7 @@ private:
         S_CRC_RESPONSE,   // Waiting for a CRC query response
 
         S_CONFIG_INIT,    // Begin work on a Configuration step
+        S_CONFIG_ADDR,    // Sending load address
     };
 
     // State-specific data

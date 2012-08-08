@@ -373,133 +373,6 @@ void AssetLoader::prepareCubeForLoading(_SYSCubeID id)
 #if 0
 
 
-void CubeSlots::fetchAssetLoaderData(_SYSAssetLoaderCube *lc)
-{
-    /*
-     * Given a guaranteed-valid pointer to a _SYSAssetLoaderCube,
-     * try to top off the FIFO buffer with data from flash memory.
-     */
-
-    /*
-     * Sample the progress state exactly once, and figure out how much
-     * data can be copied into the FIFO right now.
-     */
-    uint32_t progress = lc->progress;
-    uint32_t dataSize = lc->dataSize;
-    if (progress > dataSize)
-        return;
-    unsigned count = MIN(fifoAvail, dataSize - progress);
-
-    // Nothing to do?
-    if (count == 0)
-        return;
-
-    // Follow the pAssetGroup pointer
-    SvmMemory::VirtAddr groupVA = lc->pAssetGroup;
-    SvmMemory::PhysAddr groupPA;
-    if (!SvmMemory::mapRAM(groupVA, sizeof(_SYSAssetGroup), groupPA))
-        return;
-    _SYSAssetGroup *G = reinterpret_cast<_SYSAssetGroup*>(groupPA);
-
-    /*
-     * Calculate the VA we're reading from in flash. We can do this without
-     * mapping the _SYSAssetGroupHeader at all, which avoids a bit of
-     * cache pollution.
-     */
-
-    SvmMemory::VirtAddr srcVA = G->pHdr + sizeof(_SYSAssetGroupHeader) + progress;
-
-    // Write to the FIFO.
-
-    FlashBlockRef ref;
-    progress += count;
-    while (count--) {
-        SvmMemory::copyROData(ref, &lc->buf[tail], srcVA, 1);
-        if (++tail == _SYS_ASSETLOAD_BUF_SIZE)
-            tail = 0;
-        srcVA++;
-    }
-
-    /*
-     * Order matters when writing back state: The CubeCodec detects
-     * completion by noticing that progress==dataSize and the FIFO is empty.
-     * To avoid it detecting a false positive, we must update 'progress'
-     * after writing 'tail'.
-     */
-    
-    lc->tail = tail;
-    Atomic::Barrier();
-    lc->progress = progress;
-    ASSERT(progress <= dataSize);
-}
-
-
-void CubeSlot::startAssetLoad(SvmMemory::VirtAddr groupVA, uint16_t baseAddr)
-{
-    /*
-     * Trigger the beginning of an asset group installation for this cube.
-     * There must be a SYSAssetLoader currently set.
-     */
-
-    // Translate and verify addresses
-    SvmMemory::PhysAddr groupPA;
-    if (!SvmMemory::mapRAM(groupVA, sizeof(_SYSAssetGroup), groupPA))
-        return;
-    _SYSAssetGroup *G = reinterpret_cast<_SYSAssetGroup*>(groupPA);
-    _SYSAssetLoader *L = CubeSlots::assetLoader;
-    if (!L) return;
-    _SYSAssetLoaderCube *LC = assetLoaderCube(L);
-    if (!LC) return;
-    _SYSAssetGroupCube *GC = assetGroupCube(G);
-    if (!GC) return;
-
-    // Read (cached) asset group header. Must be valid.
-    const _SYSAssetGroupHeader *headerVA =
-        reinterpret_cast<const _SYSAssetGroupHeader*>(G->pHdr);
-    _SYSAssetGroupHeader header;
-    if (!SvmMemory::copyROData(header, headerVA))
-        return;
-
-    // Because we're storing this in a 32-bit struct field, squash groupVA
-    SvmMemory::squashPhysicalAddr(groupVA);
-
-    // Initialize state
-    Atomic::ClearLZ(L->complete, id());
-    GC->baseAddr = baseAddr;
-    LC->pAssetGroup = groupVA;
-    LC->progress = 0;
-    LC->dataSize = header.dataSize;
-    LC->reserved = 0;
-    LC->head = 0;
-    LC->tail = 0;
-
- 
-
-    LOG(("FLASH[%d]: Sending asset group %s, at base address 0x%08x\n",
-        id(), SvmDebugPipe::formatAddress(G->pHdr).c_str(), baseAddr));
-
-    DEBUG_ONLY({
-        // In debug builds, we log the asset download time
-        assetLoadTimestamp = SysTime::ticks();
-    });
-
-    // Start by resetting the flash decoder.
-    requestFlashReset();
-    Atomic::SetLZ(CubeSlots::flashAddrPending, id());
-
-    // Only _after_ triggering the reset, start the actual download
-    // by marking cubeVec as valid.
-    Atomic::SetLZ(L->cubeVec, id());
-
-    // Start filling our asset data FIFOs.
-    Tasks::trigger(Tasks::AssetLoader);
-}
-
-    void flashAckBytes(uint8_t count) {
-        loadBufferAvail += count;
-        ASSERT(loadBufferAvail <= FLS_FIFO_USABLE);
-    }
-
 //////////////////////////
 
     /*
@@ -541,21 +414,9 @@ void CubeSlot::startAssetLoad(SvmMemory::VirtAddr groupVA, uint16_t baseAddr)
 /////////////////////
 
 
-/////////////
-
     // Finalize the SysLFS state for any slots we're loading to
     VirtAssetSlots::finalizeGroup(gSlotsInProgress);
     ASSERT(gSlotsInProgress.empty());
-
-////////////////
-
-// Simulator headers, for simAssetLoaderBypass.
-#ifdef SIFTEO_SIMULATOR
-#   include "system_mc.h"
-#   include "cube_hardware.h"
-#   include "lsdec.h"
-#endif
-
 
 #endif
 
