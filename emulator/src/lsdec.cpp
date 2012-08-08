@@ -17,7 +17,6 @@
 #include "macros.h"
 #include "lsdec.h"
 #include "cube_flash_model.h"
-#include "svmmemory.h"
 
 
 LoadstreamDecoder::LoadstreamDecoder(uint8_t *buffer, uint32_t bufferSize)
@@ -32,23 +31,6 @@ void LoadstreamDecoder::reset()
     memset(lut, 0, sizeof lut);
     state = S_OPCODE;
     flashAddr = 0;
-}
-
-void LoadstreamDecoder::handleBytes(uint8_t *byte, uint32_t count)
-{
-    while (count--)
-        handleByte(*(byte++));
-}
-
-void LoadstreamDecoder::handleSVM(uint32_t va, uint32_t bytes)
-{
-    FlashBlockRef ref;
-    while (bytes--) {
-        uint8_t *p = SvmMemory::peek<uint8_t>(ref, va++);
-        if (!p)
-            break;
-        handleByte(*p);
-    }
 }
 
 void LoadstreamDecoder::setAddress(uint32_t addr)
