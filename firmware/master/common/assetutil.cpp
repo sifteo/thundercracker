@@ -310,7 +310,7 @@ unsigned AssetFIFO::fetchFromGroup(_SYSAssetLoaderCube &sys, AssetGroupInfo &gro
 			va += chunk;
 			fifo.tail += chunk;
 			ASSERT(fifo.tail <= _SYS_ASSETLOAD_BUF_SIZE);
-	        if (++fifo.tail == _SYS_ASSETLOAD_BUF_SIZE)
+	        if (fifo.tail == _SYS_ASSETLOAD_BUF_SIZE)
 	            fifo.tail = 0;
 	    } while (remaining);
 
@@ -327,7 +327,7 @@ unsigned AssetFIFO::fetchFromGroup(_SYSAssetLoaderCube &sys, AssetGroupInfo &gro
 			va += chunk;
 			fifo.tail += chunk;
 			ASSERT(fifo.tail <= _SYS_ASSETLOAD_BUF_SIZE);
-	        if (++fifo.tail == _SYS_ASSETLOAD_BUF_SIZE)
+	        if (fifo.tail == _SYS_ASSETLOAD_BUF_SIZE)
 	            fifo.tail = 0;
 	    } while (remaining);
 	}

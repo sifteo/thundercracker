@@ -72,6 +72,7 @@ bool AssetLoader::loaderBypass(_SYSCubeID id, AssetGroupInfo &group)
         AssetFIFO fifo(buffer);
         while (fifo.readAvailable())
             lsdec.handleByte(fifo.read());
+        fifo.commitReads();
     }
 
     LOG(("ASSET[%d]: Installed asset group %s at base address "
