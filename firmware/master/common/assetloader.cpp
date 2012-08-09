@@ -386,26 +386,32 @@ void AssetLoader::prepareCubeForLoading(_SYSCubeID id)
     }
 
     /*
-     * Now iterate over slots, erasing if necessary, and setting up
-     * the progress totals.
+     * Now iterate over slots, erasing if necessary. Calculate the 
+     * total amount of data to send.
      */
 
+    unsigned totalData = 0;
+
     for (unsigned slot = 0; slot < numSlots; ++slot) {
-        unsigned dataSize;
 
         if (tilesFree[slot] < 0 || groupsFree[slot] < 0) {
             // Underflow! Erase the slot.
             LOG(("ASSET[%d]: Automatically erasing slot %d\n", id, slot));
             VirtAssetSlots::getInstance(slot).erase(bit);
-            dataSize = dataSizeWithErase[slot];
+            totalData += dataSizeWithErase[slot];
         } else {
-            dataSize = dataSizeWithoutErase[slot];
+            totalData += dataSizeWithoutErase[slot];
         }
+    }
 
-        _SYSAssetLoaderCube *lc = AssetUtil::mapLoaderCube(userLoader, id);
-        if (lc) {
-            lc->progress = 0;
-            lc->total = dataSize;
-        }
+    /*
+     * Use our calculated total to initialize the userspace-visible
+     * progress estimate.
+     */
+
+    _SYSAssetLoaderCube *lc = AssetUtil::mapLoaderCube(userLoader, id);
+    if (lc) {
+        lc->progress = 0;
+        lc->total = totalData;
     }
 }
