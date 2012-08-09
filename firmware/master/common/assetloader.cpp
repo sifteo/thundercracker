@@ -364,7 +364,7 @@ void AssetLoader::prepareCubeForLoading(_SYSCubeID id)
 
         unsigned slot = cfg->slot;
         if (slot >= numSlots) {
-            LOG(("ASSET: Bad slot number %d in _SYSAssetConfiguration\n", slot));
+            LOG(("ASSET[%d]: Bad slot number %d in _SYSAssetConfiguration\n", id, slot));
             continue;
         }
 
@@ -393,8 +393,9 @@ void AssetLoader::prepareCubeForLoading(_SYSCubeID id)
     for (unsigned slot = 0; slot < numSlots; ++slot) {
         unsigned dataSize;
 
-        if (tilesFree[slot] < 0 || groupsFree[slot]) {
+        if (tilesFree[slot] < 0 || groupsFree[slot] < 0) {
             // Underflow! Erase the slot.
+            LOG(("ASSET[%d]: Automatically erasing slot %d\n", id, slot));
             VirtAssetSlots::getInstance(slot).erase(bit);
             dataSize = dataSizeWithErase[slot];
         } else {
