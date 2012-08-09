@@ -11,7 +11,6 @@
 #include "pause.h"
 #include "cubeconnector.h"
 #include "radio.h"
-#include "batterylevel.h"
 
 #ifdef SIFTEO_SIMULATOR
 #   include "mc_timing.h"
@@ -68,9 +67,6 @@ ALWAYS_INLINE void Tasks::taskInvoke(unsigned id)
 void Tasks::heartbeatTask()
 {
     Radio::heartbeat();
-#ifndef SIFTEO_SIMULATOR
-    BatteryLevel::heartbeat();
-#endif
 }
 
 

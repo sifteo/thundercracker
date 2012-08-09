@@ -18,6 +18,9 @@ public:
     static void start(unsigned data, unsigned sideMask);
     static void stop();
 
+    static void pause();
+    static void resume();
+
     // Change TX pin state
     static void floatSide(unsigned side);
     static void squelchSide(unsigned side);

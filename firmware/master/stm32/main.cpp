@@ -85,9 +85,6 @@ int main()
     NVIC.irqEnable(IVT.NBR_TX_TIM);                 // Neighbor transmit
     NVIC.irqPrioritize(IVT.NBR_TX_TIM, 0x60);       //  just below sample rate timer
 
-    NVIC.irqEnable(IVT.BATT_LVL_TIM);               // Battery Level measurement
-    NVIC.irqPrioritize(IVT.BATT_LVL_TIM, 0x60);     //  just below volume
-
     /*
      * High-level hardware initialization
      *
@@ -127,6 +124,8 @@ int main()
     NeighborTX::init();
     CubeConnector::init();
 
+    // NOTE: NeighborTX & BatteryLevel share a timer - Battery level expects
+    //       it to have already been init'd.
     BatteryLevel::init();
     Volume::init();
     AudioOutDevice::init();

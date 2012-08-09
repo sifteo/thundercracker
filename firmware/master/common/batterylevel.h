@@ -7,8 +7,8 @@ namespace BatteryLevel
 {
     void init();
     int  currentLevel();
-    void heartbeat();
-    void captureIsr(uint16_t rawvalue);
+    void beginCapture();
+    void captureIsr();
 }
 
 #endif // BATTERYLEVEL_H

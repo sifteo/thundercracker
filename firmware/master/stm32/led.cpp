@@ -24,11 +24,6 @@ void LED::init()
 
     /*
      * PWM: Full 16-bit resolution, about 1 kHz period
-     *
-     * NOTE: this timer is also used by BatteryLevel, since the battery
-     * measurement pinout requires it. Currently, BatteryLevel gets
-     * initialized after LED, but if you change that, you'll need to adjust
-     * it there as well.
      */
     pwmTimer.init(0xFFFF, 0);
     pwmTimer.configureChannelAsOutput(LED_PWM_GREEN_CHAN,
