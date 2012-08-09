@@ -131,9 +131,10 @@ class CubeCodec {
          * If the buffer has room, adds an "Explicit ACK request" escape and
          * returns true. Otherwise, returns false.
          */
-        if (txBits.hasRoomForFlush(buf, 8)) {
-            txBits.append(0x79, 8);
+        if (txBits.hasRoomForFlush(buf, 12)) {
+            txBits.append(0xF79, 12);
             txBits.flush(buf);
+            txBits.init();
             return true;
         }
         return false;
@@ -152,6 +153,7 @@ class CubeCodec {
         if (txBits.hasRoomForFlush(buf, 20)) {
             txBits.append(0xF33, 12);
             txBits.flush(buf);
+            txBits.init();
             return true;
         }
         return false;
