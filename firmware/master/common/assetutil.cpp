@@ -114,15 +114,13 @@ unsigned AssetUtil::totalTilesForPhysicalSlot(_SYSCubeID cid, unsigned slot)
     ASSERT(cid < _SYS_NUM_CUBE_SLOTS);
     ASSERT(slot < SysLFS::ASSET_SLOTS_PER_CUBE);
 
-    SysLFS::Key cubeKey = CubeSlots::instances[cid].getCubeRecordKey();
-    SysLFS::Key slotKey = SysLFS::AssetSlotRecord::makeKey(cubeKey, slot);
-    SysLFS::AssetSlotRecord slotRecord;
+    SysLFS::AssetSlotRecord asr;
+    PhysAssetSlot pSlot;
 
-    if (SysLFS::read(slotKey, slotRecord))
-        return slotRecord.totalTiles();
+    pSlot.setIndex(slot);
+    pSlot.getRecordForCube(cid, asr);
 
-    // Slot not allocated
-    return 0;
+    return asr.totalTiles();
 }
 
 bool AssetGroupInfo::fromUserPointer(const _SYSAssetGroup *group)

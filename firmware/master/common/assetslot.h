@@ -49,6 +49,8 @@ public:
         code = i + 1;
     }
 
+    void getRecordForCube(_SYSCubeID cube, SysLFS::AssetSlotRecord &asr);
+
 private:
     uint8_t code;     // invalid=0 , valid=[1, NUM_SLOTS]
 };
