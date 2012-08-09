@@ -402,26 +402,3 @@ void AssetLoader::prepareCubeForLoading(_SYSCubeID id)
         }
     }
 }
-
-
-#if 0
-
-
-
-////////////////////////
-
-                    /* Finished sending the group, and the cube finished writing it. */
-                    Atomic::SetLZ(L->complete, id());
-                    Event::setCubePending(Event::PID_CUBE_ASSETDONE, id());
-
-                    DEBUG_ONLY({
-                        // In debug builds only, we log the asset download time
-                        float seconds = (SysTime::ticks() - assetLoadTimestamp) * (1.0f / SysTime::sTicks(1));
-                        LOG(("FLASH[%d]: Finished loading in %.3f seconds\n", id(), seconds));
-                    });
-
-/////////////////////
-
-
-#endif
-

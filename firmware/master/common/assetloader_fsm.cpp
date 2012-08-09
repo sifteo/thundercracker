@@ -11,6 +11,7 @@
 #include "tasks.h"
 #include "flash_syslfs.h"
 #include "svmdebugpipe.h"
+#include "event.h"
 
 
 void AssetLoader::fsmEnterState(_SYSCubeID id, TaskState s)
@@ -42,6 +43,7 @@ void AssetLoader::fsmEnterState(_SYSCubeID id, TaskState s)
         case S_COMPLETE:
             Atomic::ClearLZ(activeCubes, id);
             updateActiveCubes();
+            Event::setCubePending(Event::PID_CUBE_ASSETDONE, id);
             return;
 
         default:
