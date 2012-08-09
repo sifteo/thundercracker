@@ -965,7 +965,6 @@ void TilePool::calculateCRC(std::vector<uint8_t> &crcbuf) const
 
         for (unsigned tile = 0; tile < TILES_PER_BLOCK; ++tile) {
             for (unsigned sample = 0; sample < 4; ++sample) {
-                printf("Sampling at %08x\n",addr);
                 crc = gf84[crc] ^ rawByte(addr);
                 addr = (addr & ~0x7f) | (crc >> 1);
             }
