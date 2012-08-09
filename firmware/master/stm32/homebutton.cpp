@@ -7,6 +7,7 @@
 #include "gpio.h"
 #include "board.h"
 #include "tasks.h"
+#include "pause.h"
 
 static GPIOPin homeButton = BTN_HOME_GPIO;
 
@@ -32,6 +33,7 @@ bool isPressed()
 IRQ_HANDLER ISR_EXTI2()
 {
     homeButton.irqAcknowledge();
+    Pause::taskWork.atomicMark(Pause::ButtonPress);
     Tasks::trigger(Tasks::Pause);
 }
 #endif
