@@ -189,6 +189,37 @@ class System {
     static void shutdown(bool now = false) {
         return _SYS_shutdown(now ? 0 : _SYS_SHUTDOWN_WITH_UI);
     }
+
+    /**
+     * @brief Set the range of cubes supported.
+     *
+     * When the number of cubes connected to the system drops below `minimum`,
+     * the system pauses execution until the requisite number of cubes are
+     * connected, or the user decides to quit.
+     *
+     * When the number of cubes connected to the system is greater than
+     * `maximum`, extra cubes will not be reported as connected to userspace. NOTE: the
+     * behavior for cubes in this limbo state has not been fully specified.
+     *
+     * In many cases, it is not required to call setCubeRange() explicitly -
+     * including a call to Metadata::cubeRange() is sufficient to set the
+     * default cube range for the app. During execution, setCubeRange()
+     * can be used to dynamically configure the number of cubes.
+     *
+     * @note Calling setCubeRange() when the number of cubes connected to the
+     * system is below the new `minimum` will trigger a pause immediately
+     * until the required cubes are connected.
+     */
+    static void setCubeRange(unsigned minimum, unsigned maximum) {
+        _SYS_setCubeRange(minimum, maximum);
+    }
+
+    /**
+     * @brief Helper to specify a cube range with identical minimum and maximum counts.
+     */
+    static void setCubeRange(unsigned count) {
+        _SYS_setCubeRange(count, count);
+    }
 };
 
 
