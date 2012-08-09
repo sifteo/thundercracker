@@ -650,7 +650,7 @@ unsigned SysLFS::AssetSlotRecord::totalTiles() const
 
     // Refuse to allocate if a load was in progress.
     if (flags & F_LOAD_IN_PROGRESS)
-        return 0;
+        return TILES_PER_ASSET_SLOT;
 
     unsigned currentOffset = 0;
 
