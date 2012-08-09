@@ -43,8 +43,9 @@ void MyLoader::load(AssetGroup &group, AssetSlot slot)
         vid[cube].bg0.image(vec(0,0), LoadingBg);
     }
 
-    // Start drawing the background
+    // Draw the background
     System::paint();
+    System::finish();
 
     AssetConfiguration<1> config;
     config.append(slot, group);
@@ -55,8 +56,6 @@ void MyLoader::load(AssetGroup &group, AssetSlot slot)
     /*
      * Animate the loading process, using STAMP mode to draw an animated progress bar.
      */
-
-    System::finish();
 
     for (CubeID cube : cubes) {
         vid[cube].initMode(STAMP);
@@ -75,12 +74,14 @@ void MyLoader::load(AssetGroup &group, AssetSlot slot)
 
         for (CubeID cube : cubes) {
 
-            LOG("Progress on cube %d: %d / %d\n", int(cube),
-                assetLoader.cubes[cube].progress,
-                assetLoader.cubes[cube].total);
-
             // Animate the horizontal window, to show progress
-            vid[cube].stamp.setHWindow(0, assetLoader.cubeProgress(cube, LCD_width));
+            unsigned p = 1 + assetLoader.cubeProgress(cube, LCD_width - 1);
+            vid[cube].stamp.setHWindow(0, p);
+
+            LOG("Progress on cube %d: %d / %d (%d)\n", int(cube),
+                assetLoader.cubes[cube].progress,
+                assetLoader.cubes[cube].total,
+                p);
 
             // Animate the colormap at a steady rate
             const RGB565 bg = RGB565::fromRGB(0xff7000);
@@ -98,14 +99,6 @@ void MyLoader::load(AssetGroup &group, AssetSlot slot)
 
         frame++;
     }
-
-    /*
-     * Finalize the asset loading process. You must call this, or the group
-     * will appear to work but it won't have been marked as finished in the
-     * system's persistent storage, and next time your game tries to access
-     * assets from the same slot they will not be cached.
-     */
-    assetLoader.finish();
     
     LOG("Loader, (%P, %d): done\n", &group, slot.sys);
 }
