@@ -208,7 +208,7 @@ void AssetLoader::fsmTaskState(_SYSCubeID id, TaskState s)
                 unsigned baseAddr = AssetUtil::loadedBaseAddr(group.va, id);
 
                 DEBUG_ONLY(groupBeginTimestamp[id] = SysTime::ticks();)
-                LOG(("ASSET[%d]: Loading group  [%d/%d] %s at base address 0x%04x\n",
+                LOG(("ASSET[%d]: Group [%d/%d] loading %s at base address 0x%04x\n",
                     id, index+1, userConfigSize[id],
                     SvmDebugPipe::formatAddress(group.headerVA).c_str(), baseAddr));
 
@@ -290,7 +290,7 @@ void AssetLoader::fsmTaskState(_SYSCubeID id, TaskState s)
             VirtAssetSlot &vSlot = VirtAssetSlots::getInstance(slot);
 
             // Announce our triumphant advancement
-            LOG(("ASSET[%d]: Finished group [%d/%d] in %f seconds\n",
+            LOG(("ASSET[%d]: Group [%d/%d] finished in %f seconds\n",
                 id, index+1, userConfigSize[id],
                 (SysTime::ticks() - groupBeginTimestamp[id]) / double(SysTime::sTicks(1))));
 
