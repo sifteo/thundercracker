@@ -90,6 +90,8 @@ public:
     uint32_t tilesFree(_SYSCubeIDVector cv);
     void erase(_SYSCubeIDVector cv);
 
+    void getRecordForCube(_SYSCubeID cube, SysLFS::AssetSlotRecord &asr);
+
 private:
     // Which physical slot does this map to, on each cube?
     PhysAssetSlot phys[_SYS_NUM_CUBE_SLOTS];

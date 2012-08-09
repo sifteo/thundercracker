@@ -200,6 +200,7 @@ namespace SysLFS {
         bool findGroup(AssetGroupIdentity identity, unsigned &offset) const;
         bool allocGroup(AssetGroupIdentity identity, unsigned numTiles, unsigned &offset);
         unsigned totalTiles() const;
+        unsigned totalGroups() const;
         bool isEmpty() const;
 
         void init();

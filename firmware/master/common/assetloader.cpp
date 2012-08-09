@@ -323,11 +323,16 @@ void AssetLoader::prepareCubeForLoading(_SYSCubeID id)
     unsigned dataSizeWithoutErase[_SYS_ASSET_SLOTS_PER_BANK];
     unsigned dataSizeWithErase[_SYS_ASSET_SLOTS_PER_BANK];
     int tilesFree[_SYS_ASSET_SLOTS_PER_BANK];
+    int groupsFree[_SYS_ASSET_SLOTS_PER_BANK];
     unsigned numSlots = VirtAssetSlots::getNumBoundSlots();
     _SYSCubeIDVector bit = Intrinsic::LZ(id);
 
     for (unsigned slot = 0; slot < numSlots; ++slot) {
-        tilesFree[slot] = VirtAssetSlots::getInstance(slot).tilesFree(bit);
+        SysLFS::AssetSlotRecord asr;
+        VirtAssetSlots::getInstance(slot).getRecordForCube(id, asr);
+
+        tilesFree[slot] = _SYS_TILES_PER_ASSETSLOT - asr.totalTiles();
+        groupsFree[slot] = _SYS_ASSET_GROUPS_PER_SLOT - asr.totalGroups();
         dataSizeWithoutErase[slot] = 0;
         dataSizeWithErase[slot] = 0;
     }
@@ -376,6 +381,7 @@ void AssetLoader::prepareCubeForLoading(_SYSCubeID id)
             dataSizeWithErase[slot] += group.dataSize;
             dataSizeWithoutErase[slot] += group.dataSize;
             tilesFree[slot] -= roundup<_SYS_ASSET_GROUP_SIZE_UNIT>(group.numTiles);
+            groupsFree[slot]--;
         }
     }
 
@@ -387,7 +393,7 @@ void AssetLoader::prepareCubeForLoading(_SYSCubeID id)
     for (unsigned slot = 0; slot < numSlots; ++slot) {
         unsigned dataSize;
 
-        if (tilesFree[slot] < 0) {
+        if (tilesFree[slot] < 0 || groupsFree[slot]) {
             // Underflow! Erase the slot.
             VirtAssetSlots::getInstance(slot).erase(bit);
             dataSize = dataSizeWithErase[slot];

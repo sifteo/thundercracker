@@ -566,16 +566,7 @@ unsigned SysLFS::AssetSlotRecord::writeableSize() const
     // How many bytes do we need to write for this record?
 
     STATIC_ASSERT(sizeof flags + sizeof groups == sizeof *this);
-
-    unsigned i;
-    for (i = 0; i < ASSET_GROUPS_PER_SLOT; ++i) {
-        const LoadedAssetGroupRecord &group = groups[i];
-    
-        if (group.isEmpty())
-            break;
-    }
-
-    return i * sizeof groups[0] + sizeof flags;
+    return totalGroups() * sizeof groups[0] + sizeof flags;
 }
 
 bool SysLFS::AssetSlotRecord::findGroup(AssetGroupIdentity identity, unsigned &offset) const
@@ -677,6 +668,22 @@ unsigned SysLFS::AssetSlotRecord::totalTiles() const
     }
 
     return currentOffset;
+}
+
+unsigned SysLFS::AssetSlotRecord::totalGroups() const
+{
+    /*
+     * How many groups are in use, in this slot?
+     */
+
+    unsigned i;
+    for (i = 0; i < ASSET_GROUPS_PER_SLOT; ++i) {
+        const LoadedAssetGroupRecord &group = groups[i];
+        if (group.isEmpty())
+            break;
+    }
+
+    return i;
 }
 
 bool SysLFS::AssetSlotRecord::isEmpty() const

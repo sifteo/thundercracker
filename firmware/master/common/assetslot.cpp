@@ -365,6 +365,26 @@ uint32_t VirtAssetSlot::tilesFree(_SYSCubeIDVector cv)
     return minTilesFree;
 }
 
+void VirtAssetSlot::getRecordForCube(_SYSCubeID cube, SysLFS::AssetSlotRecord &asr)
+{
+    /*
+     * Read in a single AssetSlotRecord, for this slot on the specified cube.
+     */
+
+    FlashLFS &lfs = SysLFS::get();
+    FlashLFSObjectIter iter(lfs);
+
+    SysLFS::Key cubeKey = SysLFS::CubeRecord::makeKey(cube);
+    SysLFS::Key asrKey = asr.makeKey(cubeKey, getPhys(cube).index());
+
+    while (iter.previous(FlashLFSKeyQuery(asrKey))) {
+        if (asr.load(iter))
+            return;
+    }
+
+    asr.init();
+}
+
 void VirtAssetSlot::erase(_SYSCubeIDVector cv)
 {
     /*
