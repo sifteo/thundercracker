@@ -153,7 +153,6 @@ private:
     static uint8_t cubeTaskState[_SYS_NUM_CUBE_SLOTS];
     static SubState cubeTaskSubstate[_SYS_NUM_CUBE_SLOTS];
     static SysTime::Ticks cubeDeadline[_SYS_NUM_CUBE_SLOTS];
-    static FlashLFSIndexRecord::KeyVector_t slotsInProgress;
 
     // ISR-owned cube state. Read-only from tasks.
     static uint8_t cubeBufferAvail[_SYS_NUM_CUBE_SLOTS];

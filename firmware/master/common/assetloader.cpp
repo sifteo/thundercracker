@@ -23,8 +23,6 @@ _SYSCubeIDVector AssetLoader::startedCubes;
 _SYSCubeIDVector AssetLoader::cacheCoherentCubes;
 _SYSCubeIDVector AssetLoader::resetPendingCubes;
 _SYSCubeIDVector AssetLoader::resetAckCubes;
-FlashLFSIndexRecord::KeyVector_t AssetLoader::slotsInProgress;
-
 
 void AssetLoader::init()
 {
@@ -422,10 +420,6 @@ void AssetLoader::prepareCubeForLoading(_SYSCubeID id)
 
 /////////////////////
 
-
-    // Finalize the SysLFS state for any slots we're loading to
-    VirtAssetSlots::finalizeGroup(gSlotsInProgress);
-    ASSERT(gSlotsInProgress.empty());
 
 #endif
 

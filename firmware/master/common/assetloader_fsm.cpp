@@ -161,7 +161,7 @@ void AssetLoader::fsmTaskState(_SYSCubeID id, TaskState s)
 
                 // Now search for the group, allocating it if it wasn't found.
                 _SYSCubeIDVector foundCV;
-                if (!VirtAssetSlots::locateGroup(group, bit, foundCV, &vSlot, &slotsInProgress)) {
+                if (!VirtAssetSlots::locateGroup(group, bit, foundCV, &vSlot)) {
                     LOG(("ASSET[%d]: Unexpected allocation failure for Configuration index %d\n", id, index));
                     cubeTaskSubstate[id].config.index = index + 1;
                     continue;
@@ -273,11 +273,19 @@ void AssetLoader::fsmTaskState(_SYSCubeID id, TaskState s)
             if (cubeBufferAvail[id] != FLS_FIFO_USABLE)
                 return;
 
-            // Done!
-            LOG(("XXX: finalize syslfs\n"));
+            // Which slot were we writing to?
+            unsigned index = cubeTaskSubstate[id].config.index;
+            const _SYSAssetConfiguration *cfg = userConfig[id] + index;
+            _SYSAssetSlot slot = cfg->slot;
+            if (!VirtAssetSlots::isSlotBound(slot))
+                return fsmEnterState(id, S_ERROR);
+            VirtAssetSlot &vSlot = VirtAssetSlots::getInstance(slot);
+
+            // Now we're actually done! Commit this to SysLFS.
+            VirtAssetSlots::finalizeSlot(id, vSlot);
 
             // Next Configuration node!
-            cubeTaskSubstate[id].config.index++;
+            cubeTaskSubstate[id].config.index = index + 1;
             return fsmEnterState(id, S_CONFIG_INIT);
         }
 

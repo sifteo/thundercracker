@@ -147,23 +147,19 @@ public:
      * and update the access ranks if necessary. We return a vector of cubes
      * where the group was already installed.
      *
-     * If it can't be found, but 'allocVec' is non-null we allocate space
-     * for the group and assign it an address. Since the state of a cubeSlot
-     * is indeterminate during a load operation (we don't know whether the
-     * physical flash sectors have been erased or not), we want to ensure that
-     * we treat the entire slot's contents as unknown if a power failure or
-     * other interruption happens during a write.
+     * If it can't be found, but 'allocSlot' is non-null we allocate space
+     * for the group in that slot, and assign it an address.
      *
-     * vSlot is only used if allocVec is non-NULL.
+     * Since the state of a cubeSlot is indeterminate during a load operation
+     * (we don't know whether the physical flash sectors have been erased or
+     * not), we want to ensure that we treat the entire slot's contents as
+     * unknown if a power failure or other interruption happens during a write.
      *
      * So, for any cube slots where we have to allocate space, we write a new
      * slot record which has (a) the space allocated, and (b) the
      * F_LOAD_IN_PROGRESS flag set. We clear this flag when the loading has
-     * successfully finished. If we see this flag while searching an asset
-     * group, we won't trust the contents of the slot at all.
-     *
-     * Any such loading-in-progress slots will be marked in allocVec,
-     * and finalized by finalizeGroup.
+     * successfully finished, in finalizeSlot(). If we see this flag while
+     * searching an asset group, we won't trust the contents of the slot at all.
      *
      * Returns 'true' on success. On allocation failure, returns 'false'.
      * Changes may have been already made by the time we discover the failure.
@@ -172,12 +168,10 @@ public:
     static bool locateGroup(const AssetGroupInfo &group,
                             _SYSCubeIDVector searchCV,
                             _SYSCubeIDVector &foundCV,
-                            const VirtAssetSlot *vSlot = 0,
-                            FlashLFSIndexRecord::KeyVector_t *allocVec = 0);
+                            const VirtAssetSlot *allocSlot = 0);
 
-    // Finalize any in-progress slots left over after locateGroup().
-    // As a side-effect, this clears all bits from 'vec'.
-    static void finalizeGroup(FlashLFSIndexRecord::KeyVector_t &vec);
+    // If the indicated slot is in-progress, finalize it.
+    static void finalizeSlot(_SYSCubeID cube, const VirtAssetSlot &slot);
 
 private:
     VirtAssetSlots();  // Do not implement

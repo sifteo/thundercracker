@@ -135,16 +135,13 @@ bool VirtAssetSlots::physSlotIsBound(_SYSCubeID cube, unsigned physSlot)
 bool VirtAssetSlots::locateGroup(const AssetGroupInfo &group,
                                  _SYSCubeIDVector searchCV,
                                  _SYSCubeIDVector &foundCV,
-                                 const VirtAssetSlot *vSlot,
-                                 FlashLFSIndexRecord::KeyVector_t *allocVec)
+                                 const VirtAssetSlot *allocSlot)
 {
     /*
      * Iterate through SysLFS until we find the indicated group
-     * on all cubes in the vector. If allocVec is non-NULL, we'll
+     * on all cubes in the vector. If allocSlot is non-NULL, we'll
      * be allocating space for any groups we don't find.
      */
-
-    ASSERT((vSlot == 0) == (allocVec == 0));
 
     foundCV = 0;
 
@@ -188,9 +185,9 @@ bool VirtAssetSlots::locateGroup(const AssetGroupInfo &group,
                 if (0 == (searchCV & Intrinsic::LZ(cube)))
                     continue;
 
-                if (vSlot) {
+                if (allocSlot) {
                     // Is this the slot we're interested in?
-                    PhysAssetSlot pSlot = vSlot->getPhys(cube);
+                    PhysAssetSlot pSlot = allocSlot->getPhys(cube);
                     if (!pSlot.isValid() || slot != pSlot.index())
                         continue;
 
@@ -204,12 +201,12 @@ bool VirtAssetSlots::locateGroup(const AssetGroupInfo &group,
                 if (!asr.load(iter))
                     continue;
 
-            } else if (allocVec) {
+            } else if (allocSlot) {
                 // We're out of records. Create a new record for one cube.
 
                 cube = Intrinsic::CLZ(searchCV);
                 SysLFS::Key cubeKey = SysLFS::CubeRecord::makeKey(cube);
-                slot = vSlot->getPhys(cube).index();
+                slot = allocSlot->getPhys(cube).index();
 
                 asr.init();
                 asrKey = asr.makeKey(cubeKey, slot);
@@ -235,14 +232,12 @@ bool VirtAssetSlots::locateGroup(const AssetGroupInfo &group,
                 continue;
             }
 
-            // If we have a specific slot in mind, we can finish searching on one cube now.
-            // Otherwise, we may still need to search other slots on the same cube.
-            if (vSlot) {
+            if (allocSlot) {
+                // If we have a specific slot in mind, we can finish searching on one cube now.
+                // Otherwise, we may still need to search other slots on the same cube.
                 ASSERT(searchCV & Intrinsic::LZ(cube));
                 searchCV ^= Intrinsic::LZ(cube);
-            }
 
-            if (allocVec) {
                 // Try to allocate the group
                 if (!asr.allocGroup(group.identity(), group.numTiles, offset)) {
                     // We know for sure that there isn't any room left. Abort!
@@ -252,7 +247,6 @@ bool VirtAssetSlots::locateGroup(const AssetGroupInfo &group,
 
                 // Mark this slot as a work in progress, remember to finalize later
                 asr.flags |= asr.F_LOAD_IN_PROGRESS;
-                allocVec->mark(asrKey);
 
                 // Now we need to write back the modified record. (Without GC)
                 int size = asr.writeableSize();
@@ -272,60 +266,38 @@ bool VirtAssetSlots::locateGroup(const AssetGroupInfo &group,
     return true;
 }
 
-void VirtAssetSlots::finalizeGroup(FlashLFSIndexRecord::KeyVector_t &vec)
+void VirtAssetSlots::finalizeSlot(_SYSCubeID cube, const VirtAssetSlot &slot)
 {
     /*
-     * Iterate through SysLFS, finalizing each group we find in 'vec'.
+     * Remove the F_LOAD_IN_PROGRESS flag from the indicated slot.
+     *
+     * This is almost a SysLFS operation we could do using only the
+     * basic read/write API, but an AssetSlotRecord is variable-sized,
+     * making this a tiny bit more complicated.
      */
 
+    SysLFS::AssetSlotRecord asr;
+    SysLFS::Key cubeKey = SysLFS::CubeRecord::makeKey(cube);
+    SysLFS::Key asrKey = asr.makeKey(cubeKey, slot.getPhys(cube).index());
     FlashLFS &lfs = SysLFS::get();
 
-    while (!vec.empty()) {
+    FlashLFSObjectIter iter(lfs);
 
-        // Restartable iteration, in case we need to collect garbage
-        FlashLFSObjectIter iter(lfs);
-        while (!vec.empty()) {
+    while (iter.previous(FlashLFSKeyQuery(asrKey))) {
+        if (!asr.load(iter))
+            continue;
 
-            if (!iter.previous(FlashLFSKeyQuery())) {
-                LOG(("SYSLFS: Missing asset slot record, skipping finalization!\n"));
-                vec.clear();
-                break;
-            }
-
-            // Is this a key we're interested in?
-            SysLFS::Key k = (SysLFS::Key) iter.record()->getKey();
-            if (!vec.test(k))
-                continue;
-
-            // Yes, still interested! Read in the AssetSlotRecord.
-            SysLFS::AssetSlotRecord asr;
-            if (!asr.load(iter))
-                continue;
-
-            // All exit paths below want this key cleared from 'vec'.
-            vec.clear(k);
-
-            // Clear the load-in-progress flag
-            if ((asr.flags & asr.F_LOAD_IN_PROGRESS) == 0) {
-                LOG(("SYSLFS: Finalizing group that isn't in-progress!\n"));
-                continue;
-            }
-            asr.flags ^= asr.F_LOAD_IN_PROGRESS;
-
-            // Now we need to write back the modified record. (Without GC)
-            int size = asr.writeableSize();
-            if (SysLFS::write(k, (uint8_t*)&asr, size, false) == size)
-                continue;
-
-            // We failed to write without garbage collection. We may be
-            // able to write with GC enabled, but at this point we'd need
-            // to restart iteration, in case volumes were deleted.
-            SysLFS::write(k, (uint8_t*)&asr, size, true);
-            break;
+        // Clear the load-in-progress flag
+        if ((asr.flags & asr.F_LOAD_IN_PROGRESS) == 0) {
+            LOG(("SYSLFS: Finalizing group that isn't in-progress!\n"));
+            continue;
         }
-    }
+        asr.flags ^= asr.F_LOAD_IN_PROGRESS;
 
-    ASSERT(vec.empty());
+        // Write back, with GC if we need it.
+        SysLFS::write(asrKey, (uint8_t*)&asr, asr.writeableSize(), true);
+        return;
+    }
 }
 
 _SYSCubeIDVector VirtAssetSlot::validCubeVector()
