@@ -111,6 +111,7 @@ void AssetLoader::fsmTaskState(_SYSCubeID id, TaskState s)
                 ASSERT(remaining);
                 unsigned slot = Intrinsic::CLZ(remaining);
                 unsigned tiles = AssetUtil::totalTilesForPhysicalSlot(id, slot);
+
                 if (!tiles) {
                     // Empty slot? Consider this successful, try the next.
                     remaining ^= Intrinsic::LZ(slot);
@@ -124,8 +125,28 @@ void AssetLoader::fsmTaskState(_SYSCubeID id, TaskState s)
                     return fsmEnterState(id, S_CONFIG_INIT);
                 }
 
-                // XXX: Send query
-                ASSERT(0);
+                /*
+                 * Prepare to write the query command into our FIFO.
+                 */
+
+                _SYSAssetLoaderCube *lc = AssetUtil::mapLoaderCube(userLoader, id);
+                if (!lc)
+                    return fsmEnterState(id, S_ERROR);
+
+                AssetFIFO fifo(*lc);
+                if (fifo.writeAvailable() < fifo.ADDRESS_SIZE + fifo.CRC_QUERY_SIZE)
+                    return;
+
+                /*
+                 * Send the query!
+                 */
+
+                fifo.writeAddress(slot * PhysAssetSlot::SLOT_SIZE);
+                fifo.writeCRCQuery(nextQueryID(id), tiles);
+                fifo.commitWrites();
+
+                resetDeadline(id);
+                return fsmEnterState(id, S_CRC_RESPONSE);
             }
 
         /*
@@ -207,26 +228,23 @@ void AssetLoader::fsmTaskState(_SYSCubeID id, TaskState s)
                 return fsmEnterState(id, S_ERROR);
 
             AssetFIFO fifo(*lc);
-            if (fifo.writeAvailable() >= 3) {
-                unsigned baseAddr = AssetUtil::loadedBaseAddr(group.va, id);
+            if (fifo.writeAvailable() < fifo.ADDRESS_SIZE)
+                return;
 
-                DEBUG_ONLY(groupBeginTimestamp[id] = SysTime::ticks();)
-                LOG(("ASSET[%d]: Group [%d/%d] loading %s at base address 0x%04x\n",
-                    id, index+1, userConfigSize[id],
-                    SvmDebugPipe::formatAddress(group.headerVA).c_str(), baseAddr));
+            unsigned baseAddr = AssetUtil::loadedBaseAddr(group.va, id);
 
-                // Opcode, lat1, lat2:a21
-                ASSERT(baseAddr < 0x8000);
-                fifo.write(0xe1);
-                fifo.write(baseAddr << 1);
-                fifo.write(((baseAddr >> 6) & 0xfe) | ((baseAddr >> 14) & 1));
-                fifo.commitWrites();
+            DEBUG_ONLY(groupBeginTimestamp[id] = SysTime::ticks();)
+            LOG(("ASSET[%d]: Group [%d/%d] loading %s at base address 0x%04x\n",
+                id, index+1, userConfigSize[id],
+                SvmDebugPipe::formatAddress(group.headerVA).c_str(), baseAddr));
 
-                resetDeadline(id);
-                cubeTaskSubstate[id].config.offset = 0;
-                return fsmEnterState(id, S_CONFIG_DATA);
-            }
-            return;
+            // Opcode, lat1, lat2:a21
+            fifo.writeAddress(baseAddr);
+            fifo.commitWrites();
+
+            resetDeadline(id);
+            cubeTaskSubstate[id].config.offset = 0;
+            return fsmEnterState(id, S_CONFIG_DATA);
         }
 
         /*

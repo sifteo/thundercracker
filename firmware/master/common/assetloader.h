@@ -51,6 +51,7 @@ public:
     static void produceFlashPacket(_SYSCubeID id, PacketBuffer &buf);
     static void ackReset(_SYSCubeID id);
     static void ackData(_SYSCubeID id, unsigned bytes);
+    static void queryResponse(_SYSCubeID id, const PacketBuffer &packet);
 
     /// Tasks callbacks
     static void task();
@@ -139,6 +140,14 @@ private:
         cubeDeadline[id] = SysTime::ticks() + SysTime::msTicks(350);
     }
 
+    // Pick the next valid query ID, and return it.
+    static ALWAYS_INLINE uint8_t nextQueryID(_SYSCubeID id)
+    {
+        uint8_t q = (cubeLastQuery[id] + 1) | 0x80;
+        cubeLastQuery[id] = q;
+        return q;
+    }
+
     // Data from userspace
     static _SYSAssetLoader *userLoader;
     static const _SYSAssetConfiguration *userConfig[_SYS_NUM_CUBE_SLOTS];
@@ -153,6 +162,7 @@ private:
     static uint8_t cubeTaskState[_SYS_NUM_CUBE_SLOTS];
     static SubState cubeTaskSubstate[_SYS_NUM_CUBE_SLOTS];
     static SysTime::Ticks cubeDeadline[_SYS_NUM_CUBE_SLOTS];
+    static uint8_t cubeLastQuery[_SYS_NUM_CUBE_SLOTS];
 
     // ISR-owned cube state. Read-only from tasks.
     static uint8_t cubeBufferAvail[_SYS_NUM_CUBE_SLOTS];

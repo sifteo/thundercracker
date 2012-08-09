@@ -7,6 +7,7 @@
 #define _ASSETUTIL_H
 
 #include <sifteo/abi.h>
+#include <protocol.h>
 #include "macros.h"
 #include "svmmemory.h"
 #include "flash_syslfs.h"
@@ -80,6 +81,9 @@ struct AssetGroupInfo {
 
 class AssetFIFO {
 public:
+    static const unsigned ADDRESS_SIZE = 3;
+    static const unsigned CRC_QUERY_SIZE = 3;
+
     ALWAYS_INLINE AssetFIFO(_SYSAssetLoaderCube &sys)
         : sys(sys), head(sys.head), tail(sys.tail)
     {
@@ -121,6 +125,22 @@ public:
         if (++tail == _SYS_ASSETLOAD_BUF_SIZE)
             tail = 0;
         count++;
+    }
+
+    ALWAYS_INLINE void writeAddress(unsigned addr)
+    { 
+        // Opcode, lat1, lat2:a21
+        ASSERT(addr < 0x8000);
+        write(FLS_OP_ADDRESS);
+        write(addr << 1);
+        write(((addr >> 6) & 0xfe) | ((addr >> 14) & 1));
+    }
+
+    ALWAYS_INLINE void writeCRCQuery(unsigned id, unsigned numTiles)
+    {
+        write(FLS_OP_QUERY_CRC);
+        write(id);
+        write(ceildiv<unsigned>(numTiles, _SYS_ASSET_GROUP_SIZE_UNIT));
     }
 
     ALWAYS_INLINE void commitReads() const {

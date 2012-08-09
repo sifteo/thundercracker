@@ -16,6 +16,7 @@ const _SYSAssetConfiguration *AssetLoader::userConfig[_SYS_NUM_CUBE_SLOTS];
 uint8_t AssetLoader::userConfigSize[_SYS_NUM_CUBE_SLOTS];
 uint8_t AssetLoader::cubeTaskState[_SYS_NUM_CUBE_SLOTS];
 uint8_t AssetLoader::cubeBufferAvail[_SYS_NUM_CUBE_SLOTS];
+uint8_t AssetLoader::cubeLastQuery[_SYS_NUM_CUBE_SLOTS];
 SysTime::Ticks AssetLoader::cubeDeadline[_SYS_NUM_CUBE_SLOTS];
 AssetLoader::SubState AssetLoader::cubeTaskSubstate[_SYS_NUM_CUBE_SLOTS];
 _SYSCubeIDVector AssetLoader::activeCubes;
@@ -62,6 +63,9 @@ void AssetLoader::cubeConnect(_SYSCubeID id)
 
     ASSERT(id < _SYS_NUM_CUBE_SLOTS);
     _SYSCubeIDVector bit = Intrinsic::LZ(id);
+
+    // Forget about any queries sent prior to the connect
+    cubeLastQuery[id] = 0;
 
     if (!activeCubes) {
         /*
@@ -414,4 +418,28 @@ void AssetLoader::prepareCubeForLoading(_SYSCubeID id)
         lc->progress = 0;
         lc->total = totalData;
     }
+}
+
+void AssetLoader::queryResponse(_SYSCubeID id, const PacketBuffer &packet)
+{
+    /*
+     * This is invoked by CubeSlot in ISR context when a new query
+     * packet arrives. We only keep track of one asynchronous query
+     * per cube, so we'll check if it's a response to that query. If not,
+     * this packet is ignored.
+     */
+
+    if (packet.len != _SYS_ASSET_GROUP_CRC_SIZE + 1) {
+        LOG(("ASSET[%d]: Query response had unexpected size\n", id));
+        return;
+    }
+
+    const uint8_t *crc = &packet.bytes[1];
+    if (packet.bytes[0] != cubeLastQuery[id]) {
+        LOG(("ASSET[%d]: Query response had unexpected ID\n", id));
+        return;
+    }
+
+    for (unsigned i = 0; i < _SYS_ASSET_GROUP_CRC_SIZE; ++i)
+        LOG(("Query response! CRC[%d] = %02x\n", i, crc[i]));
 }

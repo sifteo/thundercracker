@@ -412,5 +412,15 @@ uint16_t CubeSlot::calculateTimeSync()
 
 void CubeSlot::queryResponse(const PacketBuffer &packet)
 {
-    /// XXX implement me
+    /*
+     * Queries are theoretically a general-purpose protocol element,
+     * but currently there's only one type of query (CRC) and it's
+     * managed by the AssetLoader.
+     *
+     * If other query types were implemented, we would need a
+     * dispatch layer that would allow us to map individual query
+     * IDs to subsystems, either dynamically or statically.
+     */
+
+    AssetLoader::queryResponse(id(), packet);
 }
