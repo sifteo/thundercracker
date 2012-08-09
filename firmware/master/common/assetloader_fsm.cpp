@@ -192,21 +192,31 @@ void AssetLoader::fsmTaskState(_SYSCubeID id, TaskState s)
          * CRC in ISR context, and set some atomic flags to indicate the results.
          */
         case S_CRC_WAIT: {
-            if (0 == (queryPendingCubes & bit))
+            if (queryPendingCubes & bit)
                 return;
-            if (queryErrorCubes & bit)
-                return fsmEnterState(id, S_ERROR);
+
+            uint32_t remaining = cubeTaskSubstate[id].crc.remaining;
+            ASSERT(remaining);
+            unsigned slot = Intrinsic::CLZ(remaining);
+            ASSERT(slot < SysLFS::ASSET_SLOTS_PER_CUBE);
+
+            if (queryErrorCubes & bit) {
+                PhysAssetSlot pSlot;
+                pSlot.setIndex(slot);
+                ASSERT(!(cacheCoherentCubes & bit));
+
+                LOG(("ASSET[%d]: Cached assets in physical slot %d not valid. Erasing.\n", id, slot));
+                pSlot.erase(id);
+
+                // Go back to the beginning
+                return fsmEnterState(id, S_RESET);
+            }
 
             /*
              * Next slot. We don't update the 'remaining' bitmap until now,
              * so that the query response ISR can determine which slot the
              * query pertains to.
              */
-
-            uint32_t remaining = cubeTaskSubstate[id].crc.remaining;
-            ASSERT(remaining);
-            unsigned slot = Intrinsic::CLZ(remaining);
-            ASSERT(slot < SysLFS::ASSET_SLOTS_PER_CUBE);
 
             remaining ^= Intrinsic::LZ(slot);
             cubeTaskSubstate[id].crc.remaining = remaining;

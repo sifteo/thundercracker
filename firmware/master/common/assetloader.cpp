@@ -448,14 +448,14 @@ void AssetLoader::queryResponse(_SYSCubeID id, const PacketBuffer &packet)
         return;
     }
 
-    const uint8_t *crc = &packet.bytes[1];
-    if (packet.bytes[0] != cubeLastQuery[id]) {
-        LOG(("ASSET[%d]: Query response had unexpected ID\n", id));
+    if (!(queryPendingCubes & bit)) {
+        LOG(("ASSET[%d]: Query response received unexpectedly\n", id));
         return;
     }
 
-    if (!(queryPendingCubes & bit)) {
-        LOG(("ASSET[%d]: Query response received unexpectedly\n", id));
+    const uint8_t *crc = &packet.bytes[1];
+    if (packet.bytes[0] != cubeLastQuery[id]) {
+        LOG(("ASSET[%d]: Query response had unexpected ID\n", id));
         return;
     }
 
@@ -494,6 +494,7 @@ void AssetLoader::queryResponse(_SYSCubeID id, const PacketBuffer &packet)
         Atomic::Or(queryErrorCubes, bit);
     }
 
-    // All done
+    // All done. Wake up the FSM.
     Atomic::And(queryPendingCubes, ~bit);
+    Tasks::trigger(Tasks::AssetLoader);
 }
