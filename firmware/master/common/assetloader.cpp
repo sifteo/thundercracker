@@ -130,7 +130,7 @@ void AssetLoader::start(_SYSAssetLoader *loader, const _SYSAssetConfiguration *c
 
     // Atomically enable these cubes
     Atomic::Or(startedCubes, cv);
-    Atomic::Or(activeCubes, cv);
+    Atomic::Or(activeCubes, cv & CubeSlots::sysConnected);
     updateActiveCubes();
 
     // Poke our task, if necessary
@@ -265,7 +265,7 @@ void AssetLoader::task()
      * Pump the state machine, on each active cube.
      */
 
-    _SYSCubeIDVector cv = activeCubes;
+    _SYSCubeIDVector cv = activeCubes & CubeSlots::sysConnected;
     while (cv) {
         _SYSCubeID id = Intrinsic::CLZ(cv);
         cv ^= Intrinsic::LZ(id);
