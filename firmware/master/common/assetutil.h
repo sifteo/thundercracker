@@ -138,6 +138,8 @@ public:
 
     ALWAYS_INLINE void writeCRCQuery(unsigned id, unsigned numTiles)
     {
+        ASSERT(id & 0x80);
+        ASSERT(numTiles > 0);
         write(FLS_OP_QUERY_CRC);
         write(id);
         write(ceildiv<unsigned>(numTiles, _SYS_ASSET_GROUP_SIZE_UNIT));
