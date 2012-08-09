@@ -73,7 +73,7 @@ bool AssetLoader::loaderBypass(_SYSCubeID id, AssetGroupInfo &group)
     }
 
     LOG(("ASSET[%d]: Installed asset group %s at base address "
-        "0x%08x (loader bypassed)\n",
+        "0x%04x (loader bypassed)\n",
         id, SvmDebugPipe::formatAddress(group.headerVA).c_str(), baseAddr));
 
     return true;

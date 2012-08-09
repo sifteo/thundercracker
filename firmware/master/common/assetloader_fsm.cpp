@@ -10,6 +10,7 @@
 #include "machine.h"
 #include "tasks.h"
 #include "flash_syslfs.h"
+#include "svmdebugpipe.h"
 
 
 void AssetLoader::fsmEnterState(_SYSCubeID id, TaskState s)
@@ -204,6 +205,11 @@ void AssetLoader::fsmTaskState(_SYSCubeID id, TaskState s)
             if (fifo.writeAvailable() >= 3) {
                 unsigned baseAddr = AssetUtil::loadedBaseAddr(group.va, id);
 
+                DEBUG_ONLY(groupBeginTimestamp[id] = SysTime::ticks();)
+                LOG(("ASSET[%d]: Loading group [%d/%d] %s at base address 0x%04x\n",
+                    id, index+1, userConfigSize[id],
+                    SvmDebugPipe::formatAddress(group.headerVA).c_str(), baseAddr));
+
                 // Opcode, lat1, lat2:a21
                 ASSERT(baseAddr < 0x8000);
                 fifo.write(0xe1);
@@ -280,6 +286,11 @@ void AssetLoader::fsmTaskState(_SYSCubeID id, TaskState s)
             if (!VirtAssetSlots::isSlotBound(slot))
                 return fsmEnterState(id, S_ERROR);
             VirtAssetSlot &vSlot = VirtAssetSlots::getInstance(slot);
+
+            // Announce our triumphant advancement
+            LOG(("ASSET[%d]: Finished group [%d/%d] in %f seconds\n",
+                id, index+1, userConfigSize[id],
+                (SysTime::ticks() - groupBeginTimestamp[id]) / double(SysTime::sTicks(1))));
 
             // Now we're actually done! Commit this to SysLFS.
             VirtAssetSlots::finalizeSlot(id, vSlot);

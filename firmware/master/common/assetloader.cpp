@@ -23,6 +23,8 @@ _SYSCubeIDVector AssetLoader::startedCubes;
 _SYSCubeIDVector AssetLoader::cacheCoherentCubes;
 _SYSCubeIDVector AssetLoader::resetPendingCubes;
 _SYSCubeIDVector AssetLoader::resetAckCubes;
+DEBUG_ONLY(SysTime::Ticks AssetLoader::groupBeginTimestamp[_SYS_NUM_CUBE_SLOTS];)
+
 
 void AssetLoader::init()
 {

@@ -160,6 +160,8 @@ private:
     // Atomic shared state
     static _SYSCubeIDVector resetPendingCubes;
     static _SYSCubeIDVector resetAckCubes;
+
+    DEBUG_ONLY(static SysTime::Ticks groupBeginTimestamp[_SYS_NUM_CUBE_SLOTS];)
 };
 
 #endif
