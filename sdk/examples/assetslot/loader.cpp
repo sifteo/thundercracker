@@ -74,6 +74,11 @@ void MyLoader::load(AssetGroup &group, AssetSlot slot)
     while (!assetLoader.isComplete()) {
 
         for (CubeID cube : cubes) {
+
+            LOG("Progress on cube %d: %d / %d\n", int(cube),
+                assetLoader.cubes[cube].progress,
+                assetLoader.cubes[cube].total);
+
             // Animate the horizontal window, to show progress
             vid[cube].stamp.setHWindow(0, assetLoader.cubeProgress(cube, LCD_width));
 
