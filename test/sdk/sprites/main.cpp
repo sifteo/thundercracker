@@ -31,7 +31,7 @@ void main()
     ScopedAssetLoader loader;
     SCRIPT(LUA, System():setAssetLoaderBypass(true));
     config.append(MainSlot, GameAssets);
-    loader.start(config, CubeSet(cube));
+    loader.start(config);
     loader.finish();
 
     SCRIPT(LUA,
