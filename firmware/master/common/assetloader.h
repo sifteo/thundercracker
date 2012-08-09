@@ -86,7 +86,6 @@ private:
         S_RESET,          // Send a state machine reset token, and begin loading preparations
         S_RESET_WAIT,     // Wait for the cube's state machine to finish resetting
 
-        S_FINALIZE,       // Finalize SysLFS state after all loading is done
         S_COMPLETE,       // Done loading, nothing to do.
         S_ERROR,          // Internal consistency error; loading will stall.
  
@@ -96,6 +95,7 @@ private:
         S_CONFIG_INIT,    // Begin work on a Configuration step
         S_CONFIG_ADDR,    // Sending load address
         S_CONFIG_DATA,    // Sending AssetGroup data for the current Configuration
+        S_CONFIG_FINISH,  // Wait for cube to finsh programming, then finalize SysLFS state
     };
 
     // State-specific data

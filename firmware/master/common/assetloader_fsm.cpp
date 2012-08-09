@@ -54,8 +54,6 @@ void AssetLoader::fsmTaskState(_SYSCubeID id, TaskState s)
      * Perform the Task work for a particular cube and state.
      */
 
-    LOG(("ASSET[%d]: Loader task state %d\n", id, s));
-
     ASSERT(id < _SYS_NUM_CUBE_SLOTS);
     _SYSCubeIDVector bit = Intrinsic::LZ(id);
 
@@ -126,14 +124,6 @@ void AssetLoader::fsmTaskState(_SYSCubeID id, TaskState s)
             }
 
         /*
-         * After all loading has finished, finalize any SysLFS state associated
-         * with this cube. This marks any in-progress groups as complete.
-         */
-        case S_FINALIZE:
-            // XXX
-            return fsmEnterState(id, S_COMPLETE);
-
-        /*
          * Begin work on a new AssetConfiguration step, identified by
          * the substate config.index.
          *
@@ -148,7 +138,7 @@ void AssetLoader::fsmTaskState(_SYSCubeID id, TaskState s)
 
                 if (index >= configSize) {
                     // No more groups. Done loading this cube!
-                    return fsmEnterState(id, S_FINALIZE);
+                    return fsmEnterState(id, S_COMPLETE);
                 }
 
                 // Validate and load Configuration info
@@ -260,8 +250,34 @@ void AssetLoader::fsmTaskState(_SYSCubeID id, TaskState s)
             if (offset < group.dataSize)
                 return;
 
+            // Done sending data! Start trying to finish this group.
+            return fsmEnterState(id, S_CONFIG_FINISH);
+        }
+
+        /*
+         * We're done sending AssetGroup data for the current Configuration node.
+         * Wait for the FIFO to drain and for the cube to acknowledge all data,
+         * then mark this loading operation as complete in SysLFS.
+         */
+        case S_CONFIG_FINISH: {
+            _SYSAssetLoaderCube *lc = AssetUtil::mapLoaderCube(userLoader, id);
+            if (!lc)
+                return fsmEnterState(id, S_ERROR);
+
+            // Still waiting for FIFO to drain?
+            AssetFIFO fifo(*lc);
+            if (fifo.readAvailable())
+                return;
+
+            // Still waiting on all bytes to be ACK'ed?
+            if (cubeBufferAvail[id] != FLS_FIFO_USABLE)
+                return;
+
+            // Done!
+            LOG(("XXX: finalize syslfs\n"));
+
             // Next Configuration node!
-            cubeTaskSubstate[id].config.index = index + 1;
+            cubeTaskSubstate[id].config.index++;
             return fsmEnterState(id, S_CONFIG_INIT);
         }
 
