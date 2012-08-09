@@ -266,10 +266,12 @@ bool VirtAssetSlots::locateGroup(const AssetGroupInfo &group,
     return true;
 }
 
-void VirtAssetSlots::finalizeSlot(_SYSCubeID cube, const VirtAssetSlot &slot)
+void VirtAssetSlots::finalizeSlot(_SYSCubeID cube, const VirtAssetSlot &slot,
+    const AssetGroupInfo &group)
 {
     /*
-     * Remove the F_LOAD_IN_PROGRESS flag from the indicated slot.
+     * Remove the F_LOAD_IN_PROGRESS flag from the indicated slot,
+     * and XOR the indicated group's CRC into the slot CRC.
      *
      * This is almost a SysLFS operation we could do using only the
      * basic read/write API, but an AssetSlotRecord is variable-sized,
@@ -293,6 +295,14 @@ void VirtAssetSlots::finalizeSlot(_SYSCubeID cube, const VirtAssetSlot &slot)
             continue;
         }
         asr.flags ^= asr.F_LOAD_IN_PROGRESS;
+
+        // Calculate this group's CRC
+        uint8_t crc[_SYS_ASSET_GROUP_CRC_SIZE];
+        group.copyCRC(crc);
+
+        // XOR it with the slot's buffer
+        for (unsigned i = 0; i < arraysize(crc); ++i)
+            asr.crc[i] ^= crc[i];
 
         // Write back, with GC if we need it.
         SysLFS::write(asrKey, (uint8_t*)&asr, asr.writeableSize(), true);

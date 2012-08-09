@@ -174,8 +174,9 @@ public:
                             _SYSCubeIDVector &foundCV,
                             const VirtAssetSlot *allocSlot = 0);
 
-    // If the indicated slot is in-progress, finalize it.
-    static void finalizeSlot(_SYSCubeID cube, const VirtAssetSlot &slot);
+    // If the indicated slot is in-progress, finalize writing 'group' to it.
+    static void finalizeSlot(_SYSCubeID cube, const VirtAssetSlot &slot,
+        const AssetGroupInfo &group);
 
 private:
     VirtAssetSlots();  // Do not implement

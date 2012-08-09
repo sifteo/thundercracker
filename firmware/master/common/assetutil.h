@@ -33,7 +33,6 @@ public:
     }
 
     static unsigned loadedBaseAddr(SvmMemory::VirtAddr group, _SYSCubeID cid);
-    static unsigned totalTilesForPhysicalSlot(_SYSCubeID cid, unsigned slot);
 
     static bool isValidConfig(const _SYSAssetConfiguration *cfg, unsigned cfgSize);
 
@@ -62,6 +61,8 @@ struct AssetGroupInfo {
 
     bool fromUserPointer(const _SYSAssetGroup *group);
     bool fromAssetConfiguration(const _SYSAssetConfiguration *config);
+
+    void copyCRC(uint8_t *buffer) const;
 
     SysLFS::AssetGroupIdentity identity() const
     {
@@ -151,6 +152,29 @@ public:
 
     ALWAYS_INLINE void commitWrites() const {
         sys.tail = tail;
+    }
+
+    ALWAYS_INLINE uint8_t& spare(unsigned n)
+    {
+        /*
+         * Access 'spare' byte "N". These bytes begin with N=0
+         * indicating the byte at 'tail', and subsequent bytes
+         * coming after that.
+         * 
+         * This can be used to store and retrieve additional data
+         * in the unused portion of the FIFO, so the FIFO can be
+         * reclaimed as general purpose memory during periods of
+         * low activity.
+         *
+         * Does not affect the head/tail pointers.
+         */
+
+        n += tail;
+        if (n >= _SYS_ASSETLOAD_BUF_SIZE)
+            n -= _SYS_ASSETLOAD_BUF_SIZE;
+        ASSERT(n < _SYS_ASSETLOAD_BUF_SIZE);
+
+        return sys.buf[n];
     }
 
 private:

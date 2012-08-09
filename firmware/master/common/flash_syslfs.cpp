@@ -547,6 +547,7 @@ bool SysLFS::AssetSlotRecord::decodeKey(Key slotKey, Key &cubeKey, unsigned &slo
 void SysLFS::AssetSlotRecord::init()
 {
     flags = 0;
+    memset(crc, 0x00, sizeof crc);
     memset(groups, 0xff, sizeof groups);
 }
 
@@ -565,8 +566,8 @@ unsigned SysLFS::AssetSlotRecord::writeableSize() const
 {
     // How many bytes do we need to write for this record?
 
-    STATIC_ASSERT(sizeof flags + sizeof groups == sizeof *this);
-    return totalGroups() * sizeof groups[0] + sizeof flags;
+    STATIC_ASSERT(sizeof flags + sizeof crc + sizeof groups == sizeof *this);
+    return totalGroups() * sizeof groups[0] + sizeof flags + sizeof crc;
 }
 
 bool SysLFS::AssetSlotRecord::findGroup(AssetGroupIdentity identity, unsigned &offset) const

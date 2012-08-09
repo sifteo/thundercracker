@@ -104,11 +104,11 @@ private:
         uint32_t value;
 
         struct {
-            uint32_t remaining;
+            uint32_t remaining;     // Only top 8 bits are actually used
         } crc;
 
         struct {
-            uint32_t index  : 8,
+            uint32_t index : 8,
                      offset : 24;
         } config;
     };
@@ -170,6 +170,8 @@ private:
     // Atomic shared state
     static _SYSCubeIDVector resetPendingCubes;
     static _SYSCubeIDVector resetAckCubes;
+    static _SYSCubeIDVector queryPendingCubes;
+    static _SYSCubeIDVector queryErrorCubes;
 
     DEBUG_ONLY(static SysTime::Ticks groupBeginTimestamp[_SYS_NUM_CUBE_SLOTS];)
 };

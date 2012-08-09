@@ -190,6 +190,7 @@ namespace SysLFS {
         };
 
         uint8_t flags;
+        uint8_t crc[_SYS_ASSET_GROUP_CRC_SIZE];
 
         // Variable size. Empty groups can be truncated when writing.
         LoadedAssetGroupRecord groups[ASSET_GROUPS_PER_SLOT];
@@ -221,7 +222,7 @@ namespace SysLFS {
         STATIC_ASSERT(kEnd <= _SYS_FS_MAX_OBJECT_KEYS);
         STATIC_ASSERT(sizeof(FlashMapBlock) == 1);
         STATIC_ASSERT(sizeof(LoadedAssetGroupRecord) == 3);
-        STATIC_ASSERT(sizeof(AssetSlotRecord) == 3 * ASSET_GROUPS_PER_SLOT + 1);
+        STATIC_ASSERT(sizeof(AssetSlotRecord) == 3 * ASSET_GROUPS_PER_SLOT + 1 + 16);
         STATIC_ASSERT(sizeof(AssetSlotOverviewRecord) == 4);
         STATIC_ASSERT(sizeof(CubeRecord) == ASSET_SLOTS_PER_CUBE * sizeof(AssetSlotOverviewRecord));
 

@@ -24,6 +24,8 @@ _SYSCubeIDVector AssetLoader::startedCubes;
 _SYSCubeIDVector AssetLoader::cacheCoherentCubes;
 _SYSCubeIDVector AssetLoader::resetPendingCubes;
 _SYSCubeIDVector AssetLoader::resetAckCubes;
+_SYSCubeIDVector AssetLoader::queryPendingCubes;
+_SYSCubeIDVector AssetLoader::queryErrorCubes;
 DEBUG_ONLY(SysTime::Ticks AssetLoader::groupBeginTimestamp[_SYS_NUM_CUBE_SLOTS];)
 
 
@@ -92,6 +94,7 @@ void AssetLoader::cubeDisconnect(_SYSCubeID id)
     _SYSCubeIDVector bit = Intrinsic::LZ(id);
     Atomic::And(activeCubes, ~bit);
     Atomic::And(cacheCoherentCubes, ~bit);
+    Atomic::And(queryPendingCubes, ~bit);
     updateActiveCubes();
 }
 
@@ -427,7 +430,17 @@ void AssetLoader::queryResponse(_SYSCubeID id, const PacketBuffer &packet)
      * packet arrives. We only keep track of one asynchronous query
      * per cube, so we'll check if it's a response to that query. If not,
      * this packet is ignored.
+     *
+     * When the queryPendingCubes bit is set for a cube, it means we
+     * compare the query against the expected data, which is stowed
+     * in the 'spare' area of our AsetFIFO buffer
+     *
+     * If the query does not match the expected result, we set the
+     * queryErrorCubes bit for this cube. Either way, we clear the
+     * 'pending' bit and wake up our task.
      */
+
+    _SYSCubeIDVector bit = Intrinsic::LZ(id);
 
     if (packet.len != _SYS_ASSET_GROUP_CRC_SIZE + 1) {
         LOG(("ASSET[%d]: Query response had unexpected size\n", id));
@@ -440,6 +453,19 @@ void AssetLoader::queryResponse(_SYSCubeID id, const PacketBuffer &packet)
         return;
     }
 
+    if (!(queryPendingCubes & bit)) {
+        LOG(("ASSET[%d]: Query response received unexpectedly\n", id));
+        return;
+    }
+
+    _SYSAssetLoaderCube *lc = AssetUtil::mapLoaderCube(userLoader, id);
+    if (!lc) {
+        LOG(("ASSET[%d]: Cannot process query result without _SYSAssetLoaderCube\n", id));
+        return;
+    }
+
+    AssetFIFO fifo(*lc);
+
     for (unsigned i = 0; i < _SYS_ASSET_GROUP_CRC_SIZE; ++i)
-        LOG(("Query response! CRC[%d] = %02x\n", i, crc[i]));
+        LOG(("Query response! CRC[%d] = %02x (exp %02x)\n", i, crc[i], fifo.spare(i)));
 }

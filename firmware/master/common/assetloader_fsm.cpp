@@ -110,8 +110,22 @@ void AssetLoader::fsmTaskState(_SYSCubeID id, TaskState s)
                 uint32_t remaining = cubeTaskSubstate[id].crc.remaining;
                 ASSERT(remaining);
                 unsigned slot = Intrinsic::CLZ(remaining);
-                unsigned tiles = AssetUtil::totalTilesForPhysicalSlot(id, slot);
+                ASSERT(id < _SYS_NUM_CUBE_SLOTS);
+                ASSERT(slot < SysLFS::ASSET_SLOTS_PER_CUBE);
 
+                /*
+                 * Read in the AssetSlotRecord for this slot. It includes
+                 * information about what assets we expect to see, including
+                 * the total tile count and the expected CRC.
+                 */
+
+                SysLFS::AssetSlotRecord asr;
+                PhysAssetSlot pSlot;
+
+                pSlot.setIndex(slot);
+                pSlot.getRecordForCube(id, asr);
+
+                unsigned tiles = asr.totalTiles();
                 if (!tiles) {
                     // Empty slot? Consider this successful, try the next.
                     remaining ^= Intrinsic::LZ(slot);
@@ -127,6 +141,11 @@ void AssetLoader::fsmTaskState(_SYSCubeID id, TaskState s)
 
                 /*
                  * Prepare to write the query command into our FIFO.
+                 *
+                 * We need enough FIFO space for the command itself, plus we
+                 * borrow some "spare" bytes past the end of the FIFO for storing
+                 * the expected query result. This needs to be checked in ISR
+                 * context, where we can't read the CRC from flash.
                  */
 
                 _SYSAssetLoaderCube *lc = AssetUtil::mapLoaderCube(userLoader, id);
@@ -134,17 +153,34 @@ void AssetLoader::fsmTaskState(_SYSCubeID id, TaskState s)
                     return fsmEnterState(id, S_ERROR);
 
                 AssetFIFO fifo(*lc);
-                if (fifo.writeAvailable() < fifo.ADDRESS_SIZE + fifo.CRC_QUERY_SIZE)
+                const unsigned bytesNeeded = fifo.ADDRESS_SIZE + fifo.CRC_QUERY_SIZE + _SYS_ASSET_GROUP_CRC_SIZE;
+                if (fifo.writeAvailable() < bytesNeeded)
                     return;
 
                 /*
-                 * Send the query!
+                 * Put the command in our FIFO. Does not commit it yet.
                  */
 
                 fifo.writeAddress(slot * PhysAssetSlot::SLOT_SIZE);
                 fifo.writeCRCQuery(nextQueryID(id), tiles);
-                fifo.commitWrites();
 
+                /*
+                 * Just past the command, store the expected CRC. This
+                 * comes right out of the SysLFS AssetSlotRecord.
+                 */
+
+                for (unsigned i = 0; i < _SYS_ASSET_GROUP_CRC_SIZE; ++i)
+                    fifo.spare(i) = asr.crc[i];
+
+                /*
+                 * Now atomically trigger the query. The 'pending' flag
+                 * lets our response handler know it should be active,
+                 * and committing it to the FIFO allows our radio ISR
+                 * to start sending it.
+                 */
+
+                Atomic::SetLZ(queryPendingCubes, id);
+                fifo.commitWrites();
                 resetDeadline(id);
                 return fsmEnterState(id, S_CRC_RESPONSE);
             }
@@ -203,7 +239,7 @@ void AssetLoader::fsmTaskState(_SYSCubeID id, TaskState s)
                 // Can we install it instantly, via Asset Loader Bypass?
                 #ifdef SIFTEO_SIMULATOR
                     if (loaderBypass(id, group)) {
-                        VirtAssetSlots::finalizeSlot(id, vSlot);
+                        VirtAssetSlots::finalizeSlot(id, vSlot, group);
                         cubeTaskSubstate[id].config.index = index + 1;
                         continue;
                     }
@@ -310,8 +346,13 @@ void AssetLoader::fsmTaskState(_SYSCubeID id, TaskState s)
                 return fsmEnterState(id, S_ERROR);
             VirtAssetSlot &vSlot = VirtAssetSlots::getInstance(slot);
 
+            // And what group did we just finish?
+            AssetGroupInfo group;
+            if (!group.fromAssetConfiguration(cfg))
+                return fsmEnterState(id, S_ERROR);
+
             // Now we're actually done! Commit this to SysLFS.
-            VirtAssetSlots::finalizeSlot(id, vSlot);
+            VirtAssetSlots::finalizeSlot(id, vSlot, group);
 
             // Announce our triumphant advancement
             LOG(("ASSET[%d]: Group [%d/%d] finished in %f seconds\n",

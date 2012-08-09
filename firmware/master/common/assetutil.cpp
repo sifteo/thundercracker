@@ -109,20 +109,6 @@ bool AssetUtil::isValidConfig(const _SYSAssetConfiguration *cfg, unsigned cfgSiz
     return true;
 }
 
-unsigned AssetUtil::totalTilesForPhysicalSlot(_SYSCubeID cid, unsigned slot)
-{
-    ASSERT(cid < _SYS_NUM_CUBE_SLOTS);
-    ASSERT(slot < SysLFS::ASSET_SLOTS_PER_CUBE);
-
-    SysLFS::AssetSlotRecord asr;
-    PhysAssetSlot pSlot;
-
-    pSlot.setIndex(slot);
-    pSlot.getRecordForCube(cid, asr);
-
-    return asr.totalTiles();
-}
-
 bool AssetGroupInfo::fromUserPointer(const _SYSAssetGroup *group)
 {
     /*
@@ -334,3 +320,23 @@ unsigned AssetFIFO::fetchFromGroup(_SYSAssetLoaderCube &sys, AssetGroupInfo &gro
     return actualSize;
 }
 
+void AssetGroupInfo::copyCRC(uint8_t *buffer) const
+{
+    /*
+     * Read the CRC from an AssetGroup, as computed by stir.
+     */
+
+    SvmMemory::VirtAddr va = headerVA + offsetof(_SYSAssetGroupHeader, crc);
+
+    if (remapToVolume) {
+        // Low-level volume mapping
+        FlashBlockRef mapRef, dataRef;
+        FlashMapSpan span = volume.getPayload(mapRef);        
+        va -= SvmMemory::SEGMENT_1_VA;
+        span.copyBytes(dataRef, va, buffer, _SYS_ASSET_GROUP_CRC_SIZE);
+    } else {
+        // Normal SVM virtual address
+        FlashBlockRef dataRef;
+        SvmMemory::copyROData(dataRef, buffer, va, _SYS_ASSET_GROUP_CRC_SIZE);
+    }
+}
