@@ -39,7 +39,7 @@ struct TileCodecLUT {
     int findColor(RGB565 c, unsigned maxIndex = LUT_MAX - 1) const {
         // Is a particular color in the LUT? Return the index.
         for (unsigned i = 0; i <= maxIndex; i++)
-            if (colors[i] == c)
+            if (colors[i] == c && (valid & (1 << i)))
                 return i;
         return -1;
     }
@@ -52,6 +52,7 @@ private:
     }
 
     TilePalette::ColorMode lastMode;
+    uint32_t valid;         // Bitmap of which LUT entries can be relied on
     uint8_t mru[LUT_MAX];   // Newest entries at the end, oldest at the front.
 };
 

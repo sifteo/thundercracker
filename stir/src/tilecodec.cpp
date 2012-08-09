@@ -16,6 +16,7 @@ namespace Stir {
 
 TileCodecLUT::TileCodecLUT()
 {
+    valid = 0;
     for (unsigned i = 0; i < LUT_MAX; i++)
         mru[i] = i;
 }
@@ -99,6 +100,7 @@ unsigned TileCodecLUT::encode(const TilePalette &pal, uint16_t &newColors)
 
             colors[index] = missing[--numMissing];
             newColors |= 1 << index;
+            valid |= 1 << index;
             cost += lutLoadCost;
         }
     }
