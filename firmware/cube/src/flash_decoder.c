@@ -634,6 +634,17 @@ static void flash_query_crc() __naked
         mov     ADDR_PORT, a
         mov     CTRL_PORT, #(CTRL_FLASH_OUT | CTRL_FLASH_LAT1)
 
+        jnz     4$                  ; Handle lat1 overflow if necessary
+
+        mov     a, _flash_addr_lat2
+        add     a, #2
+        mov     ADDR_PORT, a
+        mov     CTRL_PORT, #(CTRL_FLASH_OUT | CTRL_FLASH_LAT1)
+        mov     _flash_addr_lat2, a
+        mov     CTRL_PORT, #CTRL_FLASH_OUT
+
+4$:
+
         mov     ADDR_PORT, R_TMP0   ; Now go to the next sampling point
 
         inc     R_PTR               ; Loop until we finish the allocation block
