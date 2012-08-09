@@ -58,7 +58,7 @@ void MainMenu::init()
      * executing so we can give audio feedback when no cubes are around
      * to display a pause menu.
      */
-    _SYS_setCubeRange(0, _SYS_NUM_CUBE_SLOTS);
+    System::setCubeRange(0, _SYS_NUM_CUBE_SLOTS);
     _SYS_asset_bindSlots(Volume::running(), Shared::NUM_SLOTS);
 }
 
