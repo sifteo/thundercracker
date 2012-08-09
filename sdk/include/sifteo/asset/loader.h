@@ -54,11 +54,8 @@ public:
      */
     void append(_SYSAssetSlot slot, AssetGroup &group, _SYSVolumeHandle volume = 0)
     {
-        uint32_t pGroup = reinterpret_cast<uintptr_t>(&group);
-        ASSERT((pGroup >= 0xc0000000) == (volume != 0));
-
         _SYSAssetConfiguration &cfg = super::append();
-        cfg.pGroup = pGroup;
+        cfg.pGroup = reinterpret_cast<uintptr_t>(&group);
         cfg.volume = volume;
         cfg.dataSize = group.compressedSize();
         cfg.numTiles = group.numTiles();
