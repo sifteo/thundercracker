@@ -28,6 +28,7 @@ public:
     struct Item {
         const uint16_t *icon;
         const char *label;
+        bool selectable;
     };
 
     UIMenu(UICoordinator &uic, const Item *items, unsigned numItems)

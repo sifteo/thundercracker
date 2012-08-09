@@ -32,7 +32,7 @@ bool isPressed()
 IRQ_HANDLER ISR_EXTI2()
 {
     homeButton.irqAcknowledge();
-    Tasks::trigger(Tasks::HomeButton);
+    Tasks::trigger(Tasks::Pause);
 }
 #endif
 

@@ -8,10 +8,9 @@
 #include "audiomixer.h"
 #include "svmdebugger.h"
 #include "assetloader.h"
-#include "homebutton.h"
+#include "pause.h"
 #include "cubeconnector.h"
 #include "radio.h"
-#include "batterylevel.h"
 
 #ifdef SIFTEO_SIMULATOR
 #   include "mc_timing.h"
@@ -48,7 +47,7 @@ ALWAYS_INLINE void Tasks::taskInvoke(unsigned id)
         case Tasks::AudioPull:      return AudioMixer::pullAudio();
         case Tasks::Debugger:       return SvmDebugger::messageLoop();
         case Tasks::AssetLoader:    return AssetLoader::task();
-        case Tasks::HomeButton:     return HomeButton::task();
+        case Tasks::Pause:          return Pause::task();
         case Tasks::CubeConnector:  return CubeConnector::task();
         case Tasks::Heartbeat:      return heartbeatTask();
     #endif
@@ -69,10 +68,6 @@ void Tasks::heartbeatTask()
 {
     Radio::heartbeat();
     AssetLoader::heartbeat();
-
-#ifndef SIFTEO_SIMULATOR
-    BatteryLevel::heartbeat();
-#endif
 }
 
 

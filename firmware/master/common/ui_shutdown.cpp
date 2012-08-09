@@ -221,7 +221,7 @@ void UIShutdown::mainLoop()
             // Cancel
             uic.restoreCubes(uic.uiConnected);
             LED::set(LEDPatterns::idle);
-            Tasks::cancel(Tasks::HomeButton);
+            Tasks::cancel(Tasks::Pause);
             SvmClock::resume();
             return;
         }

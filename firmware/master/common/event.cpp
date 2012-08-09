@@ -7,6 +7,7 @@
 #include "event.h"
 #include "cube.h"
 #include "neighborslot.h"
+#include "pause.h"
 
 Event::VectorInfo Event::vectors[_SYS_NUM_VECTORS];
 Event::Params Event::params[NUM_PIDS];
@@ -129,6 +130,15 @@ bool Event::dispatchCubePID(PriorityID pid, _SYSCubeID cid)
             // Connected in userspace, and need disconnection?
             // Leave our event pending, since we may need to CONNECT also.
             if (userConn && (dcFlag || !sysConn)) {
+
+                /*
+                 * If this disconnection event takes us below the current cubeRange,
+                 * execute the pause menu.
+                 * Disconnect events are delivered once the game is resumed.
+                 */
+                if (CubeSlots::belowCubeRange())
+                    Pause::cubeRange();
+
                 CubeSlots::instances[cid].userDisconnect();
                 return callCubeEvent(_SYS_CUBE_DISCONNECT, cid);
             }

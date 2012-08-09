@@ -51,7 +51,7 @@ public:
     void deinit() const;
 
     uint16_t ALWAYS_INLINE status() const {
-        return tim->SR;
+        return (tim->SR & tim->DIER);
     }
     void ALWAYS_INLINE clearStatus() const {
         tim->SR = 0;

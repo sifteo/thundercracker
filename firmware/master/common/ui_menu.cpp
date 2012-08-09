@@ -97,7 +97,7 @@ void UIMenu::animate()
             // Settling: Pull toward and activate the nearest item, if the accelerometer is mostly centered
             if (isTilting) {
                 state = S_TILTING;
-            } else if (cube.isTouching()) {
+            } else if (cube.isTouching() && items[activeItem].selectable) {
                 // Allow selection even if we're still settling
                 beginFinishing();
             } else {
@@ -122,7 +122,7 @@ void UIMenu::animate()
             // Static: Menu isn't moving, cube wasn't being touched. Has that changed?
             if (isTilting) {
                 state = S_TILTING;
-            } else if (cube.isTouching()) {
+            } else if (cube.isTouching() && items[activeItem].selectable) {
                 beginFinishing();
             }
             break;

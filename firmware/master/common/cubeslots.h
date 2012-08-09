@@ -42,6 +42,10 @@ namespace CubeSlots {
         return cv & (0xFFFFFFFF << (32 - _SYS_NUM_CUBE_SLOTS));
     }
 
+    static ALWAYS_INLINE bool belowCubeRange() {
+        return Intrinsic::POPCOUNT(CubeSlots::sysConnected) < CubeSlots::minUserCubes;
+    }
+
     void setCubeRange(unsigned minimum, unsigned maximum);
 
     void paintCubes(_SYSCubeIDVector cv, bool wait=true, uint32_t excludedTasks=0);
