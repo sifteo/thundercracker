@@ -303,12 +303,15 @@ class TilePool {
         /*
          * Look up a raw byte of decompressed tile data, by its byte address.
          * Out-of-range addresses return 0xFF.
+         *
+         * NB: This matches the actual endianness that our cube firmware
+         *     uses for flash storage, i.e. big endian (to match the display)
          */
 
         Index ti = addr / (sizeof(RGB565) * Tile::PIXELS);
         unsigned pi = (addr / sizeof(RGB565)) % Tile::PIXELS;
         if (ti < size())
-            return tile(ti)->pixel(pi).value >> ((addr & 1) << 3);
+            return tile(ti)->pixel(pi).value >> ((addr & 1 ^ 1) << 3);
         return 0xFF;
     }
 
