@@ -235,12 +235,17 @@ void testCancel()
     ASSERT(Slot0.tilesFree() < 4096);
     ASSERT(Slot0.tilesFree() > 3000);
 
-    // Cancel the second one
+    // Cancel the second one.
+    // This has to be timed just right- we don't want to cancel too early,
+    // or the group will not have been allocated yet. So, wait until it has
+    // made a nonzero amount of progress.
     {
         AssetConfiguration<1> config;
         ScopedAssetLoader loader;
         config.append(Slot0, g2);
         loader.start(config);
+        while (!loader.cubes[0].progress)
+            System::yield();
         loader.cancel();
     }
 
