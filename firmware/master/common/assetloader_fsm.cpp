@@ -253,16 +253,16 @@ void AssetLoader::fsmTaskState(_SYSCubeID id, TaskState s)
             offset += bytes;
             lc->progress += bytes;
             cubeTaskSubstate[id].config.offset = offset;
+            resetDeadline(id);
 
             // Are we done?
             ASSERT(offset <= group.dataSize);
-            if (offset >= group.dataSize) {
-                // Next Configuration
-                cubeTaskSubstate[id].config.index = index + 1;
-                return fsmEnterState(id, S_CONFIG_INIT);
-            }
+            if (offset < group.dataSize)
+                return;
 
-            return;
+            // Next Configuration node!
+            cubeTaskSubstate[id].config.index = index + 1;
+            return fsmEnterState(id, S_CONFIG_INIT);
         }
 
         default:
