@@ -91,7 +91,7 @@ private:
         S_ERROR,          // Internal consistency error; loading will stall.
  
         S_CRC_COMMAND,    // Waiting to send a CRC query for one slot (substate = slot bitmap)
-        S_CRC_RESPONSE,   // Waiting for a CRC query response
+        S_CRC_WAIT,       // Waiting for a CRC query response
 
         S_CONFIG_INIT,    // Begin work on a Configuration step
         S_CONFIG_ADDR,    // Sending load address

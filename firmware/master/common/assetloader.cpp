@@ -94,6 +94,7 @@ void AssetLoader::cubeDisconnect(_SYSCubeID id)
     _SYSCubeIDVector bit = Intrinsic::LZ(id);
     Atomic::And(activeCubes, ~bit);
     Atomic::And(cacheCoherentCubes, ~bit);
+    Atomic::And(queryErrorCubes, ~bit);
     Atomic::And(queryPendingCubes, ~bit);
     updateActiveCubes();
 }
@@ -465,7 +466,34 @@ void AssetLoader::queryResponse(_SYSCubeID id, const PacketBuffer &packet)
     }
 
     AssetFIFO fifo(*lc);
+    bool match = true;
 
-    for (unsigned i = 0; i < _SYS_ASSET_GROUP_CRC_SIZE; ++i)
-        LOG(("Query response! CRC[%d] = %02x (exp %02x)\n", i, crc[i], fifo.spare(i)));
+    for (unsigned i = 0; i < _SYS_ASSET_GROUP_CRC_SIZE; ++i) {
+        if (crc[i] != fifo.spare(i)) {
+            match = false;
+            break;
+        }
+    }
+
+    if (!match) {        
+        /*
+         * Log the mismatch
+         */
+        LOG(("ASSET[%d]: Bad CRC for physical slot %d:\nASSET[%d]:    Expected: ",
+             id, Intrinsic::CLZ(cubeTaskSubstate[id].crc.remaining), id));
+        for (unsigned i = 0; i < _SYS_ASSET_GROUP_CRC_SIZE; ++i) {
+            LOG(("%02x", fifo.spare(i)));
+        }
+        LOG(("\nASSET[%d]:    Actual:   ", id));
+        for (unsigned i = 0; i < _SYS_ASSET_GROUP_CRC_SIZE; ++i) {
+            LOG(("%02x", crc[i]));
+        }
+        LOG(("\n"));
+
+        // Flag an error beore we clear the pending bit
+        Atomic::Or(queryErrorCubes, bit);
+    }
+
+    // All done
+    Atomic::And(queryPendingCubes, ~bit);
 }

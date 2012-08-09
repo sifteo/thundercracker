@@ -108,7 +108,14 @@ void AssetLoader::fsmTaskState(_SYSCubeID id, TaskState s)
         case S_CRC_COMMAND:
             while (1) {
                 uint32_t remaining = cubeTaskSubstate[id].crc.remaining;
-                ASSERT(remaining);
+
+                if (!remaining) {
+                    // Done! Start allocating the first configuration.
+                    Atomic::Or(cacheCoherentCubes, bit);
+                    cubeTaskSubstate[id].value = 0;
+                    return fsmEnterState(id, S_CONFIG_INIT);
+                }
+
                 unsigned slot = Intrinsic::CLZ(remaining);
                 ASSERT(id < _SYS_NUM_CUBE_SLOTS);
                 ASSERT(slot < SysLFS::ASSET_SLOTS_PER_CUBE);
@@ -130,13 +137,7 @@ void AssetLoader::fsmTaskState(_SYSCubeID id, TaskState s)
                     // Empty slot? Consider this successful, try the next.
                     remaining ^= Intrinsic::LZ(slot);
                     cubeTaskSubstate[id].crc.remaining = remaining;
-                    if (remaining)
-                        continue;
-
-                    // Done! Start allocating the first configuration.
-                    Atomic::Or(cacheCoherentCubes, bit);
-                    cubeTaskSubstate[id].value = 0;
-                    return fsmEnterState(id, S_CONFIG_INIT);
+                    continue;
                 }
 
                 /*
@@ -179,11 +180,38 @@ void AssetLoader::fsmTaskState(_SYSCubeID id, TaskState s)
                  * to start sending it.
                  */
 
-                Atomic::SetLZ(queryPendingCubes, id);
+                Atomic::And(queryErrorCubes, ~bit);
+                Atomic::Or(queryPendingCubes, bit);
                 fifo.commitWrites();
                 resetDeadline(id);
-                return fsmEnterState(id, S_CRC_RESPONSE);
+                return fsmEnterState(id, S_CRC_WAIT);
             }
+
+        /*
+         * Waiting for a good CRC response. We validate the received
+         * CRC in ISR context, and set some atomic flags to indicate the results.
+         */
+        case S_CRC_WAIT: {
+            if (0 == (queryPendingCubes & bit))
+                return;
+            if (queryErrorCubes & bit)
+                return fsmEnterState(id, S_ERROR);
+
+            /*
+             * Next slot. We don't update the 'remaining' bitmap until now,
+             * so that the query response ISR can determine which slot the
+             * query pertains to.
+             */
+
+            uint32_t remaining = cubeTaskSubstate[id].crc.remaining;
+            ASSERT(remaining);
+            unsigned slot = Intrinsic::CLZ(remaining);
+            ASSERT(slot < SysLFS::ASSET_SLOTS_PER_CUBE);
+
+            remaining ^= Intrinsic::LZ(slot);
+            cubeTaskSubstate[id].crc.remaining = remaining;
+            return fsmEnterState(id, S_CRC_COMMAND);
+        }
 
         /*
          * Begin work on a new AssetConfiguration step, identified by
