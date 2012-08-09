@@ -114,6 +114,7 @@ void AssetLoader::start(_SYSAssetLoader *loader, const _SYSAssetConfiguration *c
         userConfig[id] = cfg;
         userConfigSize[id] = cfgSize;
 
+        resetDeadline(id);
         fsmEnterState(id, S_RESET);
 
         // Zero out the _SYSAssetLoaderCube.
@@ -152,7 +153,10 @@ void AssetLoader::ackData(_SYSCubeID id, unsigned bytes)
 {
     /*
      * FIFO Data acknowledged. We can update cubeBufferAvail directly.
+     * Only called when 'bytes' is nonzero.
      */
+
+    ASSERT(bytes);
 
     unsigned buffer = cubeBufferAvail[id];
     buffer += bytes;
@@ -273,15 +277,30 @@ void AssetLoader::task()
 void AssetLoader::heartbeat()
 {
     /*
-     * If any loads are still active, trigger the task so that
-     * we can check for timeouts. Normally our task is only triggered
-     * when meaningful external inputs (syscalls or ACKs) happen, but
-     * we do need to poll occasionally to check for timeouts. We can
-     * do this at a low rate, thanks to the heartbeat timer.
+     * Check on our watchdog timer for any active cubes. If the watchdog
+     * has timed out, we complain loudly and restart that cube.
      */
 
-    if (userLoader && activeCubes)
-        Tasks::trigger(Tasks::AssetLoader);
+    if (!userLoader)
+        return;
+
+    _SYSCubeIDVector cv = activeCubes;
+    if (!cv)
+        return;
+
+    SysTime::Ticks now = SysTime::ticks();
+
+    while (cv) {
+        _SYSCubeID id = Intrinsic::CLZ(cv);
+        cv ^= Intrinsic::LZ(id);
+
+        if (now > cubeDeadline[id]) {
+            LOG(("ASSET[%d]: Deadline passed, restarting load\n", id));
+
+            resetDeadline(id);
+            fsmEnterState(id, S_RESET);
+        }
+    }
 }
 
 void AssetLoader::prepareCubeForLoading(_SYSCubeID id)

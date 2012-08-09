@@ -19,6 +19,8 @@ void AssetLoader::fsmEnterState(_SYSCubeID id, TaskState s)
      * Can run either from ISR or Task context!
      */
 
+    STATIC_ASSERT(sizeof cubeTaskSubstate[0] == sizeof cubeTaskSubstate[0].value);
+
     ASSERT(id < _SYS_NUM_CUBE_SLOTS);
     cubeTaskState[id] = s;
     Tasks::trigger(Tasks::AssetLoader);
@@ -31,7 +33,6 @@ void AssetLoader::fsmEnterState(_SYSCubeID id, TaskState s)
         case S_RESET:
             Atomic::ClearLZ(resetAckCubes, id);
             Atomic::SetLZ(resetPendingCubes, id);
-            cubeDeadline[id] = SysTime::ticks() + SysTime::msTicks(350);
             return;
 
         /*
@@ -53,6 +54,8 @@ void AssetLoader::fsmTaskState(_SYSCubeID id, TaskState s)
      * Perform the Task work for a particular cube and state.
      */
 
+    LOG(("ASSET[%d]: Loader task state %d\n", id, s));
+
     ASSERT(id < _SYS_NUM_CUBE_SLOTS);
     _SYSCubeIDVector bit = Intrinsic::LZ(id);
 
@@ -64,6 +67,7 @@ void AssetLoader::fsmTaskState(_SYSCubeID id, TaskState s)
          * preparation work.
          */
         case S_RESET:
+            resetDeadline(id);
             fsmEnterState(id, S_RESET_WAIT);
             return prepareCubeForLoading(id);
 
@@ -85,10 +89,6 @@ void AssetLoader::fsmTaskState(_SYSCubeID id, TaskState s)
                 // Otherwise, begin allocating the first configuration
                 cubeTaskSubstate[id].value = 0;
                 fsmEnterState(id, S_CONFIG_INIT);
-
-            } else if (SysTime::ticks() > cubeDeadline[id]) {
-                LOG(("ASSET[%d]: Flash state reset timeout\n", id));
-                fsmEnterState(id, S_RESET);
             }
             return;
 
@@ -199,9 +199,71 @@ void AssetLoader::fsmTaskState(_SYSCubeID id, TaskState s)
         /*
          * Send an Address command for the current group, if there's space in the FIFO.
          */
-        case S_CONFIG_ADDR:
+        case S_CONFIG_ADDR: {
+            _SYSAssetLoaderCube *lc = AssetUtil::mapLoaderCube(userLoader, id);
+            if (!lc)
+                return fsmEnterState(id, S_ERROR);
 
+            unsigned index = cubeTaskSubstate[id].config.index;
+            ASSERT(index < userConfigSize[id]);
+            AssetGroupInfo group;
+            if (!group.fromAssetConfiguration(userConfig[id] + index))
+                return fsmEnterState(id, S_ERROR);
 
+            AssetFIFO fifo(*lc);
+            if (fifo.writeAvailable() >= 3) {
+                unsigned baseAddr = AssetUtil::loadedBaseAddr(group.va, id);
+
+                // Opcode, lat1, lat2:a21
+                ASSERT(baseAddr < 0x8000);
+                fifo.write(0xe1);
+                fifo.write(baseAddr << 1);
+                fifo.write(((baseAddr >> 6) & 0xfe) | ((baseAddr >> 14) & 1));
+                fifo.commitWrites();
+
+                resetDeadline(id);
+                cubeTaskSubstate[id].config.offset = 0;
+                return fsmEnterState(id, S_CONFIG_DATA);
+            }
+            return;
+        }
+
+        /*
+         * Sending AssetGroup data for the current Configuration node, if there's space.
+         */
+        case S_CONFIG_DATA: {
+            _SYSAssetLoaderCube *lc = AssetUtil::mapLoaderCube(userLoader, id);
+            if (!lc)
+                return fsmEnterState(id, S_ERROR);
+
+            unsigned index = cubeTaskSubstate[id].config.index;
+            ASSERT(index < userConfigSize[id]);
+            AssetGroupInfo group;
+            if (!group.fromAssetConfiguration(userConfig[id] + index))
+                return fsmEnterState(id, S_ERROR);
+
+            unsigned offset = cubeTaskSubstate[id].config.offset;
+            unsigned bytes = AssetFIFO::fetchFromGroup(*lc, group, offset);
+            if (!bytes) {
+                // No progress was made. Wait for more FIFO space.
+                return;
+            }
+
+            // Update current load offset and the progress indicator
+            offset += bytes;
+            lc->progress += bytes;
+            cubeTaskSubstate[id].config.offset = offset;
+
+            // Are we done?
+            ASSERT(offset <= group.dataSize);
+            if (offset >= group.dataSize) {
+                // Next Configuration
+                cubeTaskSubstate[id].config.index = index + 1;
+                return fsmEnterState(id, S_CONFIG_INIT);
+            }
+
+            return;
+        }
 
         default:
             return;

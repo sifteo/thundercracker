@@ -95,6 +95,7 @@ private:
 
         S_CONFIG_INIT,    // Begin work on a Configuration step
         S_CONFIG_ADDR,    // Sending load address
+        S_CONFIG_DATA,    // Sending AssetGroup data for the current Configuration
     };
 
     // State-specific data
@@ -106,7 +107,8 @@ private:
         } crc;
 
         struct {
-            uint8_t index;
+            uint32_t index  : 8,
+                     offset : 24;
         } config;
     };
 
@@ -128,6 +130,13 @@ private:
         _SYSAssetLoader *localUserLoader = userLoader;
         if (localUserLoader)
             localUserLoader->busyCubes = activeCubes;
+    }
+
+    // When we send data to the cube, update its watchdog timer.
+    // Not for use in ISR context.
+    static ALWAYS_INLINE void resetDeadline(_SYSCubeID id)
+    {
+        cubeDeadline[id] = SysTime::ticks() + SysTime::msTicks(350);
     }
 
     // Data from userspace
