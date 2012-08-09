@@ -311,7 +311,7 @@ class TilePool {
         Index ti = addr / (sizeof(RGB565) * Tile::PIXELS);
         unsigned pi = (addr / sizeof(RGB565)) % Tile::PIXELS;
         if (ti < size())
-            return tile(ti)->pixel(pi).value >> ((addr & 1 ^ 1) << 3);
+            return tile(ti)->pixel(pi).value >> (((addr & 1) ^ 1) << 3);
         return 0xFF;
     }
 
