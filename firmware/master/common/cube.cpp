@@ -48,7 +48,6 @@ void CubeSlot::connect(SysLFS::Key cubeRecord, const RadioAddress &addr, const R
 
     // Propagate this connection to userspace
     Event::setCubePending(Event::PID_CONNECTION, id());
-    AssetLoader::cubeConnect(id());
 }
 
 void CubeSlot::disconnect()
@@ -68,7 +67,6 @@ void CubeSlot::disconnect()
 
     // Propagate this disconnection to userspace
     Event::setCubePending(Event::PID_CONNECTION, id());
-    AssetLoader::cubeDisconnect(id());
 
     setVideoBuffer(0);
     setMotionBuffer(0);
@@ -81,11 +79,13 @@ void CubeSlot::userConnect()
     Atomic::Or(CubeSlots::userConnected, bit());
     setVideoBuffer(0);
     VirtAssetSlots::rebindCube(id());
+    AssetLoader::cubeConnect(id());
 }
 
 void CubeSlot::userDisconnect()
 {
     Atomic::And(CubeSlots::userConnected, ~bit());
+    AssetLoader::cubeDisconnect(id());
 }
 
 bool CubeSlot::isTouching() const

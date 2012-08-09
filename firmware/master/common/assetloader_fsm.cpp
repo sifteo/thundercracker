@@ -60,6 +60,8 @@ void AssetLoader::fsmTaskState(_SYSCubeID id, TaskState s)
     ASSERT(id < _SYS_NUM_CUBE_SLOTS);
     _SYSCubeIDVector bit = Intrinsic::LZ(id);
 
+    DEBUG_LOG(("ASSET[%d]: Task state %d\n", id, s));
+
     switch (s) {
 
         /*
