@@ -30,9 +30,12 @@ void main()
     while (!CubeSet::connected().test(cube))
         System::yield();
     _SYS_asset_bindSlots(_SYS_fs_runningVolume(), 1);
+
+    AssetConfiguration<1> config;
     ScopedAssetLoader loader;
     SCRIPT(LUA, System():setAssetLoaderBypass(true));
-    loader.start(MainAssets, MainSlot, cube);
+    config.append(MainSlot, MainAssets);
+    loader.start(config, cube);
     loader.finish();
 
     SCRIPT(LUA,
