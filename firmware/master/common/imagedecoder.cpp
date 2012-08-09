@@ -48,8 +48,6 @@ bool ImageDecoder::init(const _SYSAssetImage *userPtr, _SYSCubeID cid)
 
     if (header.pAssetGroup) {
         baseAddr = AssetUtil::loadedBaseAddr(header.pAssetGroup, cid);
-        if (!baseAddr)
-            return false;
     } else {
         baseAddr = 0;
     }
