@@ -39,9 +39,17 @@ struct TileCodecLUT {
     int findColor(RGB565 c, unsigned maxIndex = LUT_MAX - 1) const {
         // Is a particular color in the LUT? Return the index.
         for (unsigned i = 0; i <= maxIndex; i++)
-            if (colors[i] == c && (valid & (1 << i)))
+            if (colors[i] == c && isEntryValid(i))
                 return i;
         return -1;
+    }
+
+    bool isEntryValid(unsigned index) const {
+        return 0 != (valid & (1 << index));
+    }
+
+    void makeEntryValid(unsigned index) {
+        valid |= 1 << index;
     }
 
 private:
