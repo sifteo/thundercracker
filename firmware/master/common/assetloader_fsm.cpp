@@ -206,7 +206,7 @@ void AssetLoader::fsmTaskState(_SYSCubeID id, TaskState s)
                 unsigned baseAddr = AssetUtil::loadedBaseAddr(group.va, id);
 
                 DEBUG_ONLY(groupBeginTimestamp[id] = SysTime::ticks();)
-                LOG(("ASSET[%d]: Loading group [%d/%d] %s at base address 0x%04x\n",
+                LOG(("ASSET[%d]: Loading group  [%d/%d] %s at base address 0x%04x\n",
                     id, index+1, userConfigSize[id],
                     SvmDebugPipe::formatAddress(group.headerVA).c_str(), baseAddr));
 
