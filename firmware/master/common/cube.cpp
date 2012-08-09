@@ -284,7 +284,8 @@ void CubeSlot::radioAcknowledge(const PacketBuffer &packet)
         // This ACK includes a valid flash_fifo_bytes counter
 
         uint8_t loadACK = ack->flash_fifo_bytes - lastACK.flash_fifo_bytes;
-        AssetLoader::ackData(id(), loadACK);
+        if (loadACK)
+            AssetLoader::ackData(id(), loadACK);
     }
 
     if (packet.len >= offsetof(RF_ACKType, accel) + sizeof ack->accel) {
