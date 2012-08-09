@@ -37,10 +37,7 @@ bool AssetLoader::loaderBypass(_SYSCubeID id, AssetGroupInfo &group)
      * Prep for loading
      */
 
-    _SYSAssetGroupCube *agc = AssetUtil::mapGroupCube(group.va, id);
-    if (!agc)
-        return false;
-    unsigned baseAddr = agc->baseAddr;
+    unsigned baseAddr = AssetUtil::loadedBaseAddr(group.va, id);
 
     Cube::Hardware *simCube = SystemMC::getCubeForSlot(&CubeSlots::instances[id]);
     if (!simCube)
