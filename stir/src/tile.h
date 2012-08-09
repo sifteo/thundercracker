@@ -298,6 +298,22 @@ class TilePool {
         return stackList.size();
     }
 
+    uint8_t rawByte(uint32_t addr) const
+    {
+        /*
+         * Look up a raw byte of decompressed tile data, by its byte address.
+         * Out-of-range addresses return 0xFF.
+         */
+
+        Index ti = addr / (sizeof(RGB565) * Tile::PIXELS);
+        unsigned pi = (addr / sizeof(RGB565)) % Tile::PIXELS;
+        if (ti < size())
+            return tile(ti)->pixel(pi).value >> ((addr & 1) << 3);
+        return 0xFF;
+    }
+
+    void calculateCRC(std::vector<uint8_t> &crcbuf) const;
+
  private:
     unsigned numFixed;
 

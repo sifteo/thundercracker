@@ -147,8 +147,6 @@ public:
 
     void setDefault(lua_State *L);
     static Group *getDefault(lua_State *L);
-    void getFlashCRC(std::vector<uint8_t> &crcbuf,
-                     unsigned addr = 0, unsigned numBlocks = 1) const;
 
 private:
     lua_Number quality;

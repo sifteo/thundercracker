@@ -115,7 +115,7 @@ void CPPSourceWriter::writeGroup(const Group &group)
     if (!group.isFixed()) {
 
         std::vector<uint8_t> crc;
-        group.getFlashCRC(crc);
+        group.getPool().calculateCRC(crc);
 
         /*
          * XXX: This method of generating the group Ordinal only works within
