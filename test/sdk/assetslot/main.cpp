@@ -19,20 +19,19 @@ unsigned roundTiles(unsigned t)
     return (t + 15) & ~15;
 }
 
-bool load(AssetGroup &group, AssetSlot &slot, bool bypass)
+void load(AssetGroup &group, AssetSlot &slot, bool bypass)
 {
     ScopedAssetLoader loader;
-    bool result;
+    AssetConfiguration<1> config;
+    config.append(slot, group);
 
     if (bypass)
         SCRIPT(LUA, System():setAssetLoaderBypass(true));
 
-    result = loader.start(group, slot, cubes);
+    loader.start(config, cubes);
     loader.finish();
 
     SCRIPT(LUA, System():setAssetLoaderBypass(false));
-
-    return result;
 }
 
 
@@ -41,6 +40,9 @@ void testGroupLoading()
     /*
      * Run through a set of loading operations once, starting with empty slots.
      * Verifies the amount of free space at every step, and verifies base addresses.
+     *
+     * This does not use AssetConfigurations; rather, it tests to see that groups
+     * are cached appropriately, and that we don't unnecessarily erase slots.
      */
 
     LOG("================= Testing multi-group scenario\n");
@@ -54,50 +56,40 @@ void testGroupLoading()
     ASSERT(Slot2.tilesFree() == 4096);
     ASSERT(Slot3.tilesFree() == 4096);
 
-    // Slot 1, load all of the numbered groups.
-    // Do this twice. The second time will be a no-op.
+    // Slot 1, load all of the numbered groups that will fit
     
-    for (unsigned iter = 0; iter < 2; iter++) {
-        unsigned addr = 0;
-        unsigned base[CUBE_ALLOCATION];
+    unsigned addr = 0;
+    unsigned base[CUBE_ALLOCATION];
 
-        STATIC_ASSERT(arraysize(NumberList) == 25);
-        for (unsigned n = 0; n < arraysize(NumberList); n++) {
-            AssetGroup &group = NumberList[n].assetGroup();
+    STATIC_ASSERT(arraysize(NumberList) == 25);
 
-            if (iter == 0) {
-                // Verify initial sizes of slots
-                ASSERT(Slot0.tilesFree() == 4096 - addr);
-                ASSERT(Slot1.tilesFree() == 4096);
-                ASSERT(Slot2.tilesFree() == 4096);
-                ASSERT(Slot3.tilesFree() == 4096);
-            }
+    for (unsigned n = 0; n < 24; n++) {
+        AssetGroup &group = NumberList[n].assetGroup();
 
-            // The 25th group is expected to fail. All others should be loaded.
-            ASSERT(group.isInstalled(cubes) == (iter != 0 && n < 24));
-    
-            // Test with and without asset loader bypass
-            ASSERT(load(group, Slot0, (iter + n) & 1) == n < 24);
-            ASSERT(group.isInstalled(cubes) == n < 24);
+        // Verify initial sizes of slots
+        ASSERT(Slot0.tilesFree() == 4096 - addr);
+        ASSERT(Slot1.tilesFree() == 4096);
+        ASSERT(Slot2.tilesFree() == 4096);
+        ASSERT(Slot3.tilesFree() == 4096);
 
-            if (group.isInstalled(cubes)) {
+        // Test with and without asset loader bypass
+        ASSERT(group.isInstalled(cubes) == false);
+        load(group, Slot0, n & 1);
+        ASSERT(group.isInstalled(cubes) == true);
 
-                // Verify load addresses
-                for (CubeID cube : cubes) {
-                    if (n) {
-                        ASSERT(group.baseAddress(cube) == base[cube] + addr);
-                    } else {
-                        ASSERT(addr == 0);
-                        base[cube] = group.baseAddress(cube);
-                    }
-                }
-
-                // Verify final size of slot
-                addr += roundTiles(group.numTiles());
-                if (iter == 0)
-                    ASSERT(Slot0.tilesFree() == 4096 - addr);
+        // Verify load addresses
+        for (CubeID cube : cubes) {
+            if (n) {
+                ASSERT(group.baseAddress(cube) == base[cube] + addr);
+            } else {
+                ASSERT(addr == 0);
+                base[cube] = group.baseAddress(cube);
             }
         }
+
+        // Verify final size of slot
+        addr += roundTiles(group.numTiles());
+        ASSERT(Slot0.tilesFree() == 4096 - addr);
     }
 
     // Make sure we can use all of the loaded asset groups
@@ -137,9 +129,9 @@ void testMultipleSlots()
     ASSERT(Slot2.tilesFree() == 4096);
     ASSERT(Slot3.tilesFree() == 4096);
 
-    ASSERT(load(Ball1Group, Slot1, true) == true);
-    ASSERT(load(Ball2Group, Slot2, false) == true);
-    ASSERT(load(Ball3Group, Slot3, true) == true);
+    load(Ball1Group, Slot1, true);
+    load(Ball2Group, Slot2, false);
+    load(Ball3Group, Slot3, true);
 
     ASSERT(Slot1.tilesFree() == 4096 - roundTiles(Ball1Group.numTiles()));
     ASSERT(Slot2.tilesFree() == 4096 - roundTiles(Ball2Group.numTiles()));
@@ -172,38 +164,38 @@ void testMultipleSlots()
 void testFull()
 {
     /*
-     * For asset slots that are already partially full, try to completely fill them.
+     * Test auto-erase on overflow
      */
 
-    LOG("================= Testing completely full asset slots\n");
+    LOG("================= Testing erasure on overflow\n");
 
     // Bind all four slots, using our own volume ID
     _SYS_asset_bindSlots(_SYS_fs_runningVolume(), 4);
 
-    AssetSlot slots[] = { Slot1, Slot2, Slot3 };
+    Slot0.erase();
+    Slot1.erase();
+    Slot2.erase();
+    Slot3.erase();
 
-    for (unsigned s = 0; s < arraysize(slots); s++) {
-        AssetSlot slot = slots[s];
-        unsigned free = slot.tilesFree();
+    AssetSlot slot = Slot1;
+    unsigned free = 4096;
 
-        ASSERT(free < 4096);
+    for (unsigned n = 0; n < arraysize(NumberList); n++) {
+        AssetGroup &group = NumberList[n].assetGroup();
+        unsigned tiles = roundTiles(group.numTiles());
+        ASSERT(free == slot.tilesFree());
 
-        for (unsigned n = 0; n < arraysize(NumberList); n++) {
-            AssetGroup &group = NumberList[n].assetGroup();
-            unsigned tiles = roundTiles(group.numTiles());
-            ASSERT(free == slot.tilesFree());
+        ASSERT(group.isInstalled(cubes) == false);
+        load(group, slot, false);
+        ASSERT(group.isInstalled(cubes) == true);
 
-            if (tiles > free) {
-                ASSERT(load(group, slot, false) == false);
-                break;
-            } else {
-                ASSERT(load(group, slot, false) == true);
-                free -= tiles;
-            }
+        // If we would have overflowed the slot, we should see evidence that it was cleared
+        if (n == 24)
+            free = 4096 - tiles;
+        else
+            free -= tiles;
 
-            // No matter what, this group is still available in Slot0 :)
-            ASSERT(group.isInstalled(cubes) == true);
-        }
+        ASSERT(free == slot.tilesFree());
     }
 }
 
@@ -238,15 +230,17 @@ void testCancel()
     
     // Load one small group
     ASSERT(g1.isInstalled(cubes) == false);
-    ASSERT(load(g1, Slot0, false) == true);
+    load(g1, Slot0, false);
     ASSERT(g1.isInstalled(cubes) == true);
     ASSERT(Slot0.tilesFree() < 4096);
     ASSERT(Slot0.tilesFree() > 3000);
 
     // Cancel the second one
     {
+        AssetConfiguration<1> config;
         ScopedAssetLoader loader;
-        ASSERT(loader.start(g2, Slot0, cubes) == true);
+        config.append(Slot0, g2);
+        loader.start(config);
         loader.cancel();
     }
 
@@ -258,19 +252,16 @@ void testCancel()
 
     // Nothing can be loaded here now.
     ASSERT(Slot0.tilesFree() == 0);
-    {
-        ScopedAssetLoader loader;
-        ASSERT(loader.start(g2, Slot0, cubes) == false);
-    }
 
     // Clear it and try again
     Slot0.erase();
+    ASSERT(Slot0.tilesFree() == 4096);
 
     ASSERT(g1.isInstalled(cubes) == false);
     ASSERT(g2.isInstalled(cubes) == false);
 
-    ASSERT(load(g1, Slot0, false) == true);
-    ASSERT(load(g2, Slot0, false) == true);
+    load(g1, Slot0, false);
+    load(g2, Slot0, false);
 
     ASSERT(g2.isInstalled(cubes) == true);
     ASSERT(g1.isInstalled(cubes) == true);
@@ -404,10 +395,10 @@ void main()
 
     testGroupLoading();
     testMultipleSlots();
-    testFull();
     testBinding();
     testEviction();
     testCancel();
-
+    testFull();
+    
     LOG("Success.\n");
 }
