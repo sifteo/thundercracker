@@ -180,6 +180,7 @@ void AssetLoader::fsmTaskState(_SYSCubeID id, TaskState s)
                 // Can we install it instantly, via Asset Loader Bypass?
                 #ifdef SIFTEO_SIMULATOR
                     if (loaderBypass(id, group)) {
+                        VirtAssetSlots::finalizeSlot(id, vSlot);
                         cubeTaskSubstate[id].config.index = index + 1;
                         continue;
                     }
