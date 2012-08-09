@@ -77,6 +77,8 @@ void _SYS_asset_loadStart(_SYSAssetLoader *loader,
     cv = CubeSlots::truncateVector(cv);
 
     AssetLoader::start(loader, cfg, cfgSize, cv);
+
+    ASSERT(AssetLoader::getUserLoader() == loader);
 }
 
 void _SYS_asset_loadFinish(_SYSAssetLoader *loader)
@@ -85,10 +87,10 @@ void _SYS_asset_loadFinish(_SYSAssetLoader *loader)
         return SvmRuntime::fault(F_SYSCALL_ADDR_ALIGN);
     if (!SvmMemory::mapRAM(loader))
         return SvmRuntime::fault(F_SYSCALL_ADDRESS);
-    if (AssetLoader::getUserLoader() != loader)
-        return SvmRuntime::fault(F_BAD_ASSET_LOADER);
 
-    AssetLoader::finish();
+    // Ignored if 'loader' is no longer current
+    if (AssetLoader::getUserLoader() == loader)
+        AssetLoader::finish();
 }
 
 void _SYS_asset_loadCancel(_SYSAssetLoader *loader, _SYSCubeIDVector cv)

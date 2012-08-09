@@ -62,7 +62,6 @@ void AssetLoader::cubeConnect(_SYSCubeID id)
 
     ASSERT(id < _SYS_NUM_CUBE_SLOTS);
     _SYSCubeIDVector bit = Intrinsic::LZ(id);
-    ASSERT(0 == (activeCubes & bit));
 
     if (!activeCubes) {
         /*
@@ -75,8 +74,9 @@ void AssetLoader::cubeConnect(_SYSCubeID id)
 
     if (startedCubes & bit) {
         // Re-start this cube
+        resetDeadline(id);
         fsmEnterState(id, S_RESET);
-        Atomic::Or(startedCubes, bit);
+        Atomic::Or(activeCubes, bit);
         Tasks::trigger(Tasks::AssetLoader);
     }
 }
