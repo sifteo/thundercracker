@@ -52,7 +52,13 @@ void MainMenu::init()
     itemIndexCurrent = 0;
     cubeRangeSavedIcon = NULL;
 
-    _SYS_setCubeRange(1, _SYS_NUM_CUBE_SLOTS);
+    /*
+     * Accommodate down to 0 cubes - this is important to avoid triggering
+     * a pause due to too few cubes being connected. Plus, we want to continue
+     * executing so we can give audio feedback when no cubes are around
+     * to display a pause menu.
+     */
+    _SYS_setCubeRange(0, _SYS_NUM_CUBE_SLOTS);
     _SYS_asset_bindSlots(Volume::running(), Shared::NUM_SLOTS);
 }
 
