@@ -508,6 +508,88 @@ void VirtAssetSlot::erase(_SYSCubeIDVector cv)
     }
 }
 
+void PhysAssetSlot::erase(_SYSCubeID cube)
+{
+    /*
+     * Empty out a single physical AssetSlot, on one cube.
+     *
+     * This is very similar to VirtAssetSlot, but we have only
+     * one record of each type to udpate.
+     *
+     * Iterates over SysLFS only once, doing this all in one step, if possible.
+     */
+
+    bool pendingOverview = true;
+    bool pendingSlot = true;
+
+    FlashLFS &lfs = SysLFS::get();
+    FlashLFSObjectIter iter(lfs);
+
+    SysLFS::Key cubeKey = SysLFS::CubeRecord::makeKey(cube);
+    SysLFS::Key asrKey = SysLFS::AssetSlotRecord::makeKey(cubeKey, index());
+
+    while (pendingOverview | pendingSlot) {
+
+        // Restartable iteration, in case we need to collect garbage
+        FlashLFSObjectIter iter(lfs);
+        while (pendingOverview | pendingSlot) {
+            
+            if (!iter.previous(FlashLFSKeyQuery())) {
+                // Out of records; done
+                return;
+            }
+            
+            _SYSCubeID cube;
+            SysLFS::Key key = (SysLFS::Key) iter.record()->getKey();
+
+            // Is this our overview record?
+            if (key == cubeKey && pendingOverview) {
+
+                SysLFS::CubeRecord cr;
+                if (!cr.load(iter))
+                    continue;
+
+                pendingOverview = false;
+
+                // Mark this slot as erased
+                cr.assets.markErased(index());
+
+                // Now we need to write back the modified record. (Without GC)
+                if (SysLFS::write(key, cr, false))
+                    continue;
+
+                // We failed to write without garbage collection. We may be
+                // able to write with GC enabled, but at this point we'd need
+                // to restart iteration, in case volumes were deleted.
+                SysLFS::write(key, cr);
+                break;
+            }
+
+            // Is this our AssetSlotRecord?
+            if (key == asrKey && pendingSlot) {
+
+                SysLFS::AssetSlotRecord asr;
+                if (!asr.load(iter))
+                    continue;
+
+                pendingSlot = false;
+
+                // If this slot is already empty, we're done. (Don't write to flash)
+                if (asr.isEmpty())
+                    continue;
+
+                // Delete this record
+                if (SysLFS::write(key, 0, 0, false) == 0)
+                    continue;
+
+                // Try again with garbage collection and iterator restart
+                SysLFS::write(key, 0, 0, true);
+                break;
+            }
+        }
+    }
+}
+
 void VirtAssetSlots::eraseAssetSlotRecords(_SYSCubeID cube, PhysSlotVector slots)
 {
     /*

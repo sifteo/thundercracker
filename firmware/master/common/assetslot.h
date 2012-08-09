@@ -50,6 +50,7 @@ public:
     }
 
     void getRecordForCube(_SYSCubeID cube, SysLFS::AssetSlotRecord &asr);
+    void erase(_SYSCubeID cube);
 
 private:
     uint8_t code;     // invalid=0 , valid=[1, NUM_SLOTS]
