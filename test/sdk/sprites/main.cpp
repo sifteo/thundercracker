@@ -29,7 +29,6 @@ void main()
 
     AssetConfiguration<1> config;
     ScopedAssetLoader loader;
-    SCRIPT(LUA, System():setAssetLoaderBypass(true));
     config.append(MainSlot, GameAssets);
     loader.start(config);
     loader.finish();
@@ -80,6 +79,7 @@ void main()
 
         System::paint();
         System::finish();
+
         SCRIPT_FMT(LUA, "util:assertScreenshot(cube, 'frame-%02d')", frame);
     }
 
