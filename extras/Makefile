@@ -1,5 +1,4 @@
 SUBDIRS = \
-	hello \
 	nyan \
 	pantera \
 	monster \
