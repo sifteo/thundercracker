@@ -72,6 +72,9 @@ void Pause::buttonPress(UICoordinator &uic)
         return uiShutdown.mainLoop();
 
     UIPause uiPause(uic);
+    if (uic.isAttached())
+        uiPause.init();
+
     LED::set(LEDPatterns::paused, true);
     HomeButtonPressDetector press;
 
