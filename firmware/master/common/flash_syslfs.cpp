@@ -547,6 +547,7 @@ bool SysLFS::AssetSlotRecord::decodeKey(Key slotKey, Key &cubeKey, unsigned &slo
 void SysLFS::AssetSlotRecord::init()
 {
     flags = 0;
+    memset(crc, 0x00, sizeof crc);
     memset(groups, 0xff, sizeof groups);
 }
 
@@ -565,17 +566,8 @@ unsigned SysLFS::AssetSlotRecord::writeableSize() const
 {
     // How many bytes do we need to write for this record?
 
-    STATIC_ASSERT(sizeof flags + sizeof groups == sizeof *this);
-
-    unsigned i;
-    for (i = 0; i < ASSET_GROUPS_PER_SLOT; ++i) {
-        const LoadedAssetGroupRecord &group = groups[i];
-    
-        if (group.isEmpty())
-            break;
-    }
-
-    return i * sizeof groups[0] + sizeof flags;
+    STATIC_ASSERT(sizeof flags + sizeof crc + sizeof groups == sizeof *this);
+    return totalGroups() * sizeof groups[0] + sizeof flags + sizeof crc;
 }
 
 bool SysLFS::AssetSlotRecord::findGroup(AssetGroupIdentity identity, unsigned &offset) const
@@ -651,15 +643,15 @@ bool SysLFS::AssetSlotRecord::allocGroup(AssetGroupIdentity identity,
     return false;
 }
 
-unsigned SysLFS::AssetSlotRecord::tilesFree() const
+unsigned SysLFS::AssetSlotRecord::totalTiles() const
 {
     /*
-     * How much space is free in this slot, measuring in tiles?
+     * How much space is used in this slot, measuring in tiles?
      */
 
     // Refuse to allocate if a load was in progress.
     if (flags & F_LOAD_IN_PROGRESS)
-        return 0;
+        return TILES_PER_ASSET_SLOT;
 
     unsigned currentOffset = 0;
 
@@ -676,7 +668,23 @@ unsigned SysLFS::AssetSlotRecord::tilesFree() const
         return 0;
     }
 
-    return TILES_PER_ASSET_SLOT - currentOffset;
+    return currentOffset;
+}
+
+unsigned SysLFS::AssetSlotRecord::totalGroups() const
+{
+    /*
+     * How many groups are in use, in this slot?
+     */
+
+    unsigned i;
+    for (i = 0; i < ASSET_GROUPS_PER_SLOT; ++i) {
+        const LoadedAssetGroupRecord &group = groups[i];
+        if (group.isEmpty())
+            break;
+    }
+
+    return i;
 }
 
 bool SysLFS::AssetSlotRecord::isEmpty() const

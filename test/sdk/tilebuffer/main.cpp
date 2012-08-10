@@ -23,12 +23,11 @@ static void testTileBuffer()
     vid.attach(cube);
 
     {
+        AssetConfiguration<2> config;
         ScopedAssetLoader loader;
-        loader.start( GameAssets, MainSlot, cube);
-
-        while( !loader.isComplete() ) {
-            System::paint();
-        }
+        config.append(MainSlot, BootAssets);
+        config.append(MainSlot, GameAssets);
+        loader.start(config, CubeSet(cube));
     }
 
     TileBuffer<16, 16> tileBuffer(cube);
@@ -48,10 +47,12 @@ void main()
     while (!CubeSet::connected().test(cube))
         System::yield();
     _SYS_asset_bindSlots(_SYS_fs_runningVolume(), 1);
+
+    AssetConfiguration<1> config;
     ScopedAssetLoader loader;
     SCRIPT(LUA, System():setAssetLoaderBypass(true));
-    MainSlot.erase();
-    loader.start(BootAssets, MainSlot, cube);
+    config.append(MainSlot, BootAssets);
+    loader.start(config, CubeSet(cube));
     loader.finish();
     SCRIPT(LUA, System():setAssetLoaderBypass(false));
 

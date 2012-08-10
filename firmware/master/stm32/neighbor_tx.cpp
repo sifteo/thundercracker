@@ -10,7 +10,7 @@
 #include "gpio.h"
 #include "hwtimer.h"
 #include "vectors.h"
-
+#include "batterylevel.h"
 
 namespace {
 
@@ -32,6 +32,7 @@ namespace {
 
     static uint16_t txData;         // Shift register for transmission in progress, 0 if done
     static uint16_t txDataBuffer;   // Current packet we're transmitting
+    static bool paused = false;
 
     static enum TxState {
         Idle,
@@ -64,6 +65,9 @@ void NeighborTX::start(unsigned data, unsigned sideMask)
      *
      * In the event that a transmission is ongoing, 'data' is buffered
      * until the start of the next transmission. sideMask is applied immediately.
+     *
+     * While we're paused, transmission has stopped but we'll still accept updates
+     * to our txdata and sideMask config.
      */
 
     txDataBuffer = data;
@@ -73,6 +77,9 @@ void NeighborTX::start(unsigned data, unsigned sideMask)
         GPIOPin::Control c = (sideMask & (1 << i)) ? GPIOPin::OUT_ALT_50MHZ : GPIOPin::IN_PULL;
         pins[i].setControl(c);
     }
+
+    if (paused)
+        return;
 
     // starting from idle? reinit state machine
     if (txState == Idle) {
@@ -99,6 +106,18 @@ void NeighborTX::stop()
     txState = Idle;
 }
 
+void NeighborTX::pause()
+{
+    paused = true;
+    NeighborTX::stop();
+}
+
+void NeighborTX::resume()
+{
+    paused = false;
+    NeighborTX::start(txDataBuffer, ~0);
+}
+
 IRQ_HANDLER ISR_FN(NBR_TX_TIM)()
 {
     /*
@@ -123,10 +142,15 @@ IRQ_HANDLER ISR_FN(NBR_TX_TIM)()
         case Transmitting:
             // was the previous bit our last one?
             if (txData == 0) {
-                // Between transmissions, use the prescaler to reduce IRQ load.
+                /*
+                 * Between transmissions, we give battery measurement an
+                 * opportunity to take a sample.
+                 */
+
                 setDuty(0);
                 txPeriodTimer.setPeriod(Neighbor::BIT_PERIOD_TICKS, Neighbor::NUM_TX_WAIT_PERIODS);
                 txState = BetweenTransmissions;
+                BatteryLevel::beginCapture();
             } else {
                 // send data out big endian
                 setDuty((txData & 0x8000) ? Neighbor::PULSE_LEN_TICKS : 0);
@@ -148,6 +172,9 @@ IRQ_HANDLER ISR_FN(NBR_TX_TIM)()
             break;
         }
     }
+
+    if (status & (1 << BATT_LVL_CHAN))
+        BatteryLevel::captureIsr();
 }
 
 void NeighborTX::floatSide(unsigned side)

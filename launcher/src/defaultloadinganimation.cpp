@@ -11,6 +11,10 @@ using namespace Sifteo;
 #include "resources/loading-bitmap.h"
 
 
+DefaultLoadingAnimation::DefaultLoadingAnimation()
+    : startTime(SystemTime::now())
+{}
+
 void DefaultLoadingAnimation::begin(CubeSet cubes)
 {
     for (CubeID cube : cubes) {
@@ -27,10 +31,8 @@ void DefaultLoadingAnimation::begin(CubeSet cubes)
 
         // All dot positions available
         dotPositions[cube].mark();
+        dotCounts[cube] = 0;
     }
-
-    startTime = SystemTime::now();
-    bzero(dotCounts);
 }
 
 void DefaultLoadingAnimation::paint(CubeSet cubes, int percent)

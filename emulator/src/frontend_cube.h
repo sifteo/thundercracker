@@ -102,6 +102,7 @@ class FrontendCube {
     void setTiltTarget(b2Vec2 angles);
     void setHoverTarget(float h);
     void setRotationLock(bool isRotationFixed);
+    void toggleFlip();
     
     void setTouch(float amount) {
         hw->setTouch(amount);
@@ -109,6 +110,10 @@ class FrontendCube {
     
     bool isHovering() {
         return hoverTarget > CubeConstants::HEIGHT;
+    }
+
+    bool isFlipped() const {
+        return flipped;
     }
     
     unsigned getId() const {
@@ -139,6 +144,7 @@ public:
     b2Vec2 tiltTarget;
     b2Vec2 tiltVector;
     float hover, hoverTarget;
+    bool flipped;
     b2Mat33 modelMatrix;
 
     unsigned id;

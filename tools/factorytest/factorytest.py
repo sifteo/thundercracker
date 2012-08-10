@@ -99,7 +99,7 @@ class TestRunner(object):
             print "FAIL"
             self.failCount = self.failCount + 1
         else:
-            print "SUCCESS"
+            # print "SUCCESS"
             self.successCount = self.successCount + 1
 
     @staticmethod
@@ -114,7 +114,13 @@ class TestRunner(object):
 
         # template if you want to manually run a single test
         # while(1):
-        runner.run(cubetests.AccelerometerTest)
+        # runner.run(cubetests.setSimulatedBatteryVoltage)
+        while(1):
+            runner.run(mastertests.VBusCurrentDrawTest)
+            time.sleep(1)
+
+        jig = devManager.testjig();
+        jig.reset();
 
         print "COMPLETE. %d tests run, %d failures" % (runner.numTestsRun(), runner.failCount)
         if runner.failCount == 0:

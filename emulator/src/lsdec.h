@@ -16,7 +16,7 @@
 #ifndef _LSDEC_H
 #define _LSDEC_H
 
-#include "macros.h"
+#include <stdint.h>
 
 
 class LoadstreamDecoder {
@@ -25,8 +25,6 @@ public:
 
     void reset();
     void handleByte(uint8_t b);
-    void handleBytes(uint8_t *byte, uint32_t count);
-    void handleSVM(uint32_t va, uint32_t bytes);
     void setAddress(uint32_t addr);
 
 private:

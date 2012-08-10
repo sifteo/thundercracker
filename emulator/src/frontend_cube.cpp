@@ -16,6 +16,7 @@ void FrontendCube::init(unsigned _id, Cube::Hardware *_hw, b2World &world, float
     id = _id;
     hw = _hw;
     lastLcdCookie = 0;
+    flipped = false;
 
     initBody(world, x, y);
 
@@ -134,6 +135,11 @@ void FrontendCube::setTiltTarget(b2Vec2 angles)
     tiltTarget = angles;
 }
 
+void FrontendCube::toggleFlip()
+{
+    flipped ^= true;
+}
+
 void FrontendCube::setHoverTarget(float h)
 {
     hoverTarget = h;
@@ -163,9 +169,16 @@ void FrontendCube::updateNeighbor(bool touching, unsigned mySide,
 
 void FrontendCube::animate()
 {
+    /* Adjusted tilt target which accounts for flip too */
+    b2Vec2 adjTiltTarget = tiltTarget;
+    if (flipped) {
+        adjTiltTarget.x += 180.0f;
+        adjTiltTarget.y = -adjTiltTarget.y;
+    }
+
     /* Animated tilt */
     const float tiltGain = 0.25f;
-    tiltVector += tiltGain * (tiltTarget - tiltVector);
+    tiltVector += tiltGain * (adjTiltTarget - tiltVector);
 
     /* Animated hover */
     const float hoverGain = 0.5f;

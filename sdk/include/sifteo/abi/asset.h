@@ -20,14 +20,15 @@ extern "C" {
 #define _SYS_ASSET_GROUPS_PER_SLOT  24      // Number of AssetGroups we can track per-slot
 #define _SYS_ASSET_SLOTS_PER_BANK   4       // Number of AssetSlots maximum per-program
 #define _SYS_ASSET_GROUP_SIZE_UNIT  16      // Basic unit of AssetGroup allocation, in tiles
+#define _SYS_ASSET_GROUP_CRC_SIZE   16      // Number of bytes of AssetGroup CRC
 
 
 struct _SYSAssetGroupHeader {
-    uint8_t reserved;           /// OUT    Reserved, must be zero
-    uint8_t ordinal;            /// OUT    Small integer, unique within an ELF
-    uint16_t numTiles;          /// OUT    Uncompressed size, in tiles
-    uint32_t dataSize;          /// OUT    Size of compressed data, in bytes
-    uint64_t hash;              /// OUT    Hash of this asset group's data
+    uint8_t reserved;                       /// OUT     Reserved, must be zero
+    uint8_t ordinal;                        /// OUT     Small integer, unique within an ELF
+    uint16_t numTiles;                      /// OUT     Uncompressed size, in tiles
+    uint32_t dataSize;                      /// OUT     Size of compressed data, in bytes
+    uint8_t crc[_SYS_ASSET_GROUP_CRC_SIZE]; /// OUT     CRC of this asset group's data
     // Followed by compressed data
 };
 
@@ -41,9 +42,8 @@ struct _SYSAssetGroup {
 };
 
 struct _SYSAssetLoaderCube {
-    uint32_t pAssetGroup;   /// IN    Address for _SYSAssetGroup in RAM
     uint32_t progress;      /// IN    Number of compressed bytes read from flash
-    uint32_t dataSize;      /// IN    Local copy of asset group's dataSize
+    uint32_t total;         /// IN    Local copy of asset group's dataSize
     uint16_t reserved;      /// -
     uint8_t head;           /// -     Index of the next sample to read
     uint8_t tail;           /// -     Index of the next empty slot to write into
@@ -51,9 +51,17 @@ struct _SYSAssetLoaderCube {
 };
 
 struct _SYSAssetLoader {
-    _SYSCubeIDVector cubeVec;   /// OUT   Which _SYSAssetLoaderCube structs are valid?
-    _SYSCubeIDVector complete;  /// OUT   Which cubes have fully completed their loading?
+    _SYSCubeIDVector busyCubes; /// OUT   Which cubes are still busy loading?
     // Followed by a _SYSAssetLoaderCube array
+};
+
+struct _SYSAssetConfiguration {
+    uint32_t pGroup;            /// Address of _SYSAssetGroup
+    _SYSVolumeHandle volume;    /// Mapped volume, or 0 if the group is local
+    uint32_t dataSize;          /// Copy of group header's dataSize
+    uint16_t numTiles;          /// Copy of group header's numTiles
+    uint8_t ordinal;            /// Copy of group header's ordinal
+    _SYSAssetSlot slot;         /// Which slot to load into?
 };
 
 enum _SYSAssetImageFormat {

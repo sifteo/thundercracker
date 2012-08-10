@@ -113,13 +113,9 @@ CPPSourceWriter::CPPSourceWriter(Logger &log, const char *filename)
 void CPPSourceWriter::writeGroup(const Group &group)
 {
     if (!group.isFixed()) {
-        char hash[32];
 
-        #ifdef __MINGW32__
-            sprintf(hash, "0x%016I64x", (long long unsigned int) group.getHash());
-        #else
-            sprintf(hash, "0x%016llx", (long long unsigned int) group.getHash());
-        #endif
+        std::vector<uint8_t> crc;
+        group.getPool().calculateCRC(crc);
 
         /*
          * XXX: This method of generating the group Ordinal only works within
@@ -138,7 +134,11 @@ void CPPSourceWriter::writeGroup(const Group &group)
             indent << "/* ordinal   */ " << nextGroupOrdinal++ << ",\n" <<
             indent << "/* numTiles  */ " << group.getPool().size() << ",\n" <<
             indent << "/* dataSize  */ " << group.getLoadstream().size() << ",\n" <<
-            indent << "/* hash      */ " << hash << ",\n"
+            indent << "/* crc       */ {\n" <<
+            indent;
+                writeArray(crc);
+        mStream <<
+            indent << "},\n" <<
             "}, {\n";
 
         writeArray(group.getLoadstream());

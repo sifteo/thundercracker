@@ -25,7 +25,7 @@
 #include "cubeconnector.h"
 #include "neighbor_tx.h"
 #include "led.h"
-
+#include "batterylevel.h"
 
 /*
  * Application specific entry point.
@@ -124,6 +124,9 @@ int main()
     NeighborTX::init();
     CubeConnector::init();
 
+    // NOTE: NeighborTX & BatteryLevel share a timer - Battery level expects
+    //       it to have already been init'd.
+    BatteryLevel::init();
     Volume::init();
     AudioOutDevice::init();
     AudioOutDevice::start();

@@ -61,15 +61,16 @@ static void usage()
             "\n"
             "  --headless          Run without graphics or sound output\n"
             "  --lock-rotation     Lock rotation by default\n"
+            "  --mute              Mute the Base's volume control by default\n"
+            "  --paint-trace       Trace the state of the repaint controller\n"
+            "  --radio-trace       Trace all radio packet contents\n"
+            "  --stdout FILENAME   Redirect output to FILENAME\n"
             "  --svm-trace         Trace SVM instruction execution\n"
             "  --svm-stack         Monitor SVM stack usage\n"
             "  --svm-flash-stats   Dump statistics about flash memory usage\n"
-            "  --radio-trace       Trace all radio packet contents\n"
-            "  --paint-trace       Trace the state of the repaint controller\n"
+            "  --waveout FILE.wav  Log all audio output to LOG.wav\n"
             "  --white-bg          Force the UI to use a plain white background\n"
             "  --window WxH        Initial window size (default 800x600)\n"
-            "  --stdout FILENAME   Redirect output to FILENAME\n"
-            "  --waveout FILE.wav  Log all audio output to LOG.wav\n"
             "\n"
             "Games:\n"
             "  Any games specified on the command line will be installed to\n"
@@ -265,6 +266,11 @@ int main(int argc, char **argv)
 
         if (!strcmp(arg, "--white-bg")) {
             sys.opt_whiteBackground = true;
+            continue;
+        }
+
+        if (!strcmp(arg, "--mute")) {
+            sys.opt_mute = true;
             continue;
         }
 

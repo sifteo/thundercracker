@@ -44,7 +44,7 @@ public:
         AudioPull,
         Debugger,
         AssetLoader,
-        HomeButton,
+        Pause,
         CubeConnector,
         Heartbeat,
         Profiler,

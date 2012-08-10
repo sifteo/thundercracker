@@ -12,7 +12,6 @@
 
 #include <sstream>
 
-#include "sha.h"
 #include "script.h"
 #include "proof.h"
 #include "cppwriter.h"
@@ -512,30 +511,6 @@ Group *Group::getDefault(lua_State *L)
     Group *obj = Lunar<Group>::cast(L, -1);
     lua_pop(L, 1);
     return obj;
-}
-
-uint64_t Group::getHash() const
-{
-    /*
-     * Hashes are calculated automatically, as a
-     * truncated SHA1 of the loadstream.
-     */
-
-    SHA_CTX ctx;
-    sha1_byte digest[SHA1_DIGEST_LENGTH];
-    std::vector<uint8_t> ls = getLoadstream();
-
-    SHA1_Init(&ctx);
-    SHA1_Update(&ctx, &ls[0], ls.size());
-    SHA1_Final(digest, &ctx);
-
-    uint64_t sig = 0;
-    for (unsigned i = 0; i < sizeof sig; i++) {
-        sig <<= 8;
-        sig |= digest[i];
-    }
-
-    return sig;
 }
 
 Image::Image(lua_State *L) : mInList(false)

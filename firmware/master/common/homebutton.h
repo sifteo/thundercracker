@@ -29,32 +29,32 @@ namespace HomeButton
 
 class HomeButtonPressDetector {
 public:
-	enum State {
-		S_UNKNOWN,
-		S_IDLE,
-		S_PRESSED,
-		S_RELEASED,
-	};
+    enum State {
+        S_UNKNOWN,
+        S_IDLE,
+        S_PRESSED,
+        S_RELEASED,
+    };
 
-	HomeButtonPressDetector() : pressTimestamp(0), state(S_UNKNOWN) {}
-	void update();
+    HomeButtonPressDetector() : pressTimestamp(0), state(S_UNKNOWN) {}
+    void update();
 
-	/// Has button been pressed, after having been up?
-	ALWAYS_INLINE bool isPressed() const {
-		return state == S_PRESSED;
-	}
+    /// Has button been pressed, after having been up?
+    ALWAYS_INLINE bool isPressed() const {
+        return state == S_PRESSED;
+    }
 
-	/// Has the button been released, after being pressed?
-	ALWAYS_INLINE bool isReleased() const {
-		return state == S_RELEASED;
-	}
+    /// Has the button been released, after being pressed?
+    ALWAYS_INLINE bool isReleased() const {
+        return state == S_RELEASED;
+    }
 
-	/// How long has the button been pressed for? (Does not enforce prior released-ness)
-	SysTime::Ticks pressDuration() const;
+    /// How long has the button been pressed for? (Does not enforce prior released-ness)
+    SysTime::Ticks pressDuration() const;
 
 private:
-	SysTime::Ticks pressTimestamp;
-	State state;
+    SysTime::Ticks pressTimestamp;
+    State state;
 };
 
 

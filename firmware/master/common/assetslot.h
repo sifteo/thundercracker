@@ -9,22 +9,9 @@
 #include <sifteo/abi.h>
 #include "macros.h"
 #include "flash_syslfs.h"
+#include "svmmemory.h"
 
-
-/**
- * Mapped information about a userspace _SYSAssetGroup.
- */
-
-struct MappedAssetGroup
-{
-    _SYSAssetGroup *group;              // Physical address
-    _SYSAssetGroupHeader header;
-    SysLFS::AssetGroupIdentity id;
-
-    // Given a userspace _SYSAssetGroup pointer, fill in the info struct.
-    // On error, returns 'false' and raises an SVM fault.
-    bool init(_SYSAssetGroup *userPtr);
-};
+struct AssetGroupInfo;
 
 
 /**
@@ -61,6 +48,9 @@ public:
     void setIndex(unsigned i) {
         code = i + 1;
     }
+
+    void getRecordForCube(_SYSCubeID cube, SysLFS::AssetSlotRecord &asr);
+    void erase(_SYSCubeID cube);
 
 private:
     uint8_t code;     // invalid=0 , valid=[1, NUM_SLOTS]
@@ -100,8 +90,10 @@ public:
     }
 
     _SYSCubeIDVector validCubeVector();
-    uint32_t tilesFree();
-    void erase();
+    uint32_t tilesFree(_SYSCubeIDVector cv);
+    void erase(_SYSCubeIDVector cv);
+
+    void getRecordForCube(_SYSCubeID cube, SysLFS::AssetSlotRecord &asr);
 
 private:
     // Which physical slot does this map to, on each cube?
@@ -135,6 +127,11 @@ public:
         return slot < numBoundSlots;
     }
 
+    static unsigned getNumBoundSlots() {
+        ASSERT(numBoundSlots <= NUM_SLOTS);
+        return numBoundSlots;
+    }
+
     // Rebind all slots to a different volume, and change the number of active slots
     static void bind(FlashVolume volume, unsigned numSlots);
 
@@ -155,35 +152,32 @@ public:
      * and update the access ranks if necessary. We return a vector of cubes
      * where the group was already installed.
      *
-     * If it can't be found, but 'allocVec' is non-null we allocate space
-     * for the group and assign it an address. Since the state of a cubeSlot
-     * is indeterminate during a load operation (we don't know whether the
-     * physical flash sectors have been erased or not), we want to ensure that
-     * we treat the entire slot's contents as unknown if a power failure or
-     * other interruption happens during a write.
+     * If it can't be found, but 'allocSlot' is non-null we allocate space
+     * for the group in that slot, and assign it an address.
      *
-     * vSlot is only used if allocVec is non-NULL.
+     * Since the state of a cubeSlot is indeterminate during a load operation
+     * (we don't know whether the physical flash sectors have been erased or
+     * not), we want to ensure that we treat the entire slot's contents as
+     * unknown if a power failure or other interruption happens during a write.
      *
      * So, for any cube slots where we have to allocate space, we write a new
      * slot record which has (a) the space allocated, and (b) the
      * F_LOAD_IN_PROGRESS flag set. We clear this flag when the loading has
-     * successfully finished. If we see this flag while searching an asset
-     * group, we won't trust the contents of the slot at all.
-     *
-     * Any such loading-in-progress slots will be marked in allocVec,
-     * and finalized by finalizeGroup.
+     * successfully finished, in finalizeSlot(). If we see this flag while
+     * searching an asset group, we won't trust the contents of the slot at all.
      *
      * Returns 'true' on success. On allocation failure, returns 'false'.
      * Changes may have been already made by the time we discover the failure.
      */
 
-    static bool locateGroup(MappedAssetGroup &map, _SYSCubeIDVector searchCV,
-        _SYSCubeIDVector &foundCV, const VirtAssetSlot *vSlot = 0,
-        FlashLFSIndexRecord::KeyVector_t *allocVec = 0);
+    static bool locateGroup(const AssetGroupInfo &group,
+                            _SYSCubeIDVector searchCV,
+                            _SYSCubeIDVector &foundCV,
+                            const VirtAssetSlot *allocSlot = 0);
 
-    // Finalize any in-progress slots left over after locateGroup().
-    // As a side-effect, this clears all bits from 'vec'.
-    static void finalizeGroup(FlashLFSIndexRecord::KeyVector_t &vec);
+    // If the indicated slot is in-progress, finalize writing 'group' to it.
+    static void finalizeSlot(_SYSCubeID cube, const VirtAssetSlot &slot,
+        const AssetGroupInfo &group);
 
 private:
     VirtAssetSlots();  // Do not implement

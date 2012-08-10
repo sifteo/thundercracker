@@ -16,6 +16,7 @@ namespace Stir {
 
 TileCodecLUT::TileCodecLUT()
 {
+    valid = 0;
     for (unsigned i = 0; i < LUT_MAX; i++)
         mru[i] = i;
 }
@@ -99,6 +100,7 @@ unsigned TileCodecLUT::encode(const TilePalette &pal, uint16_t &newColors)
 
             colors[index] = missing[--numMissing];
             newColors |= 1 << index;
+            makeEntryValid(index);
             cost += lutLoadCost;
         }
     }
@@ -390,9 +392,10 @@ void TileCodec::encodeTileMasked16(const TileRef tile)
             reservePadding(FLS_MIN_TILE_P16);
 
         for (unsigned x = 0; x < Tile::SIZE; x++)
-            if (tile->pixel(x, y) != lut.colors[15]) {
+            if (tile->pixel(x, y) != lut.colors[15] || !lut.isEntryValid(15)) {
                 mask |= 1 << x;
                 lut.colors[15] = tile->pixel(x, y);
+                lut.makeEntryValid(15);
             }
 
         dataBuf.push_back(mask);

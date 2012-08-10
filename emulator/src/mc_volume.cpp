@@ -3,25 +3,46 @@
  * Copyright <c> 2012 Sifteo, Inc. All rights reserved.
  */
 
-#include "volume.h"
 #include <sifteo/abi/audio.h>
+#include "volume.h"
 #include "macros.h"
-
-static bool initialized = false;
+#include "system.h"
+#include "system_mc.h"
 
 namespace Volume {
 
+static const int kDefault = MAX_VOLUME;
+
+static int currentVolume = 0;
+static int unmuteVolume = 0;
+
 void init()
 {
-    initialized = true;
+    currentVolume = SystemMC::getSystem()->opt_mute ? 0 : kDefault;
+    unmuteVolume = kDefault;
 }
 
 int systemVolume()
 {
-    ASSERT(initialized);
+    ASSERT(currentVolume >= 0 && currentVolume <= MAX_VOLUME);
+    return currentVolume;
+}
 
-    // TODO: hook this into something in the siftulator.
-    return MAX_VOLUME;
+void setSystemVolume(int v)
+{
+	unmuteVolume = currentVolume = clamp(v, 0, MAX_VOLUME);
+}
+
+void toggleMute()
+{
+	if (currentVolume) {
+		unmuteVolume = currentVolume;
+		currentVolume = 0;
+	} else if (unmuteVolume) {
+		currentVolume = unmuteVolume;
+	} else {
+		currentVolume = kDefault;
+	}
 }
 
 } // namespace Volume

@@ -22,7 +22,9 @@ void LED::init()
     const GPIOPin outRed = LED_RED_GPIO;
     const GPIOPin outGreen = LED_GREEN_GPIO;
 
-    // PWM: Full 16-bit resolution, about 1 kHz period
+    /*
+     * PWM: Full 16-bit resolution, about 1 kHz period
+     */
     pwmTimer.init(0xFFFF, 0);
     pwmTimer.configureChannelAsOutput(LED_PWM_GREEN_CHAN,
         HwTimer::ActiveLow, HwTimer::Pwm1, HwTimer::SingleOutput);

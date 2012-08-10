@@ -9,7 +9,7 @@
 #include "lua_script.h"
 #include "lua_system.h"
 #include "ostime.h"
-#include "cubeslots.h"
+#include "assetloader.h"
 
 System *LuaSystem::sys = NULL;
 const char LuaSystem::className[] = "System";
@@ -96,7 +96,7 @@ int LuaSystem::setTraceMode(lua_State *L)
 
 int LuaSystem::setAssetLoaderBypass(lua_State *L)
 {
-    CubeSlots::simAssetLoaderBypass = lua_toboolean(L, 1);
+    AssetLoader::simBypass = lua_toboolean(L, 1);
     return 0;
 }
 

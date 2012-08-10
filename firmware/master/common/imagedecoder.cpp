@@ -5,7 +5,7 @@
 
 #include "imagedecoder.h"
 #include "cube.h"
-#include "cubeslots.h"
+#include "assetutil.h"
 #include "vram.h"
 
 
@@ -45,16 +45,9 @@ bool ImageDecoder::init(const _SYSAssetImage *userPtr, _SYSCubeID cid)
     
     if (cid >= _SYS_NUM_CUBE_SLOTS)
         return false;
-    CubeSlot &cube = CubeSlots::instances[cid];
 
     if (header.pAssetGroup) {
-        // Map and validate per-cube data.
-        // We don't need to map the _SYSAssetGroup itself- this is still a raw user pointer
-        _SYSAssetGroup *userGroupPtr = reinterpret_cast<_SYSAssetGroup*>(header.pAssetGroup);
-        _SYSAssetGroupCube *gc = cube.assetGroupCube(userGroupPtr);
-        if (!gc)
-            return false;
-        baseAddr = gc->baseAddr;
+        baseAddr = AssetUtil::loadedBaseAddr(header.pAssetGroup, cid);
     } else {
         baseAddr = 0;
     }

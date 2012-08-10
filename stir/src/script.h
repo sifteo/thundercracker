@@ -147,7 +147,6 @@ public:
 
     void setDefault(lua_State *L);
     static Group *getDefault(lua_State *L);
-    uint64_t getHash() const;
 
 private:
     lua_Number quality;
@@ -156,6 +155,8 @@ private:
     std::string mName;
     std::set<Image*> mImages;
     std::vector<uint8_t> mLoadstream;
+
+    static const uint8_t gf84[];
 };
 
 

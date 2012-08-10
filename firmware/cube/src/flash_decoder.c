@@ -565,6 +565,9 @@ static void flash_query_crc() __naked
         ; Setup
         ;--------------------------------------------------------------------
 
+        mov     _i2c_a21_target, _flash_addr_a21
+        lcall   _i2c_a21_wait
+
         acall   _flash_dequeue      ; Store block count
         mov     R_COUNT1, a
 
@@ -633,6 +636,11 @@ static void flash_query_crc() __naked
         mov     _flash_addr_lat1, a
         mov     ADDR_PORT, a
         mov     CTRL_PORT, #(CTRL_FLASH_OUT | CTRL_FLASH_LAT1)
+
+        jnz     4$                  ; Handle lat1 overflow if necessary
+        inc     _flash_addr_lat2
+        inc     _flash_addr_lat2
+4$:
 
         mov     ADDR_PORT, R_TMP0   ; Now go to the next sampling point
 

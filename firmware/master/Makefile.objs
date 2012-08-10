@@ -19,6 +19,9 @@ OBJS_COMMON = \
     $(MASTER_DIR)/common/radio.o \
     $(MASTER_DIR)/common/radioaddrfactory.o \
     $(MASTER_DIR)/common/assetslot.o \
+    $(MASTER_DIR)/common/assetloader.o \
+    $(MASTER_DIR)/common/assetloader_fsm.o \
+    $(MASTER_DIR)/common/assetutil.o \
     $(MASTER_DIR)/common/cubeslots.o \
     $(MASTER_DIR)/common/cube.o \
     $(MASTER_DIR)/common/cubeconnector.o \
@@ -52,7 +55,9 @@ OBJS_COMMON = \
     $(MASTER_DIR)/common/ui_coordinator.o \
     $(MASTER_DIR)/common/ui_menu.o \
     $(MASTER_DIR)/common/ui_shutdown.o \
+    $(MASTER_DIR)/common/pause.o \
     $(MASTER_DIR)/common/ui_pause.o \
+    $(MASTER_DIR)/common/ui_cuberange.o \
     $(MASTER_DIR)/common/imagedecoder.o \
     $(MASTER_DIR)/common/paintcontrol.o \
     $(MASTER_DIR)/common/usbvolumemanager.o \
@@ -92,7 +97,8 @@ OBJS_STM32 = \
     $(MASTER_DIR)/stm32/exti.stm32.o \
     $(MASTER_DIR)/stm32/led.stm32.o \
     $(MASTER_DIR)/stm32/neighbor_tx.stm32.o \
-    $(MASTER_DIR)/stm32/syscall_math.stm32.o
+    $(MASTER_DIR)/stm32/syscall_math.stm32.o \
+    $(MASTER_DIR)/stm32/batterylevel.stm32.o
 
 # Library code.
 #

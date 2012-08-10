@@ -27,20 +27,11 @@ static void drawBattery(T &canvas, float batteryLevel, Int2 pos)
     }
 }
 
-static void drawText(RelocatableTileBuffer<12,12> &icon, const char* text, Int2 pos)
+static void drawText(MainMenuItem::IconBuffer &icon, const char* text, Int2 pos)
 {
     for (int i = 0; text[i] != 0; i++) {
         icon.image(vec(pos.x + i, pos.y), Font, text[i]-32);
     }
-}
-
-static unsigned getNumCubes(CubeSet cubes)
-{
-    unsigned count = 0;
-    for (CubeID cube : cubes) {
-        ++count;
-    }
-    return count;
 }
 
 static unsigned getFreeMemory()
@@ -53,17 +44,10 @@ static unsigned getFreeMemory()
     return unsigned(percentage * 100);
 }
 
-CubeID getMainCube()
+void StatusApplet::getAssets(Sifteo::MenuItem &assets, Shared::AssetConfiguration &config)
 {
-    return *CubeSet::connected().begin();
-}
-
-MainMenuItem::Flags StatusApplet::getAssets(MenuItem &assets, MappedVolume &)
-{
-    drawIcon();
-    
+    drawIcon(CubeID());
     assets.icon = menuIcon;
-    return NONE;
 }
 
 void StatusApplet::exec()
@@ -77,7 +61,7 @@ void StatusApplet::arrive(Sifteo::Menu &m, unsigned index)
     
     // Draw Icon Background
     for (CubeID cube : CubeSet::connected()) {
-        if (cube != getMainCube()) {
+        if (cube != m.cube()) {
             drawCube(cube);
         }
     }
@@ -99,7 +83,7 @@ void StatusApplet::depart(Sifteo::Menu &m, unsigned index)
 {
     // Display a background on all other cubes
     for (CubeID cube : CubeSet::connected()) {
-        if (cube != getMainCube()) {
+        if (cube != m.cube()) {
             Shared::video[cube].bg0.erase(Menu_StripeTile);
         }
     }
@@ -117,18 +101,20 @@ void StatusApplet::add(MainMenu &m)
     m.append(&instance);
 }
 
-void StatusApplet::drawIcon()
+void StatusApplet::drawIcon(Sifteo::CubeID menuCube)
 {
     menuIcon.init();
     menuIcon.image(vec(0,0), Icon_Status);
 
-    drawBattery(menuIcon, getMainCube().batteryLevel(), vec(8, 1));
+    if (menuCube.isDefined()) {
+        drawBattery(menuIcon, menuCube.batteryLevel(), vec(8, 1));
+    }
     drawBattery(menuIcon, System::batteryLevel(), vec(7, 7));
     
-    unsigned numCubes = getNumCubes(CubeSet::connected());
+    unsigned numCubes = CubeSet::connected().count();
     
     String<8> bufferCubes;
-    bufferCubes << getNumCubes(CubeSet::connected());
+    bufferCubes << numCubes;
     drawText(menuIcon, bufferCubes.c_str(), vec(numCubes < 10 ? 4 : 3, 4));
     
     String<16> bufferBlocks;
@@ -148,8 +134,10 @@ void StatusApplet::drawCube(CubeID cube)
 void StatusApplet::onBatteryLevelChange(unsigned cid)
 {
     if (menu != NULL && menuItemIndex >= 0) {
-        if (cid == getMainCube()) {
-            drawIcon();
+        CubeID menuCube = menu->cube();
+
+        if (cid == menuCube) {
+            drawIcon(menuCube);
             menu->replaceIcon(menuItemIndex, menuIcon);
         } else {
             drawCube(CubeID(cid));

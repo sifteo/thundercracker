@@ -14,6 +14,7 @@
 #include "cube.h"
 #include "neighborslot.h"
 #include "cubeconnector.h"
+#include "pause.h"
 
 extern "C" {
 
@@ -30,6 +31,14 @@ void _SYS_setCubeRange(uint32_t minimum, uint32_t maximum)
         return SvmRuntime::fault(F_SYSCALL_PARAM);
     
     CubeSlots::setCubeRange(minimum, maximum);
+
+    /*
+     * If this new cube range means our currently connected cubes
+     * are out of range, execute the pause menu until enough
+     * are reconnected.
+     */
+    if (CubeSlots::belowCubeRange())
+        Pause::cubeRange();
 }
 
 void _SYS_setVideoBuffer(_SYSCubeID cid, struct _SYSVideoBuffer *vbuf)

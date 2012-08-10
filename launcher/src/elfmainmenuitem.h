@@ -17,11 +17,12 @@ class MainMenu;
 class ELFMainMenuItem : public MainMenuItem
 {
 public:
-
-    virtual MainMenuItem::Flags getAssets(Sifteo::MenuItem &assets, Sifteo::MappedVolume &map);
+    virtual void getAssets(Sifteo::MenuItem &assets, Shared::AssetConfiguration &config);
     virtual void bootstrap(Sifteo::CubeSet cubes, ProgressDelegate &progress);
 
-    virtual Sifteo::Volume getVolume() { return volume; }
+    virtual Sifteo::Volume getVolume() {
+        return volume;
+    }
 
     virtual void exec() {
         volume.exec();
@@ -75,7 +76,7 @@ private:
      * information about the load address of this icon's assets on each cube.
      */
     struct {
-        Sifteo::RelocatableTileBuffer<12,12> image;
+        IconBuffer image;
         Sifteo::AssetGroup group;
     } icon;
 

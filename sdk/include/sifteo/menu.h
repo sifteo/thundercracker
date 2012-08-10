@@ -26,3 +26,7 @@
 #include <sifteo/menu/public.h>
 #include <sifteo/menu/states.h>
 #include <sifteo/menu/events.h>
+
+/**
+ * @} endgroup menu
+ */

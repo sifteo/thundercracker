@@ -359,7 +359,7 @@ namespace Events {
      */
     const EventVector<_SYS_CUBE_DISCONNECT>  cubeDisconnect;
 
-    /// An asynchronous asset download has completed.
+    /// The current AssetConfiguration has finished loading on this cube.
     const EventVector<_SYS_CUBE_ASSETDONE>   cubeAssetDone;
 
     /// A cube's accelerometer state has changed.

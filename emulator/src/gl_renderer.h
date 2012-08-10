@@ -54,7 +54,7 @@ class GLRenderer {
     void drawCube(unsigned id, b2Vec2 center, float angle, float hover,
                   b2Vec2 tilt, const uint16_t *framebuffer, bool framebufferChanged,
                   b2Mat33 &modelMatrix);
-    void drawMC(b2Vec2 center, float angle, const float led[3]);
+    void drawMC(b2Vec2 center, float angle, const float led[3], float volume);
 
     void beginOverlay();
     void overlayRect(int x, int y, int w, int h, const float color[4], GLhandleARB program = 0);

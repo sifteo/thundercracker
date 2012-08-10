@@ -26,9 +26,11 @@ void main()
     while (!CubeSet::connected().test(cube))
         System::yield();
     _SYS_asset_bindSlots(_SYS_fs_runningVolume(), 1);
+
+    AssetConfiguration<1> config;
     ScopedAssetLoader loader;
-    SCRIPT(LUA, System():setAssetLoaderBypass(true));
-    loader.start(GameAssets, MainSlot, cube);
+    config.append(MainSlot, GameAssets);
+    loader.start(config);
     loader.finish();
 
     SCRIPT(LUA,
@@ -77,6 +79,7 @@ void main()
 
         System::paint();
         System::finish();
+
         SCRIPT_FMT(LUA, "util:assertScreenshot(cube, 'frame-%02d')", frame);
     }
 

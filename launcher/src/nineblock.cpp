@@ -16,7 +16,7 @@ unsigned NineBlock::frame(unsigned pattern, unsigned angle, bool corner)
 }
 
 
-void NineBlock::generate(unsigned identity, Sifteo::RelocatableTileBuffer<12,12> &icon)
+void NineBlock::generate(unsigned identity, MainMenuItem::IconBuffer &icon)
 {
     Random prng(identity);
 

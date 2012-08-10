@@ -523,6 +523,13 @@ typedef struct {
  *
  * The decoder will automatically erase a flash block any time the first
  * tile in a block is about to be programmed.
+ *
+ * The state of the LUT at the beginning of a particular AssetGroup cannot
+ * be relied on. The LUT is currently zero'ed by the cube during a flash
+ * state reset, but for efficiency's sake we'd like the AssetLoader to
+ * be able to stitch together multiple AssetGroups without sending resets
+ * before each group. So, stir always makes sure to define a LUT entry
+ * before using it.
  */
 
 #define FLS_BLOCK_SIZE          (64*1024)   // Size of flash erase blocks

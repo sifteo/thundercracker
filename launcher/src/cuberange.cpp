@@ -29,5 +29,5 @@ bool CubeRange::isValid()
 void CubeRange::set()
 {
     LOG("LAUNCHER: Using cube range [%d,%d]\n", sys.minCubes, sys.maxCubes);
-    _SYS_setCubeRange(sys.minCubes, sys.maxCubes);
+    System::setCubeRange(sys.minCubes, sys.maxCubes);
 }

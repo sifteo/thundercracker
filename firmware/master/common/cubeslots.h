@@ -22,9 +22,6 @@ namespace CubeSlots {
     extern _SYSCubeIDVector sysConnected;       /// Cube connected by the system
     extern _SYSCubeIDVector disconnectFlag;     /// Cube has been disconnected since last event dispatch
     extern _SYSCubeIDVector userConnected;      /// Cube is seen as connected by userspace
-    extern _SYSCubeIDVector flashResetWait;     /// We need to reset flash before writing to it
-    extern _SYSCubeIDVector flashResetSent;     /// We've sent an unacknowledged flash reset    
-    extern _SYSCubeIDVector flashAddrPending;   /// Need to send an addressing command to the flash codec
     extern _SYSCubeIDVector sendShutdown;       /// Sending a shutdown command to these cubes
     extern _SYSCubeIDVector sendStipple;        /// Sending a stipple pattern to these cubes
     extern _SYSCubeIDVector vramPaused;         /// Pause transmission of VRAM updates
@@ -34,21 +31,6 @@ namespace CubeSlots {
     
     extern _SYSCubeID minUserCubes;             /// Curent cube range for userspace
     extern _SYSCubeID maxUserCubes;
-    
-    /*
-     * Shared asset loader, for all cubes. This pointer itself must be
-     * validated when it's set, but there is no guarantee of valididty for
-     * individual _SYSAssetLoaderCubes.
-     */
-    extern _SYSAssetLoader *assetLoader;
-
-    /*
-     * In simulation only: We can opt to bypass the actual asset loader, and
-     * instead decompress loadstream data directly into cube flash.
-     */
-#ifdef SIFTEO_SIMULATOR
-    extern bool simAssetLoaderBypass;
-#endif
 
     static ALWAYS_INLINE bool validID(_SYSCubeID id) {
         // For security/reliability, all cube IDs from game code must be checked
@@ -60,6 +42,10 @@ namespace CubeSlots {
         return cv & (0xFFFFFFFF << (32 - _SYS_NUM_CUBE_SLOTS));
     }
 
+    static ALWAYS_INLINE bool belowCubeRange() {
+        return Intrinsic::POPCOUNT(CubeSlots::sysConnected) < CubeSlots::minUserCubes;
+    }
+
     void setCubeRange(unsigned minimum, unsigned maximum);
 
     void paintCubes(_SYSCubeIDVector cv, bool wait=true, uint32_t excludedTasks=0);
@@ -67,9 +53,6 @@ namespace CubeSlots {
     void refreshCubes(_SYSCubeIDVector cv);
     void clearTouchEvents();
     void disconnectCubes(_SYSCubeIDVector cv);
-
-    void assetLoaderTask();
-    void fetchAssetLoaderData(_SYSAssetLoaderCube *lc);
 }
 
 #endif

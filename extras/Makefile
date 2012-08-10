@@ -1,5 +1,4 @@
 SUBDIRS = \
-	hello \
 	nyan \
 	pantera \
 	monster \
@@ -10,7 +9,8 @@ SUBDIRS = \
 	tinytracker \
 	lfsmunch \
 	numbers \
-	accelchart
+	accelchart \
+	drumkit
 
 .PHONY: clean subdirs $(SUBDIRS)
 

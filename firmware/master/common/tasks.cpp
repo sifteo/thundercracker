@@ -7,8 +7,8 @@
 #include "svmruntime.h"
 #include "audiomixer.h"
 #include "svmdebugger.h"
-#include "cubeslots.h"
-#include "homebutton.h"
+#include "assetloader.h"
+#include "pause.h"
 #include "cubeconnector.h"
 #include "radio.h"
 
@@ -46,8 +46,8 @@ ALWAYS_INLINE void Tasks::taskInvoke(unsigned id)
     #ifndef BOOTLOADER
         case Tasks::AudioPull:      return AudioMixer::pullAudio();
         case Tasks::Debugger:       return SvmDebugger::messageLoop();
-        case Tasks::AssetLoader:    return CubeSlots::assetLoaderTask();
-        case Tasks::HomeButton:     return HomeButton::task();
+        case Tasks::AssetLoader:    return AssetLoader::task();
+        case Tasks::Pause:          return Pause::task();
         case Tasks::CubeConnector:  return CubeConnector::task();
         case Tasks::Heartbeat:      return heartbeatTask();
     #endif
@@ -67,6 +67,7 @@ ALWAYS_INLINE void Tasks::taskInvoke(unsigned id)
 void Tasks::heartbeatTask()
 {
     Radio::heartbeat();
+    AssetLoader::heartbeat();
 }
 
 

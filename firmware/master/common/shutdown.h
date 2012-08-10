@@ -22,12 +22,12 @@
 
 class ShutdownManager {
 public:
-	ShutdownManager(uint32_t excludedTasks);
+    ShutdownManager(uint32_t excludedTasks);
 
     void shutdown();
 
 private:
-	uint32_t excludedTasks;
+    uint32_t excludedTasks;
 
     void housekeeping();
     void batteryPowerOff();

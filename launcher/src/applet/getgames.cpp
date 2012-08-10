@@ -10,15 +10,14 @@
 using namespace Sifteo;
 
 
-MainMenuItem::Flags GetGamesApplet::getAssets(Sifteo::MenuItem &assets, Sifteo::MappedVolume&)
+void GetGamesApplet::getAssets(Sifteo::MenuItem &assets, Shared::AssetConfiguration &config)
 {
     assets.icon = &Icon_GetGames;
-    return NONE;
 }
 
 void GetGamesApplet::exec()
 {
-    LOG("XXX: Run the 'Get More Games' applet\n");
+	// Anything to do here?
 }
 
 void GetGamesApplet::add(MainMenu &menu)

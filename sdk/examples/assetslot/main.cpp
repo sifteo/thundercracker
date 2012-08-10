@@ -69,11 +69,13 @@ void main()
             vid[cube].bg0.erase(MenuStripe);
         }
 
+        while (m.pollEvent(&e))
+            m.performDefault();
 
-        while (m.pollEvent(&e));
         switch (e.item) {
             case 0: animation(Spinny); break;
             case 1: animation(Ball); break;
         }
+
     }
 }

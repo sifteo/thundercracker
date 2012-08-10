@@ -1,4 +1,4 @@
-APP = hello
+APP = drumkit
 
 include $(SDK_DIR)/Makefile.defs
 

@@ -188,13 +188,13 @@ void _SYS_tracker_pause() _SC(141);
 uint32_t _SYS_tracker_isPaused() _SC(142);
 
 // Asset group/slot management
-uint32_t _SYS_asset_slotTilesFree(_SYSAssetSlot slot) _SC(143);
-void _SYS_asset_slotErase(_SYSAssetSlot slot) _SC(144);
-uint32_t _SYS_asset_loadStart(struct _SYSAssetLoader *loader, struct _SYSAssetGroup *group, _SYSAssetSlot slot, _SYSCubeIDVector cv) _SC(145);
+uint32_t _SYS_asset_slotTilesFree(_SYSAssetSlot slot, _SYSCubeIDVector cv) _SC(143);
+void _SYS_asset_slotErase(_SYSAssetSlot slot, _SYSCubeIDVector cv) _SC(144);
+void _SYS_asset_loadStart(struct _SYSAssetLoader *loader, const struct _SYSAssetConfiguration *cfg, unsigned cfgSize, _SYSCubeIDVector cv) _SC(145);
 void _SYS_asset_loadFinish(struct _SYSAssetLoader *loader) _SC(146);
 uint32_t _SYS_asset_findInCache(struct _SYSAssetGroup *group, _SYSCubeIDVector cv) _SC(58);
 void _SYS_asset_bindSlots(_SYSVolumeHandle volume, unsigned numSlots) _SC(147);
-void _SYS_asset_loadCancel(struct _SYSAssetLoader *loader) _SC(148);
+void _SYS_asset_loadCancel(struct _SYSAssetLoader *loader, _SYSCubeIDVector cv) _SC(148);
 
 // Video buffers
 void _SYS_setVideoBuffer(_SYSCubeID cid, struct _SYSVideoBuffer *vbuf) _SC(61);

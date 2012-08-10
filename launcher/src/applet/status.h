@@ -12,7 +12,7 @@ class MainMenu;
 class StatusApplet : public MainMenuItem
 {
 public:
-    virtual MainMenuItem::Flags getAssets(Sifteo::MenuItem &assets, Sifteo::MappedVolume &);
+    virtual void getAssets(Sifteo::MenuItem &assets, Shared::AssetConfiguration &config);
     
     virtual void exec();
     virtual void arrive(Sifteo::Menu &m, unsigned index);
@@ -21,12 +21,12 @@ public:
     static void add(MainMenu &m);
 
 private:
-    void drawIcon();
+    void drawIcon(Sifteo::CubeID menuCube);
     void drawCube(Sifteo::CubeID cube);
     
     void onBatteryLevelChange(unsigned cid);
     
     Sifteo::Menu *menu;
     int menuItemIndex;
-    Sifteo::RelocatableTileBuffer<12,12> menuIcon;
+    IconBuffer menuIcon;
 };

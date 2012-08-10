@@ -5,6 +5,7 @@
 
 #pragma once
 #include <sifteo.h>
+#include "mainmenuitem.h"
 
 
 /**
@@ -26,7 +27,7 @@ public:
      * This value is used as the seed for a PRNG that generates the
      * characteristics of this icon.
      */
-    static void generate(unsigned identity, Sifteo::RelocatableTileBuffer<12,12> &icon);
+    static void generate(unsigned identity, MainMenuItem::IconBuffer &icon);
 
 private:
 

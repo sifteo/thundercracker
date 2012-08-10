@@ -10,6 +10,7 @@
 #include "cube.h"
 #include "systime.h"
 #include "assetslot.h"
+#include "assetloader.h"
 
 #ifdef SIFTEO_SIMULATOR
 #   include "system.h"
@@ -421,7 +422,7 @@ bool PaintControl::vramFlushed(CubeSlot *cube)
 bool PaintControl::allowContinuous(CubeSlot *cube)
 {
     // Conserve cube CPU time during asset loading; don't use continuous rendering.
-    return !cube->isAssetLoading();
+    return 0 == (cube->bit() & AssetLoader::getActiveCubes());
 }
 
 void PaintControl::enterContinuous(CubeSlot *cube, _SYSVideoBuffer *vbuf,

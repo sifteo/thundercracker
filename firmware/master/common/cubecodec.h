@@ -84,7 +84,7 @@ class BitBuffer {
 };
 
 /**
- * Compression codec, for sending VRAM and Flash data to cubes.
+ * Compression codec, for sending compressed VRAM data to cubes.
  * This implements the protocol described in protocol.h.
  */
 
@@ -105,14 +105,6 @@ class CubeCodec {
 
     bool encodePoke(PacketBuffer &buf, uint16_t addr, uint16_t data) {
         return encodeVRAMAddr(buf, addr) && encodeVRAMData(buf, data);
-    }
-
-    bool flashReset(PacketBuffer &buf);
-    bool flashSend(PacketBuffer &buf, _SYSAssetLoaderCube *lc, _SYSCubeID cube, bool &done);
-
-    void flashAckBytes(uint8_t count) {
-        loadBufferAvail += count;
-        ASSERT(loadBufferAvail <= FLS_FIFO_USABLE);
     }
 
     bool endPacket(PacketBuffer &buf);
@@ -139,9 +131,29 @@ class CubeCodec {
          * If the buffer has room, adds an "Explicit ACK request" escape and
          * returns true. Otherwise, returns false.
          */
-        if (txBits.hasRoomForFlush(buf, 8)) {
-            txBits.append(0x79, 8);
+        if (txBits.hasRoomForFlush(buf, 12)) {
+            txBits.append(0xF79, 12);
             txBits.flush(buf);
+            txBits.init();
+            return true;
+        }
+        return false;
+    }
+
+    bool flashEscape(PacketBuffer &buf)
+    {
+        /*
+         * If the buffer has room for the escape and at least one data byte,
+         * adds a "Flash Escape" command to the buffer, (two-nybble code 33)
+         * plus one extra dummy nybble to force a byte flush if necessary.
+         *
+         * This implies an encoder state reset.
+         */
+
+        if (txBits.hasRoomForFlush(buf, 20)) {
+            txBits.append(0xF33, 12);
+            txBits.flush(buf);
+            txBits.init();
             return true;
         }
         return false;
@@ -151,7 +163,6 @@ class CubeCodec {
     // Try to keep these ordered to minimize padding...
 
     BitBuffer txBits;           /// Buffer of transmittable codes
-    uint8_t loadBufferAvail;    /// Amount of flash buffer space available
     uint8_t codeS;              /// Codec "S" state (sample #)
     uint8_t codeD;              /// Codec "D" state (coded delta)
     uint8_t codeRuns;           /// Codec run count
@@ -178,18 +189,6 @@ class CubeCodec {
             // Diff code
             txBits.append(0x8 | s | (d << 4), 8);
         }
-    }
-
-    void flashEscape(PacketBuffer &buf) {
-        /*
-         * Escape to flash mode (two-nybble code 33) plus one extra
-         * dummy nybble to force a byte flush if necessary.
-         *
-         * This implies an encoder state reset.
-         */
-        txBits.append(0xF33, 12);
-        txBits.flush(buf);
-        stateReset();
     }
 
     void encodeDS(uint8_t d, uint8_t s);
