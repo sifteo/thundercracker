@@ -97,18 +97,27 @@ def UniqueIdTest(devMgr):
     else:
         return False
 
-# disconnect USB, set the simulated battery voltage, and ensure
-# that the power being drawn by the master is acceptable
-def VBattCurrentDrawTest(devMgr):
+def VBusCurrentDrawTest(devMgr):
     jig = devMgr.testjig();
-    _setUsbEnabled(jig, False)
-    
-    time.sleep(1)
-    
-    _setUsbEnabled(jig, True)
-    
-    time.sleep(1)
-    
+
+    if _setUsbEnabled(jig, True):
+        # read current & verify against window
+        jig.txPacket([GetusbCurrentID])
+        resp = jig.rxPacket()
+        if resp.opcode != GetusbCurrentID or len(resp.payload) < 2:
+            print "Opcode incorrect or payload is borked!"
+            return False
+        
+        current = resp.payload[0] | resp.payload[1] << 8
+        
+        calc_current = (3.3/(2**12)) * 200 * current
+        
+        print "current draw at VBUS: %fmA" % (calc_current)
+        
+        _setUsbEnabled(jig, False)   
+    else:
+        print "Invalid jig response!"
+        
     return True
 
     # # Master Power Iteration - cycles from 3.2V down to 2.0V and then back up

@@ -19,7 +19,7 @@ VRAM_FLAG_CONTINUOUS    = 0x08
 VRAM_MODE_BG0ROM        = 0x04
 
 # Used for setting battery
-cube_voltage = [[0x07,0x45]]
+cube_voltage = [[0x0b,0xa2]]
 
 ################################################################
 # NOTE: All functions in this module with 'Test' in the name
