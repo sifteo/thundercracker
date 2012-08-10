@@ -120,6 +120,7 @@ class Frontend {
     void drawOverlay();
 
     void toggleRotationLock();
+    void postVolumeMessage();
 
     System *sys;
     unsigned frameCount;

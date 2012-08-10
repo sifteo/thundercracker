@@ -71,6 +71,9 @@ class System {
     bool opt_cube0Debug;
     std::string opt_cube0Profile;
 
+    // Other options
+    bool opt_mute;
+
     System();
 
     bool init();

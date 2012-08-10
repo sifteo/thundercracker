@@ -10,6 +10,7 @@
 #include "gl_renderer.h"
 #include "led.h"
 #include "ostime.h"
+#include "volume.h"
 
 LEDSequencer FrontendMC::led;
 
@@ -100,7 +101,8 @@ void FrontendMC::animate()
 
 void FrontendMC::draw(GLRenderer &r)
 {
-    r.drawMC(body->GetPosition(), body->GetAngle(), ledColor);
+    float vol = Volume::systemVolume() / float(Volume::MAX_VOLUME);
+    r.drawMC(body->GetPosition(), body->GetAngle(), ledColor, vol);
 }
 
 void FrontendMC::accumulateLEDColor(LEDSequencer::LEDState state, float color[3])

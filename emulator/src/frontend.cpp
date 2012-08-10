@@ -10,6 +10,7 @@
 #include "ostime.h"
 #include "mc_homebutton.h"
 #include "mc_neighbor.h"
+#include "mc_volume.h"
 #include <time.h>
 
 Frontend *Frontend::instance = NULL;
@@ -432,6 +433,11 @@ void GLFWCALL Frontend::onKey(int key, int state)
             instance->toggleRotationLock();
             break;
 
+        case 'M':
+            Volume::toggleMute();
+            instance->postVolumeMessage();
+            break;
+
         default:
             return;
 
@@ -465,6 +471,19 @@ void Frontend::toggleFullscreen()
         glfwCloseWindow();
         openWindow(mode.Width, mode.Height, true);
     }
+}
+
+void Frontend::postVolumeMessage()
+{
+    int vol = Volume::systemVolume();
+    std::stringstream s;
+
+    if (vol)
+        s << "Base volume: " << (vol * 100 / Volume::MAX_VOLUME) << "%";
+    else
+        s << "Base muted";
+
+    overlay.postMessage(s.str());
 }
 
 void GLFWCALL Frontend::onMouseMove(int x, int y)
@@ -759,6 +778,22 @@ void Frontend::animate()
         viewCenter += gain * (targetViewCenter() - viewCenter);
 
         moveWalls();
+    }
+
+    /* Volume slider */
+    {
+        const int step = Volume::MAX_VOLUME / 50;
+
+        if (glfwGetKey(GLFW_KEY_UP)) {
+            Volume::setSystemVolume(Volume::systemVolume() + step);
+            instance->postVolumeMessage();
+            idleFrames = 0;
+
+        } else if (glfwGetKey(GLFW_KEY_DOWN)) {
+            Volume::setSystemVolume(Volume::systemVolume() - step);
+            instance->postVolumeMessage();
+            idleFrames = 0;
+        } 
     }
 
     world.Step(timeStep, velocityIterations, positionIterations);

@@ -682,7 +682,7 @@ void GLRenderer::drawCube(unsigned id, b2Vec2 center, float angle, float hover,
     drawCubeFace(id, framebufferChanged ? framebuffer : NULL);
 }
 
-void GLRenderer::drawMC(b2Vec2 center, float angle, const float led[3])
+void GLRenderer::drawMC(b2Vec2 center, float angle, const float led[3], float volume)
 {
     glLoadIdentity();
     glTranslatef(center.x, center.y, 0.0f);
@@ -713,14 +713,10 @@ void GLRenderer::drawMC(b2Vec2 center, float angle, const float led[3])
     glActiveTexture(GL_TEXTURE0);
     glDisable(GL_TEXTURE_2D);
 
-    /*
-     * All the rest is static for now, and draws using the same plastic texture
-     * as the cube body. In the future we may move the mcVolume model separately
-     * in order to show the volume slider position.
-     */
-
     glUseProgramObjectARB(cubeBodyProgram);
     drawModel(mcBody);
+
+    glTranslatef(0.8f * (1.0f - volume), 0, 0);
     drawModel(mcVolume);
 }
 
