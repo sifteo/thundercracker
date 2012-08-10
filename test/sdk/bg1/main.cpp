@@ -33,7 +33,6 @@ void main()
 
     AssetConfiguration<1> config;
     ScopedAssetLoader loader;
-    SCRIPT(LUA, System():setAssetLoaderBypass(true));
     config.append(MainSlot, MainAssets);
     loader.start(config, CubeSet(cube));
     loader.finish();
