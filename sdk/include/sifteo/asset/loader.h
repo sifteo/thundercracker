@@ -173,7 +173,7 @@ struct AssetLoader {
         // Limit to cubes that we've allocated _SYSAssetLoaderCubes for
         STATIC_ASSERT(CUBE_ALLOCATION <= _SYS_NUM_CUBE_SLOTS);
         cubes &= 0xFFFFFFFF << (32 - CUBE_ALLOCATION);
-        _SYS_asset_loadStart(*this, &configuration[0], configuration.count(), cubes);
+        _SYS_asset_loadStart(*this, configuration.begin(), configuration.count(), cubes);
     }
 
     /**
