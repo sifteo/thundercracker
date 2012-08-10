@@ -2,6 +2,8 @@
 Graphics Engine       {#gfx}
 ===============
 
+@brief Details on the Sifteo graphical architecture
+
 # Overview
 
 Sifteo cubes have a fairly unique graphics architecture. This section introduces the main differences you'll notice between Sifteo cubes and other systems you may be familiar with. We assume at least some basic familiarity with computer architecture and computer graphics.

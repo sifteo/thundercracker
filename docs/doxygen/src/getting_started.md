@@ -2,6 +2,8 @@
 Getting Started     {#getting_started}
 ===============
 
+@brief Quickly build and run your first app
+
 # Requirements
 If you don't have it already, grab the latest version of the SDK at https://www.sifteo.com/developers
 

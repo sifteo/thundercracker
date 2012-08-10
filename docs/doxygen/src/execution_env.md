@@ -1,6 +1,8 @@
 Execution Environment     {#execution_env}
 =====================
 
+@brief Details on the Sifteo app runtime
+
 # Overview
 
 Sifteo applications are deployed as ELF binaries, a [standard file format](http://en.wikipedia.org/wiki/Executable_and_Linkable_Format), and run in a specialized sandbox called __SVM__. Your C++ source is compiled by [Clang](http://clang.llvm.org/), the same top-notch C/C++ compiler used by Apple's iOS. Our __slinky__ optimizing linker and code-generator performs very aggressive whole-program optimizations, so you can continue to use very high-level and modern C++ while keeping your binaries small and fast.

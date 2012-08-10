@@ -2,6 +2,8 @@
 Device Management       {#device_mgmt}
 =================
 
+@brief How to install and manage content on the Sifteo Base
+
 # Overview              {#overview}
 
 `swiss` is a utility tool, provided with the SDK to perform a variety of device management tasks. `swiss` can be found in __sdk/bin__ within the Sifteo SDK.

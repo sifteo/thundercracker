@@ -1,6 +1,8 @@
 Asset Workflow      {#asset_workflow}
 ==============
 
+@brief How to prepare, proof and deploy visual and audio assets
+
 @b stir is a tool that formats your visual and audio assets to the compact formats used on Sifteo Cubes. It accepts configuration files written in [Lua](http://www.lua.org), and generates C++ code that should be built into your project.
 
 Proofs of your image assets are also generated, formatted as HTML documents, so you can easily inspect them in your browser after the formatting process.

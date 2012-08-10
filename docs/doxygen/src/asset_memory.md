@@ -1,6 +1,8 @@
 Asset Memory Management      {#asset_memory}
 =======================
 
+@brief End to end details on graphics data management
+
 # Overview
 
 To make the most efficient use of memory and of radio bandwidth, Sifteo Cubes have a multi-level hierarchy of storage types, utilizing several special-purpose data compression codecs.

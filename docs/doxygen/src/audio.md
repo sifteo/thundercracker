@@ -1,6 +1,8 @@
 Audio      {#audio}
 ===================
 
+@brief Details on the Sifteo audio engine
+
 The Sifteo Base provides audio from a single speaker, and global volume can be controlled by the slider on its side. 
 
 ![](@ref base-render-512.png)
