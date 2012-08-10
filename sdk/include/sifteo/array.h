@@ -108,20 +108,20 @@ public:
         return item;
     }
 
-    // Allocate the first unused slot in the array, and return an reference to this uninitialized slot.
+    /// Allocate the first unused slot in the array, and return an reference to this uninitialized slot.
     T& push_back() {
         ASSERT(count() < tCapacity);
         return items[numItems++];
     }
 
-    // Deallocate the last element and return a copy of it's value
+    /// Deallocate the last element and return a copy of it's value
     T pop_back() {
         ASSERT(count() > 0);
         numItems--;
         return items[numItems];
     }
 
-    // Pop-back, but avoid a potential unnecessary copy
+    /// Pop-back, but avoid a potential unnecessary copy
     void pop_back(T* outValue) {
         ASSERT(outValue != 0);
         ASSERT(count() > 0);
@@ -151,7 +151,7 @@ public:
         numItems--;
     }
 
-    // Remove the last element, which involves no shifting
+    /// Remove the last element, which involves no shifting
     void erase_tail() {
         ASSERT(count() > 0);
         numItems--;
