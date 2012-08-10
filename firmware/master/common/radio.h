@@ -47,25 +47,25 @@ struct PacketBuffer {
 
     PacketBuffer() {}
 
-    PacketBuffer(uint8_t *_bytes, unsigned _len=0)
+    ALWAYS_INLINE PacketBuffer(uint8_t *_bytes, unsigned _len=0)
         : bytes(_bytes), len(_len) {}
 
-    bool isFull() {
+    ALWAYS_INLINE bool isFull() {
         ASSERT(len <= MAX_LEN);
         return len == MAX_LEN;
     }
 
-    unsigned bytesFree() {
+    ALWAYS_INLINE unsigned bytesFree() {
         ASSERT(len <= MAX_LEN);
         return MAX_LEN - len;
     }
 
-    void append(uint8_t b) {
+    ALWAYS_INLINE void append(uint8_t b) {
         ASSERT(len < MAX_LEN);
         bytes[len++] = b;
     }
 
-    void append(uint8_t *src, unsigned count) {
+    ALWAYS_INLINE void append(uint8_t *src, unsigned count) {
         // Overflow-safe assertions
         ASSERT(len <= MAX_LEN);
         ASSERT(count <= MAX_LEN);
@@ -97,17 +97,17 @@ struct PacketTransmission {
     static const unsigned DEFAULT_HARDWARE_RETRIES = MAX_HARDWARE_RETRIES;
     static const unsigned DEFAULT_SOFTWARE_RETRIES = 64;
 
-    void init() {
+    ALWAYS_INLINE void init() {
         noAck = 0;
         numHardwareRetries = DEFAULT_HARDWARE_RETRIES;
         numSoftwareRetries = DEFAULT_SOFTWARE_RETRIES;
     }
 
-    PacketTransmission() {
+    ALWAYS_INLINE PacketTransmission() {
         init();
     }
 
-    PacketTransmission(const RadioAddress *_dest, uint8_t *_bytes, unsigned _len=0)
+    ALWAYS_INLINE PacketTransmission(const RadioAddress *_dest, uint8_t *_bytes, unsigned _len=0)
         : packet(PacketBuffer(_bytes, _len)), dest(_dest) {
         init();
     }

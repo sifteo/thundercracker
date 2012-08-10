@@ -208,19 +208,15 @@ bool CubeSlot::radioProduce(PacketTransmission &tx)
     if (AssetLoader::getActiveCubes() & cv) {
         // Loading is in progress
 
-        if (AssetLoader::needFlashPacket(id()) && codec.flashEscape(tx.packet)) {
+        if (AssetLoader::needFlashPacket(id()) && codec.escFlash(tx.packet)) {
             // Loader has data to send. Send an escape, and be done with this packet.
             AssetLoader::produceFlashPacket(id(), tx.packet);
             return true;
         }
 
         // Otherwise, maybe the loader needs a full ACK before it can make progress?
-        if (AssetLoader::needFullACK(id()) && codec.explicitAckRequest(tx.packet)) {
-            // This is also an escape. End of packet!
-            if (!tx.packet.isFull())
-                codec.stateReset();
+        if (AssetLoader::needFullACK(id()) && codec.escRequestAck(tx.packet))
             return true;
-        }
     }
 
     /*
@@ -238,9 +234,8 @@ bool CubeSlot::radioProduce(PacketTransmission &tx)
         timeSyncState--;
     } else if (tx.packet.len == 0) {
         timeSyncState = 1000;
-        codec.timeSync(tx.packet, calculateTimeSync());
+        codec.escTimeSync(tx.packet, calculateTimeSync());
         tx.noAck = true;    // just throw it out there UDP style
-        codec.stateReset();
         return true;
     }
 

@@ -29,12 +29,12 @@
 
 class BitBuffer {
  public:
-    void init() {
+    ALWAYS_INLINE void init() {
         bits = 0;
         count = 0;
     }
 
-    unsigned flush(PacketBuffer &buf) {
+    ALWAYS_INLINE unsigned flush(PacketBuffer &buf) {
         ASSERT(count <= 32);
 
         unsigned byteWidth = MIN(buf.bytesFree(), (unsigned)(count >> 3));
@@ -53,12 +53,12 @@ class BitBuffer {
         return byteWidth;
     }
 
-    bool hasRoomForFlush(PacketBuffer &buf, unsigned additionalBits=0) {
+    ALWAYS_INLINE bool hasRoomForFlush(PacketBuffer &buf, unsigned additionalBits=0) {
         // Does the buffer have room for every complete byte in the buffer, plus additionalBits?
         return buf.bytesFree() >= ((count + additionalBits) >> 3);
     }
 
-    void append(uint32_t value, unsigned width) {
+    ALWAYS_INLINE void append(uint32_t value, unsigned width) {
         CODEC_DEBUG_LOG(("CODEC: \tbits: %08x/%d <- %08x/%d\n", bits, count, value, width));
 
         // Overflow-safe asserts
@@ -70,11 +70,11 @@ class BitBuffer {
         ASSERT(count <= 32);
     }
 
-    void appendMasked(uint32_t value, unsigned width) {
+    ALWAYS_INLINE void appendMasked(uint32_t value, unsigned width) {
         append(value & ((1 << width) - 1), width);
     }
 
-    bool hasPartialByte() const {
+    ALWAYS_INLINE bool hasPartialByte() const {
         return count > 0 && count < 8;
     }
 
@@ -90,7 +90,7 @@ class BitBuffer {
 
 class CubeCodec {
  public:
-    void stateReset() { 
+    ALWAYS_INLINE void stateReset() { 
         codePtr = 0;
         codeS = -1;
         txBits.init();
@@ -109,55 +109,11 @@ class CubeCodec {
 
     bool endPacket(PacketBuffer &buf);
 
-    void timeSync(PacketBuffer &buf, uint16_t rawTimer)
-    {
-        /*
-         * Timer synchronization escape. This sends the sync escape,
-         * plus a dummy nybble to force a flush if necessary. We then
-         * send the new raw 13-bit time synchronization value. This
-         * must be the last code in the packet.
-         */
-
-        txBits.append(0xF78, 12);
-        txBits.flush(buf);
-        txBits.init();
-        buf.append(rawTimer & 0x1F);    // Low 5 bits
-        buf.append(rawTimer >> 5);      // High 8 bits
-    }
-
-    bool explicitAckRequest(PacketBuffer &buf)
-    {
-        /*
-         * If the buffer has room, adds an "Explicit ACK request" escape and
-         * returns true. Otherwise, returns false.
-         */
-        if (txBits.hasRoomForFlush(buf, 12)) {
-            txBits.append(0xF79, 12);
-            txBits.flush(buf);
-            txBits.init();
-            return true;
-        }
-        return false;
-    }
-
-    bool flashEscape(PacketBuffer &buf)
-    {
-        /*
-         * If the buffer has room for the escape and at least one data byte,
-         * adds a "Flash Escape" command to the buffer, (two-nybble code 33)
-         * plus one extra dummy nybble to force a byte flush if necessary.
-         *
-         * This implies an encoder state reset.
-         */
-
-        if (txBits.hasRoomForFlush(buf, 20)) {
-            txBits.append(0xF33, 12);
-            txBits.flush(buf);
-            txBits.init();
-            return true;
-        }
-        return false;
-    }
+    // Escape codes (Ends the packet)
+    void escTimeSync(PacketBuffer &buf, uint16_t rawTimer);
+    bool escFlash(PacketBuffer &buf);
+    bool escRequestAck(PacketBuffer &buf);
+    bool escRadioNap(PacketBuffer &buf, uint16_t duration);
 
  private:
     // Try to keep these ordered to minimize padding...
@@ -174,14 +130,14 @@ class CubeCodec {
     static uint16_t exemptionBegin;    /// Lock exemption range, first address
     static uint16_t exemptionEnd;      /// Lock exemption range, last address
 
-    void codePtrAdd(uint16_t words) {
+    ALWAYS_INLINE void codePtrAdd(uint16_t words) {
         ASSERT(codePtr < _SYS_VRAM_WORDS);
         codePtr = (codePtr + words) & _SYS_VRAM_WORD_MASK;
     }
 
     unsigned deltaSample(_SYSVideoBuffer *vb, uint16_t data, uint16_t offset);
 
-    void appendDS(uint8_t d, uint8_t s) {
+    ALWAYS_INLINE void appendDS(uint8_t d, uint8_t s) {
         if (d == RF_VRAM_DIFF_BASE) {
             // Copy code
             txBits.append(0x4 | s, 4);

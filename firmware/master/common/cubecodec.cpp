@@ -500,3 +500,93 @@ unsigned CubeCodec::deltaSample(_SYSVideoBuffer *vb, uint16_t data, uint16_t off
 
     return result;
 }
+
+void CubeCodec::escTimeSync(PacketBuffer &buf, uint16_t rawTimer)
+{
+    /*
+     * Timer synchronization escape. This sends the sync escape,
+     * plus a dummy nybble to force a flush if necessary. We then
+     * send the new raw 13-bit time synchronization value. This
+     * must be the last code in the packet.
+     */
+
+    ASSERT(txBits.hasRoomForFlush(buf, 12 + 2*8));
+
+    txBits.append(0xF78, 12);
+    txBits.flush(buf);
+    txBits.init();
+
+    buf.append(rawTimer & 0x1F);    // Low 5 bits
+    buf.append(rawTimer >> 5);      // High 8 bits
+
+    if (!buf.isFull())
+        stateReset();
+}
+
+bool CubeCodec::escRequestAck(PacketBuffer &buf)
+{
+    /*
+     * If the buffer has room, adds an "Explicit ACK request" escape and
+     * returns true. Otherwise, returns false.
+     */
+    if (txBits.hasRoomForFlush(buf, 12)) {
+
+        txBits.append(0xF79, 12);
+        txBits.flush(buf);
+        txBits.init();
+
+        if (!buf.isFull())
+            stateReset();
+
+        return true;
+    }
+    return false;
+}
+
+bool CubeCodec::escFlash(PacketBuffer &buf)
+{
+    /*
+     * If the buffer has room for the escape and at least one data byte,
+     * adds a "Flash Escape" command to the buffer, (two-nybble code 33)
+     * plus one extra dummy nybble to force a byte flush if necessary.
+     *
+     * This implies an encoder state reset.
+     */
+
+    if (txBits.hasRoomForFlush(buf, 12 + 8)) {
+    
+        txBits.append(0xF33, 12);
+        txBits.flush(buf);
+        txBits.init();
+
+        ASSERT(!buf.isFull());
+        stateReset();
+
+        return true;
+    }
+    return false;
+}
+
+bool CubeCodec::escRadioNap(PacketBuffer &buf, uint16_t duration)
+{
+    /*
+     * If the buffer has room, add a "Radio Nap" code, instructing
+     * the cube to turn its receiver off for 'duration' CLKLF ticks.
+     */
+
+    if (txBits.hasRoomForFlush(buf, 12 + 2*8)) {
+
+        txBits.append(0xF7B, 12);
+        txBits.flush(buf);
+        txBits.init();
+
+        buf.append(duration);
+        buf.append(duration >> 8);
+
+        if (!buf.isFull())
+            stateReset();
+
+        return true;
+    }
+    return false;
+}
