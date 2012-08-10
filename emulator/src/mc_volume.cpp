@@ -11,7 +11,7 @@
 
 namespace Volume {
 
-static const int kDefault = MAX_VOLUME * 3 / 4;
+static const int kDefault = MAX_VOLUME;
 
 static int currentVolume = 0;
 static int unmuteVolume = 0;
