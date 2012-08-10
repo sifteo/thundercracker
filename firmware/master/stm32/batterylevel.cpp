@@ -26,7 +26,7 @@ static const unsigned CHARGE_PRESCALER = 833;
  *
  * 0.05 / ((1 / 36000000) * 0xffff) == 27.466
  */
-static const unsigned DISCHARGE_PRESCALER = 28;
+static const unsigned DISCHARGE_PRESCALER = 3;
 
 namespace BatteryLevel {
 
