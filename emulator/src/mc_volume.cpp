@@ -13,8 +13,8 @@ namespace Volume {
 
 static const int kDefault = MAX_VOLUME * 3 / 4;
 
-static unsigned currentVolume = 0;
-static unsigned unmuteVolume = 0;
+static int currentVolume = 0;
+static int unmuteVolume = 0;
 
 void init()
 {
@@ -24,7 +24,7 @@ void init()
 
 int systemVolume()
 {
-    ASSERT(currentVolume <= MAX_VOLUME);
+    ASSERT(currentVolume >= 0 && currentVolume <= MAX_VOLUME);
     return currentVolume;
 }
 
