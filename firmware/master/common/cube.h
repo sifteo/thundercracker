@@ -33,7 +33,7 @@
 
 class CubeSlot {
  public:
-    bool radioProduce(PacketTransmission &tx);
+    bool radioProduce(PacketTransmission &tx, SysTime::Ticks now);
     void radioAcknowledge(const PacketBuffer &packet);
     void radioTimeout();
 
@@ -140,7 +140,7 @@ class CubeSlot {
     static const unsigned RTT_DEADLINE_MS = 250;
 
     // Large data
-    SysTime::Ticks flashDeadline;
+    SysTime::Ticks napDeadline;     // Accessed on ISR only, after connect
     PaintControl paintControl;
 
     // Other aligned data
@@ -155,6 +155,7 @@ class CubeSlot {
     RF_ACKType lastACK;
 
     uint16_t calculateTimeSync();
+    unsigned suggestNapTicks();
 
     void queryResponse(const PacketBuffer &packet);
 };

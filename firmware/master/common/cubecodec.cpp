@@ -372,7 +372,7 @@ void CubeCodec::flushDSRuns(bool rleSafe)
     }
 }
 
-bool CubeCodec::endPacket(PacketBuffer &buf)
+void CubeCodec::endPacket(PacketBuffer &buf)
 {
     /*
      * Big note:
@@ -394,11 +394,7 @@ bool CubeCodec::endPacket(PacketBuffer &buf)
      * If we're in this last situation, we can pad with some arbitrary
      * harmless code, like a skip (00), as long as we keep the encode and
      * decode state in sync.
-     *
-     * Returns 'true' if this packet contained any content.
      */
-
-    bool content = true;
 
     if (!buf.isFull()) {
         // If not full, pad with a single nybble 0. This is usable as a junk
@@ -445,15 +441,11 @@ bool CubeCodec::endPacket(PacketBuffer &buf)
                 
                 txBits.append(0xFF, 8);
                 txBits.flush(buf); 
-
-                content = false;
             }
 
             stateReset();
         }
     }
-
-    return content;
 }
 
 unsigned CubeCodec::deltaSample(_SYSVideoBuffer *vb, uint16_t data, uint16_t offset)
@@ -589,4 +581,48 @@ bool CubeCodec::escRadioNap(PacketBuffer &buf, uint16_t duration)
         return true;
     }
     return false;
+}
+
+void CubeCodec::encodeShutdown(PacketBuffer &buf)
+{
+    /*
+     * Tell this cube to power off, by sending it to _SYS_VM_SLEEP.
+     * We leave this bit set; if the cube doesn't go to sleep right
+     * away, keep telling it to. Once we succeed, the cube will
+     * disconnect.
+     */
+
+    encodePoke(buf, offsetof(_SYSVideoRAM, mode)/2,
+        _SYS_VM_SLEEP | (_SYS_VF_CONTINUOUS << 8));
+}
+
+void CubeCodec::encodeStipple(PacketBuffer &buf, _SYSVideoBuffer *vbuf)
+{
+    /* 
+     * Show that this cube is paused, by having it draw a stipple pattern.
+     *
+     * Note, we expect this cube to have finished rendering already,
+     * or it may end up drawing a garbage frame behind the stipple!
+     *
+     * This does not require us to have a vbuf attached. But if we
+     * do, we'll use it to be a good citizen and avoid using continuous
+     * mode or causing an unintentional rotation change.
+     */
+
+    unsigned modeFlagsWord = _SYS_VM_STAMP;
+    if (vbuf) {
+        uint8_t flags = vbuf->vram.flags ^ _SYS_VF_TOGGLE;
+        vbuf->flags = flags;
+        modeFlagsWord |= flags << 8;
+    } else {
+        modeFlagsWord |= _SYS_VF_CONTINUOUS << 8;
+    }
+
+    encodePoke(buf, offsetof(_SYSVideoRAM, fb)/2,          0x0220);
+    encodePoke(buf, offsetof(_SYSVideoRAM, colormap[2])/2, 0x0000);
+    encodePoke(buf, offsetof(_SYSVideoRAM, stamp_pitch)/2, 0x0201);
+    encodePoke(buf, offsetof(_SYSVideoRAM, stamp_x)/2,     0x8000);
+    encodePoke(buf, offsetof(_SYSVideoRAM, stamp_key)/2,   0x0000);
+    encodePoke(buf, offsetof(_SYSVideoRAM, first_line)/2,  0x8000);
+    encodePoke(buf, offsetof(_SYSVideoRAM, mode)/2,        modeFlagsWord);
 }

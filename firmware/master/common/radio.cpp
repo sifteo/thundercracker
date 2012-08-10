@@ -78,6 +78,7 @@ void RadioManager::produce(PacketTransmission &tx)
      */
 
     const uint32_t activeMask = CubeSlots::sysConnected | Intrinsic::LZ(CONNECTOR_ID);
+    const SysTime::Ticks now = SysTime::ticks();
 
     for (;;) {
 
@@ -175,7 +176,7 @@ void RadioManager::produce(PacketTransmission &tx)
         schedule[foundPID] ^= producerBit;
 
         // Does this producer even want to transmit right now?
-        if (dispatchProduce(producer, tx)) {
+        if (dispatchProduce(producer, tx, now)) {
             nextSchedule[thisPID] |= producerBit;
             nextPID = (thisPID + 1) & PID_MASK;
             fifo.enqueue(producer);
@@ -202,7 +203,7 @@ void RadioManager::timeout()
     dispatchTimeout(fifo.dequeue());
 }
 
-bool RadioManager::dispatchProduce(unsigned id, PacketTransmission &tx)
+ALWAYS_INLINE bool RadioManager::dispatchProduce(unsigned id, PacketTransmission &tx, SysTime::Ticks now)
 {
     RADIO_UART_STR("\r\ntx ");
     RADIO_UART_HEX(id);
@@ -215,10 +216,10 @@ bool RadioManager::dispatchProduce(unsigned id, PacketTransmission &tx)
     }
 
     CubeSlot &slot = CubeSlot::getInstance(id);
-    return slot.isSysConnected() && slot.radioProduce(tx);
+    return slot.isSysConnected() && slot.radioProduce(tx, now);
 }
 
-void RadioManager::dispatchAcknowledge(unsigned id, const PacketBuffer &packet)
+ALWAYS_INLINE void RadioManager::dispatchAcknowledge(unsigned id, const PacketBuffer &packet)
 {
     RADIO_UART_STR("\r\nack ");
     RADIO_UART_HEX(id);
@@ -236,7 +237,7 @@ void RadioManager::dispatchAcknowledge(unsigned id, const PacketBuffer &packet)
         slot.radioAcknowledge(packet);
 }
 
-void RadioManager::dispatchEmptyAcknowledge(unsigned id)
+ALWAYS_INLINE void RadioManager::dispatchEmptyAcknowledge(unsigned id)
 {
     RADIO_UART_STR("\r\nack0 ");
     RADIO_UART_HEX(id);
@@ -246,7 +247,7 @@ void RadioManager::dispatchEmptyAcknowledge(unsigned id)
         return CubeConnector::radioEmptyAcknowledge();
 }
 
-void RadioManager::dispatchTimeout(unsigned id)
+ALWAYS_INLINE void RadioManager::dispatchTimeout(unsigned id)
 {
     RADIO_UART_STR("\r\nTIMEOUT ");
     RADIO_UART_HEX(id);

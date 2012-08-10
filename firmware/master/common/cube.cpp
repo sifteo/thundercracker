@@ -32,6 +32,9 @@ void CubeSlot::connect(SysLFS::Key cubeRecord, const RadioAddress &addr, const R
     Atomic::And(CubeSlots::vramPaused, ~cv);
     Atomic::And(CubeSlots::touch, ~cv);
 
+    // Cube starts out awake
+    napDeadline = 0;
+
     // Store new identity
     lastACK = fullACK;
     address = addr;
@@ -129,8 +132,13 @@ void CubeSlot::setVideoBuffer(_SYSVideoBuffer *v)
     vbuf = v;
 }
 
-bool CubeSlot::radioProduce(PacketTransmission &tx)
+bool CubeSlot::radioProduce(PacketTransmission &tx, SysTime::Ticks now)
 {
+    // If the cube is asleep, yield our transmit slot
+    if (napDeadline > now)
+        return false;
+
+    bool idle = true;
     _SYSCubeIDVector cv = bit();
     tx.dest = getRadioAddress();
     tx.packet.len = 0;
@@ -144,57 +152,33 @@ bool CubeSlot::radioProduce(PacketTransmission &tx)
      */
 
     if (UNLIKELY(CubeSlots::sendShutdown & cv)) {
-        /*
-         * Tell this cube to power off, by sending it to _SYS_VM_SLEEP.
-         * We leave this bit set; if the cube doesn't go to sleep right
-         * away, keep telling it to. Once we succeed, the cube will
-         * disconnect.
-         */
-
-        codec.encodePoke(tx.packet, offsetof(_SYSVideoRAM, mode)/2,
-            _SYS_VM_SLEEP | (_SYS_VF_CONTINUOUS << 8));
-
+        // Ask the cube to shut down (it will disconnect)
+        codec.encodeShutdown(tx.packet);
         ASSERT(!tx.packet.isFull());
 
     } else if (UNLIKELY(CubeSlots::sendStipple & cv)) {
-        /* 
-         * Show that this cube is paused, by having it draw a stipple pattern.
-         *
-         * Note, we expect this cube to have finished rendering already,
-         * or it may end up drawing a garbage frame behind the stipple!
-         *
-         * This does not require us to have a vbuf attached. But if we
-         * do, we'll use it to be a good citizen and avoid using continuous
-         * mode or causing an unintentional rotation change.
-         */
-
-        _SYSVideoBuffer *localVBuf = vbuf;
-        unsigned modeFlagsWord = _SYS_VM_STAMP;
-        if (localVBuf) {
-            uint8_t flags = localVBuf->vram.flags ^ _SYS_VF_TOGGLE;
-            localVBuf->flags = flags;
-            modeFlagsWord |= flags << 8;
-        } else {
-            modeFlagsWord |= _SYS_VF_CONTINUOUS << 8;
-        }
-
-        codec.encodePoke(tx.packet, offsetof(_SYSVideoRAM, fb)/2,          0x0220);
-        codec.encodePoke(tx.packet, offsetof(_SYSVideoRAM, colormap[2])/2, 0x0000);
-        codec.encodePoke(tx.packet, offsetof(_SYSVideoRAM, stamp_pitch)/2, 0x0201);
-        codec.encodePoke(tx.packet, offsetof(_SYSVideoRAM, stamp_x)/2,     0x8000);
-        codec.encodePoke(tx.packet, offsetof(_SYSVideoRAM, stamp_key)/2,   0x0000);
-        codec.encodePoke(tx.packet, offsetof(_SYSVideoRAM, first_line)/2,  0x8000);
-        codec.encodePoke(tx.packet, offsetof(_SYSVideoRAM, mode)/2,        modeFlagsWord);
-
-        ASSERT(!tx.packet.isFull());
+        // Send a stipple pattern
+        codec.encodeStipple(tx.packet, vbuf);
         Atomic::And(CubeSlots::sendStipple, ~cv);
+        ASSERT(!tx.packet.isFull());
 
     } else if (LIKELY(0 == (CubeSlots::vramPaused & cv))) {
         // Normal updates from VideoBuffer
 
-        if (codec.encodeVRAM(tx.packet, vbuf))
-            if (paintControl.vramFlushed(this))
-                codec.encodeVRAM(tx.packet, vbuf);
+        if (codec.encodeVRAM(tx.packet, vbuf)) {
+            // Finished flushing Video Buffer. Maybe trigger a render.
+
+            if (paintControl.vramFlushed(this)) {
+                if (!codec.encodeVRAM(tx.packet, vbuf)) {
+                    // Didn't have enough room to flush the trigger. More work to do!
+                    idle = false;
+                }
+            }
+
+        } else if (tx.packet.isFull()) {
+            // Not done, and we filled up the packet. We have more work to do later!
+            idle = false;
+        }
     }
 
     /*
@@ -207,6 +191,9 @@ bool CubeSlot::radioProduce(PacketTransmission &tx)
 
     if (AssetLoader::getActiveCubes() & cv) {
         // Loading is in progress
+
+        // Keep the radio from sleeping as long as we're loading assets.
+        idle = false;
 
         if (AssetLoader::needFlashPacket(id()) && codec.escFlash(tx.packet)) {
             // Loader has data to send. Send an escape, and be done with this packet.
@@ -239,14 +226,29 @@ bool CubeSlot::radioProduce(PacketTransmission &tx)
         return true;
     }
 
-    // Finalize this packet. Must be last.
-    bool hasContent = codec.endPacket(tx.packet);
-
     /*
-     * XXX: We don't have to always return true... we can return false if
-     *      we have no useful work to do, so long as we still occasionally
-     *      return true to request a ping packet at some particular interval.
+     * Last priority: Radio power management
+     *
+     * If we don't have any more work to do after this packet, tell the cube
+     * to put its radio to sleep for a short time. We will remember when the
+     * cube is expected to wake up, and we also relinquish transmit bandwidth
+     * until then.
      */
+
+#ifdef USE_RADIO_NAP
+    if (idle) {
+        unsigned napTicks = suggestNapTicks();
+        if (codec.escRadioNap(tx.packet, napTicks)) {
+            // How long will we be asleep for? Naps are measured in units of 32.768 kHz ticks.
+            napDeadline = now + (uint32_t(SysTime::hzTicks(32768)) * napTicks);
+            return true;
+        }
+    }
+#endif
+
+    // Finalize this packet. Must be last.
+    codec.endPacket(tx.packet);
+
     return true;
 }
 
@@ -418,4 +420,16 @@ void CubeSlot::queryResponse(const PacketBuffer &packet)
      */
 
     AssetLoader::queryResponse(id(), packet);
+}
+
+unsigned CubeSlot::suggestNapTicks()
+{
+    /*
+     * We don't have any more work to do immediately after the current
+     * packet. How long should we ask the cube to sleep for? Returns
+     * a result in units of 32.768 kHz ticks, up to a maximum of 0xFFFF.
+     */
+
+    // XXX: Currently hardcoded at 10ms
+    return 328;
 }

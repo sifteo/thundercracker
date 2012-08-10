@@ -103,11 +103,14 @@ class CubeCodec {
     bool encodeVRAMData(PacketBuffer &buf, uint16_t data);
     bool encodeVRAMData(PacketBuffer &buf, _SYSVideoBuffer *vb, uint16_t data);
 
+    void encodeShutdown(PacketBuffer &buf);
+    void encodeStipple(PacketBuffer &buf, _SYSVideoBuffer *vbuf);
+
     bool encodePoke(PacketBuffer &buf, uint16_t addr, uint16_t data) {
         return encodeVRAMAddr(buf, addr) && encodeVRAMData(buf, data);
     }
 
-    bool endPacket(PacketBuffer &buf);
+    void endPacket(PacketBuffer &buf);
 
     // Escape codes (Ends the packet)
     void escTimeSync(PacketBuffer &buf, uint16_t rawTimer);

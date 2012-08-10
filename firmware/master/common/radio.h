@@ -11,6 +11,7 @@
 #include "macros.h"
 #include "bits.h"
 #include "ringbuffer.h"
+#include "systime.h"
 
 class RadioManager;
 
@@ -53,6 +54,11 @@ struct PacketBuffer {
     ALWAYS_INLINE bool isFull() {
         ASSERT(len <= MAX_LEN);
         return len == MAX_LEN;
+    }
+
+    ALWAYS_INLINE bool isEmpty() {
+        ASSERT(len <= MAX_LEN);
+        return len == 0;
     }
 
     ALWAYS_INLINE unsigned bytesFree() {
@@ -232,10 +238,10 @@ class RadioManager {
     static uint32_t nextSchedule[PID_COUNT];
     
     // Dispatch to a paritcular producer, by ID
-    static bool dispatchProduce(unsigned id, PacketTransmission &tx);
-    static void dispatchAcknowledge(unsigned id, const PacketBuffer &packet);
-    static void dispatchEmptyAcknowledge(unsigned id);
-    static void dispatchTimeout(unsigned id);
+    static ALWAYS_INLINE bool dispatchProduce(unsigned id, PacketTransmission &tx, SysTime::Ticks now);
+    static ALWAYS_INLINE void dispatchAcknowledge(unsigned id, const PacketBuffer &packet);
+    static ALWAYS_INLINE void dispatchEmptyAcknowledge(unsigned id);
+    static ALWAYS_INLINE void dispatchTimeout(unsigned id);
 };
 
 #endif
