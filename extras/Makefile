@@ -9,7 +9,8 @@ SUBDIRS = \
 	tinytracker \
 	lfsmunch \
 	numbers \
-	accelchart
+	accelchart \
+	drumkit
 
 .PHONY: clean subdirs $(SUBDIRS)
 
