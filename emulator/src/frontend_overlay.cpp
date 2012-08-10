@@ -213,7 +213,7 @@ void FrontendOverlay::drawHelp()
         "Control-click or middle-click a cube to tap it.",
         "Drag by an edge or corner to pull and rotate it.",
         "While pulling, Right-click or Space to hover, again to rotate.",
-        "Shift-drag or Right-drag to tilt a cube.",
+        "Shift-drag or Right-drag to tilt a cube. Press (X) to flip.",
         "Mouse wheel resizes the play surface.",
         "",
         "Home (B)utton, (S)creenshot, (F)ullscreen, (T)urbo, (I)nspector",

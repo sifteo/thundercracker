@@ -570,18 +570,43 @@ void GLRenderer::cubeTransform(b2Vec2 center, float angle, float hover,
 
     glLoadIdentity();
     glTranslatef(center.x, center.y, 0.0f);
+
+    if (hover > 1e-3) {
+        glTranslatef(0.0f, 0.0f, hover * CubeConstants::SIZE);
+        tState.nonPixelAccurate = true;
+    }
+
     glRotatef(angle * (180.0f / M_PI), 0,0,1);
    
     const float tiltDeadzone = 5.0f;
     const float height = CubeConstants::HEIGHT;
 
+    /*
+     * Consider a cube 'flipped' if its tilt.x is more than 90 degrees.
+     * To keep our euler angle math simple, at this point we undo the
+     * flip and calculate our tilt as usual. This lets us keep our tilt
+     * edges and deadzones set up very explicitly, while also letting
+     * us easily animate the transition between flipped and upright
+     * orientations.
+     */
+
+    bool flipped = tilt.x > 90.0f;
+    if (flipped) {
+        tilt.x -= 180.0f;
+        tilt.y = -tilt.y;
+    }
+
+    // Tilt along right edge, up to 90 degrees
     if (tilt.x > tiltDeadzone) {
+        float t = std::min(90.0f, tilt.x - tiltDeadzone);
         glTranslatef(CubeConstants::SIZE, 0, height * CubeConstants::SIZE);
-        glRotatef(tilt.x - tiltDeadzone, 0,1,0);
+        glRotatef(t, 0,1,0);
         glTranslatef(-CubeConstants::SIZE, 0, -height * CubeConstants::SIZE);
         tState.isTilted = true;
         tState.nonPixelAccurate = true;
     }
+
+    // Tilt along left edge
     if (tilt.x < -tiltDeadzone) {
         glTranslatef(-CubeConstants::SIZE, 0, height * CubeConstants::SIZE);
         glRotatef(tilt.x + tiltDeadzone, 0,1,0);
@@ -590,6 +615,7 @@ void GLRenderer::cubeTransform(b2Vec2 center, float angle, float hover,
         tState.nonPixelAccurate = true;
     }
 
+    // Tilt along bottom edge
     if (tilt.y > tiltDeadzone) {
         glTranslatef(0, CubeConstants::SIZE, height * CubeConstants::SIZE);
         glRotatef(-tilt.y + tiltDeadzone, 1,0,0);
@@ -597,12 +623,19 @@ void GLRenderer::cubeTransform(b2Vec2 center, float angle, float hover,
         tState.isTilted = true;
         tState.nonPixelAccurate = true;
     }
+
+    // Tilt along top edge
     if (tilt.y < -tiltDeadzone) {
         glTranslatef(0, -CubeConstants::SIZE, height * CubeConstants::SIZE);
         glRotatef(-tilt.y - tiltDeadzone, 1,0,0);
         glTranslatef(0, CubeConstants::SIZE, -height * CubeConstants::SIZE);
         tState.isTilted = true;
         tState.nonPixelAccurate = true;
+    }
+
+    if (flipped) {
+        glRotatef(180.0f, 0,1,0);
+        glTranslatef(0, 0, -height * CubeConstants::SIZE);
     }
 
     /* Save a copy of the transformation, before scaling it by our size. */
@@ -620,12 +653,6 @@ void GLRenderer::cubeTransform(b2Vec2 center, float angle, float hover,
 
     /* Now scale it */
     glScalef(CubeConstants::SIZE, CubeConstants::SIZE, CubeConstants::SIZE);
-    
-    /* Hover is relative to cube size, so apply that now. */
-    if (hover > 1e-3) {
-        glTranslatef(0.0f, 0.0f, hover);
-        tState.nonPixelAccurate = true;
-    }
 }
 
 

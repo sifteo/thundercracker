@@ -348,6 +348,11 @@ void GLFWCALL Frontend::onKey(int key, int state)
             instance->overlay.toggleHelp();
             break;
 
+        case 'X':
+            if (instance->mousePicker.mCube)
+                instance->mousePicker.mCube->toggleFlip();
+            break;
+
         case 'Q':
         case GLFW_KEY_ESC:
             instance->isRunning = false;
