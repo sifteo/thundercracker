@@ -74,6 +74,7 @@ private:
     // event handlers
     void cubeConnect(unsigned cid);
     void cubeDisconnect(unsigned cid);
+    void cubeTouch(unsigned cid);
     void neighborAdded(unsigned firstID, unsigned firstSide,
                        unsigned secondID, unsigned secondSide);
 
