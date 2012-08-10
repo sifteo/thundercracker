@@ -565,6 +565,9 @@ static void flash_query_crc() __naked
         ; Setup
         ;--------------------------------------------------------------------
 
+        mov     _i2c_a21_target, _flash_addr_a21
+        lcall   _i2c_a21_wait
+
         acall   _flash_dequeue      ; Store block count
         mov     R_COUNT1, a
 
