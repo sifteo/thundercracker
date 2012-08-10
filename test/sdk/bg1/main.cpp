@@ -38,6 +38,8 @@ void main()
     loader.start(config, CubeSet(cube));
     loader.finish();
 
+    LOG_INT(MainAssets.cubes[0].baseAddr);
+
     SCRIPT(LUA,
         package.path = package.path .. ";../../lib/?.lua"
         require('siftulator')
@@ -45,8 +47,10 @@ void main()
     );
 
     vid.initMode(BG0_SPR_BG1);
-    vid.bg0.erase(Background);
     vid.attach(cube);
+    vid.bg0.erase(Background);
+
+    LOG_INT(vid.sys.vbuf.vram.words[0]);
 
     testMaskedImage();
 
