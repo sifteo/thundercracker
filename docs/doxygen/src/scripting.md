@@ -2,6 +2,8 @@
 Scripting   {#scripting}
 =======
 
+@brief Automate, introspect and debug apps via Lua scripting
+
 # Running Lua code
 
 The Sifteo platform simulator _Siftulator_ includes scripting support, via an embedded [Lua](http://www.lua.org/) interpreter. This scripting support is intended primarily for automated testing, and as a way to interface emulated Sifteo games with the outside world for debugging, testing, and exploration.

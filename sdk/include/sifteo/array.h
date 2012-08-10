@@ -114,6 +114,21 @@ public:
         return items[numItems++];
     }
 
+    /// Deallocate the last element and return a copy of it's value
+    T pop_back() {
+        ASSERT(count() > 0);
+        numItems--;
+        return items[numItems];
+    }
+
+    /// Pop-back, but avoid a potential unnecessary copy
+    void pop_back(T* outValue) {
+        ASSERT(outValue != 0);
+        ASSERT(count() > 0);
+        numItems--;
+        *outValue = items[numItems];
+    }
+    
     /// Equivalent to setCount(0)
     void clear() {
         numItems = 0;
@@ -136,6 +151,12 @@ public:
         numItems--;
     }
 
+    /// Remove the last element, which involves no shifting
+    void erase_tail() {
+        ASSERT(count() > 0);
+        numItems--;
+    }
+    
     /// Return an iterator pointing to the first slot in the array.
     iterator begin() {
         return &items[0];
