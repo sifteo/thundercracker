@@ -42,8 +42,12 @@ namespace CubeSlots {
         return cv & (0xFFFFFFFF << (32 - _SYS_NUM_CUBE_SLOTS));
     }
 
+    static ALWAYS_INLINE uint32_t numConnected() {
+        return Intrinsic::POPCOUNT(sysConnected);
+    }
+
     static ALWAYS_INLINE bool belowCubeRange() {
-        return Intrinsic::POPCOUNT(CubeSlots::sysConnected) < CubeSlots::minUserCubes;
+        return numConnected() < minUserCubes;
     }
 
     void setCubeRange(unsigned minimum, unsigned maximum);
