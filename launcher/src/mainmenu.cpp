@@ -164,18 +164,16 @@ void MainMenu::handleEvent(MenuEvent &e)
     switch (e.type) {
 
         case MENU_ITEM_PRESS:
-            if (canLaunchItem(e.item)) {
+            ASSERT(e.item < arraysize(items));
+            if (items[e.item]->getCubeRange().isEmpty()) {
+                AudioChannel(0).play(Sound_NonPossibleAction);
+                performDefault = false;
+            } else if (canLaunchItem(e.item)) {
                 AudioChannel(0).play(Sound_ConfirmClick);
                 itemIndexChoice = e.item;
             } else {
-                ASSERT(e.item < arraysize(items));
-                if (items[e.item]->getCubeRange().isEmpty()) {
-                    AudioChannel(0).play(Sound_NonPossibleAction);
-                    performDefault = false;
-                } else {
-                    toggleCubeRangeAlert(e.item);
-                    performDefault = false;
-                }
+                toggleCubeRangeAlert(e.item);
+                performDefault = false;
             }
             break;
 
