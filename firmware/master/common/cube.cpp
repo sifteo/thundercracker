@@ -17,6 +17,7 @@
 #include "cubeslots.h"
 #include "assetslot.h"
 #include "assetloader.h"
+#include "cubeconnector.h"
 
 
 void CubeSlot::connect(SysLFS::Key cubeRecord, const RadioAddress &addr, const RF_ACKType &fullACK)
@@ -49,6 +50,10 @@ void CubeSlot::connect(SysLFS::Key cubeRecord, const RadioAddress &addr, const R
     Atomic::Or(CubeSlots::sysConnected, cv);
     CubeSlots::pairConnected.atomicMark(cubeRecord - SysLFS::kCubeBase);
 
+    // is this connection means we're full, don't bother trying to connect anybody else
+    if (!CubeSlots::connectionSlotsAvailable())
+        CubeConnector::disableReconnect();
+
     // Propagate this connection to userspace
     Event::setCubePending(Event::PID_CONNECTION, id());
 }
@@ -64,6 +69,10 @@ void CubeSlot::disconnect()
 
     // Disconnect it from the system; the user will follow when we dispatch the event.
     Atomic::And(CubeSlots::sysConnected, ~cv);
+
+    // if this has freed up a slot, ensure reconnect is enabled
+    if (CubeSlots::connectionSlotsAvailable())
+        CubeConnector::enableReconnect();
 
     // Begin trying to reconnect
     CubeSlots::pairConnected.atomicClear(cubeRecord - SysLFS::kCubeBase);

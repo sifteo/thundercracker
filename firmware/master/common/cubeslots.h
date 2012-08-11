@@ -50,6 +50,10 @@ namespace CubeSlots {
         return numConnected() < minUserCubes;
     }
 
+    static ALWAYS_INLINE bool connectionSlotsAvailable() {
+        return numConnected() < maxUserCubes;
+    }
+
     void setCubeRange(unsigned minimum, unsigned maximum);
 
     void paintCubes(_SYSCubeIDVector cv, bool wait=true, uint32_t excludedTasks=0);

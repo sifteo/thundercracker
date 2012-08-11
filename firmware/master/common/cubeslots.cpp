@@ -10,6 +10,8 @@
 #include "tasks.h"
 #include "radio.h"
 #include "event.h"
+#include "cubeconnector.h"
+#include "pause.h"
 
 CubeSlot CubeSlots::instances[_SYS_NUM_CUBE_SLOTS];
 
@@ -29,8 +31,28 @@ _SYSCubeID CubeSlots::maxUserCubes = _SYS_NUM_CUBE_SLOTS;
 
 void CubeSlots::setCubeRange(unsigned minimum, unsigned maximum)
 {
+    // if we have too many cubes connected, shutdown the extras
+    int excessCount = numConnected() - maximum;
+    if (excessCount > 0) {
+        while (excessCount-- > 0) {
+            uint32_t excessID = 31 - Intrinsic::CTZ(sysConnected);
+            ASSERT(excessID >= 0);
+            Atomic::Or(sendShutdown, Intrinsic::LZ(excessID));
+        }
+    }
+
     minUserCubes = minimum;
     maxUserCubes = maximum;
+
+    // ensure reconnection is enabled if we have room, or disabled if we don't
+    if (connectionSlotsAvailable())
+        CubeConnector::enableReconnect();
+    else
+        CubeConnector::disableReconnect();
+
+    // do we have enough cubes to continue?
+    if (belowCubeRange())
+        Pause::cubeRange();
 }
 
 void CubeSlots::paintCubes(_SYSCubeIDVector cv, bool wait, uint32_t excludedTasks)
