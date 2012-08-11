@@ -193,21 +193,23 @@ struct AssetLoader {
         ASSERT(cubeID < CUBE_ALLOCATION);
         // NB: Division by zero on ARM (udiv) yields zero.
         return cubes[cubeID].progress * max / cubes[cubeID].total;
-    };
+    }
 
     /**
      * @brief Measures progress on a single cube, as a floating point value
      *
      * This measures just the loading progress for a single cube, returning
      * a number between 0.0f and 1.0f. If the cube is done loading, this returns
-     * 1.0f. If the cube hasn't started loading, returns 0.0f. If the cube
-     * has no need to load assets, returns NaN.
+     * 1.0f. If the cube hasn't started loading or has no need to load assets,
+     * returns 0.0f.
      */
     float cubeProgress(_SYSCubeID cubeID) const
     {
         ASSERT(cubeID < CUBE_ALLOCATION);
-        return cubes[cubeID].progress / float(cubes[cubeID].total);
-    };
+        unsigned progress = cubes[cubeID].progress;
+        unsigned total = cubes[cubeID].total;
+        return total ? (progress / float(total)) : 0.0f;
+    }
 
     /**
      * @brief Measures total progress on all cubes, as an integer
@@ -229,7 +231,7 @@ struct AssetLoader {
             total += cubes[i].total;
         }
         return progress * max / total;
-    };
+    }
 
     /**
      * @brief Measures total progress on all cubes, as a floating point value
@@ -246,8 +248,8 @@ struct AssetLoader {
             progress += cubes[i].progress;
             total += cubes[i].total;
         }
-        return progress / float(total);
-    };
+        return total ? (progress / float(total)) : 0.0f;
+    }
 
     /**
      * @brief Which cubes are still busy loading?
