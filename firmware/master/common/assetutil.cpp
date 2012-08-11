@@ -94,7 +94,7 @@ bool AssetUtil::isValidConfig(const _SYSAssetConfiguration *cfg, unsigned cfgSiz
             return false;
         }
 
-        if (unsigned(count.slotTiles[slot]) + numTiles >= _SYS_TILES_PER_ASSETSLOT) {
+        if (unsigned(count.slotTiles[slot]) + numTiles > _SYS_TILES_PER_ASSETSLOT) {
             LOG(("ASSET: Bad _SYSAssetConfiguration, too many tiles in slot %d\n", slot));
             return false;
         }
