@@ -32,12 +32,12 @@ namespace Sifteo {
  */
 
 enum Side {
-    TOP = 0,
-    LEFT,
-    BOTTOM,
-    RIGHT,
-    NUM_SIDES,
-    NO_SIDE = -1
+    TOP = 0,            ///< Top side (Y-)
+    LEFT,               ///< Left side (X-)
+    BOTTOM,             ///< Bottom side (Y+)
+    RIGHT,              ///< Right side (X+)
+    NUM_SIDES,          ///< Total number of sides (4)
+    NO_SIDE = -1        ///< Nil value (-1)
 };
 
 /**
