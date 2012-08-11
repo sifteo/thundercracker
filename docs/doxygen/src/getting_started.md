@@ -11,6 +11,8 @@ If you don't have it already, grab the latest version of the SDK at https://www.
 
 The Sifteo SDK is distributed as a zip archive, and can be unpacked anywhere on your machine.
 
+It is recommended to unpack the SDK archive to a path with no spaces in the name - `make` is used as the default build tool, which does not handle paths with spaces very well.
+
 ![](@ref installation.png)
 
 ## What's Inside?
@@ -28,7 +30,9 @@ The Sifteo SDK doesn't dictate any build tools or IDE that must be used to devel
 # Build & Run
 Now we'll build and run __stars__, one of the example applications in the SDK.
 
-First, open the appropriate shell, depending on your platform:
+First, ensure your SDK is on a path with no spaces in the name, otherwise `make` will report errors.
+
+Now, open the appropriate shell, depending on your platform:
 * Windows: double click `sifteo-sdk-shell.cmd`
 * Mac OS X: double click `sifteo-sdk-shell.command`
 * Linux: run `sifteo-sdk-shell.sh`
