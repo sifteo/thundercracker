@@ -18,9 +18,10 @@ namespace Sifteo {
 /**
  * @defgroup motion Motion
  *
- * Motion tracking subsystem. By attaching MotionBuffer objects to cubes,
- * applications can capture high-frequency motion data and detect gestures
- * using this data.
+ * @brief Motion tracking subsystem
+ * 
+ * By attaching MotionBuffer objects to cubes, applications can capture
+ * high-frequency motion data and detect gestures using this data.
  *
  * @{
  */

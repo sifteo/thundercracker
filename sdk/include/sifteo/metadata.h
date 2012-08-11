@@ -13,6 +13,13 @@
 
 namespace Sifteo {
 
+/**
+ * @defgroup metadata Metadata
+ *
+ * @brief Tools for annotating your ELF binary with key/value metadata
+ *
+ * @{
+ */
 
 /**
  * @brief Metadata objects are special compile-time mechanisms for annotating your
@@ -163,5 +170,8 @@ public:
     }
 };
 
+/**
+ * @} endgroup metadata
+ */
 
 }   // namespace Sifteo

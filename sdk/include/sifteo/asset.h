@@ -15,6 +15,8 @@
 /**
  * @defgroup assets Assets
  *
+ * @brief Objects for loading, using, and inspecting visual and audio assets
+ *
  * Audio and visual artwork packaged with a game are referred to here as _assets_.
  * This module details the ways that Sifteo Cubes store and load assets. Many of the
  * objects here are instantiated by `stir`. See the @ref asset_workflow for details.

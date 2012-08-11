@@ -20,7 +20,8 @@ class SystemTime;
 /**
  * @defgroup time Time
  *
- * Time overview blurb here...
+ * @brief Timekeeping objects
+ *
  * @{
  */
 

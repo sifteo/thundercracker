@@ -16,6 +16,8 @@ namespace Sifteo {
 /**
  * @defgroup string String
  *
+ * @brief String formatting classes
+ *
  * @{
  */
 

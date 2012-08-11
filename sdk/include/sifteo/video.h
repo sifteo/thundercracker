@@ -26,7 +26,8 @@ namespace Sifteo {
 /**
  * @defgroup video Video
  *
- * Video group overview blurb here...
+ * @brief Video graphics subsystem
+ *
  * @{
  */
 

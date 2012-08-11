@@ -16,6 +16,8 @@ namespace Sifteo {
 /**
  * @defgroup memory Memory
  *
+ * @brief Fast memory copy, fill, and CRC operations
+ *
  * @{
  */
 

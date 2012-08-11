@@ -17,7 +17,8 @@ namespace Sifteo {
 /**
  * @defgroup math Math
  *
- * Math group overview blurb here...
+ * @brief Floating point and integer math, matrices, vectors
+ *
  * @{
  */
 

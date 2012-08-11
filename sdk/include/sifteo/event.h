@@ -17,6 +17,8 @@ namespace Sifteo {
 /**
  * @defgroup event Event
  *
+ * @brief Event dispatch subsystem, for event-driven programming
+ *
  * Event dispatch subsystem. This module allows applications to set up
  * event callbacks which are automatically invoked at system _yield points_
  * like System::paint().

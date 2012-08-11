@@ -14,6 +14,8 @@
 /**
  * @defgroup macros Macros
  *
+ * @brief Utility, logging, and scripting macros
+ *
  * This section includes common C++ utility macros, as well as macros which
  * implement platform-specific logging and debugging support.
  *

@@ -14,6 +14,13 @@
 
 namespace Sifteo {
 
+/**
+ * @defgroup system System
+ *
+ * @brief Global operations that apply to the system as a whole.
+ *
+ * @{
+ */
 
 /**
  * @brief Global operations that apply to the system as a whole.
@@ -222,5 +229,8 @@ class System {
     }
 };
 
+/**
+ * @} end defgroup system
+ */
 
 };  // namespace Sifteo

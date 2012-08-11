@@ -18,7 +18,7 @@
 /**
  * @defgroup menu Menu
  *
- * Menu overview blurb here...
+ * @brief Common tilt-flow menu API
  */
 
 #include <sifteo/menu/types.h>

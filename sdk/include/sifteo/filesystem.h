@@ -17,6 +17,8 @@ namespace Sifteo {
 /**
  * @defgroup filesystem Filesystem
  *
+ * @brief Access to persistent storage, including saved game data
+ * 
  * These objects serve as an interface to the simple filesystem which
  * stores saved game data, as well as storing games themselves.
  *

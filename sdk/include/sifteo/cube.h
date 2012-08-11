@@ -15,6 +15,13 @@
 
 namespace Sifteo {
 
+/**
+ * @defgroup cube Cube
+ *
+ * @brief Objects for cube identity and cube sensor state
+ *
+ * @{
+ */
 
 /**
  * @brief An enumeration which names the four sides of a Sifteo cube.
@@ -395,5 +402,8 @@ struct Neighborhood {
     }
 };
 
+/**
+ * @} endgroup cube
+ */
 
 };  // namespace Sifteo

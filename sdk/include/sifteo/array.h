@@ -17,6 +17,8 @@ namespace Sifteo {
 /**
  * @defgroup array Array
  *
+ * @brief Container classes, Array and BitArray
+ * 
  * @{
  */
 

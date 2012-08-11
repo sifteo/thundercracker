@@ -16,7 +16,8 @@ namespace Sifteo {
 /**
  * @defgroup audio Audio
  *
- * Audio overview blurb here...
+ * @brief Interface to the audio mixer and the music tracker
+ *
  * @{
  */
 
