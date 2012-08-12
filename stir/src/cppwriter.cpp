@@ -161,7 +161,7 @@ void CPPSourceWriter::writeGroup(const Group &group)
     mLog.infoEnd();
 }
 
-void CPPSourceWriter::writeSound(const Sound &sound)
+bool CPPSourceWriter::writeSound(const Sound &sound)
 {
     AudioEncoder *enc = AudioEncoder::create(sound.getEncode());
     assert(enc != 0);
@@ -172,10 +172,13 @@ void CPPSourceWriter::writeSound(const Sound &sound)
     std::string filepath = sound.getFile();
     unsigned sz = filepath.size();
 
-    if (sz >= 4 && filepath.substr(sz - 4) == ".wav")
-        WaveDecoder::loadFile(raw, filepath, mLog);
-    else
+    if (sz >= 4 && filepath.substr(sz - 4) == ".wav") {
+        if (!WaveDecoder::loadFile(raw, filepath, mLog))
+            return false;
+    }
+    else {
         LodePNG::loadFile(raw, filepath);
+    }
 
     uint32_t numSamples = raw.size() / sizeof(int16_t);
 
@@ -188,7 +191,7 @@ void CPPSourceWriter::writeSound(const Sound &sound)
     if (data.empty()) {
         mLog.error("Error encoding audio file '%s'", sound.getFile().c_str());
         delete enc;
-        return;
+        return false;
     }
 
     mStream << "static const char " << sound.getName() << "_data[] = \n";
@@ -230,6 +233,7 @@ void CPPSourceWriter::writeSound(const Sound &sound)
         "}};\n\n";
 
     delete enc;
+    return true;
 }
 
 void CPPSourceWriter::writeImageList(const ImageList& images)
