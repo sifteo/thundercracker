@@ -8,10 +8,8 @@
 
 int Delete::run(int argc, char **argv, IODevice &_dev)
 {
-    if (!_dev.open(IODevice::SIFTEO_VID, IODevice::BASE_PID)) {
-        fprintf(stderr, "device is not attached\n");
+    if (!_dev.open(IODevice::SIFTEO_VID, IODevice::BASE_PID))
         return 1;
-    }
 
     Delete m(_dev);
     bool success = false;

@@ -62,10 +62,8 @@ bool Profiler::profile(const char *elfPath, const char *outPath)
         }
     }
 
-    if (!dev.open(IODevice::SIFTEO_VID, IODevice::BASE_PID)) {
-        fprintf(stderr, "device is not attached\n");
+    if (!dev.open(IODevice::SIFTEO_VID, IODevice::BASE_PID))
         return false;
-    }
 
     {
         USBProtocolMsg m(USBProtocol::Profiler);

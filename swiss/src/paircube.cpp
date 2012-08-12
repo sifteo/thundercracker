@@ -31,10 +31,8 @@ PairCube::PairCube(IODevice &_dev) :
 
 bool PairCube::pair(const char *slotStr, const char *hwidStr)
 {
-    if (!dev.open(IODevice::SIFTEO_VID, IODevice::BASE_PID)) {
-        fprintf(stderr, "device is not attached\n");
+    if (!dev.open(IODevice::SIFTEO_VID, IODevice::BASE_PID))
         return false;
-    }
 
     unsigned pairingSlot;
     if (!getValidPairingSlot(slotStr, pairingSlot))
@@ -68,10 +66,8 @@ bool PairCube::pair(const char *slotStr, const char *hwidStr)
 
 bool PairCube::dumpPairingData()
 {
-    if (!dev.open(IODevice::SIFTEO_VID, IODevice::BASE_PID)) {
-        fprintf(stderr, "device is not attached\n");
+    if (!dev.open(IODevice::SIFTEO_VID, IODevice::BASE_PID))
         return false;
-    }
 
     TabularList table;
 

@@ -62,10 +62,8 @@ bool Installer::install(const char *path, int vid, int pid, bool launcher, bool 
         return false;
     }
 
-    if (!dev.open(vid, pid)) {
-        fprintf(stderr, "device is not attached\n");
+    if (!dev.open(vid, pid))
         return false;
-    }
 
     unsigned fileSize = getInstallableElfSize(f);
     if (!fileSize) {

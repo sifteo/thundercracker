@@ -24,6 +24,7 @@ bool UsbDevice::open(uint16_t vendorId, uint16_t productId, uint8_t interface)
 
     USB_TRACE(("USB: Starting open()\n"));
 
+    bool foundAnyDevice = false;
     libusb_device **devs;
     int deviceCount = libusb_get_device_list(NULL, &devs);
     if (deviceCount < 0)
@@ -41,17 +42,25 @@ bool UsbDevice::open(uint16_t vendorId, uint16_t productId, uint8_t interface)
 
         if (desc.idVendor != vendorId || desc.idProduct != productId)
             continue;
+        foundAnyDevice = true;
 
         USB_TRACE(("USB: Starting libusb_open()\n"));
 
         libusb_device_handle *handle;
         r = libusb_open(dev, &handle);
-        if (r < 0)
+        if (r < 0) {
+            if (r == LIBUSB_ERROR_ACCESS)
+                fprintf(stderr, "insufficient permissions to open device\n");
+            else
+                fprintf(stderr, "error opening device\n");
             continue;
+        }
 
         libusb_config_descriptor *cfg;
         r = libusb_get_config_descriptor(dev, 0, &cfg);
-        if (r >= 0) {
+        if (r < 0) {
+            fprintf(stderr, "error communicating with device\n");
+        } else {
             bool found = populateDeviceInfo(cfg);
             libusb_free_config_descriptor(cfg);
             if (found) {
@@ -64,13 +73,18 @@ bool UsbDevice::open(uint16_t vendorId, uint16_t productId, uint8_t interface)
 
     libusb_free_device_list(devs, 1);
 
-    if (!isOpen())
+    if (!isOpen()) {
+        if (!foundAnyDevice)
+            fprintf(stderr, "device is not attached\n");
         return false;
+    }
 
     USB_TRACE(("USB: Claiming interface\n"));
     int r = libusb_claim_interface(mHandle, interface);
-    if (r < 0)
+    if (r < 0) {
+        fprintf(stderr, "error claiming exclusive access to device\n");
         return false;
+    }
 
     /*
      * Open a number of IN transfers.
