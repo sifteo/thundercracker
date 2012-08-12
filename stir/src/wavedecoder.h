@@ -20,8 +20,10 @@ private:
     };
 
     struct FormatDescriptor {
-        char subchunk1ID[4];
-        uint32_t subchunk1Size;
+        struct {
+            char subchunk1ID[4];
+            uint32_t subchunk1Size;
+        } header;
         uint16_t audioFormat;
         uint16_t numChannels;
         uint32_t sampleRate;
@@ -31,7 +33,7 @@ private:
     };
 
     struct DataDescriptor {
-        uint32_t subchunk2ID;
+        char subchunk2ID[4];
         uint32_t subchunk2Size;
     };
 };

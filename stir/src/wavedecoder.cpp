@@ -14,7 +14,7 @@ bool WaveDecoder::loadFile(std::vector<unsigned char>& buffer, const std::string
 
     RiffDescriptor rd;
     if (fread(&rd, 1, sizeof rd, f) != sizeof rd) {
-        log.error("i/o failure\n");
+        log.error("RiffDescriptor: i/o failure\n");
         return false;
     }
 
@@ -37,12 +37,12 @@ bool WaveDecoder::loadFile(std::vector<unsigned char>& buffer, const std::string
      */
     FormatDescriptor fd;
     if (fread(&fd, 1, sizeof fd, f) != sizeof fd) {
-        log.error("i/o failure\n");
+        log.error("FormatDescriptor: i/o failure\n");
         return false;
     }
 
     const char fmt[4] = { 'f', 'm', 't', ' ' };
-    if (memcmp(fd.subchunk1ID, fmt, sizeof fmt)) {
+    if (memcmp(fd.header.subchunk1ID, fmt, sizeof fmt)) {
         log.error("header didn't match (fmt)\n");
         return false;
     }
@@ -68,15 +68,38 @@ bool WaveDecoder::loadFile(std::vector<unsigned char>& buffer, const std::string
         return false;
     }
 
+    /*
+     * Some encoders appear to include the ExtraParamSize field at the end
+     * of FormatDescriptor that should not exist for PCM format.
+     *
+     * Give them a chance, and seek ahead as specified by FormatDescriptor::subchunk1Size
+     */
+    unsigned pos = ftell(f);
+    unsigned offset = sizeof(RiffDescriptor) + sizeof(fd.header) + fd.header.subchunk1Size;
+    if (offset > pos) {
+        if (offset - pos != sizeof(uint16_t)) {
+            log.error("tried to handle oddly encoded file whose FormatDescriptor was larger"
+                      "than expected, but it was just...too...large...\n");
+            return false;
+        }
+        fseek(f, offset - pos, SEEK_CUR);
+    }
+
     DataDescriptor dd;
     if (fread(&dd, 1, sizeof dd, f) != sizeof dd) {
-        log.error("i/o failure\n");
+        log.error("DataDescriptor: i/o failure\n");
+        return false;
+    }
+
+    const char datachunk[4] = { 'd', 'a', 't', 'a' };
+    if (memcmp(dd.subchunk2ID, datachunk, sizeof datachunk)) {
+        log.error("header didn't match (data)\n");
         return false;
     }
 
     buffer.resize(dd.subchunk2Size);
     if (fread(&buffer.front(), 1, dd.subchunk2Size, f) != dd.subchunk2Size) {
-        log.error("i/o failure\n");
+        log.error("Read: i/o failure\n");
         return false;
     }
 

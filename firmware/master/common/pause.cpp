@@ -6,6 +6,7 @@
 #include "led.h"
 #include "ledsequencer.h"
 #include "cube.h"
+#include "event.h"
 
 #include "svmloader.h"
 #include "svmclock.h"
@@ -16,6 +17,7 @@
 #include "ui_coordinator.h"
 
 BitVector<Pause::NUM_WORK_ITEMS> Pause::taskWork;
+HomeButtonPressDetector Pause::press;
 
 void Pause::task()
 {
@@ -31,15 +33,7 @@ void Pause::task()
         switch (index) {
 
         case ButtonPress:
-            // only want to execute on press, not release
-            if (HomeButton::isPressed()) {
-
-                const uint32_t excludedTasks =
-                    Intrinsic::LZ(Tasks::AudioPull) |
-                    Intrinsic::LZ(Tasks::Pause);
-                UICoordinator uic(excludedTasks);
-                buttonPress(uic);
-            }
+            onButtonChange();
             break;
 
         case LowBattery:
@@ -50,7 +44,53 @@ void Pause::task()
     }
 }
 
-void Pause::buttonPress(UICoordinator &uic)
+void Pause::onButtonChange()
+{
+    bool changed = press.update();
+
+    const uint32_t excludedTasks =
+        Intrinsic::LZ(Tasks::AudioPull) |
+        Intrinsic::LZ(Tasks::Pause);
+    UICoordinator uic(excludedTasks);
+
+    /*
+     * Shutdown on button press threshold.
+     */
+    if (press.pressDuration() > SysTime::msTicks(1000)) {
+        UIShutdown uiShutdown(uic);
+        uiShutdown.init();
+        return uiShutdown.mainLoop();
+    }
+
+    /*
+     * Never display the pause menu within the launcher.
+     * Instead, send it a GameMenu event to indicate the button was pressed.
+     * Continue triggering the pause task until button is either released
+     * or we reach the shutdown threshold.
+     */
+    if (SvmLoader::getRunLevel() == SvmLoader::RUNLEVEL_LAUNCHER) {
+
+        if (press.isPressed()) {
+            // only trigger event on edge
+            if (changed) {
+                Event::setBasePending(Event::PID_BASE_GAME_MENU);
+            }
+
+            taskWork.atomicMark(ButtonPress);
+            Tasks::trigger(Tasks::Pause);
+        }
+
+        return;
+    }
+
+    /*
+     * Game is running, and button was pressed - execute the pause menu.
+     */
+    if (HomeButton::isPressed())
+        runPauseMenu(uic);
+}
+
+void Pause::runPauseMenu(UICoordinator &uic)
 {
     /*
      * Long running button press handler.
@@ -64,12 +104,6 @@ void Pause::buttonPress(UICoordinator &uic)
 
     if (!SvmClock::isPaused())
         SvmClock::pause();
-
-    UIShutdown uiShutdown(uic);
-
-    // Immediate shutdown if the button is pressed from the launcher
-    if (SvmLoader::getRunLevel() == SvmLoader::RUNLEVEL_LAUNCHER)
-        return uiShutdown.mainLoop();
 
     UIPause uiPause(uic);
     if (uic.isAttached())
@@ -91,6 +125,7 @@ void Pause::buttonPress(UICoordinator &uic)
 
         // Long press- shut down
         if (press.pressDuration() > SysTime::msTicks(1000)) {
+            UIShutdown uiShutdown(uic);
             uiShutdown.init();
             return uiShutdown.mainLoop();
         }
@@ -154,6 +189,6 @@ void Pause::cubeRange()
         SvmClock::resume();
         SvmLoader::exit();
     } else {
-        buttonPress(uic);
+        runPauseMenu(uic);
     }
 }

@@ -30,14 +30,13 @@ namespace HomeButton
 class HomeButtonPressDetector {
 public:
     enum State {
-        S_UNKNOWN,
         S_IDLE,
         S_PRESSED,
         S_RELEASED,
     };
 
-    HomeButtonPressDetector() : pressTimestamp(0), state(S_UNKNOWN) {}
-    void update();
+    HomeButtonPressDetector() : pressTimestamp(0), state(S_IDLE) {}
+    bool update();
 
     /// Has button been pressed, after having been up?
     ALWAYS_INLINE bool isPressed() const {

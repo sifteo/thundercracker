@@ -4,6 +4,7 @@
 #include <stdint.h>
 #include "bits.h"
 #include "ui_coordinator.h"
+#include "homebutton.h"
 
 class Pause {
 public:
@@ -20,8 +21,11 @@ public:
     static void cubeRange();
 
 private:
-    static void buttonPress(UICoordinator &uic);
-    static void lowBattery();
+    static void runPauseMenu(UICoordinator &uic);
+    static ALWAYS_INLINE void onButtonChange();
+    static ALWAYS_INLINE void lowBattery();
+
+    static HomeButtonPressDetector press;
 };
 
 #endif // PAUSE_H
