@@ -72,17 +72,21 @@ bool WaveDecoder::loadFile(std::vector<unsigned char>& buffer, const std::string
      * Some encoders appear to include the ExtraParamSize field at the end
      * of FormatDescriptor that should not exist for PCM format.
      *
-     * Give them a chance, and seek ahead as specified by FormatDescriptor::subchunk1Size
+     * Verify that at least in this case, ExtraParamSize is 0.
      */
     unsigned pos = ftell(f);
     unsigned offset = sizeof(RiffDescriptor) + sizeof(fd.header) + fd.header.subchunk1Size;
     if (offset > pos) {
-        if (offset - pos != sizeof(uint16_t)) {
-            log.error("tried to handle oddly encoded file whose FormatDescriptor was larger"
-                      "than expected, but it was just...too...large...\n");
+        uint16_t extraParamSize;
+        if (fread(&extraParamSize, 1, sizeof extraParamSize, f) != sizeof extraParamSize) {
+            log.error("i/o error reading ExtraParamSize\n");
             return false;
         }
-        fseek(f, offset - pos, SEEK_CUR);
+
+        if (extraParamSize != 0) {
+            log.error("error: ExtraParamSize was non-zero for a PCM file\n");
+            return false;
+        }
     }
 
     DataDescriptor dd;
