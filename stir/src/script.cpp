@@ -124,7 +124,8 @@ bool Script::run(const char *filename)
         for (std::set<Sound*>::iterator i = sounds.begin(); i != sounds.end(); i++) {
             Sound *sound = *i;
             header.writeSound(*sound);
-            source.writeSound(*sound);
+            if (!source.writeSound(*sound))
+                return false;
         }
 
         log.infoEnd();
