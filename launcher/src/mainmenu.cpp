@@ -42,6 +42,7 @@ void MainMenu::init()
     Events::cubeConnect.set(&MainMenu::cubeConnect, this);
     Events::cubeDisconnect.set(&MainMenu::cubeDisconnect, this);
     Events::neighborAdd.set(&MainMenu::neighborAdded, this);
+    Events::gameMenu.set(&MainMenu::gameMenuEvent, this);
 
     loader.init();
 
@@ -251,6 +252,10 @@ void MainMenu::neighborAdded(unsigned firstID, unsigned firstSide,
                              unsigned secondID, unsigned secondSide)
 {
     /*
+     * XXX: we should only present UI to offer unpairing instead
+     *      of immediately unpairing. Wait until a cube is neighbored
+     *      AND we get a home button press to unpair.
+     *
      * If a connected cube has been neighbored to the base,
      * toggle its pairing state (ie, unpair it).
      *
@@ -270,6 +275,15 @@ void MainMenu::neighborAdded(unsigned firstID, unsigned firstSide,
     ASSERT(Shared::connectTime[cid].isValid());
     if (SystemTime::now() - Shared::connectTime[cid] > TimeDelta::fromMillisec(2000))
         cid.unpair();
+}
+
+void MainMenu::gameMenuEvent()
+{
+    /*
+     * TODO: GameMenu event is delivered on home button press.
+     *       If we're presenting UI to unpair a cube, now is the time
+     *       to actually unpair it.
+     */
 }
 
 void MainMenu::updateConnecting()
