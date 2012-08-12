@@ -134,6 +134,10 @@ OBJS_STM32 += \
     $(MASTER_DIR)/stm32/newlib/libm/math/ef_rem_pio2.stm32.o \
     $(MASTER_DIR)/stm32/newlib/libm/math/kf_rem_pio2.stm32.o \
     $(MASTER_DIR)/stm32/newlib/libm/math/sf_floor.stm32.o \
+    $(MASTER_DIR)/stm32/newlib/libm/math/kf_tan.stm32.o \
+    $(MASTER_DIR)/stm32/newlib/libm/math/sf_tan.stm32.o \
+    $(MASTER_DIR)/stm32/newlib/libm/math/sf_atan.stm32.o \
+    $(MASTER_DIR)/stm32/newlib/libm/math/ef_atan2.stm32.o \
     $(MASTER_DIR)/stm32/newlib/libm/common/s_scalbn.stm32.o \
     $(MASTER_DIR)/stm32/newlib/libm/common/sf_scalbn.stm32.o
 

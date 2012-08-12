@@ -133,6 +133,32 @@ void testExceptions()
     // pow(-1, 1.5) == NAN
     ASSERT(isunordered(pow(b(-1.f), b(1.5f))) == true);
     ASSERT(isunordered(pow(b(-1.0), b(1.5 ))) == true);
+
+    // tan(0) == 0
+    ASSERT(tan(b(0.f)) == 0.f);
+
+    // tan(infinity) == NAN
+    ASSERT(isunordered(tan(b(50.f) / b(0.f))) == true);
+
+    // tan(-infinity) == NAN
+    ASSERT(isunordered(tan(b(-50.f) / b(0.f))) == true);
+
+    // atan(0) == 0
+    ASSERT(atan(b(0.f)) == 0.f);
+
+    // atan2(0,0) == 0
+    ASSERT(atan2(b(0.f), b(0.f)) == 0.f);
+}
+
+void testTrig()
+{
+    // Woefully incomplete test for trig operations...
+
+    ASSERT(sin(5.f) == -0.9589242746631385f);
+    ASSERT(cos(5.f) == 0.2836621854632263f);
+    ASSERT(tan(5.f) == -3.380515006246585f);
+    ASSERT(atan(5.f) == 1.373400766945016f);
+    ASSERT(atan2(-5.f, -1.f) == -1.7681918866447774f);
 }
 
 void testBits()
@@ -218,6 +244,7 @@ void main()
     testLog();
     testExceptions();
     testBits();
+    testTrig();
 
     LOG("Success.\n");
 }

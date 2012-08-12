@@ -300,6 +300,26 @@ uint32_t _SYS_cosf(uint32_t a)
     return reinterpret_cast<uint32_t&>(r);
 }
 
+uint32_t _SYS_tanf(uint32_t a)
+{
+    float r = tanf(reinterpret_cast<float&>(a));
+    return reinterpret_cast<uint32_t&>(r);
+}
+
+uint32_t _SYS_atanf(uint32_t a)
+{
+    float r = atanf(reinterpret_cast<float&>(a));
+    return reinterpret_cast<uint32_t&>(r);
+}
+
+uint32_t _SYS_atan2f(uint32_t y, uint32_t x)
+{
+    float fY = reinterpret_cast<float&>(y);
+    float fX = reinterpret_cast<float&>(x);
+    float fR = atan2f(fY, fX);
+    return reinterpret_cast<uint32_t&>(fR);
+}
+
 uint64_t _SYS_fmod(uint32_t aL, uint32_t aH, uint32_t bL, uint32_t bH)
 {
     uint64_t a = aL | (uint64_t)aH << 32;

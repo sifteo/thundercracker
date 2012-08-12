@@ -87,7 +87,10 @@ aliasTable = {
     '_SYS_powf': '__ieee754_powf',
     '_SYS_sinf': 'sinf',
     '_SYS_cosf': 'cosf',
-    
+    '_SYS_tanf': 'tanf',
+    '_SYS_atanf': 'atanf',
+    '_SYS_atan2f': '__ieee754_atan2f',
+
     # 64-bit integer operators
     '_SYS_sdiv_i64' : '__aeabi_ldivmod',
     '_SYS_udiv_i64' : '__aeabi_uldivmod',

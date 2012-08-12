@@ -251,6 +251,32 @@ float inline cos(float x)
     return reinterpret_cast<float&>(r);
 }
 
+/// Calculate the tangent of a specified angle, in radians. Single-precision.
+float inline tan(float x)
+{
+    uint32_t r = _SYS_tanf(reinterpret_cast<uint32_t&>(x));
+    return reinterpret_cast<float&>(r);
+}
+
+/// Single-precision arc tangent function, of one variable
+float inline atan(float x)
+{
+    uint32_t r = _SYS_atanf(reinterpret_cast<uint32_t&>(x));
+    return reinterpret_cast<float&>(r);
+}
+
+/**
+ * @brief Single-precision arc tangent function, of two variables
+ *
+ * This computes the arc tangent of y/x, using the sign of each
+ * argument to determine which quadrant the result is in.
+ */
+float inline atan2(float a, float b)
+{
+    uint32_t r = _SYS_atan2f(reinterpret_cast<uint32_t&>(a), reinterpret_cast<uint32_t&>(b));
+    return reinterpret_cast<float&>(r);
+}
+
 /**
  * @brief Simultaneously compute the sine and cosine of a specified angle,
  * in radians.
