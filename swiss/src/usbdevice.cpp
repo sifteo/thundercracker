@@ -52,14 +52,14 @@ bool UsbDevice::open(uint16_t vendorId, uint16_t productId, uint8_t interface)
             if (r == LIBUSB_ERROR_ACCESS)
                 fprintf(stderr, "insufficient permissions to open device\n");
             else
-                fprintf(stderr, "error opening device\n");
+                fprintf(stderr, "error opening device: %s\n", libusb_error_name(r));
             continue;
         }
 
         libusb_config_descriptor *cfg;
         r = libusb_get_config_descriptor(dev, 0, &cfg);
         if (r < 0) {
-            fprintf(stderr, "error communicating with device\n");
+            fprintf(stderr, "error communicating with device: %s\n", libusb_error_name(r));
         } else {
             bool found = populateDeviceInfo(cfg);
             libusb_free_config_descriptor(cfg);
@@ -82,7 +82,7 @@ bool UsbDevice::open(uint16_t vendorId, uint16_t productId, uint8_t interface)
     USB_TRACE(("USB: Claiming interface\n"));
     int r = libusb_claim_interface(mHandle, interface);
     if (r < 0) {
-        fprintf(stderr, "error claiming exclusive access to device\n");
+        fprintf(stderr, "error claiming exclusive access to device: %s\n", libusb_error_name(r));
         return false;
     }
 
@@ -191,7 +191,7 @@ void UsbDevice::cancelTransfers(Endpoint &ep)
         int r = libusb_cancel_transfer(*i);
 
         // Complain if this isn't an expected error.
-        if (r < 0 && r != LIBUSB_ERROR_OTHER && r != LIBUSB_ERROR_NO_DEVICE)
+        if (r < 0 && r != LIBUSB_ERROR_OTHER && r != LIBUSB_ERROR_NOT_FOUND && r != LIBUSB_ERROR_NO_DEVICE)
             fprintf(stderr, "failed to cancel transfer: %s\n", libusb_error_name(r));
     }
 }
