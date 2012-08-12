@@ -47,6 +47,14 @@ namespace Sifteo {
  * MotionBuffers are templatized by buffer size. The default should be
  * sufficient for most uses, but if you need to save a longer motion
  * history the size can be adjusted to a maximum of 256 samples.
+ *
+ * @warning We don't recommend allocating MotionBuffers on the stack. Usually
+ * this wouldn't be a useful thing to do anyway, since MotionBuffers tend
+ * to be long-lived objects. But the specific reason we don't recommend this
+ * is that the system requires a MotionBuffer pointer to be at least 1kB
+ * away from the top of RAM. In other words, it needs to have enough physical
+ * memory for the entire size of a maximally-large (256-sample) buffer, even
+ * if you've defined the buffer with a smaller size.
  */
 
 template < unsigned tSize = 32 >
@@ -85,6 +93,9 @@ struct MotionBuffer {
      *
      * The caller is responsible for ensuring that a MotionBuffer is
      * only attached to one cube at a time.
+     *
+     * Note that, regardless of the actual size of this motion buffer,
+     * the system requires a block of memoryw 
      */
     void attach(_SYSCubeID id, unsigned hz=100)
     {
@@ -93,6 +104,14 @@ struct MotionBuffer {
         bzero(sys);
         sys.header.last = tSize - 1;
         sys.header.rate = TICK_HZ / hz;
+
+        /*
+         * If this ASSERT fails, the buffer is too close to the top of RAM. This
+         * usually means you've allocated the MotionBuffer on the stack, which isn't
+         * recommended. See the warning in the MotionBuffer class comments.
+         */
+        ASSERT(reinterpret_cast<uintptr_t>(this) + sizeof(_SYSMotionBuffer) <= 0x18000);
+
         _SYS_setMotionBuffer(id, *this);
     }
 
