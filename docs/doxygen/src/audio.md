@@ -29,7 +29,9 @@ Typically PCM audio is only useful if you will be generating the audio data prog
 
 ## Channels
 
-__8 channels__ of audio are available on the Sifteo Base. A single Sifteo::AudioChannel can render one Sifteo::AssetAudio at a time.
+__8 channels__ of audio are available on the Sifteo Base. A single Sifteo::AudioChannel can render one Sifteo::AssetAudio at a time. You can see the status of each channel in real-time using Siftulator's _audio visualizer_ mode. Enable or disable the visualizer by pressing `V`. It shows eight oscilloscopes. From left to right, they correspond to audio channels 0 through 7:
+
+![](@ref audio-scope.png)
 
 The Sifteo::AudioTracker, described below, can also play back multichannel musical compositions, while typically sound effects will be played back directly on a single channel.
 
