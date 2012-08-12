@@ -154,11 +154,11 @@ void testTrig()
 {
     // Woefully incomplete test for trig operations...
 
-    ASSERT(sin(5.f) == -0.9589242746631385f);
-    ASSERT(cos(5.f) == 0.2836621854632263f);
-    ASSERT(tan(5.f) == -3.380515006246585f);
-    ASSERT(atan(5.f) == 1.373400766945016f);
-    ASSERT(atan2(-5.f, -1.f) == -1.7681918866447774f);
+    ASSERT(almostEqual(sin(5.f), -0.9589242746631385f, 1e-6f));
+    ASSERT(almostEqual(cos(5.f), 0.2836621854632263f, 1e-6f));
+    ASSERT(almostEqual(tan(5.f), -3.380515006246585f, 1e-6f));
+    ASSERT(almostEqual(atan(5.f), 1.373400766945016f, 1e-6f));
+    ASSERT(almostEqual(atan2(-5.f, -1.f), -1.7681918866447774f, 1e-6f));
 }
 
 void testBits()
