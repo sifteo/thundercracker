@@ -18,7 +18,7 @@ CubeRange::CubeRange(const _SYSMetadataCubeRange *cr)
 
 bool CubeRange::isEmpty()
 {
-    return sys.minCubes == 0;
+    return sys.minCubes == 0 && sys.maxCubes == 0;
 }
 
 bool CubeRange::isValid()
