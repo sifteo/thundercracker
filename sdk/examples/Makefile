@@ -1,4 +1,5 @@
 SUBDIRS = \
+	accelchart \
 	assetslot \
 	mandelbrot \
 	membrane \
