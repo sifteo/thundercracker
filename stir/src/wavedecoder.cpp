@@ -78,8 +78,12 @@ bool WaveDecoder::loadFile(std::vector<unsigned char>& buffer, const std::string
     unsigned offset = sizeof(RiffDescriptor) + sizeof(fd.header) + fd.header.subchunk1Size;
     if (offset > pos) {
         uint16_t extraParamSize;
-        fread(&extraParamSize, 1, sizeof extraParamSize, f);
-        if (extraParamSize) {
+        if (fread(&extraParamSize, 1, sizeof extraParamSize, f) != sizeof extraParamSize) {
+            log.error("i/o error reading ExtraParamSize\n");
+            return false;
+        }
+
+        if (extraParamSize != 0) {
             log.error("error: ExtraParamSize was non-zero for a PCM file\n");
             return false;
         }
