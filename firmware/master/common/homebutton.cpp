@@ -25,8 +25,9 @@
 #include "shutdown.h"
 
 
-void HomeButtonPressDetector::update()
+bool HomeButtonPressDetector::update()
 {
+    State oldState = state;
     bool pressed = HomeButton::isPressed();
 
     if (!pressed)
@@ -35,10 +36,6 @@ void HomeButtonPressDetector::update()
         pressTimestamp = SysTime::ticks();
 
     switch (state) {
-        case S_UNKNOWN:
-            if (!pressed)
-                state = S_IDLE;
-            break;
 
         case S_IDLE:
         case S_RELEASED:
@@ -51,6 +48,8 @@ void HomeButtonPressDetector::update()
                 state = S_RELEASED;
             break;
     }
+
+    return state != oldState;
 }
 
 SysTime::Ticks HomeButtonPressDetector::pressDuration() const
