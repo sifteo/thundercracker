@@ -172,6 +172,7 @@ void AssetLoader::ackData(_SYSCubeID id, unsigned bytes)
     if (buffer > FLS_FIFO_USABLE) {
         LOG(("ASSET[%d]: Acknowledged more data than sent (%d + %d > %d)\n",
             id, buffer - bytes, bytes, FLS_FIFO_USABLE));
+        ASSERT(0);
         buffer = FLS_FIFO_USABLE;
     }
 
