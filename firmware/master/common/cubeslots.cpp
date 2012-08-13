@@ -36,7 +36,7 @@ void CubeSlots::setCubeRange(unsigned minimum, unsigned maximum)
     if (excessCount > 0) {
         while (excessCount-- > 0) {
             uint32_t excessID = 31 - Intrinsic::CTZ(sysConnected);
-            ASSERT(excessID >= 0);
+            ASSERT(excessID < _SYS_NUM_CUBE_SLOTS);
             Atomic::Or(sendShutdown, Intrinsic::LZ(excessID));
         }
     }
