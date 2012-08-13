@@ -57,6 +57,7 @@ void Pause::onButtonChange()
      * Shutdown on button press threshold.
      */
     if (press.pressDuration() > SysTime::msTicks(1000)) {
+        SvmClock::pause();
         UIShutdown uiShutdown(uic);
         uiShutdown.init();
         return uiShutdown.mainLoop();
