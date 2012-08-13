@@ -89,7 +89,8 @@ void LoadstreamDecoder::handleByte(uint8_t byte)
         case OP_TILE_P2_R4:
         case OP_TILE_P4_R4:
             counter = 64;
-            rle1 = 0xFF;
+            rle1 = 0xff;
+            rle2 = 0xfe;
             state = S_TILE_RLE4;
             return;
 
