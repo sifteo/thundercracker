@@ -81,7 +81,7 @@ void AssetLoader::cubeConnect(_SYSCubeID id)
     if (startedCubes & bit) {
         // Re-start this cube
         resetDeadline(id);
-        fsmEnterState(id, S_RESET);
+        fsmEnterState(id, S_RESET1);
         Atomic::Or(activeCubes, bit);
         Tasks::trigger(Tasks::AssetLoader);
     }
@@ -123,7 +123,7 @@ void AssetLoader::start(_SYSAssetLoader *loader, const _SYSAssetConfiguration *c
         userConfigSize[id] = cfgSize;
 
         resetDeadline(id);
-        fsmEnterState(id, S_RESET);
+        fsmEnterState(id, S_RESET1);
 
         // Zero out the _SYSAssetLoaderCube.
         _SYSAssetLoaderCube *lc = AssetUtil::mapLoaderCube(loader, id);
@@ -218,7 +218,8 @@ bool AssetLoader::needFullACK(_SYSCubeID id)
     ASSERT(Intrinsic::LZ(id) & activeCubes);
     ASSERT(id < _SYS_NUM_CUBE_SLOTS);
 
-    if (cubeTaskState[id] == S_RESET)
+    unsigned state = cubeTaskState[id];
+    if (state >= S_BEGIN_RESET_STATES && state <= S_END_RESET_STATES)
         return true;
 
     if (cubeBufferAvail[id] == 0)
@@ -307,7 +308,7 @@ void AssetLoader::heartbeat()
             LOG(("ASSET[%d]: Deadline passed, restarting load\n", id));
 
             resetDeadline(id);
-            fsmEnterState(id, S_RESET);
+            fsmEnterState(id, S_RESET1);
         }
     }
 }

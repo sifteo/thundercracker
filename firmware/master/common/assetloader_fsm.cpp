@@ -32,7 +32,8 @@ void AssetLoader::fsmEnterState(_SYSCubeID id, TaskState s)
         /*
          * Send a flash reset token, and wait for it to ACK.
          */
-        case S_RESET:
+        case S_RESET1:
+        case S_RESET2:
             Atomic::ClearLZ(resetAckCubes, id);
             Atomic::SetLZ(resetPendingCubes, id);
             return;
@@ -69,16 +70,36 @@ void AssetLoader::fsmTaskState(_SYSCubeID id, TaskState s)
          * take advantage of this otherwise-wasted time to do some local
          * preparation work.
          */
-        case S_RESET:
+        case S_RESET1:
+        case S_RESET2:
             resetDeadline(id);
-            fsmEnterState(id, S_RESET_WAIT);
+            fsmEnterState(id, TaskState(s + 1));
             return prepareCubeForLoading(id);
 
         /*
          * Waiting for a flash reset, as acknowledged by resetAckCubes bits.
-         * If we time out, re-enter the S_RESET state to try again.
+         * If we time out, re-enter the S_RESET1 state to try again.
+         *
+         * After we do one reset, we'll do a second identical reset. This
+         * is necessary to make absolutely sure that the cube has no
+         * residual data in its FIFO, and we're fully sync'ed up with it.
+         * The first reset forces a round-trip synchronization that lets
+         * us ensure we're on the same page as the cube, while the second
+         * reset guarantees that, after this sync-up, the FIFO is also
+         * fully drained and our cubeBufferAvail[] estimate matches the
+         * cube's actual buffer state.
          */
-        case S_RESET_WAIT:
+        case S_RESET1_WAIT:
+            if (resetAckCubes & bit)
+                return fsmEnterState(id, S_RESET2);
+            return;
+
+        /*
+         * Reset is fully done. Now we either check the cache consistency
+         * with a set of CRC queries, or we get ready to start sending
+         * asset groups.
+         */
+        case S_RESET2_WAIT:
             if (resetAckCubes & bit) {
                 // Done with reset! We know the device's FIFO is empty now.
                 cubeBufferAvail[id] = FLS_FIFO_USABLE;
@@ -209,7 +230,7 @@ void AssetLoader::fsmTaskState(_SYSCubeID id, TaskState s)
                 pSlot.erase(id);
 
                 // Go back to the beginning
-                return fsmEnterState(id, S_RESET);
+                return fsmEnterState(id, S_RESET1);
             }
 
             /*

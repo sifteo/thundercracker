@@ -84,19 +84,23 @@ private:
     AssetLoader();  // Do not implement
 
     enum TaskState {
-        S_RESET,          // Send a state machine reset token, and begin loading preparations
-        S_RESET_WAIT,     // Wait for the cube's state machine to finish resetting
+        S_ERROR,                // Internal consistency error; loading will stall.
+        S_COMPLETE,             // Done loading, nothing to do.
 
-        S_COMPLETE,       // Done loading, nothing to do.
-        S_ERROR,          // Internal consistency error; loading will stall.
+        S_BEGIN_RESET_STATES,
+            S_RESET1,           // Send a state machine reset token, and begin loading preparations
+            S_RESET1_WAIT,      // Wait for the cube's state machine to finish resetting
+            S_RESET2,           // Second reset packet
+            S_RESET2_WAIT,      // Waiting for second reset packet
+        S_END_RESET_STATES,
  
-        S_CRC_COMMAND,    // Waiting to send a CRC query for one slot (substate = slot bitmap)
-        S_CRC_WAIT,       // Waiting for a CRC query response
+        S_CRC_COMMAND,          // Waiting to send a CRC query for one slot (substate = slot bitmap)
+        S_CRC_WAIT,             // Waiting for a CRC query response
 
-        S_CONFIG_INIT,    // Begin work on a Configuration step
-        S_CONFIG_ADDR,    // Sending load address
-        S_CONFIG_DATA,    // Sending AssetGroup data for the current Configuration
-        S_CONFIG_FINISH,  // Wait for cube to finsh programming, then finalize SysLFS state
+        S_CONFIG_INIT,          // Begin work on a Configuration step
+        S_CONFIG_ADDR,          // Sending load address
+        S_CONFIG_DATA,          // Sending AssetGroup data for the current Configuration
+        S_CONFIG_FINISH,        // Wait for cube to finsh programming, then finalize SysLFS state
     };
 
     // State-specific data
