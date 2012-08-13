@@ -100,8 +100,14 @@ struct PacketTransmission {
 
     static const unsigned MAX_HARDWARE_RETRIES = 15;
 
+    /*
+     * Note: Default retry counts should be chosen such that
+     * one cube disconnecting will not freeze the system badly
+     * enough that other cubes are also affected (for example,
+     * by a secondary timeout)
+     */
     static const unsigned DEFAULT_HARDWARE_RETRIES = MAX_HARDWARE_RETRIES;
-    static const unsigned DEFAULT_SOFTWARE_RETRIES = 64;
+    static const unsigned DEFAULT_SOFTWARE_RETRIES = 32;
 
     ALWAYS_INLINE void init() {
         noAck = 0;
