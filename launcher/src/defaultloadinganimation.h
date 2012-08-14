@@ -21,22 +21,6 @@ public:
     virtual void paint(Sifteo::CubeSet cubes, int percent);
 
 private:
-    // Color scheme
-    const Sifteo::RGB565 bgColor  = Sifteo::RGB565::fromRGB(0x000000);  // Black screen
-    const Sifteo::RGB565 fgColor  = Sifteo::RGB565::fromRGB(0x24b6ff);  // Sifteo logo blue
-    const Sifteo::RGB565 dotColor = Sifteo::RGB565::fromRGB(0xff9100);  // Sifteo logo orange
-
-    // Palette layout
-    static const unsigned bgIndex = 0;
-    static const unsigned dotIndex = 15;
-    static const unsigned firstAnimIndex = 1;
-    static const unsigned lastAnimIndex = 14;
-
-    // Animation parameters
-    static const int shimmerPeriod = 32;
-    static const float frameRate = 30.0;
-    static const unsigned numDots = 50;
-
     // When did the animation start?
     Sifteo::SystemTime startTime;
 
@@ -44,6 +28,7 @@ private:
     uint8_t dotCounts[CUBE_ALLOCATION];
 
     // The pattern of remaining dot positions, on each cube
+    static const unsigned numDots = 50;
     Sifteo::BitArray<numDots> dotPositions[CUBE_ALLOCATION];
 
     void drawNextDot(Sifteo::CubeID cube);

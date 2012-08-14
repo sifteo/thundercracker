@@ -10,6 +10,30 @@ using namespace Sifteo;
 
 #include "resources/loading-bitmap.h"
 
+// Parameters
+namespace {
+
+    // Color scheme
+    const Sifteo::RGB565 bgColor  = Sifteo::RGB565::fromRGB(0x000000);  // Black screen
+    const Sifteo::RGB565 dotColor = Sifteo::RGB565::fromRGB(0xff9100);  // Sifteo logo orange
+    const Sifteo::RGB565 gradient[5] = {
+        { 0x0126 },
+        { 0x0a4c },
+        { 0x1372 },
+        { 0x1c98 },
+        { 0x25bf },
+    };
+
+    // Palette layout
+    const unsigned bgIndex = 0;
+    const unsigned dotIndex = 15;
+    const unsigned firstAnimIndex = 1;
+    const unsigned lastAnimIndex = 14;
+
+    // Animation parameters
+    const int shimmerPeriod = 64;       // Breathing time at the end
+    const float frameRate = 30.0;
+};
 
 DefaultLoadingAnimation::DefaultLoadingAnimation()
     : startTime(SystemTime::now())
@@ -46,8 +70,10 @@ void DefaultLoadingAnimation::paint(CubeSet cubes, int percent)
          */
 
         auto& cmap = Shared::video[cube].colormap;
-        for (int i = firstAnimIndex; i <= lastAnimIndex; i++)
-            cmap[i] = i > shimmerIndex ? bgColor : fgColor.lerp(bgColor, clamp((shimmerIndex - i) * 50, 0, 255));
+        for (int i = firstAnimIndex; i <= lastAnimIndex; i++) {
+            int x = shimmerIndex - i;
+            cmap[i] = (x >= 0 && x < arraysize(gradient)) ? gradient[x] : bgColor;
+        }
 
         /*
          * Plot new dots, sufficient to cover the progress made since last time.
