@@ -425,6 +425,26 @@ public:
         return false;
     }
 
+    /**
+     * @brief Find and clear the Nth lowest marked bit.
+     *
+     * For n=0, this is equivalent to clearFirst(). For n=1, we
+     * skip the first marked bit and clear the second. And so on.
+     * If there is no Nth marked bit, returns false.
+     */
+    bool clearN(unsigned &index, unsigned n)
+    {
+        for (unsigned i : *this) {
+            if (n--)
+                continue;
+
+            clear(i);
+            index = i;
+            return true;
+        }
+        return false;
+    }
+
     /// An STL-style iterator for the BitArray.
     struct iterator {
         unsigned index;
