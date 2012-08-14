@@ -9,21 +9,21 @@
 #include "tasks.h"
 #include "pause.h"
 
-static GPIOPin homeButton = BTN_HOME_GPIO;
-
 namespace HomeButton {
 
 void init()
 {
+    GPIOPin homeButton = BTN_HOME_GPIO;
     homeButton.setControl(GPIOPin::IN_FLOAT);
     homeButton.irqInit();
     homeButton.irqSetRisingEdge();
+    homeButton.irqSetFallingEdge();
     homeButton.irqEnable();
 }
 
 bool isPressed()
 {
-    return homeButton.isHigh();
+    return BTN_HOME_GPIO.isHigh();
 }
 
 } // namespace HomeButton
@@ -32,7 +32,8 @@ bool isPressed()
 #if (BOARD >= BOARD_TC_MASTER_REV2)
 IRQ_HANDLER ISR_EXTI2()
 {
-    homeButton.irqAcknowledge();
+    BTN_HOME_GPIO.irqAcknowledge();
+    HomeButton::update();
     Pause::taskWork.atomicMark(Pause::ButtonPress);
     Tasks::trigger(Tasks::Pause);
 }

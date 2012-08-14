@@ -17,7 +17,6 @@
 #include "ui_coordinator.h"
 
 BitVector<Pause::NUM_WORK_ITEMS> Pause::taskWork;
-HomeButtonPressDetector Pause::press;
 
 void Pause::task()
 {
@@ -36,6 +35,10 @@ void Pause::task()
             onButtonChange();
             break;
 
+        case ButtonHold:
+            monitorButtonHold();
+            break;
+
         case LowBattery:
             lowBattery();
             break;
@@ -46,22 +49,6 @@ void Pause::task()
 
 void Pause::onButtonChange()
 {
-    bool changed = press.update();
-
-    const uint32_t excludedTasks =
-        Intrinsic::LZ(Tasks::AudioPull) |
-        Intrinsic::LZ(Tasks::Pause);
-    UICoordinator uic(excludedTasks);
-
-    /*
-     * Shutdown on button press threshold.
-     */
-    if (press.pressDuration() > SysTime::msTicks(1000)) {
-        UIShutdown uiShutdown(uic);
-        uiShutdown.init();
-        return uiShutdown.mainLoop();
-    }
-
     /*
      * Never display the pause menu within the launcher.
      * Instead, send it a GameMenu event to indicate the button was pressed.
@@ -70,24 +57,59 @@ void Pause::onButtonChange()
      */
     if (SvmLoader::getRunLevel() == SvmLoader::RUNLEVEL_LAUNCHER) {
 
-        if (press.isPressed()) {
-            // only trigger event on edge
-            if (changed) {
-                Event::setBasePending(Event::PID_BASE_GAME_MENU);
-            }
-
-            taskWork.atomicMark(ButtonPress);
+        if (HomeButton::isPressed()) {
+            // start monitoring button hold for shutdown
+            Event::setBasePending(Event::PID_BASE_GAME_MENU);
+            taskWork.atomicMark(ButtonHold);
             Tasks::trigger(Tasks::Pause);
         }
-
         return;
     }
 
     /*
      * Game is running, and button was pressed - execute the pause menu.
      */
-    if (HomeButton::isPressed())
+    if (HomeButton::isPressed()) {
+        const uint32_t excludedTasks =
+            Intrinsic::LZ(Tasks::AudioPull) |
+            Intrinsic::LZ(Tasks::Pause);
+
+        UICoordinator uic(excludedTasks);
         runPauseMenu(uic);
+    }
+}
+
+void Pause::monitorButtonHold()
+{
+    /*
+     * Shutdown on button press threshold.
+     *
+     * We only need to monitor this asynchronously because we want to allow
+     * the launcher to keep running, and respond to our initial button press
+     * in case it needs to unpair a cube (or do anything else) before the
+     * shutdown timeout is reached.
+     *
+     * Pause contexts that the use the firmware UI loop can monitor
+     * button hold in that loop.
+     */
+    if (HomeButton::pressDuration() > SysTime::msTicks(1000)) {
+
+        const uint32_t excludedTasks =
+            Intrinsic::LZ(Tasks::AudioPull) |
+            Intrinsic::LZ(Tasks::Pause);
+
+        SvmClock::pause();
+        UICoordinator uic(excludedTasks);
+        UIShutdown uiShutdown(uic);
+        uiShutdown.init();
+        return uiShutdown.mainLoop();
+    }
+
+    if (HomeButton::isPressed()) {
+        // continue monitoring
+        taskWork.atomicMark(ButtonHold);
+        Tasks::trigger(Tasks::Pause);
+    }
 }
 
 void Pause::runPauseMenu(UICoordinator &uic)
@@ -110,10 +132,8 @@ void Pause::runPauseMenu(UICoordinator &uic)
         uiPause.init();
 
     LED::set(LEDPatterns::paused, true);
-    HomeButtonPressDetector press;
 
-    do {
-
+    for (;;) {
         uic.stippleCubes(uic.connectCubes());
 
         if (uic.pollForAttach())
@@ -121,21 +141,23 @@ void Pause::runPauseMenu(UICoordinator &uic)
 
         uiPause.animate();
         uic.paint();
-        press.update();
 
         // Long press- shut down
-        if (press.pressDuration() > SysTime::msTicks(1000)) {
+        if (HomeButton::pressDuration() > SysTime::msTicks(1000)) {
             UIShutdown uiShutdown(uic);
             uiShutdown.init();
             return uiShutdown.mainLoop();
         }
 
-    } while (!press.isReleased() && !uiPause.isDone());
+        if (uiPause.isDone() && HomeButton::isReleased())
+            break;
+    };
 
     uic.restoreCubes(uic.uiConnected);
     LED::set(LEDPatterns::idle);
     Tasks::cancel(Tasks::Pause);
-    SvmClock::resume();
+    if (SvmClock::isPaused())
+        SvmClock::resume();
     uiPause.takeAction();
 }
 
@@ -186,7 +208,8 @@ void Pause::cubeRange()
     if (uiCubeRange.quitWasSelected()) {
         uic.restoreCubes(uic.uiConnected);
         LED::set(LEDPatterns::idle);
-        SvmClock::resume();
+        if (SvmClock::isPaused())
+            SvmClock::resume();
         SvmLoader::exit();
     } else {
         runPauseMenu(uic);

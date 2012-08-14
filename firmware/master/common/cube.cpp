@@ -18,6 +18,7 @@
 #include "assetslot.h"
 #include "assetloader.h"
 #include "cubeconnector.h"
+#include "idletimeout.h"
 
 
 void CubeSlot::connect(SysLFS::Key cubeRecord, const RadioAddress &addr, const RF_ACKType &fullACK)
@@ -336,6 +337,9 @@ void CubeSlot::radioAcknowledge(const PacketBuffer &packet)
 
         // Trigger a rescan of all neighbors, during event dispatch
         Event::setCubePending(Event::PID_NEIGHBORS, id());
+        // this is a bit coarse, but we'll be conservative in staying awake
+        // if we get anything from the cubes indicating neighbors or touch might have changed.
+        IdleTimeout::reset();
     }
 
     if (packet.len >= offsetof(RF_ACKType, battery_v) + sizeof ack->battery_v) {

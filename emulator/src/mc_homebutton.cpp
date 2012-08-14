@@ -19,6 +19,7 @@ void setPressed(bool value)
 {
     if (state != value) {
         state = value;
+        HomeButton::update();
         Pause::taskWork.atomicMark(Pause::ButtonPress);
         Tasks::trigger(Tasks::Pause);
     }
