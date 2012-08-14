@@ -1148,7 +1148,7 @@ void FlashLFS::scrubUnderutilizedVolumes(VolumeIndexVector &volumesToKeep, const
             } while (!iter.readAndCheckCRCOnly());
         }
 
-        if (iter.volumeIndex() != i) {
+        if (iter.volumeIndex() != unsigned(i)) {
             // Failed to find any valid records in this volume. Shouldn't happen.
             ASSERT(0);
             continue;
