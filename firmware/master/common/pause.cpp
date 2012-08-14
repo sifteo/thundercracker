@@ -156,7 +156,8 @@ void Pause::runPauseMenu(UICoordinator &uic)
     uic.restoreCubes(uic.uiConnected);
     LED::set(LEDPatterns::idle);
     Tasks::cancel(Tasks::Pause);
-    SvmClock::resume();
+    if (SvmClock::isPaused())
+        SvmClock::resume();
     uiPause.takeAction();
 }
 
@@ -207,7 +208,8 @@ void Pause::cubeRange()
     if (uiCubeRange.quitWasSelected()) {
         uic.restoreCubes(uic.uiConnected);
         LED::set(LEDPatterns::idle);
-        SvmClock::resume();
+        if (SvmClock::isPaused())
+            SvmClock::resume();
         SvmLoader::exit();
     } else {
         runPauseMenu(uic);

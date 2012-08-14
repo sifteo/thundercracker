@@ -63,7 +63,8 @@ OBJS_COMMON = \
     $(MASTER_DIR)/common/usbvolumemanager.o \
     $(MASTER_DIR)/common/ledsequencer.o \
     $(MASTER_DIR)/common/shutdown.o \
-    $(MASTER_DIR)/common/motion.o
+    $(MASTER_DIR)/common/motion.o   \
+    $(MASTER_DIR)/common/idletimeout.o
 
 # Sources common to all stm32 builds (currently master & testjig)
 OBJS_STM32 = \
