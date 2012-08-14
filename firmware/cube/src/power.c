@@ -323,15 +323,13 @@ void power_sleep(void)
     #if HWREV >= 5
     {
         static const __code uint8_t init[] = {
-            // ADC turned off
-            ACCEL_TEMP_CFG_REG, 0,
-
-            // Enable inertial interrupt on INT2
-            ACCEL_CTRL_REG2, ACCEL_REG2_INIT,
-            ACCEL_CTRL_REG6, ACCEL_REG6_INIT,
-            ACCEL_INT1_CFG,  ACCEL_CFG_INIT,
-            ACCEL_INT1_THS,  ACCEL_THS_INIT,
-            ACCEL_INT1_DUR,  ACCEL_DUR_INIT,
+            ACCEL_CTRL_REG1, ACCEL_REG1_WAKE,
+            ACCEL_TEMP_CFG_REG, ACCEL_TEMP_CFG_WAKE,
+            ACCEL_CTRL_REG2, ACCEL_REG2_WAKE,
+            ACCEL_CTRL_REG6, ACCEL_REG6_WAKE,
+            ACCEL_INT1_CFG,  ACCEL_CFG_WAKE,
+            ACCEL_INT1_THS,  ACCEL_THS_WAKE,
+            ACCEL_INT1_DUR,  ACCEL_DUR_WAKE,
 
             0
         };

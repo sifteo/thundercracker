@@ -192,15 +192,10 @@ void sensors_init()
 
     {
         static const __code uint8_t init[] = {
-
-            // Put LIS3D in low power mode with all 3 axes enabled & block data update enabled
-            ACCEL_CTRL_REG1, ACCEL_REG1_INIT,
-            ACCEL_CTRL_REG4, ACCEL_REG4_INIT,
+            ACCEL_CTRL_REG1, ACCEL_REG1_NORMAL,
+            ACCEL_CTRL_REG4, ACCEL_REG4_NORMAL,
             ACCEL_CTRL_REG6, ACCEL_IO_00,
-
-            // Enable the ADC
-            ACCEL_TEMP_CFG_REG, ACCEL_TEMP_CFG_INIT,
-
+            ACCEL_TEMP_CFG_REG, ACCEL_TEMP_CFG_NORMAL,
             0
         };
         i2c_accel_tx(init);
