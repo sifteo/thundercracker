@@ -223,8 +223,8 @@ int16_t Hardware::scaleAccelAxis(float g)
 
     const int range = 1 << 15;
     const float fullScale = 2.0f;
-    const int noiseAmount = 0x180;  // 1.5 LSB after truncation to 8-bit
-
+    const int noiseAmount = 0x60;  // A little less than 1 LSB after truncation
+    
     unsigned randomBits = rand();
     int noise = ((randomBits & 0xFFFF) * noiseAmount) >> 16;
     if ((randomBits >> 16) & 1)
