@@ -143,7 +143,7 @@ void Hardware::graphicsTick()
     // Port output values, pull-up when floating
     uint8_t bus_port = cpu.mSFR[BUS_PORT] | cpu.mSFR[BUS_PORT_DIR];
     uint8_t addr_port = cpu.mSFR[ADDR_PORT] | cpu.mSFR[ADDR_PORT_DIR];
-    uint8_t ctrl_port = cpu.mSFR[CTRL_PORT] | cpu.mSFR[CTRL_PORT_DIR];
+    uint8_t ctrl_port = cpu.mSFR[CTRL_PORT] | cpu.mSFR[CTRL_PORT_DIR];;
 
     // 7-bit address in high bits of p1
     uint8_t addr7 = addr_port >> 1;
@@ -224,7 +224,7 @@ int16_t Hardware::scaleAccelAxis(float g)
     const int range = 1 << 15;
     const float fullScale = 2.0f;
     const int noiseAmount = 0x60;  // A little less than 1 LSB after truncation
-    
+
     unsigned randomBits = rand();
     int noise = ((randomBits & 0xFFFF) * noiseAmount) >> 16;
     if ((randomBits >> 16) & 1)
@@ -296,10 +296,34 @@ void Hardware::logWatchdogReset()
      * will have the expected value that isn't matching.
      */
 
-    printf("CUBE[%d]: Watchdog reset. pc=%02x bus=[%02x.%02x.%02x -> %02x] a=%02x\n",
+    Tracer::logV(&cpu,
+        "CUBE[%d]: Watchdog reset. pc=%02x bus=[%02x.%02x.%02x -> %02x] a=%02x\n",
         cpu.id, cpu.mPC,
         lat2, lat1, cpu.mSFR[ADDR_PORT],
         cpu.mSFR[BUS_PORT], cpu.mSFR[REG_ACC]);
+}
+
+bool Hardware::testWakeOnPin()
+{
+    /*
+     * Accelerometer INT2 drives LAT1 through a 10K resistor, for wakeup purposes.
+     * We need to check this when asleep, so we can't update it soleley in graphicsTick().
+     */
+
+    if (cpu.mSFR[CTRL_PORT_DIR] & CTRL_FLASH_LAT1) {
+        if (i2c.accel.intPin(1))
+            cpu.mSFR[CTRL_PORT] |= CTRL_FLASH_LAT1;
+        else
+            cpu.mSFR[CTRL_PORT] &= ~CTRL_FLASH_LAT1;
+    }
+
+    // Check wake-on-pin
+    uint8_t c0 = cpu.mSFR[REG_WUOPC0];
+    uint8_t c1 = cpu.mSFR[REG_WUOPC1];
+    uint8_t p0 = cpu.mSFR[REG_P2];
+    uint8_t p1 = (cpu.mSFR[REG_P1] & 0x80) | (cpu.mSFR[REG_P3] & 0x7F);
+
+    return ((c0 & p0) | (c1 & p1));
 }
 
 void Hardware::traceExecution()

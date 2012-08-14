@@ -81,10 +81,6 @@ class Hardware {
 
     void reset();
 
-    ALWAYS_INLINE bool isSleeping() {
-        return cpu.powerDown;
-    }
-
     ALWAYS_INLINE unsigned id() const {
         return cpu.id;
     }
@@ -97,10 +93,8 @@ class Hardware {
     }
 
     ALWAYS_INLINE void tick(bool *cpuTicked=NULL) {
-        if (!isSleeping()) {
-            CPU::em8051_tick(&cpu, 1, cpu.sbt, cpu.mProfileData != NULL, Tracer::isEnabled(), cpu.mBreakpoint != 0, cpuTicked);
-            hardwareTick();
-        }
+        CPU::em8051_tick(&cpu, 1, cpu.sbt, cpu.mProfileData != NULL, Tracer::isEnabled(), cpu.mBreakpoint != 0, cpuTicked);
+        hardwareTick();
     }
 
     ALWAYS_INLINE unsigned tickFastSBT(unsigned tickBatch=1) {
@@ -147,19 +141,20 @@ class Hardware {
     }
 
     ALWAYS_INLINE bool isRadioClockRunning() {
-        return rfcken && !isSleeping();
+        return rfcken && !cpu.powerDown;
     }
 
     uint32_t getExceptionCount();
     void incExceptionCount();
     void logWatchdogReset();
     void traceExecution();
+    bool testWakeOnPin();
 
     ALWAYS_INLINE uint8_t readFlashBus() {
         if (LIKELY(flash_drv))
             cpu.mSFR[BUS_PORT] = flash.dataOut();
         return cpu.mSFR[BUS_PORT];
-    }    
+    }
     
  private:
 
@@ -181,6 +176,9 @@ class Hardware {
 
         if (hwDeadline.hasPassed() || cpu.needHardwareTick)
             hwDeadlineWork();
+
+        if (testWakeOnPin())
+            CPU::wake_from_sleep(&cpu, 0x80);
     }
 
     int16_t scaleAccelAxis(float g);

@@ -44,7 +44,7 @@ namespace CPU {
 NEVER_INLINE void trace_execution(em8051 *mCPU);
 NEVER_INLINE void profile_tick(em8051 *mCPU);
 NEVER_INLINE void timer_tick_work(em8051 *aCPU, bool tick12);
-NEVER_INLINE void wakeup_test(em8051 *aCPU);
+NEVER_INLINE void wake_from_sleep(em8051 *aCPU, uint8_t reason);
 
 static ALWAYS_INLINE void timer_tick(em8051 *aCPU, unsigned numTicks)
 {
@@ -71,100 +71,108 @@ static ALWAYS_INLINE void em8051_tick(em8051 *aCPU, unsigned numTicks,
                                       bool sbt, bool isProfiling, bool isTracing, bool hasBreakpoint,
                                       bool *ticked)
 {
-    int32_t tickDelay = aCPU->mTickDelay - numTicks;
-    if (tickDelay < 0) {
-        // Can happen when waking up from deep sleep
-        tickDelay = 0;
-    }
-    aCPU->mTickDelay = tickDelay;
+    if (aCPU->powerDown) {
+        // Arbitrary large batch size when we're off.
+        aCPU->mTickDelay = 1024;
 
-    /*
-     * Interrupts are sent if the following cases are not true:
-     *   1. interrupt of equal or higher priority is in progress (tested inside function)
-     *   2. current cycle is not the final cycle of instruction (tickdelay = 0)
-     *   3. the instruction in progress is RETI or any write to the IE or IP regs (TODO)
-     *
-     * We only check for interrupt dispatch if the corresponding flag in aCPU has been
-     * set, in order to save time checking the many interrupt sources and priorities.
-     *
-     * If we're in interpreter mode, we dispatch interrupts between any two CPU
-     * instructions, like real hardware would.
-     *
-     * In binary translation mode, we have to cheat a bit. If we allowed dispatch only
-     * between basic block boundaries, the resulting latency variability would be far
-     * too much for some of our timing-sensitive code, like the neighbor sensors. So,
-     * we'll instead do better than real hardware, and dispatch interrupts on every clock
-     * cycle. Since basic blocks are indivisible in the binary translated firmware, the
-     * side-effects from a single basic block always happen before the interrupt is
-     * delivered. But we can "virtually preempt" the basic block by storing its remaining
-     * mTickDelay, and coming back to it later after return.
-     */
+    } else {
+        // CPU core is awake
 
-    if (UNLIKELY(aCPU->needInterruptDispatch) && (aCPU->sbt || aCPU->mTickDelay <= 0)) {
-        aCPU->needInterruptDispatch = false;
-        aCPU->needInterruptDispatch = false;
-        handle_interrupts(aCPU);
-    }
-    
-    if (!aCPU->mTickDelay) {
+        int32_t tickDelay = aCPU->mTickDelay - numTicks;
+        if (tickDelay < 0) {
+            // Can happen when waking up from deep sleep
+            tickDelay = 0;
+        }
+        aCPU->mTickDelay = tickDelay;
 
         /*
-         * Run one instruction!
+         * Interrupts are sent if the following cases are not true:
+         *   1. interrupt of equal or higher priority is in progress (tested inside function)
+         *   2. current cycle is not the final cycle of instruction (tickdelay = 0)
+         *   3. the instruction in progress is RETI or any write to the IE or IP regs (TODO)
          *
-         * Or, in SBT mode, run one translated basic block.
+         * We only check for interrupt dispatch if the corresponding flag in aCPU has been
+         * set, in order to save time checking the many interrupt sources and priorities.
+         *
+         * If we're in interpreter mode, we dispatch interrupts between any two CPU
+         * instructions, like real hardware would.
+         *
+         * In binary translation mode, we have to cheat a bit. If we allowed dispatch only
+         * between basic block boundaries, the resulting latency variability would be far
+         * too much for some of our timing-sensitive code, like the neighbor sensors. So,
+         * we'll instead do better than real hardware, and dispatch interrupts on every clock
+         * cycle. Since basic blocks are indivisible in the binary translated firmware, the
+         * side-effects from a single basic block always happen before the interrupt is
+         * delivered. But we can "virtually preempt" the basic block by storing its remaining
+         * mTickDelay, and coming back to it later after return.
          */
 
-        unsigned pc = aCPU->mPC;
-        aCPU->mPreviousPC = pc;
-
-        if (sbt) {
-            aCPU->mTickDelay = sbt_rom_code[pc](aCPU);
-        } else {
-            uint8_t opcode = aCPU->mCodeMem[pc];
-            uint8_t operand1 = aCPU->mCodeMem[(pc + 1) & PC_MASK];
-            uint8_t operand2 = aCPU->mCodeMem[(pc + 2) & PC_MASK];
-            aCPU->mTickDelay = aCPU->op[aCPU->mCodeMem[pc]](aCPU, pc, opcode, operand1, operand2);
-            aCPU->mPC = pc & PC_MASK;
+        if (UNLIKELY(aCPU->needInterruptDispatch) && (aCPU->sbt || aCPU->mTickDelay <= 0)) {
+            aCPU->needInterruptDispatch = false;
+            aCPU->needInterruptDispatch = false;
+            handle_interrupts(aCPU);
         }
-        
-        if (ticked)
-            *ticked = true;
 
-        /*
-         * Update profiler stats for this byte
-         */
+        if (!aCPU->mTickDelay) {
 
-        if (UNLIKELY(isProfiling))
-            profile_tick(aCPU);
+            /*
+             * Run one instruction!
+             *
+             * Or, in SBT mode, run one translated basic block.
+             */
 
-        /*
-         * Update parity bit
-         * (Currently disabled, we don't use it)
-         */
+            unsigned pc = aCPU->mPC;
+            aCPU->mPreviousPC = pc;
 
-#ifdef EM8051_SUPPORT_PARITY
-        {
-            int v = aCPU->mSFR[REG_ACC];
-            v ^= v >> 4;
-            v &= 0xf;
-            v = (0x6996 >> v) & 1;
-            aCPU->mSFR[REG_PSW] = (aCPU->mSFR[REG_PSW] & ~PSWMASK_P) | (v * PSWMASK_P);
+            if (sbt) {
+                aCPU->mTickDelay = sbt_rom_code[pc](aCPU);
+            } else {
+                uint8_t opcode = aCPU->mCodeMem[pc];
+                uint8_t operand1 = aCPU->mCodeMem[(pc + 1) & PC_MASK];
+                uint8_t operand2 = aCPU->mCodeMem[(pc + 2) & PC_MASK];
+                aCPU->mTickDelay = aCPU->op[aCPU->mCodeMem[pc]](aCPU, pc, opcode, operand1, operand2);
+                aCPU->mPC = pc & PC_MASK;
+            }
+            
+            if (ticked)
+                *ticked = true;
+
+            /*
+             * Update profiler stats for this byte
+             */
+
+            if (UNLIKELY(isProfiling))
+                profile_tick(aCPU);
+
+            /*
+             * Update parity bit
+             * (Currently disabled, we don't use it)
+             */
+
+            #ifdef EM8051_SUPPORT_PARITY
+                {
+                    int v = aCPU->mSFR[REG_ACC];
+                    v ^= v >> 4;
+                    v &= 0xf;
+                    v = (0x6996 >> v) & 1;
+                    aCPU->mSFR[REG_PSW] = (aCPU->mSFR[REG_PSW] & ~PSWMASK_P) | (v * PSWMASK_P);
+                }
+            #endif
+
+            /*
+             * Write execution trace
+             */
+
+            if (UNLIKELY(isTracing))
+                trace_execution(aCPU);
+
+            /*
+             * Fire breakpoints
+             */
+            
+            if (UNLIKELY(hasBreakpoint && aCPU->mBreakpoint == aCPU->mPC))
+                except(aCPU, EXCEPTION_BREAK);
         }
-#endif
-
-        /*
-         * Write execution trace
-         */
-
-        if (UNLIKELY(isTracing))
-            trace_execution(aCPU);
-
-        /*
-         * Fire breakpoints
-         */
-        
-        if (UNLIKELY(hasBreakpoint && aCPU->mBreakpoint == aCPU->mPC))
-            except(aCPU, EXCEPTION_BREAK);
     }
 
     timer_tick(aCPU, numTicks);

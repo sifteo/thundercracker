@@ -60,6 +60,34 @@ NEVER_INLINE void profile_tick(em8051 *aCPU)
     pd->loop_prev = aCPU->vtime->clocks;
 }
 
+NEVER_INLINE void wake_from_sleep(em8051 *aCPU, uint8_t reason)
+{
+    /*
+     * Called from external wakeup sources. NOT for watchdog wakeup.
+     * (That is always an em8051_reset)
+     */
+
+    reason |= aCPU->mSFR[REG_PWRDWN];
+    switch (reason & PWRDWN_MODE_MASK) {
+
+    case PWRDWN_OFF:
+    case PWRDWN_DEEP_SLEEP:
+        em8051_reset(aCPU, true);   // Wipe memory
+        break;
+
+    case PWRDWN_MEMORY:
+    case PWRDWN_MEMORY_TIMERS:
+        em8051_reset(aCPU, false);  // Memory preserved
+        break;
+
+    default:                        // Other modes simply resume
+        aCPU->powerDown = false;
+        break;
+    }
+
+    aCPU->mSFR[REG_PWRDWN] = reason;
+}
+
 int em8051_decode(em8051 *aCPU, int aPosition, char *aBuffer)
 {
     return aCPU->dec[aCPU->mCodeMem[aPosition & PC_MASK]](aCPU, aPosition, aBuffer);
@@ -80,6 +108,7 @@ void em8051_reset(em8051 *aCPU, int aWipe)
 
     aCPU->wdtEnabled = false;
     aCPU->wdtCounter = 0;
+    aCPU->powerDown = false;
 
     aCPU->wdsvLow = 0;
     aCPU->wdsvHigh = 0;
@@ -111,24 +140,6 @@ void em8051_reset(em8051 *aCPU, int aWipe)
     // Clean internal variables
     aCPU->irq_count = 0;
     aCPU->needInterruptDispatch = false;
-}
-
-void wakeup_test(em8051 *aCPU)
-{
-    #if 0
-    // Check for a pin state that would wake us from deep sleep
-
-    if (!aCPU->deepSleep)
-        return;
-    
-    uint8_t c0 = aCPU->mSFR[REG_WUOPC0];
-    uint8_t c1 = aCPU->mSFR[REG_WUOPC1];
-    uint8_t p0 = aCPU->mSFR[REG_P2];
-    uint8_t p1 = (aCPU->mSFR[REG_P1] & 0x80) | (aCPU->mSFR[REG_P3] & 0x7F);
-
-    if ((c0 & p0) | (c1 & p1))
-        em8051_reset(aCPU, true);
-#endif
 }
 
 static int readbyte(FILE * f)
@@ -241,7 +252,7 @@ NEVER_INLINE void timer_clklf_tick(em8051 *aCPU)
         aCPU->wdtCounter = wdt;
         if (!wdt) {
             ((Cube::Hardware*) aCPU->callbackData)->logWatchdogReset();
-            em8051_reset(aCPU, true);
+            em8051_reset(aCPU, false);
         }
     }
 
@@ -288,6 +299,18 @@ NEVER_INLINE void timer_tick_work(em8051 *aCPU, bool tick12)
      */
  
     Neighbors::clearNeighborInput(*aCPU);
+
+    /*
+     * Are timers powered down?
+     */
+
+    if (UNLIKELY(aCPU->powerDown)) {
+        switch (aCPU->mSFR[REG_PWRDWN] & PWRDWN_MODE_MASK) {
+            case PWRDWN_DEEP_SLEEP:
+            case PWRDWN_MEMORY:
+                return;
+        }
+    }
 
     /*
      * Synthesize CLKLF edges.

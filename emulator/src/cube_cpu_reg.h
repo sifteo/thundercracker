@@ -270,6 +270,21 @@ enum RTC2CON_COMPARE_MODES
     RTC2CON_CM_WITHOUT_RESET = 2 << 1
 };
 
+enum PWRDWN_MASKS
+{
+    PWRDWN_WAKE_FROM_PIN = 0x80,
+    PWRDWN_WAKE_FROM_TICK = 0x40,
+    PWRDWN_WAKE_FROM_COMPARATOR = 0x20,
+
+    PWRDWN_MODE_MASK = 0x07,
+    PWRDWN_OFF = 0,
+    PWRDWN_DEEP_SLEEP = 1,
+    PWRDWN_MEMORY = 2,
+    PWRDWN_MEMORY_TIMERS = 3,
+    PWRDWN_REGISTERS = 4,
+    PWRDWN_STANDBY = 7,
+};    
+
 // The active DPTR registers depend on the value of DPS.
 #define SEL_DPL(dps)   (((dps) & 1) ? REG_DPL1 : REG_DPL)
 #define SEL_DPH(dps)   (((dps) & 1) ? REG_DPH1 : REG_DPH)

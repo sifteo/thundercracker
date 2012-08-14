@@ -288,8 +288,7 @@ NEVER_INLINE void SystemCubes::tickLoopFastSBT()
 
         for (unsigned i = 0; i < nCubes; i++) {
             Cube::Hardware &cube = sys->cubes[i];
-            if (!cube.isSleeping())
-                nextStep = std::min(nextStep, sys->cubes[i].tickFastSBT(stepSize));
+            nextStep = std::min(nextStep, sys->cubes[i].tickFastSBT(stepSize));
         }
 
         tick(stepSize);
