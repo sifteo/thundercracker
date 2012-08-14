@@ -971,8 +971,6 @@ bool FlashLFS::collectGlobalGarbage(FlashLFS *exclude)
 
 bool FlashLFS::collectLocalGarbage()
 {
-    ASSERT(isValid());
-
     /*
      * Iterate through this LFS, from newest to oldest, keeping track of which
      * volume we're in and which keys have already been "obsoleted" by newer
@@ -987,28 +985,63 @@ bool FlashLFS::collectLocalGarbage()
      * past the end of that volume.
      */
 
+    ASSERT(isValid());
+
     // Early out
     if (volumes.numSlotsInUse == 0)
         return false;
 
-    // Marked bits indicate volumes not to delete
-    BitVector<FlashLFSVolumeVector::MAX_VOLUMES> volumesToKeep;
+    /*
+     * Keep track of total size of non-obsolete data on each volume, so we
+     * know if it's worth scrubbing or not. Volumes that aren't the most
+     * recent and have dropped below our utilization threshold will be scrubbed.
+     */
+ 
+    VolumeIndexVector volumesToKeep;
+    VolumeUtilizationVector utilization;
+
+    findGarbageCandidates(volumesToKeep, utilization);
+
+    /*
+     * Look at this utilization data, and try to scrub any volumes
+     * that are mostly wasted space.
+     */
+
+    scrubUnderutilizedVolumes(volumesToKeep, utilization);
+
+    /*
+     * Delete obsolete volumes, i.e. any volume that we haven't marked
+     * in 'volumesToKeep'. These could be totally unused volumes, or volumes
+     * that we've just scrubbed.
+     */
+
+    return deleteGarbageVolumes(volumesToKeep);
+}
+
+void FlashLFS::findGarbageCandidates(VolumeIndexVector &volumesToKeep, VolumeUtilizationVector &utilization)
+{
+    /*
+     * Keep track of total size of non-obsolete data on each volume, so we
+     * know if it's worth scrubbing or not. Volumes that aren't the most
+     * recent and have dropped below our utilization threshold will be scrubbed.
+     *
+     * Volumes with no remaining non-obsolete data will not be marked in 'volumesToKeep'.
+     *
+     * This fully rewrites both arrays.
+     */
+
     volumesToKeep.clear();
+    memset(utilization, 0, sizeof utilization);
 
     // Keys for records which have been obsoleted by newer ones
     FlashLFSIndexRecord::KeyVector_t obsoleteKeys;
     obsoleteKeys.clear();
 
-    /*
-     * Iterate over non-obsolete keys only
-     */
-
     FlashLFSObjectIter iter(*this);
     while (iter.previous(FlashLFSKeyQuery(&obsoleteKeys))) {
 
         // Check this key's CRC. It doesn't obsolete older keys if it's corrupt!
-        uint32_t crc;
-        if (!iter.readAndCheckCRCOnly(crc))
+        if (!iter.readAndCheckCRCOnly())
             continue;
 
         // Any additional instances of this key are obsolete
@@ -1017,12 +1050,19 @@ bool FlashLFS::collectLocalGarbage()
         ASSERT(obsoleteKeys.test(key) == false);
         obsoleteKeys.mark(key);
 
-        // Keep this volume
-        volumesToKeep.mark(iter.volumeIndex());
+        // Count this as utilized space
+        unsigned volumeIndex = iter.volumeIndex();
+        ASSERT(volumeIndex < arraysize(utilization));
+        utilization[volumeIndex] += iter.record()->getSizeInUnits();
+        volumesToKeep.mark(volumeIndex);
     }
+}
 
+bool FlashLFS::deleteGarbageVolumes(const VolumeIndexVector &volumesToKeep)
+{
     /*
-     * Delete obsolete volumes
+     * Delete any volumes not marked in 'volumesToKeep', and compact the LFS array.
+     * Returns 'true' if any volumes are actually deleted.
      */
 
     bool foundGarbage = false;
@@ -1034,10 +1074,93 @@ bool FlashLFS::collectLocalGarbage()
             volumes.slots[i].block.setInvalid();
             foundGarbage = true;
         }
-    }
+    }    
+
+    /*
+     * Compact the volume list. This can renumber volumes, making our
+     * obsoleteKeys and utilization arrays above no longer meaningful.
+     */
 
     if (foundGarbage)
         volumes.compact();
 
     return foundGarbage;
 }
+
+void FlashLFS::scrubUnderutilizedVolumes(VolumeIndexVector &volumesToKeep, const VolumeUtilizationVector &utilization)
+{
+    /*
+     * Given some information about the utilization level of our volumes, iterate
+     * through and look for volumes which aren't totally empty, but are mostly
+     * obsolete. These volumes will be 'scrubbed' by scrubVolume(). Any volumes
+     * which are successfully scrubbed will get removed from 'volumesToKeep'.
+     */
+
+    // Scrub volumes after they're less than half full.
+    const unsigned minUtilization = FlashMapBlock::BLOCK_SIZE >> (FlashLFSIndexRecord::SIZE_SHIFT + 1);
+
+    // Keys for records which have been obsoleted by newer ones
+    FlashLFSIndexRecord::KeyVector_t obsoleteKeys;
+    obsoleteKeys.clear();
+
+    // Start a new reverse-iteration
+    FlashLFSObjectIter iter(*this);
+
+    // Find an underutilized volume first
+    for (int i = volumes.numSlotsInUse - 1; i > 0; --i) {
+
+        // Already planning on deleting this one?
+        if (!volumesToKeep.test(i))
+            continue;
+
+        // Still full enough?
+        if (utilization[i] >= minUtilization)
+            continue;
+
+        /*
+         * Advance the iterator until it's pointing to the last record in this
+         * volume. All records after this one must have been marked in obsoleteKeys,
+         * whereas records inside this volume will be processed below.
+         *
+         * From here on, we'll be adding a key to 'obsoleteKeys' before advancing
+         * the iterator, rather than after. We want the 'current' record to not yet
+         * be included in 'obsoleteKeys', so we know if this is the latest version
+         * of that key's data.
+         */
+
+        while (!iter.isInVolumeIndex(i)) {
+
+            if (!iter.isPastEnd()) {
+                // The key we were just pointing at is now in the 'obsolete' set
+                unsigned key = iter.record()->getKey();
+                ASSERT(obsoleteKeys.test(key) == false);
+                obsoleteKeys.mark(key);
+            }
+
+            do {
+                if (!iter.previous(FlashLFSKeyQuery(&obsoleteKeys))) {
+                    // Out of records! Shouldn't happen, but it's safe to give up.
+                    ASSERT(0);
+                    return;
+                }
+
+                // Check this key's CRC. Ignore it if it's corrupt
+            } while (!iter.readAndCheckCRCOnly());
+        }
+
+        if (iter.volumeIndex() != i) {
+            // Failed to find any valid records in this volume. Shouldn't happen.
+            ASSERT(0);
+            continue;
+        }
+
+        // Now try to scrub this particular volume
+        scrubVolume(iter, obsoleteKeys);
+    }
+}
+
+void FlashLFS::scrubVolume(FlashLFSObjectIter &iter, FlashLFSIndexRecord::KeyVector_t &obsoleteKeys)
+{
+    LOG(("XXX Incomplete: Trying to scrub volume %02x\n", parent.block.code));
+}
+

@@ -155,7 +155,7 @@ public:
     }
 
     /// Is a particular bit marked?
-    bool test(unsigned index)
+    bool test(unsigned index) const
     {
         const unsigned NUM_WORDS = (tSize + 31) / 32;
 

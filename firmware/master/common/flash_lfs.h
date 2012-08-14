@@ -55,6 +55,8 @@
 #include "bits.h"
 #include <sifteo/abi.h>
 
+class FlashLFSObjectIter;
+
 
 /**
  * Common methods used by multiple LFS components.
@@ -276,6 +278,10 @@ public:
 
     ALWAYS_INLINE unsigned getSizeInBytes() const {
         return size << SIZE_SHIFT;
+    }
+
+    ALWAYS_INLINE unsigned getSizeInUnits() const {
+        return size;
     }
 
     ALWAYS_INLINE bool checkCRC(unsigned reference) const {
@@ -598,6 +604,15 @@ public:
     uint32_t lastSequenceNumber;
     FlashVolume parent;
     FlashLFSVolumeVector volumes;
+
+private:
+    typedef BitVector<FlashLFSVolumeVector::MAX_VOLUMES> VolumeIndexVector;
+    typedef uint16_t VolumeUtilizationVector[FlashLFSVolumeVector::MAX_VOLUMES];
+
+    void findGarbageCandidates(VolumeIndexVector &volumesToKeep, VolumeUtilizationVector &utilization);
+    void scrubUnderutilizedVolumes(VolumeIndexVector &volumesToKeep, const VolumeUtilizationVector &utilization);
+    void scrubVolume(FlashLFSObjectIter &iter, FlashLFSIndexRecord::KeyVector_t &obsoleteKeys);
+    bool deleteGarbageVolumes(const VolumeIndexVector &volumesToKeep);
 };
 
 
@@ -682,6 +697,22 @@ public:
     bool readAndCheck(uint8_t *buffer, unsigned size) const;
     bool readAndCheckCRCOnly(uint32_t &crc) const;
     void copyToFlash(unsigned dest) const;
+
+    // No-argument version of readAndCheckCRCOnly.
+    ALWAYS_INLINE bool readAndCheckCRCOnly() const {
+        uint32_t crc;
+        return readAndCheckCRCOnly(crc);
+    }
+
+    // Is this iter still in its initial state, pointing past the end of the LFS?
+    ALWAYS_INLINE bool isPastEnd() const {
+        return volumeCount > lfs.volumes.numSlotsInUse;
+    }
+
+    // Is this iterator pointing to a record within the specified volume index?
+    ALWAYS_INLINE bool isInVolumeIndex(unsigned i) const {
+        return !isPastEnd() && volumeIndex() == i;
+    }
 
     // Address of the current object
     ALWAYS_INLINE unsigned address() const {
