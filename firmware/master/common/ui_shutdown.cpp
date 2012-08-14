@@ -103,8 +103,8 @@ void UIShutdown::animate()
             // Next digit
             beginDigit(digit - 1);
 
-            if (digit == 1) {
-                // Beginning the last digit, blink faster
+            if (digit == 2) {
+                // Beginning the next-to-last digit, blink faster
                 LED::set(LEDPatterns::shutdownFast);
             }
         }
