@@ -777,3 +777,10 @@ bool FlashVolumeWriter::beginLauncher(unsigned payloadBytes)
 
     return begin(FlashVolume::T_LAUNCHER, payloadBytes);
 }
+
+
+void FlashVolume::preEraseBlocks()
+{
+    LOG(("XXX Incomplete: Pre-erase fs blocks\n"));
+}
+

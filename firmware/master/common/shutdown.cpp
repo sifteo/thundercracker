@@ -75,8 +75,15 @@ void ShutdownManager::shutdown()
 
 void ShutdownManager::housekeeping()
 {
-    // XXX: Filesystem garbage collection
-    // XXX: Pre-erase flash blocks
+    /*
+     * First make some more room if we can, by running the global garbage
+     * collector until it can't find any more garbage. Then, consoldiate
+     * this extra space into pre-erased blocks, as much as possible.
+     */
+
+    while (FlashLFS::collectGlobalGarbage()) {}
+
+    FlashVolume::preEraseBlocks();
 }
 
 void ShutdownManager::batteryPowerOff()

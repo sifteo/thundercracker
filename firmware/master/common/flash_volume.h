@@ -120,6 +120,12 @@ public:
      */
     static void deleteEverything();
 
+    /**
+     * Pre-erase filesystem blocks, if we can, storing them in a special
+     * kind of deleted volume.
+     */
+    static void preEraseBlocks();
+
 private:
     static uint32_t signHandle(uint32_t h);
 };
