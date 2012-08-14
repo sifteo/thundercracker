@@ -34,8 +34,16 @@ void CubeSlots::setCubeRange(unsigned minimum, unsigned maximum)
     // if we have too many cubes connected, shutdown the extras
     int excessCount = numConnected() - maximum;
     if (excessCount > 0) {
-        while (excessCount-- > 0) {
-            uint32_t excessID = 31 - Intrinsic::CTZ(sysConnected);
+
+        // sysConnected isn't updated until the cubes actually get shut down, later
+        _SYSCubeIDVector connected = sysConnected;
+
+        while (excessCount--) {
+            // shutdown the highest cube IDs
+            uint32_t trailingZeros = Intrinsic::CTZ(connected);
+            connected &= ~(1 << trailingZeros);
+
+            uint32_t excessID = 31 - trailingZeros;
             ASSERT(excessID < _SYS_NUM_CUBE_SLOTS);
             Atomic::Or(sendShutdown, Intrinsic::LZ(excessID));
         }

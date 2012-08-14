@@ -125,7 +125,7 @@ void MainMenu::eventLoop()
             menu.init(Shared::video[mainCube], &menuAssets, &menuItems[0]);
             menu.setIconYOffset(8);
             if (itemIndexCurrent >= 0)
-                menu.anchor(itemIndexCurrent);
+                menu.anchor(itemIndexCurrent, true);
         }
 
         MenuEvent e;
