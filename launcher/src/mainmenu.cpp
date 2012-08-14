@@ -20,7 +20,6 @@ static const unsigned kClickSpeedFast = 300;
 static const unsigned kConnectSfxDelayMS = 2000;
 static const unsigned kDisplayBlueLogoTimeMS = 2000;
 static const unsigned kNoCubesConnectedSfxMS = 5000;
-static const unsigned kShutdownTimerMS = 60 * 2 * 1000; // 2 minutes
 
 
 static void drawText(MainMenuItem::IconBuffer &icon, const char *text, Int2 pos)
