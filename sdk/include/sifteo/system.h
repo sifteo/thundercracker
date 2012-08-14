@@ -198,6 +198,18 @@ class System {
     }
 
     /**
+     * @brief Prevent the system from shutting down due to inactivity.
+     *
+     * By default, the system shuts down automatically after 10 minutes
+     * of inactivity - no touch or neighbor events. If an app wants to keep
+     * running, and does not expect to generate any neighbor or touch events
+     * during normal operation, keepAwake() resets the timeout countdown.
+     */
+    static void keepAwake() {
+        _SYS_keepAwake();
+    }
+
+    /**
      * @brief Set the range of cubes supported.
      *
      * When the number of cubes connected to the system drops below `minimum`,
