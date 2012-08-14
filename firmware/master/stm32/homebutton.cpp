@@ -21,7 +21,7 @@ void init()
     homeButton.irqEnable();
 }
 
-bool hwIsPressed()
+bool isPressed()
 {
     return BTN_HOME_GPIO.isHigh();
 }

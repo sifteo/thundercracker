@@ -25,7 +25,7 @@ void setPressed(bool value)
     }
 }
 
-bool hwIsPressed()
+bool isPressed()
 {
     return state;
 }

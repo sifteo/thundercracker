@@ -26,49 +26,20 @@
 
 namespace HomeButton {
 
-enum State {
-    S_IDLE,
-    S_PRESSED,
-    S_RELEASED,
-};
-
-static State state = S_IDLE;
 SysTime::Ticks pressTimestamp;
 
 void update()
 {
-    bool pressed = HomeButton::hwIsPressed();
+    bool pressed = HomeButton::isPressed();
 
     if (!pressed)
         pressTimestamp = 0;
     else if (!pressTimestamp)
         pressTimestamp = SysTime::ticks();
-
-    switch (state) {
-
-        case S_IDLE:
-        case S_RELEASED:
-            if (pressed)
-                state = S_PRESSED;
-            break;
-
-        case S_PRESSED:
-            if (!pressed)
-                state = S_RELEASED;
-            break;
-    }
-}
-
-bool isPressed() {
-    return state == S_PRESSED;
-}
-
-bool isReleased() {
-    return state == S_RELEASED;
 }
 
 SysTime::Ticks pressDuration() {
-    return HomeButton::hwIsPressed() ? (SysTime::ticks() - pressTimestamp) : 0;
+    return HomeButton::isPressed() ? (SysTime::ticks() - pressTimestamp) : 0;
 }
 
 } // namespace HomeButton

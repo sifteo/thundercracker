@@ -13,12 +13,13 @@ namespace HomeButton
 {
     // Hardware-specific
     void init();
-    bool hwIsPressed();
+    bool isPressed();
+    ALWAYS_INLINE bool isReleased() {
+        return !isPressed();
+    }
 
     // Hardware-independent
     void update();
-    bool isPressed();
-    bool isReleased();
     SysTime::Ticks pressDuration();
 }
 

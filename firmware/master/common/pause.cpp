@@ -133,8 +133,7 @@ void Pause::runPauseMenu(UICoordinator &uic)
 
     LED::set(LEDPatterns::paused, true);
 
-    do {
-
+    for (;;) {
         uic.stippleCubes(uic.connectCubes());
 
         if (uic.pollForAttach())
@@ -150,7 +149,9 @@ void Pause::runPauseMenu(UICoordinator &uic)
             return uiShutdown.mainLoop();
         }
 
-    } while (!(HomeButton::isReleased() && uiPause.isDone()));
+        if (uiPause.isDone() && HomeButton::isReleased())
+            break;
+    };
 
     uic.restoreCubes(uic.uiConnected);
     LED::set(LEDPatterns::idle);
