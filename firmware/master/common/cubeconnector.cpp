@@ -186,7 +186,13 @@ bool CubeConnector::chooseConnectionAddr()
      * If no more cube IDs are available, we return false.
      * Otherwise, we return true after successfully initializing the
      * connection channel, address, and cube ID.
+     *
+     * If reconnect is disabled, return false as well - this is effectively
+     * the same as no more cube IDs being available for our current cubeRange.
      */
+
+    if (!reconnectEnabled)
+        return false;
 
     PRNG::collectTimingEntropy(&prng);
     RadioAddrFactory::random(connectionAddr, prng);
