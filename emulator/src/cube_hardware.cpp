@@ -175,6 +175,12 @@ void Hardware::graphicsTick()
     flash.cycle(&flashp, &cpu);
     lcd.cycle(&lcdp);
 
+    /* Backlight latch */
+    if ((ctrl_port & CTRL_FLASH_LAT1) && !(prev_ctrl_port & CTRL_FLASH_LAT1)) {
+        const uint8_t mask = CTRL_3V3_EN | CTRL_LCD_DCX;
+        backlight.cycle(mask == (ctrl_port & mask), time->clocks);
+    }
+
     /* Address latch write cycles, triggered by rising edge */
 
     if ((ctrl_port & CTRL_FLASH_LAT1) && !(prev_ctrl_port & CTRL_FLASH_LAT1)) lat1 = addr7;

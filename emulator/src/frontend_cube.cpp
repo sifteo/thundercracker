@@ -124,7 +124,7 @@ bool FrontendCube::draw(GLRenderer &r)
 
     r.drawCube(id, body->GetPosition(), body->GetAngle(),
                hover, tiltVector, framebuffer, framebufferChanged,
-               modelMatrix);
+               hw->backlight.getBrightness(), modelMatrix);
 
     return framebufferChanged;
 }

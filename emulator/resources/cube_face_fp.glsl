@@ -5,6 +5,7 @@ varying vec2 hilightCoord;
 
 uniform sampler2D lcd;
 uniform sampler2D hilight;
+uniform float backlight;
 
 vec4 lcdPixel(vec2 coord)
 {
@@ -36,5 +37,5 @@ void main() {
      vec2 lcdCoordAbs = abs(lcdCoord);
      float lcdDist = max(lcdCoordAbs.x, lcdCoordAbs.y);
 
-     gl_FragColor = lcdEdgeFilter(lcdPixel(lcdCoord + 0.5), hilight, lcdDist);
+     gl_FragColor = lcdEdgeFilter(lcdPixel(lcdCoord + 0.5) * backlight, hilight, lcdDist);
 }

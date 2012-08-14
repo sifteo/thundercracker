@@ -658,7 +658,7 @@ void GLRenderer::cubeTransform(b2Vec2 center, float angle, float hover,
 
 void GLRenderer::drawCube(unsigned id, b2Vec2 center, float angle, float hover,
                           b2Vec2 tilt, const uint16_t *framebuffer, bool framebufferChanged,
-                          b2Mat33 &modelMatrix)
+                          float backlight, b2Mat33 &modelMatrix)
 {
     /*
      * Draw one cube, and place its modelview matrix in 'modelmatrix'.
@@ -706,7 +706,7 @@ void GLRenderer::drawCube(unsigned id, b2Vec2 center, float angle, float hover,
     }
 
     drawCubeBody();
-    drawCubeFace(id, framebufferChanged ? framebuffer : NULL);
+    drawCubeFace(id, framebufferChanged ? framebuffer : NULL, backlight);
 }
 
 void GLRenderer::drawMC(b2Vec2 center, float angle, const float led[3], float volume)
@@ -753,11 +753,13 @@ void GLRenderer::drawCubeBody()
     drawModel(cubeBody);
 }
 
-void GLRenderer::drawCubeFace(unsigned id, const uint16_t *framebuffer)
+void GLRenderer::drawCubeFace(unsigned id, const uint16_t *framebuffer, float backlight)
 {
     GLCube &cube = cubes[id];
+    GLhandleARB program = cube.pixelAccurate ? cubeFaceProgUnfiltered : cubeFaceProgFiltered;
 
-    glUseProgramObjectARB(cube.pixelAccurate ? cubeFaceProgUnfiltered : cubeFaceProgFiltered);
+    glUseProgramObjectARB(program);
+    glUniform1fARB(glGetUniformLocationARB(program, "backlight"), backlight);
 
     /*
      * Set up samplers

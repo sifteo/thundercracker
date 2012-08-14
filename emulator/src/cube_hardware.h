@@ -20,6 +20,7 @@
 #include "cube_ccp.h"
 #include "cube_rng.h"
 #include "cube_lcd.h"
+#include "cube_backlight.h"
 #include "cube_flash.h"
 #include "cube_neighbors.h"
 #include "cube_cpu_core.h"
@@ -67,6 +68,7 @@ class Hardware {
     CPU::em8051 cpu;
     VirtualTime *time;
     LCD lcd;
+    Backlight backlight;
     SPIBus spi;
     I2CBus i2c;
     ADC adc;

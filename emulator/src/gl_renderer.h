@@ -53,7 +53,7 @@ class GLRenderer {
 
     void drawCube(unsigned id, b2Vec2 center, float angle, float hover,
                   b2Vec2 tilt, const uint16_t *framebuffer, bool framebufferChanged,
-                  b2Mat33 &modelMatrix);
+                  float backlight, b2Mat33 &modelMatrix);
     void drawMC(b2Vec2 center, float angle, const float led[3], float volume);
 
     void beginOverlay();
@@ -98,7 +98,7 @@ class GLRenderer {
                        b2Vec2 tilt, CubeTransformState &tState);
 
     void drawCubeBody();
-    void drawCubeFace(unsigned id, const uint16_t *framebuffer);
+    void drawCubeFace(unsigned id, const uint16_t *framebuffer, float backlight);
 
     void loadModel(const uint8_t *data, Model &model);
     void drawModel(Model &model);
