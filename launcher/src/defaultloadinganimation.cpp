@@ -17,11 +17,11 @@ namespace {
     const Sifteo::RGB565 bgColor  = Sifteo::RGB565::fromRGB(0x000000);  // Black screen
     const Sifteo::RGB565 dotColor = Sifteo::RGB565::fromRGB(0xff9100);  // Sifteo logo orange
     const Sifteo::RGB565 gradient[5] = {
-        { 0x0126 },
-        { 0x0a4c },
-        { 0x1372 },
-        { 0x1c98 },
         { 0x25bf },
+        { 0x1c98 },
+        { 0x1372 },
+        { 0x0a4c },
+        { 0x0126 },
     };
 
     // Palette layout
