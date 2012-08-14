@@ -105,8 +105,11 @@ void Pause::monitorButtonHold()
         return uiShutdown.mainLoop();
     }
 
-    taskWork.atomicMark(ButtonHold);
-    Tasks::trigger(Tasks::Pause);
+    if (HomeButton::isPressed()) {
+        // continue monitoring
+        taskWork.atomicMark(ButtonHold);
+        Tasks::trigger(Tasks::Pause);
+    }
 }
 
 void Pause::runPauseMenu(UICoordinator &uic)
