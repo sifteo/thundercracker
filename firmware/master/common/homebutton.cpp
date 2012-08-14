@@ -24,11 +24,20 @@
 #include "svmclock.h"
 #include "shutdown.h"
 
+namespace HomeButton {
 
-bool HomeButtonPressDetector::update()
+enum State {
+    S_IDLE,
+    S_PRESSED,
+    S_RELEASED,
+};
+
+static State state = S_IDLE;
+SysTime::Ticks pressTimestamp;
+
+void update()
 {
-    State oldState = state;
-    bool pressed = HomeButton::isPressed();
+    bool pressed = HomeButton::hwIsPressed();
 
     if (!pressed)
         pressTimestamp = 0;
@@ -48,11 +57,18 @@ bool HomeButtonPressDetector::update()
                 state = S_RELEASED;
             break;
     }
-
-    return state != oldState;
 }
 
-SysTime::Ticks HomeButtonPressDetector::pressDuration() const
-{
-    return HomeButton::isPressed() ? (SysTime::ticks() - pressTimestamp) : 0;
+bool isPressed() {
+    return state == S_PRESSED;
 }
+
+bool isReleased() {
+    return state == S_RELEASED;
+}
+
+SysTime::Ticks pressDuration() {
+    return HomeButton::hwIsPressed() ? (SysTime::ticks() - pressTimestamp) : 0;
+}
+
+} // namespace HomeButton

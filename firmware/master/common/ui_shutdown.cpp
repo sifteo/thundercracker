@@ -202,9 +202,9 @@ float UIShutdown::easeInAndOut(float t)
 
 void UIShutdown::mainLoop()
 {
-    HomeButtonPressDetector press;
-
     LED::set(LEDPatterns::shutdownSlow, true);
+    // only cancel if we see a new press during shutdown process.
+    bool haveSeenRelease = HomeButton::isReleased();
 
     while (1) {
 
@@ -215,9 +215,11 @@ void UIShutdown::mainLoop()
 
         animate();
         uic.paint();
-        press.update();
 
-        if (press.isPressed() || uic.isTouching()) {
+        if (HomeButton::isReleased())
+            haveSeenRelease = true;
+
+        if ((haveSeenRelease && HomeButton::isPressed()) || uic.isTouching()) {
             // Cancel
             uic.restoreCubes(uic.uiConnected);
             LED::set(LEDPatterns::idle);

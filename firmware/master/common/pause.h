@@ -10,6 +10,7 @@ class Pause {
 public:
     enum WorkItems {
         ButtonPress,
+        ButtonHold,
         LowBattery,
 
         NUM_WORK_ITEMS,         // Must be last
@@ -23,9 +24,8 @@ public:
 private:
     static void runPauseMenu(UICoordinator &uic);
     static ALWAYS_INLINE void onButtonChange();
+    static ALWAYS_INLINE void monitorButtonHold();
     static ALWAYS_INLINE void lowBattery();
-
-    static HomeButtonPressDetector press;
 };
 
 #endif // PAUSE_H
