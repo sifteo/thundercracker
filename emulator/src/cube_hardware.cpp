@@ -13,7 +13,7 @@
 namespace Cube {
 
 bool Hardware::init(VirtualTime *masterTimer, const char *firmwareFile,
-    FlashStorage::CubeRecord *flashStorage, bool wakeFromSleep)
+    FlashStorage::CubeRecord *flashStorage)
 {
     time = masterTimer;
     hwDeadline.init(time);
@@ -27,13 +27,6 @@ bool Hardware::init(VirtualTime *masterTimer, const char *firmwareFile,
     memset(&cpu, 0, sizeof cpu);
     cpu.callbackData = this;
     cpu.vtime = masterTimer;
-    
-    /*
-     * If true, the cube acts like it's been awakened from deep sleep by
-     * a touch, and it will power on immediately. If false, it acts like a
-     * battery insertion occurred, and the cube will immediately sleep again.
-     */
-    cpu.deepSleep = wakeFromSleep;
     
     CPU::em8051_reset(&cpu, true);
 
@@ -263,12 +256,10 @@ NEVER_INLINE void Hardware::hwDeadlineWork()
 
 void Hardware::setTouch(bool touching)
 {
-    if (touching) {
+    if (touching)
         cpu.mSFR[MISC_PORT] |= MISC_TOUCH;
-        CPU::wakeup_test(&cpu);
-    } else {
+    else
         cpu.mSFR[MISC_PORT] &= ~MISC_TOUCH;
-    }
 }
 
 bool Hardware::isDebugging()

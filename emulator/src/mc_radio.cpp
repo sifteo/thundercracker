@@ -137,7 +137,8 @@ void SystemMC::doRadioPacket()
 
     if (RadioManager::isRadioEnabled()) {
         Cube::Hardware *cube = getCubeForAddress(buf.ptx.dest);
-        buf.ack = cube && cube->spi.radio.handlePacket(buf.packet, buf.reply);
+        buf.ack = cube && cube->isRadioClockRunning()
+            && cube->spi.radio.handlePacket(buf.packet, buf.reply);
         buf.ackCube = cube ? cube->id() : -1;
     }
 

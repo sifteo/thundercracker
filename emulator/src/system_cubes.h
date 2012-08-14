@@ -32,7 +32,7 @@ class SystemCubes {
 
  private: 
     static void threadFn(void *param);
-    bool initCube(unsigned id, bool wakeFromSleep=false);
+    bool initCube(unsigned id);
 
     ALWAYS_INLINE void tick(unsigned count=1);
     NEVER_INLINE void tickLoopDebug();

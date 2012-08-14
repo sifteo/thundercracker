@@ -52,9 +52,9 @@ bool SystemCubes::init(System *sys)
         sys->tracer.vcd.leaveScope();
     }
 
-    // Initialize default cubes, and wake them from sleep
+    // Initialize default cubes
     for (unsigned i = 0; i < sys->opt_numCubes; i++)
-        if (!initCube(i, true))
+        if (!initCube(i))
             return false;
     
     return true;
@@ -86,14 +86,14 @@ void SystemCubes::resetCube(unsigned id)
     sys->cubes[id].reset();
 }
 
-bool SystemCubes::initCube(unsigned id, bool wakeFromSleep)
+bool SystemCubes::initCube(unsigned id)
 {
     const char *firmware = sys->opt_cubeFirmware.empty()
         ? NULL : sys->opt_cubeFirmware.c_str();
 
     ASSERT(sys->flash.data);
     if (!sys->cubes[id].init(&sys->time, firmware,
-        &sys->flash.data->cubes[id], wakeFromSleep))
+        &sys->flash.data->cubes[id]))
         return false;
 
     sys->cubes[id].cpu.id = id;

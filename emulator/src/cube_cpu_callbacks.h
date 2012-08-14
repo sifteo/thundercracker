@@ -113,9 +113,10 @@ struct SFR {
             break;
             
         case REG_PWRDWN:
-            // XXX: Only handle deep sleep mode
-            if (cpu->mSFR[reg] == 0x01)
-                cpu->deepSleep = true;
+            if (cpu->mSFR[reg] & 7) {
+                // Entering any powerdown mode. Keep the specific mode in PWRDWN, but set our sleep flag
+                cpu->powerDown = true;
+            }
             break;
 
         case REG_WDSV:

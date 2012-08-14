@@ -105,13 +105,6 @@ void em8051_reset(em8051 *aCPU, int aWipe)
     // Pretend the 16 MHz xtal is ready immediately
     aCPU->mSFR[REG_CLKLFCTRL] = 0x0F;
 
-    // XXX: Fake sleep support in siftulator :(
-    aCPU->mSFR[REG_PWRDWN] = 0x00;
-    aCPU->deepSleep = false;
-
-
-    // build function pointer lists
-
     disasm_setptrs(aCPU);
     op_setptrs(aCPU);
 
@@ -122,6 +115,7 @@ void em8051_reset(em8051 *aCPU, int aWipe)
 
 void wakeup_test(em8051 *aCPU)
 {
+    #if 0
     // Check for a pin state that would wake us from deep sleep
 
     if (!aCPU->deepSleep)
@@ -134,6 +128,7 @@ void wakeup_test(em8051 *aCPU)
 
     if ((c0 & p0) | (c1 & p1))
         em8051_reset(aCPU, true);
+#endif
 }
 
 static int readbyte(FILE * f)

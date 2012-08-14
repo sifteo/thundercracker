@@ -77,12 +77,12 @@ class Hardware {
     RNG rng;
 
     bool init(VirtualTime *masterTimer, const char *firmwareFile,
-        FlashStorage::CubeRecord *flashStorage, bool wakeFromSleep);
+        FlashStorage::CubeRecord *flashStorage);
 
     void reset();
 
     ALWAYS_INLINE bool isSleeping() {
-        return cpu.deepSleep;
+        return cpu.powerDown;
     }
 
     ALWAYS_INLINE unsigned id() const {
@@ -144,6 +144,10 @@ class Hardware {
     
     ALWAYS_INLINE void setRadioClockEnable(bool e) {
         rfcken = e;
+    }
+
+    ALWAYS_INLINE bool isRadioClockRunning() {
+        return rfcken && !isSleeping();
     }
 
     uint32_t getExceptionCount();

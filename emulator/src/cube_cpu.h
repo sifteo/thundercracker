@@ -90,7 +90,7 @@ struct em8051
     bool needInterruptDispatch;
     bool needHardwareTick;
     bool needTimerEdgeCheck;
-    bool deepSleep;
+    bool powerDown;             // PWRDWN register indicates specific powerdown mode
     bool wdtEnabled;            // Watchdog enabled (Only cleared at reset)
 
     uint8_t irq_count;          // Number of currently active IRQ handlers
