@@ -84,6 +84,16 @@ void DefaultLoadingAnimation::paint(CubeSet cubes, int percent)
             drawNextDot(cube);
             dotCounts[cube]++;
         }
+
+        /*
+         * It's also possible for loading progress to go backwards. In that case,
+         * we may need to remove dots.
+         */
+
+        while (dotCounts[cube] > nextDotCount) {
+            removeDot(cube);
+            dotCounts[cube]--;
+        }
     }
 }
 
@@ -97,20 +107,38 @@ void DefaultLoadingAnimation::drawNextDot(Sifteo::CubeID cube)
     ASSERT(!dotPositions[cube].empty());
 
     // Random choice from the remaining dots
-    unsigned i = Shared::random.randrange(numDots - dotCounts[cube]);
+    unsigned position;
+    unsigned choice = Shared::random.randrange(numDots - dotCounts[cube]);
+    if (dotPositions[cube].clearN(position, choice))
+        drawDotAtPosition(cube, position, dotIndex);
+}
 
-    // Find the i'th remaining dot on this cube
-    for (unsigned position : dotPositions[cube]) {
-        if (i--)
-            continue;
+void DefaultLoadingAnimation::removeDot(Sifteo::CubeID cube)
+{
+    /*
+     * Backtrack: Remove an arbitrary dot, putting it back into
+     * 'dotPositions'. This is not common, but we may need
+     * to backtrack, for example if a new cube arrives or there's
+     * an error on one cube.
+     *
+     * For simplicity, instead of doing a proper random choice
+     * here we'll just start repopulating from the beginning.
+     */
 
-        dotPositions[cube].clear(position);
-        drawDotAtPosition(cube, position);
-        break;
+    ASSERT(dotCounts[cube] > 0);
+
+    Sifteo::BitArray<numDots> usedDots = ~dotPositions[cube];
+
+    unsigned position;
+    unsigned choice = Shared::random.randrange(dotCounts[cube]);
+    if (usedDots.clearN(position, choice)) {
+        // Clear the dot
+        dotPositions[cube].mark(position);
+        drawDotAtPosition(cube, position, 0);
     }
 }
 
-void DefaultLoadingAnimation::drawDotAtPosition(Sifteo::CubeID cube, unsigned position)
+void DefaultLoadingAnimation::drawDotAtPosition(Sifteo::CubeID cube, unsigned position, unsigned color)
 {
     /*
      * Our image has room for 50 2x2-pixel dots currently, arranged in two 5x5 grids
@@ -134,5 +162,5 @@ void DefaultLoadingAnimation::drawDotAtPosition(Sifteo::CubeID cube, unsigned po
     v.x += 3 * (position % 5);
     v.y += 3 * (position / 5);
 
-    Shared::video[cube].fb32.fill(v, vec(2,2), dotIndex);
+    Shared::video[cube].fb32.fill(v, vec(2,2), color);
 }

@@ -32,5 +32,7 @@ private:
     Sifteo::BitArray<numDots> dotPositions[CUBE_ALLOCATION];
 
     void drawNextDot(Sifteo::CubeID cube);
-    void drawDotAtPosition(Sifteo::CubeID cube, unsigned position);
+    void removeDot(Sifteo::CubeID cube);
+
+    void drawDotAtPosition(Sifteo::CubeID cube, unsigned position, unsigned color);
 };
