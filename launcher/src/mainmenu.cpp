@@ -276,6 +276,13 @@ void MainMenu::neighborAdded(unsigned firstID, unsigned firstSide,
         cid.unpair();
 }
 
+void MainMenu::volumesChanged(unsigned)
+{
+    /*
+     * TODO: A game was deleted or added. Rebuild the menu.
+     */
+}
+
 void MainMenu::gameMenuEvent()
 {
     /*

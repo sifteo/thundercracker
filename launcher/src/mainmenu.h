@@ -72,6 +72,7 @@ private:
     DefaultLoadingAnimation loadingAnimation;
 
     // event handlers
+    void volumesChanged(unsigned);
     void cubeConnect(unsigned cid);
     void cubeDisconnect(unsigned cid);
     void cubeTouch(unsigned cid);
