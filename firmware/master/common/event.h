@@ -51,6 +51,10 @@ class Event {
         PID_BASE_GAME_MENU,
         PID_CUBE_ASSETDONE,
 
+        // Filesystem events (delete before commit)
+        PID_BASE_VOLUME_DELETE,
+        PID_BASE_VOLUME_COMMIT,
+
         // Low-bandwidth sensor events
         PID_NEIGHBORS,
         PID_CUBE_TOUCH,

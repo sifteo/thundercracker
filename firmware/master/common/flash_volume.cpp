@@ -10,6 +10,7 @@
 #include "crc.h"
 #include "elfprogram.h"
 #include "svmloader.h"
+#include "event.h"
 
 
 bool FlashVolume::isValid() const
@@ -76,6 +77,18 @@ unsigned FlashVolume::getType() const
     return hdr->type;
 }
 
+bool FlashVolume::typeIsUserVisible(unsigned type)
+{
+    switch (type) {
+        case T_DELETED:
+        case T_INCOMPLETE:
+        case T_LFS:
+            return false;
+    }
+
+    return true;
+}
+
 FlashVolume FlashVolume::getParent() const
 {
     ASSERT(isValid());
@@ -139,7 +152,11 @@ void FlashVolume::deleteSingleWithoutInvalidate() const
     FlashBlockRef ref;
     FlashVolumeHeader *hdr = FlashVolumeHeader::get(ref, block);
     ASSERT(hdr->isHeaderValid());
-    
+
+    // If we're deleting a user-visible volume, send out a change event.
+    if (typeIsUserVisible(hdr->type))
+        Event::setBasePending(Event::PID_BASE_VOLUME_DELETE, getHandle());
+
     FlashBlockWriter writer(ref);
     hdr->type = T_DELETED;
     hdr->typeCopy = T_DELETED;
@@ -604,6 +621,10 @@ void FlashVolumeWriter::commit()
     writer.commitBlock();
 
     ASSERT(volume.isValid());
+
+    // All done. Notify userspace, if they can see this volume.
+    if (volume.typeIsUserVisible(hdr->type))
+        Event::setBasePending(Event::PID_BASE_VOLUME_COMMIT, volume.getHandle());
 }
 
 uint8_t *FlashVolumeWriter::mapTypeSpecificData(unsigned &size)

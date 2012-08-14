@@ -83,6 +83,8 @@ public:
     FlashMapSpan getPayload(FlashBlockRef &ref) const;
     uint8_t *mapTypeSpecificData(FlashBlockRef &ref, unsigned &size) const;
 
+    static bool typeIsUserVisible(unsigned type);
+
     /**
      * Delete just this volume. Only for use as part of a larger delete
      * operation, or for volumes which are guaranteed not to have any
