@@ -155,14 +155,12 @@ void StatusApplet::onCubeDisconnect(unsigned cid)
 void StatusApplet::onCubeBatteryLevelChange(unsigned cid)
 {
     ASSERT(menu);
-    if (menu != NULL && menuItemIndex >= 0) {
-        CubeID menuCube = menu->cube();
-
-        if (cid == menuCube) {
-            drawIcon(menuCube);
-            menu->replaceIcon(menuItemIndex, menuIcon);
-        } else {
-            drawCube(CubeID(cid));
-        }
+    // Update the appropriate cube's icon
+    CubeID menuCube = menu->cube();
+    if (cid == menuCube) {
+        drawIcon(menuCube);
+        menu->replaceIcon(menuItemIndex, menuIcon);
+    } else {
+        drawCube(CubeID(cid));
     }
 }
