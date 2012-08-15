@@ -371,8 +371,6 @@ void MainMenu::updateConnecting()
 
             loadingCubes.clear();
 
-
-
         } else {
             // Still loading, update progress
             loadingAnimation.paint(loadingCubes, loader.averageProgress(100));
