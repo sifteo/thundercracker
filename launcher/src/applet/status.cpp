@@ -59,6 +59,12 @@ void StatusApplet::arrive(Sifteo::Menu &m, unsigned index)
     menu = &m;
     menuItemIndex = index;
     
+    // Update menu icon, if necessary
+    if (numCubes != CubeSet::connected().count()) {
+        drawIcon(m.cube());
+        menu->replaceIcon(menuItemIndex, menuIcon);
+    }
+
     // Draw Icon Background
     for (CubeID cube : CubeSet::connected()) {
         if (cube != m.cube()) {
@@ -111,7 +117,7 @@ void StatusApplet::drawIcon(Sifteo::CubeID menuCube)
     }
     drawBattery(menuIcon, System::batteryLevel(), vec(7, 7));
     
-    unsigned numCubes = CubeSet::connected().count();
+    numCubes = CubeSet::connected().count();
     
     String<8> bufferCubes;
     bufferCubes << numCubes;

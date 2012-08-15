@@ -29,4 +29,5 @@ private:
     Sifteo::Menu *menu;
     int menuItemIndex;
     IconBuffer menuIcon;
+    int numCubes;
 };
