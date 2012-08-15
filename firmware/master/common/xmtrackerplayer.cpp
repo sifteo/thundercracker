@@ -38,6 +38,11 @@ void XmTrackerPlayer::init()
     hasSong = 0;
     paused = 0;
     memset(&song, 0, sizeof(song));
+
+    // default volumes
+    userVolume = _SYS_AUDIO_DEFAULT_VOLUME;
+    for (unsigned i = 0; i < arraysize(channels); i++)
+        channels[i].userVolume = _SYS_AUDIO_DEFAULT_VOLUME;
 }
 
 bool XmTrackerPlayer::play(const struct _SYSXMSong *pSong)
@@ -71,9 +76,8 @@ bool XmTrackerPlayer::play(const struct _SYSXMSong *pSong)
     song = *pSong;
     hasSong = true;
     paused = false;
-    
+
     volume = kMaxVolume;
-    userVolume = _SYS_AUDIO_DEFAULT_VOLUME;
     bpm = song.bpm;
     ticks = tempo = song.tempo;
     delay = 0;
@@ -86,11 +90,16 @@ bool XmTrackerPlayer::play(const struct _SYSXMSong *pSong)
         return false;
     }
 
-    memset(channels, 0, sizeof(channels));
     for (unsigned i = 0; i < arraysize(channels); i++) {
-        XmTrackerPattern::resetNote(channels[i].note);
-        channels[i].userVolume = _SYS_AUDIO_MAX_VOLUME;
-        channels[i].state = STATE_STOPPED;
+
+        // Zero out channels, but preserve channel volume.
+        XmTrackerChannel &ch = channels[i];
+        uint16_t usrVol = ch.userVolume;
+        memset(&ch, 0, sizeof ch);
+
+        XmTrackerPattern::resetNote(ch.note);
+        ch.userVolume = usrVol;
+        ch.state = STATE_STOPPED;
     }
 
     AudioMixer::instance.setTrackerCallbackInterval(2500000 / bpm);
