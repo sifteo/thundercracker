@@ -66,8 +66,11 @@ public:
         T_LAUNCHER      = _SYS_FS_VOL_LAUNCHER,     // "LN"
         T_GAME          = _SYS_FS_VOL_GAME,         // "GM"
         T_LFS           = 0x5346,                   // "FS"
-        T_DELETED       = 0x0000,                   // Must be zero
-        T_INCOMPLETE    = 0xFFFF,                   // Must be FFFF
+
+        // Internal types
+        T_PRE_ERASED    = 0xFF55,       // Storage for pre-erased blocks
+        T_DELETED       = 0x0000,       // Normal deleted volume (Must be zero)
+        T_INCOMPLETE    = 0xFFFF,       // Not-yet-committed volume (Must be FFFF)
     };
 
     FlashMapBlock block;
@@ -83,7 +86,20 @@ public:
     FlashMapSpan getPayload(FlashBlockRef &ref) const;
     uint8_t *mapTypeSpecificData(FlashBlockRef &ref, unsigned &size) const;
 
-    static bool typeIsUserVisible(unsigned type);
+    /// This volume can be reclaimed as free space
+    static bool typeIsRecyclable(unsigned type) {
+        return type == T_INCOMPLETE || type == T_DELETED || type == T_PRE_ERASED;
+    }
+
+    /// This is a volume used for internal bookkeeping, and never visible to the user
+    static bool typeIsInternal(unsigned type) {
+        return typeIsRecyclable(type);
+    }
+
+    /// This volume is user-created, not created automatically
+    static bool typeIsUserCreated(unsigned type) {
+        return !typeIsInternal(type) && type != T_LFS;
+    }
 
     /**
      * Delete just this volume. Only for use as part of a larger delete

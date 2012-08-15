@@ -36,8 +36,7 @@ uint32_t _SYS_fs_listVolumes(unsigned volType, _SYSVolumeHandle *results, uint32
     }
 
     // Some volume types can't be iterated over from userspace
-    if (volType == FlashVolume::T_INCOMPLETE ||
-        volType == FlashVolume::T_DELETED ||
+    if (FlashVolume::typeIsInternal(volType) ||
         volType != (uint16_t)volType) {
         SvmRuntime::fault(F_SYSCALL_PARAM);
         return 0;
@@ -323,7 +322,7 @@ uint32_t _SYS_fs_info(_SYSFilesystemInfo *buffer, uint32_t bufferSize)
         ASSERT(hdr->isHeaderValid());
 
         // Ignore deleted/incomplete volumes. (Treat them as free space)
-        if (hdr->isDeleted())
+        if (FlashVolume::typeIsRecyclable(hdr->type))
             continue;
 
         // All other volumes count against our free space

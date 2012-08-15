@@ -129,12 +129,6 @@ struct FlashVolumeHeader
         ASSERT(isHeaderValid());
     }
 
-    /// Is this a deleted (or incomplete) volume?
-    bool isDeleted()
-    {
-        return type == 0x0000 || type == 0xFFFF;
-    }
-
     /// Payload size, in bytes
     unsigned payloadBytes() const
     {

@@ -145,7 +145,7 @@ void UsbVolumeManager::volumeOverview(USBProtocolMsg &reply)
         ASSERT(hdr->isHeaderValid());
 
         // Ignore deleted/incomplete volumes. (Treat them as free space)
-        if (hdr->isDeleted())
+        if (FlashVolume::typeIsRecyclable(hdr->type))
             continue;
 
         // All other volumes count against our free space

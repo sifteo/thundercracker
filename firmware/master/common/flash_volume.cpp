@@ -32,7 +32,7 @@ bool FlashVolume::isValid() const
      */
 
     unsigned numMapEntries = hdr->numMapEntries();
-    if (!hdr->isDeleted() && hdr->crcMap != hdr->calculateMapCRC(numMapEntries))
+    if (!FlashVolume::typeIsRecyclable(hdr->type) && hdr->crcMap != hdr->calculateMapCRC(numMapEntries))
         return false;
     if (hdr->crcErase != hdr->calculateEraseCountCRC(block, numMapEntries))
         return false;
@@ -75,18 +75,6 @@ unsigned FlashVolume::getType() const
     FlashVolumeHeader *hdr = FlashVolumeHeader::get(ref, block);
     ASSERT(hdr->isHeaderValid());
     return hdr->type;
-}
-
-bool FlashVolume::typeIsUserVisible(unsigned type)
-{
-    switch (type) {
-        case T_DELETED:
-        case T_INCOMPLETE:
-        case T_LFS:
-            return false;
-    }
-
-    return true;
 }
 
 FlashVolume FlashVolume::getParent() const
@@ -154,7 +142,7 @@ void FlashVolume::deleteSingleWithoutInvalidate() const
     ASSERT(hdr->isHeaderValid());
 
     // If we're deleting a user-visible volume, send out a change event.
-    if (typeIsUserVisible(hdr->type))
+    if (typeIsUserCreated(hdr->type))
         Event::setBasePending(Event::PID_BASE_VOLUME_DELETE, getHandle());
 
     FlashBlockWriter writer(ref);
@@ -295,7 +283,7 @@ void FlashBlockRecycler::findOrphansAndDeletedVolumes()
         // If the volume is still mapped by SVM, skip it for now. This allows in-use volumes
         // to be deleted, knowing that they won't be recycled until they are unmapped.
 
-        if (hdr->isDeleted() && !SvmLoader::isVolumeMapped(vol)) {
+        if (FlashVolume::typeIsRecyclable(hdr->type) && !SvmLoader::isVolumeMapped(vol)) {
             vol.block.mark(deletedVolumes);
         }
 
@@ -343,7 +331,7 @@ void FlashBlockRecycler::findCandidateVolumes()
         FlashBlockRef eraseRef;
 
         ASSERT(FlashVolume(block).isValid());
-        ASSERT(hdr->isDeleted());
+        ASSERT(FlashVolume::typeIsRecyclable(hdr->type));
         ASSERT(hdr->isHeaderValid());
 
         for (unsigned I = 0; I != numMapEntries; ++I) {
@@ -623,7 +611,7 @@ void FlashVolumeWriter::commit()
     ASSERT(volume.isValid());
 
     // All done. Notify userspace, if they can see this volume.
-    if (volume.typeIsUserVisible(hdr->type))
+    if (volume.typeIsUserCreated(hdr->type))
         Event::setBasePending(Event::PID_BASE_VOLUME_COMMIT, volume.getHandle());
 }
 
