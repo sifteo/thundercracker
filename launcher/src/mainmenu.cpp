@@ -42,6 +42,7 @@ void MainMenu::init()
     Events::cubeDisconnect.set(&MainMenu::cubeDisconnect, this);
     Events::neighborAdd.set(&MainMenu::neighborAdded, this);
     Events::gameMenu.set(&MainMenu::gameMenuEvent, this);
+    Events::cubeBatteryLevelChange.set(&MainMenu::onBatteryLevelChange, this);
 
     loader.init();
 
@@ -234,6 +235,12 @@ void MainMenu::cubeConnect(unsigned cid)
     Shared::video[cid].initMode(BG0_ROM);
     Shared::video[cid].bg0.setPanning(vec(0,0));
     Shared::video[cid].bg0.image(vec(0,0), Logo);
+
+    if (itemIndexCurrent >= 0) {
+        ASSERT(itemIndexCurrent < arraysize(items));
+        MainMenuItem *item = items[itemIndexCurrent];
+        item->onCubeConnect(cid);
+    }
 }
 
 void MainMenu::cubeDisconnect(unsigned cid)
@@ -245,6 +252,13 @@ void MainMenu::cubeDisconnect(unsigned cid)
     // Were we using this cube? Not any more.
     if (mainCube == cid)
         mainCube = CubeID();
+
+    if (itemIndexCurrent >= 0) {
+        ASSERT(itemIndexCurrent < arraysize(items));
+        MainMenuItem *item = items[itemIndexCurrent];
+        item->onCubeDisconnect(cid);
+    }
+
 }
 
 void MainMenu::neighborAdded(unsigned firstID, unsigned firstSide,
@@ -274,6 +288,15 @@ void MainMenu::neighborAdded(unsigned firstID, unsigned firstSide,
     ASSERT(Shared::connectTime[cid].isValid());
     if (SystemTime::now() - Shared::connectTime[cid] > TimeDelta::fromMillisec(2000))
         cid.unpair();
+}
+
+void MainMenu::onBatteryLevelChange(unsigned cid)
+{
+    if (itemIndexCurrent >= 0) {
+        ASSERT(itemIndexCurrent < arraysize(items));
+        MainMenuItem *item = items[itemIndexCurrent];
+        item->onCubeBatteryLevelChange(cid);
+    }
 }
 
 void MainMenu::volumesChanged(unsigned)

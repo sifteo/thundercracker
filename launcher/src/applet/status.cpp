@@ -103,7 +103,6 @@ void StatusApplet::add(MainMenu &m)
     static StatusApplet instance;
     instance.menu = NULL;
     instance.menuItemIndex = -1;
-    Events::cubeBatteryLevelChange.set(&StatusApplet::onBatteryLevelChange, &instance);
     m.append(&instance);
 }
 
@@ -137,7 +136,21 @@ void StatusApplet::drawCube(CubeID cube)
     drawBattery(vid.bg0, cube.batteryLevel(), vec(7, 9));
 }
 
-void StatusApplet::onBatteryLevelChange(unsigned cid)
+void StatusApplet::onCubeConnect(unsigned cid)
+{
+    // Update menu icon
+    drawIcon(menu->cube());
+    menu->replaceIcon(menuItemIndex, menuIcon);
+}
+
+void StatusApplet::onCubeDisconnect(unsigned cid)
+{
+    // Update menu icon
+    drawIcon(menu->cube());
+    menu->replaceIcon(menuItemIndex, menuIcon);
+}
+
+void StatusApplet::onCubeBatteryLevelChange(unsigned cid)
 {
     if (menu != NULL && menuItemIndex >= 0) {
         CubeID menuCube = menu->cube();
