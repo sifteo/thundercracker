@@ -497,14 +497,14 @@ class FlashLFSVolumeVector
     static const unsigned MAX_TOTAL_OBJ_BYTES =
         FlashLFSIndexRecord::MAX_KEYS * FlashLFSIndexRecord::MAX_SIZE;
 
+public:
     // Number of volumes required just to store the worst-case set of objects
     static const unsigned MAX_OBJ_VOLUMES = 
-        (MAX_TOTAL_OBJ_BYTES + MIN_OBJ_BYTES_PER_VOLUME - 1) / MIN_OBJ_BYTES_PER_VOLUME;
+        (MAX_TOTAL_OBJ_BYTES + MIN_OBJ_BYTES_PER_VOLUME - 1) / MIN_OBJ_BYTES_PER_VOLUME + 1;
 
     // Number of 'padding' volumes which we may require for garbage collection
     static const unsigned PAD_VOLUMES = 2;
 
-public:
     // Size of payload portion of any volume
     static const unsigned VOL_PAYLOAD_SIZE = FlashMapBlock::BLOCK_SIZE
         - FlashBlock::BLOCK_SIZE;
@@ -537,15 +537,15 @@ public:
             return FlashMapBlock::invalid();
     }
 
-    ALWAYS_INLINE bool full() const
+    ALWAYS_INLINE bool full(unsigned limit) const
     {
         ASSERT(numSlotsInUse <= MAX_VOLUMES);
-        return numSlotsInUse == MAX_VOLUMES;
+        return numSlotsInUse >= limit;
     }
 
     ALWAYS_INLINE void append(FlashVolume vol)
     {
-        ASSERT(!full());
+        ASSERT(!full(MAX_VOLUMES));
         slots[numSlotsInUse++] = vol;
     }
 
@@ -578,7 +578,7 @@ public:
     void init(FlashVolume parent);
     void initWithVolumeVector(FlashVolume parent, FlashLFSVolumeVector::SequenceInfo &si);
 
-    bool newVolume();
+    bool newVolume(unsigned volLimit);
 
     // Collect garbage on any volume, trying this one first
     bool collectGarbage();
@@ -612,7 +612,7 @@ private:
     void findGarbageCandidates(VolumeIndexVector &volumesToKeep, VolumeUtilizationVector &utilization);
     void scrubUnderutilizedVolumes(VolumeIndexVector &volumesToKeep, const VolumeUtilizationVector &utilization);
     bool scrubVolume(unsigned volIndex, FlashLFSObjectIter &iter, FlashLFSIndexRecord::KeyVector_t &obsoleteKeys, uint32_t &crc);
-    bool deleteGarbageVolumes(const VolumeIndexVector &volumesToKeep);
+    bool deleteGarbageVolumes(const VolumeIndexVector &volumesToKeep, unsigned numSlotsInUse);
     bool writeCopyOfRecord(const FlashLFSIndexRecord *record, uint32_t crc, unsigned srcAddress);
 };
 
@@ -651,7 +651,8 @@ public:
     FlashLFSObjectAllocator(FlashLFS &lfs, unsigned key, unsigned size, unsigned crc);
 
     // Perform the actual allocation. Writes to flash, etc.
-    bool allocate();
+    // By default, uses only MAX_OBJ_VOLUMES, leaving our padding available for GC use.
+    bool allocate(unsigned volLimit = FlashLFSVolumeVector::MAX_OBJ_VOLUMES);
 
     // Try to allocate, retrying after garbage collection if we fail
     bool allocateAndCollectGarbage();

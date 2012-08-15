@@ -324,7 +324,7 @@ FlashLFSIndexRecord *FlashLFSIndexBlockIter::beginAppend(FlashBlockWriter &write
 
 void FlashLFSVolumeVector::append(FlashVolume vol, SequenceInfo &si)
 {
-    if (full()) {
+    if (full(MAX_VOLUMES)) {
         // Too many volumes!
         ASSERT(0);
         return;
@@ -456,7 +456,7 @@ void FlashLFS::initWithVolumeVector(FlashVolume parent, FlashLFSVolumeVector::Se
     #endif
 }
 
-bool FlashLFS::newVolume()
+bool FlashLFS::newVolume(unsigned volLimit)
 {
     /*
      * Allocate a new volume with the next sequence number.
@@ -465,7 +465,7 @@ bool FlashLFS::newVolume()
      * isn't any more space to allocate volumes.
      */
 
-    if (volumes.full())
+    if (volumes.full(volLimit))
         return false;
 
     FlashVolumeWriter vw;
@@ -524,7 +524,7 @@ FlashLFSObjectAllocator::FlashLFSObjectAllocator(FlashLFS &lfs, unsigned key,
     ASSERT(FlashLFSIndexRecord::isSizeAllowed(this->size));
 }
 
-bool FlashLFSObjectAllocator::allocate()
+bool FlashLFSObjectAllocator::allocate(unsigned volLimit)
 {
     /*
      * Allocate space for a new object, and write an index record for it.
@@ -536,7 +536,7 @@ bool FlashLFSObjectAllocator::allocate()
     if (vol.block.isValid() && allocInVolume(vol))
         return true;
 
-    return lfs.newVolume() && allocInVolume(lfs.volumes.last());
+    return lfs.newVolume(volLimit) && allocInVolume(lfs.volumes.last());
 }
 
 bool FlashLFSObjectAllocator::allocateAndCollectGarbage()
@@ -988,7 +988,8 @@ bool FlashLFS::collectLocalGarbage()
     ASSERT(isValid());
 
     // Early out
-    if (volumes.numSlotsInUse == 0)
+    unsigned numSlotsInUse = volumes.numSlotsInUse;
+    if (numSlotsInUse == 0)
         return false;
 
     /*
@@ -1013,9 +1014,13 @@ bool FlashLFS::collectLocalGarbage()
      * Delete obsolete volumes, i.e. any volume that we haven't marked
      * in 'volumesToKeep'. These could be totally unused volumes, or volumes
      * that we've just scrubbed.
+     *
+     * Note that the scrubbing operation may produce new volumes which
+     * aren't represented in our volumesToKeep map. We pass in our original
+     * numSlotsInUse, so these new volumes will not be touched.
      */
 
-    return deleteGarbageVolumes(volumesToKeep);
+    return deleteGarbageVolumes(volumesToKeep, numSlotsInUse);
 }
 
 void FlashLFS::findGarbageCandidates(VolumeIndexVector &volumesToKeep, VolumeUtilizationVector &utilization)
@@ -1059,7 +1064,7 @@ void FlashLFS::findGarbageCandidates(VolumeIndexVector &volumesToKeep, VolumeUti
     }
 }
 
-bool FlashLFS::deleteGarbageVolumes(const VolumeIndexVector &volumesToKeep)
+bool FlashLFS::deleteGarbageVolumes(const VolumeIndexVector &volumesToKeep, unsigned numSlotsInUse)
 {
     /*
      * Delete any volumes not marked in 'volumesToKeep', and compact the LFS array.
@@ -1067,8 +1072,9 @@ bool FlashLFS::deleteGarbageVolumes(const VolumeIndexVector &volumesToKeep)
      */
 
     bool foundGarbage = false;
+    ASSERT(numSlotsInUse <= volumes.numSlotsInUse);
 
-    for (unsigned i = 0; i < volumes.numSlotsInUse; ++i) {
+    for (unsigned i = 0; i < numSlotsInUse; ++i) {
         if (!volumesToKeep.test(i)) {
             FlashVolume &vol = volumes.slots[i];
             vol.deleteSingleWithoutInvalidate();
@@ -1108,8 +1114,12 @@ void FlashLFS::scrubUnderutilizedVolumes(VolumeIndexVector &volumesToKeep, const
     FlashLFSObjectIter iter(*this);
     uint32_t crc;
 
-    // Find an underutilized volume first
-    for (int i = volumes.numSlotsInUse - 1; i > 0; --i) {
+    /*
+     * Find an underutilized volume first. Start from the _next_ to last volume,
+     * since we really don't care if the last volume is underutilized. It's a
+     * work in progress anyway.
+     */
+    for (int i = volumes.numSlotsInUse - 2; i > 0; --i) {
 
         // Already planning on deleting this one?
         if (!volumesToKeep.test(i))
@@ -1216,26 +1226,42 @@ bool FlashLFS::writeCopyOfRecord(const FlashLFSIndexRecord *record, uint32_t crc
     unsigned dataSize = record->getSizeInBytes();
     FlashLFSObjectAllocator allocator(*this, record->getKey(), dataSize, crc);
 
-    if (!allocator.allocate())
+    // During garbage collection, allow use of all volumes (even our padding space)
+    if (!allocator.allocate(FlashLFSVolumeVector::MAX_VOLUMES)) {
+        LOG(("LFS: Defer GC of record 0x%02x at 0x%08x due to insufficient space\n",
+            record->getKey(), srcAddress));
         return false;
+    }
 
     unsigned destAddress = allocator.address();
     FlashBlock::invalidate(destAddress, destAddress + dataSize);
 
+    LOG(("LFS: GC copying key 0x%02x from 0x%08x to 0x%08x (%d bytes)\n",
+        record->getKey(), srcAddress, destAddress, dataSize));
+
     /*
      * To perform the copy, we'll move data in small chunks via a stack buffer.
+     * On debug builds, we make sure the CRC we were given is correct.
      */
 
     uint8_t buffer[32];
+    DEBUG_ONLY(CrcStream cs;)
+    DEBUG_ONLY(cs.reset();)
 
     while (dataSize) {
         unsigned chunk = MIN(dataSize, sizeof buffer);
+
         FlashDevice::read(srcAddress, buffer, chunk);
         FlashDevice::write(destAddress, buffer, chunk);
+
+        DEBUG_ONLY(cs.addBytes(buffer, chunk);)
+
         srcAddress += chunk;
         destAddress += chunk;
         dataSize -= chunk;
     }
+
+    ASSERT(cs.get(FlashLFSIndexRecord::SIZE_UNIT) == crc);
 
     return true;
 }
