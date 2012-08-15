@@ -208,11 +208,6 @@ ALWAYS_INLINE void Event::cubeEventsClear(PriorityID pid)
 
 void Event::setBasePending(PriorityID pid, uint32_t param)
 {
-    if (pending.test(pid)) {
-        LOG(("EVENT: Warning, event %d already registered (param: 0x%08X), overwriting.\n",
-             pid, params[pid].generic));
-    }
-
     Atomic::Store(params[pid].generic, param);
     pending.atomicMark(pid);
 }
