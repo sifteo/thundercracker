@@ -1154,13 +1154,54 @@ void FlashLFS::scrubUnderutilizedVolumes(VolumeIndexVector &volumesToKeep, const
             continue;
         }
 
-        // Now try to scrub this particular volume
-        scrubVolume(iter, obsoleteKeys);
+        // Now try to scrub this particular volume. If successful, we'll mark it for deletion.
+        if (scrubVolume(i, iter, obsoleteKeys))
+            volumesToKeep.clear(i);
     }
 }
 
-void FlashLFS::scrubVolume(FlashLFSObjectIter &iter, FlashLFSIndexRecord::KeyVector_t &obsoleteKeys)
+bool FlashLFS::scrubVolume(unsigned volIndex, FlashLFSObjectIter &iter, FlashLFSIndexRecord::KeyVector_t &obsoleteKeys)
 {
-    LOG(("XXX Incomplete: Trying to scrub volume %02x\n", parent.block.code));
+    /*
+     * Scrub the volume. If we're successful, we can return true and the volume will be deleted.
+     * If not, any partial progress we've made will be kept and we return false to keep the original
+     * volume as well.
+     *
+     * This involves reverse-iterating for as long as we're still inside 'volIndex', and copying
+     * any keys not already in 'obsoleteKeys'.
+     *
+     * We're expected to mark keys in obsoleteKeys prior to callint iter.previous(), just like
+     * the loop in scrubUnderutilizedVolumes().
+     */
+
+    while (iter.isInVolumeIndex(volIndex)) {
+
+        if (!iter.isPastEnd()) {
+            unsigned key = iter.record()->getKey();
+            ASSERT(obsoleteKeys.test(key) == false);
+
+            // Found a key that isn't yet obsolete. Copy it!
+            if (!writeCopyOfRecord(iter.record()))
+                return false;
+
+            obsoleteKeys.mark(key);
+        }
+
+        // Move to the next non-obsolete record with a valid CRC
+        do {
+            if (!iter.previous(FlashLFSKeyQuery(&obsoleteKeys))) {
+                // Finished whole filesystem
+                return true;
+            }
+        } while (!iter.readAndCheckCRCOnly());
+    }
+
+    // Finished volume
+    return true;
 }
 
+bool FlashLFS::writeCopyOfRecord(const FlashLFSIndexRecord *record)
+{
+    LOG(("XXX: Garbage collector wants to copy record %02x. Not yet implemented.\n", record->getKey()));
+    return false;
+}

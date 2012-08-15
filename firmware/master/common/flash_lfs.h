@@ -611,8 +611,9 @@ private:
 
     void findGarbageCandidates(VolumeIndexVector &volumesToKeep, VolumeUtilizationVector &utilization);
     void scrubUnderutilizedVolumes(VolumeIndexVector &volumesToKeep, const VolumeUtilizationVector &utilization);
-    void scrubVolume(FlashLFSObjectIter &iter, FlashLFSIndexRecord::KeyVector_t &obsoleteKeys);
+    bool scrubVolume(unsigned volIndex, FlashLFSObjectIter &iter, FlashLFSIndexRecord::KeyVector_t &obsoleteKeys);
     bool deleteGarbageVolumes(const VolumeIndexVector &volumesToKeep);
+    bool writeCopyOfRecord(const FlashLFSIndexRecord *record);
 };
 
 
