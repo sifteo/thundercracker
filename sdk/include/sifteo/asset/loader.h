@@ -21,6 +21,86 @@ namespace Sifteo {
  * @{
  */
 
+class Volume;
+
+/**
+ * @brief One node in an AssetConfiguration list
+ *
+ * This node makes a single request to load one group into one slot. A list of
+ * these nodes makes up an AssetConfiguration.
+ */
+
+struct AssetConfigurationNode {
+    _SYSAssetConfiguration sys;
+
+    /*
+     * @brief Initialize this node with an AssetSlot and AssetGroup
+     *
+     * This initializes the AssetConfigurationNode with instructions for
+     * the AssetLoader to make sure the AssetGroup 'group' is available in the AssetSlot
+     * 'slot' by the time the load finishes.
+     *
+     * If the AssetGroup is part of a different Volume, you must provide that volume
+     * handle as the 'volume' parameter, and the 'group' must be mapped via MappedVolume.
+     * If you are loading assets packaged with your own game, you do not need to provide
+     * a volume.
+     */
+    void init(_SYSAssetSlot slot, AssetGroup &group, _SYSVolumeHandle volume = 0)
+    {
+        sys.pGroup = reinterpret_cast<uintptr_t>(&group);
+        sys.volume = volume;
+        sys.dataSize = group.compressedSize();
+        sys.numTiles = group.numTiles();
+        sys.ordinal = group.sysHeader()->ordinal;
+        sys.slot = slot;
+    }
+
+    /**
+     * @brief Return the AssetSlot this node will be loaded into
+     */
+    AssetSlot slot() const {
+        return AssetSlot(sys.slot);
+    }
+
+    /**
+     * @brief Return the AssetGroup referenced by this node
+     */
+    AssetGroup *group() const {
+        return reinterpret_cast<AssetGroup*>(sys.pGroup);
+    }
+
+    /** 
+     * @brief Return the Volume handle referenced by this node.
+     */
+    _SYSVolumeHandle volume() const {
+        return sys.volume;
+    }
+
+    /**
+     * @brief Get the size of this asset group, in tiles.
+     */
+    unsigned numTiles() const {
+        return sys.numTiles;
+    }
+
+    /**
+     * @brief How many tiles will this group use up in its AssetSlot?
+     *
+     * This is numTiles(), rounded up to the nearest AssetSlot allocation unit.
+     */
+    unsigned tileAllocation() const {
+        return roundup<unsigned>(numTiles(), _SYS_ASSET_GROUP_SIZE_UNIT);
+    }
+
+    /**
+     * @brief Get the compressed size of this asset group, in bytes
+     */
+    unsigned compressedSize() const {
+        return sys.dataSize;
+    }
+};
+
+
 /**
  * @brief An AssetConfiguration represents an arrangement of AssetGroups to load
  *
@@ -36,8 +116,8 @@ namespace Sifteo {
  */
 
 template <unsigned tCapacity>
-class AssetConfiguration : public Array<_SYSAssetConfiguration, tCapacity, uint8_t> {
-    typedef Array<_SYSAssetConfiguration, tCapacity, uint8_t> super;
+class AssetConfiguration : public Array<AssetConfigurationNode, tCapacity, uint8_t> {
+    typedef Array<AssetConfigurationNode, tCapacity, uint8_t> super;
 public:
 
     /**
@@ -54,13 +134,7 @@ public:
      */
     void append(_SYSAssetSlot slot, AssetGroup &group, _SYSVolumeHandle volume = 0)
     {
-        _SYSAssetConfiguration &cfg = super::append();
-        cfg.pGroup = reinterpret_cast<uintptr_t>(&group);
-        cfg.volume = volume;
-        cfg.dataSize = group.compressedSize();
-        cfg.numTiles = group.numTiles();
-        cfg.ordinal = group.sysHeader()->ordinal;
-        cfg.slot = slot;
+        super::append().init(slot, group, volume);
     }
 };
 
@@ -173,7 +247,7 @@ struct AssetLoader {
         // Limit to cubes that we've allocated _SYSAssetLoaderCubes for
         STATIC_ASSERT(CUBE_ALLOCATION <= _SYS_NUM_CUBE_SLOTS);
         cubes &= 0xFFFFFFFF << (32 - CUBE_ALLOCATION);
-        _SYS_asset_loadStart(*this, configuration.begin(), configuration.count(), cubes);
+        _SYS_asset_loadStart(*this, &configuration.begin()->sys, configuration.count(), cubes);
     }
 
     /**
