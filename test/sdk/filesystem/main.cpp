@@ -113,7 +113,7 @@ void createObjects()
     ObjectFlavor foo(1.00);
     ObjectFlavor bar(0.10);
     ObjectFlavor wub(0.01);
-    ObjectFlavor qux(0.00);
+    ObjectFlavor qux(0.001);
 
     SCRIPT(LUA, logger = FlashLogger:start(fs, "flash.log"));
 
@@ -125,11 +125,13 @@ void createObjects()
 
     LOG("Recording values...\n");
 
-    for (unsigned i = 0; i < 5000; i++) {
+    for (unsigned i = 0; i < 10000; i++) {
         foo.write();
         bar.write();
         wub.write();
         qux.write();
+
+        System::keepAwake();
     }
 
     /*
@@ -178,6 +180,8 @@ void createObjects()
                 wub.key.sys, wub.readValue, wub.writeValue,
                 qux.key.sys, qux.readValue, qux.writeValue);
         }
+
+        System::keepAwake();
     }
 
     SCRIPT(LUA, player:stop());
