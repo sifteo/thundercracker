@@ -611,9 +611,9 @@ private:
 
     void findGarbageCandidates(VolumeIndexVector &volumesToKeep, VolumeUtilizationVector &utilization);
     void scrubUnderutilizedVolumes(VolumeIndexVector &volumesToKeep, const VolumeUtilizationVector &utilization);
-    bool scrubVolume(unsigned volIndex, FlashLFSObjectIter &iter, FlashLFSIndexRecord::KeyVector_t &obsoleteKeys);
+    bool scrubVolume(unsigned volIndex, FlashLFSObjectIter &iter, FlashLFSIndexRecord::KeyVector_t &obsoleteKeys, uint32_t &crc);
     bool deleteGarbageVolumes(const VolumeIndexVector &volumesToKeep);
-    bool writeCopyOfRecord(const FlashLFSIndexRecord *record);
+    bool writeCopyOfRecord(const FlashLFSIndexRecord *record, uint32_t crc, unsigned srcAddress);
 };
 
 
@@ -698,12 +698,6 @@ public:
     bool readAndCheck(uint8_t *buffer, unsigned size) const;
     bool readAndCheckCRCOnly(uint32_t &crc) const;
     void copyToFlash(unsigned dest) const;
-
-    // No-argument version of readAndCheckCRCOnly.
-    ALWAYS_INLINE bool readAndCheckCRCOnly() const {
-        uint32_t crc;
-        return readAndCheckCRCOnly(crc);
-    }
 
     // Is this iter still in its initial state, pointing past the end of the LFS?
     ALWAYS_INLINE bool isPastEnd() const {

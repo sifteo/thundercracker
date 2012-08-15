@@ -1041,7 +1041,8 @@ void FlashLFS::findGarbageCandidates(VolumeIndexVector &volumesToKeep, VolumeUti
     while (iter.previous(FlashLFSKeyQuery(&obsoleteKeys))) {
 
         // Check this key's CRC. It doesn't obsolete older keys if it's corrupt!
-        if (!iter.readAndCheckCRCOnly())
+        uint32_t crc;
+        if (!iter.readAndCheckCRCOnly(crc))
             continue;
 
         // Any additional instances of this key are obsolete
@@ -1105,6 +1106,7 @@ void FlashLFS::scrubUnderutilizedVolumes(VolumeIndexVector &volumesToKeep, const
 
     // Start a new reverse-iteration
     FlashLFSObjectIter iter(*this);
+    uint32_t crc;
 
     // Find an underutilized volume first
     for (int i = volumes.numSlotsInUse - 1; i > 0; --i) {
@@ -1145,7 +1147,7 @@ void FlashLFS::scrubUnderutilizedVolumes(VolumeIndexVector &volumesToKeep, const
                 }
 
                 // Check this key's CRC. Ignore it if it's corrupt
-            } while (!iter.readAndCheckCRCOnly());
+            } while (!iter.readAndCheckCRCOnly(crc));
         }
 
         if (iter.volumeIndex() != unsigned(i)) {
@@ -1155,12 +1157,13 @@ void FlashLFS::scrubUnderutilizedVolumes(VolumeIndexVector &volumesToKeep, const
         }
 
         // Now try to scrub this particular volume. If successful, we'll mark it for deletion.
-        if (scrubVolume(i, iter, obsoleteKeys))
+        if (scrubVolume(i, iter, obsoleteKeys, crc))
             volumesToKeep.clear(i);
     }
 }
 
-bool FlashLFS::scrubVolume(unsigned volIndex, FlashLFSObjectIter &iter, FlashLFSIndexRecord::KeyVector_t &obsoleteKeys)
+bool FlashLFS::scrubVolume(unsigned volIndex, FlashLFSObjectIter &iter,
+    FlashLFSIndexRecord::KeyVector_t &obsoleteKeys, uint32_t &crc)
 {
     /*
      * Scrub the volume. If we're successful, we can return true and the volume will be deleted.
@@ -1172,6 +1175,8 @@ bool FlashLFS::scrubVolume(unsigned volIndex, FlashLFSObjectIter &iter, FlashLFS
      *
      * We're expected to mark keys in obsoleteKeys prior to callint iter.previous(), just like
      * the loop in scrubUnderutilizedVolumes().
+     *
+     * 'crc' must always be the CRC of the current record pointed to by 'iter'.
      */
 
     while (iter.isInVolumeIndex(volIndex)) {
@@ -1181,7 +1186,7 @@ bool FlashLFS::scrubVolume(unsigned volIndex, FlashLFSObjectIter &iter, FlashLFS
             ASSERT(obsoleteKeys.test(key) == false);
 
             // Found a key that isn't yet obsolete. Copy it!
-            if (!writeCopyOfRecord(iter.record()))
+            if (!writeCopyOfRecord(iter.record(), crc, iter.address()))
                 return false;
 
             obsoleteKeys.mark(key);
@@ -1193,15 +1198,44 @@ bool FlashLFS::scrubVolume(unsigned volIndex, FlashLFSObjectIter &iter, FlashLFS
                 // Finished whole filesystem
                 return true;
             }
-        } while (!iter.readAndCheckCRCOnly());
+        } while (!iter.readAndCheckCRCOnly(crc));
     }
 
     // Finished volume
     return true;
 }
 
-bool FlashLFS::writeCopyOfRecord(const FlashLFSIndexRecord *record)
+bool FlashLFS::writeCopyOfRecord(const FlashLFSIndexRecord *record, uint32_t crc, unsigned srcAddress)
 {
-    LOG(("XXX: Garbage collector wants to copy record %02x. Not yet implemented.\n", record->getKey()));
-    return false;
+    /*
+     * Try to copy an existing record to a fresh location in the LFS.
+     * Does not try to garbage collect. Returns 'true' on success,
+     * or 'false' if we could not allocate space.
+     */
+
+    unsigned dataSize = record->getSizeInBytes();
+    FlashLFSObjectAllocator allocator(*this, record->getKey(), dataSize, crc);
+
+    if (!allocator.allocate())
+        return false;
+
+    unsigned destAddress = allocator.address();
+    FlashBlock::invalidate(destAddress, destAddress + dataSize);
+
+    /*
+     * To perform the copy, we'll move data in small chunks via a stack buffer.
+     */
+
+    uint8_t buffer[32];
+
+    while (dataSize) {
+        unsigned chunk = MIN(dataSize, sizeof buffer);
+        FlashDevice::read(srcAddress, buffer, chunk);
+        FlashDevice::write(destAddress, buffer, chunk);
+        srcAddress += chunk;
+        destAddress += chunk;
+        dataSize -= chunk;
+    }
+
+    return true;
 }
