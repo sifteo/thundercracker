@@ -79,6 +79,7 @@ private:
     void neighborAdded(unsigned firstID, unsigned firstSide,
                        unsigned secondID, unsigned secondSide);
     void gameMenuEvent();
+    void onBatteryLevelChange(unsigned cid);
 
     void waitForACube();
 

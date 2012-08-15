@@ -17,14 +17,16 @@ public:
     virtual void exec();
     virtual void arrive(Sifteo::Menu &m, unsigned index);
     virtual void depart(Sifteo::Menu &m, unsigned index);
+    virtual void onCubeBatteryLevelChange(unsigned cid);
+    virtual void onCubeConnect(unsigned cid);
+    virtual void onCubeDisconnect(unsigned cid);
+
     
     static void add(MainMenu &m);
 
 private:
     void drawIcon(Sifteo::CubeID menuCube);
     void drawCube(Sifteo::CubeID cube);
-    
-    void onBatteryLevelChange(unsigned cid);
     
     Sifteo::Menu *menu;
     int menuItemIndex;

@@ -59,6 +59,11 @@ void StatusApplet::arrive(Sifteo::Menu &m, unsigned index)
     menu = &m;
     menuItemIndex = index;
     
+    // The number of cubes connected, or the base and menu cube battery status
+    // could have changed while the Status applet was inactive.
+    drawIcon(m.cube());
+    m.replaceIcon(menuItemIndex, menuIcon);
+
     // Draw Icon Background
     for (CubeID cube : CubeSet::connected()) {
         if (cube != m.cube()) {
@@ -97,7 +102,6 @@ void StatusApplet::add(MainMenu &m)
     static StatusApplet instance;
     instance.menu = NULL;
     instance.menuItemIndex = -1;
-    Events::cubeBatteryLevelChange.set(&StatusApplet::onBatteryLevelChange, &instance);
     m.append(&instance);
 }
 
@@ -131,16 +135,32 @@ void StatusApplet::drawCube(CubeID cube)
     drawBattery(vid.bg0, cube.batteryLevel(), vec(7, 9));
 }
 
-void StatusApplet::onBatteryLevelChange(unsigned cid)
+void StatusApplet::onCubeConnect(unsigned cid)
 {
-    if (menu != NULL && menuItemIndex >= 0) {
-        CubeID menuCube = menu->cube();
+    ASSERT(menu);
+    // Update menu icon
+    drawIcon(menu->cube());
+    menu->replaceIcon(menuItemIndex, menuIcon);
+    drawCube(CubeID(cid));
+}
 
-        if (cid == menuCube) {
-            drawIcon(menuCube);
-            menu->replaceIcon(menuItemIndex, menuIcon);
-        } else {
-            drawCube(CubeID(cid));
-        }
+void StatusApplet::onCubeDisconnect(unsigned cid)
+{
+    ASSERT(menu);
+    // Update menu icon
+    drawIcon(menu->cube());
+    menu->replaceIcon(menuItemIndex, menuIcon);
+}
+
+void StatusApplet::onCubeBatteryLevelChange(unsigned cid)
+{
+    ASSERT(menu);
+    // Update the appropriate cube's icon
+    CubeID menuCube = menu->cube();
+    if (cid == menuCube) {
+        drawIcon(menuCube);
+        menu->replaceIcon(menuItemIndex, menuIcon);
+    } else {
+        drawCube(CubeID(cid));
     }
 }

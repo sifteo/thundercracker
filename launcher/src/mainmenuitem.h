@@ -72,4 +72,19 @@ public:
      * Hook for menu item's departing from being the current item.
      */
     virtual void depart(Sifteo::Menu &m, unsigned index) {}
+
+    /**
+     * Battery level changed event recieved while this menu item is the current item.
+     */
+    virtual void onCubeBatteryLevelChange(unsigned cid) {}
+
+    /**
+     * Cube connected event recieved while this menu item is the current item.
+     */
+    virtual void onCubeConnect(unsigned cid) {}
+
+    /**
+     * Cube disconnected event recieved while this menu item is the current item.
+     */
+    virtual void onCubeDisconnect(unsigned cid) {}
 };

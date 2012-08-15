@@ -42,6 +42,7 @@ void MainMenu::init()
     Events::cubeDisconnect.set(&MainMenu::cubeDisconnect, this);
     Events::neighborAdd.set(&MainMenu::neighborAdded, this);
     Events::gameMenu.set(&MainMenu::gameMenuEvent, this);
+    Events::cubeBatteryLevelChange.set(&MainMenu::onBatteryLevelChange, this);
 
     loader.init();
 
@@ -245,6 +246,13 @@ void MainMenu::cubeDisconnect(unsigned cid)
     // Were we using this cube? Not any more.
     if (mainCube == cid)
         mainCube = CubeID();
+
+    if (itemIndexCurrent >= 0) {
+        ASSERT(itemIndexCurrent < arraysize(items));
+        MainMenuItem *item = items[itemIndexCurrent];
+        item->onCubeDisconnect(cid);
+    }
+
 }
 
 void MainMenu::neighborAdded(unsigned firstID, unsigned firstSide,
@@ -274,6 +282,15 @@ void MainMenu::neighborAdded(unsigned firstID, unsigned firstSide,
     ASSERT(Shared::connectTime[cid].isValid());
     if (SystemTime::now() - Shared::connectTime[cid] > TimeDelta::fromMillisec(2000))
         cid.unpair();
+}
+
+void MainMenu::onBatteryLevelChange(unsigned cid)
+{
+    if (itemIndexCurrent >= 0) {
+        ASSERT(itemIndexCurrent < arraysize(items));
+        MainMenuItem *item = items[itemIndexCurrent];
+        item->onCubeBatteryLevelChange(cid);
+    }
 }
 
 void MainMenu::volumesChanged(unsigned)
@@ -343,6 +360,13 @@ void MainMenu::updateConnecting()
                 vid.bg0.erase(Menu_StripeTile);
 
                 connectingCubes.clear(cube);
+
+                // Dispatch connected event to current applet now that the cube is ready
+                if (itemIndexCurrent >= 0) {
+                    ASSERT(itemIndexCurrent < arraysize(items));
+                    MainMenuItem *item = items[itemIndexCurrent];
+                    item->onCubeConnect(cube);
+                }
             }
 
             loadingCubes.clear();
