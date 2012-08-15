@@ -141,6 +141,7 @@ void StatusApplet::onCubeConnect(unsigned cid)
     // Update menu icon
     drawIcon(menu->cube());
     menu->replaceIcon(menuItemIndex, menuIcon);
+    drawCube(CubeID(cid));
 }
 
 void StatusApplet::onCubeDisconnect(unsigned cid)

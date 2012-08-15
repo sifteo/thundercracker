@@ -235,12 +235,6 @@ void MainMenu::cubeConnect(unsigned cid)
     Shared::video[cid].initMode(BG0_ROM);
     Shared::video[cid].bg0.setPanning(vec(0,0));
     Shared::video[cid].bg0.image(vec(0,0), Logo);
-
-    if (itemIndexCurrent >= 0) {
-        ASSERT(itemIndexCurrent < arraysize(items));
-        MainMenuItem *item = items[itemIndexCurrent];
-        item->onCubeConnect(cid);
-    }
 }
 
 void MainMenu::cubeDisconnect(unsigned cid)
@@ -366,9 +360,18 @@ void MainMenu::updateConnecting()
                 vid.bg0.erase(Menu_StripeTile);
 
                 connectingCubes.clear(cube);
+
+                // Dispatch connected event to current applet now that the cube is ready
+                if (itemIndexCurrent >= 0) {
+                    ASSERT(itemIndexCurrent < arraysize(items));
+                    MainMenuItem *item = items[itemIndexCurrent];
+                    item->onCubeConnect(cube);
+                }
             }
 
             loadingCubes.clear();
+
+
 
         } else {
             // Still loading, update progress
