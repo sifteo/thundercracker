@@ -134,6 +134,15 @@ struct SFR {
             }
             break;
 
+        case REG_RTC2CON:
+            // SFR-triggered timer capture
+            if (cpu->mSFR[REG_RTC2CON] & RTC2CON_SFRCAPTURE) {
+                uint16_t rtc2 = cpu->rtc2;
+                cpu->mSFR[REG_RTC2CPT00] = rtc2;
+                cpu->mSFR[REG_RTC2CPT01] = rtc2 >> 8;
+            }
+            break;
+
         }
     }
 
