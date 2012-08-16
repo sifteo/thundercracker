@@ -160,7 +160,7 @@ v_0053: ljmp    _spi_i2c_isr
         ;---------------------------------
 
 v_006b: setb    _RF_CE              ; Turn the radio back on
-        mov     _RTC2CON, #0x09     ; Disable IRQ until the next nap
+        mov     _RTC2CON, #0x01     ; Disable IRQ until the next nap
         reti
 
     __endasm ;

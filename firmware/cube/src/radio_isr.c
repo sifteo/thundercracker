@@ -245,6 +245,11 @@ void radio_isr(void) __interrupt(VECTOR_RF) __naked __using(RF_BANK)
         mov     _DPL1, _vram_dptr
         mov     _DPH1, _vram_dptr+1
 
+        ; Timestamp the packet arrival time with RTC2. This is supposed to be equivalent
+        ; to RTC2 enableExternalCapture, but that does not seem to work correctly?
+
+        orl     _RTC2CON, #0x10     ; Trigger RTC2 capture
+
 rx_begin_packet:
 
         ;--------------------------------------------------------------------
@@ -747,7 +752,7 @@ rx_special:
         ; Enable RTC2 compare interrupt, and turn the radio off. We turn it back on
         ; in the RTC2 ISR.
 
-        mov     _RTC2CON, #0x0D
+        mov     _RTC2CON, #0x05
         clr     _RF_CE
 
         sjmp    rx_complete
