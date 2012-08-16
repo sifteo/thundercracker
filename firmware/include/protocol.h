@@ -17,6 +17,25 @@
 
 /**************************************************************************
  *
+ * Cube Hardware/Firmware Versions
+ *
+ * This is a combined hardware and firmware version, represented as a
+ * single 8-bit number in the least significant byte of the HWID.
+ *
+ * It is intended to be very coarse-grained, bumped only when we do
+ * an actual manufacturing run with a new firmware version.
+ *
+ * This is the spot to record the minimum version number required for
+ * various features.
+ */
+
+#define CUBE_FEATURE_NAP		0x02
+
+#define CUBE_VERSION_LATEST		0x01	// XXX: Temporary
+
+
+/**************************************************************************
+ *
  * Radio Connection Management
  *
  *   Background

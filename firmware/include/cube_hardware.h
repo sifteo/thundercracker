@@ -34,10 +34,6 @@
 #  error Hardware revision is too old; no longer supported by this codebase!
 #endif
 
-// Combined hardware and firmware revision.
-// Available to firmware and userspace, as part of HWID.
-#define HWID_REVISION_CODE  0x01
-
 /*
  * Battery thresholds
  *

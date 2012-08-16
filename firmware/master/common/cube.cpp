@@ -245,8 +245,7 @@ bool CubeSlot::radioProduce(PacketTransmission &tx, SysTime::Ticks now)
      * until then.
      */
 
-#ifdef USE_RADIO_NAP
-    if (idle) {
+    if (idle && getVersion() >= CUBE_FEATURE_NAP) {
         unsigned napTicks = suggestNapTicks();
         if (codec.escRadioNap(tx.packet, napTicks)) {
             // How long will we be asleep for? Naps are measured in units of 32.768 kHz ticks.
@@ -254,7 +253,6 @@ bool CubeSlot::radioProduce(PacketTransmission &tx, SysTime::Ticks now)
             return true;
         }
     }
-#endif
 
     // Finalize this packet. Must be last.
     codec.endPacket(tx.packet);
@@ -367,7 +365,7 @@ void CubeSlot::radioTimeout()
     disconnect();
 }
 
-uint64_t CubeSlot::getHWID()
+uint64_t CubeSlot::getHWID() const
 {
     uint64_t result = 0;
     memcpy(&result, lastACK.hwid, sizeof lastACK.hwid);

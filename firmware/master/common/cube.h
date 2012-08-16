@@ -111,7 +111,12 @@ class CubeSlot {
         paintControl.triggerPaint(this, now);
     }
 
-    uint64_t getHWID();
+    uint64_t getHWID() const;
+
+    uint8_t ALWAYS_INLINE getVersion() const {
+        // Low 8 bits of HWID are a version code
+        return lastACK.hwid[0];
+    }
 
     unsigned ALWAYS_INLINE getRawBatteryV() const {
         return lastACK.battery_v;
