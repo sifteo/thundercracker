@@ -357,6 +357,11 @@ void GLFWCALL Frontend::onKey(int key, int state)
                 instance->mousePicker.mCube->toggleFlip();
             break;
 
+        case 'R':
+            if (instance->mousePicker.mCube)
+                instance->mousePicker.mCube->fullReset();
+            break;
+
         case 'Q':
         case GLFW_KEY_ESC:
             instance->isRunning = false;
@@ -403,7 +408,7 @@ void GLFWCALL Frontend::onKey(int key, int state)
             instance->overlay.toggleAudioVisualizer();
             break;
 
-        case 'R':
+        case 'A':
             /*
              * Intentionally undocumented: Toggle trace mode.
              * If trace mode isn't available, this key is a silent no-op.

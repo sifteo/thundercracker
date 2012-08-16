@@ -82,6 +82,7 @@ class Hardware {
         FlashStorage::CubeRecord *flashStorage);
 
     void reset();
+    void fullReset();
 
     ALWAYS_INLINE unsigned id() const {
         return cpu.id;

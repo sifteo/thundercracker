@@ -103,6 +103,7 @@ class FrontendCube {
     void setHoverTarget(float h);
     void setRotationLock(bool isRotationFixed);
     void toggleFlip();
+    void fullReset();
     
     void setTouch(float amount) {
         hw->setTouch(amount);

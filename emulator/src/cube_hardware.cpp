@@ -74,6 +74,15 @@ void Hardware::reset()
     CPU::em8051_reset(&cpu, false);
 }
 
+void Hardware::fullReset()
+{
+    // Reset the contents of flash memory as well
+    FlashStorage::CubeRecord *rec = flash.getStorage();
+    memset(rec->nvm, 0xFF, sizeof rec->nvm);
+    memset(rec->ext, 0xFF, sizeof rec->ext);
+    reset();
+}
+
 // cube_cpu_callbacks.h
 void CPU::except(CPU::em8051 *cpu, int exc)
 {
