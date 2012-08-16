@@ -55,7 +55,7 @@ private:
 public:
     FrontendMC();
 
-    void init(b2World &world, float x, float y);
+    void init(b2World& world, float x, float y, bool isRotationFixed);
     void exit();
 
     void animate();
@@ -63,6 +63,7 @@ public:
 
     b2Body* getBody() { return body; }
     bool isInitialized() const { return body != 0; }
+    void setRotationLock(bool isRotationFixed);
 
     // Hook for LED::set()
     static LEDSequencer led;

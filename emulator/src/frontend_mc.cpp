@@ -17,7 +17,7 @@ LEDSequencer FrontendMC::led;
 FrontendMC::FrontendMC()
     : body(0) {}
 
-void FrontendMC::init(b2World& world, float x, float y)
+void FrontendMC::init(b2World& world, float x, float y, bool isRotationFixed)
 {
     /*
      * Note: The MC intentionally has very different physical
@@ -53,6 +53,8 @@ void FrontendMC::init(b2World& world, float x, float y)
     // Attach neighbor fixtures
     initNeighbor(0, 1.0f);
     initNeighbor(1, -1.0f);
+
+    setRotationLock(isRotationFixed);
 }
 
 void FrontendMC::exit()
@@ -132,6 +134,16 @@ void FrontendMC::initNeighbor(unsigned id, float x)
     fixtureDef.isSensor = true;
     fixtureDef.userData = &neighborFixtureData[id];
     body->CreateFixture(&fixtureDef);
+}
+
+void FrontendMC::setRotationLock(bool isRotationFixed)
+{
+    b2Body* b = bodyFixture->GetBody();
+    b->SetFixedRotation(isRotationFixed);
+    if (isRotationFixed) {
+        b->SetTransform(b->GetPosition(), 0.f);
+        b->SetAngularVelocity(0.f);
+    }
 }
 
 void LED::init()
