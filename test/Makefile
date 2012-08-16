@@ -20,7 +20,6 @@ TESTS = \
 	sdk/filesystem \
 	sdk/bg0rom \
 	sdk/bg1 \
-	sdk/sprites \
 	sdk/tilebuffer \
 	sdk/scripting \
 	sdk/stir \
@@ -41,7 +40,8 @@ ifneq ($(BUILD_PLATFORM), windows32)
 	sdk/adpcm \
 	sdk/pcm \
 	sdk/tracker-bubbles \
-	sdk/tracker-sine
+	sdk/tracker-sine \
+	sdk/sprites
 endif
 
 #############################################################
