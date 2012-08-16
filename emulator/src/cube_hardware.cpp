@@ -78,8 +78,8 @@ void Hardware::fullReset()
 {
     // Reset the contents of flash memory as well
     FlashStorage::CubeRecord *rec = flash.getStorage();
-    memset(rec, 0, sizeof *rec);
-
+    memset(rec->nvm, 0xFF, sizeof rec->nvm);
+    memset(rec->ext, 0xFF, sizeof rec->ext);
     reset();
 }
 
