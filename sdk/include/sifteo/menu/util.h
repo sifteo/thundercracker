@@ -27,9 +27,15 @@ inline void Menu::detectNeighbors()
 
         if (nbr.hasNeighborAt(i)) {
             CubeID c(nbr.neighborAt(i));
-            n.neighborSide = Neighborhood(c).sideOf(vid->cube());
+
             n.neighbor = c;
             n.masterSide = i;
+
+            if (nbr.neighborAt(i).isBase()) {
+                n.neighborSide = NO_SIDE;
+            } else {
+                n.neighborSide = Neighborhood(c).sideOf(vid->cube());
+            }
         } else {
             n.neighborSide = NO_SIDE;
             n.neighbor = CubeID::UNDEFINED;
