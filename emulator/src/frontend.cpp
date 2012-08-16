@@ -25,6 +25,8 @@ Frontend::Frontend()
     mouseJoint(NULL),
     mouseIsAligning(false),
     mouseIsSpinning(false),
+    mouseIsPulling(false),
+    mouseIsTilting(false),
     contactListener(ContactListener(*this))
 {}
 
