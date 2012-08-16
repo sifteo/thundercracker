@@ -51,6 +51,11 @@ public:
 		return mbuf != 0;
 	}
 
+    /// Returns the buffer's suggested rate in ticks, if any, or an arbitrary large value otherwise.
+    ALWAYS_INLINE unsigned getBufferRate() const {
+        return mbuf ? mbuf->header.rate : -1;
+    }
+
 	// Safe to call from ISR context
     void write(_SYSByte4 reading, SysTime::Ticks timestamp);
 

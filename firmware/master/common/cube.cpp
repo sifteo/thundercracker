@@ -441,8 +441,28 @@ unsigned CubeSlot::suggestNapTicks()
      * We don't have any more work to do immediately after the current
      * packet. How long should we ask the cube to sleep for? Returns
      * a result in units of 32.768 kHz ticks, up to a maximum of 0xFFFF.
+     *
+     * Right now there is only one input feeding into this calculation:
+     * The suggested motion capture rate from userspace. If we have such
+     * a suggestion, use it.
+     *
+     * Otherwise, we'll use a default minimum rate which polls at 60 Hz.
      */
 
-    // XXX: Currently hardcoded at 10ms
-    return 328;
+    // Maximum is 60 Hz
+    unsigned maxRate = _SYS_MOTION_TIMESTAMP_HZ / 60;
+
+    // Look for a motion buffer
+    unsigned motionRate = motionWriter.getBufferRate();
+
+    // Actual rate is the fastest of the two
+    unsigned rate = MIN(maxRate, motionRate);
+
+    // Convert from motion ticks to CLKLF ticks (approximate)
+    unsigned napTicks = rate * (32768 / _SYS_MOTION_TIMESTAMP_HZ);
+
+    // Minimum nap duration
+    napTicks = MAX(napTicks, 2);
+
+    return napTicks;
 }
