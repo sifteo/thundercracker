@@ -20,6 +20,8 @@ tthread::mutex Frontend::instanceLock;
 Frontend::Frontend() 
   : frameCount(0),
     idleFrames(0),
+    normalViewExtent(0.0f),
+    viewCenter(b2Vec2(0.0f, 0.0f)),
     world(b2Vec2(0.0f, 0.0f)),
     mouseBody(NULL),
     mouseJoint(NULL),

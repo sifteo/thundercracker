@@ -147,6 +147,12 @@ static void power_wake_on_rf_poll(void)
     __asm
 1$:
     __endasm ;
+    /*
+     * We reset powerdown state before attempting rest of the system power-up.
+     * This ensures the system comes up even if the mcu were to reset during
+     * that process, especially when the battery is running low.
+     */
+    powerdown_state = 0;
 }
 
 
