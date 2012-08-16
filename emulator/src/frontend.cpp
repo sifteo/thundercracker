@@ -62,7 +62,7 @@ bool Frontend::init(System *_sys)
     viewExtent = targetViewExtent() * 3.0;
 
     // Initial postiion for the MC, center bottom
-    mc.init(world, 0, targetViewExtent());
+    mc.init(world, 0, targetViewExtent(), isRotationFixed);
 
     // Listen for collisions. This is how we update our neighbor matrix.
     world.SetContactListener(&contactListener);
@@ -1003,6 +1003,7 @@ void Frontend::toggleRotationLock()
 
     for (unsigned i = 0; i < cubeCount; i++)
         cubes[i].setRotationLock(isRotationFixed);
+    mc.setRotationLock(isRotationFixed);
 }
 
 void Frontend::MousePicker::test(b2World &world, b2Vec2 point)
