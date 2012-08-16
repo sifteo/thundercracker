@@ -730,7 +730,7 @@ rx_special:
 
         ; -------- 1011 0111 <LOW> <HIGH> -- Radio nap
 
-        ; Turn off the radio, and turn it off at the given time (measured
+        ; Turn off the radio, and turn it on at the given time (measured
         ; in CLKLF ticks) after the current packet timestamp, which was captured
         ; by RTC2 when the radio interrupt occurred.
 
