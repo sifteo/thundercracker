@@ -173,22 +173,11 @@ void power_init(void)
     PWRDWN = 0;
 
     /*
-     * XXX: Another power management mystery... as far as I can tell, the
-     *      radio peripheral just doesn't receive properly after waking up
-     *      from pin. We can communicate with and configure the radio, and
-     *      its registers seem fine, but we don't receive any packets.
-     *
-     *      So, for now, I'm working around this by immediately resetting
-     *      if we wake due to shaking. We'll reboot again, and this time it
-     *      will be a watchdog timeout, and the radio will be fine.
+     * If we are waking up on shake, reset powerdown_state so we
+     * continue powering up rest of the system.
      */
     if (pwrdwn_value & PWRDWN_WAKE_FROM_PIN) {
         powerdown_state = 0;
-        CLKLFCTRL = CLKLFCTRL_SRC_RC;
-        WDSV;
-        WDSV = 0x01;
-        WDSV = 0x00;
-        while (1);
     }
 
     /*
