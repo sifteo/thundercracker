@@ -25,7 +25,7 @@ void params_init()
      * MUST be called before interrupts are enabled. We don't want
      * to enter ISRs while FSR_WEN is set!
      *
-     * Inside the HWID, we embed the HWID_REVISION_CODE as the first byte.
+     * Inside the HWID, we embed the cube version as the first byte.
      */
 
     __asm
