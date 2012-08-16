@@ -259,7 +259,7 @@ NEVER_INLINE void timer_clklf_tick(em8051 *aCPU)
     uint8_t rtc2con = aCPU->mSFR[REG_RTC2CON];
     if (rtc2con & RTC2CON_ENABLE) {
         // Tick RTC2
-        unsigned rtc2 = aCPU->rtc2 + 1;
+        uint16_t rtc2 = aCPU->rtc2 + 1;
 
         // RTC2 compare
         if (rtc2con & RTC2CON_COMPARE_EN) {
