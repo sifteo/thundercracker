@@ -236,20 +236,15 @@ static void fp_bounce_axis(void) __naked
     __endasm ;
 }
 
-static void sub_s8_from_s16(void) __naked
+static void add_s8_to_s16(void) __naked
 {
     /*
-     * Assembly-callable math utility, with two entry points.
+     * Assembly-callable math utility.
      *
-     * Adds or subtracts signed 8-bit value (in 'a') to/from a signed 16-bit value in r3:r2.
+     * Adds a signed 8-bit value (in 'a') to a signed 16-bit value in r3:r2.
      */
 
     __asm
-
-        cpl     a       ; Twos complement
-        inc     a
-
-_add_s8_to_s16::
 
         jb      acc.7, 1$
 
@@ -600,8 +595,8 @@ fp_bounce_axis_ret:
         ; the logo to the center, an accelerometer force, plus some damping.
         ;
         ; Equivalent to:
-        ;    disc_logo_x += (disc_logo_dx -= x + (disc_logo_dx >> FP_BITS) - ack_data.accel[0]);
-        ;    disc_logo_y += (disc_logo_dy -= -BATTERY_HEIGHT + y + (disc_logo_dy >> FP_BITS) - ack_data.accel[1]);
+        ;    disc_logo_x += (disc_logo_dx -= x + (disc_logo_dx >> FP_BITS) + ack_data.accel[0]);
+        ;    disc_logo_y += (disc_logo_dy -= -BATTERY_HEIGHT + y + (disc_logo_dy >> FP_BITS) + ack_data.accel[1]);
 
         ; ---- X axis
 
@@ -613,7 +608,7 @@ fp_bounce_axis_ret:
         mov     a, r4                               ; Damping force
         acall   _add_s8_to_s16
         mov     a, (_ack_data + RF_ACK_ACCEL + 0)   ; Tilt force
-        acall   _sub_s8_from_s16
+        acall   _add_s8_to_s16
         mov     r0, #_disc_logo_dx                  ; Integrate velocity and position
         acall   _fp_integrate_axis
 
@@ -626,7 +621,7 @@ fp_bounce_axis_ret:
         mov     a, r5                               ; Damping force
         acall   _add_s8_to_s16
         mov     a, (_ack_data + RF_ACK_ACCEL + 1)   ; Tilt force
-        acall   _sub_s8_from_s16
+        acall   _add_s8_to_s16
         mov     r0, #_disc_logo_dy                  ; Integrate velocity and position
         acall   _fp_integrate_axis
 
