@@ -259,29 +259,9 @@ void MainMenu::neighborAdded(unsigned firstID, unsigned firstSide,
                              unsigned secondID, unsigned secondSide)
 {
     /*
-     * XXX: we should only present UI to offer unpairing instead
-     *      of immediately unpairing. Wait until a cube is neighbored
-     *      AND we get a home button press to unpair.
-     *
-     * If a connected cube has been neighbored to the base,
-     * toggle its pairing state (ie, unpair it).
-     *
-     * Ensure a cube has been connected to the system for at
-     * least 2 seconds to avoid unpairing cubes based on a neighbor
-     * event that was generated for a cube being newly paired.
+     * XXX: used to unpair neighbors here, but TBD how that is
+     * going to work going forward.
      */
-
-    CubeID cid;
-    if (NeighborID(firstID).isBase())
-        cid = secondID;
-    else if (NeighborID(secondID).isBase())
-        cid = firstID;
-    else
-        return;
-
-    ASSERT(Shared::connectTime[cid].isValid());
-    if (SystemTime::now() - Shared::connectTime[cid] > TimeDelta::fromMillisec(2000))
-        cid.unpair();
 }
 
 void MainMenu::onBatteryLevelChange(unsigned cid)
