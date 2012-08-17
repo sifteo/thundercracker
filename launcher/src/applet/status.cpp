@@ -54,19 +54,16 @@ void StatusApplet::exec()
 {
 }
 
-void StatusApplet::arrive(Sifteo::Menu &m, unsigned index)
+void StatusApplet::arrive()
 {
-    menu = &m;
-    menuItemIndex = index;
-    
     // The number of cubes connected, or the base and menu cube battery status
     // could have changed while the Status applet was inactive.
-    drawIcon(m.cube());
-    m.replaceIcon(menuItemIndex, menuIcon);
+    drawIcon(menu->cube());
+    menu->replaceIcon(menuItemIndex, menuIcon);
 
     // Draw Icon Background
     for (CubeID cube : CubeSet::connected()) {
-        if (cube != m.cube()) {
+        if (cube != menu->cube()) {
             drawCube(cube);
         }
     }
@@ -84,17 +81,14 @@ void StatusApplet::arrive(Sifteo::Menu &m, unsigned index)
     }
 }
 
-void StatusApplet::depart(Sifteo::Menu &m, unsigned index)
+void StatusApplet::depart()
 {
     // Display a background on all other cubes
     for (CubeID cube : CubeSet::connected()) {
-        if (cube != m.cube()) {
+        if (cube != menu->cube()) {
             Shared::video[cube].bg0.erase(Menu_StripeTile);
         }
     }
-    
-    menu = NULL;
-    menuItemIndex = -1;
 }
 
 void StatusApplet::add(MainMenu &m)
