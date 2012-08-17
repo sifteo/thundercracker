@@ -98,15 +98,11 @@ void vm_fb32(void) __naked
         mov     dph, r6
         acall   _vm_fb32_line
 
-        djnz    r7, 2$              ; Next line. Done yet?
-        sjmp    10$
-2$:
-
         mov     a, r4               ; Next source line? (Group of 4 dest lines)
         inc     a
         mov     r4, a
         anl     a, #3
-        jnz     1$
+        jnz     2$
 
         mov     a, r5               ; Add 16 bytes
         add     a, #16
@@ -116,9 +112,9 @@ void vm_fb32(void) __naked
         anl     a, #1               ; Mask to 0x1FF
         mov     r6, a
 
-        sjmp    1$
+2$:
+        djnz    r7, 1$              ; Next line. Done yet?
 
-10$:
     __endasm;
 
     lcd_end_frame();

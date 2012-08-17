@@ -64,6 +64,7 @@ _x_bg0_first_addr:: ; 1 byte
 _x_spr::            ;     20 bytes
 _lcd_window_x::     ;     1 byte
 _fb64_y::           ;     1 byte
+_fb128_y::          ;     1 byte
     .ds 1           ; +0
 _lcd_window_y::     ;     1 byte
 _fb64_scale::       ;     1 byte

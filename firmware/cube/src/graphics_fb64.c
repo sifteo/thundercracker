@@ -86,15 +86,11 @@ void vm_fb64(void) __naked
         mov     dph, r1
         acall   _vm_fb64_line
 
-        djnz    _fb64_y, 2$         ; Next line. Done yet?
-        sjmp    10$
-2$:
-
         mov     a, _fb64_scale      ; Next source line? (Group of 2 dest lines)
         inc     a
         mov     _fb64_scale, a
         anl     a, #1
-        jnz     1$
+        jnz     2$
 
         mov     a, r0               ; Add 8 bytes
         add     a, #8
@@ -104,9 +100,9 @@ void vm_fb64(void) __naked
         anl     a, #1               ; Mask to 0x1FF
         mov     r1, a
 
-        sjmp    1$
+2$:
+        djnz    _fb64_y, 1$         ; Next line. Done yet?
 
-10$:
     __endasm;
 
     lcd_end_frame();
