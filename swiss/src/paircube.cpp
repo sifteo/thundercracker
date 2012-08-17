@@ -15,7 +15,11 @@ int PairCube::run(int argc, char **argv, IODevice &_dev)
         success = pc.dumpPairingData();
 
     } else if (argc == 3) {
-        success = pc.pair(argv[1], argv[2]);
+        if (!strcmp(argv[1], "--read") && !strcmp(argv[2], "--rpc")) {
+            success = pc.dumpPairingData(true);
+        } else {
+            success = pc.pair(argv[1], argv[2]);
+        }
 
     } else {
         fprintf(stderr, "incorrect args\n");
@@ -64,7 +68,7 @@ bool PairCube::pair(const char *slotStr, const char *hwidStr)
     return true;
 }
 
-bool PairCube::dumpPairingData()
+bool PairCube::dumpPairingData(bool rpc)
 {
     if (!dev.open(IODevice::SIFTEO_VID, IODevice::BASE_PID))
         return false;
@@ -92,6 +96,14 @@ bool PairCube::dumpPairingData()
             table.cell() << std::setiosflags(std::ios::hex) << std::setw(16) << std::setfill('0') << reply->hwid;
         }
         table.endRow();
+        
+        if (rpc) {
+            if (reply->hwid == ~0) {
+                fprintf(stdout, "::pairing:%u:\n", reply->pairingSlot); fflush(stdout);
+            } else {
+                fprintf(stdout, "::pairing:%u:%llu\n", reply->pairingSlot, reply->hwid); fflush(stdout);
+            }
+        }
     }
 
     table.end();
