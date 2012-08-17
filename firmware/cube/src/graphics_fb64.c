@@ -8,10 +8,14 @@
 
 #include "graphics.h"
 
+extern uint8_t fb64_y;
+extern uint8_t fb64_scale;
+
 /*
  * 2-color 64x64 framebuffer mode.
  *
  * Two-entry colormap, 8 bytes per line.
+ * Clobbers r2-r7.
  */
 
 void vm_fb64_line(uint16_t ptr)
@@ -64,18 +68,46 @@ void vm_fb64(void) __naked
     lcd_begin_frame();
     LCD_WRITE_BEGIN();
 
-    {
-        uint8_t y = vram.num_lines;
-        uint16_t src = 0;
+    __asm
 
-        do {
-            vm_fb64_line(src);
-            if (!--y) break;
-            vm_fb64_line(src);
-            src += 8;
-            src &= 0x1F8;
-        } while (--y);    
-    }
+        ; Keep line count in fb64_y
+
+        mov     dptr, #_SYS_VA_NUM_LINES
+        movx    a, @dptr
+        mov     _fb64_y, a
+
+        clr     a
+        mov     r1, a               ; Line pointer in r1:r0
+        mov     r0, a
+        mov     _fb64_scale, a      ; Vertical scaling counter in r4
+
+1$:
+        mov     dpl, r0             ; Draw line from r1:r0
+        mov     dph, r1
+        acall   _vm_fb64_line
+
+        djnz    _fb64_y, 2$         ; Next line. Done yet?
+        sjmp    10$
+2$:
+
+        mov     a, _fb64_scale      ; Next source line? (Group of 2 dest lines)
+        inc     a
+        mov     _fb64_scale, a
+        anl     a, #3
+        jnz     1$
+
+        mov     a, r5               ; Add 8 bytes
+        add     a, #8
+        mov     r5, a
+        mov     a, r6
+        addc    a, #0
+        anl     a, #1               ; Mask to 0x1FF
+        mov     r6, a
+
+        sjmp    1$
+
+10$:
+    __endasm;
 
     lcd_end_frame();
     GRAPHICS_RET();
