@@ -63,15 +63,24 @@ public:
      */
     virtual void exec() = 0;
 
+    /**
+     * Called by menu owner to provide a valid menu and index context for use
+     * by the event hooks.
+     */
+    void setMenuInfo(Sifteo::Menu *m, int index) {
+        menu = m;
+        menuItemIndex = index;
+    }
+
     /** 
      * Hook for menu item's arriving as the current item.
      */
-    virtual void arrive(Sifteo::Menu &m, unsigned index) {}
+    virtual void arrive() {}
     
     /** 
      * Hook for menu item's departing from being the current item.
      */
-    virtual void depart(Sifteo::Menu &m, unsigned index) {}
+    virtual void depart() {}
 
     /**
      * Battery level changed event recieved while this menu item is the current item.
@@ -92,4 +101,8 @@ public:
      * The menu is about to paint() a frame. Use this to paint the non-active cubes.
      */
     virtual void paint() {}
+
+protected:
+    Sifteo::Menu *menu;
+    int menuItemIndex;
 };

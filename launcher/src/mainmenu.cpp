@@ -476,14 +476,16 @@ void MainMenu::arriveItem(unsigned index)
 {
     ASSERT(index < arraysize(items));
     MainMenuItem *item = items[index];
-    item->arrive(menu, index);
+    item->setMenuInfo(&menu, index);
+    item->arrive();
 }
 
 void MainMenu::departItem(unsigned index)
 {
     ASSERT(index < arraysize(items));
     MainMenuItem *item = items[index];
-    item->depart(menu, index);
+    item->depart();
+    item->setMenuInfo(NULL, -1);
 }
 
 void MainMenu::paint(unsigned index)

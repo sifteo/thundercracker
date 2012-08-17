@@ -15,8 +15,8 @@ public:
     virtual void getAssets(Sifteo::MenuItem &assets, Shared::AssetConfiguration &config);
     
     virtual void exec();
-    virtual void arrive(Sifteo::Menu &m, unsigned index);
-    virtual void depart(Sifteo::Menu &m, unsigned index);
+    virtual void arrive();
+    virtual void depart();
     virtual void onCubeBatteryLevelChange(unsigned cid);
     virtual void onCubeConnect(unsigned cid);
     virtual void onCubeDisconnect(unsigned cid);
@@ -28,7 +28,5 @@ private:
     void drawIcon(Sifteo::CubeID menuCube);
     void drawCube(Sifteo::CubeID cube);
     
-    Sifteo::Menu *menu;
-    int menuItemIndex;
     IconBuffer menuIcon;
 };
