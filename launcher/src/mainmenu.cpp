@@ -51,7 +51,7 @@ void MainMenu::init()
     connectingCubes.clear();
 
     items.clear();
-    itemIndexCurrent = 0;
+    itemIndexCurrent = -1;
     cubeRangeSavedIcon = NULL;
 
     /*
@@ -127,6 +127,7 @@ void MainMenu::eventLoop()
             menu.setIconYOffset(8);
             if (itemIndexCurrent >= 0)
                 menu.anchor(itemIndexCurrent, true);
+            itemIndexCurrent = -1;
         }
 
         MenuEvent e;
