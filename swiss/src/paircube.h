@@ -12,7 +12,7 @@ public:
     static int run(int argc, char **argv, IODevice &_dev);
 
     bool pair(const char *slotStr, const char *hwidStr);
-    bool dumpPairingData();
+    bool dumpPairingData(bool rpc=false);
 
 private:
     IODevice &dev;
