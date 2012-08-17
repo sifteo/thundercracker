@@ -100,7 +100,16 @@ public:
     /**
      * The menu is about to paint() a frame. Use this to paint the non-active cubes.
      */
-    virtual void paint() {}
+    virtual void paint() {
+        ASSERT(menu);
+
+        // Non-active cubes respond to events with DefaultCubeResponder by default.
+        for (Sifteo::CubeID cube : Sifteo::CubeSet::connected()) {
+            if (cube != menu->cube()) {
+                Shared::cubeResponder[cube].paint();
+            }
+        }
+    }
 
 protected:
     Sifteo::Menu *menu;

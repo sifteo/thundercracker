@@ -16,7 +16,8 @@ OBJS = \
 	src/nineblock.o \
 	src/applet/getgames.o \
 	src/applet/status.o \
-	src/applet/diagnostic.o
+	src/applet/diagnostic.o \
+	src/defaultcuberesponder.o
 
 ASSETDEPS += images/*.lua images/*.png sounds/*.lua sounds/*.xm $(ASSETS).lua
 CDEPS += src/*.h
