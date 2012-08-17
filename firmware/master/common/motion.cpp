@@ -7,7 +7,7 @@
 #include "motion.h"
 
 
-_SYSByte4 MotionUtil::captureAccelState(const RF_ACKType &ack)
+_SYSByte4 MotionUtil::captureAccelState(const RF_ACKType &ack, uint8_t cubeVersion)
 {
     /*
      * All bytes in protocol happen to be inverted
@@ -15,10 +15,18 @@ _SYSByte4 MotionUtil::captureAccelState(const RF_ACKType &ack)
      */
 
     _SYSByte4 state;
-    state.x = -ack.accel[0];
-    state.y = -ack.accel[1];
+
+    if (cubeVersion >= CUBE_FEATURE_ACCEL_XY_FLIP) {
+        state.x = ack.accel[0];
+        state.y = ack.accel[1];
+    } else {
+        state.x = -ack.accel[0];
+        state.y = -ack.accel[1];
+    }
+
     state.z = -ack.accel[2];
     state.w = 0;
+
     return state;
 }
 

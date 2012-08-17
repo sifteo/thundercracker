@@ -304,7 +304,7 @@ void CubeSlot::radioAcknowledge(const PacketBuffer &packet)
 
             // If userspace has subscribed to high-frequency updates, write to its MotionBuffer
             if (motionWriter.hasBuffer()) {
-                motionWriter.write(MotionUtil::captureAccelState(*ack),
+                motionWriter.write(MotionUtil::captureAccelState(*ack, getVersion()),
                                    SysTime::ticks());
             }
         }
