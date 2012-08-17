@@ -25,17 +25,11 @@ inline void Menu::detectNeighbors()
     for (Side i = Side(0); i < NUM_SIDES; i++) {
         MenuNeighbor n;
 
-        if (nbr.hasNeighborAt(i)) {
-            CubeID c(nbr.neighborAt(i));
-
+        if (nbr.hasCubeAt(i)) {
+            CubeID c(nbr.cubeAt(i));
+            n.neighborSide = Neighborhood(c).sideOf(vid->cube());
             n.neighbor = c;
             n.masterSide = i;
-
-            if (nbr.neighborAt(i).isBase()) {
-                n.neighborSide = NO_SIDE;
-            } else {
-                n.neighborSide = Neighborhood(c).sideOf(vid->cube());
-            }
         } else {
             n.neighborSide = NO_SIDE;
             n.neighbor = CubeID::UNDEFINED;
