@@ -705,8 +705,10 @@ void GLRenderer::drawCube(unsigned id, b2Vec2 center, float angle, float hover,
         cubes[id].isTilted = tState.isTilted;
     }
 
-    drawCubeBody();
     drawCubeFace(id, framebufferChanged ? framebuffer : NULL, backlight);
+
+    glRotatef(180.f, 0,0,1);
+    drawCubeBody();
 }
 
 void GLRenderer::drawMC(b2Vec2 center, float angle, const float led[3], float volume)
