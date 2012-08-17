@@ -31,7 +31,7 @@
 
 #define CUBE_FEATURE_NAP		0x02
 
-#define CUBE_VERSION_LATEST		0x01	// XXX: Temporary
+#define CUBE_VERSION_LATEST		0x02
 
 
 /**************************************************************************
