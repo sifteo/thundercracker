@@ -217,6 +217,20 @@ public:
      *
      * Fully replaces the current program in memory. Does not return.
      * For Volumes containing a valid ELF binary only.
+     *
+     * This does _not_ automatically call System::setCubeRange() on behalf
+     * of the new program, nor does it load any bootstrap assets. Both of
+     * these tasks are typically done by the Launcher app, before calling
+     * exec(), by reading the volume metadata with MappedVolume::metadata().
+     *
+     * @warning While it is possible to call Volume::current().exec() to restart
+     * the current program, there is an edge case to be aware of: Programs may be
+     * deleted or upgraded while they are running, in which case Volume::current()
+     * refers to a volume which has been deleted. Deleted volumes will not be
+     * recycled as long as they are mapped, so programs normally continue running
+     * correctly in this case. But a deleted volume cannot be executed or mapped.
+     * If this edge case is important to avoid, one approach would be to search
+     * for the new version of your own application, if any, using Volume::list().
      */
     void exec() const {
         _SYS_elf_exec(sys);
