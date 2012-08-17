@@ -29,3 +29,11 @@ v01_IconResume = image{ "01-icon-resume.png", flat=1 }
 v01_ShutdownBackground = image{ "01-shutdown-background.png", flat=1 }
 v01_LogoWhiteOnBlue = image{ "01-img-logo-white-on-blue.png", flat=1 }
 v01_BigDigits = image{ "01-big-digits.png", flat=1, width=32, height=40 }
+
+-----------------------------------------------------------------------
+--------------------- Version 02 Tile ROM -----------------------------
+-----------------------------------------------------------------------
+
+v02_TileROM = group{ atlas="../../cube/tilerom/tilerom-atlas.png" }
+
+v02_LogoWhiteOnBlue = image{ "02-img-logo-white-on-blue.png", flat=1 }
