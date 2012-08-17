@@ -199,7 +199,26 @@ void MainMenu::handleEvent(MenuEvent &e)
 
         case MENU_PREPAINT:
             if (itemIndexCurrent >= 0) {
+                // Detect if the applet uses the default cube responder.
+                DefaultCubeResponder::resetCallCount();
+                
                 paint(itemIndexCurrent);
+
+                // If unused, reset the responder.
+                if (!DefaultCubeResponder::callCount()) {
+                    for (CubeID cube : CubeSet::connected()) {
+                        if (cube != menu.cube()) {
+                            Shared::cubeResponder[cube].init();
+                        }
+                    }
+                }
+            } else {
+                // Non-active cubes respond to events with DefaultCubeResponder.
+                for (CubeID cube : CubeSet::connected()) {
+                    if (cube != menu.cube()) {
+                        Shared::cubeResponder[cube].paint();
+                    }
+                }
             }
             break;
 
@@ -242,6 +261,9 @@ void MainMenu::cubeConnect(unsigned cid)
     Shared::video[cid].initMode(BG0_ROM);
     Shared::video[cid].bg0.setPanning(vec(0,0));
     Shared::video[cid].bg0.image(vec(0,0), Logo);
+
+    // Initialize default responders
+    Shared::cubeResponder[cid].init(cid);
 }
 
 void MainMenu::cubeDisconnect(unsigned cid)
