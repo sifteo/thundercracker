@@ -20,9 +20,9 @@
 #include "sensors_nb.h"
 #include "power.h"
 
-extern __bit disc_battery_draw;     // 0 = drawing logo, 1 = drawing battery
+extern __bit disc_battery_draw;     // 0 = drawing logo, 1 = drawing battery and score/icon
 
-#define BATTERY_HEIGHT  19          // Number of scanlines at the top of the display reserved for battery
+#define BATTERY_HEIGHT  20          // Number of scanlines at the top of the display reserved for battery
 #define FP_BITS         4           // Fixed point precision, in bits
 
 // Arbitrary horizontal limits, let the logo get off-screen a bit without wrapping
@@ -70,6 +70,11 @@ extern const __code uint8_t img_battery_bars_1[];
 extern const __code uint8_t img_battery_bars_2[];
 extern const __code uint8_t img_battery_bars_3[];
 extern const __code uint8_t img_battery_bars_4[];
+extern const __code uint8_t img_disconnected[];
+extern const __code uint8_t img_disconnected_1[];
+extern const __code uint8_t img_disconnected_2[];
+extern const __code uint8_t img_disconnected_3[];
+extern const __code uint8_t img_disconnected_4[];
 
 
 static void draw_logo(void) __naked
@@ -387,13 +392,13 @@ void disconnected_poll(void)
         draw_clear();
         vram.num_lines = BATTERY_HEIGHT;
 
-        /*
-         * Battery indicator image
-         */
-
         __asm
+
+            ;-------------------------------------------
+            ; Battery indicator image
+
             mov     a, (_ack_data + RF_ACK_BATTERY_V)   ; Skip if we have no samples yet
-            jz      2$
+            jz      10$
 
             DRAW_XY (11, 0)                             ; Draw battery outline
             mov     dptr, #_img_battery
@@ -416,25 +421,27 @@ void disconnected_poll(void)
             acall   _draw_image
 
         2$:
-        __endasm ;
 
-        /*
-         * Score counter (two-digit BCD) or trophy image
-         */
+            ;-------------------------------------------
+            ; Top-left corner
 
-        __asm
+            ; In descending order of priority:
+            ;   1. Trophy
+            ;   2. Score counter (two-digit BCD)
+            ;   3. "Disconnected" animation
+
+            ; ----------- Trophy
 
             jnb     _disc_has_trophy, 4$
-
-            ; Draw trophy
 
             DRAW_XY (1, 0)
             mov     dptr, #_img_trophy
             acall   _draw_image
-            sjmp    3$
+            sjmp    10$
+
         4$:
 
-            ; Draw two-digit score counter
+            ; ----------- Score counter
 
             mov     dptr, #XY(1,1)
             mov     a, _disc_score                      ; First, look at tens digit
@@ -444,7 +451,39 @@ void disconnected_poll(void)
             acall   _draw_digit
             mov     a, _disc_score
             acall   _draw_digit
+            sjmp    10$
+
         3$:
+
+            ; ----------- Disconnected
+
+            DRAW_XY (0, 0)
+            mov     dptr, #_img_disconnected
+            acall   _draw_image
+
+            DRAW_XY (2, 0)
+
+            ; Jump tree, pick an animation frame based on bits from the tick counter
+
+            mov     a, _sensor_tick_counter
+            jb      acc.7, 21$
+            jb      acc.6, 22$
+            mov     dptr, #_img_disconnected_1
+            sjmp    20$
+        22$:
+            mov     dptr, #_img_disconnected_2
+            sjmp    20$
+        21$:
+            jb      acc.6, 23$
+            mov     dptr, #_img_disconnected_3
+            sjmp    20$
+        23$:
+            mov     dptr, #_img_disconnected_4
+        20$:
+
+            acall   _draw_image
+
+        10$:
         __endasm ;
 
         return graphics_render();
