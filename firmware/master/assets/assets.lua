@@ -1,14 +1,31 @@
-TileROM = group{ atlas="../../cube/tilerom/tilerom-atlas.png" }
+--[[
+
+ Note:
+
+  Graphics are versioned using the cube's 8-bit version number,
+  so we can tolerate some amount of change to the tile ROM contents.
+  Graphics are labeled according to the first cube version they are
+  compatible with. Unless a subsequent version exists, our convention
+  is to assume a particular version of artwork will work on cubes of
+  that version and later.
+
+]]--
+
+-----------------------------------------------------------------------
+--------------------- Version 01 Tile ROM -----------------------------
+-----------------------------------------------------------------------
+
+v01_TileROM = group{ atlas="01-tilerom-atlas.png" }
 
 --- UIMenu
 
-MenuBackground = image{ "menu-background.png", flat=1 }
-IconQuit = image{ "icon-quit.png", flat=1 }
-IconBack = image{ "icon-back.png", flat=1 }
-IconResume = image{ "icon-resume.png", flat=1 }
+v01_MenuBackground = image{ "01-menu-background.png", flat=1 }
+v01_IconQuit = image{ "01-icon-quit.png", flat=1 }
+v01_IconBack = image{ "01-icon-back.png", flat=1 }
+v01_IconResume = image{ "01-icon-resume.png", flat=1 }
 
 --- UIShutdown
 
-ShutdownBackground = image{ "shutdown-background.png", flat=1 }
-LogoWhiteOnBlue = image{ "img-logo-white-on-blue.png", flat=1 }
-BigDigits = image{ "big-digits.png", flat=1, width=32, height=40 }
+v01_ShutdownBackground = image{ "01-shutdown-background.png", flat=1 }
+v01_LogoWhiteOnBlue = image{ "01-img-logo-white-on-blue.png", flat=1 }
+v01_BigDigits = image{ "01-big-digits.png", flat=1, width=32, height=40 }

@@ -15,9 +15,9 @@
 #include "shutdown.h"
 
 // Assets
-extern const uint16_t ShutdownBackground_data[];
-extern const uint16_t BigDigits_data[];
-extern const uint16_t LogoWhiteOnBlue_data[];
+extern const uint16_t v01_ShutdownBackground_data[];
+extern const uint16_t v01_BigDigits_data[];
+extern const uint16_t v01_LogoWhiteOnBlue_data[];
 
 // Shutdown UI Settings
 namespace {
@@ -124,7 +124,7 @@ void UIShutdown::drawBackground()
 
     for (unsigned y = 0; y < kNumTilesY; ++y) {
         for (unsigned x = 0; x < kNumTilesX; ++x) {
-            uint16_t tile = ShutdownBackground_data[y];
+            uint16_t tile = v01_ShutdownBackground_data[y];
             VRAM::poke(uic.avb.vbuf, addr, _SYS_TILE77(tile));
             addr++;
         }
@@ -139,7 +139,7 @@ void UIShutdown::drawLogo()
     VRAM::pokeb(uic.avb.vbuf, offsetof(_SYSVideoRAM, first_line), 0);
     VRAM::pokeb(uic.avb.vbuf, offsetof(_SYSVideoRAM, num_lines), 128);
 
-    const uint16_t *src = LogoWhiteOnBlue_data;
+    const uint16_t *src = v01_LogoWhiteOnBlue_data;
     unsigned addr = 0;
 
     for (unsigned y = 0; y < 16; ++y) {
@@ -158,7 +158,7 @@ void UIShutdown::drawText(unsigned addr, const char *string)
      * Draw a text string to BG0_ROM, using a palette from ShutdownBackground.
      */
 
-    const uint16_t palette = ShutdownBackground_data[1];
+    const uint16_t palette = v01_ShutdownBackground_data[1];
 
     while (*string) {
         uint16_t tile = uint8_t(*string - ' ') ^ palette;
@@ -176,8 +176,8 @@ void UIShutdown::drawDigit(unsigned number)
      * that background tile.
      */
 
-    const uint16_t palette = ShutdownBackground_data[1];
-    const uint16_t *frame = BigDigits_data + number * (kDigitWidth * kDigitHeight);
+    const uint16_t palette = v01_ShutdownBackground_data[1];
+    const uint16_t *frame = v01_BigDigits_data + number * (kDigitWidth * kDigitHeight);
     unsigned addr = 0;
 
     for (unsigned y = 0; y < kDigitHeight; ++y) {

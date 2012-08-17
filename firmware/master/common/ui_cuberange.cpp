@@ -2,13 +2,13 @@
 #include "svmclock.h"
 #include "svmloader.h"
 
-extern const uint16_t IconQuit_data[];
-extern const uint16_t IconResume_data[];
+extern const uint16_t v01_IconQuit_data[];
+extern const uint16_t v01_IconResume_data[];
 
 const UIMenu::Item UICubeRange::items[NUM_ITEMS] = {
     // Note: labels with an odd number of characters will center perfectly
-    { IconResume_data,  "Connect Cubes", false },
-    { IconQuit_data,    "Quit Game", true },
+    { v01_IconResume_data,  "Connect Cubes", false },
+    { v01_IconQuit_data,    "Quit Game", true },
 };
 
 UICubeRange::UICubeRange(UICoordinator &uic) :

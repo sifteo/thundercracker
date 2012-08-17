@@ -8,18 +8,18 @@
 #include "svmclock.h"
 #include "event.h"
 
-extern const uint16_t MenuBackground_data[];
-extern const uint16_t IconQuit_data[];
-extern const uint16_t IconBack_data[];
-extern const uint16_t IconResume_data[];
+extern const uint16_t v01_MenuBackground_data[];
+extern const uint16_t v01_IconQuit_data[];
+extern const uint16_t v01_IconBack_data[];
+extern const uint16_t v01_IconResume_data[];
 
 char UIPause::gameMenuLabel[MAX_LABEL_CHARS + 1];
 
 const UIMenu::Item UIPause::items[NUM_ITEMS] = {
     // Note: labels with an odd number of characters will center perfectly
-    { IconBack_data,    gameMenuLabel, true },
-    { IconResume_data,  "Continue Game", true },
-    { IconQuit_data,    "Quit Game", true },
+    { v01_IconBack_data,    gameMenuLabel, true },
+    { v01_IconResume_data,  "Continue Game", true },
+    { v01_IconQuit_data,    "Quit Game", true },
 };
 
 

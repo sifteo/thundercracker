@@ -10,7 +10,7 @@
 #include "cube.h"
 
 // Assets
-extern const uint16_t MenuBackground_data[];
+extern const uint16_t v01_MenuBackground_data[];
 
 // Menu settings
 namespace {
@@ -47,7 +47,7 @@ void UIMenu::init(unsigned defaultItem)
         return;
 
     // Paint entire screen with background tile (We'll see it during the hop animation)
-    uint16_t bg = _SYS_TILE77(MenuBackground_data[1]);
+    uint16_t bg = _SYS_TILE77(v01_MenuBackground_data[1]);
     for (unsigned i = 0; i < _SYS_VRAM_BG0_WIDTH * _SYS_VRAM_BG0_WIDTH; ++i)
         VRAM::poke(uic.avb.vbuf, i, bg);
 
@@ -258,7 +258,7 @@ void UIMenu::drawColumn(int x)
 
     for (unsigned y = 0; y < kNumTilesY; ++y) {
         // Don't draw borderes when finishing. Otherwise, draw the whole background.
-        uint16_t tile = state == S_FINISHING ? MenuBackground_data[1] : MenuBackground_data[y];
+        uint16_t tile = state == S_FINISHING ? v01_MenuBackground_data[1] : v01_MenuBackground_data[y];
 
         unsigned iconIndex = x / kIconSpacing;
         unsigned iconX = x % kIconSpacing;
