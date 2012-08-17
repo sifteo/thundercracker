@@ -87,4 +87,9 @@ public:
      * Cube disconnected event recieved while this menu item is the current item.
      */
     virtual void onCubeDisconnect(unsigned cid) {}
+
+    /**
+     * The menu is about to paint() a frame. Use this to paint the non-active cubes.
+     */
+    virtual void paint() {}
 };

@@ -196,6 +196,12 @@ void MainMenu::handleEvent(MenuEvent &e)
             itemIndexCurrent = -1;
             break;
 
+        case MENU_PREPAINT:
+            if (itemIndexCurrent >= 0) {
+                paint(itemIndexCurrent);
+            }
+            break;
+
         default:
             break;
     }
@@ -478,6 +484,12 @@ void MainMenu::departItem(unsigned index)
     ASSERT(index < arraysize(items));
     MainMenuItem *item = items[index];
     item->depart(menu, index);
+}
+
+void MainMenu::paint(unsigned index)
+{
+    ASSERT(index < arraysize(items));
+    items[index]->paint();
 }
 
 void MainMenu::prepareAssets()
