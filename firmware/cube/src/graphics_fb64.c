@@ -93,16 +93,16 @@ void vm_fb64(void) __naked
         mov     a, _fb64_scale      ; Next source line? (Group of 2 dest lines)
         inc     a
         mov     _fb64_scale, a
-        anl     a, #3
+        anl     a, #1
         jnz     1$
 
-        mov     a, r5               ; Add 8 bytes
+        mov     a, r0               ; Add 8 bytes
         add     a, #8
-        mov     r5, a
-        mov     a, r6
+        mov     r0, a
+        mov     a, r1
         addc    a, #0
         anl     a, #1               ; Mask to 0x1FF
-        mov     r6, a
+        mov     r1, a
 
         sjmp    1$
 
