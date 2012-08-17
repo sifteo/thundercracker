@@ -17,6 +17,10 @@
 
 v01_TileROM = group{ atlas="01-tilerom-atlas.png" }
 
+--- Common
+
+v01_LogoWhiteOnBlue = image{ "01-img-logo-white-on-blue.png", flat=1 }
+
 --- UIMenu
 
 v01_MenuBackground = image{ "01-menu-background.png", flat=1 }
@@ -27,7 +31,6 @@ v01_IconResume = image{ "01-icon-resume.png", flat=1 }
 --- UIShutdown
 
 v01_ShutdownBackground = image{ "01-shutdown-background.png", flat=1 }
-v01_LogoWhiteOnBlue = image{ "01-img-logo-white-on-blue.png", flat=1 }
 v01_BigDigits = image{ "01-big-digits.png", flat=1, width=32, height=40 }
 
 -----------------------------------------------------------------------
@@ -36,4 +39,12 @@ v01_BigDigits = image{ "01-big-digits.png", flat=1, width=32, height=40 }
 
 v02_TileROM = group{ atlas="../../cube/tilerom/tilerom-atlas.png" }
 
+--- Common
+
 v02_LogoWhiteOnBlue = image{ "02-img-logo-white-on-blue.png", flat=1 }
+
+--- UIMenu
+
+v02_IconQuit = image{ "02-icon-quit.png", flat=1 }
+v02_IconBack = image{ "02-icon-back.png", flat=1 }
+v02_IconResume = image{ "02-icon-resume.png", flat=1 }
