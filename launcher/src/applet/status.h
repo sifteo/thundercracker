@@ -16,7 +16,6 @@ public:
     
     virtual void exec();
     virtual void arrive();
-    virtual void depart();
     virtual void onCubeBatteryLevelChange(unsigned cid);
     virtual void onCubeConnect(unsigned cid);
     virtual void onCubeDisconnect(unsigned cid);
