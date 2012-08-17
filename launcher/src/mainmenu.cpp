@@ -486,6 +486,13 @@ void MainMenu::departItem(unsigned index)
     MainMenuItem *item = items[index];
     item->depart();
     item->setMenuInfo(NULL, -1);
+
+    // Reset the background on all non-active cubes
+    for (CubeID cube : CubeSet::connected()) {
+        if (cube != menu.cube()) {
+            Shared::video[cube].bg0.erase(Menu_StripeTile);
+        }
+    }
 }
 
 void MainMenu::paint(unsigned index)

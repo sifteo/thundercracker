@@ -81,16 +81,6 @@ void StatusApplet::arrive()
     }
 }
 
-void StatusApplet::depart()
-{
-    // Display a background on all other cubes
-    for (CubeID cube : CubeSet::connected()) {
-        if (cube != menu->cube()) {
-            Shared::video[cube].bg0.erase(Menu_StripeTile);
-        }
-    }
-}
-
 void StatusApplet::add(MainMenu &m)
 {
     static StatusApplet instance;
