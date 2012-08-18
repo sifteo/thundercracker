@@ -1,4 +1,5 @@
 #include <sifteo.h>
+#include "assets.gen.h"
 using namespace Sifteo;
 
 static AssetSlot MainSlot = AssetSlot::allocate();
@@ -46,32 +47,40 @@ void testColors()
         const char *name;
         BG0ROMDrawable::Palette value;
     } colors[] = {
-        { "black",      BG0ROMDrawable::BLACK, },
-        { "blue",       BG0ROMDrawable::BLUE, },
-        { "orange",     BG0ROMDrawable::ORANGE, },
-        { "invorange",  BG0ROMDrawable::INVORANGE, },
-        { "red",        BG0ROMDrawable::RED, },
-        { "gray",       BG0ROMDrawable::GRAY, },
-        { "inv",        BG0ROMDrawable::INV, },
-        { "invgray",    BG0ROMDrawable::INVGRAY, },
-        { "ltblue",     BG0ROMDrawable::LTBLUE, },
-        { "ltorange",   BG0ROMDrawable::LTORANGE, },
+        { "black_on_white",    BG0ROMDrawable::BLACK_ON_WHITE },
+        { "blue_on_white",     BG0ROMDrawable::BLUE_ON_WHITE },
+        { "orange_on_white",   BG0ROMDrawable::ORANGE_ON_WHITE },
+        { "yellow_on_blue",    BG0ROMDrawable::YELLOW_ON_BLUE },
+        { "red_on_white",      BG0ROMDrawable::RED_ON_WHITE },
+        { "gray_on_white",     BG0ROMDrawable::GRAY_ON_WHITE },
+        { "white_on_black",    BG0ROMDrawable::WHITE_ON_BLACK },
+        { "white_on_blue",     BG0ROMDrawable::WHITE_ON_BLUE },
+        { "white_on_teal",     BG0ROMDrawable::WHITE_ON_TEAL },
+        { "black_on_yellow",   BG0ROMDrawable::BLACK_ON_YELLOW },
+        { "dkgray_on_ltgray",  BG0ROMDrawable::DKGRAY_ON_LTGRAY },
+        { "green_on_white",    BG0ROMDrawable::GREEN_ON_WHITE },
+        { "white_on_green",    BG0ROMDrawable::WHITE_ON_GREEN },
+        { "purple_on_white",   BG0ROMDrawable::PURPLE_ON_WHITE },
+        { "ltblue_on_dkblue",  BG0ROMDrawable::LTBLUE_ON_DKBLUE },
+        { "gold_on_white",     BG0ROMDrawable::GOLD_ON_WHITE },
     };
     
     for (unsigned i = 0; i < arraysize(colors); ++i) {
-        vid.bg0rom.span(vec(0U, i), 2,
-            colors[i].value ^ BG0ROMDrawable::SOLID_FG);
-
-        vid.bg0rom.span(vec(2U, i), 14,
-            colors[i].value ^ BG0ROMDrawable::SOLID_BG);
-
-        vid.bg0rom.text(vec(4U, i), colors[i].name, colors[i].value);
-        vid.bg0rom.hBargraph(vec(14U, i), 12, colors[i].value);
+        vid.bg0rom.text(vec(0U, i), colors[i].name, colors[i].value);
     }
 
     System::paint();
     System::finish();
     SCRIPT(LUA, util:assertScreenshot(cube, 'colors'));
+}
+
+void testMap()
+{
+    vid.initMode(BG0_ROM);
+    vid.bg0.image(vec(0,0), Map);
+    System::paint();
+    System::finish();
+    SCRIPT(LUA, util:assertScreenshot(cube, 'map'));
 }
 
 void main()
@@ -90,6 +99,7 @@ void main()
     testText();
     testBargraph();
     testColors();
+    testMap();
 
     LOG("Success.\n");
 }

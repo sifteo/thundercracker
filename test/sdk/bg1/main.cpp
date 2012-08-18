@@ -51,6 +51,11 @@ void main()
 
     LOG_INT(vid.sys.vbuf.vram.words[0]);
 
+    // XXX: Workaround
+    vid.touch();
+    System::paint();
+    System::finish();
+
     testMaskedImage();
 
     LOG("Success.\n");
