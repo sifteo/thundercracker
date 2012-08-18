@@ -33,6 +33,7 @@ void CubeSlot::connect(SysLFS::Key cubeRecord, const RadioAddress &addr, const R
     Atomic::And(CubeSlots::sendStipple, ~cv);
     Atomic::And(CubeSlots::vramPaused, ~cv);
     Atomic::And(CubeSlots::touch, ~cv);
+    Atomic::And(CubeSlots::waitingOnCubes, ~cv);
 
     // Cube starts out awake
     napDeadline = 0;
@@ -447,6 +448,10 @@ unsigned CubeSlot::suggestNapTicks()
      * Otherwise, we'll use a default minimum rate which polls at 60 Hz.
      */
 
+    // Waiting on this cube? Don't sleep!
+    if (bit() & CubeSlots::waitingOnCubes)
+        return 0;
+
     // Maximum is 60 Hz
     unsigned maxRate = _SYS_MOTION_TIMESTAMP_HZ / 60;
 
@@ -458,9 +463,6 @@ unsigned CubeSlot::suggestNapTicks()
 
     // Convert from motion ticks to CLKLF ticks (approximate)
     unsigned napTicks = rate * (32768 / _SYS_MOTION_TIMESTAMP_HZ);
-
-    // Minimum nap duration
-    napTicks = MAX(napTicks, 2);
 
     return napTicks;
 }

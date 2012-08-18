@@ -26,6 +26,7 @@ namespace CubeSlots {
     extern _SYSCubeIDVector sendStipple;        /// Sending a stipple pattern to these cubes
     extern _SYSCubeIDVector vramPaused;         /// Pause transmission of VRAM updates
     extern _SYSCubeIDVector touch;              /// Stretched touch-detection bits for each cube
+    extern _SYSCubeIDVector waitingOnCubes;     /// Cubes that we're blocking on. Boosts radio service rate.
 
     extern BitVector<SysLFS::NUM_PAIRINGS> pairConnected;   /// Connected cubes, indexed by pairing ID
     
