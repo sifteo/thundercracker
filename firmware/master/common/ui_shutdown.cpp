@@ -20,14 +20,9 @@ namespace {
 
     static const unsigned kNumTilesX = 18;
     static const unsigned kNumVisibleTilesX = 16;
-    static const unsigned kNumTilesY = 10;
-
-    static const unsigned kWindowHeight = kNumTilesY * TILE;
-    static const unsigned kWindowBegin = (128 - kWindowHeight) / 2;
 
     static const unsigned kDigitWidth = 4;
     static const unsigned kDigitHeight = 5;
-    static const unsigned kDigitWindowBegin = kWindowBegin + TILE*2 + TILE/2;
 
     static const unsigned kFirstDigit = 5;
     static const float kSlideDuration = SysTime::msTicks(1000);
@@ -46,13 +41,12 @@ void UIShutdown::init()
         return;
 
     uic.finish();
+    uic.letterboxWindow(TILE * uic.assets.shutdownHeight);
     VRAM::pokeb(uic.avb.vbuf, offsetof(_SYSVideoRAM, mode), _SYS_VM_BG0_ROM);
-    VRAM::pokeb(uic.avb.vbuf, offsetof(_SYSVideoRAM, first_line), kWindowBegin);
-    VRAM::pokeb(uic.avb.vbuf, offsetof(_SYSVideoRAM, num_lines), kWindowHeight);
 
     drawBackground();
-    drawText(xy(3,1), "Shutdown in");
-    drawText(xy(1,8), "press to cancel");
+    drawText(xy(3, uic.assets.shutdownY1), "Shutdown in");
+    drawText(xy(1, uic.assets.shutdownY2), "press to cancel");
 
     uic.setPanX(TILE/2);
     uic.setPanY(0);
@@ -69,8 +63,7 @@ void UIShutdown::beginDigit(unsigned number)
     digitTimestamp = SysTime::ticks() - SysTime::msTicks(100);
     drawDigit(number);
 
-    VRAM::pokeb(uic.avb.vbuf, offsetof(_SYSVideoRAM, first_line), kDigitWindowBegin);
-    VRAM::pokeb(uic.avb.vbuf, offsetof(_SYSVideoRAM, num_lines), kDigitHeight * TILE);
+    uic.letterboxWindow(kDigitHeight * TILE);
 }
 
 void UIShutdown::animate()
@@ -116,8 +109,9 @@ void UIShutdown::drawBackground()
      */
 
     unsigned addr = 0;
+    unsigned height = uic.assets.shutdownHeight;
 
-    for (unsigned y = 0; y < kNumTilesY; ++y) {
+    for (unsigned y = 0; y < height; ++y) {
         for (unsigned x = 0; x < kNumTilesX; ++x) {
             uint16_t tile = uic.assets.shutdownBackground[y];
             VRAM::poke(uic.avb.vbuf, addr, _SYS_TILE77(tile));

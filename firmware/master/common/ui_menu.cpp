@@ -24,9 +24,6 @@ namespace {
     static const int kAccelHysteresisMin = 8;
     static const int kAccelHysteresisMax = 18;
     static const float kAccelScale = -8.0f;
-
-    static const unsigned kInactivePalette = (11 ^ 6) << 10;
-    static const unsigned kTextPalette = 11 << 10;
 }
 
 void UIMenu::init(unsigned defaultItem)
@@ -177,19 +174,14 @@ void UIMenu::setActiveItem(unsigned n)
     labelWidth = n < numItems ? strlen(items[n].label) : 0;
 }
 
-unsigned UIMenu::iconSpacing()
-{
-    return uic.assets.iconSize + kIconPadding;
-}
-
 int UIMenu::itemCenterPosition(unsigned n)
 {
-    return iconSpacing() * TILE * n - centerPixelX();
+    return uic.assets.iconSpacing * TILE * n - centerPixelX();
 }
 
 unsigned UIMenu::nearestItem()
 {
-    const int pixelSpacing = iconSpacing() * TILE;
+    const int pixelSpacing = uic.assets.iconSpacing * TILE;
     int item = (position + centerPixelX() + pixelSpacing/2) / pixelSpacing;
     return MAX(0, MIN(numItems - 1, item));
 }
@@ -203,7 +195,7 @@ void UIMenu::updatePosition(float velocity)
 
     int center = centerPixelX();
     int leftLimit = -kEndPadding - center;
-    int rightLimit = iconSpacing() * TILE * (numItems - 1) + kEndPadding - center;
+    int rightLimit = uic.assets.iconSpacing * TILE * (numItems - 1) + kEndPadding - center;
     int pixelPosition = position;
     if (pixelPosition < leftLimit)  position = leftLimit;
     if (pixelPosition > rightLimit) position = rightLimit;
@@ -252,34 +244,35 @@ void UIMenu::drawColumn(int x)
     // system. It is mapped modulo-18 onto BG0.
 
     unsigned iconSize = uic.assets.iconSize;
-    unsigned iconSpacingValue = iconSpacing();
+    unsigned iconSpacing = uic.assets.iconSpacing;
+    unsigned textPalette = unsigned(uic.assets.menuTextPalette) << 10;
     unsigned addr = umod(x, kNumTilesX);
 
     for (int y = 0; y < uic.assets.menuHeight; ++y) {
         // Don't draw borders when finishing. Otherwise, draw the whole background.
         uint16_t tile = uic.assets.menuBackground[state == S_FINISHING ? 1 : y];
 
-        unsigned iconIndex = x / iconSpacingValue;
-        unsigned iconX = x % iconSpacingValue;
+        unsigned iconIndex = x / iconSpacing;
+        unsigned iconX = x % iconSpacing;
         unsigned iconY = y - kIconYOffset;
 
         if (iconX < iconSize && iconY < iconSize && iconIndex < numItems) {
             bool active = iconIndex == activeItem;
 
             if (state != S_FINISHING || active) {
-                tile = uic.assets.images[items[iconIndex].index][iconX + iconY * iconSize];
-                if (!active)
-                    tile ^= kInactivePalette;
+                // Inactive icon is below active icon
+                unsigned frameY = iconY + (active ? 0 : iconSize);
+                tile = uic.assets.images[items[iconIndex].index][iconX + frameY * iconSize];
             }
         }
 
         if (y == (uic.assets.menuHeight - 2) && labelWidth) {
             // Drawing the label text
 
-            unsigned labelX = x - iconSpacingValue * activeItem + (labelWidth - iconSize) / 2;
+            unsigned labelX = x - iconSpacing * activeItem + labelWidth/2 - iconSize/2;
             if (labelX < labelWidth) {
                 // Note the uint8_t cast. This is important to avoid sign-extending non-ASCII characters!
-                tile = uint8_t(items[activeItem].label[labelX] - ' ') ^ kTextPalette;
+                tile = uint8_t(items[activeItem].label[labelX] - ' ') ^ textPalette;
             }
         }
 

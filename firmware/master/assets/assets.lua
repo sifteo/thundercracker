@@ -58,5 +58,4 @@ v02_IconResume = image{ "02-icon-resume.png", flat=1 }
 
 --- UIShutdown
 
-v02_ShutdownBackground = image{ "02-shutdown-background.png", flat=1 }
 v02_BigDigits = image{ "01-big-digits.png", flat=1, width=32, height=40 }

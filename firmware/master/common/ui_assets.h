@@ -35,8 +35,13 @@ struct UIAssets {
         };
     };
 
-    int menuHeight;
-    int iconSize;
+    int8_t menuHeight;
+    uint8_t menuTextPalette;
+    int8_t iconSize;
+    int8_t iconSpacing;
+    int8_t shutdownHeight;
+    int8_t shutdownY1;
+    int8_t shutdownY2;
 };
 
 // Calculate an index into images[]

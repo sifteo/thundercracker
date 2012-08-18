@@ -77,7 +77,6 @@ private:
     void drawColumn(int x);
     void setActiveItem(unsigned n);
     int itemCenterPosition(unsigned n);
-    unsigned iconSpacing();
     unsigned centerPixelX();
     unsigned nearestItem();
 };
