@@ -31,8 +31,7 @@ void ShutdownManager::shutdown()
 
     // First round of shut down. We'll appear to be off.
     LED::set(NULL);
-    CubeConnector::disableReconnect();
-    CubeSlots::sendShutdown = ~0;
+    CubeSlots::setCubeRange(0, 0);
 
     // We have plenty of time now. Clean up.
     housekeeping();
@@ -54,6 +53,7 @@ void ShutdownManager::shutdown()
 
     RadioManager::disableRadio();
     CubeSlots::disconnectCubes(CubeSlots::sysConnected);
+
     LOG(("SHUTDOWN: Entering USB-sleep state\n"));
 
     while (!HomeButton::isPressed())
@@ -70,6 +70,7 @@ void ShutdownManager::shutdown()
     CubeConnector::enableReconnect();
     RadioManager::enableRadio();
     SvmLoader::execLauncher();
+
     LOG(("SHUTDOWN: Resuming from USB-sleep state\n"));
 }
 
