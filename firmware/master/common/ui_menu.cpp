@@ -206,12 +206,24 @@ void UIMenu::updateHop()
     // Update the vertical 'hop' animation (Y panning)
 
     static const int8_t hop[] = {
-        // [int(i*2.5 - i*i*0.3 + 0.5) for i in range(1, 22)]
-        2, 4, 5, 5, 5, 4, 3, 1, -1, -4, -8, -12, -17, -23, -29, -36, -43, -51, -60, -69, -79
+        // [int(i*2.5 - i*i*0.3 + 0.5) for i in range(1, 24)]
+        2, 4, 5, 5, 5, 4, 3, 1, -1, -4, -8, -12, -17, -23,
+        -29, -36, -43, -51, -60, -69, -79, -89, -100
     };
 
     ASSERT(hopFrame < arraysize(hop));
     uic.setPanY(kWindowBorder + hop[hopFrame]);
+
+    if (hopFrame == 17) {
+        // Partway through, clear the bottom half of the icon before it wraps around
+
+        unsigned begin = kNumTilesX * (kIconYOffset + uic.assets.iconSize/2);
+        unsigned end = kNumTilesX * uic.assets.menuHeight;
+        uint16_t bg = _SYS_TILE77(uic.assets.menuBackground[1]);
+
+        for (unsigned i = begin; i != end; ++i)
+            VRAM::poke(uic.avb.vbuf, i, bg);
+    }
 
     if (++hopFrame == arraysize(hop))
         state = S_DONE;
