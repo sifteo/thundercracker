@@ -250,7 +250,8 @@ bool CubeSlot::radioProduce(PacketTransmission &tx, SysTime::Ticks now)
         unsigned napTicks = suggestNapTicks();
         if (codec.escRadioNap(tx.packet, napTicks)) {
             // How long will we be asleep for? Naps are measured in units of 32.768 kHz ticks.
-            napDeadline = now + (uint32_t(SysTime::hzTicks(32768)) * napTicks);
+            // Give the cube 1ms extra, so it can wake up before we start talking to it.
+            napDeadline = now + SysTime::msTicks(1) + (uint32_t(SysTime::hzTicks(32768)) * napTicks);
             return true;
         }
     }
