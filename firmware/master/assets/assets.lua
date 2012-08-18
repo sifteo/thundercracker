@@ -51,6 +51,12 @@ v02_LogoWhiteOnBlue = image{ "02-img-logo-white-on-blue.png", flat=1 }
 
 --- UIMenu
 
+v02_MenuBackground = image{ "02-menu-background.png", flat=1 }
 v02_IconQuit = image{ "02-icon-quit.png", flat=1 }
 v02_IconBack = image{ "02-icon-back.png", flat=1 }
 v02_IconResume = image{ "02-icon-resume.png", flat=1 }
+
+--- UIShutdown
+
+v02_ShutdownBackground = image{ "02-shutdown-background.png", flat=1 }
+v02_BigDigits = image{ "01-big-digits.png", flat=1, width=32, height=40 }
