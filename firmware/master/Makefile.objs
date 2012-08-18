@@ -51,6 +51,7 @@ OBJS_COMMON = \
     $(MASTER_DIR)/common/svmfastlz.o \
     $(MASTER_DIR)/common/usbprotocol.o \
     $(MASTER_DIR)/common/elfprogram.o \
+    $(MASTER_DIR)/common/ui_assets.o \
     $(MASTER_DIR)/common/ui_panic.o \
     $(MASTER_DIR)/common/ui_coordinator.o \
     $(MASTER_DIR)/common/ui_menu.o \

@@ -9,28 +9,16 @@
 #include "cubeslots.h"
 #include "cube.h"
 
-// Assets
-extern const uint16_t v01_MenuBackground_data[];
-
 // Menu settings
 namespace {
     static const unsigned TILE = 8;
 
-    static const unsigned kIconTileWidth = 5;
-    static const unsigned kIconTileHeight = 5;
-
-    static const unsigned kIconSpacing = 8;
+    static const unsigned kIconPadding = 3;
     static const unsigned kIconYOffset = 1;
-    static const unsigned kLabelYOffset = 7;
 
     static const unsigned kNumTilesX = 18;
     static const unsigned kNumVisibleTilesX = 16;
-    static const unsigned kNumTilesY = 9;
     static const unsigned kEndPadding = 4 * TILE;
-    static const unsigned kCenterPixelX = (kNumVisibleTilesX - kIconTileWidth) * TILE / 2;
-
-    static const unsigned kWindowHeight = kNumTilesY * TILE;
-    static const unsigned kWindowBegin = (128 - kWindowHeight) / 2;
     static const unsigned kWindowBorder = 3;
 
     static const int kAccelHysteresisMin = 8;
@@ -47,15 +35,14 @@ void UIMenu::init(unsigned defaultItem)
         return;
 
     // Paint entire screen with background tile (We'll see it during the hop animation)
-    uint16_t bg = _SYS_TILE77(v01_MenuBackground_data[1]);
+    uint16_t bg = _SYS_TILE77(uic.assets.menuBackground[1]);
     for (unsigned i = 0; i < _SYS_VRAM_BG0_WIDTH * _SYS_VRAM_BG0_WIDTH; ++i)
         VRAM::poke(uic.avb.vbuf, i, bg);
 
     // Set up default video state
     uic.finish();
+    uic.letterboxWindow(TILE * uic.assets.menuHeight);
     VRAM::pokeb(uic.avb.vbuf, offsetof(_SYSVideoRAM, mode), _SYS_VM_BG0_ROM);
-    VRAM::pokeb(uic.avb.vbuf, offsetof(_SYSVideoRAM, first_line), kWindowBegin);
-    VRAM::pokeb(uic.avb.vbuf, offsetof(_SYSVideoRAM, num_lines), kWindowHeight);
 
     // We won't transition to STATIC until we verify that isTouching() == false
     state = S_SETTLING;
@@ -66,6 +53,11 @@ void UIMenu::init(unsigned defaultItem)
     drawAll();
     uic.setPanX(position);
     uic.setPanY(0);
+}
+
+unsigned UIMenu::centerPixelX()
+{
+    return (kNumVisibleTilesX - uic.assets.iconSize) * (TILE / 2);
 }
 
 void UIMenu::animate()
@@ -175,8 +167,7 @@ void UIMenu::beginFinishing()
 
     // Need to finsh rendering before adjusting the window and panning atomically like this
     uic.finish();
-    VRAM::pokeb(uic.avb.vbuf, offsetof(_SYSVideoRAM, first_line), kWindowBegin + kWindowBorder);
-    VRAM::pokeb(uic.avb.vbuf, offsetof(_SYSVideoRAM, num_lines), kWindowHeight - kWindowBorder*2);
+    uic.letterboxWindow(TILE * uic.assets.menuHeight - kWindowBorder * 2);
     updateHop();
 }
 
@@ -186,15 +177,20 @@ void UIMenu::setActiveItem(unsigned n)
     labelWidth = n < numItems ? strlen(items[n].label) : 0;
 }
 
+unsigned UIMenu::iconSpacing()
+{
+    return uic.assets.iconSize + kIconPadding;
+}
+
 int UIMenu::itemCenterPosition(unsigned n)
 {
-    return kIconSpacing * TILE * n - kCenterPixelX;
+    return iconSpacing() * TILE * n - centerPixelX();
 }
 
 unsigned UIMenu::nearestItem()
 {
-    const int pixelSpacing = kIconSpacing * TILE;
-    int item = (position + kCenterPixelX + pixelSpacing/2) / pixelSpacing;
+    const int pixelSpacing = iconSpacing() * TILE;
+    int item = (position + centerPixelX() + pixelSpacing/2) / pixelSpacing;
     return MAX(0, MIN(numItems - 1, item));
 }
 
@@ -205,8 +201,9 @@ void UIMenu::updatePosition(float velocity)
 
     position += velocity;
 
-    int leftLimit = -kEndPadding - kCenterPixelX;
-    int rightLimit = kIconSpacing * TILE * (numItems - 1) + kEndPadding - kCenterPixelX;
+    int center = centerPixelX();
+    int leftLimit = -kEndPadding - center;
+    int rightLimit = iconSpacing() * TILE * (numItems - 1) + kEndPadding - center;
     int pixelPosition = position;
     if (pixelPosition < leftLimit)  position = leftLimit;
     if (pixelPosition > rightLimit) position = rightLimit;
@@ -254,30 +251,32 @@ void UIMenu::drawColumn(int x)
     // 'x' is a column index, in tiles, from the origin of our virtual coordinate
     // system. It is mapped modulo-18 onto BG0.
 
+    unsigned iconSize = uic.assets.iconSize;
+    unsigned iconSpacingValue = iconSpacing();
     unsigned addr = umod(x, kNumTilesX);
 
-    for (unsigned y = 0; y < kNumTilesY; ++y) {
-        // Don't draw borderes when finishing. Otherwise, draw the whole background.
-        uint16_t tile = state == S_FINISHING ? v01_MenuBackground_data[1] : v01_MenuBackground_data[y];
+    for (int y = 0; y < uic.assets.menuHeight; ++y) {
+        // Don't draw borders when finishing. Otherwise, draw the whole background.
+        uint16_t tile = uic.assets.menuBackground[state == S_FINISHING ? 1 : y];
 
-        unsigned iconIndex = x / kIconSpacing;
-        unsigned iconX = x % kIconSpacing;
+        unsigned iconIndex = x / iconSpacingValue;
+        unsigned iconX = x % iconSpacingValue;
         unsigned iconY = y - kIconYOffset;
 
-        if (iconX < kIconTileWidth && iconY < kIconTileHeight && iconIndex < numItems) {
+        if (iconX < iconSize && iconY < iconSize && iconIndex < numItems) {
             bool active = iconIndex == activeItem;
 
             if (state != S_FINISHING || active) {
-                tile = items[iconIndex].icon[iconX + iconY * kIconTileWidth];
+                tile = uic.assets.images[items[iconIndex].index][iconX + iconY * iconSize];
                 if (!active)
                     tile ^= kInactivePalette;
             }
         }
 
-        if (y == kLabelYOffset && labelWidth) {
+        if (y == (uic.assets.menuHeight - 2) && labelWidth) {
             // Drawing the label text
 
-            unsigned labelX = x - kIconSpacing * activeItem + (labelWidth - kIconTileWidth) / 2;
+            unsigned labelX = x - iconSpacingValue * activeItem + (labelWidth - iconSize) / 2;
             if (labelX < labelWidth) {
                 // Note the uint8_t cast. This is important to avoid sign-extending non-ASCII characters!
                 tile = uint8_t(items[activeItem].label[labelX] - ' ') ^ kTextPalette;
