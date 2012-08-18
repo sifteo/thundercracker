@@ -70,7 +70,6 @@ public:
         T_LFS           = 0x5346,                   // "FS"
 
         // Internal types
-        T_PRE_ERASED    = 0xFF55,       // Storage for pre-erased blocks
         T_DELETED       = 0x0000,       // Normal deleted volume (Must be zero)
         T_INCOMPLETE    = 0xFFFF,       // Not-yet-committed volume (Must be FFFF)
     };
@@ -94,7 +93,7 @@ public:
 
     /// This volume can be reclaimed as free space
     static bool typeIsRecyclable(unsigned type) {
-        return type == T_INCOMPLETE || type == T_DELETED || type == T_PRE_ERASED;
+        return type == T_INCOMPLETE || type == T_DELETED;
     }
 
     /// This is a volume used for internal bookkeeping, and never visible to the user
@@ -229,9 +228,6 @@ public:
      */
     bool next(FlashMapBlock &block, EraseCount &eraseCount);
 
-    /// Would it be useful to gather additional pre-erased blocks now?
-    static bool wantPreErase();
-
 private:
     FlashMapBlock::Set orphanBlocks;
     FlashMapBlock::Set deletedVolumes;
@@ -290,8 +286,7 @@ public:
      * Try to collect pre-erased filesystem blocks into a special volume type.
      * If we can do this, it will make future volume creation operations faster.
      *
-     * On success, this begins and commits a special type of volume,
-     * T_PRE_ERASED. Blocks from this volume will be recycled by future allocations.
+     * Returns true if we made any forward progress.
      */
     bool preEraseBlocks();
 
