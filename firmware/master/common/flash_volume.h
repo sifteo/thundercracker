@@ -41,6 +41,8 @@
 #include "macros.h"
 #include "flash_map.h"
 
+struct FlashVolumeHeader;
+
 
 /**
  * Represents a single Volume in flash: a physically discontiguous
@@ -80,11 +82,15 @@ public:
     FlashVolume(_SYSVolumeHandle vh);
 
     bool isValid() const;
-    _SYSVolumeHandle getHandle() const;
     unsigned getType() const;
     FlashVolume getParent() const;
     FlashMapSpan getPayload(FlashBlockRef &ref) const;
     uint8_t *mapTypeSpecificData(FlashBlockRef &ref, unsigned &size) const;
+
+    /// Create a _SYSVolumeHandle to represent this FlashVolume.
+    ALWAYS_INLINE _SYSVolumeHandle getHandle() const {
+        return signHandle(block.code);
+    }
 
     /// This volume can be reclaimed as free space
     static bool typeIsRecyclable(unsigned type) {
@@ -92,7 +98,7 @@ public:
     }
 
     /// This is a volume used for internal bookkeeping, and never visible to the user
-    static bool typeIsInternal(unsigned type) {
+    static ALWAYS_INLINE bool typeIsInternal(unsigned type) {
         return typeIsRecyclable(type);
     }
 
@@ -135,12 +141,6 @@ public:
      * factory reset / system wipe.
      */
     static void deleteEverything();
-
-    /**
-     * Pre-erase filesystem blocks, if we can, storing them in a special
-     * kind of deleted volume.
-     */
-    static void preEraseBlocks();
 
 private:
     static uint32_t signHandle(uint32_t h);
@@ -224,8 +224,13 @@ public:
      * in a log-structured filesystem. This seems less preferable, however,
      * since it would turn the recycling operation into an O(N^2) problem
      * with the number of flash blocks in the device!
+     *
+     * The returned block is guaranteed to be erased.
      */
     bool next(FlashMapBlock &block, EraseCount &eraseCount);
+
+    /// Would it be useful to gather additional pre-erased blocks now?
+    static bool wantPreErase();
 
 private:
     FlashMapBlock::Set orphanBlocks;
@@ -282,6 +287,15 @@ public:
     bool beginLauncher(unsigned payloadBytes);
 
     /**
+     * Try to collect pre-erased filesystem blocks into a special volume type.
+     * If we can do this, it will make future volume creation operations faster.
+     *
+     * On success, this begins and commits a special type of volume,
+     * T_PRE_ERASED. Blocks from this volume will be recycled by future allocations.
+     */
+    bool preEraseBlocks();
+
+    /**
      * Map a writeable copy of the portion of the type-specific data region
      * which fits in the header block.
      *
@@ -311,6 +325,16 @@ private:
     FlashBlockWriter payloadWriter;
     unsigned payloadOffset;
     uint16_t type;
+
+    /**
+     * Allocates up to 'count' new map blocks for 'hdr'. Returns the actual
+     * number of blocks allocated. If we did nothing, returns zero. Otherwise,
+     * the result will include 1 header blocks and 0 or more payload blocks.
+     *
+     * May reposition hdrWriter to a different block, in order to write
+     * erase counts. Saves a copy of the header to 'hdrVolume'.
+     */
+    static unsigned populateMap(FlashBlockWriter &hdrWriter, unsigned count, FlashVolume &hdrVolume);
 };
 
 

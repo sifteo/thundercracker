@@ -84,7 +84,10 @@ void ShutdownManager::housekeeping()
 
     while (FlashLFS::collectGlobalGarbage()) {}
 
-    FlashVolume::preEraseBlocks();
+    FlashVolumeWriter writer;
+    if (writer.preEraseBlocks()) {
+        LOG(("SHUTDOWN: Successfully pre-erased flash memory\n"));
+    }
 }
 
 void ShutdownManager::batteryPowerOff()

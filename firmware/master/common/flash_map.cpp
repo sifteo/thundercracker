@@ -10,6 +10,8 @@
 
 void FlashMapBlock::erase() const
 {
+    LOG(("FILESYSTEM: Erasing flash block %08x\n", address()));
+
     STATIC_ASSERT(FlashDevice::ERASE_BLOCK_SIZE <= BLOCK_SIZE);
     STATIC_ASSERT((BLOCK_SIZE % FlashDevice::ERASE_BLOCK_SIZE) == 0);
 
