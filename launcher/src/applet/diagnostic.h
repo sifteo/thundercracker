@@ -9,7 +9,7 @@
 
 class DiagnosticApplet {
 public:
-    static void run();
+	static void run();
 
 private:
     struct Counter {
