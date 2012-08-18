@@ -204,7 +204,7 @@ struct GameMenuEventVector {
      *
      * This sets the text which is displayed under the Game Menu icon on the
      * standard Pause menu. It must be between 1 and 15 characters long, and
-     * we strongly recommend that it is an odd number of characters, so that
+     * we strongly recommend that it is an even number of characters, so that
      * it can be centered perfectly.
      *
      * The character set is that of the font in BG0_ROM. It is a superset of

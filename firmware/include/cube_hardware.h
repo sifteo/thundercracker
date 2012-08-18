@@ -39,11 +39,17 @@
  *
  * These three thresholds are the boundaries between
  * the four bars on our idle screen's battery meter.
+ *
+ * Chosen based on a compromise between the NiMH and Alkaline
+ * discharge curves. Very broadly, we want the first and last
+ * breakpoints to encompass the steep slopes at the beginning
+ * and end of a battery's life, and the third breakpoint should
+ * be roughly in the middle.
  */
 
-#define BATTERY_THRESHOLD_1     0x05
-#define BATTERY_THRESHOLD_2     0x40
-#define BATTERY_THRESHOLD_3     0x80
+#define BATTERY_THRESHOLD_1     90      // ~30-60 min left with NiMH
+#define BATTERY_THRESHOLD_2     105
+#define BATTERY_THRESHOLD_3     130     // ~1 hour in for NiMH, ~3 hours for Alkaline
 
 
 /*
@@ -87,10 +93,10 @@
 
 // Numbered according to the standard side enum.
 // Both the number and name are represented here; due to the binary masking, both are critical.
-#define MISC_NB_0_TOP          (1 << 4)
-#define MISC_NB_1_LEFT         (1 << 5)
-#define MISC_NB_2_BOTTOM       (1 << 0)
-#define MISC_NB_3_RIGHT        (1 << 1)
+#define MISC_NB_0_TOP          (1 << 0)
+#define MISC_NB_1_LEFT         (1 << 1)
+#define MISC_NB_2_BOTTOM       (1 << 4)
+#define MISC_NB_3_RIGHT        (1 << 5)
 
 #define BATTERY_ADC_CH  0
 

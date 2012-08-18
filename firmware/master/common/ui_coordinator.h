@@ -8,6 +8,7 @@
 
 #include <sifteo/abi.h>
 #include "systime.h"
+#include "ui_assets.h"
 
 
 /**
@@ -40,6 +41,7 @@ public:
     void detach();
     void setPanX(int x);
     void setPanY(int y);
+    void letterboxWindow(unsigned height);
     bool isTouching();
 
     void idle();
@@ -48,9 +50,10 @@ public:
         return _SYSCubeID(avb.cube) != _SYSCubeID(_SYS_CUBE_ID_INVALID);
     }
 
-    _SYSAttachedVideoBuffer avb;
-    _SYSCubeIDVector uiConnected;
     uint32_t excludedTasks;
+    _SYSCubeIDVector uiConnected;
+    UIAssets assets;
+    _SYSAttachedVideoBuffer avb;
 
 private:
     _SYSVideoBuffer *savedVBuf;

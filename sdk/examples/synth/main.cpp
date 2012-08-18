@@ -57,7 +57,7 @@ void synthesize(float hz, float timbre, float volume)
 
 void main()
 {
-    unsigned fg = BG0ROMDrawable::SOLID_FG ^ BG0ROMDrawable::LTBLUE;
+    unsigned fg = BG0ROMDrawable::SOLID_FG ^ BG0ROMDrawable::BLUE;
     unsigned bg = BG0ROMDrawable::SOLID_FG ^ BG0ROMDrawable::BLACK;
 
     vid.initMode(BG0_ROM);

@@ -80,7 +80,7 @@ class CubeSlot {
     }
 
     ALWAYS_INLINE const _SYSByte4 getAccelState() {
-        return MotionUtil::captureAccelState(lastACK);
+        return MotionUtil::captureAccelState(lastACK, getVersion());
     }
 
     ALWAYS_INLINE const uint8_t* getRawNeighbors() const {

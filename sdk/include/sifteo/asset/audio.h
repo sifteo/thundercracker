@@ -5,9 +5,10 @@
  */
 
 #pragma once
-#ifdef NOT_USERSPACE
-#   error This is a userspace-only header, not allowed by the current build.
-#endif
+
+/*
+ * This header needs to work in both userspace and non-userspace builds.
+ */
 
 #include <sifteo/abi.h>
 

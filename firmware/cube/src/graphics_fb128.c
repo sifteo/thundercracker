@@ -8,6 +8,8 @@
 
 #include "graphics.h"
 
+extern uint8_t fb128_y;
+
 /*
  * 2-color 128x48 framebuffer mode.
  *
@@ -19,6 +21,8 @@
  * text.
  *
  * Two-entry colormap, 16 bytes per line.
+ *
+ * Clobbers r2-r7.
  */
 
 static void vm_fb128_line(uint16_t ptr)
@@ -69,17 +73,37 @@ void vm_fb128(void) __naked
     lcd_begin_frame();
     LCD_WRITE_BEGIN();
 
-    {
-        uint8_t y = vram.num_lines;
-        uint16_t src = 0;
+    __asm
 
-        do {
-            vm_fb128_line(src);
-            src += 16;
-            if ((src >> 8) == (_SYS_VA_COLORMAP >> 8))
-               src = 0;
-        } while (--y);    
-    }
+        ; Keep line count in fb128_y
+
+        mov     dptr, #_SYS_VA_NUM_LINES
+        movx    a, @dptr
+        mov     _fb128_y, a
+
+        clr     a
+        mov     r1, a               ; Line pointer in r1:r0
+        mov     r0, a
+
+1$:
+        mov     dpl, r0             ; Draw line from r1:r0
+        mov     dph, r1
+        acall   _vm_fb128_line
+
+        mov     a, r0               ; Add 16 bytes
+        add     a, #16
+        mov     r0, a
+        mov     a, r1
+        addc    a, #0
+        cjne    a, #(_SYS_VA_COLORMAP >> 8), 2$
+        clr     a                   ; Wrap at the bottom of the framebuffer
+2$:
+        mov     r1, a
+
+        djnz    _fb128_y, 1$        ; Next line. Done yet?
+
+10$:
+    __endasm;
 
     lcd_end_frame();
     GRAPHICS_RET();

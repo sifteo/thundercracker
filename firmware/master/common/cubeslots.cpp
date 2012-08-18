@@ -22,6 +22,7 @@ _SYSCubeIDVector CubeSlots::sendShutdown = 0;
 _SYSCubeIDVector CubeSlots::sendStipple = 0;
 _SYSCubeIDVector CubeSlots::vramPaused = 0;
 _SYSCubeIDVector CubeSlots::touch = 0;
+_SYSCubeIDVector CubeSlots::waitingOnCubes = 0;
 
 BitVector<SysLFS::NUM_PAIRINGS> CubeSlots::pairConnected;
 
@@ -111,6 +112,9 @@ void CubeSlots::finishCubes(_SYSCubeIDVector cv, uint32_t excludedTasks)
      * state changes which get that cube closer to finishing.
      */
 
+    // Start by keeping all of these cubes awake
+    Atomic::Or(waitingOnCubes, cv);
+
     _SYSCubeIDVector beginVec = cv;
     while (beginVec) {
         _SYSCubeID id = Intrinsic::CLZ(beginVec);
@@ -125,9 +129,17 @@ void CubeSlots::finishCubes(_SYSCubeIDVector cv, uint32_t excludedTasks)
 
         while (pollVec) {
             _SYSCubeID id = Intrinsic::CLZ(pollVec);
-            if (!CubeSlots::instances[id].pollForFinish(now))
+            _SYSCubeIDVector bit = Intrinsic::LZ(id);
+            pollVec ^= bit;
+
+            if (CubeSlots::instances[id].pollForFinish(now)) {
+                // This cube is done. Don't need to poll it any more.
+                cv ^= bit;
+                Atomic::And(waitingOnCubes, ~bit);
+            } else {
+                // Still waiting on at least one cube
                 finished = false;
-            pollVec ^= Intrinsic::LZ(id);
+            }
         }
     
         if (finished)

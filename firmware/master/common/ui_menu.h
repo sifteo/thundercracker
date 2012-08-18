@@ -26,8 +26,8 @@ class UICoordinator;
 class UIMenu {
 public:
     struct Item {
-        const uint16_t *icon;
         const char *label;
+        uint8_t index;
         bool selectable;
     };
 
@@ -77,6 +77,7 @@ private:
     void drawColumn(int x);
     void setActiveItem(unsigned n);
     int itemCenterPosition(unsigned n);
+    unsigned centerPixelX();
     unsigned nearestItem();
 };
 

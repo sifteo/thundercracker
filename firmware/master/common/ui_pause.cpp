@@ -3,23 +3,19 @@
  * Copyright <c> 2012 Sifteo, Inc. All rights reserved.
  */
 
+#include "ui_assets.h"
 #include "ui_pause.h"
 #include "svmloader.h"
 #include "svmclock.h"
 #include "event.h"
 
-extern const uint16_t v01_MenuBackground_data[];
-extern const uint16_t v01_IconQuit_data[];
-extern const uint16_t v01_IconBack_data[];
-extern const uint16_t v01_IconResume_data[];
-
 char UIPause::gameMenuLabel[MAX_LABEL_CHARS + 1];
 
 const UIMenu::Item UIPause::items[NUM_ITEMS] = {
-    // Note: labels with an odd number of characters will center perfectly
-    { v01_IconBack_data,    gameMenuLabel, true },
-    { v01_IconResume_data,  "Continue Game", true },
-    { v01_IconQuit_data,    "Quit Game", true },
+    // Note: labels with an even number of characters will center perfectly
+    { gameMenuLabel,  UI_IMAGE_INDEX(iconBack),    true },
+    { "Resume",       UI_IMAGE_INDEX(iconResume),  true },
+    { "Quit",         UI_IMAGE_INDEX(iconQuit),    true },
 };
 
 

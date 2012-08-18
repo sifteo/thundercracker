@@ -124,7 +124,7 @@ static void power_wake_on_rf_poll(void)
      */
 
     {
-        uint8_t i = 0, j = 2;
+        uint8_t i = 0, j = 10;
         do {
             do {
                 __asm
