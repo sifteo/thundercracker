@@ -230,11 +230,18 @@ void MainMenu::cubeConnect(unsigned cid)
 
     /*
      * Initialize to blue Sifteo logo to match firmware.
+     *
      * This is in the cube's ROM, so we can show it even before asset loading.
+     * TileROM images can be versioned according to the version in the hwid's
+     * low byte.
      */
+
+    uint8_t version = CubeID(cid).hwID();
+    const AssetImage& logo = (version >= 0x02) ? v02_CubeConnected : v01_CubeConnected;
+
     Shared::video[cid].initMode(BG0_ROM);
     Shared::video[cid].bg0.setPanning(vec(0,0));
-    Shared::video[cid].bg0.image(vec(0,0), Logo);
+    Shared::video[cid].bg0.image(vec(0,0), logo);
 }
 
 void MainMenu::cubeDisconnect(unsigned cid)
