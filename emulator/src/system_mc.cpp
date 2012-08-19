@@ -110,7 +110,12 @@ void SystemMC::autoInstall()
     const char *launcher = sys->opt_launcherFilename.empty() ? NULL : sys->opt_launcherFilename.c_str();
     if (sys->flash.installLauncher(launcher)) {
 
-        // Install any ELF data that we've previously queued
+        /*
+         * Install any ELF data that we've previously queued.
+         *
+         * XXX: Use writer.beginGame(), so we can remove previous copies of the same game.
+         */
+
         tthread::lock_guard<tthread::mutex> guard(pendingGameInstallLock);
         while (!pendingGameInstalls.empty()) {
             std::vector<uint8_t> &data = pendingGameInstalls.back();
