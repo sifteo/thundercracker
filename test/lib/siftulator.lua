@@ -64,7 +64,7 @@ util = {}
             if rec then
 
                 -- Iterate over slots
-                for slot = 1, 8 do
+                for slot = 0, 7 do
 
                     -- Extract slots[slot].identity.volume
                     local slotIdentityVolume = rec:byte(1 + 2 + slot*4)

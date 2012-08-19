@@ -445,6 +445,9 @@ void testVolumeCleanup()
     ASSERT(!findVolumeInSysLFS(vols[1]));
     ASSERT(!findVolumeInSysLFS(vols[2]));
     ASSERT(!findVolumeInSysLFS(vols[3]));
+
+    Volume::list(Volume::T_GAME, vols);
+    ASSERT(vols.count() == 0);
 }
 
 void main()
