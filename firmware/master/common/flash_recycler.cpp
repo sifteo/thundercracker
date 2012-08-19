@@ -80,6 +80,10 @@ void FlashBlockRecycler::findCandidateVolumes()
      * Using the results of findOrphansAndDeletedVolumes(),
      * create a set of "candidate" volumes, in which at least one
      * of the valid blocks has an erase count <= the average.
+     *
+     * In order to avoid deleting the erase log unless we're really
+     * low on space, we never include erase log volumes in this initial
+     * list of candidates.
      */
 
     candidateVolumes.clear();
@@ -91,6 +95,10 @@ void FlashBlockRecycler::findCandidateVolumes()
         FlashBlockRef ref;
         FlashMapBlock block = FlashMapBlock::fromIndex(index);
         FlashVolumeHeader *hdr = FlashVolumeHeader::get(ref, block);
+
+        if (hdr->type == FlashVolume::T_ERASE_LOG)
+            continue;
+
         unsigned numMapEntries = hdr->numMapEntries();
         const FlashMap *map = hdr->getMap();
         FlashBlockRef eraseRef;
@@ -113,6 +121,8 @@ void FlashBlockRecycler::findCandidateVolumes()
      * (say, we've already allocated all blocks with below-average
      * erase counts) we'll punt by making all deleted volumes into
      * candidates.
+     *
+     * This also opens up T_ERASE_LOG volumes for recycling.
      */
 
     if (candidateVolumes.empty())

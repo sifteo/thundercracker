@@ -95,7 +95,7 @@ public:
 
     /// This volume can be reclaimed as free space
     static bool typeIsRecyclable(unsigned type) {
-        return type == T_INCOMPLETE || type == T_DELETED;
+        return type == T_INCOMPLETE || type == T_DELETED || type == T_ERASE_LOG;
     }
 
     /// This is a volume used for internal bookkeeping, and never visible to the user
