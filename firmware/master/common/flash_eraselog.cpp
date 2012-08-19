@@ -3,6 +3,8 @@
  * Copyright <c> 2012 Sifteo, Inc. All rights reserved.
  */
 
+#include "flash_volume.h"
+#include "flash_recycler.h"
 #include "flash_eraselog.h"
 #include "crc.h"
 

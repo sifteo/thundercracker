@@ -19,7 +19,7 @@
 #define FLASH_ERASELOG_H_
 
 #include "flash_map.h"
-#include "flash_volume.h"
+#include "flash_recycler.h"
 
 
 /**
