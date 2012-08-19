@@ -24,6 +24,7 @@
 #include "flash_device.h"
 #include "flash_storage.h"
 #include "flash_volume.h"
+#include "flash_recycler.h"
 #include "ostime.h"
 #include "lodepng.h"
 
@@ -157,7 +158,9 @@ bool FlashStorage::installLauncher(const char *filename)
     }
 
     FlashVolumeWriter writer;
-    if (!writer.begin(FlashVolume::T_LAUNCHER, launcherSize)) {
+    FlashBlockRecycler recycler;
+
+    if (!writer.begin(recycler, FlashVolume::T_LAUNCHER, launcherSize)) {
         LOG(("FLASH: Insufficient space for launcher binary\n"));
         return false;
     }

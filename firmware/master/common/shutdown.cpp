@@ -11,7 +11,7 @@
 #include "svmloader.h"
 #include "cubeslots.h"
 #include "cubeconnector.h"
-#include "flash_eraselog.h"
+#include "flash_preerase.h"
 
 #ifndef SIFTEO_SIMULATOR
 #   include "powermanager.h"

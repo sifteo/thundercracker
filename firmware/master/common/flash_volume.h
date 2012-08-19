@@ -42,6 +42,7 @@
 #include "flash_map.h"
 
 struct FlashVolumeHeader;
+class FlashBlockRecycler;
 
 
 /**
@@ -194,8 +195,8 @@ public:
      * This can take some time, as it involves erasing flash blocks as well
      * as scanning for recyclable blocks.
      */
-    bool begin(unsigned type, unsigned payloadBytes,
-        unsigned hdrDataBytes = 0,
+    bool begin(FlashBlockRecycler &recycler,
+        unsigned type, unsigned payloadBytes, unsigned hdrDataBytes = 0,
         FlashVolume parent = FlashMapBlock::invalid());
 
     /**
@@ -239,6 +240,7 @@ private:
     FlashBlockWriter payloadWriter;
     unsigned payloadOffset;
     uint16_t type;
+    bool useEraseLog;
 
     /**
      * Allocates up to 'count' new map blocks for 'hdr'. Returns the actual
@@ -248,7 +250,8 @@ private:
      * May reposition hdrWriter to a different block, in order to write
      * erase counts. Saves a copy of the header to 'hdrVolume'.
      */
-    static unsigned populateMap(FlashBlockWriter &hdrWriter, unsigned count, FlashVolume &hdrVolume);
+    static unsigned populateMap(FlashBlockWriter &hdrWriter,
+            FlashBlockRecycler &recycler, unsigned count, FlashVolume &hdrVolume);
 };
 
 

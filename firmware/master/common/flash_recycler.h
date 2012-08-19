@@ -21,6 +21,8 @@
 
 #include "macros.h"
 #include "flash_map.h"
+#include "flash_eraselog.h"
+
 
 /**
  * Manages the process of finding unused FlashMapBlocks to recycle.
@@ -81,7 +83,9 @@ private:
     FlashMapBlock::Set deletedVolumes;
     FlashMapBlock::Set candidateVolumes;
     uint32_t averageEraseCount;
+    bool useEraseLog;
 
+    FlashEraseLog eraseLog;
     FlashBlockWriter dirtyVolume;
 
     void findOrphansAndDeletedVolumes();

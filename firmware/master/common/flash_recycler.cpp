@@ -6,10 +6,12 @@
 #include "flash_volume.h"
 #include "flash_volumeheader.h"
 #include "flash_recycler.h"
+#include "flash_eraselog.h"
 #include "svmloader.h"
 
 
 FlashBlockRecycler::FlashBlockRecycler(bool useEraseLog)
+    : useEraseLog(useEraseLog)
 {
     ASSERT(!dirtyVolume.ref.isHeld());
     findOrphansAndDeletedVolumes();
@@ -25,6 +27,9 @@ void FlashBlockRecycler::findOrphansAndDeletedVolumes()
 
     orphanBlocks.mark();
     deletedVolumes.clear();
+
+    // Blocks in our Erase Log are not orphaned
+    FlashEraseLog::clearBlocks(orphanBlocks);
 
     uint64_t avgEraseNumerator = 0;
     uint32_t avgEraseDenominator = 0;
@@ -116,6 +121,27 @@ void FlashBlockRecycler::findCandidateVolumes()
 
 bool FlashBlockRecycler::next(FlashMapBlock &block, EraseCount &eraseCount)
 {
+    /*
+     * If we're allowed to, see if we can take a shortcut by using the Erase Log.
+     * This is a persistent FIFO which stores earlier output from this same
+     * recycler algorithm, allowing us to pre-erase blocks whenever we have
+     * time to kill, in order to avoid erase latency in the future.
+     *
+     * This needs to happen first, even before orphaned blocks. When the
+     * filesystem is new (before every block has been erased once) there
+     * will be a lot of orphaned blocks still. Those blocks need to be erased,
+     * and we'd rather do that when we have time to spare.
+     */
+
+    if (useEraseLog) {
+        FlashEraseLog::Record rec;
+        if (eraseLog.pop(rec)) {
+            block = rec.block;
+            eraseCount = rec.ec;
+            return true;
+        }
+    }
+
     /*
      * We must start with orphaned blocks. See the explanation in the class
      * comment for FlashBlockRecycler. This part is easy- we assume they're

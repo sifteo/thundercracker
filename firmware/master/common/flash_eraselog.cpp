@@ -54,11 +54,13 @@ void FlashEraseLog::findIndices()
     unsigned end = NUM_RECORDS;
 
     // Binary search for the last F_POPPED record.
-    while (begin + 1 < end) {
+    while (begin < end) {
         unsigned middle = (begin + end) >> 1;
         ASSERT(middle < end);
         if (readFlag(middle) == F_POPPED) {
             // After or equal to this record
+            if (begin == middle)
+                break;
             begin = middle;
         } else {
             // Before this record
@@ -77,7 +79,7 @@ void FlashEraseLog::findIndices()
 
     // Binary search for the last non-erased record
     end = NUM_RECORDS;
-    while (begin + 1 < end) {
+    while (begin < end) {
         unsigned middle = (begin + end) >> 1;
         ASSERT(middle < end);
         if (readFlag(middle) == F_ERASED) {
@@ -85,9 +87,12 @@ void FlashEraseLog::findIndices()
             end = middle;
         } else {
             // After or equal to this record
+            if (begin == middle)
+                break;
             begin = middle;
         }
     }
+    ASSERT(end == 0 || begin + 1 == end);
 
     // Start writing at the first erased record. If the volume is full,
     // writeIndex == NUM_RECORDS.
@@ -96,7 +101,7 @@ void FlashEraseLog::findIndices()
     ASSERT(writeIndex == 0 || readFlag(writeIndex - 1) != F_ERASED);
 }
 
-bool FlashEraseLog::allocate()
+bool FlashEraseLog::allocate(FlashBlockRecycler &recycler)
 {
     /*
      * Make sure we have space for one more record: We must have a valid
@@ -116,7 +121,8 @@ bool FlashEraseLog::allocate()
                 // Out of volumes to search. Try allocating a new volume.
 
                 FlashVolumeWriter vw;
-                if (!vw.begin(FlashVolume::T_ERASE_LOG, NUM_RECORDS * sizeof(Record), 0, FlashMapBlock::invalid()))
+                if (!vw.begin(recycler, FlashVolume::T_ERASE_LOG,
+                    NUM_RECORDS * sizeof(Record), 0, FlashMapBlock::invalid()))
                     return false;
                 vw.commit();
 
@@ -148,6 +154,9 @@ void FlashEraseLog::commit(Record &rec)
     /*
      * Space has already been allocated. Just write this record to flash.
      */
+
+    // Records should pack down to 8 bytes each
+    STATIC_ASSERT(sizeof rec == 8);
 
     ASSERT(writeIndex < NUM_RECORDS);
     ASSERT(volume.block.isValid());
@@ -209,27 +218,34 @@ bool FlashEraseLog::pop(Record &rec)
     }
 }
 
-// Tell our FlashBlockRecycler not to use the erase log
-FlashBlockPreEraser::FlashBlockPreEraser()
-    : recycler(false)
-{}
-
-bool FlashBlockPreEraser::next()
+void FlashEraseLog::clearBlocks(FlashMapBlock::Set &inventory)
 {
     /*
-     * Recycle and log one more block.
-     *
-     * Ask the Recycler to bypass using the erase log, otherwise
-     * we would not be guaranteed to make forward progress here.
+     * Iterate over the contents of all erase log volumes, clearing the bits associated with
+     * blocks we find. This is used by the FlashBlockRecycler when it's accounting for orphaned
+     * blocks.
      */
 
-    if (!log.allocate())
-        return false;
+    FlashVolumeIter vi;
+    FlashEraseLog log;
+    vi.begin();
 
-    FlashEraseLog::Record r;
-    if (!recycler.next(r.block, r.ec))
-        return false;
+    while (vi.next(log.volume)) {
+        if (log.volume.getType() != FlashVolume::T_ERASE_LOG)
+            continue;
 
-    log.commit(r);
-    return true;
+        log.findIndices();
+
+        for (unsigned i = log.readIndex; i < log.writeIndex; ++i) {
+            Record rec;
+            log.readRecord(rec, i);
+
+            if (rec.flag == F_VALID && computeCheck(rec) == rec.check) {
+                rec.block.clear(inventory);
+            } else {
+                LOG(("FLASH: Invalid record in erase log at <%02x>:0x%04x\n",
+                    log.volume.block.code, i));
+            }
+        }
+    }
 }

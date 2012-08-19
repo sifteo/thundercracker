@@ -19,7 +19,9 @@
 #define FLASH_ERASELOG_H_
 
 #include "flash_map.h"
-#include "flash_recycler.h"
+#include "flash_volume.h"
+
+class FlashBlockRecycler;
 
 
 /**
@@ -30,20 +32,23 @@
 class FlashEraseLog {
 public:
     struct Record {
-        FlashBlockRecycler::EraseCount ec;
+        uint32_t ec;
         FlashMapBlock block;
-        uint16_t check;
         uint8_t flag;
+        uint16_t check;
     };
 
     FlashEraseLog();
 
     // Record storage
-    bool allocate();
+    bool allocate(FlashBlockRecycler &recycler);
     void commit(Record &rec);
 
     // Record retrieval
     bool pop(Record &rec);
+
+    // Block inventory
+    static void clearBlocks(FlashMapBlock::Set &inventory);
 
 private:
     static const unsigned NUM_RECORDS =
@@ -62,30 +67,12 @@ private:
     void findIndices();
 
     unsigned indexToFlashAddress(unsigned index);
-    uint16_t computeCheck(const Record &r);
+    static uint16_t computeCheck(const Record &r);
 
     unsigned readFlag(unsigned index);
     void writePopFlag(unsigned index);
     void readRecord(Record &r, unsigned index);
     void writeRecord(Record &r, unsigned index);
-};
-
-
-/**
- * Manages the process of pre-erasing blocks.
- * Callers can erase blocks as long as they have time to kill.
- * Results are immediately committed to the FlashEraseLog.
- */
-
-class FlashBlockPreEraser {
-public:
-    FlashBlockPreEraser();
-
-    bool next();
-
-private:
-    FlashEraseLog log;
-    FlashBlockRecycler recycler;
 };
 
 

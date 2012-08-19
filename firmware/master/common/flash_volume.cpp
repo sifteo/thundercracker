@@ -249,8 +249,8 @@ bool FlashVolumeIter::next(FlashVolume &vol)
     return false;
 }
 
-bool FlashVolumeWriter::begin(unsigned type, unsigned payloadBytes,
-    unsigned hdrDataBytes, FlashVolume parent)
+bool FlashVolumeWriter::begin(FlashBlockRecycler &recycler,
+    unsigned type, unsigned payloadBytes, unsigned hdrDataBytes, FlashVolume parent)
 {
     // The real type will be written in commit(), once the volume is complete.
     this->type = type;
@@ -268,7 +268,7 @@ bool FlashVolumeWriter::begin(unsigned type, unsigned payloadBytes,
 
     // Fill the volume header's map with recycled memory blocks
     unsigned numMapEntries = hdr->numMapEntries();
-    unsigned count = populateMap(writer, numMapEntries, volume);
+    unsigned count = populateMap(writer, recycler, numMapEntries, volume);
     if (count == 0) {
         // Didn't allocate anything successfully, not even a header
         return false;
@@ -281,7 +281,8 @@ bool FlashVolumeWriter::begin(unsigned type, unsigned payloadBytes,
     return count == numMapEntries;
 }
 
-unsigned FlashVolumeWriter::populateMap(FlashBlockWriter &hdrWriter, unsigned count, FlashVolume &hdrVolume)
+unsigned FlashVolumeWriter::populateMap(FlashBlockWriter &hdrWriter,
+    FlashBlockRecycler &recycler, unsigned count, FlashVolume &hdrVolume)
 {
     /*
      * Get some temporary memory to store erase counts in.
@@ -314,14 +315,13 @@ unsigned FlashVolumeWriter::populateMap(FlashBlockWriter &hdrWriter, unsigned co
      */
 
     FlashMap *map = hdr->getMap();
-    FlashBlockRecycler br;
     unsigned actualCount;
 
     for (actualCount = 0; actualCount < count; ++actualCount) {
         FlashMapBlock block;
         FlashBlockRecycler::EraseCount ec;
 
-        if (!br.next(block, ec))
+        if (!recycler.next(block, ec))
             break;
 
         /*
@@ -550,7 +550,8 @@ bool FlashVolumeWriter::beginGame(unsigned payloadBytes, const char *package)
         }
     }
 
-    return begin(FlashVolume::T_GAME, payloadBytes);
+    FlashBlockRecycler recycler;
+    return begin(recycler, FlashVolume::T_GAME, payloadBytes);
 }
 
 bool FlashVolumeWriter::beginLauncher(unsigned payloadBytes)
@@ -568,5 +569,6 @@ bool FlashVolumeWriter::beginLauncher(unsigned payloadBytes)
             vol.deleteTree();
     }
 
-    return begin(FlashVolume::T_LAUNCHER, payloadBytes);
+    FlashBlockRecycler recycler;
+    return begin(recycler, FlashVolume::T_LAUNCHER, payloadBytes);
 }
