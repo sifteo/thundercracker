@@ -9,6 +9,7 @@
 #include "prng.h"
 #include "cube.h"
 #include "cubeslots.h"
+#include "svmloader.h"
 
 
 int SysLFS::read(Key k, uint8_t *buffer, unsigned bufferSize)
@@ -845,7 +846,7 @@ bool SysLFS::CubeRecord::cleanupDeletedVolumes(const FlashMapBlock::Set &allVolu
         SysLFS::AssetSlotIdentity &id = assets.slots[slot].identity;
         FlashMapBlock vol = FlashMapBlock::fromCode(id.volume);
 
-        if (vol.isValid() && !vol.test(allVolumes)) {
+        if (vol.isValid() && !vol.test(allVolumes) && !SvmLoader::isVolumeMapped(vol)) {
             // Found a deleted volume. Erase the slot.
 
             memset(&id, 0, sizeof id);
@@ -872,7 +873,7 @@ bool SysLFS::AssetSlotRecord::cleanupDeletedVolumes(const FlashMapBlock::Set &al
         SysLFS::AssetGroupIdentity &id = groups[group].identity;
         FlashMapBlock vol = FlashMapBlock::fromCode(id.volume);
 
-        if (vol.isValid() && !vol.test(allVolumes)) {
+        if (vol.isValid() && !vol.test(allVolumes) && !SvmLoader::isVolumeMapped(vol)) {
             // Found a deleted volume. Invalidate its volume code, but leave the rest of the slot intact.
             // This will prevent the deleted group from being used, but other groups will still be usable.
 
