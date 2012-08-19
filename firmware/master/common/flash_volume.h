@@ -209,21 +209,15 @@ class FlashBlockRecycler {
 public:
     typedef uint32_t EraseCount;
 
-    FlashBlockRecycler();
+    FlashBlockRecycler(bool useEraseLog=true);
 
     /**
      * Find the next recyclable block, as well as its erase count.
      *
-     * In the case of orphaned blocks, this returns quickly without modifying
-     * any memory. However, if we're reclaiming a block from a deleted volume,
-     * this may need to write to the deleted volume's map in order to invalidate
-     * individual blocks.
-     *
-     * Note: One alternative design, which wouldn't require writing to the
-     * volume map, would be to 'version' each volume header, as you may do
-     * in a log-structured filesystem. This seems less preferable, however,
-     * since it would turn the recycling operation into an O(N^2) problem
-     * with the number of flash blocks in the device!
+     * There are multiple sources for recyclable blocks. This class searches
+     * all of them, in a predefined order. Most recyclable blocks must be
+     * erased first. We have a special cache of pre-erased blocks (the 'erase log')
+     * which is optional. By default, it is consulted first.
      *
      * The returned block is guaranteed to be erased.
      */
@@ -282,14 +276,6 @@ public:
      * Start writing the launcher, after deleting any existing launcher.
      */
     bool beginLauncher(unsigned payloadBytes);
-
-    /**
-     * Try to collect pre-erased filesystem blocks into a special volume type.
-     * If we can do this, it will make future volume creation operations faster.
-     *
-     * Returns true if we made any forward progress.
-     */
-    bool preEraseBlocks();
 
     /**
      * Map a writeable copy of the portion of the type-specific data region

@@ -249,7 +249,7 @@ bool FlashVolumeIter::next(FlashVolume &vol)
     return false;
 }
 
-FlashBlockRecycler::FlashBlockRecycler()
+FlashBlockRecycler::FlashBlockRecycler(bool useEraseLog)
 {
     ASSERT(!dirtyVolume.ref.isHeld());
     findOrphansAndDeletedVolumes();
@@ -770,9 +770,4 @@ bool FlashVolumeWriter::beginLauncher(unsigned payloadBytes)
     }
 
     return begin(FlashVolume::T_LAUNCHER, payloadBytes);
-}
-
-bool FlashVolumeWriter::preEraseBlocks()
-{
-    return false;
 }

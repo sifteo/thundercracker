@@ -22,6 +22,11 @@
 #include "flash_volume.h"
 
 
+/**
+ * Data storage for information about erased blocks,
+ * as a log-structured FIFO within a special volume type.
+ */
+
 class FlashEraseLog {
 public:
     struct Record {
@@ -33,9 +38,11 @@ public:
 
     FlashEraseLog();
 
+    // Record storage
     bool allocate();
-
     void commit(Record &rec);
+
+    // Record retrieval
     bool pop(Record &rec);
 
 private:
@@ -58,8 +65,27 @@ private:
     uint16_t computeCheck(const Record &r);
 
     unsigned readFlag(unsigned index);
+    void writePopFlag(unsigned index);
     void readRecord(Record &r, unsigned index);
     void writeRecord(Record &r, unsigned index);
+};
+
+
+/**
+ * Manages the process of pre-erasing blocks.
+ * Callers can erase blocks as long as they have time to kill.
+ * Results are immediately committed to the FlashEraseLog.
+ */
+
+class FlashBlockPreEraser {
+public:
+    FlashBlockPreEraser();
+
+    bool next();
+
+private:
+    FlashEraseLog log;
+    FlashBlockRecycler recycler;
 };
 
 

@@ -24,6 +24,12 @@ unsigned FlashEraseLog::readFlag(unsigned index)
     return flag;
 }
 
+void FlashEraseLog::writePopFlag(unsigned index)
+{
+    uint8_t flag = F_POPPED;
+    FlashDevice::write(indexToFlashAddress(index) + offsetof(Record, flag), &flag, sizeof flag);
+}    
+
 void FlashEraseLog::readRecord(Record &r, unsigned index)
 {
     FlashDevice::read(indexToFlashAddress(index), (uint8_t*) &r, sizeof r);
@@ -190,8 +196,38 @@ bool FlashEraseLog::pop(Record &rec)
         if (rec.flag == F_ERASED)
             return false;
 
+        // Consume this record
+        if (rec.flag != F_POPPED)
+            writePopFlag(readIndex);
+        readIndex++;
+
         // Skip bad records, only return good ones
         if (rec.flag == F_VALID && computeCheck(rec) == rec.check)
             return true;
     }
+}
+
+// Tell our FlashBlockRecycler not to use the erase log
+FlashBlockPreEraser::FlashBlockPreEraser()
+    : recycler(false)
+{}
+
+bool FlashBlockPreEraser::next()
+{
+    /*
+     * Recycle and log one more block.
+     *
+     * Ask the Recycler to bypass using the erase log, otherwise
+     * we would not be guaranteed to make forward progress here.
+     */
+
+    if (!log.allocate())
+        return false;
+
+    FlashEraseLog::Record r;
+    if (!recycler.next(r.block, r.ec))
+        return false;
+
+    log.commit(r);
+    return true;
 }
