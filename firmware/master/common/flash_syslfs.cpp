@@ -756,6 +756,7 @@ void SysLFS::cleanupDeletedVolumes()
 
     /*
      * Iterate over volumes once, to build a map of which volumes still exist.
+     * We must explicitly avoid adding deleted volumes to this set!
      */
 
     FlashMapBlock::Set allVolumes;
@@ -764,8 +765,10 @@ void SysLFS::cleanupDeletedVolumes()
         FlashVolumeIter vi;
         FlashVolume vol;
         vi.begin();
-        while (vi.next(vol))
-            vol.block.mark(allVolumes);
+        while (vi.next(vol)) {
+            if (!FlashVolume::typeIsRecyclable(vol.getType()))
+                vol.block.mark(allVolumes);
+        }
     }
 
     /*
