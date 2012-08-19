@@ -196,8 +196,11 @@ bool FlashEraseLog::pop(Record &rec)
             volume = v;
             findIndices();
 
-            if (readIndex >= NUM_RECORDS)
-                volume.deleteSingle();
+            if (readIndex >= NUM_RECORDS) {
+                // Old volume, no use any more.
+                v.deleteSingleWithoutInvalidate();
+                volume.block.setInvalid();
+            }
         }
 
         readRecord(rec, readIndex);
