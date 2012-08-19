@@ -52,3 +52,29 @@ util = {}
                                 x, y, lcdColor, refColor, errVal, failedPath))
         end
     end
+
+    function util:findVolumeInSysLFS(vol)
+        -- See if we can find a particular volume inside SysLFS. Returns 1 if we see it anywhere, 0 if not.
+
+        fs = Filesystem()
+
+        -- Iterate over all SysLFS CubeRecords
+        for key = 0x28, 0x3f do
+            local rec = fs:readObject(0, key)
+            if rec then
+
+                -- Iterate over slots
+                for slot = 1, 8 do
+
+                    -- Extract slots[slot].identity.volume
+                    local slotIdentityVolume = rec:byte(1 + 2 + slot*4)
+
+                    if slotIdentityVolume == vol then
+                        return 1
+                    end
+                end
+            end
+        end
+
+        return 0
+    end

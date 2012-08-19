@@ -388,6 +388,65 @@ void testEviction()
 }
 
 
+bool findVolumeInSysLFS(Volume v)
+{
+    unsigned result = false;
+    SCRIPT_FMT(LUA, "Runtime():poke(%p, util:findVolumeInSysLFS(%d))", &result, v & 0xFF);
+    return result;
+}
+
+void testVolumeCleanup()
+{
+    /*
+     * Now that we've been binding our stub volumes, SysLFS has references to those
+     * volume codes. When we delete the stub volumes, SysLFS will lazily clean up
+     * those references just before the next subsequent volume is created.
+     */
+
+    // Locate our four stub volumes
+    Array<Volume, 8> vols;
+    Volume::list(Volume::T_GAME, vols);
+    ASSERT(vols.count() == 4);
+
+    // Allocate space for one slot on each stub volume
+    _SYS_asset_bindSlots(vols[0], 1);
+    _SYS_asset_bindSlots(vols[1], 1);
+    _SYS_asset_bindSlots(vols[2], 1);
+    _SYS_asset_bindSlots(vols[3], 1);
+
+    // Should be bound to our own volume again
+    _SYS_asset_bindSlots(_SYS_fs_runningVolume(), 4);
+
+    // Should see references to our four stubs now
+    ASSERT(findVolumeInSysLFS(vols[0]));
+    ASSERT(findVolumeInSysLFS(vols[1]));
+    ASSERT(findVolumeInSysLFS(vols[2]));
+    ASSERT(findVolumeInSysLFS(vols[3]));
+
+    // Delete the stub volumes
+    SCRIPT_FMT(LUA, "Filesystem():deleteVolume(%d)", vols[0] & 0xFF);
+    SCRIPT_FMT(LUA, "Filesystem():deleteVolume(%d)", vols[1] & 0xFF);
+    SCRIPT_FMT(LUA, "Filesystem():deleteVolume(%d)", vols[2] & 0xFF);
+    SCRIPT_FMT(LUA, "Filesystem():deleteVolume(%d)", vols[3] & 0xFF);
+
+    // We'll still see references. SysLFS cleanup happens lazily
+    ASSERT(findVolumeInSysLFS(vols[0]));
+    ASSERT(findVolumeInSysLFS(vols[1]));
+    ASSERT(findVolumeInSysLFS(vols[2]));
+    ASSERT(findVolumeInSysLFS(vols[3]));
+
+    // As soon as we create any other new volume, the block codes
+    // referenced above may be recycled. Before this happens, SysLFS
+    // will be scrubbed for old references.
+    SCRIPT(LUA, Filesystem():newVolume(0x1234, "Foobar"));
+
+    // Now the references should all be gone
+    ASSERT(!findVolumeInSysLFS(vols[0]));
+    ASSERT(!findVolumeInSysLFS(vols[1]));
+    ASSERT(!findVolumeInSysLFS(vols[2]));
+    ASSERT(!findVolumeInSysLFS(vols[3]));
+}
+
 void main()
 {
     while (CubeSet::connected() != cubes)
@@ -404,6 +463,7 @@ void main()
     testEviction();
     testCancel();
     testFull();
+    testVolumeCleanup();
     
     LOG("Success.\n");
 }
