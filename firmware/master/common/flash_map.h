@@ -85,6 +85,11 @@ public:
             v.clear(index());
     }
 
+    bool ALWAYS_INLINE test(const Set &v) const {
+        ASSERT(isValid());
+        return v.test(index());
+    }
+
     void ALWAYS_INLINE mark(ISet &v) const {
         v.mark(isValid() ? code : 0);
     }
@@ -93,7 +98,7 @@ public:
         v.clear(isValid() ? code : 0);
     }
 
-    bool ALWAYS_INLINE test(ISet &v) const {
+    bool ALWAYS_INLINE test(const ISet &v) const {
         return v.test(isValid() ? code : 0);
     }
 
