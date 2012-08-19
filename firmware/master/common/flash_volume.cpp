@@ -324,11 +324,7 @@ unsigned FlashVolumeWriter::populateMap(FlashBlockWriter &hdrWriter,
         if (!recycler.next(block, ec))
             break;
 
-        DEBUG_ONLY({
-            uint8_t erased[FlashMapBlock::BLOCK_SIZE];
-            memset(erased, 0xFF, sizeof erased);
-            FlashDevice::verify(block.address(), erased, sizeof erased);
-        })
+        DEBUG_ONLY(block.verifyErased();)
 
         /*
          * We must ensure that the first block has the lowest block index,

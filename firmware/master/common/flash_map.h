@@ -97,6 +97,14 @@ public:
         return v.test(isValid() ? code : 0);
     }
 
+    #ifdef SIFTEO_SIMULATOR
+    void verifyErased() const {
+        uint8_t erased[BLOCK_SIZE];
+        memset(erased, 0xFF, BLOCK_SIZE);
+        FlashDevice::verify(address(), erased, BLOCK_SIZE);
+    }
+    #endif
+
     void erase() const;
 
     static ALWAYS_INLINE FlashMapBlock fromIndex(unsigned i) {

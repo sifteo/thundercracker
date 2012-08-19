@@ -216,8 +216,10 @@ bool FlashEraseLog::pop(Record &rec)
         readIndex++;
 
         // Skip bad records, only return good ones
-        if (rec.flag == F_VALID && computeCheck(rec) == rec.check)
+        if (rec.flag == F_VALID && computeCheck(rec) == rec.check) {
+            DEBUG_ONLY(rec.block.verifyErased();)
             return true;
+        }
     }
 }
 
