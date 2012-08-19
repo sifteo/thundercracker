@@ -115,7 +115,10 @@ void createObjects()
     ObjectFlavor wub(0.01);
     ObjectFlavor qux(0.001);
 
-    SCRIPT(LUA, logger = FlashLogger:start(fs, "flash.log"));
+    SCRIPT(LUA,
+        saveFlashSnapshot(fs, "flash.snapshot")
+        logger = FlashLogger:start(fs, "flash.log")
+    );
 
     /*
      * Write some interleaved values, in random order,
@@ -144,7 +147,10 @@ void createObjects()
     ASSERT(wub.found());
     ASSERT(qux.found());
 
-    SCRIPT(LUA, logger:stop());
+    SCRIPT(LUA,
+        logger:stop()
+        loadFlashSnapshot(fs, "flash.snapshot")
+    );
 
     ASSERT(!foo.found());
     ASSERT(!bar.found());
@@ -156,7 +162,9 @@ void createObjects()
      * in monotonically increasing order.
      */
 
-    SCRIPT(LUA, player = FlashReplay:start(fs, "flash.log"));
+    SCRIPT(LUA,
+        player = FlashReplay:start(fs, "flash.log")
+    );
 
     LOG("Replaying log...\n");
 
