@@ -8,6 +8,7 @@
 #include "flash_volumeheader.h"
 #include "flash_recycler.h"
 #include "flash_lfs.h"
+#include "flash_syslfs.h"
 #include "crc.h"
 #include "elfprogram.h"
 #include "event.h"
@@ -535,6 +536,8 @@ bool FlashVolumeWriter::beginGame(unsigned payloadBytes, const char *package)
      * the same package name.
      */
 
+    SysLFS::cleanupDeletedVolumes();
+
     FlashVolumeIter vi;
     FlashVolume vol;
 
@@ -561,6 +564,8 @@ bool FlashVolumeWriter::beginLauncher(unsigned payloadBytes)
     /**
      * Start writing the launcher, after deleting any existing launcher.
      */
+
+    SysLFS::cleanupDeletedVolumes();
 
     FlashVolumeIter vi;
     FlashVolume vol;

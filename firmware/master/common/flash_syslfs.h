@@ -139,6 +139,7 @@ namespace SysLFS {
 
         void init();
         bool load(const FlashLFSObjectIter &iter);
+        bool cleanupDeletedVolumes(const FlashMapBlock::Set &allVolumes);
 
         static Key makeKey(_SYSCubeID cube);
         static bool decodeKey(Key cubeKey, _SYSCubeID &cube);
@@ -206,6 +207,7 @@ namespace SysLFS {
 
         void init();
         bool load(const FlashLFSObjectIter &iter);
+        bool cleanupDeletedVolumes(const FlashMapBlock::Set &allVolumes);
         unsigned writeableSize() const;
 
         unsigned ALWAYS_INLINE tilesFree() const {
@@ -245,6 +247,8 @@ namespace SysLFS {
 
     void deleteAll();
     void deleteCube(unsigned index);
+
+    void cleanupDeletedVolumes();
 
 } // end namespace SysLFS
 
