@@ -68,7 +68,8 @@ public:
         T_LAUNCHER      = _SYS_FS_VOL_LAUNCHER,     // "LN"
         T_GAME          = _SYS_FS_VOL_GAME,         // "GM"
         T_LFS           = 0x5346,                   // "FS"
-
+        T_ERASE_LOG     = 0x4c45,                   // "EL"
+    
         // Internal types
         T_DELETED       = 0x0000,       // Normal deleted volume (Must be zero)
         T_INCOMPLETE    = 0xFFFF,       // Not-yet-committed volume (Must be FFFF)
