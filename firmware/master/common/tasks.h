@@ -81,6 +81,11 @@ public:
         Atomic::SetLZ(pendingMask, id);
     }
 
+    // Is a task pending?
+    static ALWAYS_INLINE bool isPending(TaskID id) {
+        return !!(Intrinsic::LZ(id) & pendingMask);
+    }
+
     /*
      * Cancel a trigger() before the task has run.
      *

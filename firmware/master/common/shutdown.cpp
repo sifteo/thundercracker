@@ -80,15 +80,23 @@ void ShutdownManager::housekeeping()
     /*
      * First make some more room if we can, by running the global garbage
      * collector until it can't find any more garbage. Then, consoldiate
-     * this extra space into pre-erased blocks, as much as possible.
+     * this extra space into pre-erased blocks.
      *
-     * Give up as soon as possible if the home button is pressed again.
+     * Give up as soon as possible if the home button is pressed again,
+     * or if we start receiving USB traffic. This typically has a latency
+     * of one flash block erasure.
      */
 
-    FlashBlockPreEraser bpe;
+    while (!HomeButton::isPressed() && !Tasks::isPending(Tasks::UsbOUT)) {
+        if (!FlashLFS::collectGlobalGarbage())
+            break;
+    }
 
-    while (!HomeButton::isPressed() && FlashLFS::collectGlobalGarbage()) {}
-    while (!HomeButton::isPressed() && bpe.next()) {}
+    FlashBlockPreEraser bpe;
+    while (!HomeButton::isPressed() && !Tasks::isPending(Tasks::UsbOUT)) {
+        if (!bpe.next())
+            break;
+    }
 }
 
 void ShutdownManager::batteryPowerOff()
