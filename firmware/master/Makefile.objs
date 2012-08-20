@@ -39,9 +39,12 @@ OBJS_COMMON = \
     $(MASTER_DIR)/common/flash_blockcache.o \
     $(MASTER_DIR)/common/flash_map.o \
     $(MASTER_DIR)/common/flash_volume.o \
+    $(MASTER_DIR)/common/flash_eraselog.o \
+    $(MASTER_DIR)/common/flash_preerase.o \
     $(MASTER_DIR)/common/flash_lfs.o \
     $(MASTER_DIR)/common/flash_syslfs.o \
     $(MASTER_DIR)/common/flash_stack.o \
+    $(MASTER_DIR)/common/flash_recycler.o \
     $(MASTER_DIR)/common/svmclock.o \
     $(MASTER_DIR)/common/svmloader.o \
     $(MASTER_DIR)/common/svmruntime.o \

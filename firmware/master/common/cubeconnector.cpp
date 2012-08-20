@@ -261,6 +261,15 @@ bool CubeConnector::popReconnectQueue()
         return false;
     #endif
 
+    /*
+     * Reconnection can be disabled at runtime. We do this, for example, during shutdown
+     * or when the cube range is exceeded. Normally we won't get here, since we also refuse
+     * to refill the reconnect queue. But if we already have queued reconnects, we can also
+     * skip those.
+     */
+    if (!reconnectEnabled)
+        return false;
+
     unsigned index;
     if (!reconnectQueue.clearFirst(index))
         return false;

@@ -25,7 +25,12 @@ class SystemCubes {
     void stop();
 
     void setNumCubes(unsigned n);
+
+    /// Reset RAM and register contents only
     void resetCube(unsigned id);
+
+    /// Reset flash memory and HWID too
+    void fullResetCube(unsigned id);
 
     // Allow other threads to synchronize with cube execution
     DeadlineSynchronizer deadlineSync;

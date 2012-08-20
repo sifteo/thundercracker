@@ -11,6 +11,7 @@
 #include "svmloader.h"
 #include "cubeslots.h"
 #include "cubeconnector.h"
+#include "flash_preerase.h"
 
 #ifndef SIFTEO_SIMULATOR
 #   include "powermanager.h"
@@ -25,14 +26,13 @@ void ShutdownManager::shutdown()
 {
     LOG(("SHUTDOWN: Beginning shutdown sequence\n"));
 
+    // First round of shut down. We'll appear to be off.
+    LED::set(NULL);
+    CubeSlots::setCubeRange(0, 0);
+
     // Make sure the home button is released before we go on
     while (HomeButton::isPressed())
         Tasks::idle(excludedTasks);
-
-    // First round of shut down. We'll appear to be off.
-    LED::set(NULL);
-    CubeConnector::disableReconnect();
-    CubeSlots::sendShutdown = ~0;
 
     // We have plenty of time now. Clean up.
     housekeeping();
@@ -54,6 +54,7 @@ void ShutdownManager::shutdown()
 
     RadioManager::disableRadio();
     CubeSlots::disconnectCubes(CubeSlots::sysConnected);
+
     LOG(("SHUTDOWN: Entering USB-sleep state\n"));
 
     while (!HomeButton::isPressed())
@@ -70,6 +71,7 @@ void ShutdownManager::shutdown()
     CubeConnector::enableReconnect();
     RadioManager::enableRadio();
     SvmLoader::execLauncher();
+
     LOG(("SHUTDOWN: Resuming from USB-sleep state\n"));
 }
 
@@ -78,12 +80,23 @@ void ShutdownManager::housekeeping()
     /*
      * First make some more room if we can, by running the global garbage
      * collector until it can't find any more garbage. Then, consoldiate
-     * this extra space into pre-erased blocks, as much as possible.
+     * this extra space into pre-erased blocks.
+     *
+     * Give up as soon as possible if the home button is pressed again,
+     * or if we start receiving USB traffic. This typically has a latency
+     * of one flash block erasure.
      */
 
-    while (FlashLFS::collectGlobalGarbage()) {}
+    while (!HomeButton::isPressed() && !Tasks::isPending(Tasks::UsbOUT)) {
+        if (!FlashLFS::collectGlobalGarbage())
+            break;
+    }
 
-    FlashVolume::preEraseBlocks();
+    FlashBlockPreEraser bpe;
+    while (!HomeButton::isPressed() && !Tasks::isPending(Tasks::UsbOUT)) {
+        if (!bpe.next())
+            break;
+    }
 }
 
 void ShutdownManager::batteryPowerOff()

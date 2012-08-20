@@ -23,9 +23,10 @@ fs = Filesystem()
 VOLUME_TYPE_INFO = {}
 VOLUME_TYPE_INFO[0x0000] = { name="Deleted", hidden=true }
 VOLUME_TYPE_INFO[0xffff] = { name="Incomplete", hidden=true }
+VOLUME_TYPE_INFO[0x4c45] = { name="Pre-erase Log", hidden=true }
+VOLUME_TYPE_INFO[0x5346] = { name="Log-structured Filesystem", hidden=true, lfs=true }
 VOLUME_TYPE_INFO[0x4d47] = { name="Game", elf=true }
 VOLUME_TYPE_INFO[0x4e4c] = { name="Launcher", elf=true }
-VOLUME_TYPE_INFO[0x5346] = { name="Log-structured Filesystem", hidden=true, lfs=true }
 
 -- Information about metadata types
 METADATA_INFO = {}

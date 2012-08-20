@@ -41,6 +41,9 @@ extern __bit disc_battery_draw;     // 0 = drawing logo, 1 = drawing battery and
 // Threshold for detecting score-affecting bounces
 #define BOUNCE_THR      0x40
 
+// Absolute accel value at which we unlock accelerometer input
+#define ACCEL_DEAD_ZONE  5 
+
 #define X_MIN_FP        (X_MIN << FP_BITS)
 #define X_MAX_FP        (X_MAX << FP_BITS)
 #define Y_MIN_FP        (Y_MIN << FP_BITS)
@@ -262,7 +265,39 @@ static void add_s8_to_s16(void) __naked
         mov     a, r3
         addc    a, #0xFF
         mov     r3, a
+
         ret
+
+    __endasm ;
+}
+
+static void disc_update_tilt(void) __naked
+{
+    /*
+     * Assembly-callable helper for tilt. One axis of accelerometer
+     * data is in 'a', and if it is to have any effect we need to
+     * use add_s8_to_s16 to add it in with an accumulator in r3:r2.
+     *
+     * This consists of add_s8_to_s16, with some dead-zone handling
+     * first. If the absolute value of the input is below ACCEL_DEAD_ZONE,
+     * we don't affect the acceleration at all.
+     */
+
+    __asm
+
+        mov     r0, a       ; Keep copy of accel data in r0
+
+        jnb     acc.7, 1$   ; Absolute value
+        clr     a
+        clr     c
+        subb    a, r0
+1$:
+
+        add     a, #(0x100 - ACCEL_DEAD_ZONE)
+        mov     a, r0
+        jc      _add_s8_to_s16
+        ret
+
     __endasm ;
 }
 
@@ -608,7 +643,7 @@ fp_bounce_axis_ret:
         mov     a, r4                               ; Damping force
         acall   _add_s8_to_s16
         mov     a, (_ack_data + RF_ACK_ACCEL + 0)   ; Tilt force
-        acall   _add_s8_to_s16
+        acall   _disc_update_tilt
         mov     r0, #_disc_logo_dx                  ; Integrate velocity and position
         acall   _fp_integrate_axis
 
@@ -621,7 +656,7 @@ fp_bounce_axis_ret:
         mov     a, r5                               ; Damping force
         acall   _add_s8_to_s16
         mov     a, (_ack_data + RF_ACK_ACCEL + 1)   ; Tilt force
-        acall   _add_s8_to_s16
+        acall   _disc_update_tilt
         mov     r0, #_disc_logo_dy                  ; Integrate velocity and position
         acall   _fp_integrate_axis
 

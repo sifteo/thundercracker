@@ -358,8 +358,10 @@ void GLFWCALL Frontend::onKey(int key, int state)
             break;
 
         case 'R':
-            if (instance->mousePicker.mCube)
-                instance->mousePicker.mCube->fullReset();
+            if (instance->mousePicker.mCube) {
+                unsigned id = instance->mousePicker.mCube->getId();
+                instance->sys->fullResetCube(id);
+            }
             break;
 
         case 'Q':

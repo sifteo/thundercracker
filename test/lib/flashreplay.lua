@@ -14,6 +14,28 @@ function fromHex(s)
     return s:gsub("(..)", function (c) return string.char("0x"..c) end)
 end
 
+function saveFlashSnapshot(fs, filename)
+    local f = io.open(filename, 'wb')    
+    f:write(fs:rawRead(0, 0x1000000))
+    f:close()
+end
+
+function loadFlashSnapshot(fs, filename)
+    local f = io.open(filename, 'rb')
+    local data = f:read(0x1000000)
+
+    for i = 0, 0xff0000, 0x10000 do
+        fs:rawErase(i)
+    end
+    fs:rawWrite(0, data)
+    fs:invalidateCache()
+
+    if fs:rawRead(0, #data) ~= data then
+        saveFlashSnapshot(fs, "error.bin")
+        error(string.format("Failed to restore flash data from '%s'. Actual data in 'error.bin'", filename))
+    end
+end
+
 
 FlashLogger = {}
 
@@ -33,7 +55,7 @@ FlashLogger = {}
             logger.file:write(string.format("e %06x\n", addr))
         end
 
-        local o = { file=io.open(filename, 'w'), fs=fs, backup=fs:rawRead(0, 0x1000000) }
+        local o = { file=io.open(filename, 'w'), fs=fs }
         setmetatable(o, self)
         self.__index = self
 
@@ -46,13 +68,6 @@ FlashLogger = {}
     function FlashLogger:stop()
         self.fs:setCallbacksEnabled(false)
         self.file:close()
-
-        -- Restore our filesystem backup
-        for i = 0, 0xff000, 0x10000 do
-            self.fs:rawErase(i)
-        end
-        self.fs:rawWrite(0, self.backup)
-        self.fs:invalidateCache()
     end
 
 

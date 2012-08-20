@@ -4,6 +4,7 @@
  */
 
 #include "flash_lfs.h"
+#include "flash_recycler.h"
 #include "macros.h"
 #include "bits.h"
 #include "crc.h"
@@ -472,7 +473,8 @@ bool FlashLFS::newVolume(unsigned volLimit)
     unsigned hdrSize = sizeof(FlashLFSVolumeHeader);
     unsigned payloadSize = FlashLFSVolumeVector::VOL_PAYLOAD_SIZE;
 
-    if (!vw.begin(FlashVolume::T_LFS, payloadSize, hdrSize, parent))
+    FlashBlockRecycler recycler;
+    if (!vw.begin(recycler, FlashVolume::T_LFS, payloadSize, hdrSize, parent))
         return false;
 
     FlashLFSVolumeHeader *hdr = (FlashLFSVolumeHeader*)vw.mapTypeSpecificData(hdrSize);

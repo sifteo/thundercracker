@@ -41,6 +41,9 @@
 #include "macros.h"
 #include "flash_map.h"
 
+struct FlashVolumeHeader;
+class FlashBlockRecycler;
+
 
 /**
  * Represents a single Volume in flash: a physically discontiguous
@@ -66,9 +69,9 @@ public:
         T_LAUNCHER      = _SYS_FS_VOL_LAUNCHER,     // "LN"
         T_GAME          = _SYS_FS_VOL_GAME,         // "GM"
         T_LFS           = 0x5346,                   // "FS"
-
+        T_ERASE_LOG     = 0x4c45,                   // "EL"
+    
         // Internal types
-        T_PRE_ERASED    = 0xFF55,       // Storage for pre-erased blocks
         T_DELETED       = 0x0000,       // Normal deleted volume (Must be zero)
         T_INCOMPLETE    = 0xFFFF,       // Not-yet-committed volume (Must be FFFF)
     };
@@ -80,19 +83,23 @@ public:
     FlashVolume(_SYSVolumeHandle vh);
 
     bool isValid() const;
-    _SYSVolumeHandle getHandle() const;
     unsigned getType() const;
     FlashVolume getParent() const;
     FlashMapSpan getPayload(FlashBlockRef &ref) const;
     uint8_t *mapTypeSpecificData(FlashBlockRef &ref, unsigned &size) const;
 
+    /// Create a _SYSVolumeHandle to represent this FlashVolume.
+    ALWAYS_INLINE _SYSVolumeHandle getHandle() const {
+        return signHandle(block.code);
+    }
+
     /// This volume can be reclaimed as free space
     static bool typeIsRecyclable(unsigned type) {
-        return type == T_INCOMPLETE || type == T_DELETED || type == T_PRE_ERASED;
+        return type == T_INCOMPLETE || type == T_DELETED || type == T_ERASE_LOG;
     }
 
     /// This is a volume used for internal bookkeeping, and never visible to the user
-    static bool typeIsInternal(unsigned type) {
+    static ALWAYS_INLINE bool typeIsInternal(unsigned type) {
         return typeIsRecyclable(type);
     }
 
@@ -136,12 +143,6 @@ public:
      */
     static void deleteEverything();
 
-    /**
-     * Pre-erase filesystem blocks, if we can, storing them in a special
-     * kind of deleted volume.
-     */
-    static void preEraseBlocks();
-
 private:
     static uint32_t signHandle(uint32_t h);
 };
@@ -167,78 +168,6 @@ private:
     FlashMapBlock::Set remaining;
     DEBUG_ONLY(bool initialized;)
 };
-
-
-/**
- * Manages the process of finding unused FlashMapBlocks to recycle.
- * Typically we look for blocks in deleted volumes, starting with
- * the lowest-erase-count blocks that aren't part of a volume header.
- *
- * We use header blocks only when all other blocks in that volume have
- * already been recycled, so that we don't lose any erase count data.
- *
- * If we spot any orphaned blocks (not part of any volume, even a deleted
- * one) we unfortunately have no way of knowing the true erase count of
- * those blocks. We prefer to use these orphaned blocks before recycling
- * deleted blocks, since we make up an erase count by taking the average
- * of all known erase counts. If we didn't use the orphaned blocks first,
- * the calculated pseudo-erase-count would increase over time, causing
- * these orphan blocks to systematically appear more heavily worn than
- * they actually are, causing us to overwear the non-orphaned blocks.
- *
- * This property of the recycler is especially important when dealing with
- * a blank or heavily damaged filesystem, in which large numbers of blocks
- * (possibly all of them) are orphaned.
- *
- * Much of the complexity here comes from trying to keep the memory usage
- * and algorithmic complexity low. For example, we don't want to spend the
- * memory on a full table of blocks sorted by erase count, nor do we want
- * to re-scan the device once per recycled block. It turns out that it isn't
- * actually important that we pick the absolute lowest-erase-count block
- * every time. As long as we tend to pick lower-erase-count blocks first,
- * and we accurately propagate erase counts, we'll still provide wear
- * leveling.
- *
- * Since we prefer to operate within a single deleted volume at a time,
- * our approach involves keeping a set of candidate volumes in which at least
- * one of their blocks has an erase count <= the average. This candidate list
- * is always preferred when searching for blocks to recycle.
- */
-
-class FlashBlockRecycler {
-public:
-    typedef uint32_t EraseCount;
-
-    FlashBlockRecycler();
-
-    /**
-     * Find the next recyclable block, as well as its erase count.
-     *
-     * In the case of orphaned blocks, this returns quickly without modifying
-     * any memory. However, if we're reclaiming a block from a deleted volume,
-     * this may need to write to the deleted volume's map in order to invalidate
-     * individual blocks.
-     *
-     * Note: One alternative design, which wouldn't require writing to the
-     * volume map, would be to 'version' each volume header, as you may do
-     * in a log-structured filesystem. This seems less preferable, however,
-     * since it would turn the recycling operation into an O(N^2) problem
-     * with the number of flash blocks in the device!
-     */
-    bool next(FlashMapBlock &block, EraseCount &eraseCount);
-
-private:
-    FlashMapBlock::Set orphanBlocks;
-    FlashMapBlock::Set deletedVolumes;
-    FlashMapBlock::Set candidateVolumes;
-    uint32_t averageEraseCount;
-
-    FlashBlockWriter dirtyVolume;
-
-    void findOrphansAndDeletedVolumes();
-    void findCandidateVolumes();
-};
-
 
 /**
  * A FlashVolumeWriter keeps track of the multi-step process of writing
@@ -266,8 +195,8 @@ public:
      * This can take some time, as it involves erasing flash blocks as well
      * as scanning for recyclable blocks.
      */
-    bool begin(unsigned type, unsigned payloadBytes,
-        unsigned hdrDataBytes = 0,
+    bool begin(FlashBlockRecycler &recycler,
+        unsigned type, unsigned payloadBytes, unsigned hdrDataBytes = 0,
         FlashVolume parent = FlashMapBlock::invalid());
 
     /**
@@ -311,6 +240,18 @@ private:
     FlashBlockWriter payloadWriter;
     unsigned payloadOffset;
     uint16_t type;
+    bool useEraseLog;
+
+    /**
+     * Allocates up to 'count' new map blocks for 'hdr'. Returns the actual
+     * number of blocks allocated. If we did nothing, returns zero. Otherwise,
+     * the result will include 1 header blocks and 0 or more payload blocks.
+     *
+     * May reposition hdrWriter to a different block, in order to write
+     * erase counts. Saves a copy of the header to 'hdrVolume'.
+     */
+    static unsigned populateMap(FlashBlockWriter &hdrWriter,
+            FlashBlockRecycler &recycler, unsigned count, FlashVolume &hdrVolume);
 };
 
 
