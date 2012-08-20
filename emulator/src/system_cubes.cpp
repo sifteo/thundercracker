@@ -86,6 +86,12 @@ void SystemCubes::resetCube(unsigned id)
     sys->cubes[id].reset();
 }
 
+void SystemCubes::fullResetCube(unsigned id)
+{
+    tthread::lock_guard<tthread::mutex> guard(mBigCubeLock);
+    sys->cubes[id].fullReset();
+}
+
 bool SystemCubes::initCube(unsigned id)
 {
     const char *firmware = sys->opt_cubeFirmware.empty()

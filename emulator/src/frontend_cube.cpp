@@ -140,11 +140,6 @@ void FrontendCube::toggleFlip()
     flipped ^= true;
 }
 
-void FrontendCube::fullReset()
-{
-    hw->fullReset();
-}
-
 void FrontendCube::setHoverTarget(float h)
 {
     hoverTarget = h;
