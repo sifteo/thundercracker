@@ -138,7 +138,7 @@ buffer.image(vec(4,2), Door);
 vid.bg0.image(vec(0,0), buffer);
 ~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-## Radio
+# Radio
 
 Radio communication between the base and cubes can also be a bottleneck. However, this is rare since the system is designed to minimize radio transmissions. But watch out if you are continuously transmitting data (for example, with non-stop changing of frame buffer mode pixels).
 
