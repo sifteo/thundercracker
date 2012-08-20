@@ -2,7 +2,7 @@
 Sifteo TC Virtual Machine (SVM)
 ===============================
 
-M. Elizabeth Scott, 2011
+M. Elizabeth Scott, 2012
 (C) Sifteo, Inc.
 
 What is it?
