@@ -174,6 +174,10 @@ class System {
      * representation, with 0.0f representing a qualitatively dead
      * battery and 1.0f representing a totally new battery.
      *
+     * A reading of exactly zero will only result when the battery level is not 
+     * yet known. This is only relevant to code which can run very soon after
+     * the system boots.
+     *
      * To get the battery level for a single cube, call CubeID::batteryLevel().
      */
     static float batteryLevel() {
