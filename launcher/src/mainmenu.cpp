@@ -51,7 +51,7 @@ void MainMenu::init()
     connectingCubes.clear();
 
     items.clear();
-    itemIndexCurrent = 0;
+    itemIndexCurrent = -1;
     cubeRangeSavedIcon = NULL;
 
     /*
@@ -127,6 +127,7 @@ void MainMenu::eventLoop()
             menu.setIconYOffset(8);
             if (itemIndexCurrent >= 0)
                 menu.anchor(itemIndexCurrent, true);
+            itemIndexCurrent = -1;
         }
 
         MenuEvent e;
@@ -196,6 +197,31 @@ void MainMenu::handleEvent(MenuEvent &e)
             itemIndexCurrent = -1;
             break;
 
+        case MENU_PREPAINT:
+            if (itemIndexCurrent >= 0) {
+                // Detect if the applet uses the default cube responder.
+                DefaultCubeResponder::resetCallCount();
+                
+                paint(itemIndexCurrent);
+
+                // If unused, reset the responder.
+                if (!DefaultCubeResponder::callCount()) {
+                    for (CubeID cube : CubeSet::connected()) {
+                        if (cube != menu.cube()) {
+                            Shared::cubeResponder[cube].init();
+                        }
+                    }
+                }
+            } else {
+                // Non-active cubes respond to events with DefaultCubeResponder.
+                for (CubeID cube : CubeSet::connected()) {
+                    if (cube != menu.cube()) {
+                        Shared::cubeResponder[cube].paint();
+                    }
+                }
+            }
+            break;
+
         default:
             break;
     }
@@ -242,6 +268,9 @@ void MainMenu::cubeConnect(unsigned cid)
     Shared::video[cid].initMode(BG0_ROM);
     Shared::video[cid].bg0.setPanning(vec(0,0));
     Shared::video[cid].bg0.image(vec(0,0), logo);
+
+    // Initialize default responders
+    Shared::cubeResponder[cid].init(cid);
 }
 
 void MainMenu::cubeDisconnect(unsigned cid)
@@ -477,14 +506,29 @@ void MainMenu::arriveItem(unsigned index)
 {
     ASSERT(index < arraysize(items));
     MainMenuItem *item = items[index];
-    item->arrive(menu, index);
+    item->setMenuInfo(&menu, index);
+    item->arrive();
 }
 
 void MainMenu::departItem(unsigned index)
 {
     ASSERT(index < arraysize(items));
     MainMenuItem *item = items[index];
-    item->depart(menu, index);
+    item->depart();
+    item->setMenuInfo(NULL, -1);
+
+    // Reset the background on all non-active cubes
+    for (CubeID cube : CubeSet::connected()) {
+        if (cube != menu.cube()) {
+            Shared::video[cube].bg0.erase(Menu_StripeTile);
+        }
+    }
+}
+
+void MainMenu::paint(unsigned index)
+{
+    ASSERT(index < arraysize(items));
+    items[index]->paint();
 }
 
 void MainMenu::prepareAssets()
