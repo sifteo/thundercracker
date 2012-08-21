@@ -293,6 +293,7 @@ class LCD {
             break;
 
         case CMD_MAGIC_TIANMA_HX8353:
+            model.madctr_xor = MADCTR_MX | MADCTR_MY;
             model.order = model.SWAP_BEFORE_MIRROR;
             break;
 

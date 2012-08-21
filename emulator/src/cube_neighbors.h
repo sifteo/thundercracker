@@ -91,10 +91,10 @@ class Neighbors {
 
     void ioTick(CPU::em8051 &cpu);
 
-    static const unsigned PIN_0_TOP_IDX     = 4;
-    static const unsigned PIN_1_LEFT_IDX    = 5;
-    static const unsigned PIN_2_BOTTOM_IDX  = 0;
-    static const unsigned PIN_3_RIGHT_IDX   = 1;
+    static const unsigned PIN_0_TOP_IDX     = 0;
+    static const unsigned PIN_1_LEFT_IDX    = 1;
+    static const unsigned PIN_2_BOTTOM_IDX  = 4;
+    static const unsigned PIN_3_RIGHT_IDX   = 5;
 
  private:
     void transmitPulse(CPU::em8051 &cpu, unsigned otherCube, uint8_t otherSide);

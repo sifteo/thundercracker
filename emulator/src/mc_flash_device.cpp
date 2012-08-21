@@ -96,6 +96,9 @@ void FlashDevice::eraseBlock(uint32_t address)
         unsigned sector = address - (address % FlashDevice::ERASE_BLOCK_SIZE);
 
         if (!gStealthIOCounter) {
+            // Log non-stealth erases, since these will introduce a visible performance hiccup.
+            LOG(("FLASH: Erasing block %08x\n", address));
+
             LuaFilesystem::onRawErase(address);
             SystemMC::elapseTicks(MCTiming::TICKS_PER_BLOCK_ERASE);
         }

@@ -14,6 +14,8 @@
 #include "flash_volumeheader.h"
 #include "flash_lfs.h"
 #include "flash_stack.h"
+#include "flash_recycler.h"
+#include "flash_syslfs.h"
 #include "elfprogram.h"
 
 const char LuaFilesystem::className[] = "Filesystem";
@@ -142,7 +144,10 @@ int LuaFilesystem::newVolume(lua_State *L)
 
     FlashScopedStealthIO sio;
     FlashVolumeWriter writer;
-    if (!writer.begin(type, payloadStrLen, dataStrLen, parent))
+    FlashBlockRecycler recycler;
+
+    SysLFS::cleanupDeletedVolumes();
+    if (!writer.begin(recycler, type, payloadStrLen, dataStrLen, parent))
         return 0;
 
     writer.appendPayload((const uint8_t*)payloadStr, payloadStrLen);

@@ -22,6 +22,8 @@
 #include "flash_stack.h"
 #include "flash_volume.h"
 #include "flash_syslfs.h"
+#include "flash_recycler.h"
+#include "flash_preerase.h"
 #include "svmloader.h"
 #include "svmcpu.h"
 #include "svmruntime.h"
@@ -96,27 +98,35 @@ void SystemMC::autoInstall()
     // Use stealth flash I/O, for speed
     FlashDevice::setStealthIO(1);
 
-    do {
+    /*
+     * Pre-erase some but not all of the device. This helps us get test coverage
+     * for all of the FlashBlockRecycler paths even in simulation (where we're typically
+     * using non-persistent flash)
+     */
+    FlashBlockPreEraser bpe;
+    for (unsigned i = 0; i < 30 && bpe.next(); ++i);
 
-        // Install a launcher
-        const char *launcher = sys->opt_launcherFilename.empty() ? NULL : sys->opt_launcherFilename.c_str();
-        if (!sys->flash.installLauncher(launcher))
-            break;
+    // Install a launcher
+    const char *launcher = sys->opt_launcherFilename.empty() ? NULL : sys->opt_launcherFilename.c_str();
+    if (sys->flash.installLauncher(launcher)) {
 
-        // Install any ELF data that we've previously queued
+        /*
+         * Install any ELF data that we've previously queued.
+         *
+         * XXX: Use writer.beginGame(), so we can remove previous copies of the same game.
+         */
 
         tthread::lock_guard<tthread::mutex> guard(pendingGameInstallLock);
-
         while (!pendingGameInstalls.empty()) {
             std::vector<uint8_t> &data = pendingGameInstalls.back();
             FlashVolumeWriter writer;
-            writer.begin(FlashVolume::T_GAME, data.size());
+            FlashBlockRecycler recycler;
+            writer.begin(recycler, FlashVolume::T_GAME, data.size());
             writer.appendPayload(&data[0], data.size());
             writer.commit();
             pendingGameInstalls.pop_back();
         }
-
-    } while (0);
+    }
 
     FlashDevice::setStealthIO(-1);
 }

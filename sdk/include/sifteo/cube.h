@@ -183,6 +183,11 @@ struct CubeID {
      * representation, with 0.0f representing a qualitatively dead
      * battery and 1.0f representing a totally new battery.
      *
+     * A reading of exactly zero will only result when the battery level is not
+     * yet known. It takes the cube about a second to measure its own battery
+     * level, so if you're talking to a cube that has just been turned on and
+     * connected, the first measurement may not yet be available.
+     *
      * To get the battery level for the base unit, call System::batteryLevel().
      */
     float batteryLevel() const {

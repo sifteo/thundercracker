@@ -9,6 +9,7 @@
 #include "prng.h"
 #include "cube.h"
 #include "cubeslots.h"
+#include "svmloader.h"
 
 
 int SysLFS::read(Key k, uint8_t *buffer, unsigned bufferSize)
@@ -717,4 +718,172 @@ void SysLFS::deleteCube(unsigned index)
 
     for (unsigned i = 0; i < ASSET_SLOTS_PER_CUBE; ++i)
         write(AssetSlotRecord::makeKey(cubeKey, i), 0, 0);
+}
+
+void SysLFS::cleanupDeletedVolumes()
+{
+    /*
+     * Scrub through SysLFS, and remove any referencs to volumes which are
+     * deleted and no longer mapped. We do this just before creating a new
+     * game or launcher volume.
+     *
+     * This is how we remove references to AssetGroups in games which have
+     * been deleted, for example. There are a couple constraints that
+     * make this process a bit delicate:
+     *
+     *   - We can't do this from a place where we'd create a re-entrancy
+     *     hazard, such as during block recycling. (We may need to recycle
+     *     blocks while writing new SysLFS records, and having two block
+     *     recyclers active at once is a very bad thing.)
+     *
+     *   - We need to be kind to volumes which have been deleted but are
+     *     still running. Ideally these unlinked volumes can still make use
+     *     of cached assets until they finally stop running.
+     *
+     * So, this lazy process parallels the way blocks are recycled. We only
+     * clean up stale volume references when we may be about to re-use those
+     * same block codes for other volumes.
+     *
+     * Places where we need to check volume references:
+     *
+     *   - AssetSlotIdentity, inside the CubeRecord
+     *   - AssetGroupIdentity, inside the AssetSlotRecord
+     *
+     * Each individual record type has a cleanupDeletedVolumes() function
+     * which does the actual work. This function manages the overall SysLFS
+     * iteration loop.
+     */
+
+    /*
+     * Iterate over volumes once, to build a map of which volumes still exist.
+     * We must explicitly avoid adding deleted volumes to this set!
+     */
+
+    FlashMapBlock::Set allVolumes;
+    allVolumes.clear();
+    {
+        FlashVolumeIter vi;
+        FlashVolume vol;
+        vi.begin();
+        while (vi.next(vol)) {
+            if (!FlashVolume::typeIsRecyclable(vol.getType()))
+                vol.block.mark(allVolumes);
+        }
+    }
+
+    /*
+     * Restartable iteration over all of SysLFS
+     */
+
+    // Exclude anything below kCubeBase. As we go, we'll exclude already-visited keys.
+    FlashLFSIndexRecord::KeyVector_t excluded;
+    excluded.clear();
+    for (unsigned i = 0; i < SysLFS::kCubeBase; ++i)
+        excluded.mark(i);
+
+    FlashLFS &lfs = get();
+    while (1) {
+        FlashLFSObjectIter iter(lfs);
+        while (1) {
+            
+            if (!iter.previous(FlashLFSKeyQuery(&excluded))) {
+                // Out of records; done
+                return;
+            }
+
+            // Is this an overview record?
+            _SYSCubeID cube;
+            SysLFS::Key key = (SysLFS::Key) iter.record()->getKey();
+            if (SysLFS::CubeRecord::decodeKey(key, cube)) {
+
+                // Load it. On success, exclude key from future iteration.
+                SysLFS::CubeRecord cr;
+                if (!cr.load(iter))
+                    continue;
+                excluded.mark(key);
+
+                if (cr.cleanupDeletedVolumes(allVolumes)) {
+                    if (SysLFS::write(key, cr, false))
+                        continue;
+                    // Enable GC, and restart iteration.
+                    SysLFS::write(key, cr);
+                    break;
+                }
+            }
+
+            // Is this an AssetSlotRecord?
+            SysLFS::Key cubeKey;
+            unsigned slot;
+            if (SysLFS::AssetSlotRecord::decodeKey(key, cubeKey, slot)) {
+
+                // Load it. On success, exclude key from future iteration.
+                SysLFS::AssetSlotRecord asr;
+                if (!asr.load(iter))
+                    continue;
+                excluded.mark(key);
+
+                if (asr.cleanupDeletedVolumes(allVolumes)) {
+                    if (SysLFS::write(key, asr, false))
+                        continue;
+                    // Enable GC, and restart iteration.
+                    SysLFS::write(key, asr);
+                    break;
+                }
+            }
+        }
+    }
+}
+
+bool SysLFS::CubeRecord::cleanupDeletedVolumes(const FlashMapBlock::Set &allVolumes)
+{
+    /*
+     * Delete any references to deleted volumes within this CubeRecord,
+     * given a vector of volumes which are still valid.
+     *
+     * Returns 'true' if any changes were made, or 'false' if none were needed.
+     */
+
+    bool changed = false;
+
+    for (unsigned slot = 0; slot < ASSET_SLOTS_PER_CUBE; ++slot) {
+        SysLFS::AssetSlotIdentity &id = assets.slots[slot].identity;
+        FlashMapBlock vol = FlashMapBlock::fromCode(id.volume);
+
+        if (vol.isValid() && !vol.test(allVolumes) && !SvmLoader::isVolumeMapped(vol)) {
+            // Found a deleted volume. Erase the slot.
+
+            memset(&id, 0, sizeof id);
+            assets.markErased(slot);
+            changed = true;
+        }
+    }
+
+    return changed;
+}
+
+bool SysLFS::AssetSlotRecord::cleanupDeletedVolumes(const FlashMapBlock::Set &allVolumes)
+{
+    /*
+     * Delete any references to deleted volumes within this AssetSlotRecord,
+     * given a vector of volumes which are still valid.
+     *
+     * Returns 'true' if any changes were made, or 'false' if none were needed.
+     */
+
+    bool changed = false;
+
+    for (unsigned group = 0; group < ASSET_GROUPS_PER_SLOT; ++group) {
+        SysLFS::AssetGroupIdentity &id = groups[group].identity;
+        FlashMapBlock vol = FlashMapBlock::fromCode(id.volume);
+
+        if (vol.isValid() && !vol.test(allVolumes) && !SvmLoader::isVolumeMapped(vol)) {
+            // Found a deleted volume. Invalidate its volume code, but leave the rest of the slot intact.
+            // This will prevent the deleted group from being used, but other groups will still be usable.
+
+            memset(&id, 0, sizeof id);
+            changed = true;
+        }
+    }
+
+    return changed;
 }

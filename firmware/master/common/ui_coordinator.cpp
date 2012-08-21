@@ -12,7 +12,7 @@
 
 
 UICoordinator::UICoordinator(uint32_t excludedTasks)
-    : uiConnected(0), excludedTasks(excludedTasks),
+    : excludedTasks(excludedTasks), uiConnected(0),
       savedVBuf(0), stippleDeadline(0)
 {
     memset(&avb, 0, sizeof avb);
@@ -137,6 +137,9 @@ void UICoordinator::attachToCube(_SYSCubeID id)
     avb.cube = id;
     cube.setVideoBuffer(&avb.vbuf);
     Atomic::And(CubeSlots::vramPaused, ~cv);
+
+    // Use assets appropriate for this cube's version
+    assets.init(cube.getVersion());
 }
 
 void UICoordinator::paint()
@@ -221,4 +224,10 @@ bool UICoordinator::pollForAttach()
     }
 
     return false;
+}
+
+void UICoordinator::letterboxWindow(unsigned height)
+{
+    VRAM::pokeb(avb.vbuf, offsetof(_SYSVideoRAM, first_line), (128 - height) >> 1);
+    VRAM::pokeb(avb.vbuf, offsetof(_SYSVideoRAM, num_lines), height);
 }

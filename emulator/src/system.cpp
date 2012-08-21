@@ -64,6 +64,11 @@ void System::resetCube(unsigned id)
     sc.resetCube(id);
 }
 
+void System::fullResetCube(unsigned id)
+{
+    sc.fullResetCube(id);
+}
+
 bool System::isTraceAllowed()
 {   
     /*

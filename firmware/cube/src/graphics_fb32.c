@@ -51,12 +51,12 @@ static void vm_fb32_line(uint16_t src)
 {
     src = src;
     __asm
-        mov     r4, #16         ; Loop over 16 horizontal bytes per line
+        mov     r2, #16         ; Loop over 16 horizontal bytes per line
 4$:
 
         movx    a, @dptr
         inc     dptr
-        mov     r5, a
+        mov     r3, a
 
         ; Low nybble
 
@@ -65,12 +65,12 @@ static void vm_fb32_line(uint16_t src)
 
         ; High nybble
 
-        mov     a, r5
+        mov     a, r3
         swap    a
         acall   _vm_fb32_pixel
         acall   _vm_fb32_pixel3
 
-        djnz    r4, 4$          ; Next byte
+        djnz    r2, 4$          ; Next byte
 
     __endasm ;
 }
@@ -80,22 +80,42 @@ void vm_fb32(void) __naked
     lcd_begin_frame();
     LCD_WRITE_BEGIN();
 
-    {
-        uint8_t y = vram.num_lines;
-        uint16_t src = 0;
+    __asm
 
-        do {
-            vm_fb32_line(src);
-            if (!--y) break;
-            vm_fb32_line(src);
-            if (!--y) break;
-            vm_fb32_line(src);
-            if (!--y) break;
-            vm_fb32_line(src);
-            src += 16;
-            src &= 0x1F0;
-        } while (--y);    
-    }
+        ; Keep line count in r7
+
+        mov     dptr, #_SYS_VA_NUM_LINES
+        movx    a, @dptr
+        mov     r7, a
+
+        clr     a
+        mov     r5, a               ; Line pointer in r6:r5
+        mov     r6, a
+        mov     r4, a               ; Vertical scaling counter in r4
+
+1$:
+        mov     dpl, r5             ; Draw line from r6:r5
+        mov     dph, r6
+        acall   _vm_fb32_line
+
+        mov     a, r4               ; Next source line? (Group of 4 dest lines)
+        inc     a
+        mov     r4, a
+        anl     a, #3
+        jnz     2$
+
+        mov     a, r5               ; Add 16 bytes
+        add     a, #16
+        mov     r5, a
+        mov     a, r6
+        addc    a, #0
+        anl     a, #1               ; Mask to 0x1FF
+        mov     r6, a
+
+2$:
+        djnz    r7, 1$              ; Next line. Done yet?
+
+    __endasm;
 
     lcd_end_frame();
     GRAPHICS_RET();

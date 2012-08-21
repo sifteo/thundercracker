@@ -392,6 +392,11 @@ if __name__ == "__main__":
         "tilerom/img-battery-bars-2.png",
         "tilerom/img-battery-bars-3.png",
         "tilerom/img-battery-bars-4.png",
+        "tilerom/img-disconnected.png",
+        "tilerom/img-disconnected-1.png",
+        "tilerom/img-disconnected-2.png",
+        "tilerom/img-disconnected-3.png",
+        "tilerom/img-disconnected-4.png",
         ):
         t.loadImage(img)
 

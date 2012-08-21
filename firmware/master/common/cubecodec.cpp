@@ -566,6 +566,11 @@ bool CubeCodec::escRadioNap(PacketBuffer &buf, uint16_t duration)
      * the cube to turn its receiver off for 'duration' CLKLF ticks.
      */
 
+    if (duration < 2) {
+        // Nap is too short
+        return false;
+    }
+
     if (txBits.hasRoomForFlush(buf, 12 + 2*8)) {
 
         txBits.append(0xF7B, 12);

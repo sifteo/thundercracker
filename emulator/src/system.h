@@ -81,6 +81,7 @@ class System {
     void exit();
     void setNumCubes(unsigned n);
     void resetCube(unsigned id);
+    void fullResetCube(unsigned id);
 
     bool isRunning() {
         return mIsStarted;

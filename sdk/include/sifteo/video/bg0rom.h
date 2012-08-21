@@ -36,32 +36,45 @@ struct BG0ROMDrawable {
 
     /**
      * @brief Palette IDs, XOR'ed with the tile IDs below.
-     *
-     * XXX: The ROM artwork is not currently finalized. These color palettes may change.
      */
     enum Palette {
-        BLACK       = 0 << 10,
-        BLUE        = 1 << 10,
-        ORANGE      = 2 << 10,
-        INVORANGE   = 3 << 10,
-        RED         = 4 << 10,
-        GRAY        = 5 << 10,
-        INV         = 6 << 10,
-        INVGRAY     = 7 << 10,
-        LTBLUE      = 8 << 10,
-        LTORANGE    = 9 << 10,
+        BLACK_ON_WHITE      = 0 << 10,
+        BLUE_ON_WHITE       = 1 << 10,
+        ORANGE_ON_WHITE     = 2 << 10,
+        YELLOW_ON_BLUE      = 3 << 10,
+        RED_ON_WHITE        = 4 << 10,
+        GRAY_ON_WHITE       = 5 << 10,
+        WHITE_ON_BLACK      = 6 << 10,
+        WHITE_ON_BLUE       = 7 << 10,
+        WHITE_ON_TEAL       = 8 << 10,
+        BLACK_ON_YELLOW     = 9 << 10,
+        DKGRAY_ON_LTGRAY    = 10 << 10,
+        GREEN_ON_WHITE      = 11 << 10,
+        WHITE_ON_GREEN      = 12 << 10,
+        PURPLE_ON_WHITE     = 13 << 10,
+        LTBLUE_ON_DKBLUE    = 14 << 10,
+        GOLD_ON_WHITE       = 15 << 10,
+
+        // Aliases for white background
+        BLACK   = BLACK_ON_WHITE,
+        BLUE    = BLUE_ON_WHITE,
+        ORANGE  = ORANGE_ON_WHITE,
+        RED     = RED_ON_WHITE,
+        GRAY    = GRAY_ON_WHITE,
+        GREEN   = GREEN_ON_WHITE,
+        PURPLE  = PURPLE_ON_WHITE,
+        GOLD    = GOLD_ON_WHITE,
     };
 
     /**
      * @brief Well-known tile numbers.
-     *
-     * XXX: The ROM artwork is not currently finalized. These tiles may change.
      */
     enum Tiles {
         FONT_SPACE  = 0,        ///< First character in the font, ASCII space
         SOLID_BG    = 0,        ///< Solid background-colored tile (space)
-        SOLID_FG    = 0x1fe,    ///< Solid foreground-colored tile
-        BARGRAPH    = 0x060,    ///< First tile in the horizontal bargraph series
+        SOLID_FG    = 104,      ///< Solid foreground-colored tile
+        V_BARGRAPH  = 224,      ///< First tile in the vertical bargraph series
+        H_BARGRAPH  = 231,      ///< First tile in the horizontal bargraph series
     };
 
     /**
@@ -234,7 +247,7 @@ struct BG0ROMDrawable {
                 _SYS_TILE77(palette ^ SOLID_FG), wTiles);
             if (wRemainder)
                 _SYS_vbuf_poke(&sys.vbuf, addr + wTiles,
-                    _SYS_TILE77(palette ^ (BARGRAPH + wRemainder - 1)));
+                    _SYS_TILE77(palette ^ (H_BARGRAPH + wRemainder - 1)));
             addr += tileWidth();
         }
     }

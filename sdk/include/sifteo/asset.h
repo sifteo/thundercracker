@@ -27,9 +27,9 @@
 #ifndef NOT_USERSPACE
 #   include <sifteo/asset/group.h>
 #   include <sifteo/asset/loader.h>
-#   include <sifteo/asset/audio.h>
 #endif
 
+#include <sifteo/asset/audio.h>
 #include <sifteo/asset/image.h>
 
 /**

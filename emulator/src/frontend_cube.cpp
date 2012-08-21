@@ -140,11 +140,6 @@ void FrontendCube::toggleFlip()
     flipped ^= true;
 }
 
-void FrontendCube::fullReset()
-{
-    hw->fullReset();
-}
-
 void FrontendCube::setHoverTarget(float h)
 {
     hoverTarget = h;
@@ -213,7 +208,7 @@ void FrontendCube::animate()
      */
 
     b2Vec3 accelLocal = modelMatrix.Solve33(accelG);
-    hw->setAcceleration(-accelLocal.x, -accelLocal.y, accelLocal.z);
+    hw->setAcceleration(accelLocal.x, accelLocal.y, accelLocal.z);
 }
 
 void FrontendCube::computeAABB(b2AABB &aabb)

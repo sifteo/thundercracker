@@ -16,8 +16,6 @@ void FlashMapBlock::erase() const
     unsigned I = address();
     unsigned E = I + BLOCK_SIZE;
 
-    FlashBlock::invalidate(I, E, FlashBlock::F_KNOWN_ERASED);
-
     for (; I != E; I += FlashDevice::ERASE_BLOCK_SIZE) {
         ASSERT(I < E);
 
@@ -26,6 +24,9 @@ void FlashMapBlock::erase() const
         Tasks::resetWatchdog();
         FlashDevice::eraseBlock(I);
     }
+
+    // Must take place after erasing the flash device, for debug-only verify checks
+    FlashBlock::invalidate(I, E, FlashBlock::F_KNOWN_ERASED);
 }
 
 bool FlashMapSpan::flashAddrToOffset(FlashAddr flashAddr, ByteOffset &byteOffset) const

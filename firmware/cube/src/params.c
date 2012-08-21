@@ -9,9 +9,6 @@
 #include "cube_hardware.h"
 #include "params.h"
 
-// Soak up the space between BG1 and the Tile ROM
-#pragma codeseg BG1LINE
-
 
 void params_init()
 {
