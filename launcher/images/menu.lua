@@ -4,6 +4,7 @@ MenuGroup = group{ quality=9.8 }
 -- Main menu graphics
 Menu_BgTile = image{ "images/bg.png", pinned=1 }
 Menu_StripeTile = image{ "images/stripes.png", pinned=1 }
+Menu_IdleCube = image{ "images/bg-unused-cube.png" }
 
 Menu_Tip0 = image{ "images/Tip0.png" }
 Menu_Tip1 = image{ "images/Tip1.png" }
