@@ -75,13 +75,14 @@ static void radio_receive()
 
 static void radio_transmit(uint8_t channel)
 {
+    radio_disable();
+
     spi_begin();
     spi_byte(RF_CMD_W_REGISTER | RF_REG_RF_CH);
-    spi_byte(channel++);
+    spi_byte(channel);
     spi_end();
 
     radio_enable();
-    while (1);
 }
 
 static void power_init(void)
@@ -123,7 +124,25 @@ void main(void)
     /* Radio in PRX mode */
     radio_receive();
 #else
+
+#if (PTX_CHAN < 0)
+    /* sweep tx mode    */
+    while(1) {
+        uint8_t i=0;
+        do {
+            uint8_t d1=3,d2=0;
+            radio_transmit(i);
+            do {
+                do {
+                } while(--d2);
+            } while(--d1);
+            i++;
+        } while (i<100);
+    }
+#else
     /* Radio in PTX mode */
     radio_transmit(PTX_CHAN);
+    while(1);
+#endif
 #endif
 }

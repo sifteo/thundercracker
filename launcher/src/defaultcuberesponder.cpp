@@ -58,5 +58,5 @@ void DefaultCubeResponder::paint()
         position.x = kRest.x + kMag * u * sin(kShakeCount * 3.14159f * u);
         position.y = (1 - kUpRate) * position.y + kUpRate * kRest.y;
     }
-    Shared::video[cube].bg0.setPanning(position);
+    Shared::video[cube].bg0.setPanning(position - cube.accel().xy()/2.f);
 }
