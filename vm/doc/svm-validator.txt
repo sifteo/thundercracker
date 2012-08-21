@@ -124,3 +124,24 @@ be set based on how many "definitely valid" instructions we have. If a "maybe" i
 has a successor which is "definitely valid", we can mark that "maybe" instruction as
 "definitely valid" and include it below this lower bound. This also saves us from
 re-examining instructions we've already looked at.
+
+Bundle Decoding
+---------------
+
+The primary building block we use to implement this algorithm involves "decoding"
+one instruction bundle to determine (a) if it's valid at all, and (b) what other
+instructions could be its successors.
+
+SVM requires all branch targets to be 32-bit aligned, so that for the purposes of
+code validation we can always treat the program as an aligned array of 32-bit
+"bundles" which contain either one Thumb-2 instruction or two 16-bit Thumb
+instructions.
+
+The maximum number of these successor addresses in a bundle is three:
+one for the instruction following the bundle, if it's reachable, and
+one for a possible jump target for each of the two instructions.
+
+For the validation algorithm this successor information can be distilled
+to a single integer value: the "maximum successor" of that bundle. If the bundle
+has no successors, this is -1. If the bundle is completely invalid, this returns
+an arbitrary large number which is never a valid successor address.
