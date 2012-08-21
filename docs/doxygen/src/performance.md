@@ -2,7 +2,7 @@
 Performance   {#performance}
 ===========
 
-@brief Optimization tips and best practices for getting the best performance
+@brief Tips and best practices for performance optimization
 
 # Introduction
 
