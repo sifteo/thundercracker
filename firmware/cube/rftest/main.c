@@ -130,7 +130,7 @@ void main(void)
     while(1) {
         uint8_t i=0;
         do {
-            uint8_t d1=3,d2=0;
+            uint8_t d1=6,d2=0;
             radio_transmit(i);
             do {
                 do {

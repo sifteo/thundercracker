@@ -33,7 +33,7 @@ int main()
      * we detect a button press.
      */
     uint8_t channelIdx = 0;
-    const uint8_t channels[4] = { 2, 40, 80, 128};		// channel>127 => PRX
+    const uint8_t channels[5] = {2, 40, 80, 128, 129};		// channel>127 (special) 128:PRX 129:tx-sweep
 
     NRF24L01::instance.setConstantCarrier(true, channels[channelIdx]);
     bool lastButton = HomeButton::isPressed();
@@ -41,6 +41,9 @@ int main()
     GPIOPin green = LED_GREEN_GPIO;
     green.setControl(GPIOPin::OUT_2MHZ);
     green.setHigh();
+
+    uint8_t sweep_ch = 0;
+    bool sweep_mode = 0;
 
     for (;;) {
 
@@ -52,19 +55,30 @@ int main()
             if (button == true) {
                 NRF24L01::instance.setPRXMode(false);
                 NRF24L01::instance.setConstantCarrier(false);
+                sweep_mode = 0;
 
                 green.setLow();
                 channelIdx = (channelIdx + 1) % sizeof(channels);
                 if (channels[channelIdx] < 128) {
                 	NRF24L01::instance.setConstantCarrier(true, channels[channelIdx]);
                 } else {
-                	NRF24L01::instance.setPRXMode(true);
+                    if (channels[channelIdx] == 128) {
+                        NRF24L01::instance.setPRXMode(true);
+                    }
+                    if (channels[channelIdx] == 129) {
+                        sweep_mode = 1;
+                    }
                 }
             } else {
                 green.setHigh();
             }
 
             lastButton = button;
+        }
+        if (sweep_mode) {
+            NRF24L01::instance.setConstantCarrier(true, sweep_ch++);
+            if (sweep_ch > 83)
+                sweep_ch = 0;
         }
     }
 }
