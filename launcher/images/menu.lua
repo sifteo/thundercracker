@@ -38,5 +38,7 @@ BatteryBars = image{ {
     "images/img-battery-bars-4.png"
 } }
 
+BarGraph = image{ "images/bargraph.png", width=8, height=8 }
+
 -- More Cubes
 MoreCubesStates = image{ "images/more-cubes-states.png", height=8 }

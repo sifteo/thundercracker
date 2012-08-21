@@ -34,12 +34,22 @@ static void drawText(MainMenuItem::IconBuffer &icon, const char* text, Int2 pos)
     }
 }
 
-static unsigned getFreeMemory()
+static void drawGraph(MainMenuItem::IconBuffer &icon, unsigned percentage, Int2 pos)
+{
+    int pixelage = percentage * 80 / 100;
+
+    for (int i = 0; pixelage > 0; i++) {
+        icon.image(vec(pos.x + i, pos.y), BarGraph, pixelage >= 8 ? 0 : pixelage);
+        pixelage -= 8;
+    }
+}
+
+static unsigned getUsedMemory()
 {
     FilesystemInfo info;
     info.gather();
     
-    float percentage = float(info.freeUnits()) / float(info.totalUnits());
+    float percentage = float(info.totalUnits() - info.freeUnits()) / float(info.totalUnits());
     
     return unsigned(percentage * 100);
 }
@@ -97,17 +107,19 @@ void StatusApplet::drawIcon(Sifteo::CubeID menuCube)
     if (menuCube.isDefined()) {
         drawBattery(menuIcon, menuCube.batteryLevel(), vec(8, 1));
     }
-    drawBattery(menuIcon, System::batteryLevel(), vec(7, 7));
+    drawBattery(menuIcon, System::batteryLevel(), vec(8, 7));
     
     unsigned numCubes = CubeSet::connected().count();
-    
+    ASSERT(numCubes < 100);
+
     String<8> bufferCubes;
     bufferCubes << numCubes;
-    drawText(menuIcon, bufferCubes.c_str(), vec(numCubes < 10 ? 4 : 3, 4));
+    drawText(menuIcon, bufferCubes.c_str(), vec(3, 4));
     
     String<16> bufferBlocks;
-    bufferBlocks << getFreeMemory();
-    drawText(menuIcon, bufferBlocks.c_str(), vec(1, 10));
+    bufferBlocks << getUsedMemory();
+    drawText(menuIcon, bufferBlocks.c_str(), vec(1, 9));
+    drawGraph(menuIcon, getUsedMemory(), vec(1, 10));
 }
 
 void StatusApplet::drawCube(CubeID cube)
