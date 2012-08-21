@@ -51,7 +51,9 @@ IRQ_HANDLER ISR_SysTick()
     tickBase += SysTime::hzTicks(SYSTICK_IRQ_HZ);
 
     STATIC_ASSERT(SYSTICK_IRQ_HZ == Tasks::HEARTBEAT_HZ);
+#ifndef RFTEST
     Tasks::heartbeatISR();
+#endif
 }
 
 SysTime::Ticks SysTime::ticks()
