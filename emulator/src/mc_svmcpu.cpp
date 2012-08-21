@@ -10,6 +10,7 @@
 #include "mc_timing.h"
 #include "system.h"
 #include "system_mc.h"
+#include "svmmemory.h"
 
 #include <string.h>
 
@@ -902,6 +903,19 @@ static uint16_t fetch()
         emulateFault(F_LOAD_ALIGNMENT);
         return Nop;
     }
+
+    /*
+     * As we execute, check that each address we hit is
+     * part of a valid bundle according to SvmValidator. This
+     * serves to double-check both the validator and this runtime.
+     */
+    DEBUG_ONLY({
+        SvmMemory::VirtAddr bundleVA = SvmRuntime::reconstructCodeAddr(regs[REG_PC]);
+        SvmMemory::PhysAddr pa;
+        FlashBlockRef ref;
+        bundleVA &= ~(Svm::BUNDLE_SIZE - 1);
+        ASSERT(SvmMemory::mapROCode(ref, bundleVA, pa));
+    });
 
     uint16_t *pc = reinterpret_cast<uint16_t*>(regs[REG_PC]);
     TRACING_ONLY(traceFetch(pc));

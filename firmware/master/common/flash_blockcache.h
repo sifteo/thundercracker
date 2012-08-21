@@ -13,6 +13,7 @@
 #define FLASH_BLOCKCACHE_H_
 
 #include "flash_device.h"
+#include "svm.h"
 #include "svmvalidator.h"
 #include "systime.h"
 #include "machine.h"
@@ -88,7 +89,7 @@ private:
     static unsigned latestStamp;
 
     // Stored out-of-line, to keep the main FlashBlock length a power-of-two
-    static uint16_t validCodeBytes[NUM_CACHE_BLOCKS];
+    static uint8_t validCodeBundles[NUM_CACHE_BLOCKS];
 
 public:
     ALWAYS_INLINE unsigned id() const {
@@ -107,19 +108,26 @@ public:
         return &mem[id()][0];
     }
 
-    ALWAYS_INLINE bool isCodeOffsetValid(unsigned offset) {
-        // Misaligned offsets are never valid
+    ALWAYS_INLINE bool isCodeOffsetValid(unsigned offset)
+    {
+        STATIC_ASSERT(BLOCK_SIZE == Svm::BLOCK_SIZE);
+        STATIC_ASSERT(Svm::BUNDLE_SIZE == 4);
+        STATIC_ASSERT(Svm::BUNDLE_SIZE * 0xFF >= Svm::BLOCK_SIZE);
+
+        // Must be bundle-aligned
         if (offset & 3)
             return false;
         
         // Lazily validate
-        uint16_t &pcb = validCodeBytes[id()];
+        uint8_t &pcb = validCodeBundles[id()];
         unsigned cb = pcb;
 
-        if (cb == 0)
-            pcb = cb = SvmValidator::validBytes(getData(), BLOCK_SIZE);
+        if (cb == 0) {
+            const uint32_t *words = reinterpret_cast<const uint32_t*>(getData());
+            pcb = cb = SvmValidator::findValidBundles(words);
+        }
 
-        return offset < cb;
+        return (offset >> 2) < cb;
     }
 
 #ifdef SIFTEO_SIMULATOR

@@ -2,7 +2,7 @@
 Performance   {#performance}
 ===========
 
-@brief Optimization tips and best practices for getting the best performance
+@brief Tips and best practices for performance optimization
 
 # Introduction
 
@@ -76,17 +76,45 @@ Most Sifteo games are not CPU bound. Flash bandwidth and graphics performance ar
 - High sample rates in tracker audio
 - Poorly-written game logic
 - Decompressing data from flash:
- - Decompressing AssetImages (use a TileBuffer to cache decompressed data)
+- Heavy floating-point math
+- Unnecessary memory loads and stores
+
+## Decompression bottlenecks
+
+There are several places where the system may spend CPU time to decompress data from flash:
+
+ - Decompressing AssetImages
  - Decompressing ADPCM audio
  - Invoking other runtime decompression, such as FastLZ1.
-- Heavy floating-point math
- - All of our floating point is implemented in software
- - Trig functions and square roots are especially slow
- - Remember, integer math is fast! (32-bit multiplication in one clock cycle)
- - Pro Tip! Use Sifteo::TimeDelta for frame time delta instead of floats
-- Unnecessary memory loads and stores
- - It is much faster to access the stack than general-purpose RAM
- - It is faster yet to keep data in registers
+
+Normally these are not bottlenecks, but if they do become too much of a CPU burden, you may be able to selectively disable compression on the problematic data (such as by using FlatAssetImage or uncompressed PCM audio), or you can pre-decompress it (i.e. by storing images in a TileBuffer).
+
+## Floating point math bottlenecks
+
+The Base's CPU has no hardware floating point coprocessor. It is super fast at integer math, even at integer multiplication. But floating point will always be a bit pokey.
+
+For human-timescale operations, such as animation that happens once or a few times per frame, this shouldn't be a problem. But if you have any inner loops or very math-heavy algorithms, consider avoiding floating point in those cases, and using integer math or fixed-point instead.
+
+In particular, math library functions like sin(), cos(), sqrt(), and log() are especially slow. When possible, avoid these operations or pre-compute the values you need.
+
+If you're using trig heavily but you don't need amazing precision, consider the table-driven alternatives: tsin() and tcos(), or their fixed-point counterparts tsini() and tcosi().
+
+Remember, integer math is very fast! Integer math runs at full native speed in SVM, without either the software floating point overhead itself, or the virtualization overhead inherent in calling into the floating point library.
+
+Pro Tip! Use Sifteo::TimeDelta for frame time delta instead of floats. Floats are convenient, but beyond that it's rarely a good idea to use them for time.
+
+## Memory load/store bottlenecks
+
+Due to details of the SVM architecture, some types of memory are vastly speedier than others:
+
+ - General purpose registers are extremely fast
+ - Local variables in a non-oversized stack frame are almost as fast
+ - Local variables in an oversized stack frame are somewhat slower
+ - Any other kind of RAM is a little slower still
+ - Uncached flash memory is very slow
+
+The compiler will naturally try to keep things in fast memory whenever possible, but due to the semantics of memory access in C++ it isn't always possible for the compiler to optimize out loads and stores. So it can help the optimizer to keep data in local variables instead of repeatedly accessing class members.
+
  - Use local variables for temporary space, not class member variables
  - In some cases, it may be faster to memcpy() a data structure to the stack, manipulate it there, then memcpy() it back.
 
@@ -99,7 +127,7 @@ So what are some techniques to optimize graphics?
 - **Eliminate overdraw**. This is really important, and we discuss it separately below.
 - Try moving sprites (it's cheap!).  Also BG0 and BG1 panning.
 - Do not change masks or tiles every frame.
-- Think careful about what you are asking the graphics pipeline to do, and unnecessary operations like early System::finish().
+- Think carefully about what you are asking the graphics pipeline to do, and unnecessary operations like early System::finish().
  - Note that finish calls near the end of the frame often are "free" if the rendering has already completed.
 
 Cubes do not render synchronously, but certain function calls (namely System::finish) can force them to wait and sync up. Some types of rendering require this behavior, but it is also easy to call finish more often than you need to. Also watch out for functions that implicitly call finish like VideoBuffer::initMode and BG1Drawable::setMask. Only call finish when you need it (for example, before some dependent BG1 calls).

@@ -237,14 +237,24 @@ double inline sqrt(double a)
     return reinterpret_cast<double&>(r);
 }
 
-/// Calculate the sine of a specified angle, in radians. Single-precision.
+/**
+ * @brief Calculate the sine of a specified angle, in radians. Single-precision.
+ *
+ * Trigonometry functions are very slow. If you're computing more than a few sine
+ * or cosine values per frame, consider using the table-driven alternative tsin().
+ */
 float inline sin(float x)
 {
     uint32_t r = _SYS_sinf(reinterpret_cast<uint32_t&>(x));
     return reinterpret_cast<float&>(r);
 }
 
-/// Calculate the cosine of a specified angle, in radians. Single-precision.
+/**
+ * @brief Calculate the cosine of a specified angle, in radians. Single-precision.
+ *
+ * Trigonometry functions are very slow. If you're computing more than a few sine
+ * or cosine values per frame, consider using the table-driven alternative tsin().
+ */
 float inline cos(float x)
 {
     uint32_t r = _SYS_cosf(reinterpret_cast<uint32_t&>(x));
@@ -284,10 +294,74 @@ float inline atan2(float a, float b)
  * This yields two single-precision floating point results,
  * returned via the pointers 's' and 'c'.
  */
-
 void inline sincos(float x, float *s, float *c)
 {
     _SYS_sincosf(reinterpret_cast<uint32_t&>(x), s, c);
+}
+
+/**
+ * @brief Table-driven drop-in replacement for sin()
+ *
+ * This calculates the sine of a specified angle, in radians. Usage is
+ * identical to sin(), but the implementation is based on the same fast
+ * table lookup used by tsini() and tcosi().
+ */
+float inline tsin(float x)
+{
+    uint32_t r = _SYS_tsinf(reinterpret_cast<uint32_t&>(x));
+    return reinterpret_cast<float&>(r);
+}
+
+/**
+ * @brief Table-driven drop-in replacement for cos()
+ *
+ * This calculates the cosine of a specified angle, in radians. Usage is
+ * identical to cos(), but the implementation is based on the same fast
+ * table lookup used by tsini() and tcosi().
+ */
+float inline tcos(float x)
+{
+    uint32_t r = _SYS_tcosf(reinterpret_cast<uint32_t&>(x));
+    return reinterpret_cast<float&>(r);
+}
+
+/**
+ * @brief Integer sine table lookup
+ *
+ * This is an all-integer table driven alternative to sin(). It is
+ * very fast. The lookup table is stored in very fast internal flash
+ * memory.
+ *
+ * The input angle is specified in units of 360/8192 degrees. A full
+ * circle is exactly 8192 units, meaning that a 90 degree arc is 2048
+ * units. The result is in fixed-point, with 16 bits to the right of
+ * the binary point. A value of 1.0 is represented by exactly 65536.
+ *
+ * Only the low 13 bits of the input angle are used.
+ */
+int inline tsini(int x)
+{
+    return _SYS_tsini(x);
+}
+
+/**
+ * @brief Integer cosine table lookup
+ *
+ * This is an all-integer table driven alternative to cos(). It is
+ * very fast. The lookup table is stored in very fast internal flash
+ * memory.
+ *
+ * The input angle is specified in units of 360/8192 degrees. A full
+ * circle is exactly 8192 units, meaning that a 90 degree arc is 2048
+ * units. The result is in fixed-point, with 16 bits to the right of
+ * the binary point. A value of 1.0 is represented by exactly 65536.
+ *
+ * Only the low 13 bits of the input angle are used.
+ * This function is implemented as a thin wrapper around tsini().
+ */
+int inline tcosi(int x)
+{
+    return _SYS_tcosi(x);
 }
 
 /**

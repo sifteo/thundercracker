@@ -12,7 +12,7 @@
 
 uint8_t FlashBlock::mem[NUM_CACHE_BLOCKS][BLOCK_SIZE] BLOCK_ALIGN;
 FlashBlock FlashBlock::instances[NUM_CACHE_BLOCKS];
-uint16_t FlashBlock::validCodeBytes[NUM_CACHE_BLOCKS];
+uint8_t FlashBlock::validCodeBundles[NUM_CACHE_BLOCKS];
 unsigned FlashBlock::latestStamp;
 
 
@@ -85,7 +85,7 @@ void FlashBlock::anonymous(FlashBlockRef &ref)
 
     // This ensures nobody else will ref the same block.
     recycled->address = INVALID_ADDRESS;
-    recycled->validCodeBytes[recycled->id()] = 0;
+    recycled->validCodeBundles[recycled->id()] = 0;
 
     ref.set(recycled);
     ASSERT(recycled->refCount == 1);
@@ -185,7 +185,7 @@ void FlashBlock::load(uint32_t blockAddr, unsigned flags)
     ASSERT(blockAddr != INVALID_ADDRESS);
     ASSERT((blockAddr & (BLOCK_SIZE - 1)) == 0);
 
-    validCodeBytes[id()] = 0;
+    validCodeBundles[id()] = 0;
     address = blockAddr;
 
     uint8_t *data = getData();
@@ -233,7 +233,7 @@ void FlashBlockWriter::beginBlock(const FlashBlockRef &r)
     ASSERT(ref.isHeld());
 
     // Prepare to write
-    ref->validCodeBytes[ref->id()] = 0;
+    ref->validCodeBundles[ref->id()] = 0;
 }
 
 void FlashBlockWriter::beginBlock()
@@ -307,7 +307,7 @@ void FlashBlockWriter::commitBlock()
         FlashBlock *block = &*ref;
 
         // Must not have tried to run code from this block during a write.
-        ASSERT(ref->validCodeBytes[ref->id()] == 0);
+        ASSERT(ref->validCodeBundles[ref->id()] == 0);
 
         // Must not be anonymous
         ASSERT(block->address != FlashBlock::INVALID_ADDRESS);

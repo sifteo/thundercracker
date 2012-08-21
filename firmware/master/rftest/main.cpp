@@ -12,21 +12,21 @@
 #include "homebutton.h"
 
 /*
- * Bootloader application specific entry point.
+ * RF test application specific entry point.
  * Lower level init happens in setup.cpp.
  */
 int main()
 {
-    PowerManager::init();
-
     SysTime::init();
-    SysTime::Ticks start = SysTime::ticks();
-
+    PowerManager::init();
     HomeButton::init();
-
-    while (SysTime::ticks() - start < SysTime::msTicks(110))
-        ;
     Radio::init();
+
+    // wait for 2nd power on delay - this is normally done via the heartbeat task
+    while (SysTime::ticks() < SysTime::msTicks(210));
+
+    Usart::Dbg.init(UART_RX_GPIO, UART_TX_GPIO, 115200);
+    UART(("RF Test\r\n"));
 
     /*
      * Cycle through constant carrier and PRX on the given channels when
@@ -60,7 +60,7 @@ int main()
                 green.setLow();
                 channelIdx = (channelIdx + 1) % sizeof(channels);
                 if (channels[channelIdx] < 128) {
-                	NRF24L01::instance.setConstantCarrier(true, channels[channelIdx]);
+                    NRF24L01::instance.setConstantCarrier(true, channels[channelIdx]);
                 } else {
                     if (channels[channelIdx] == 128) {
                         NRF24L01::instance.setPRXMode(true);

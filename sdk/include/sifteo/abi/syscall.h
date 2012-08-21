@@ -129,6 +129,11 @@ uint32_t _SYS_tanf(uint32_t a) _SC(127);
 uint32_t _SYS_atanf(uint32_t a) _SC(128);
 uint32_t _SYS_atan2f(uint32_t y, uint32_t x) _SC(179);
 
+int32_t _SYS_tsini(uint32_t a) _SC(15);
+int32_t _SYS_tcosi(uint32_t a) _SC(181);
+uint32_t _SYS_tsinf(uint32_t a) _SC(182);
+uint32_t _SYS_tcosf(uint32_t a) _SC(183);
+
 void _SYS_memset8(uint8_t *dest, uint8_t value, uint32_t count) _SC(44);
 void _SYS_memset16(uint16_t *dest, uint16_t value, uint32_t count) _SC(110);
 void _SYS_memset32(uint32_t *dest, uint32_t value, uint32_t count) _SC(49);

@@ -100,6 +100,13 @@
 #   define SECTION(_x)        __attribute__((section(_x)))
 #endif
 
+// On hardware, mark this as dead code to be eliminated. On simulation, generate an ASSERT.
+#ifdef SIFTEO_SIMULATOR
+#   define UNREACHABLE()     assert(0)
+#else
+#   define UNREACHABLE()     __builtin_unreachable()
+#endif
+
 // Produces a 'size of array is negative' compile error when the assert fails
 #define STATIC_ASSERT(_x)  ((void)sizeof(char[1 - 2*!(_x)]))
 

@@ -234,6 +234,32 @@ void testBits()
     ASSERT(ffs(b(0x80000000)) == 32);
 }
 
+void testTrigTables()
+{
+    /*
+     * Test table-driven trig operations
+     */
+
+    ASSERT(tsini(0) == 0);
+    ASSERT(tsini(0x5aa) == 0xe58b);
+    ASSERT(tsini(-0x5aa) == -0xe58b);
+    ASSERT(tsini(0x80f005aa) == 0xe58b);
+    ASSERT(tsini(0x7fa) == 0xffff);
+    ASSERT(tsini(0x7fb) == 0x10000);
+
+    ASSERT(tcosi(0) == 0x10000);
+    ASSERT(tcosi(0x800) == 0);
+    ASSERT(tcosi(0x1daa) == 0xe58b);
+    ASSERT(tcosi(-0x1daa) == 0xe58b);
+    ASSERT(tcosi(0xffb) == -0x10000);
+
+    for (unsigned i = 0; i < 10000; ++i) {
+        float r = i * 0.001f;
+        ASSERT(almostEqual(sin(r), tsin(r), 1e-3f));
+        ASSERT(almostEqual(cos(r), tcos(r), 1e-3f));
+    }
+}
+
 void main()
 {
     testClamp();
@@ -245,6 +271,7 @@ void main()
     testExceptions();
     testBits();
     testTrig();
+    testTrigTables();
 
     LOG("Success.\n");
 }

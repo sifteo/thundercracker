@@ -374,6 +374,7 @@ void MainMenu::updateConnecting()
                 auto& vid = Shared::video[cube];
                 vid.initMode(BG0);
                 vid.bg0.erase(Menu_StripeTile);
+                vid.bg0.image(vec(0,0), Menu_IdleCube);
 
                 connectingCubes.clear(cube);
 
@@ -521,6 +522,7 @@ void MainMenu::departItem(unsigned index)
     for (CubeID cube : CubeSet::connected()) {
         if (cube != menu.cube()) {
             Shared::video[cube].bg0.erase(Menu_StripeTile);
+            Shared::video[cube].bg0.image(vec(0,0), Menu_IdleCube);
         }
     }
 }
