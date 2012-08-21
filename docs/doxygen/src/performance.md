@@ -127,7 +127,7 @@ So what are some techniques to optimize graphics?
 - **Eliminate overdraw**. This is really important, and we discuss it separately below.
 - Try moving sprites (it's cheap!).  Also BG0 and BG1 panning.
 - Do not change masks or tiles every frame.
-- Think careful about what you are asking the graphics pipeline to do, and unnecessary operations like early System::finish().
+- Think carefully about what you are asking the graphics pipeline to do, and unnecessary operations like early System::finish().
  - Note that finish calls near the end of the frame often are "free" if the rendering has already completed.
 
 Cubes do not render synchronously, but certain function calls (namely System::finish) can force them to wait and sync up. Some types of rendering require this behavior, but it is also easy to call finish more often than you need to. Also watch out for functions that implicitly call finish like VideoBuffer::initMode and BG1Drawable::setMask. Only call finish when you need it (for example, before some dependent BG1 calls).
