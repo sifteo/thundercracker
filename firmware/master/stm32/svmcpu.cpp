@@ -66,6 +66,29 @@ void run(reg_t sp, reg_t pc)
  * After runtime handling, the desired user stack pointer may have been modified,
  * so copy the hardware stacked regs to this location, and update the user sp
  * before exiting such that HW unstacking finds them at the correct location.
+ *
+ * Note: It is very important for security that we do copy out the trusted registers
+ *       into trusted memory during the SVC. Due to the hardware's interrupt dispatch
+ *       behaviour, we must briefly store some of our trusted registers (including
+ *       the program counter!) to the user stack. If we left them there, user code
+ *       could use a syscall (like memcpy) to modify them during the SVC. Then we
+ *       could return to a modified (userspace-specified) return address. Instant
+ *       sandbox escape. We can prevent this form of attack by storing the trusted
+ *       registers separately, in secure memory.
+ *
+ * XXX:  The door is still open (but just barely) for a specific kind of attack
+ *       in which a malicious userspace app could abuse a higher-priority ISR
+ *       to modify this hardware-stacked data before we can save it or after we
+ *       restore it. For example, the radio ISR could write to a MotionBuffer
+ *       or VideoBuffer on behalf of an app. It would be difficult to successfully
+ *       execute an attack this way given the largely non-user-determined nature of
+ *       the data you could convince the system to write: but it's certainly possible.
+ *
+ *       One way to avoid this bug may be to have all other interrupts masked during
+ *       these critical sections. We woule need a way for hardware to treat SVC as
+ *       a very high priority interrupt in which most other things are masked, but
+ *       we would then unmask the other interrupts in software around the actual
+ *       handler() invocation below.
  */
 NAKED_HANDLER ISR_SVCall()
 {
