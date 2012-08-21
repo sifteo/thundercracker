@@ -311,7 +311,7 @@ int32_t _SYS_tsini(uint32_t a)
             return (a >= arraysize(sineTable)) ? -0x10000 : -int(sineTable[a]);
 
         default:
-            __builtin_unreachable();
+            UNREACHABLE();
     }
 }
 
