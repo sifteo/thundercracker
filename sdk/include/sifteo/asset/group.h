@@ -89,9 +89,8 @@ struct AssetGroup {
      * The result is only valid if the asset group is
      * already installed on that cube.
      *
-     * It is an error to rely on the value of baseAddress() before
-     * calling AssetGroup::isInstalled(), AssetSlot::bootstrap(),
-     * or using AssetLoader to load the group.
+     * It is an error to rely on the value of baseAddress() before using
+     * either AssetSlot::bootstrap() or AssetLoader to load a group.
      */
     uint16_t baseAddress(_SYSCubeID cube) const {
         ASSERT(cube < CUBE_ALLOCATION);
@@ -108,10 +107,10 @@ struct AssetGroup {
      * asset bootstrapping, or due to a cached AssetSlot from a previous
      * invocation of the game.
      *
-     * If a game doesn't explicitly install an AssetGroup, it must at least
-     * call isInstalled() to check whether the group is already installed
-     * in a cached AssetSlot. Because of this, we might update the asset's
-     * cached base address on success.
+     * This function should be used only as a hint. Don't use it to make
+     * decisions about whether or not to include this group in an AssetConfiguration!
+     * If you will need to use a group, it belongs in the AssetConfiguration
+     * regardless of whether or not it's already loaded.
      */
     bool isInstalled(_SYSCubeIDVector vec) {
         return _SYS_asset_findInCache(*this, vec) == vec;
@@ -120,7 +119,10 @@ struct AssetGroup {
     /**
      * @brief Is this AssetGroup installed on a particular cube?
      *
-     * If 'true', we may update the asset's cached base address.
+     * This function should be used only as a hint. Don't use it to make
+     * decisions about whether or not to include this group in an AssetConfiguration!
+     * If you will need to use a group, it belongs in the AssetConfiguration
+     * regardless of whether or not it's already loaded.
      */
     bool isInstalled(_SYSCubeID cube) {
         return isInstalled(_SYSCubeIDVector(0x80000000 >> cube));
