@@ -77,22 +77,12 @@ bool Installer::install(const char *path, int vid, int pid, bool launcher, bool 
         fprintf(stderr, "installing %s, version %s (%d bytes)\n",
             package.c_str(), version.c_str(), fileSize);
 
-    if (!sendHeader(fileSize))
-        return false;
-
-    if (!sendFileContents(f, fileSize)) {
-        return false;
-    }
-
-    if (!commit())
-        return false;
+    bool success =  sendHeader(fileSize) &&
+                    sendFileContents(f, fileSize) &&
+                    commit();
 
     fclose(f);
-
-    while (dev.numPendingOUTPackets()) {
-        dev.processEvents();
-    }
-    return true;
+    return success;
 }
 
 /*

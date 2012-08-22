@@ -57,6 +57,7 @@ void UsbVolumeManager::onUsbData(const USBProtocolMsg &m)
 
     case WritePayload:
         writer.appendPayload(m.payload, m.payloadLen());
+        // NOTE: we don't respond to these to avoid the traffic overhead, so just return
         return;
 
     case WriteCommit:
@@ -66,7 +67,7 @@ void UsbVolumeManager::onUsbData(const USBProtocolMsg &m)
         } else {
             reply.header |= WriteCommitFail;
         }
-        return;
+        break;
 
     case VolumeOverview:
         volumeOverview(reply);
