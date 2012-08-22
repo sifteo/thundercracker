@@ -91,35 +91,4 @@ void DefaultCubeResponder::motionUpdate()
     Int2 fpPosition = position + fpVelocity;
     velocity = fpVelocity;
     position = fpPosition;
-
-//    if (intPos.x > /
-#if 0
-
-
-    Sifteo::Short2 position;
-    Sifteo::Short2 velocity;
-    Sifteo::CubeID cube;
-
-
-    // Basic shake touch response
-    if (cube.isTouching()) {
-        // Initialize animation timer
-        u = 1.f;
-
-        position.x = (1-kDownRate) * position.x  + kDownRate * kRest.x;
-        position.y  = (1-kDownRate) * position.y  + kDownRate * kDownTarget;
-    } else if (u > 0) {
-        // Timer countdown
-        u -= kRate;
-        if (u < 0) u = 0;
-
-        position.x = kRest.x + kMag * u * sin(kShakeCount * 3.14159f * u);
-        position.y = (1 - kUpRate) * position.y + kUpRate * kRest.y;
-    }
-
-     ;    disc_logo_x += (disc_logo_dx -= x + (disc_logo_dx >> FP_BITS) + ack_data.accel[0]);
-        ;    disc_logo_y += (disc_logo_dy -= -BATTERY_HEIGHT + y + (disc_logo_dy >> FP_BITS) + ack_data.accel[1]);
-
-    Shared::video[cube].bg0.setPanning(position - cube.accel().xy()/2.f);
-#endif
 }
