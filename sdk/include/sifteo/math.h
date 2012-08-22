@@ -558,6 +558,13 @@ template <typename T> struct Vector2 {
     }
 
     /**
+     * @brief Calculate the manhattan (city block) distance of this vector.
+     */
+    T lenManhattan() const {
+        return abs(x) + abs(y);
+    }
+
+    /**
      * @brief Return a normalized version of this vector.
      *
      * The returned vector will have a magnitude of 1.0.
@@ -727,6 +734,13 @@ template <typename T> struct Vector3 {
      */
     T len() const {
         return sqrt(len2());
+    }
+
+    /**
+     * @brief Calculate the manhattan (city block) distance of this vector.
+     */
+    T lenManhattan() const {
+        return abs(x) + abs(y) + abs(z);
     }
 
     /**
