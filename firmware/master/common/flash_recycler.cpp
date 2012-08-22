@@ -27,6 +27,7 @@ void FlashBlockRecycler::findOrphansAndDeletedVolumes()
 
     orphanBlocks.mark();
     deletedVolumes.clear();
+    eraseLogVolumes.clear();
 
     // Blocks in our Erase Log are not orphaned
     FlashEraseLog::clearBlocks(orphanBlocks);
@@ -44,12 +45,21 @@ void FlashBlockRecycler::findOrphansAndDeletedVolumes()
         FlashVolumeHeader *hdr = FlashVolumeHeader::get(ref, vol.block);
         ASSERT(hdr->isHeaderValid());
 
-        // Remember deleted or incomplete recyclable volumes according to their header block.
-        // If the volume is still mapped by SVM, skip it for now. This allows in-use volumes
-        // to be deleted, knowing that they won't be recycled until they are unmapped.
+        /*
+         * Remember deleted or incomplete recyclable volumes according to their header block.
+         * If the volume is still mapped by SVM, skip it for now. This allows in-use volumes
+         * to be deleted, knowing that they won't be recycled until they are unmapped.
+         *
+         * We track Erase Log volumes (the actual space used to contain the erase log, not volumes
+         * which are mentioned by the erase log) separately, since we'll only erase these as a
+         * last resort.
+         */
 
-        if (FlashVolume::typeIsRecyclable(hdr->type) && !SvmLoader::isVolumeMapped(vol)) {
-            vol.block.mark(deletedVolumes);
+        if (!SvmLoader::isVolumeMapped(vol)) {
+            if (hdr->type == FlashVolume::T_ERASE_LOG)
+                vol.block.mark(eraseLogVolumes);
+            else if (FlashVolume::typeIsRecyclable(hdr->type))
+                vol.block.mark(deletedVolumes);
         }
 
         // If a block is reachable at all, even by a deleted volume, it isn't orphaned.
@@ -96,8 +106,8 @@ void FlashBlockRecycler::findCandidateVolumes()
         FlashMapBlock block = FlashMapBlock::fromIndex(index);
         FlashVolumeHeader *hdr = FlashVolumeHeader::get(ref, block);
 
-        if (hdr->type == FlashVolume::T_ERASE_LOG)
-            continue;
+        // Erase log volumes are stored separately
+        ASSERT(hdr->type != FlashVolume::T_ERASE_LOG);
 
         unsigned numMapEntries = hdr->numMapEntries();
         const FlashMap *map = hdr->getMap();
@@ -121,12 +131,19 @@ void FlashBlockRecycler::findCandidateVolumes()
      * (say, we've already allocated all blocks with below-average
      * erase counts) we'll punt by making all deleted volumes into
      * candidates.
-     *
-     * This also opens up T_ERASE_LOG volumes for recycling.
      */
 
-    if (candidateVolumes.empty())
+    if (candidateVolumes.empty()) {
         candidateVolumes = deletedVolumes;
+
+        /*
+         * Still nothing?? Start recycling the volume(s) used to store our
+         * erase log.
+         */
+
+        if (candidateVolumes.empty())
+            candidateVolumes = eraseLogVolumes;
+    }
 }
 
 bool FlashBlockRecycler::next(FlashMapBlock &block, EraseCount &eraseCount)
@@ -238,6 +255,8 @@ bool FlashBlockRecycler::next(FlashMapBlock &block, EraseCount &eraseCount)
     // Yanking the last (header) block. Remove this volume from the pool.
     
     vol.block.clear(deletedVolumes);
+    vol.block.clear(eraseLogVolumes);
+
     dirtyVolume.commitBlock();
 
     block = vol.block;
