@@ -31,6 +31,9 @@ public:
     DEBUG_ONLY(static void verify(uint32_t address, const uint8_t *buf, unsigned len);)
 
     static void eraseBlock(uint32_t address);
+    static void eraseAll();
+
+    static bool busy();
 
     struct JedecID {
         uint8_t manufacturerID;
