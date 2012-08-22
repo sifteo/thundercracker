@@ -37,6 +37,14 @@ void FlashDevice::eraseBlock(uint32_t address) {
     flash.eraseBlock(address);
 }
 
+void FlashDevice::eraseAll() {
+    flash.chipErase();
+}
+
+bool FlashDevice::busy() {
+    return flash.busy();
+}
+
 void FlashDevice::readId(JedecID *id)
 {
     flash.readId(id);

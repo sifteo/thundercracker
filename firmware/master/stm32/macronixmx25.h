@@ -32,6 +32,14 @@ public:
     void read(uint32_t address, uint8_t *buf, unsigned len);
     void write(uint32_t address, const uint8_t *buf, unsigned len);
     void eraseBlock(uint32_t address);
+    void chipErase();
+
+    bool busy() {
+        if (mightBeBusy) {
+            mightBeBusy = readReg(ReadStatusReg) & WriteInProgress;
+        }
+        return mightBeBusy || dmaInProgress;
+    }
 
     void readId(FlashDevice::JedecID *id);
 
