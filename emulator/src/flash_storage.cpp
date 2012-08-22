@@ -85,6 +85,16 @@ void FlashStorage::initData()
 {
     ASSERT(data);
 
+    // Zero unused parts of the header
+    memset(data->header.bytes, 0x00, sizeof data->header.bytes);
+
+    initCubes();
+    initMC();
+    initHeader();
+}
+
+void FlashStorage::initCubes()
+{
     for (unsigned i = 0; i < arraysize(data->cubes); ++i) {
         CubeRecord &cube = data->cubes[i];
 
@@ -101,27 +111,32 @@ void FlashStorage::initData()
         memset(cube.eraseCounts, 0x00, sizeof cube.eraseCounts);
     }
 
-    // Initialize internal flash to all zeroes, also to make sure nobody
-    // relies on it starting out erased.
-    memset(data->master.bytes, 0x00, sizeof data->master.bytes);
-
-    // Zero unused parts of the header
-    memset(data->header.bytes, 0x00, sizeof data->header.bytes);
-
-    // Zero out the erase counts
-    memset(data->master.eraseCounts, 0x00, sizeof data->master.eraseCounts);
-
-    // Fill in the header...
-    data->header.magic = HeaderRecord::MAGIC;
-    data->header.version = HeaderRecord::CURRENT_VERSION;
-    data->header.fileSize = sizeof *data;
     data->header.cube_count = arraysize(data->cubes);
     data->header.cube_nvmSize = sizeof data->cubes[0].nvm;
     data->header.cube_extSize = sizeof data->cubes[0].ext;
     data->header.cube_sectorSize = Cube::FlashModel::SECTOR_SIZE;
+}
+
+void FlashStorage::initMC()
+{
+    // Initialize internal flash to all zeroes, also to make sure nobody
+    // relies on it starting out erased.
+    memset(data->master.bytes, 0x00, sizeof data->master.bytes);
+
+    // Zero out the erase counts
+    memset(data->master.eraseCounts, 0x00, sizeof data->master.eraseCounts);
+
     data->header.mc_pageSize = FlashDevice::PAGE_SIZE;
     data->header.mc_capacity = FlashDevice::CAPACITY;
     data->header.mc_blockSize = FlashDevice::ERASE_BLOCK_SIZE;
+}
+
+void FlashStorage::initHeader()
+{
+    // Fill in the header...
+    data->header.magic = HeaderRecord::MAGIC;
+    data->header.version = HeaderRecord::CURRENT_VERSION;
+    data->header.fileSize = sizeof *data;
 
     // Create a unique ID for this storage file
     data->header.uniqueID = rand() ^ rand() ^ uint32_t(OSTime::clock() * 1e6);
@@ -165,6 +180,10 @@ bool FlashStorage::checkData()
     /*
      * In the future, we may have softer versioning for these storage files.
      * For now, require that everything matches our current version exactly.
+     *
+     * The only currently permissible variation: Cube data is optional.
+     * If the file has cube_count==0, we ignore all cube data and reinitialize
+     * it from scratch.
      */
 
     if (data->header.magic != HeaderRecord::MAGIC) {
@@ -175,6 +194,13 @@ bool FlashStorage::checkData()
     if (data->header.version != HeaderRecord::CURRENT_VERSION) {
         LOG(("FLASH: Storage file has an unsupported version\n"));
         return false;
+    }
+
+    if (data->header.cube_count == 0) {
+        // Importing a file with no cubes. Update cubes and header, leave MC alone.
+        initHeader();
+        initCubes();
+        LOG(("FLASH: Importing storage file with no saved cube data\n"));
     }
 
     if (data->header.fileSize != sizeof *data ||
