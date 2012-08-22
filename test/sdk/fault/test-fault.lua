@@ -46,11 +46,7 @@ function fmtFault(code)
 end
 
 function Runtime:onFault(code)
-	-- Do not handle ASSERTs or Lua errors
-
-	-- print("Lua got fault " .. fmtFault(code))
-
-	if code ~= F_ABORT and code ~= F_SCRIPT_EXCEPTION then
+	if code ~= F_SCRIPT_EXCEPTION then
 
 		if rt:getFP() == 0 then
 			error("Should not be handling faults while still in main()")
