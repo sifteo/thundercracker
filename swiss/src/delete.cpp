@@ -62,6 +62,8 @@ bool Delete::deleteReformat()
 {
     USBProtocolMsg m(USBProtocol::Installer);
 
+    fprintf(stderr, "This will take a few minutes...\n");
+
     m.header |= UsbVolumeManager::DeleteReformat;
     dev.writePacket(m.bytes, m.len);
 
