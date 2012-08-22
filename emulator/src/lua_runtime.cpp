@@ -72,7 +72,6 @@ bool LuaRuntime::onFault(unsigned fault)
     if (L) {
         lua_pushinteger(L, fault);
         int ret = Lunar<LuaRuntime>::call(L, "onFault", 1, 1);
-LOG(("ret = %d\n", ret));
         ASSERT(ret == 1 || ret == -1);
         if (ret < 0) {
             LuaScript::handleError(L, "callback");
