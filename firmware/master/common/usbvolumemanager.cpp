@@ -117,6 +117,10 @@ void UsbVolumeManager::onUsbData(const USBProtocolMsg &m)
         pairingSlotDetail(m, reply);
         break;
 
+    case FlashDeviceRead:
+        flashDeviceRead(m, reply);
+        break;
+
     }
 
 #ifndef SIFTEO_SIMULATOR
@@ -291,4 +295,22 @@ void UsbVolumeManager::pairingSlotDetail(const USBProtocolMsg &m, USBProtocolMsg
     PairingSlotDetailReply *r = reply.zeroCopyAppend<PairingSlotDetailReply>();
     r->hwid = rec.hwid[pairingSlot];
     r->pairingSlot = pairingSlot;
+}
+
+void UsbVolumeManager::flashDeviceRead(const USBProtocolMsg &m, USBProtocolMsg &reply)
+{
+    if (m.payloadLen() < sizeof(FlashDeviceReadRequest))
+        return;
+
+    const FlashDeviceReadRequest *payload = m.castPayload<FlashDeviceReadRequest>();
+
+    unsigned address = payload->address;
+    unsigned length = address > FlashDevice::CAPACITY ? 0 : FlashDevice::CAPACITY - address;
+    length = MIN(length, payload->length);
+    length = MIN(length, reply.bytesFree());
+
+    reply.header |= FlashDeviceRead;
+
+    FlashDevice::read(address, reply.castPayload<uint8_t>(), length);
+    reply.len += length;
 }
