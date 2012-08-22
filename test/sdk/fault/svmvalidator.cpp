@@ -22,6 +22,6 @@ void testSvmValidator()
     SCRIPT(LUA, assertFault(nil));
 
     // Jumping to invalid bundle
-    //call(testReturnOnly, 4);
-    //SCRIPT(LUA, assertFault(nil));
+    call(testReturnOnly, 4);
+    SCRIPT(LUA, assertFault(F_BAD_CODE_ADDRESS));
 }
