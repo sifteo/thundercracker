@@ -84,9 +84,14 @@ void UsbVolumeManager::onUsbData(const USBProtocolMsg &m)
         break;
     }
 
-    case DeleteSysLFS: {
+    case DeleteSysLFS:
         SysLFS::deleteAll();
         reply.header |= DeleteSysLFS;
+        break;
+
+    case DeleteReformat: {
+        FlashVolume::reformat();
+        reply.header |= DeleteReformat;
         break;
     }
 
@@ -94,17 +99,15 @@ void UsbVolumeManager::onUsbData(const USBProtocolMsg &m)
         volumeMetadata(m, reply);
         break;
 
-    case DeleteEverything: {
+    case DeleteEverything:
         FlashVolume::deleteEverything();
         reply.header |= DeleteEverything;
         break;
-    }
 
-    case FirmwareVersion: {
+    case FirmwareVersion:
         reply.header |= FirmwareVersion;
         reply.append((const uint8_t*) TOSTRING(SDK_VERSION), sizeof(TOSTRING(SDK_VERSION)));
         break;
-    }
 
     case PairCube:
         pairCube(m, reply);

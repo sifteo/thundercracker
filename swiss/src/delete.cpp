@@ -18,6 +18,9 @@ int Delete::run(int argc, char **argv, IODevice &_dev)
     if (argc == 2 && !strcmp(argv[1], "--all")) {
         success = m.deleteEverything();
 
+    } else if (argc == 2 && !strcmp(argv[1], "--reformat")) {
+        success = m.deleteReformat();
+
     } else if (argc == 2 && !strcmp(argv[1], "--sys")) {
         success = m.deleteSysLFS();
 
@@ -48,6 +51,26 @@ bool Delete::deleteEverything()
 
     m.len = dev.readPacket(m.bytes, m.MAX_LEN);
     if ((m.header & 0xff) != UsbVolumeManager::DeleteEverything) {
+        fprintf(stderr, "unexpected response\n");
+        return false;
+    }
+
+    return true;
+}
+
+bool Delete::deleteReformat()
+{
+    USBProtocolMsg m(USBProtocol::Installer);
+
+    m.header |= UsbVolumeManager::DeleteReformat;
+    dev.writePacket(m.bytes, m.len);
+
+    while (dev.numPendingINPackets() == 0) {
+        dev.processEvents();
+    }
+
+    m.len = dev.readPacket(m.bytes, m.MAX_LEN);
+    if ((m.header & 0xff) != UsbVolumeManager::DeleteReformat) {
         fprintf(stderr, "unexpected response\n");
         return false;
     }
