@@ -143,13 +143,6 @@ public:
      */
     static void deleteEverything();
 
-    /**
-     * The nuclear option.
-     *
-     * Physically erase the entire device, and pre-erase all blocks.
-     */
-    static void reformat();
-
 private:
     static uint32_t signHandle(uint32_t h);
 };

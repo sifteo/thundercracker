@@ -4,6 +4,7 @@
 #include "flash_volume.h"
 #include "flash_volumeheader.h"
 #include "flash_syslfs.h"
+#include "flash_stack.h"
 
 #ifndef SIFTEO_SIMULATOR
 #include "usb/usbdevice.h"
@@ -95,7 +96,7 @@ void UsbVolumeManager::onUsbData(const USBProtocolMsg &m)
         break;
 
     case DeleteReformat: {
-        FlashVolume::reformat();
+        FlashStack::reformatDevice();
         reply.header |= DeleteReformat;
         break;
     }

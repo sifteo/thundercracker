@@ -220,48 +220,6 @@ void FlashVolume::deleteEverything()
         vol.deleteSingle();
 }
 
-void FlashVolume::reformat()
-{
-    /*
-     * Do a physical wipe of the flash device.
-     *
-     * Bonus: since we now know everything is erased, we can mark all blocks as
-     * pre-erased, allowing subsequent write operations to avoid erasing
-     * what would otherwise be considered "orphaned" blocks.
-     */
-
-    FlashDevice::eraseAll();
-
-    // max timeout for chip erase is 200 seconds (!)
-    SysTime::Ticks timeout = SysTime::ticks() + SysTime::sTicks(200);
-    while (FlashDevice::busy()) {
-        if (SysTime::ticks() < timeout)
-            Tasks::resetWatchdog();
-    }
-
-    FlashBlockRecycler recycler;
-    FlashEraseLog log;
-
-    for (unsigned i = 0; i < FlashMapBlock::NUM_BLOCKS; ++i) {
-
-        if (!log.allocate(recycler))
-            break;
-
-        /*
-         * We're writing our erase log data to a block, which means it's
-         * no longer erased- ensure we don't represent it as such.
-         */
-        FlashMapBlock block = FlashMapBlock::fromIndex(i);
-        if (log.currentVolume().block.code == block.code)
-            continue;
-
-        // set erase count to 0
-        FlashEraseLog::Record rec = { 0, block };
-        log.commit(rec);
-        Tasks::resetWatchdog();
-    }
-}
-
 bool FlashVolumeIter::next(FlashVolume &vol)
 {
     unsigned index;
