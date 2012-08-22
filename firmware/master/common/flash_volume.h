@@ -243,9 +243,15 @@ public:
      */
     void commit();
 
+    /// Have exactly the right number of payload bytes been written?
+    ALWAYS_INLINE bool isPayloadComplete() const {
+        return payloadOffset == payloadBytes;
+    }
+
 private:
     FlashBlockWriter payloadWriter;
     unsigned payloadOffset;
+    unsigned payloadBytes;
     uint16_t type;
     bool useEraseLog;
 

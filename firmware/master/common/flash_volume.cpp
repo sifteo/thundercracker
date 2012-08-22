@@ -297,7 +297,8 @@ bool FlashVolumeWriter::begin(FlashBlockRecycler &recycler,
 {
     // The real type will be written in commit(), once the volume is complete.
     this->type = type;
-    payloadOffset = 0;
+    this->payloadBytes = payloadBytes;
+    this->payloadOffset = 0;
 
     // Start building a volume header, in anonymous cache memory.
     // populateMap() will assign concrete block addresses to the volume.
@@ -484,6 +485,20 @@ uint8_t *FlashVolumeWriter::mapTypeSpecificData(unsigned &size)
 
 void FlashVolumeWriter::appendPayload(const uint8_t *bytes, uint32_t count)
 {
+    if (payloadOffset > payloadBytes ||
+        count > payloadBytes ||
+        payloadOffset + count > payloadBytes) {
+
+        /*
+         * If we're overrunning the end of the volume, it's an error!
+         * Prevent the write from happening, and make sure payloadOffset does get
+         * incremented so that isPayloadComplete() will never return 'true'.
+         */
+
+        payloadOffset += count;
+        return;
+    }
+
     FlashBlockRef spanRef;
     FlashMapSpan span = volume.getPayload(spanRef);
 
