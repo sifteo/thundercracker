@@ -8,8 +8,9 @@ using namespace Sifteo;
 
 inline void call(const uint16_t *block, unsigned offset = 0) {
     // SVM magic.. convert RODATA address to call address (fnstack=0)
-    typedef void (*fn)();
-    reinterpret_cast<fn>(offset + (0xFFFFFF & reinterpret_cast<uintptr_t>(block)))();
+    typedef void (*fn)(int);
+    LOG("--- Running %P +%02x\n", block, offset);
+    reinterpret_cast<fn>(offset + (0xFFFFFF & reinterpret_cast<uintptr_t>(block)))(0);
 }
 
 // Convenience method for defining machine code chunks
