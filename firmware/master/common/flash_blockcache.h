@@ -53,7 +53,8 @@ public:
 
     /// Flags
     enum {
-        F_KNOWN_ERASED = (1 << 0),      // Contents known to be erased
+        F_KNOWN_ERASED  = (1 << 0),      // Contents known to be erased
+        F_ABORT_TRAP    = (1 << 1),      // Page is full of _SYS_abort() calls
     };
 
 private:
@@ -141,7 +142,7 @@ public:
 
     // Global operations
     static void init();
-    static void invalidate();
+    static void invalidate(unsigned flags = 0);
     static void invalidate(uint32_t addrBegin, uint32_t addrEnd, unsigned flags = 0);
 
     // Cached block accessors
