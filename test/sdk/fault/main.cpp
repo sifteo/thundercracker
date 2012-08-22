@@ -1,17 +1,6 @@
-#include <sifteo.h>
-using namespace Sifteo;
+#include "fault.h"
 
 void NOINLINE returnFunc() {}
-
-void NOINLINE testWriteNull()
-{
-    *(volatile int*)0 = 0;
-}
-
-void NOINLINE testReadNull()
-{
-    volatile int x = *(volatile int*)0;
-}
 
 void main()
 {
@@ -22,11 +11,8 @@ void main()
         assertFault(nil)
     );
 
-    testWriteNull();
-    SCRIPT(LUA, assertFault(0x06));
-
-    testReadNull();
-    SCRIPT(LUA, assertFault(0x05));
+    testMemoryFaults();
+    testSvmValidator();
 
     SCRIPT(LUA, assertFault(nil));
     LOG("Success.\n");
