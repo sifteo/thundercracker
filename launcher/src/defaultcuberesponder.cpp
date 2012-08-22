@@ -47,7 +47,7 @@ void DefaultCubeResponder::motionUpdate()
      */
 
     const int kFPBits = 5;
-    const int kDampingBits = 4;
+    const int kDampingBits = 3;
     const int kDeadZone = 5;
     const int kRangeOfMotion = 24;
     const Int2 kPressVector = vec(0, 8);
