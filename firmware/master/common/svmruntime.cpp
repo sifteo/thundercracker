@@ -43,9 +43,16 @@ bool SvmRuntime::pendingExitFlag;
 void SvmRuntime::run(uint32_t entryFunc, const StackInfo &stack)
 {
     UART(("Entering SVM.\r\n"));
+
     initStack(stack);
-    SvmCpu::run(mapSP(stack.top - getSPAdjustBytes(entryFunc)),
-                mapBranchTarget(entryFunc));
+
+    SvmMemory::PhysAddr pa;
+    if (SvmMemory::mapROCode(codeBlock, entryFunc, pa)) {
+        SvmCpu::run(mapSP(stack.top - getSPAdjustBytes(entryFunc)),
+                    reinterpret_cast<reg_t>(pa));
+    } else {
+        SvmRuntime::fault(F_BAD_CODE_ADDRESS);
+    }
 }
 
 void SvmRuntime::exec(uint32_t entryFunc, const StackInfo &stack)
@@ -574,17 +581,11 @@ reg_t SvmRuntime::mapSP(reg_t addr)
 
 void SvmRuntime::branch(reg_t addr)
 {
-    SvmCpu::setReg(REG_PC, mapBranchTarget(addr));
-}
-
-ALWAYS_INLINE reg_t SvmRuntime::mapBranchTarget(reg_t addr)
-{
     SvmMemory::PhysAddr pa;
-
-    if (!SvmMemory::mapROCode(codeBlock, addr, pa))
+    if (SvmMemory::mapROCode(codeBlock, addr, pa))
+        SvmCpu::setReg(REG_PC, reinterpret_cast<reg_t>(pa));
+    else
         SvmRuntime::fault(F_BAD_CODE_ADDRESS);
-
-    return reinterpret_cast<reg_t>(pa);
 }
 
 ALWAYS_INLINE void SvmRuntime::longLDRSP(unsigned reg, unsigned offset)
