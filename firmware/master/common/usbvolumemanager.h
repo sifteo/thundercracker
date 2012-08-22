@@ -25,6 +25,8 @@ public:
         PairCube,
         PairingSlotDetail,
         FlashDeviceRead,
+        WriteCommitOK,
+        WriteCommitFail,
     };
 
     struct VolumeOverviewReply {

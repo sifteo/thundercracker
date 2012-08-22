@@ -232,7 +232,18 @@ bool Installer::commit()
     m.header |= UsbVolumeManager::WriteCommit;
 
     dev.writePacket(m.bytes, m.len);
-    dev.processEvents();
 
-    return true;
+    while (dev.numPendingINPackets() == 0) {
+        dev.processEvents();
+    }
+
+    m.len = dev.readPacket(m.bytes, m.MAX_LEN);
+
+    if ((m.header & 0xff) == UsbVolumeManager::WriteCommitOK) {
+        fprintf(stderr, "successfully committed new volume\n");
+        return true;
+    }
+
+    fprintf(stderr, "failed to write volume!\n");
+    return false;
 }
