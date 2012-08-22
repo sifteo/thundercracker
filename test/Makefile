@@ -25,7 +25,8 @@ TESTS = \
 	sdk/stir \
 	sdk/assetslot \
 	sdk/fastlz \
-	sdk/motion
+	sdk/motion \
+	sdk/fault
 
 # Mac-only tests
 ifeq ($(BUILD_PLATFORM), Darwin)
