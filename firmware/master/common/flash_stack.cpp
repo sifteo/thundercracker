@@ -64,6 +64,10 @@ void FlashStack::reformatDevice()
 
     for (unsigned i = 0; i < FlashMapBlock::NUM_BLOCKS; ++i) {
 
+        // Must allocate before checking log.currentVolume below!
+        if (!log.allocate(recycler))
+            break;
+
         /*
          * We're writing our erase log data to a block, which means it's
          * no longer erased- ensure we don't represent it as such.
@@ -71,9 +75,6 @@ void FlashStack::reformatDevice()
         FlashMapBlock block = FlashMapBlock::fromIndex(i);
         if (log.currentVolume().block.code == block.code)
             continue;
-
-        if (!log.allocate(recycler))
-            break;
 
         // Initial erase count is 1
         FlashEraseLog::Record rec = { 1, block };
