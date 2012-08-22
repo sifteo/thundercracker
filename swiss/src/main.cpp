@@ -7,6 +7,7 @@
 #include "delete.h"
 #include "paircube.h"
 #include "usbdevice.h"
+#include "reboot.h"
 #include "macros.h"
 
 #include <stdio.h>
@@ -48,6 +49,12 @@ static const Command commands[] = {
         "add a pairing record to the Sifteo Base",
         "pair (--read | slotID hardwareID)",
         PairCube::run
+    },
+    {
+        "reboot",
+        "reset the Sifteo Base, equivalent to reinserting batteries",
+        "reboot",
+        Reboot::run
     },
 };
 
