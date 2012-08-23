@@ -33,6 +33,10 @@ namespace RadioMC {
 
     void trace();
     unsigned retryCount();
+    unsigned maxRetries() {
+        return (1 + unsigned(buf.ptx.numHardwareRetries))
+             * (1 + unsigned(buf.ptx.numSoftwareRetries));
+    }
 }
 
 
@@ -100,7 +104,7 @@ unsigned RadioMC::retryCount()
      * traffic to the RF hardware to get the exact count.
      */
 
-    return buf.ptx.numHardwareRetries * (buf.ptx.numSoftwareRetries - buf.triesRemaining);
+    return maxRetries() - buf.triesRemaining;
 }
 
 void SystemMC::doRadioPacket()
@@ -126,8 +130,7 @@ void SystemMC::doRadioPacket()
         buf.packet.len = buf.ptx.packet.len;
         
         ASSERT(buf.ptx.numHardwareRetries <= PacketTransmission::MAX_HARDWARE_RETRIES);
-        buf.triesRemaining = (1 + unsigned(buf.ptx.numHardwareRetries))
-                           * (1 + unsigned(buf.ptx.numSoftwareRetries));
+        buf.triesRemaining = RadioMC::maxRetries();
     }
 
     /*
