@@ -220,6 +220,11 @@ class RadioManager {
      */
     static const unsigned FIFO_DEPTH = 8;
 
+    /**
+     * Shared pseudorandom number generator, usable by anyone in Radio ISR context
+     */
+    static _SYSPseudoRandomState prngISR;
+
  private:
     typedef RingBuffer<FIFO_DEPTH, uint8_t, uint8_t> fifo_t;
     static fifo_t fifo;

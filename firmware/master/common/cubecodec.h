@@ -117,6 +117,7 @@ class CubeCodec {
     bool escFlash(PacketBuffer &buf);
     bool escRequestAck(PacketBuffer &buf);
     bool escRadioNap(PacketBuffer &buf, uint16_t duration);
+    bool escChannelHop(PacketBuffer &buf, uint8_t channel);
 
  private:
     // Try to keep these ordered to minimize padding...

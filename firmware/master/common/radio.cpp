@@ -21,6 +21,7 @@ bool RadioManager::enabled;
 uint8_t RadioManager::nextPID;
 uint32_t RadioManager::schedule[RadioManager::PID_COUNT];
 uint32_t RadioManager::nextSchedule[RadioManager::PID_COUNT];
+_SYSPseudoRandomState RadioManager::prngISR;
 
 
 void RadioManager::produce(PacketTransmission &tx)
@@ -242,9 +243,17 @@ ALWAYS_INLINE void RadioManager::dispatchEmptyAcknowledge(unsigned id)
     RADIO_UART_STR("\r\nack0 ");
     RADIO_UART_HEX(id);
 
-    // Cubes don't care, only the connector.
     if (id == CONNECTOR_ID)
         return CubeConnector::radioEmptyAcknowledge();
+
+   if (id >= NUM_PRODUCERS) {
+        ASSERT(id == DUMMY_ID);
+        return;
+    }
+
+    CubeSlot &slot = CubeSlot::getInstance(id);
+    if (slot.isSysConnected())
+        slot.radioEmptyAcknowledge();
 }
 
 ALWAYS_INLINE void RadioManager::dispatchTimeout(unsigned id)
