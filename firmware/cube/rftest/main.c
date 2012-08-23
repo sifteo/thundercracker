@@ -137,7 +137,7 @@ void main(void)
                 } while(--d2);
             } while(--d1);
             i++;
-        } while (i<100);
+        } while (i<=83);
     }
 #else
     /* Radio in PTX mode */
