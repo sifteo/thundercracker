@@ -138,10 +138,13 @@ void FlashBlockRecycler::findCandidateVolumes()
 
         /*
          * Still nothing?? Start recycling the volume(s) used to store our
-         * erase log.
+         * erase log. Don't do this if we aren't using erase log volumes.
+         *
+         * (In effect, the erase log itself becomes the last block
+         * we'll dequeue from it.)
          */
 
-        if (candidateVolumes.empty())
+        if (useEraseLog && candidateVolumes.empty())
             candidateVolumes = eraseLogVolumes;
     }
 }
