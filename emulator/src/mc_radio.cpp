@@ -32,8 +32,8 @@ namespace RadioMC {
     static Buffer buf;
 
     void trace();
-
-};
+    unsigned retryCount();
+}
 
 
 void RadioMC::trace()
@@ -91,6 +91,17 @@ void RadioMC::trace()
     }
 }
 
+unsigned RadioMC::retryCount()
+{
+    /*
+     * Return the number of retries expended for the current transmission.
+     *
+     * This is quantized to `numHardwareRetries` to avoid generating additional
+     * traffic to the RF hardware to get the exact count.
+     */
+
+    return buf.ptx.numHardwareRetries * (buf.ptx.numSoftwareRetries - buf.triesRemaining);
+}
 
 void SystemMC::doRadioPacket()
 {
@@ -157,9 +168,9 @@ void SystemMC::doRadioPacket()
 
             if (buf.reply.len) {
                 buf.prx.len = buf.reply.len;
-                RadioManager::ackWithPacket(buf.prx);
+                RadioManager::ackWithPacket(buf.prx, RadioMC::retryCount());
             } else {
-                RadioManager::ackEmpty();
+                RadioManager::ackEmpty(RadioMC::retryCount());
             }
 
             buf.triesRemaining = 0;

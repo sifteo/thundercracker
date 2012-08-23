@@ -21,7 +21,11 @@ bool RadioManager::enabled;
 uint8_t RadioManager::nextPID;
 uint32_t RadioManager::schedule[RadioManager::PID_COUNT];
 uint32_t RadioManager::nextSchedule[RadioManager::PID_COUNT];
+<<<<<<< HEAD
 _SYSPseudoRandomState RadioManager::prngISR;
+=======
+uint32_t RadioManager::retryBucketMask = 0;
+>>>>>>> 08a081ade4201b8117d03d2a270aea7b2fc5d4ed
 
 
 void RadioManager::produce(PacketTransmission &tx)
@@ -91,7 +95,6 @@ void RadioManager::produce(PacketTransmission &tx)
          * While we're in here, we clear inactive producers from the schedule.
          */
 
-        const unsigned NOT_FOUND = -1;
         unsigned thisPID = nextPID;
         unsigned foundPID = 0;
         unsigned foundCount = 0;
@@ -189,19 +192,46 @@ void RadioManager::produce(PacketTransmission &tx)
     }
 }
 
-void RadioManager::ackWithPacket(const PacketBuffer &packet)
+void RadioManager::ackWithPacket(const PacketBuffer &packet, unsigned retries)
 {
-    dispatchAcknowledge(fifo.dequeue(), packet);
+    dispatchAcknowledge(fifo.dequeue(), packet, retries);
 }
 
-void RadioManager::ackEmpty()
+void RadioManager::ackEmpty(unsigned retries)
 {
-    dispatchEmptyAcknowledge(fifo.dequeue());
+    dispatchEmptyAcknowledge(fifo.dequeue(), retries);
 }
 
 void RadioManager::timeout()
 {
     dispatchTimeout(fifo.dequeue());
+}
+
+void RadioManager::processRetries(unsigned channel, unsigned retries)
+{
+    /*
+     * Upon completion of a transmission, check whether the number of retries
+     * was in the danger zone. If 2 back to back transmissions took too many
+     * retries, initiate a channel hop for cubes within that bucket.
+     *
+     * We bucketize channels so we can track them in a single uint32_t mask -
+     * there are 83 possible channels, and we'd like to
+     */
+
+    unsigned bucket = channel / 3; // 3 == roundup(MAX_RF_CHANNEL / 32)
+    ASSERT(bucket < 32);
+    unsigned bucketBit = Intrinsic::LZ(bucket);
+
+    if (retries > CHANNEL_HOP_THRESHOLD) {
+        if (retryBucketMask & bucketBit) {
+            // initiate hop!
+        } else {
+            retryBucketMask |= bucketBit;
+            return;
+        }
+    }
+
+    retryBucketMask &= ~bucketBit;
 }
 
 ALWAYS_INLINE bool RadioManager::dispatchProduce(unsigned id, PacketTransmission &tx, SysTime::Ticks now)
@@ -220,7 +250,7 @@ ALWAYS_INLINE bool RadioManager::dispatchProduce(unsigned id, PacketTransmission
     return slot.isSysConnected() && slot.radioProduce(tx, now);
 }
 
-ALWAYS_INLINE void RadioManager::dispatchAcknowledge(unsigned id, const PacketBuffer &packet)
+ALWAYS_INLINE void RadioManager::dispatchAcknowledge(unsigned id, const PacketBuffer &packet, unsigned retries)
 {
     RADIO_UART_STR("\r\nack ");
     RADIO_UART_HEX(id);
@@ -234,11 +264,14 @@ ALWAYS_INLINE void RadioManager::dispatchAcknowledge(unsigned id, const PacketBu
     }
 
     CubeSlot &slot = CubeSlot::getInstance(id);
+
+    processRetries(slot.getRadioAddress()->channel, retries);
+
     if (slot.isSysConnected())
         slot.radioAcknowledge(packet);
 }
 
-ALWAYS_INLINE void RadioManager::dispatchEmptyAcknowledge(unsigned id)
+ALWAYS_INLINE void RadioManager::dispatchEmptyAcknowledge(unsigned id, unsigned retries)
 {
     RADIO_UART_STR("\r\nack0 ");
     RADIO_UART_HEX(id);
@@ -252,6 +285,9 @@ ALWAYS_INLINE void RadioManager::dispatchEmptyAcknowledge(unsigned id)
     }
 
     CubeSlot &slot = CubeSlot::getInstance(id);
+
+    processRetries(slot.getRadioAddress()->channel, retries);
+
     if (slot.isSysConnected())
         slot.radioEmptyAcknowledge();
 }
