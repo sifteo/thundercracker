@@ -145,6 +145,9 @@ class CubeSlot {
     // Limit on round-trip time
     static const unsigned RTT_DEADLINE_MS = 250;
 
+    // sentinel to determine whether pending channel change is available
+    static const unsigned RF_INVALID_CHAN = 0xff;
+
     // Large data
     SysTime::Ticks napDeadline;     // Accessed on ISR only, after connect
     PaintControl paintControl;
@@ -163,11 +166,19 @@ class CubeSlot {
     // Really tiny bit FIFO to track whether ACKs are required, for each pending packet
     uint8_t pendingPackets;
     uint8_t ackOptionalFIFO;
+    uint8_t pendingChannel;
 
     uint16_t calculateTimeSync();
     unsigned suggestNapTicks();
 
     void queryResponse(const PacketBuffer &packet);
+
+    void applyPendingChannelHop() {
+        if (pendingChannel != RF_INVALID_CHAN) {
+            address.channel = pendingChannel;
+            pendingChannel = RF_INVALID_CHAN;
+        }
+    }
 };
 
 #endif

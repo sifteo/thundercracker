@@ -13,6 +13,7 @@
 #include "ringbuffer.h"
 #include "systime.h"
 
+class CubeSlot;
 class RadioManager;
 
 
@@ -207,7 +208,7 @@ class RadioManager {
     static void ackWithPacket(const PacketBuffer &packet, unsigned retries);
     static void ackEmpty(unsigned retries);
     static void timeout();
-    static void processRetries(unsigned channel, unsigned retries);
+    static void processRetries(const CubeSlot &slot, unsigned retries);
 
     /*
      * FIFO buffer of slot numbers that have pending acknowledgments.
@@ -231,8 +232,7 @@ class RadioManager {
     static fifo_t fifo;
     static bool enabled;
 
-    static const unsigned CHANNEL_HOP_THRESHOLD =
-            (PacketTransmission::DEFAULT_HARDWARE_RETRIES * PacketTransmission::DEFAULT_SOFTWARE_RETRIES) / 4;
+    static const unsigned CHANNEL_HOP_THRESHOLD = PacketTransmission::DEFAULT_HARDWARE_RETRIES;
     static uint32_t retryBucketMask;
 
     // ID for the CubeConnector. Must not collide with any CubeSlot ID.

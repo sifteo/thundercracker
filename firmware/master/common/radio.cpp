@@ -204,7 +204,7 @@ void RadioManager::timeout()
     dispatchTimeout(fifo.dequeue());
 }
 
-void RadioManager::processRetries(unsigned channel, unsigned retries)
+void RadioManager::processRetries(const CubeSlot &slot, unsigned retries)
 {
     /*
      * Upon completion of a transmission, check whether the number of retries
@@ -212,9 +212,11 @@ void RadioManager::processRetries(unsigned channel, unsigned retries)
      * retries, initiate a channel hop for cubes within that bucket.
      *
      * We bucketize channels so we can track them in a single uint32_t mask -
-     * there are 83 possible channels, and we'd like to
+     * there are 83 possible channels, but we only really need to track in
+     * larger buckets, since we'll want to jump away in larger increments.
      */
 
+    unsigned channel = slot.getRadioAddress()->channel;
     unsigned bucket = channel / 3; // 3 == roundup(MAX_RF_CHANNEL / 32)
     ASSERT(bucket < 32);
     unsigned bucketBit = Intrinsic::LZ(bucket);
@@ -222,6 +224,8 @@ void RadioManager::processRetries(unsigned channel, unsigned retries)
     if (retries > CHANNEL_HOP_THRESHOLD) {
         if (retryBucketMask & bucketBit) {
             // initiate hop!
+            // still leaving this disabled by default pending a little more testing
+            // CubeSlots::pendingHop |= slot.bit();
         } else {
             retryBucketMask |= bucketBit;
             return;
@@ -261,9 +265,7 @@ ALWAYS_INLINE void RadioManager::dispatchAcknowledge(unsigned id, const PacketBu
     }
 
     CubeSlot &slot = CubeSlot::getInstance(id);
-
-    processRetries(slot.getRadioAddress()->channel, retries);
-
+    processRetries(slot, retries);
     if (slot.isSysConnected())
         slot.radioAcknowledge(packet);
 }
@@ -283,8 +285,7 @@ ALWAYS_INLINE void RadioManager::dispatchEmptyAcknowledge(unsigned id, unsigned 
 
     CubeSlot &slot = CubeSlot::getInstance(id);
 
-    processRetries(slot.getRadioAddress()->channel, retries);
-
+    processRetries(slot, retries);
     if (slot.isSysConnected())
         slot.radioEmptyAcknowledge();
 }

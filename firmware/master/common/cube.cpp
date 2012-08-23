@@ -40,6 +40,7 @@ void CubeSlot::connect(SysLFS::Key cubeRecord, const RadioAddress &addr, const R
     pendingPackets = 0;
     ackOptionalFIFO = 0;
     napDeadline = 0;
+    pendingChannel = RF_INVALID_CHAN;
 
     // Store new identity
     lastACK = fullACK;
@@ -249,6 +250,7 @@ bool CubeSlot::radioProduce(PacketTransmission &tx, SysTime::Ticks now)
         PRNG::collectTimingEntropy(&RadioManager::prngISR);
         unsigned ch = RadioAddrFactory::randomChannel(RadioManager::prngISR);
         if (codec.escChannelHop(tx.packet, ch)) {
+            pendingChannel = ch;
             Atomic::And(CubeSlots::pendingHop, ~cv);
             ackOptionalFIFO |= 1;
             return true;
@@ -305,6 +307,8 @@ void CubeSlot::radioEmptyAcknowledge()
     // Dequeue from ACK Optional fifo
     ASSERT(pendingPackets);
     pendingPackets--;
+
+    applyPendingChannelHop();
 }
 
 void CubeSlot::radioAcknowledge(const PacketBuffer &packet)
@@ -314,6 +318,8 @@ void CubeSlot::radioAcknowledge(const PacketBuffer &packet)
     // Dequeue from ACK Optional fifo
     ASSERT(pendingPackets);
     pendingPackets--;
+
+    applyPendingChannelHop();
 
     // ACKs are always at least one byte.
     if (packet.len < 1) {
@@ -418,8 +424,17 @@ void CubeSlot::radioTimeout()
     pendingPackets--;
 
     // If an ACK was required, disconnect the cube. Otherwise, ignore.
-    if (((ackOptionalFIFO >> pendingPackets) & 1) == 0)
+    if (((ackOptionalFIFO >> pendingPackets) & 1) == 0) {
         disconnect();
+    } else {
+        /*
+         * In this case, it's likely that we sent a hop command that didn't
+         * get ACKed. This is feasible since we're hopping to avoid interference
+         * anyway. So, we hope that the cube received the packet and just the
+         * ACK got dropped, and apply the new channel.
+         */
+        applyPendingChannelHop();
+    }
 }
 
 uint64_t CubeSlot::getHWID() const
