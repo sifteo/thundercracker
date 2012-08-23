@@ -319,20 +319,6 @@ void NRF24L01::beginTransmitting()
 
     softRetriesLeft = txBuffer.numSoftwareRetries;
 
-#if 0
-    if (softRetriesLeft != PacketTransmission::DEFAULT_SOFTWARE_RETRIES && txBuffer.dest->channel != 0) {
-        UART("soft retries: ");
-        UART_HEX(softRetriesLeft);
-        UART("\r\n");
-    }
-
-    if (hardRetries != PacketTransmission::DEFAULT_HARDWARE_RETRIES && txBuffer.dest->channel != 0) {
-        UART("hard retries: ");
-        UART_HEX(hardRetries);
-        UART("\r\n");
-    }
-#endif
-
 #ifdef DEBUG_MASTER_TX
     Debug::logToBuffer(txBuffer.packet.bytes, txBuffer.packet.len);
 #endif
