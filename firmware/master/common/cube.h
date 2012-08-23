@@ -35,6 +35,7 @@ class CubeSlot {
  public:
     bool radioProduce(PacketTransmission &tx, SysTime::Ticks now);
     void radioAcknowledge(const PacketBuffer &packet);
+    void radioEmptyAcknowledge();
     void radioTimeout();
 
     // System connect/disconnect handlers (ISR context)
@@ -158,6 +159,10 @@ class CubeSlot {
     RadioAddress address;
     SysLFS::Key cubeRecord;
     RF_ACKType lastACK;
+
+    // Really tiny bit FIFO to track whether ACKs are required, for each pending packet
+    uint8_t pendingPackets;
+    uint8_t ackOptionalFIFO;
 
     uint16_t calculateTimeSync();
     unsigned suggestNapTicks();

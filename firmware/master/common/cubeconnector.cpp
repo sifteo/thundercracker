@@ -24,7 +24,6 @@ RadioAddress CubeConnector::pairingAddr = { 0, RF_PAIRING_ADDRESS };
 RadioAddress CubeConnector::connectionAddr;
 RadioAddress CubeConnector::reconnectAddr;
 
-_SYSPseudoRandomState CubeConnector::prng;
 RingBuffer<RadioManager::FIFO_DEPTH, uint8_t, uint8_t> CubeConnector::rxState;
 
 SysLFS::PairingIDRecord CubeConnector::savedPairingID;
@@ -47,7 +46,7 @@ void CubeConnector::init()
     // Seed our PRNG with an unguessable number, unique to this system
     Crc32::reset();
     Crc32::addUniqueness();
-    PRNG::init(&prng, Crc32::get());
+    PRNG::init(&RadioManager::prngISR, Crc32::get());
 
     // Set a default master ID
     neighborKey = ~0;
@@ -153,17 +152,17 @@ void CubeConnector::nextNeighborKey()
      * so we make the best use of our very limited ID space.
      */
 
-    PRNG::collectTimingEntropy(&prng);
+    PRNG::collectTimingEntropy(&RadioManager::prngISR);
 
     unsigned newKey;
     if (neighborKey < Neighbor::NUM_MASTER_ID) {
         // Replacing a valid key. Avoid picking the same one.
-        newKey = PRNG::valueBounded(&prng, Neighbor::NUM_MASTER_ID - 2);
+        newKey = PRNG::valueBounded(&RadioManager::prngISR, Neighbor::NUM_MASTER_ID - 2);
         if (newKey >= neighborKey)
             newKey++;
     } else {
         // Not replacing any key. Choose any one.
-        newKey = PRNG::valueBounded(&prng, Neighbor::NUM_MASTER_ID - 1);
+        newKey = PRNG::valueBounded(&RadioManager::prngISR, Neighbor::NUM_MASTER_ID - 1);
     }
 
     setNeighborKey(newKey);
@@ -194,8 +193,8 @@ bool CubeConnector::chooseConnectionAddr()
     if (!reconnectEnabled)
         return false;
 
-    PRNG::collectTimingEntropy(&prng);
-    RadioAddrFactory::random(connectionAddr, prng);
+    PRNG::collectTimingEntropy(&RadioManager::prngISR);
+    RadioAddrFactory::random(connectionAddr, RadioManager::prngISR);
 
     // Pick a cube ID, based on what's available right now.
     _SYSCubeIDVector cv = ~CubeSlots::sysConnected;

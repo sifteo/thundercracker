@@ -192,16 +192,34 @@ void FlashBlock::load(uint32_t blockAddr, unsigned flags)
     ASSERT(isAddrValid(reinterpret_cast<uintptr_t>(data)));
     ASSERT(isAddrValid(reinterpret_cast<uintptr_t>(data + BLOCK_SIZE - 1)));
 
-    if (flags & F_KNOWN_ERASED) {
+    if (LIKELY(!flags)) {
+        // Normal cache miss; fetch from hardware
+        FlashDevice::read(blockAddr, data, BLOCK_SIZE);
+        FLASHLAYER_STATS_ONLY(countBlockMiss(blockAddr));
+
+    } else if (flags & F_ABORT_TRAP) {
+        // Create a _SYS_abort() trap page. Any address in this page will cause
+        // an abort trap at the beginning of the page. We place the syscall at the
+        // beginning of the page, a nop slide in the middle, and a branch at the end.
+
+        uint16_t *instrs = (uint16_t*) data;
+        STATIC_ASSERT(BLOCK_SIZE == 256);
+
+        // _SYS_abort()
+        instrs[0] = 0xdf80;
+
+        // nop slide
+        for (unsigned i = 1; i < 127; ++i)
+            instrs[i] = 0xbf00;
+
+        // Branch to top of block
+        instrs[127] = 0xe77f;
+
+    } else if (flags & F_KNOWN_ERASED) {
         // This is an important optimization which prevents us from reading
         // blocks that we've just erased, especially while writing to a new volume.
         memset(data, 0xFF, BLOCK_SIZE);
         DEBUG_ONLY(verify());
-
-    } else {
-        // Normal cache miss; fetch from hardware
-        FlashDevice::read(blockAddr, data, BLOCK_SIZE);
-        FLASHLAYER_STATS_ONLY(countBlockMiss(blockAddr));
     }
 
     SvmDebugger::patchFlashBlock(blockAddr, data);
@@ -248,7 +266,7 @@ void FlashBlockWriter::beginBlock()
 }
 
 
-void FlashBlock::invalidate()
+void FlashBlock::invalidate(unsigned flags)
 {
     /*
      * Invalidate the whole cache. This is a pretty heavyweight operation
@@ -259,7 +277,7 @@ void FlashBlock::invalidate()
      * replacement. Blocks with a reference are reloaded in-place.
      */
 
-    invalidate(0, 0xFFFFFFFF);
+    invalidate(0, 0xFFFFFFFF, flags);
 }
 
 void FlashBlock::invalidate(uint32_t addrBegin, uint32_t addrEnd, unsigned flags)

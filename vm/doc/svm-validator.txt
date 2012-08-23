@@ -145,3 +145,51 @@ For the validation algorithm this successor information can be distilled
 to a single integer value: the "maximum successor" of that bundle. If the bundle
 has no successors, this is -1. If the bundle is completely invalid, this returns
 an arbitrary large number which is never a valid successor address.
+
+Single pass iteration
+---------------------
+
+This iterative algorithm keeps track of two kinds of state
+
+  - An upper bound for the result, which is iteratively refined. This
+    starts out as the full size of the block, and we decrease it any
+    time we find an instruction bundle which wouldn't be valid.
+
+  - The maximum successor out of all bundles up to the iteration's
+    upper bound. If this is >= the upper bound, it indicates that
+    the algorithm has not yet converged and the DAG is not closed.
+    If it is < the upper bound, we are done and all bundles in the
+    range are valid.
+
+How do we know this algorithm will always converge? At each iteration,
+we need to know that the upper bound will be decreased. If the algorithm
+has continued to iterate, that guarantees that there is at least one
+bundle which now has a successor >= the upper bound. On the next iteration,
+that bundle will be known to be invalid, causing it to now be excluded
+from the set of possible results by decreasing the upper bound. Therefore,
+all iterations of this algorithm are guaranteed to make progress by
+decreasing the upper bound.
+
+An upper bound of zero always indicates we're finished. This means that
+zero bundles have been examined, and the maximum successor will take on
+its base-case value of -1.
+
+There are a few specific decisions which help this algorithm converge
+in significantly fewer passes than otherwise:
+
+  - We do NOT update our 'maximum successor' estimate for the instruction
+    which ends up updating upperBound. This lets us complete in one fewer pass
+    than if we always updated the maximum successor. This is safe because,
+    at the moment we're processing that bundle, we know it will not be
+    included in the set of valid results.
+
+  - Situations where many valid-looking instructions trail after the
+    last terminator can be a problem for performance. If we iterated
+    forward, we would need one full iteration to propagate each "i+1"
+    successor backwards. It would be bubble-sort, effectively. To
+    combat this, we can reverse our iteration order.
+
+ With these tweaks, this algorithm is actually _guaranteed_ to run in one
+ pass. We can at all times guarantee that our "maximum successor" is less
+ than the upper bound.
+ 

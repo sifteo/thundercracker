@@ -30,7 +30,7 @@ const uint8_t RadioAddrFactory::gf84[0x100] = {
 
 void RadioAddrFactory::random(RadioAddress &addr, _SYSPseudoRandomState &prng)
 {
-    addr.channel = PRNG::valueBounded(&prng, MAX_RF_CHANNEL);
+    addr.channel = randomChannel(prng);
 
     for (unsigned i = 0; i < arraysize(addr.id); ++i) {
         unsigned value = PRNG::valueBounded(&prng, 255 - 4) + 1;
@@ -39,6 +39,13 @@ void RadioAddrFactory::random(RadioAddress &addr, _SYSPseudoRandomState &prng)
         ASSERT(allowedByte(value));
         addr.id[i] = value;
     }
+}
+
+
+unsigned RadioAddrFactory::randomChannel(_SYSPseudoRandomState &prng)
+{
+    // XXX: This is where we should avoid noisy channels
+    return PRNG::valueBounded(&prng, MAX_RF_CHANNEL);
 }
 
 

@@ -233,7 +233,7 @@ void NRF24L01::isr()
 
     case TX_DS:
         // Successful transmit, no ACK data
-        ackEmpty();
+        ackEmpty(retryCount());
         beginTransmitting();
         break;
 
@@ -407,7 +407,7 @@ void NRF24L01::onSpiComplete()
         break;
 
     case RXPayload:
-        ackWithPacket(rxBuffer);
+        ackWithPacket(rxBuffer, retryCount());
         beginTransmitting();
         break;
 

@@ -50,6 +50,10 @@ public:
     // Block inventory
     static void clearBlocks(FlashMapBlock::Set &inventory);
 
+    FlashVolume currentVolume() const {
+        return volume;
+    }
+
 private:
     static const unsigned NUM_RECORDS =
         (FlashMapBlock::BLOCK_SIZE - FlashBlock::BLOCK_SIZE) / sizeof(Record);

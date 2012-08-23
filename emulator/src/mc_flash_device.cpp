@@ -111,6 +111,20 @@ void FlashDevice::eraseBlock(uint32_t address)
     }
 }
 
+void FlashDevice::eraseAll()
+{
+    FlashStorage::MasterRecord &storage = SystemMC::getSystem()->flash.data->master;
+    memset(storage.bytes, 0xff, sizeof storage.bytes);
+    for (unsigned i = 0; i < arraysize(storage.eraseCounts); ++i)
+        storage.eraseCounts[i]++;
+}
+
+bool FlashDevice::busy()
+{
+    // everything is done synchronously in simulation
+    return false;
+}
+
 void FlashDevice::init()
 {
     // No-op in the simulator

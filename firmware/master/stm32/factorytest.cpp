@@ -41,6 +41,7 @@ FactoryTest::TestHandler const FactoryTest::handlers[] = {
     audioTestHandler,           // 9
     bootloadRequestHandler,     // 10
     rfPacketTestHandler,        // 11
+    rebootRequestHandler,       // 12
 };
 
 void FactoryTest::init()
@@ -323,6 +324,15 @@ void FactoryTest::bootloadRequestHandler(uint8_t argc, const uint8_t *args)
     NVIC.deinit();
     NVIC.systemReset();
 #endif
+}
+
+/*
+ * XXX: This one could use a better home, for the same reason.
+ */
+void FactoryTest::rebootRequestHandler(uint8_t argc, const uint8_t *args)
+{
+    NVIC.deinit();
+    NVIC.systemReset();
 }
 
 /*
