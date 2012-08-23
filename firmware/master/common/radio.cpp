@@ -21,11 +21,8 @@ bool RadioManager::enabled;
 uint8_t RadioManager::nextPID;
 uint32_t RadioManager::schedule[RadioManager::PID_COUNT];
 uint32_t RadioManager::nextSchedule[RadioManager::PID_COUNT];
-<<<<<<< HEAD
 _SYSPseudoRandomState RadioManager::prngISR;
-=======
 uint32_t RadioManager::retryBucketMask = 0;
->>>>>>> 08a081ade4201b8117d03d2a270aea7b2fc5d4ed
 
 
 void RadioManager::produce(PacketTransmission &tx)
