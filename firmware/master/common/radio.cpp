@@ -225,7 +225,7 @@ void RadioManager::processRetries(const CubeSlot &slot, unsigned retries)
         if (retryBucketMask & bucketBit) {
             // initiate hop!
             // still leaving this disabled by default pending a little more testing
-            // CubeSlots::pendingHop |= slot.bit();
+            // Atomic::Or(CubeSlots::pendingHop, slot.bit());
         } else {
             retryBucketMask |= bucketBit;
             return;
