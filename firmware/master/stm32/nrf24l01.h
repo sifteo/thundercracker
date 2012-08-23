@@ -159,18 +159,18 @@ public:
             RadioManager::timeout();
     }
 
-    static void ALWAYS_INLINE ackEmpty() {
+    static void ALWAYS_INLINE ackEmpty(unsigned retries) {
         if (rfTestModeEnabled)
-            FactoryTest::ackEmpty();
+            FactoryTest::ackEmpty(retries);
         else
-            RadioManager::ackEmpty();
+            RadioManager::ackEmpty(retries);
     }
 
-    static void ALWAYS_INLINE ackWithPacket(const PacketBuffer &packet) {
+    static void ALWAYS_INLINE ackWithPacket(const PacketBuffer &packet, unsigned retries) {
         if (rfTestModeEnabled)
-            FactoryTest::ackWithPacket(packet);
+            FactoryTest::ackWithPacket(packet, retries);
         else
-            RadioManager::ackWithPacket(packet);
+            RadioManager::ackWithPacket(packet, retries);
     }
 
     static void ALWAYS_INLINE produce(PacketTransmission &tx) {
@@ -178,6 +178,18 @@ public:
             FactoryTest::produce(tx);
         else
             RadioManager::produce(tx);
+    }
+
+    unsigned ALWAYS_INLINE retryCount() const {
+
+        /*
+         * Return the number of retries expended for the current transmission.
+         *
+         * This is quantized to `hardRetries` to avoid generating additional
+         * traffic to the RF hardware to get the exact count.
+         */
+
+        return hardRetries * (txBuffer.numSoftwareRetries - softRetriesLeft);
     }
 
     static void staticSpiCompletionHandler();

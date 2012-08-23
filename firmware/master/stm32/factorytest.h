@@ -27,7 +27,7 @@ public:
      * failure if we don't get an ACK from either one.
      */
     static void produce(PacketTransmission &tx);
-    static void ALWAYS_INLINE ackWithPacket(const PacketBuffer &packet) {
+    static void ALWAYS_INLINE ackWithPacket(const PacketBuffer &packet, unsigned retries) {
         rfSuccessCount++;
         if (rfTransmissionsRemaining)
             rfTransmissionsRemaining--;
@@ -36,7 +36,7 @@ public:
         if (rfTransmissionsRemaining)
             rfTransmissionsRemaining--;
     }
-    static void ALWAYS_INLINE ackEmpty() {
+    static void ALWAYS_INLINE ackEmpty(unsigned retries) {
         rfSuccessCount++;
         if (rfTransmissionsRemaining)
             rfTransmissionsRemaining--;
