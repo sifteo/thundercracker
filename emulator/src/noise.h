@@ -26,15 +26,15 @@ namespace Noise {
  */
 inline double integer1D(int32_t x)
 {
-	// This is a pretty simple algorithm based on a polynomial with prime coefficients...
-	// but it seems nobody knows where it comes from?
-	// http://forums.tigsource.com/index.php?topic=21257.0;wap2
+    // This is a pretty simple algorithm based on a polynomial with prime coefficients...
+    // but it seems nobody knows where it comes from?
+    // http://forums.tigsource.com/index.php?topic=21257.0;wap2
 
-	x ^= x >> 13;
- 	int y = (x * (x * x * 60493 + 19990303) + 1376312589) & 0x7fffffff;
-  	
- 	// Scale from 31-bit int to signed double.
-  	return 1.0 - (double(y) / 1073741824.0);
+    x ^= x >> 13;
+    int y = (x * (x * x * 60493 + 19990303) + 1376312589) & 0x7fffffff;
+    
+    // Scale from 31-bit int to signed double.
+    return 1.0 - (double(y) / 1073741824.0);
 }
 
 /*
@@ -42,8 +42,8 @@ inline double integer1D(int32_t x)
  */
 inline double integer2D(int32_t x, int32_t y)
 {
-	// Scale one axis by a large prime
-	return integer1D(x ^ (y * 12553));
+    // Scale one axis by a large prime
+    return integer1D(x ^ (y * 12553));
 }
 
 /*
@@ -51,30 +51,30 @@ inline double integer2D(int32_t x, int32_t y)
  */
 inline double linear2D(double x, double y)
 {
-	// Lower integer corner of this grid square
-	double fx = floor(x);
-	double fy = floor(y);
-	int32_t ix = fx;
-	int32_t iy = fy;
+    // Lower integer corner of this grid square
+    double fx = floor(x);
+    double fy = floor(y);
+    int32_t ix = fx;
+    int32_t iy = fy;
 
-	// Distance from corner
-	double ax = x - fx;
-	double ay = y - fy;
-	double axI = 1.0 - ax;
-	double ayI = 1.0 - ay;	
+    // Distance from corner
+    double ax = x - fx;
+    double ay = y - fy;
+    double axI = 1.0 - ax;
+    double ayI = 1.0 - ay;  
 
-	// Calculate all corner values
-	double c00 = integer2D(ix, iy);
-	double c01 = integer2D(ix, iy+1);
-	double c10 = integer2D(ix+1, iy);
-	double c11 = integer2D(ix+1, iy+1);
+    // Calculate all corner values
+    double c00 = integer2D(ix, iy);
+    double c01 = integer2D(ix, iy+1);
+    double c10 = integer2D(ix+1, iy);
+    double c11 = integer2D(ix+1, iy+1);
 
-	// Interpolate along X edges of square
-	double x0 = c10 * ax + c00 * axI;
-	double x1 = c11 * ax + c01 * axI;
+    // Interpolate along X edges of square
+    double x0 = c10 * ax + c00 * axI;
+    double x1 = c11 * ax + c01 * axI;
 
-	// Interpolate Y axis
-	return x1 * ay + x0 * ayI;
+    // Interpolate Y axis
+    return x1 * ay + x0 * ayI;
 }
 
 /*
@@ -82,17 +82,17 @@ inline double linear2D(double x, double y)
  */
 inline double perlin2D(double x, double y, unsigned octaves)
 {
-	double r = 0.0;
-	double amplitude = 1.0;
+    double r = 0.0;
+    double amplitude = 1.0;
 
-	while (octaves--) {
-		r += amplitude * linear2D(x, y);
-		amplitude *= 0.5;
-		x *= 2.0;
-		y *= 2.0;
-	}
+    while (octaves--) {
+        r += amplitude * linear2D(x, y);
+        amplitude *= 0.5;
+        x *= 2.0;
+        y *= 2.0;
+    }
 
-	return r;
+    return r;
 }
 
 
