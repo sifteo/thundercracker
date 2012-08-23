@@ -42,7 +42,7 @@ int main()
     green.setControl(GPIOPin::OUT_2MHZ);
     green.setHigh();
 
-    uint8_t sweep_ch = 0;
+    uint8_t sweep_ch=0, d1=0;
     bool sweep_mode = 0;
 
     for (;;) {
@@ -76,9 +76,14 @@ int main()
             lastButton = button;
         }
         if (sweep_mode) {
-            NRF24L01::instance.setConstantCarrier(true, sweep_ch++);
-            if (sweep_ch > 83)
-                sweep_ch = 0;
+           if (--d1) {
+               //skip
+           } else {
+               d1 = 0;
+               NRF24L01::instance.setConstantCarrier(true, sweep_ch++);
+               if (sweep_ch > 83)
+                   sweep_ch = 0;
+           }
         }
     }
 }
