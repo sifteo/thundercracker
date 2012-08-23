@@ -41,9 +41,16 @@ namespace RadioMC {
     bool testPacketLoss(unsigned bytes, unsigned channel);
     void updateRadioNoise(double noiseAmount);
 
-    unsigned maxRetries() {
+    // total transmission attempts
+    unsigned maxTries() {
         return (1 + unsigned(buf.ptx.numHardwareRetries))
              * (1 + unsigned(buf.ptx.numSoftwareRetries));
+    }
+
+    // number of transmission attempts beyond the initial attempt
+    unsigned maxRetries() {
+        return (unsigned(buf.ptx.numHardwareRetries))
+             * (unsigned(buf.ptx.numSoftwareRetries));
     }
 }
 
@@ -204,7 +211,7 @@ void SystemMC::doRadioPacket()
         buf.packet.len = buf.ptx.packet.len;
         
         ASSERT(buf.ptx.numHardwareRetries <= PacketTransmission::MAX_HARDWARE_RETRIES);
-        buf.triesRemaining = RadioMC::maxRetries();
+        buf.triesRemaining = RadioMC::maxTries();
     }
 
     /*
