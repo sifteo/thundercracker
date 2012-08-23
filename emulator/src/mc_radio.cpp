@@ -6,6 +6,8 @@
  * Copyright <c> 2012 Sifteo, Inc. All rights reserved.
  */
 
+#include <math.h>
+#include <protocol.h>
 #include "system.h"
 #include "system_mc.h"
 #include "macros.h"
@@ -16,6 +18,7 @@
 #include "tasks.h"
 #include "mc_timing.h"
 #include "bits.h"
+#include "noise.h"
 
 namespace RadioMC {
 
@@ -30,15 +33,86 @@ namespace RadioMC {
     };
 
     static Buffer buf;
+    static double bitErrorRates[MAX_RF_CHANNEL + 1];
+    static SysTime::Ticks lastNoiseUpdate;
 
     void trace();
     unsigned retryCount();
+    bool testPacketLoss(unsigned bytes, unsigned channel);
+    void updateRadioNoise(double noiseAmount);
+
     unsigned maxRetries() {
         return (1 + unsigned(buf.ptx.numHardwareRetries))
              * (1 + unsigned(buf.ptx.numSoftwareRetries));
     }
 }
 
+bool RadioMC::testPacketLoss(unsigned bytes, unsigned channel)
+{
+    /*
+     * Are we losing data due to RF noise? True if we're dropping
+     * the packet, false if not.
+     *
+     * This handles loss of either the original packet or the ACK
+     * by using an estimated bit error rate for the current channel,
+     * which we update periodically using a time-variant noise function.
+     *
+     * The probability of dropping a packet depends on the bit error rate
+     * and the packet's length. The bit error rate itself is the probability
+     * that one bit will be corrupted. Its inverse is the probability
+     * of a successful bit. Raising this probability to the power of
+     * the packet's length, in bits, is the probability that no bit has
+     * been disturbed.
+     */
+
+    ASSERT(channel <= MAX_RF_CHANNEL);
+    double ber = RadioMC::bitErrorRates[buf.ptx.dest->channel];
+    double successProbability = pow(1.0 - ber, bytes * 8);
+    int threshold = successProbability * RAND_MAX;
+    return rand() > threshold;
+}
+
+void RadioMC::updateRadioNoise(double noiseAmount)
+{
+    /*
+     * Update the radio noise profile periodically. When we change
+     * the noise profile, draw a graph of the new noise amounts to stdout.
+     */
+
+    if (!noiseAmount)
+        return;
+
+    SysTime::Ticks now = SysTime::ticks();
+    if (now - lastNoiseUpdate < SysTime::msTicks(500))
+        return;
+    lastNoiseUpdate = now;
+
+    // Time scale for Perlin noise
+    double fNow = now / double(SysTime::sTicks(60));
+
+    LOG(("NOISE: Radio noise spectrum summary:\n"));
+
+    for (unsigned channel = 0; channel < arraysize(bitErrorRates); ++channel) {
+
+        double perlin = Noise::perlin2D(fNow, channel / double(MAX_RF_CHANNEL), 10);
+
+        // Exponentiated, so we have high peaks infrequently
+        double exPerlin = powf(fabs(perlin), 4.0);
+
+        // Arbitrary conversion to BER
+        double ber = std::min(noiseAmount * exPerlin, 1.0);
+
+        // Summarize the noise by printing a representative sample of channels
+        if (!(channel & 7)) {
+            LOG(("NOISE:    ch[%02x] BER=%.5f ", channel, ber));
+            for (double x = 0; x < exPerlin; x += 1e-2)
+                LOG(("#"));
+            LOG(("\n"));
+        }
+
+        bitErrorRates[channel] = ber;
+    }
+}
 
 void RadioMC::trace()
 {
@@ -145,14 +219,24 @@ void SystemMC::doRadioPacket()
      *
      * The timestamp we give to endEvent() is the farthest we allow
      * the Cube thread to run asynchronously before waiting for us again.
+     *
+     * XXX: We don't yet model ACK loss separately, just dropping the
+     *      original packet. To model ACK loss properly, we'd need to
+     *      also take into account the nRF's packet ID counters.
      */
+
+    RadioMC::updateRadioNoise(sys->opt_radioNoise);
 
     sys->getCubeSync().beginEventAt(radioPacketDeadline, mThreadRunning);
 
     if (RadioManager::isRadioEnabled()) {
+        bool dropped = sys->opt_radioNoise &&
+            RadioMC::testPacketLoss(buf.packet.len, buf.ptx.dest->channel);
+
         Cube::Hardware *cube = getCubeForAddress(buf.ptx.dest);
+
         buf.ack = cube && cube->isRadioClockRunning()
-            && cube->spi.radio.handlePacket(buf.packet, buf.reply);
+            && !dropped && cube->spi.radio.handlePacket(buf.packet, buf.reply);
         buf.ackCube = cube ? cube->id() : -1;
     }
 

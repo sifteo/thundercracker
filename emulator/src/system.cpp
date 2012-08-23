@@ -29,6 +29,7 @@ System::System()
         opt_gdbServerPort(0),
         opt_cube0Debug(NULL),
         opt_mute(false),
+        opt_radioNoise(0),
         mIsInitialized(false),
         mIsStarted(false)
         {}
