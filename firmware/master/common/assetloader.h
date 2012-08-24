@@ -108,7 +108,8 @@ private:
         uint32_t value;
 
         struct {
-            uint32_t remaining;     // Only top 8 bits are actually used
+            uint16_t remaining;     // CLZ16 map of remaining slots
+            uint16_t retryCount;    // Number of total failures per cube
         } crc;
 
         struct {

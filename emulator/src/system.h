@@ -73,6 +73,7 @@ class System {
 
     // Other options
     bool opt_mute;
+    double opt_radioNoise;
 
     System();
 

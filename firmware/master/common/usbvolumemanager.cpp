@@ -4,6 +4,7 @@
 #include "flash_volume.h"
 #include "flash_volumeheader.h"
 #include "flash_syslfs.h"
+#include "flash_stack.h"
 
 #ifndef SIFTEO_SIMULATOR
 #include "usb/usbdevice.h"
@@ -56,11 +57,17 @@ void UsbVolumeManager::onUsbData(const USBProtocolMsg &m)
 
     case WritePayload:
         writer.appendPayload(m.payload, m.payloadLen());
+        // NOTE: we don't respond to these to avoid the traffic overhead, so just return
         return;
 
     case WriteCommit:
-        writer.commit();
-        return;
+        if (writer.isPayloadComplete()) {
+            writer.commit();
+            reply.header |= WriteCommitOK;
+        } else {
+            reply.header |= WriteCommitFail;
+        }
+        break;
 
     case VolumeOverview:
         volumeOverview(reply);
@@ -84,9 +91,14 @@ void UsbVolumeManager::onUsbData(const USBProtocolMsg &m)
         break;
     }
 
-    case DeleteSysLFS: {
+    case DeleteSysLFS:
         SysLFS::deleteAll();
         reply.header |= DeleteSysLFS;
+        break;
+
+    case DeleteReformat: {
+        FlashStack::reformatDevice();
+        reply.header |= DeleteReformat;
         break;
     }
 
@@ -94,17 +106,15 @@ void UsbVolumeManager::onUsbData(const USBProtocolMsg &m)
         volumeMetadata(m, reply);
         break;
 
-    case DeleteEverything: {
+    case DeleteEverything:
         FlashVolume::deleteEverything();
         reply.header |= DeleteEverything;
         break;
-    }
 
-    case FirmwareVersion: {
+    case FirmwareVersion:
         reply.header |= FirmwareVersion;
         reply.append((const uint8_t*) TOSTRING(SDK_VERSION), sizeof(TOSTRING(SDK_VERSION)));
         break;
-    }
 
     case PairCube:
         pairCube(m, reply);
@@ -112,6 +122,10 @@ void UsbVolumeManager::onUsbData(const USBProtocolMsg &m)
 
     case PairingSlotDetail:
         pairingSlotDetail(m, reply);
+        break;
+
+    case FlashDeviceRead:
+        flashDeviceRead(m, reply);
         break;
 
     }
@@ -288,4 +302,22 @@ void UsbVolumeManager::pairingSlotDetail(const USBProtocolMsg &m, USBProtocolMsg
     PairingSlotDetailReply *r = reply.zeroCopyAppend<PairingSlotDetailReply>();
     r->hwid = rec.hwid[pairingSlot];
     r->pairingSlot = pairingSlot;
+}
+
+void UsbVolumeManager::flashDeviceRead(const USBProtocolMsg &m, USBProtocolMsg &reply)
+{
+    if (m.payloadLen() < sizeof(FlashDeviceReadRequest))
+        return;
+
+    const FlashDeviceReadRequest *payload = m.castPayload<FlashDeviceReadRequest>();
+
+    unsigned address = payload->address;
+    unsigned length = address > FlashDevice::CAPACITY ? 0 : FlashDevice::CAPACITY - address;
+    length = MIN(length, payload->length);
+    length = MIN(length, reply.bytesFree());
+
+    reply.header |= FlashDeviceRead;
+
+    FlashDevice::read(address, reply.castPayload<uint8_t>(), length);
+    reply.len += length;
 }

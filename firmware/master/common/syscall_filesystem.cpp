@@ -235,8 +235,6 @@ int32_t _SYS_fs_objectWrite(unsigned key, const uint8_t *data, unsigned dataSize
      * involve an extra copy from userspace memory to cache memory).
      */
 
-    FlashBlock::invalidate(allocator.address(), allocator.address() + dataSize);
-
     uint32_t currentAddr = allocator.address();
     uint32_t remainingBytes = dataSize;
 
@@ -269,6 +267,10 @@ int32_t _SYS_fs_objectWrite(unsigned key, const uint8_t *data, unsigned dataSize
         remainingBytes -= chunk;
         currentAddr += chunk;
     }
+
+    // If any refs are held to the page(s) we touched, they will be reloaded
+    // from flash. I
+    FlashBlock::invalidate(allocator.address(), allocator.address() + dataSize);
 
     return dataSize;
 }

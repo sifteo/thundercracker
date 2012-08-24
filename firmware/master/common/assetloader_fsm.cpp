@@ -106,7 +106,8 @@ void AssetLoader::fsmTaskState(_SYSCubeID id, TaskState s)
 
                 // Cache not consistent? Check it out first.
                 if (0 == (bit & cacheCoherentCubes)) {
-                    cubeTaskSubstate[id].crc.remaining = 0xFFFFFFFF << (32 - SysLFS::ASSET_SLOTS_PER_CUBE);
+                    cubeTaskSubstate[id].crc.remaining = uint16_t(0xFFFF << (16 - SysLFS::ASSET_SLOTS_PER_CUBE));
+                    cubeTaskSubstate[id].crc.retryCount = 0;
                     return fsmEnterState(id, S_CRC_COMMAND);
                 }
 
@@ -128,7 +129,7 @@ void AssetLoader::fsmTaskState(_SYSCubeID id, TaskState s)
          */
         case S_CRC_COMMAND:
             while (1) {
-                uint32_t remaining = cubeTaskSubstate[id].crc.remaining;
+                unsigned remaining = cubeTaskSubstate[id].crc.remaining;
 
                 if (!remaining) {
                     // Done! Start allocating the first configuration.
@@ -137,7 +138,7 @@ void AssetLoader::fsmTaskState(_SYSCubeID id, TaskState s)
                     return fsmEnterState(id, S_CONFIG_INIT);
                 }
 
-                unsigned slot = Intrinsic::CLZ(remaining);
+                unsigned slot = Intrinsic::CLZ16(remaining);
                 ASSERT(id < _SYS_NUM_CUBE_SLOTS);
                 ASSERT(slot < SysLFS::ASSET_SLOTS_PER_CUBE);
 
@@ -156,7 +157,7 @@ void AssetLoader::fsmTaskState(_SYSCubeID id, TaskState s)
                 unsigned tiles = asr.totalTiles();
                 if (!tiles) {
                     // Empty slot? Consider this successful, try the next.
-                    remaining ^= Intrinsic::LZ(slot);
+                    remaining ^= Intrinsic::LZ16(slot);
                     cubeTaskSubstate[id].crc.remaining = remaining;
                     continue;
                 }
@@ -216,21 +217,45 @@ void AssetLoader::fsmTaskState(_SYSCubeID id, TaskState s)
             if (queryPendingCubes & bit)
                 return;
 
-            uint32_t remaining = cubeTaskSubstate[id].crc.remaining;
+            unsigned remaining = cubeTaskSubstate[id].crc.remaining;
             ASSERT(remaining);
-            unsigned slot = Intrinsic::CLZ(remaining);
+            unsigned slot = Intrinsic::CLZ16(remaining);
             ASSERT(slot < SysLFS::ASSET_SLOTS_PER_CUBE);
 
             if (queryErrorCubes & bit) {
+                /*
+                 * Oops, a CRC failure. Retry a smallish number of times, in case this was
+                 * a transient electrical or radio glitch. If the CRC is indeed bad, 
+                 * we have to do a really heavy-weight slot erase, so we need to be sure!
+                 *
+                 * XXX: I'm still not totally sure why we're seeing these transient CRC
+                 *      failures, but it seems like they tend to happen sometimes (but not
+                 *      all the time) on cubes that have just powered on. This might be
+                 *      an issue with the flash, the accelerometer (for A21), or something
+                 *      else not powering up as fast as we try to use it. If that's the case,
+                 *      this isn't a terrible solution, if rather inelegant.
+                 */
+
+                const unsigned kRetryLimit = 30;
+
                 PhysAssetSlot pSlot;
                 pSlot.setIndex(slot);
                 ASSERT(!(cacheCoherentCubes & bit));
 
-                LOG(("ASSET[%d]: Cached assets in physical slot %d not valid. Erasing.\n", id, slot));
-                pSlot.erase(id);
+                if (++cubeTaskSubstate[id].crc.retryCount > kRetryLimit) {
+                    // Hard failure
 
-                // Go back to the beginning
-                return fsmEnterState(id, S_RESET1);
+                    LOG(("ASSET[%d]: Cached assets in physical slot %d not valid. Erasing.\n", id, slot));
+                    pSlot.erase(id);
+
+                    // Go back to the beginning
+                    return fsmEnterState(id, S_RESET1);
+
+                } else {
+                    // Retry
+                    LOG(("ASSET[%d]: Cached assets in physical slot %d not valid. Retrying CRC...\n", id, slot));
+                    return fsmEnterState(id, S_CRC_COMMAND);
+                }
             }
 
             /*
@@ -239,7 +264,7 @@ void AssetLoader::fsmTaskState(_SYSCubeID id, TaskState s)
              * query pertains to.
              */
 
-            remaining ^= Intrinsic::LZ(slot);
+            remaining ^= Intrinsic::LZ16(slot);
             cubeTaskSubstate[id].crc.remaining = remaining;
             return fsmEnterState(id, S_CRC_COMMAND);
         }

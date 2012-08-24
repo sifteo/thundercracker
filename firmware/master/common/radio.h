@@ -13,6 +13,7 @@
 #include "ringbuffer.h"
 #include "systime.h"
 
+class CubeSlot;
 class RadioManager;
 
 
@@ -204,9 +205,12 @@ class RadioManager {
      */
 
     static void produce(PacketTransmission &tx);
-    static void ackWithPacket(const PacketBuffer &packet);
-    static void ackEmpty();
+    static void ackWithPacket(const PacketBuffer &packet, unsigned retries);
+    static void ackEmpty(unsigned retries);
     static void timeout();
+    static void processRetries(const CubeSlot &slot, unsigned retries);
+
+    static bool channelMightBeNoisy(unsigned channel);
 
     /*
      * FIFO buffer of slot numbers that have pending acknowledgments.
@@ -220,10 +224,18 @@ class RadioManager {
      */
     static const unsigned FIFO_DEPTH = 8;
 
+    /**
+     * Shared pseudorandom number generator, usable by anyone in Radio ISR context
+     */
+    static _SYSPseudoRandomState prngISR;
+
  private:
     typedef RingBuffer<FIFO_DEPTH, uint8_t, uint8_t> fifo_t;
     static fifo_t fifo;
     static bool enabled;
+
+    static const unsigned CHANNEL_HOP_THRESHOLD = PacketTransmission::DEFAULT_HARDWARE_RETRIES;
+    static uint32_t retryBucketMask;
 
     // ID for the CubeConnector. Must not collide with any CubeSlot ID.
     static const unsigned CONNECTOR_ID = _SYS_NUM_CUBE_SLOTS;
@@ -245,8 +257,8 @@ class RadioManager {
     
     // Dispatch to a paritcular producer, by ID
     static ALWAYS_INLINE bool dispatchProduce(unsigned id, PacketTransmission &tx, SysTime::Ticks now);
-    static ALWAYS_INLINE void dispatchAcknowledge(unsigned id, const PacketBuffer &packet);
-    static ALWAYS_INLINE void dispatchEmptyAcknowledge(unsigned id);
+    static ALWAYS_INLINE void dispatchAcknowledge(unsigned id, const PacketBuffer &packet, unsigned retries);
+    static ALWAYS_INLINE void dispatchEmptyAcknowledge(unsigned id, unsigned retries);
     static ALWAYS_INLINE void dispatchTimeout(unsigned id);
 };
 

@@ -27,7 +27,7 @@ public:
      * failure if we don't get an ACK from either one.
      */
     static void produce(PacketTransmission &tx);
-    static void ALWAYS_INLINE ackWithPacket(const PacketBuffer &packet) {
+    static void ALWAYS_INLINE ackWithPacket(const PacketBuffer &packet, unsigned retries) {
         rfSuccessCount++;
         if (rfTransmissionsRemaining)
             rfTransmissionsRemaining--;
@@ -36,7 +36,7 @@ public:
         if (rfTransmissionsRemaining)
             rfTransmissionsRemaining--;
     }
-    static void ALWAYS_INLINE ackEmpty() {
+    static void ALWAYS_INLINE ackEmpty(unsigned retries) {
         rfSuccessCount++;
         if (rfTransmissionsRemaining)
             rfTransmissionsRemaining--;
@@ -69,6 +69,7 @@ private:
     static void audioTestHandler(uint8_t argc, const uint8_t *args);
     static void bootloadRequestHandler(uint8_t argc, const uint8_t *args);
     static void rfPacketTestHandler(uint8_t argc, const uint8_t *args);
+    static void rebootRequestHandler(uint8_t argc, const uint8_t *args);
 };
 
 #endif // FACTORYTEST_H

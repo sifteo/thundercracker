@@ -19,10 +19,16 @@ class RadioAddrFactory {
 public:
 
     static void random(RadioAddress &addr, _SYSPseudoRandomState &prng);
+    static unsigned randomChannel(_SYSPseudoRandomState &prng, unsigned currentChannel = 0xff);
+
     static void fromHardwareID(RadioAddress &addr, uint64_t hwid);
     static void convertPrimaryToAlternateChannel(RadioAddress &addr);
 
 private:
+
+    // 802.11 g/n channels are 20MHz wide, nordic channels are 1MHz
+    static const unsigned WIFI_CHANNEL_WIDTH = 20;
+
     static const uint8_t gf84[0x100];
 
     static ALWAYS_INLINE bool allowedByte(uint8_t b)

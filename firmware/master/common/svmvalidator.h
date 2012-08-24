@@ -8,16 +8,8 @@
 
 #include <stdint.h>
 
-class SvmValidator
-{
-public:
-    SvmValidator();  // Do not implement
-
-    static unsigned validBytes(void *block, unsigned lenInBytes);
-
-private:
-    static bool isValid16(uint16_t instr);
-    static bool isValid32(uint32_t instr);
-};
+namespace SvmValidator {
+    unsigned findValidBundles(const uint32_t *block);
+}
 
 #endif // SVMVALIDATOR_H

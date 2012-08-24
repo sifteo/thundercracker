@@ -74,8 +74,6 @@ int main()
     NVIC.irqEnable(IVT.USART3);                     // factory test uart
     NVIC.irqPrioritize(IVT.USART3, 0x99);           //  loooooowest prio
 
-    NVIC.sysHandlerPrioritize(IVT.SVCall, 0x96);
-
     NVIC.irqEnable(IVT.VOLUME_TIM);                 // volume timer
     NVIC.irqPrioritize(IVT.VOLUME_TIM, 0x60);       //  just below sample rate timer
 
@@ -84,6 +82,19 @@ int main()
 
     NVIC.irqEnable(IVT.NBR_TX_TIM);                 // Neighbor transmit
     NVIC.irqPrioritize(IVT.NBR_TX_TIM, 0x60);       //  just below sample rate timer
+
+    /*
+     * For SVM to operate properly, SVC needs to have a very low priority
+     * (we'll be inside it most of the time) and any fault handlers which have
+     * meaning in userspace need to be higher priority than it.
+     *
+     * We disable the local fault handlers, (should be disabled by default anyway)
+     * so all faults will get routed through HardFault and handled by SvmCpu.
+     */
+
+    NVIC.sysHandlerPrioritize(IVT.SVCall, 0x96);
+    NVIC.sysHandlerPrioritize(IVT.HardFault, 0x00);
+    NVIC.sysHandlerControl = 0;
 
     /*
      * High-level hardware initialization

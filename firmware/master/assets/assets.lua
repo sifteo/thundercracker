@@ -49,6 +49,8 @@ v02_TileROM = group{ atlas="../../cube/tilerom/tilerom-atlas.png" }
 
 v02_LogoWhiteOnBlue = image{ "02-img-logo-white-on-blue.png", flat=1 }
 
+v02_FaultMessage = image{ "02-fault-message.png", flat=1 }
+
 --- UIMenu
 
 v02_MenuBackground = image{ "02-menu-background.png", flat=1 }

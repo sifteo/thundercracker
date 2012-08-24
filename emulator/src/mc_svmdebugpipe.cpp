@@ -13,6 +13,7 @@
 #include "mc_elfdebuginfo.h"
 #include "mc_gdbserver.h"
 #include "mc_logdecoder.h"
+#include "lua_runtime.h"
 #include "tinythread.h"
 #include "tasks.h"
 using namespace Svm;
@@ -35,6 +36,17 @@ static struct DebuggerMailbox {
 
 bool SvmDebugPipe::fault(FaultCode code)
 {
+    /*
+     * Does Lua code want to handle the fault?
+     */
+
+    if (LuaRuntime::onFault(code))
+        return true;
+
+    /*
+     * Nope. Pass it through, but log it along the way.
+     */
+
     uint32_t pcVA = SvmRuntime::reconstructCodeAddr(SvmCpu::reg(REG_PC));
     std::string pcName = formatAddress(pcVA);
 

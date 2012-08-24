@@ -90,6 +90,10 @@ class FlashStorage {
 
     void initData();
     bool checkData();
+
+    void initHeader();
+    void initMC();
+    void initCubes();
 };
 
 

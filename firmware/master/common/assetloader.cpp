@@ -477,12 +477,28 @@ void AssetLoader::queryResponse(_SYSCubeID id, const PacketBuffer &packet)
         }
     }
 
-    if (!match) {        
+    #ifdef UART_CRC_QUERY_DEBUG
+        UART("CRC query finished. Cube/slot/match/00: ");
+            UART_HEX( (id << 24) | (Intrinsic::CLZ16(cubeTaskSubstate[id].crc.remaining) << 16) | (match << 8) );
+        UART("\r\nExpect: ");
+            UART_HEX( (fifo.spare(0) << 24)  | (fifo.spare(1) << 16)  | (fifo.spare(2) << 8)  | (fifo.spare(3) << 0) );
+            UART_HEX( (fifo.spare(4) << 24)  | (fifo.spare(5) << 16)  | (fifo.spare(6) << 8)  | (fifo.spare(7) << 0) );
+            UART_HEX( (fifo.spare(8) << 24)  | (fifo.spare(9) << 16)  | (fifo.spare(10) << 8) | (fifo.spare(11) << 0) );
+            UART_HEX( (fifo.spare(12) << 24) | (fifo.spare(13) << 16) | (fifo.spare(14) << 8) | (fifo.spare(15) << 0) );
+        UART("\r\nActual: ");
+            UART_HEX( (crc[0] << 24)  | (crc[1] << 16)  | (crc[2] << 8)  | (crc[3] << 0) );
+            UART_HEX( (crc[4] << 24)  | (crc[5] << 16)  | (crc[6] << 8)  | (crc[7] << 0) );
+            UART_HEX( (crc[8] << 24)  | (crc[9] << 16)  | (crc[10] << 8) | (crc[11] << 0) );
+            UART_HEX( (crc[12] << 24) | (crc[13] << 16) | (crc[14] << 8) | (crc[15] << 0) );
+        UART("\r\n");
+    #endif
+
+    if (!match) {
         /*
          * Log the mismatch
          */
         LOG(("ASSET[%d]: Bad CRC for physical slot %d:\nASSET[%d]:    Expected: ",
-             id, Intrinsic::CLZ(cubeTaskSubstate[id].crc.remaining), id));
+             id, Intrinsic::CLZ16(cubeTaskSubstate[id].crc.remaining), id));
         for (unsigned i = 0; i < _SYS_ASSET_GROUP_CRC_SIZE; ++i) {
             LOG(("%02x", fifo.spare(i)));
         }

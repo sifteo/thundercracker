@@ -153,7 +153,6 @@ private:
     static void longSTRSP(unsigned reg, unsigned offset);
 
     static void enterFunction(reg_t addr);
-    static reg_t mapBranchTarget(reg_t addr);
 
     static unsigned getSPAdjustWords(reg_t addr) {
         // High bit is reserved

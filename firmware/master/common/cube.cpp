@@ -19,6 +19,8 @@
 #include "assetloader.h"
 #include "cubeconnector.h"
 #include "idletimeout.h"
+#include "prng.h"
+#include "radioaddrfactory.h"
 
 
 void CubeSlot::connect(SysLFS::Key cubeRecord, const RadioAddress &addr, const RF_ACKType &fullACK)
@@ -34,8 +36,10 @@ void CubeSlot::connect(SysLFS::Key cubeRecord, const RadioAddress &addr, const R
     Atomic::And(CubeSlots::vramPaused, ~cv);
     Atomic::And(CubeSlots::touch, ~cv);
     Atomic::And(CubeSlots::waitingOnCubes, ~cv);
-
-    // Cube starts out awake
+    Atomic::And(CubeSlots::pendingHop, ~cv);
+    pendingPackets = 0;
+    ackOptionalFIFO = 0;
+    pendingChannelFIFO = 0;
     napDeadline = 0;
 
     // Store new identity
@@ -52,7 +56,7 @@ void CubeSlot::connect(SysLFS::Key cubeRecord, const RadioAddress &addr, const R
     Atomic::Or(CubeSlots::sysConnected, cv);
     CubeSlots::pairConnected.atomicMark(cubeRecord - SysLFS::kCubeBase);
 
-    // is this connection means we're full, don't bother trying to connect anybody else
+    // if this connection means we're full, don't bother trying to connect anybody else
     if (!CubeSlots::connectionSlotsAvailable())
         CubeConnector::disableReconnect();
 
@@ -154,6 +158,12 @@ bool CubeSlot::radioProduce(PacketTransmission &tx, SysTime::Ticks now)
     tx.dest = getRadioAddress();
     tx.packet.len = 0;
 
+    // At this point, we're guranteed to transmit.
+    // Enqueue a 'false' bit in our ACK Optional fifo.
+    pendingPackets++;
+    ackOptionalFIFO <<= 1;
+    pendingChannelFIFO <<= 1;
+
     /* 
      * First priority: Send VRAM data.
      *
@@ -218,7 +228,39 @@ bool CubeSlot::radioProduce(PacketTransmission &tx, SysTime::Ticks now)
     }
 
     /*
-     * Third priority: Sensor time synchronization
+     * Low priority: Opportunistic radio hops
+     *
+     * If we detect that communications are getting flaky (according
+     * to our software retry count) we may opt to try and move a cube
+     * to a new (and hopefully better) channel.
+     *
+     * Hops are asynchronous. We perform them when the radio would otherwise
+     * be idle, and they need to go at the end of the packet since they're
+     * a type of escape.
+     *
+     * Note that we do want to retry, but if the hop succeeds and we drop
+     * an ACK, that would appear to be a timeout even though it doesn't
+     * represent a problem. (If we really did drop all transmit attempts,
+     * the cube will not have hopped and we'll disconnect it.)
+     *
+     * We need to remember not to worry about retries then, by storing a
+     * bit in our "ackOptional" queue.
+     */
+
+    if (CubeSlots::pendingHop & cv) {
+        PRNG::collectTimingEntropy(&RadioManager::prngISR);
+        unsigned ch = RadioAddrFactory::randomChannel(RadioManager::prngISR, address.channel);
+        if (codec.escChannelHop(tx.packet, ch)) {
+            pendingChannel = ch;
+            Atomic::And(CubeSlots::pendingHop, ~cv);
+            pendingChannelFIFO |= 1;
+            ackOptionalFIFO |= 1;
+            return true;
+        }
+    }
+
+    /*
+     * Low priority: Sensor time synchronization
      *
      * Time syncs are kind of special.  We use them to assign
      * each cube to a different timeslice of our sensor polling
@@ -262,9 +304,24 @@ bool CubeSlot::radioProduce(PacketTransmission &tx, SysTime::Ticks now)
     return true;
 }
 
+void CubeSlot::radioEmptyAcknowledge()
+{
+    // Dequeue from ACK Optional fifo
+    ASSERT(pendingPackets);
+    pendingPackets--;
+
+    applyPendingChannelHop();
+}
+
 void CubeSlot::radioAcknowledge(const PacketBuffer &packet)
 {
     RF_ACKType *ack = (RF_ACKType *) packet.bytes;
+
+    // Dequeue from ACK Optional fifo
+    ASSERT(pendingPackets);
+    pendingPackets--;
+
+    applyPendingChannelHop();
 
     // ACKs are always at least one byte.
     if (packet.len < 1) {
@@ -364,7 +421,22 @@ void CubeSlot::radioAcknowledge(const PacketBuffer &packet)
 
 void CubeSlot::radioTimeout()
 {
-    disconnect();
+    // Dequeue from ACK Optional fifo
+    ASSERT(pendingPackets);
+    pendingPackets--;
+
+    // If an ACK was required, disconnect the cube. Otherwise, ignore.
+    if (((ackOptionalFIFO >> pendingPackets) & 1) == 0) {
+        disconnect();
+    } else {
+        /*
+         * In this case, it's likely that we sent a hop command that didn't
+         * get ACKed. This is feasible since we're hopping to avoid interference
+         * anyway. So, we hope that the cube received the packet and just the
+         * ACK got dropped, and apply the new channel.
+         */
+        applyPendingChannelHop();
+    }
 }
 
 uint64_t CubeSlot::getHWID() const

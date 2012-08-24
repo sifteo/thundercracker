@@ -77,22 +77,12 @@ bool Installer::install(const char *path, int vid, int pid, bool launcher, bool 
         fprintf(stderr, "installing %s, version %s (%d bytes)\n",
             package.c_str(), version.c_str(), fileSize);
 
-    if (!sendHeader(fileSize))
-        return false;
-
-    if (!sendFileContents(f, fileSize)) {
-        return false;
-    }
-
-    if (!commit())
-        return false;
+    bool success =  sendHeader(fileSize) &&
+                    sendFileContents(f, fileSize) &&
+                    commit();
 
     fclose(f);
-
-    while (dev.numPendingOUTPackets()) {
-        dev.processEvents();
-    }
-    return true;
+    return success;
 }
 
 /*
@@ -232,7 +222,18 @@ bool Installer::commit()
     m.header |= UsbVolumeManager::WriteCommit;
 
     dev.writePacket(m.bytes, m.len);
-    dev.processEvents();
 
-    return true;
+    while (dev.numPendingINPackets() == 0) {
+        dev.processEvents();
+    }
+
+    m.len = dev.readPacket(m.bytes, m.MAX_LEN);
+
+    if ((m.header & 0xff) == UsbVolumeManager::WriteCommitOK) {
+        fprintf(stderr, "successfully committed new volume\n");
+        return true;
+    }
+
+    fprintf(stderr, "failed to write volume!\n");
+    return false;
 }

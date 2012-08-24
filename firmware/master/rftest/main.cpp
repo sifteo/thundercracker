@@ -12,28 +12,28 @@
 #include "homebutton.h"
 
 /*
- * Bootloader application specific entry point.
+ * RF test application specific entry point.
  * Lower level init happens in setup.cpp.
  */
 int main()
 {
-    PowerManager::init();
-
     SysTime::init();
-    SysTime::Ticks start = SysTime::ticks();
-
+    PowerManager::init();
     HomeButton::init();
-
-    while (SysTime::ticks() - start < SysTime::msTicks(110))
-        ;
     Radio::init();
+
+    // wait for 2nd power on delay - this is normally done via the heartbeat task
+    while (SysTime::ticks() < SysTime::msTicks(210));
+
+    Usart::Dbg.init(UART_RX_GPIO, UART_TX_GPIO, 115200);
+    UART(("RF Test\r\n"));
 
     /*
      * Cycle through constant carrier and PRX on the given channels when
      * we detect a button press.
      */
     uint8_t channelIdx = 0;
-    const uint8_t channels[4] = { 2, 40, 80, 128};		// channel>127 => PRX
+    const uint8_t channels[5] = {2, 40, 80, 128, 129};		// channel>127 (special) 128:PRX 129:tx-sweep
 
     NRF24L01::instance.setConstantCarrier(true, channels[channelIdx]);
     bool lastButton = HomeButton::isPressed();
@@ -41,6 +41,9 @@ int main()
     GPIOPin green = LED_GREEN_GPIO;
     green.setControl(GPIOPin::OUT_2MHZ);
     green.setHigh();
+
+    uint8_t sweep_ch=0, d1=0;
+    bool sweep_mode = 0;
 
     for (;;) {
 
@@ -52,19 +55,35 @@ int main()
             if (button == true) {
                 NRF24L01::instance.setPRXMode(false);
                 NRF24L01::instance.setConstantCarrier(false);
+                sweep_mode = 0;
 
                 green.setLow();
                 channelIdx = (channelIdx + 1) % sizeof(channels);
                 if (channels[channelIdx] < 128) {
-                	NRF24L01::instance.setConstantCarrier(true, channels[channelIdx]);
+                    NRF24L01::instance.setConstantCarrier(true, channels[channelIdx]);
                 } else {
-                	NRF24L01::instance.setPRXMode(true);
+                    if (channels[channelIdx] == 128) {
+                        NRF24L01::instance.setPRXMode(true);
+                    }
+                    if (channels[channelIdx] == 129) {
+                        sweep_mode = 1;
+                    }
                 }
             } else {
                 green.setHigh();
             }
 
             lastButton = button;
+        }
+        if (sweep_mode) {
+           if (--d1) {
+               //skip
+           } else {
+               d1 = 0;
+               NRF24L01::instance.setConstantCarrier(true, sweep_ch++);
+               if (sweep_ch > 83)
+                   sweep_ch = 0;
+           }
         }
     }
 }

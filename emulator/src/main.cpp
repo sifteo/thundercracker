@@ -51,26 +51,27 @@ static void usage()
             "Sifteo Hardware Emulator (" TOSTRING(SDK_VERSION) ")\n"
             "\n"
             "Options:\n"
-            "  -h                  Show this help message, and exit\n"
-            "  -n NUM              Set initial number of cubes\n"
-            "  -T                  Turbo mode; run faster than real-time if we can\n"
-            "  -F FLASH.bin        Persistently keep all flash memory in a file on disk\n"
-            "  -P PORT             Run a GDB debug server on the specified TCP port number\n"
-            "  -e SCRIPT.lua       Execute a Lua script instead of the default frontend\n"
-            "  -l LAUNCHER.elf     Start the supplied binary as the system launcher\n"
+            "  -h                    Show this help message, and exit\n"
+            "  -n NUM                Set initial number of cubes\n"
+            "  -T                    Turbo mode; run faster than real-time if we can\n"
+            "  -F FLASH.bin          Persistently keep all flash memory in a file on disk\n"
+            "  -P PORT               Run a GDB debug server on the specified TCP port number\n"
+            "  -e SCRIPT.lua         Execute a Lua script instead of the default frontend\n"
+            "  -l LAUNCHER.elf       Start the supplied binary as the system launcher\n"
             "\n"
-            "  --headless          Run without graphics or sound output\n"
-            "  --lock-rotation     Lock rotation by default\n"
-            "  --mute              Mute the Base's volume control by default\n"
-            "  --paint-trace       Trace the state of the repaint controller\n"
-            "  --radio-trace       Trace all radio packet contents\n"
-            "  --stdout FILENAME   Redirect output to FILENAME\n"
-            "  --svm-trace         Trace SVM instruction execution\n"
-            "  --svm-stack         Monitor SVM stack usage\n"
-            "  --svm-flash-stats   Dump statistics about flash memory usage\n"
-            "  --waveout FILE.wav  Log all audio output to LOG.wav\n"
-            "  --white-bg          Force the UI to use a plain white background\n"
-            "  --window WxH        Initial window size (default 800x600)\n"
+            "  --headless            Run without graphics or sound output\n"
+            "  --lock-rotation       Lock rotation by default\n"
+            "  --mute                Mute the Base's volume control by default\n"
+            "  --paint-trace         Trace the state of the repaint controller\n"
+            "  --radio-trace         Trace all radio packet contents\n"
+            "  --radio-noise FLOAT   Simulated radio noise, arbitrary units.\n"     
+            "  --stdout FILENAME     Redirect output to FILENAME\n"
+            "  --svm-trace           Trace SVM instruction execution\n"
+            "  --svm-stack           Monitor SVM stack usage\n"
+            "  --svm-flash-stats     Dump statistics about flash memory usage\n"
+            "  --waveout FILE.wav    Log all audio output to LOG.wav\n"
+            "  --white-bg            Force the UI to use a plain white background\n"
+            "  --window WxH          Initial window size (default 800x600)\n"
             "\n"
             "Games:\n"
             "  Any games specified on the command line will be installed to\n"
@@ -271,6 +272,12 @@ int main(int argc, char **argv)
 
         if (!strcmp(arg, "--mute")) {
             sys.opt_mute = true;
+            continue;
+        }
+
+        if (!strcmp(arg, "--radio-noise") && argv[c+1]) {
+            sys.opt_radioNoise = atof(argv[c+1]);
+            c++;
             continue;
         }
 

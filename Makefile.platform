@@ -28,7 +28,7 @@ endif
 
 ifeq ($(BUILD_PLATFORM), windows32)
 	DEPS_DIR := $(TC_DIR)/deps/win32
-	UPX := $(DEPS_DIR)/upx307w/upx.exe
+	UPX := $(DEPS_DIR)/upx308w/upx.exe
 	WINDRES := windres
 endif
 

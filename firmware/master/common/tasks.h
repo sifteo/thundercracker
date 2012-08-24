@@ -71,13 +71,17 @@ public:
     /*
      * Heartbeat ISR handler, called at HEARTBEAT_HZ by a hardware timer.
      * This triggers the Heartbeat task, and acts as a watchdog for Tasks::work().
+     *
+     * This timer MUST be long enough, worst case, for one 64kB flash block erasure.
+     * Typical erase time is 1/2 second, but the data sheet specifies a max of 1 second.
+     * To be on the safe side, our timeout is currently 3 seconds.
      */
     static void heartbeatISR();
     static const unsigned HEARTBEAT_HZ = 10;
-    static const unsigned WATCHDOG_DURATION = HEARTBEAT_HZ;
+    static const unsigned WATCHDOG_DURATION = HEARTBEAT_HZ * 3;
 
     /// One-shot, execute a task once at the next opportunity
-    static void trigger(TaskID id) {
+    static ALWAYS_INLINE void trigger(TaskID id) {
         Atomic::SetLZ(pendingMask, id);
     }
 
