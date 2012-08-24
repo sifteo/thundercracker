@@ -19,7 +19,7 @@ public:
     static const unsigned SAMPLE_HZ = 16000;
 
     // Type and size for output buffer, between mixer and audio device
-    typedef RingBuffer<512, int16_t> OutputBuffer;
+    typedef RingBuffer<1024, int16_t> OutputBuffer;
 
     AudioMixer();
 
