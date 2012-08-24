@@ -6,6 +6,7 @@
 #include "svmcpu.h"
 #include "svmruntime.h"
 #include "ui_panic.h"
+#include "flash_blockcache.h"
 
 #include "vectors.h"
 
@@ -131,4 +132,37 @@ NAKED_HANDLER ISR_SVCall()
             [handler] "i"(SvmRuntime::svc),
             [savedSp] "i"(&SvmCpu::userRegs.sp)
     );
+}
+
+/*
+ * The CPU detected a hard fault. This might have been an internal bug in the
+ * firmware, but it also might have been userspace error, like loading or storing
+ * through a bad pointer.
+ *
+ * Here we examine the fault to determine how we need to route it.
+ */
+NAKED_HANDLER ISR_HardFault()
+{
+    /*
+     * Extraordinary measures... Clobber *all* code in the cache, so that we fault
+     * again if any of it actually runs.
+     */
+    FlashBlock::invalidate(FlashBlock::F_ABORT_TRAP);
+
+    // XXX: Currently has bogus userspace registers!
+    SvmRuntime::fault(F_UNKNOWN);
+
+    /*
+     * Plan of attack:
+     *
+     *   - Similar register capture/restore code as SVCall. Maybe unify/cleanup
+     *   - SvmRuntime::fault needs to store fault info in RAM and pend a task
+     *   - Meanwhile, userspace returns to the abort trap which funnels it into
+     *     this pending task.
+     *   - Task saves fault info to SysLFS, displays UI message
+     *   - UI message dismissed, exec new process according to runlevel
+     *
+     * It is really important that, no matter how broken userspace gets, we
+     * can still (1) shut down, and (2) respond to USB traffic!
+     */
 }
