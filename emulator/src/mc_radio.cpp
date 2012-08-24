@@ -46,12 +46,6 @@ namespace RadioMC {
         return (1 + unsigned(buf.ptx.numHardwareRetries))
              * (1 + unsigned(buf.ptx.numSoftwareRetries));
     }
-
-    // number of transmission attempts beyond the initial attempt
-    unsigned maxRetries() {
-        return (unsigned(buf.ptx.numHardwareRetries))
-             * (unsigned(buf.ptx.numSoftwareRetries));
-    }
 }
 
 bool RadioMC::testPacketLoss(unsigned bytes, unsigned channel)
@@ -180,12 +174,10 @@ unsigned RadioMC::retryCount()
 {
     /*
      * Return the number of retries expended for the current transmission.
-     *
-     * This is quantized to `numHardwareRetries` to avoid generating additional
-     * traffic to the RF hardware to get the exact count.
+     * Don't count the single original attempt.
      */
 
-    return maxRetries() - buf.triesRemaining;
+    return maxTries() - 1 - buf.triesRemaining;
 }
 
 void SystemMC::doRadioPacket()
