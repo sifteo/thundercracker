@@ -269,8 +269,15 @@ bool MacronixMX25::waitForDma()
         if (SysTime::ticks() > deadline) {
             /*
              * Recover from terrible hardware badness!
+             *
+             * (UART logging here disabled by default so as not to make a slight
+             * performance hiccup significantly less slight.)
              */
-            UART("DMA timeout\r\n");
+
+            #ifdef UART_DMA_TIMEOUT_DEBUG
+                UART("DMA timeout\r\n");
+            #endif
+
             spi.init();
             success = false;
         }
