@@ -135,7 +135,7 @@ IRQ_HANDLER ISR_FN(AUDIO_SAMPLE_TIM)()
     GPIOPin::Control ctrlA = GPIOPin::OUT_2MHZ;
     GPIOPin::Control ctrlB = GPIOPin::OUT_2MHZ;
 
-    if (!AudioMixer::output.empty()) {
+    while (!AudioMixer::output.empty()) {
         int sample = AudioMixer::output.dequeue();
 
         if (sample > 0) {
@@ -146,14 +146,19 @@ IRQ_HANDLER ISR_FN(AUDIO_SAMPLE_TIM)()
             // + output modulated, - output held HIGH
             sample = -sample;
             ctrlB = GPIOPin::OUT_ALT_50MHZ;
+
+        } else {
+            // Duty doesn't matter, skip it
+            break;
         }
 
-        if (sample) {
-            unsigned duty = (sample * (PwmAudioOut::PWM_PERIOD - PwmAudioOut::PWM_TURNON_TIME)) >> 15;
-            duty += PwmAudioOut::PWM_TURNON_TIME;
-            const HwTimer pwmTimer(&AUDIO_PWM_TIM);
-            pwmTimer.setDuty(AUDIO_PWM_CHAN, duty);
-        }
+        unsigned duty = (sample * (PwmAudioOut::PWM_PERIOD - PwmAudioOut::PWM_TURNON_TIME)) >> 15;
+        duty += PwmAudioOut::PWM_TURNON_TIME;
+
+        const HwTimer pwmTimer(&AUDIO_PWM_TIM);
+        pwmTimer.setDuty(AUDIO_PWM_CHAN, duty);
+
+        break;
     }
 
     GPIOPin::setControl(&AUDIO_PWMA_PORT, AUDIO_PWMA_PIN, ctrlA);

@@ -81,7 +81,7 @@ public:
     static const unsigned WATCHDOG_DURATION = HEARTBEAT_HZ * 3;
 
     /// One-shot, execute a task once at the next opportunity
-    static void trigger(TaskID id) {
+    static ALWAYS_INLINE void trigger(TaskID id) {
         Atomic::SetLZ(pendingMask, id);
     }
 
