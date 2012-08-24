@@ -27,9 +27,6 @@ namespace PwmAudioOut {
     /*
      * The frequency of our PWM carrier is 72MHz / PWM_PERIOD.
      *
-     * This can be any 16-bit number, but we save time
-     * in the ISR if it's a power of two.
-     *
      * Higher periods / lower frequencies give us more effective
      * resolution and better power efficiency, whereas lower
      * periods / higher frequencies reduce carrier noise at the cost
@@ -39,11 +36,8 @@ namespace PwmAudioOut {
      * human hearing that we don't get any audible aliasing back down
      * into frequencies we can hear. I can still hear the carrier
      * pretty clearly at 40 Khz. 50 KHz seems to be fine.
-     *
-     * So, currently this is set to the next power of two,
-     * which gives us 70 Khz and a nice round number.
      */
-    static const unsigned PWM_PERIOD = 1024;
+    static const unsigned PWM_PERIOD = 1440;
 
     /*
      * The conversion from 16-bit audio sample to PWM duty cycle is lossy
