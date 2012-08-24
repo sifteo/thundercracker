@@ -164,7 +164,7 @@ namespace SysLFS {
 
         unsigned tileCount() const {
             return (code + 1U) << 4;
-        };
+        }
     };
 
     struct AssetGroupIdentity {

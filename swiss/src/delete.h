@@ -12,6 +12,7 @@ public:
     static int run(int argc, char **argv, IODevice &_dev);
 
     bool deleteEverything();
+    bool deleteReformat();
     bool deleteSysLFS();
     bool deleteVolume(unsigned code);
 

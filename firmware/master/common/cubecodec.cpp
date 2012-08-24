@@ -588,6 +588,32 @@ bool CubeCodec::escRadioNap(PacketBuffer &buf, uint16_t duration)
     return false;
 }
 
+bool CubeCodec::escChannelHop(PacketBuffer &buf, uint8_t channel)
+{
+    /*
+     * If the buffer has room, send a channel hop, directing
+     * the cube to reconfigure its radio for the given channel.
+     *
+     * Note that this command may appear to time out if the hop
+     * occurs successfully but the first ACK is dropped.
+     */
+
+    if (txBits.hasRoomForFlush(buf, 12 + 8)) {
+
+        txBits.append(0xF7A, 12);
+        txBits.flush(buf);
+        txBits.init();
+
+        buf.append(channel);
+
+        if (!buf.isFull())
+            stateReset();
+
+        return true;
+    }
+    return false;
+}
+
 void CubeCodec::encodeShutdown(PacketBuffer &buf)
 {
     /*

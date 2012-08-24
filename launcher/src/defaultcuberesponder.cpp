@@ -8,23 +8,13 @@
 
 using namespace Sifteo;
 
-const Float2 DefaultCubeResponder::kRest = vec(0.f, 0.f);
-const float DefaultCubeResponder::kRate = 0.05f;
-const float DefaultCubeResponder::kMag = 20.f;
-const float DefaultCubeResponder::kShakeCount = 5.f;
-const float DefaultCubeResponder::kDownTarget = -8.f;
-const float DefaultCubeResponder::kDownRate = 0.2f;
-const float DefaultCubeResponder::kUpRate = 0.35f;
-
 unsigned DefaultCubeResponder::called = 0;
 
-void DefaultCubeResponder::_init()
+
+void DefaultCubeResponder::init()
 {
     ASSERT(cube.isDefined());
-
-    u = 0.f;
-    position = kRest;
-    needInit = false;
+    position = velocity = vec(0, 0);
 }
 
 void DefaultCubeResponder::init(CubeID cid)
@@ -37,26 +27,79 @@ void DefaultCubeResponder::paint()
 {
     ASSERT(cube.isDefined());
 
-    // Delayed initialization.
-    if (needInit) _init();
-
     // Call accounting to detect continuity of use.
     called++;
 
-    // Basic shake touch response
-    if (cube.isTouching()) {
-        // Initialize animation timer
-        u = 1.f;
+    motionUpdate();
+}
 
-        position.x = (1-kDownRate) * position.x  + kDownRate * kRest.x;
-        position.y  = (1-kDownRate) * position.y  + kDownRate * kDownTarget;
-    } else if (u > 0) {
-        // Timer countdown
-        u -= kRate;
-        if (u < 0) u = 0;
+void DefaultCubeResponder::motionUpdate()
+{
+    /*
+     * This is the same motion algorithm used by our cube firmware:
+     * It takes into account bounces, acceleration, and damping, and it
+     * uses 16-bit fixed point math.
+     *
+     * The constants here have been tweaked a bit, since we're running
+     * at a higher frame rate here and therefore our physics timestep
+     * is shorter. We also don't have to worry about fitting anything
+     * into 8 bits any more :)
+     */
 
-        position.x = kRest.x + kMag * u * sin(kShakeCount * 3.14159f * u);
-        position.y = (1 - kUpRate) * position.y + kUpRate * kRest.y;
+    const int kFPBits = 5;
+    const int kDampingBits = 3;
+    const int kDeadZone = 5;
+    const int kRangeOfMotion = 24;
+    const Int2 kPressVector = vec(0, -5) << kFPBits;
+    const int kNeighborMagnetism = 6 << kFPBits;
+
+    // Integer position becomes our new panning
+    Int2 intPos = fpRound(position, kFPBits);
+    Shared::video[cube].bg0.setPanning(intPos);
+
+    // Let the logo portion bounce against the screen edges
+    if (intPos.x > kRangeOfMotion) {
+        position.x = kRangeOfMotion << kFPBits;
+        velocity.x = -velocity.x;
     }
-    Shared::video[cube].bg0.setPanning(position - cube.accel().xy()/2.f);
+    if (intPos.x < -kRangeOfMotion) {
+        position.x = -kRangeOfMotion << kFPBits;
+        velocity.x = -velocity.x;
+    }
+    if (intPos.y > kRangeOfMotion) {
+        position.y = kRangeOfMotion << kFPBits;
+        velocity.y = -velocity.y;
+    }
+    if (intPos.y < -kRangeOfMotion) {
+        position.y = -kRangeOfMotion << kFPBits;
+        velocity.y = -velocity.y;
+    }
+
+    // Start out with a spring return force and damping force
+    Int2 accel = intPos + fpTrunc(velocity, kDampingBits);
+
+    // Jump when pressed
+    bool touching = cube.isTouching();
+    if (touching && !wasTouching) {
+        accel += kPressVector;
+    }
+    wasTouching = touching;
+
+    // Neighbors are magnetic
+    Neighborhood nbr(cube);
+    if (nbr.hasNeighborAt(TOP))     accel.y -= kNeighborMagnetism;
+    if (nbr.hasNeighborAt(LEFT))    accel.x -= kNeighborMagnetism;
+    if (nbr.hasNeighborAt(BOTTOM))  accel.y += kNeighborMagnetism;
+    if (nbr.hasNeighborAt(RIGHT))   accel.x += kNeighborMagnetism;
+
+    // Add tilt, if we're outside the dead zone
+    Int2 cubeAccel = cube.accel().xy();
+    if (cubeAccel.lenManhattan() >= kDeadZone)
+        accel += cubeAccel;
+
+    // Integrate
+    Int2 fpVelocity = velocity - accel;
+    Int2 fpPosition = position + fpVelocity;
+    velocity = fpVelocity;
+    position = fpPosition;
 }

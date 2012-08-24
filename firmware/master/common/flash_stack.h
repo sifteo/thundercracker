@@ -14,7 +14,15 @@
 namespace FlashStack {
 
     void init();
-    void invalidateCache();
+    void invalidateCache(unsigned flags = 0);
+
+    /**
+     * The nuclear option.
+     *
+     * Physically erase the entire device, and pre-erase all blocks.
+     * If SVM is executing code, this places the virtual CPU in an abort trap.
+     */
+    void reformatDevice();
 
 } // end namespace FlashStack
 

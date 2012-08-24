@@ -314,6 +314,96 @@ Write a 32-bit word into RAM, at the specified virtual address. When using _inli
 
 If the virtual address is invalid, raises a Lua error.
 
+### Runtime():peek( _address_ )
+
+Read a 32-bit word from RAM, at the specified virtual address. When using _inline_ scripting, this address is equivalent to the value of a C++ pointer to integer or unsigned integer.
+
+If the virtual address is invalid, raises a Lua error.
+
+### Runtime():faultString( _code_ )
+
+Given a numeric fault code, returns a string describing that fault.
+
+### Runtime():formatAddress( _address_ )
+
+Given a virtual address uses the currently loaded symbol tables, if any, to format the address as a string. Even if no suitable symbols can be found, this function will return a readable hexadecimal offset.
+
+### Runtime():onFault( _code_ )
+
+By default this function does nothing, but it can be overridden in order to handle VM faults in a special way. By returning 'true', the fault is considered to be _handled_ and program execution will continue. You may wish to use functions like branch() to modify control flow first. By returning 'false', the default fault handler will proceed to run, and the application will be terminated.
+
+You can use this to build unit tests that expect a fault to occur:
+
+~~~~~~~~~~~~~~~~~~{.cpp}
+#include <sifteo.h>
+using namespace Sifteo;
+
+void NOINLINE buggyFunction()
+{
+    LOG("About to crash...\n");
+    *(volatile int*)0 = 0;
+    LOG("Shouldn't get here!\n");
+}
+
+void NOINLINE handler()
+{
+    LOG("Recovering from the fault...\n");
+    // This returns from buggyFunction()'s stack frame.
+}
+
+void main()
+{
+    SCRIPT_FMT(LUA, "pHandler = 0x%x", &handler);
+    SCRIPT(LUA,
+
+        // On faults in Siftulator, transfer flow control to the C++ handler()
+        function Runtime:onFault(code)
+            print("Fault handled in Lua: " .. rt:faultString(code))
+            rt:branch(pHandler)
+            return true
+        end
+
+        // Creating an instance installs the callback
+        rt = Runtime()
+    );
+
+    // We expect this function to fail
+    buggyFunction();
+}
+~~~~~~~~~~~~~~~~~~
+
+### Runtime():getPC()
+
+Return the virtual CPU's program counter. Only recommended for use with inline scripting. This will reflect the state of the program at the point where it was interrupted to run the inline script.
+
+### Runtime():getSP()
+
+Return the virtual CPU's stack pointer register.
+
+### Runtime():getFP()
+
+Return the virtual CPU's frame pointer register. This will point to an 8-word structure containing state to be restored by the VM at the next return instruction.
+
+### Runtime():getGPR( _n_ )
+
+Return the value of a general purpose register in the virtual CPU. N must be between 0 and 7, inclusive.
+
+### Runtime():branch( _pc_ )
+
+Issue a branch to the specified code pointer. Only recommended for use with inline scripting. This is equivalent to an unconditional branch instruction that happened to execute at the exact place and time where the VM was stopped to run the script.
+
+### Runtime():setGPR( _n_, _value_ )
+
+Change the value of a general purpose register in the virtual CPU. N must be between 0 and 7, inclusive.
+
+### Runtime():runningVolume()
+
+Return the filesystem's block code for the volume containing our current ELF binary.
+
+### Runtime():previousVolume()
+
+Return the filesystem's block code for the volume which executed this one.
+
 ### Runtime():virtToFlashAddr( _virtual address_ )
 
 Convert an SVM virtual address to a physical Flash memory address, using the currently active mappings. If this VA is not mapped, returns zero.
@@ -400,20 +490,22 @@ By default these callbacks are disabled for performance reasons. When enabled, t
 
 For example:
 
-    function Filesystem:onRawRead(addr, data)
-        print(string.format("Read %08x, %d bytes", addr, string.len(data)))
-    end
+~~~~~~~~~~~~~~~
+function Filesystem:onRawRead(addr, data)
+    print(string.format("Read %08x, %d bytes", addr, string.len(data)))
+end
 
-    function Filesystem:onRawWrite(addr, data)
-        print(string.format("Write %08x, %d bytes", addr, string.len(data)))
-    end
+function Filesystem:onRawWrite(addr, data)
+    print(string.format("Write %08x, %d bytes", addr, string.len(data)))
+end
 
-    function Filesystem:onRawErase(addr)
-        print(string.format("Erase %08x", addr))
-    end
+function Filesystem:onRawErase(addr)
+    print(string.format("Erase %08x", addr))
+end
 
-    fs = Filesystem()
-    fs:setCallbacksEnabled(true)
+fs = Filesystem()
+fs:setCallbacksEnabled(true)
+~~~~~~~~~~~~~~~
 
 This overrides the three callback methods on Filesystem, then enables those callbacks. Any Flash memory operations after this point will be accompanied by logging.
 

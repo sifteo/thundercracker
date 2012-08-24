@@ -156,6 +156,8 @@ void NRF24L01::setConstantCarrier(bool enabled, unsigned channel)
     //    6. Keep CE high as long as the carrier is needed.
 
     if (enabled) {
+        ce.setLow();
+
         spi.begin();
         spi.transfer(CMD_W_REGISTER | REG_RF_SETUP);
         spi.transfer(0x0e | (1 << 7) | (1 << 4));
@@ -231,7 +233,7 @@ void NRF24L01::isr()
 
     case TX_DS:
         // Successful transmit, no ACK data
-        ackEmpty();
+        ackEmpty(retryCount());
         beginTransmitting();
         break;
 
@@ -405,7 +407,7 @@ void NRF24L01::onSpiComplete()
         break;
 
     case RXPayload:
-        ackWithPacket(rxBuffer);
+        ackWithPacket(rxBuffer, retryCount());
         beginTransmitting();
         break;
 

@@ -20,9 +20,13 @@ public:
         DeleteEverything,
         DeleteVolume,
         DeleteSysLFS,
+        DeleteReformat,
         FirmwareVersion,
         PairCube,
         PairingSlotDetail,
+        FlashDeviceRead,
+        WriteCommitOK,
+        WriteCommitFail,
     };
 
     struct VolumeOverviewReply {
@@ -52,6 +56,11 @@ public:
         unsigned pairingSlot;
     };
 
+    struct FlashDeviceReadRequest {
+        uint32_t address;
+        uint32_t length;
+    };
+
     static void onUsbData(const USBProtocolMsg &m);
 
 private:
@@ -63,6 +72,7 @@ private:
     static ALWAYS_INLINE void volumeMetadata(const USBProtocolMsg &m, USBProtocolMsg &reply);
     static ALWAYS_INLINE void pairCube(const USBProtocolMsg &m, USBProtocolMsg &reply);
     static ALWAYS_INLINE void pairingSlotDetail(const USBProtocolMsg &m, USBProtocolMsg &reply);
+    static ALWAYS_INLINE void flashDeviceRead(const USBProtocolMsg &m, USBProtocolMsg &reply);
 };
 
 #endif // _USB_VOLUME_MANAGER_H

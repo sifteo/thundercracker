@@ -137,6 +137,18 @@ void MacronixMX25::eraseBlock(uint32_t address)
     mightBeBusy = true;
 }
 
+void MacronixMX25::chipErase()
+{
+    waitWhileBusy();
+    ensureWriteEnabled();
+
+    spi.begin();
+    spi.transfer(ChipErase);
+    spi.end();
+
+    mightBeBusy = true;
+}
+
 void MacronixMX25::ensureWriteEnabled()
 {
     do {
@@ -148,7 +160,7 @@ void MacronixMX25::ensureWriteEnabled()
 
 void MacronixMX25::readId(FlashDevice::JedecID *id)
 {
-    waitWhileBusy();    
+    waitWhileBusy();
     spi.begin();
 
     spi.transfer(ReadID);
@@ -257,8 +269,15 @@ bool MacronixMX25::waitForDma()
         if (SysTime::ticks() > deadline) {
             /*
              * Recover from terrible hardware badness!
+             *
+             * (UART logging here disabled by default so as not to make a slight
+             * performance hiccup significantly less slight.)
              */
-            UART("DMA timeout\r\n");
+
+            #ifdef UART_DMA_TIMEOUT_DEBUG
+                UART("DMA timeout\r\n");
+            #endif
+
             spi.init();
             success = false;
         }

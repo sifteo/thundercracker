@@ -4,7 +4,7 @@ MenuGroup = group{ quality=9.8 }
 -- Main menu graphics
 Menu_BgTile = image{ "images/bg.png", pinned=1 }
 Menu_StripeTile = image{ "images/stripes.png", pinned=1 }
-Menu_IdleCube = image{ "images/bg-unused-cube.png" }
+Menu_IdleCube = image{ "images/bg-unused-cube.png", quality=9.9 }
 
 Menu_Tip0 = image{ "images/Tip0.png" }
 Menu_Tip1 = image{ "images/Tip1.png" }
@@ -37,6 +37,8 @@ BatteryBars = image{ {
     "images/img-battery-bars-3.png",
     "images/img-battery-bars-4.png"
 } }
+
+BarGraph = image{ "images/bargraph.png", width=8, height=8 }
 
 -- More Cubes
 MoreCubesStates = image{ "images/more-cubes-states.png", height=8 }

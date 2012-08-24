@@ -27,9 +27,6 @@ namespace PwmAudioOut {
     /*
      * The frequency of our PWM carrier is 72MHz / PWM_PERIOD.
      *
-     * This can be any 16-bit number, but we save time
-     * in the ISR if it's a power of two.
-     *
      * Higher periods / lower frequencies give us more effective
      * resolution and better power efficiency, whereas lower
      * periods / higher frequencies reduce carrier noise at the cost
@@ -39,34 +36,25 @@ namespace PwmAudioOut {
      * human hearing that we don't get any audible aliasing back down
      * into frequencies we can hear. I can still hear the carrier
      * pretty clearly at 40 Khz. 50 KHz seems to be fine.
-     *
-     * So, currently this is set to the next power of two,
-     * which gives us 70 Khz and a nice round number.
      */
-    static const unsigned PWM_PERIOD = 1024;
+    static const unsigned PWM_PERIOD = 1440;
 
     /*
-     * The conversion from 16-bit audio sample to PWM duty cycle is lossy
-     * as long as PWM_PERIOD is less than 2^15. To decorrelate the
-     * quantization error and improve our performance especially with
-     * lower volume levels, add a random dither of less than 1 LSB.
+     * We have a small discontinuity around the zero crossing due to
+     * the turn-on time for our FETs. This is a small adjustment we add
+     * to our PWM duty cycle in order to account for this. This value
+     * should be equal to the duration, in PWM clock ticks, of this
+     * turn-on time.
      *
-     * This value is the maximum amount of dither we add to a sample
-     * before quantizing it. The ideal value for this would be 2^15
-     * divided by PWM_PERIOD. For efficiency, however, this must be
-     * a bit mask of the form (2^N)-1. If PWM_PERIOD is a power of two
-     * we can choose the ideal value for this constant as well, but if
-     * PWM_POWER is not a power of two we'll have to approximate.
+     * How to tune this? If quiet sounds drop out, increase it.
+     * If quiet sounds are distorted, decrease it.
      */
-    static const unsigned DITHER_MASK = 31;
+    static const unsigned PWM_TURNON_TIME = 5;
 
     static const HwTimer pwmTimer(&AUDIO_PWM_TIM);
     static const HwTimer sampleTimer(&AUDIO_SAMPLE_TIM);
     static const GPIOPin outA(&AUDIO_PWMA_PORT, AUDIO_PWMA_PIN);
     static const GPIOPin outB(&AUDIO_PWMB_PORT, AUDIO_PWMB_PIN);
-
-    static _SYSPseudoRandomState dither;
-
 }
 
 void AudioOutDevice::init()
@@ -74,9 +62,6 @@ void AudioOutDevice::init()
     // TIM1 partial remap for complementary channels
     STATIC_ASSERT(&AUDIO_PWM_TIM == &TIM1);
     AFIO.MAPR |= (1 << 6);
-
-    // Initialize PRNG for audio dithering
-    PRNG::init(&PwmAudioOut::dither, 0);
 
     PwmAudioOut::sampleTimer.init(36000000 / AudioMixer::SAMPLE_HZ, 0);
 
@@ -150,25 +135,8 @@ IRQ_HANDLER ISR_FN(AUDIO_SAMPLE_TIM)()
     GPIOPin::Control ctrlA = GPIOPin::OUT_2MHZ;
     GPIOPin::Control ctrlB = GPIOPin::OUT_2MHZ;
 
-    if (!AudioMixer::output.empty()) {
+    while (!AudioMixer::output.empty()) {
         int sample = AudioMixer::output.dequeue();
-
-        /*
-         * We've now extracted the sign, and the remaining sample is a 15-bit
-         * unsigned value. Convert it to a hardware PWM duty cycle, ranging from
-         * 0 to just below PWM_PERIOD.
-         *
-         * This conversion is lossy, since our PWM resolution is lower than our
-         * original 16-bit audio. To decorrelate the quantization error and improve
-         * our performance especially with lower volume levels, add a random dither
-         * of less than 1 LSB.
-         *
-         * This means that, prior to scaling, our dither needs to be at
-         * most 2^15 / PWM_PERIOD.
-         */
-
-        sample += PRNG::valueInline(&PwmAudioOut::dither) & PwmAudioOut::DITHER_MASK;
-        sample = Intrinsic::SSAT(sample, 16);
 
         if (sample > 0) {
             // + output held HIGH, - output modulated
@@ -178,13 +146,19 @@ IRQ_HANDLER ISR_FN(AUDIO_SAMPLE_TIM)()
             // + output modulated, - output held HIGH
             sample = -sample;
             ctrlB = GPIOPin::OUT_ALT_50MHZ;
+
+        } else {
+            // Duty doesn't matter, skip it
+            break;
         }
 
-        if (sample) {
-            unsigned duty = (sample * PwmAudioOut::PWM_PERIOD) >> 15;
-            const HwTimer pwmTimer(&AUDIO_PWM_TIM);
-            pwmTimer.setDuty(AUDIO_PWM_CHAN, duty);
-        }
+        unsigned duty = (sample * (PwmAudioOut::PWM_PERIOD - PwmAudioOut::PWM_TURNON_TIME)) >> 15;
+        duty += PwmAudioOut::PWM_TURNON_TIME;
+
+        const HwTimer pwmTimer(&AUDIO_PWM_TIM);
+        pwmTimer.setDuty(AUDIO_PWM_CHAN, duty);
+
+        break;
     }
 
     GPIOPin::setControl(&AUDIO_PWMA_PORT, AUDIO_PWMA_PIN, ctrlA);

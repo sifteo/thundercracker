@@ -73,7 +73,6 @@ private:
 
     static uint8_t neighborKey;
     static bool reconnectEnabled;
-    static _SYSPseudoRandomState prng;
 
     static SysLFS::PairingIDRecord savedPairingID;
     static SysLFS::PairingMRURecord savedPairingMRU;

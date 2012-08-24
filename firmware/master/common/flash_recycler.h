@@ -79,9 +79,10 @@ public:
     bool next(FlashMapBlock &block, EraseCount &eraseCount);
 
 private:
-    FlashMapBlock::Set orphanBlocks;
-    FlashMapBlock::Set deletedVolumes;
-    FlashMapBlock::Set candidateVolumes;
+    FlashMapBlock::Set orphanBlocks;            // Not reachable from anywhere
+    FlashMapBlock::Set deletedVolumes;          // Header blocks for deleted volumes
+    FlashMapBlock::Set eraseLogVolumes;         // Blocks used to store the erase log
+    FlashMapBlock::Set candidateVolumes;        // Current list of recycling candidates
     uint32_t averageEraseCount;
     bool useEraseLog;
 

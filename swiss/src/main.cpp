@@ -7,23 +7,27 @@
 #include "delete.h"
 #include "paircube.h"
 #include "usbdevice.h"
+#include "reboot.h"
 #include "macros.h"
+#include "backup.h"
 
 #include <stdio.h>
 #include <string.h>
 
 static const Command commands[] = {
+    // Keeping this list in alphabetical order, for lack of a better ordering...
+
     {
-        "profile",
-        "capture profiling data from an app",
-        "profile <app.elf> <output.txt>",
-        Profiler::run
+        "backup",
+        "create a full backup of a Sifteo Base filesystem",
+        "backup <filesystem.bin>",
+        Backup::run
     },
     {
-        "update",
-        "update the firmware on your Sifteo Base",
-        "update <firmware.sft>",
-        FwLoader::run
+        "delete",
+        "delete data from the Sifteo Base",
+        "delete (--all | --sys | --reformat | volume)",
+        Delete::run
     },
     {
         "install",
@@ -38,16 +42,28 @@ static const Command commands[] = {
         Manifest::run
     },
     {
-        "delete",
-        "delete data from the Sifteo Base",
-        "delete (--all | --sys | volume)",
-        Delete::run
-    },
-    {
         "pair",
         "add a pairing record to the Sifteo Base",
         "pair (--read | slotID hardwareID)",
         PairCube::run
+    },
+    {
+        "profile",
+        "capture profiling data from an app",
+        "profile <app.elf> <output.txt>",
+        Profiler::run
+    },
+    {
+        "reboot",
+        "reset the Sifteo Base, equivalent to reinserting batteries",
+        "reboot",
+        Reboot::run
+    },
+    {
+        "update",
+        "update the firmware on your Sifteo Base",
+        "update <firmware.sft>",
+        FwLoader::run
     },
 };
 

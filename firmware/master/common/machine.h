@@ -116,6 +116,17 @@ namespace Intrinsic {
         return 0x80000000 >> l;
     }
 
+    static ALWAYS_INLINE unsigned CLZ16(unsigned r) {
+        // Count 16-bit leading zeroes
+        return CLZ(r << 16);
+    }
+
+    static ALWAYS_INLINE unsigned LZ16(unsigned l) {
+        // Generate 16-bit number with 'l' leading zeroes. Inverse of CLZ16.
+        ASSERT(l < 16);
+        return 0x8000 >> l;
+    }
+
     static ALWAYS_INLINE uint32_t CTZ(uint32_t r) {
         // Count trailing zeroes. Reference:
         // http://en.wikipedia.org/wiki/Find_first_set#Properties_and_relations

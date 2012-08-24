@@ -17,6 +17,11 @@
 
 namespace Svm {
 
+// Memory geometry
+static const unsigned BLOCK_SIZE = 256;
+static const unsigned BUNDLE_SIZE = 4;
+static const unsigned BUNDLES_PER_BLOCK = BLOCK_SIZE / BUNDLE_SIZE;
+
 // Registers are wide enough to hold a native pointer
 typedef uintptr_t reg_t;
 
@@ -263,7 +268,7 @@ namespace Debugger {
  ***************************************************************************/
 
 // Extend a W-bit wide two's complement value to 32-bit.
-static inline int32_t signExtend(uint32_t value, unsigned w) {
+static ALWAYS_INLINE int32_t signExtend(uint32_t value, unsigned w) {
     const uint32_t msb = 1 << (w - 1);
     const uint32_t upper = (uint32_t)-1 << w;
     if (value & msb)
@@ -271,13 +276,13 @@ static inline int32_t signExtend(uint32_t value, unsigned w) {
     return value;
 }
 
-static inline InstructionSize instructionSize(uint16_t instr) {
+static ALWAYS_INLINE InstructionSize instructionSize(uint16_t instr) {
     // if bits [15:11] are 0b11101, 0b11110 or 0b11111, it's a 32-bit instruction
     // 0xe800 == 0b11101 << 11
     return (instr & 0xf800) >= 0xe800 ? InstrBits32 : InstrBits16;
 }
 
-static inline reg_t calculateBranchOffset(reg_t pc, int32_t offset) {
+static ALWAYS_INLINE reg_t calculateBranchOffset(reg_t pc, int32_t offset) {
     return (pc + offset + 2) & ~(reg_t)1;
 }
 
@@ -304,23 +309,23 @@ enum Conditions {
     NoneAL = 14 // None, always, unconditional
 };
 
-static inline bool getNeg(reg_t cpsr) {
+static ALWAYS_INLINE bool getNeg(reg_t cpsr) {
     return (cpsr >> 31) & 1;
 }
 
-static inline bool getZero(reg_t cpsr) {
+static ALWAYS_INLINE bool getZero(reg_t cpsr) {
     return (cpsr >> 30) & 1;
 }
 
-static inline bool getCarry(reg_t cpsr) {
+static ALWAYS_INLINE bool getCarry(reg_t cpsr) {
     return (cpsr >> 29) & 1;
 }
 
-static inline int getOverflow(reg_t cpsr) {
+static ALWAYS_INLINE int getOverflow(reg_t cpsr) {
     return (cpsr >> 28) & 1;
 }
 
-static inline bool conditionPassed(uint8_t cond, reg_t cpsr)
+static ALWAYS_INLINE bool conditionPassed(uint8_t cond, reg_t cpsr)
 {
     switch (cond) {
     case EQ: return  getZero(cpsr);
@@ -348,35 +353,46 @@ static inline bool conditionPassed(uint8_t cond, reg_t cpsr)
  * Branch Emulation utilities
  ***************************************************************************/
 
-static inline reg_t branchTargetB(uint16_t instr, reg_t pc)
+static ALWAYS_INLINE reg_t branchTargetB(uint16_t instr, reg_t pc)
 {
     // encoding T2 only
     unsigned imm11 = instr & 0x7FF;
     return calculateBranchOffset(pc, signExtend(imm11 << 1, 12));
 }
 
-static inline reg_t branchTargetCondB(uint16_t instr, reg_t pc, reg_t cpsr)
+static ALWAYS_INLINE reg_t passedBranchTargetCondB(uint16_t instr, reg_t pc)
+{
+    unsigned imm8 = instr & 0xff;
+    return calculateBranchOffset(pc, signExtend(imm8 << 1, 9));
+}
+
+static ALWAYS_INLINE reg_t branchTargetCondB(uint16_t instr, reg_t pc, reg_t cpsr)
 {
     unsigned cond = (instr >> 8) & 0xf;
-    unsigned imm8 = instr & 0xff;
 
     if (conditionPassed(cond, cpsr))
-        return calculateBranchOffset(pc, signExtend(imm8 << 1, 9));
+        return passedBranchTargetCondB(instr, pc);
     else
         return pc;
 }
 
-static inline reg_t branchTargetCBZ_CBNZ(uint16_t instr, reg_t pc, reg_t cpsr, reg_t Rn)
+static ALWAYS_INLINE reg_t passedBranchTargetCBZ_CBNZ(uint16_t instr, reg_t pc)
 {
-    bool nonzero = instr & (1 << 11);
     unsigned i = instr & (1 << 9);
     unsigned imm5 = (instr >> 3) & 0x1f;
 
-    if (nonzero ^ (Rn == 0)) {
-        // ZeroExtend(i:imm5:'0')
-        return calculateBranchOffset(pc, (i << 6) | (imm5 << 1));
-    }
-    return pc;
+    // ZeroExtend(i:imm5:'0')
+    return calculateBranchOffset(pc, (i << 6) | (imm5 << 1));
+}
+
+static ALWAYS_INLINE reg_t branchTargetCBZ_CBNZ(uint16_t instr, reg_t pc, reg_t cpsr, reg_t Rn)
+{
+    bool nonzero = instr & (1 << 11);
+
+    if (nonzero ^ (Rn == 0))
+        return passedBranchTargetCBZ_CBNZ(instr, pc);
+    else
+        return pc;
 }
 
 
@@ -467,6 +483,14 @@ static const uint32_t AddropTest = 0x3 << 30;                   // 110nnnnn aaaa
 
 static const uint32_t AddropFlashMask = 0x7 << 29;              // 111xxxxx xxxxxxxx xxxxxxxx xxxxxxxx
 static const uint32_t AddropFlashTest = 0x7 << 29;              // 111nnnnn aaaaaaaa aaaaaaaa aaaaaaaa
+
+// Subset of AddropFlash
+static const uint32_t SvcBranchMask = 0xff000003;               // 11111111 xxxxxxxx xxxxxxxx xxxxxx11
+static const uint32_t SvcBranchTest = 0xe0000000;               // 11100000 aaaaaaaa aaaaaaaa aaaaaa00
+
+// Subset of Tail/IndirectSyscall
+static const uint32_t SvcExitMask = 0xffff0000;                 // 11111111 11111111 xxxxxxxx xxxxxxxx
+static const uint32_t SvcExitTest = 0x80400000;                 // 10000000 01000000 iiiiiiii iiiiiiit
 
 }   // namespace Svm
 
