@@ -249,7 +249,7 @@ bool CubeSlot::radioProduce(PacketTransmission &tx, SysTime::Ticks now)
 
     if (CubeSlots::pendingHop & cv) {
         PRNG::collectTimingEntropy(&RadioManager::prngISR);
-        unsigned ch = RadioAddrFactory::randomChannel(RadioManager::prngISR);
+        unsigned ch = RadioAddrFactory::randomChannel(RadioManager::prngISR, address.channel);
         if (codec.escChannelHop(tx.packet, ch)) {
             pendingChannel = ch;
             Atomic::And(CubeSlots::pendingHop, ~cv);
