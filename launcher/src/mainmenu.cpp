@@ -2,7 +2,7 @@
  * Thundercracker Launcher -- Confidential, not for redistribution.
  * Copyright <c> 2012 Sifteo, Inc. All rights reserved.
  */
-#define MENU_LOGS_ENABLED 1
+// #define MENU_LOGS_ENABLED 1
 #include "shared.h"
 #include "mainmenu.h"
 #include "mainmenuitem.h"
