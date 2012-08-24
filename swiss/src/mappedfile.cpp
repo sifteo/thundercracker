@@ -23,19 +23,14 @@ int MappedFile::map(const char *path)
     HANDLE fh = CreateFile(path, GENERIC_READ | GENERIC_WRITE,
         FILE_SHARE_READ | FILE_SHARE_WRITE, NULL, OPEN_ALWAYS,
         FILE_ATTRIBUTE_NORMAL, NULL);
-    if (fh == INVALID_HANDLE_VALUE) {
-        fprintf(stderr, "FLASH: Can't open backing file '%s' (%08x)\n",
-                path, (unsigned)GetLastError());
+    if (fh == INVALID_HANDLE_VALUE)
         return false;
-    }
 
     unsigned sz = GetFileSize(fh, NULL);
 
     HANDLE mh = CreateFileMapping(fh, NULL, PAGE_READWRITE, 0, sz, NULL);
     if (mh == NULL) {
         CloseHandle(fh);
-        fprintf(stderr, "FLASH: Can't create mapping for file '%s' (%08x)\n",
-            path, (unsigned)GetLastError());
         return false;
     }
 
@@ -43,8 +38,6 @@ int MappedFile::map(const char *path)
     if (mapping == NULL) {
         CloseHandle(mh);
         CloseHandle(fh);
-        fprintf(stderr, "FLASH: Can't map view of file '%s' (%08x)\n",
-            path, (unsigned)GetLastError());
         return false;
     }
 
@@ -61,7 +54,6 @@ int MappedFile::map(const char *path)
     if (fh < 0 || fstat(fh, &st)) {
         if (fh >= 0)
             close(fh);
-        fprintf(stderr, "FLASH: Can't open backing file '%s' (%s)\n", path, strerror(errno));
         return false;
     }
 
@@ -70,8 +62,6 @@ int MappedFile::map(const char *path)
     void *mapping = mmap(NULL, sz, PROT_READ | PROT_WRITE, MAP_SHARED, fh, 0);
     if (mapping == MAP_FAILED) {
         close(fh);
-        fprintf(stderr, "FLASH: Can't memory-map backing file '%s' (%s)\n",
-            path, strerror(errno));
         return false;
     }
 
