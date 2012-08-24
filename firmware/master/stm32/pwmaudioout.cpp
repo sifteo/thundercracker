@@ -60,6 +60,22 @@ namespace PwmAudioOut {
      */
     static const unsigned DITHER_MASK = 31;
 
+    /*
+     * We have a small discontinuity around the zero crossing due to
+     * the turn-on time for our FETs. This is a small adjustment we add
+     * to our PWM duty cycle in order to account for this. This value
+     * should be equal to the duration, in PWM clock ticks, of this
+     * turn-on time.
+     *
+     * How to tune this? If quiet sounds drop out, increase it.
+     * If quiet sounds are distorted, decrease it.
+     *
+     * Also note that the dither, described above, counts as a quiet
+     * sound: so if your turnon time is too high, the dither signal
+     * will be exaggerated.
+     */
+    static const unsigned PWM_TURNON_TIME = 5;
+
     static const HwTimer pwmTimer(&AUDIO_PWM_TIM);
     static const HwTimer sampleTimer(&AUDIO_SAMPLE_TIM);
     static const GPIOPin outA(&AUDIO_PWMA_PORT, AUDIO_PWMA_PIN);
@@ -181,7 +197,8 @@ IRQ_HANDLER ISR_FN(AUDIO_SAMPLE_TIM)()
         }
 
         if (sample) {
-            unsigned duty = (sample * PwmAudioOut::PWM_PERIOD) >> 15;
+            unsigned duty = (sample * (PwmAudioOut::PWM_PERIOD - PwmAudioOut::PWM_TURNON_TIME)) >> 15;
+            duty += PwmAudioOut::PWM_TURNON_TIME;
             const HwTimer pwmTimer(&AUDIO_PWM_TIM);
             pwmTimer.setDuty(AUDIO_PWM_CHAN, duty);
         }
