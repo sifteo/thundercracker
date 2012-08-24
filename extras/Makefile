@@ -3,6 +3,7 @@ SUBDIRS = \
 	pantera \
 	monster \
 	loopy \
+	abort \
 	kersplody \
 	thrasher \
 	trackycat \
