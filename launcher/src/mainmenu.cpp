@@ -2,7 +2,7 @@
  * Thundercracker Launcher -- Confidential, not for redistribution.
  * Copyright <c> 2012 Sifteo, Inc. All rights reserved.
  */
-
+#define MENU_LOGS_ENABLED 1
 #include "shared.h"
 #include "mainmenu.h"
 #include "mainmenuitem.h"
@@ -112,9 +112,10 @@ void MainMenu::eventLoop()
                 CubeSet usable = CubeSet::connected() & ~connectingCubes;
 
                 if (usable.empty()) {
+                    System::paint();
                     updateMusic();
                     updateConnecting();
-                    System::paint();
+                    System::yield();
                     continue;
                 } else {
                     mainCube = *usable.begin();
