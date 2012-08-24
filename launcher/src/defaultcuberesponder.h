@@ -20,8 +20,17 @@ private:
     Sifteo::Short2 position;
     Sifteo::Short2 velocity;
     Sifteo::CubeID cube;
+    bool wasTouching;
 
     static unsigned called;
 
     void motionUpdate();
+
+    Sifteo::Int2 fpRound(Sifteo::Int2 fp, unsigned bits) {
+        return (fp + (Sifteo::vec(1,1) << (bits-1))) >> bits;
+    }
+
+    Sifteo::Int2 fpTrunc(Sifteo::Int2 fp, unsigned bits) {
+        return fp >> bits;
+    }
 };

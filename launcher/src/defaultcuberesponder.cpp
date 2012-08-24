@@ -50,10 +50,11 @@ void DefaultCubeResponder::motionUpdate()
     const int kDampingBits = 3;
     const int kDeadZone = 5;
     const int kRangeOfMotion = 24;
-    const Int2 kPressVector = vec(0, 8);
+    const Int2 kPressVector = vec(0, -5) << kFPBits;
+    const int kNeighborMagnetism = 6 << kFPBits;
 
     // Integer position becomes our new panning
-    Int2 intPos = position >> kFPBits;
+    Int2 intPos = fpRound(position, kFPBits);
     Shared::video[cube].bg0.setPanning(intPos);
 
     // Let the logo portion bounce against the screen edges
@@ -75,11 +76,21 @@ void DefaultCubeResponder::motionUpdate()
     }
 
     // Start out with a spring return force and damping force
-    Int2 accel = intPos + (velocity >> kDampingBits);
+    Int2 accel = intPos + fpTrunc(velocity, kDampingBits);
 
-    // Add 'press' force
-    if (cube.isTouching())
+    // Jump when pressed
+    bool touching = cube.isTouching();
+    if (touching && !wasTouching) {
         accel += kPressVector;
+    }
+    wasTouching = touching;
+
+    // Neighbors are magnetic
+    Neighborhood nbr(cube);
+    if (nbr.hasNeighborAt(TOP))     accel.y -= kNeighborMagnetism;
+    if (nbr.hasNeighborAt(LEFT))    accel.x -= kNeighborMagnetism;
+    if (nbr.hasNeighborAt(BOTTOM))  accel.y += kNeighborMagnetism;
+    if (nbr.hasNeighborAt(RIGHT))   accel.x += kNeighborMagnetism;
 
     // Add tilt, if we're outside the dead zone
     Int2 cubeAccel = cube.accel().xy();
