@@ -180,6 +180,12 @@ void MainMenu::handleEvent(MenuEvent &e)
             break;
 
         case MENU_ITEM_ARRIVE:
+
+            // ignore if we're arriving at the same item
+            // usually means we were tilting against one end of the menu
+            if (e.item == itemIndexCurrent)
+                break;
+
             itemIndexCurrent = e.item;
             if (itemIndexCurrent >= 0) {
                 arriveItem(itemIndexCurrent);
@@ -187,6 +193,18 @@ void MainMenu::handleEvent(MenuEvent &e)
             break;
 
         case MENU_ITEM_DEPART:
+            /*
+             * if we're tilting against either end, don't count this as a real
+             * departure, because we can't transition to any other items.
+             *
+             * NOTE: current motivation for this is to avoid transitioning away
+             * from the status applet, which currently happens to be the last
+             * item in the menu.
+             */
+            if ((itemIndexCurrent == items.count() - 1 && e.direction > 0) ||
+                (itemIndexCurrent == 0 && e.direction < 0))
+                break;
+
             if (itemIndexCurrent >= 0) {
                 if (cubeRangeSavedIcon != NULL) {
                     menu.replaceIcon(itemIndexCurrent, cubeRangeSavedIcon);

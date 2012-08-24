@@ -39,8 +39,8 @@ void CubeSlot::connect(SysLFS::Key cubeRecord, const RadioAddress &addr, const R
     Atomic::And(CubeSlots::pendingHop, ~cv);
     pendingPackets = 0;
     ackOptionalFIFO = 0;
+    pendingChannelFIFO = 0;
     napDeadline = 0;
-    pendingChannel = RF_INVALID_CHAN;
 
     // Store new identity
     lastACK = fullACK;
@@ -56,7 +56,7 @@ void CubeSlot::connect(SysLFS::Key cubeRecord, const RadioAddress &addr, const R
     Atomic::Or(CubeSlots::sysConnected, cv);
     CubeSlots::pairConnected.atomicMark(cubeRecord - SysLFS::kCubeBase);
 
-    // is this connection means we're full, don't bother trying to connect anybody else
+    // if this connection means we're full, don't bother trying to connect anybody else
     if (!CubeSlots::connectionSlotsAvailable())
         CubeConnector::disableReconnect();
 
@@ -162,6 +162,7 @@ bool CubeSlot::radioProduce(PacketTransmission &tx, SysTime::Ticks now)
     // Enqueue a 'false' bit in our ACK Optional fifo.
     pendingPackets++;
     ackOptionalFIFO <<= 1;
+    pendingChannelFIFO <<= 1;
 
     /* 
      * First priority: Send VRAM data.
@@ -252,6 +253,7 @@ bool CubeSlot::radioProduce(PacketTransmission &tx, SysTime::Ticks now)
         if (codec.escChannelHop(tx.packet, ch)) {
             pendingChannel = ch;
             Atomic::And(CubeSlots::pendingHop, ~cv);
+            pendingChannelFIFO |= 1;
             ackOptionalFIFO |= 1;
             return true;
         }
