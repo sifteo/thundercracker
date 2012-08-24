@@ -6,6 +6,7 @@ Sound_ConfirmClick = sound{ "sounds/UI_confirmClick_2012.08.20.aif_NRML.wav" }
 Sound_NonPossibleAction = sound{ "sounds/UI_nonPossibleAction_2012.08.20.aif_NRML.wav" }
 Sound_TiltClick = sound{ "sounds/UI_tiltClick_2012.08.20.aif_NRML.wav" }
 Sound_NoCubesConnected = sound{ "sounds/UI_cubeLost_2012.08.20.aif_NRML.wav" }
+Sound_LoadingGame = sound { "sounds/UI_loadingBlip_2012.08.24.wav" }
 
 Tracker_CubeConnect = tracker{ "sounds/UI_pairedCube_2012.06.14.xm", loop=false }
 Tracker_CubeDisconnect = tracker{ "sounds/UI_unPairedCube_2012.07.05.xm", loop=false }
