@@ -369,8 +369,7 @@ void AudioMixer::setVolume(_SYSAudioChannelID ch, uint16_t volume)
         return;
     }
 
-    // XXX: should call setVolume
-    channelSlots[ch].volume = clamp((int)volume, 0, (int)_SYS_AUDIO_MAX_VOLUME);
+    channelSlots[ch].setVolume(volume);
 }
 
 int AudioMixer::volume(_SYSAudioChannelID ch)
