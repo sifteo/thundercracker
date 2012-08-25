@@ -98,6 +98,11 @@ public:
     virtual void onCubeDisconnect(unsigned cid) {}
 
     /**
+     * Filesystem volume changed event recieved while this menu item is the current item.
+     */
+    virtual void onVolumeChanged(unsigned volumeHandle) {}
+
+    /**
      * The menu is about to paint() a frame. Use this to paint the non-active cubes.
      */
     virtual void paint() {

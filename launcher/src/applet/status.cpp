@@ -160,3 +160,11 @@ void StatusApplet::onCubeBatteryLevelChange(unsigned cid)
         drawCube(CubeID(cid));
     }
 }
+
+void StatusApplet::onVolumeChanged(unsigned volumeHandle)
+{
+    ASSERT(menu);
+    // Update menu icon
+    drawIcon(menu->cube());
+    menu->replaceIcon(menuItemIndex, menuIcon);
+}

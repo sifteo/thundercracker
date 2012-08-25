@@ -19,6 +19,7 @@ public:
     virtual void onCubeBatteryLevelChange(unsigned cid);
     virtual void onCubeConnect(unsigned cid);
     virtual void onCubeDisconnect(unsigned cid);
+    virtual void onVolumeChanged(unsigned volumeHandle);
 
     
     static void add(MainMenu &m);

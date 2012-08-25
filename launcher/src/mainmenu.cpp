@@ -43,6 +43,8 @@ void MainMenu::init()
     Events::neighborAdd.set(&MainMenu::neighborAdded, this);
     Events::gameMenu.set(&MainMenu::gameMenuEvent, this);
     Events::cubeBatteryLevelChange.set(&MainMenu::onBatteryLevelChange, this);
+    Events::volumeCommit.set(&MainMenu::volumeChanged, this);
+    Events::volumeDelete.set(&MainMenu::volumeChanged, this);
 
     loader.init();
 
@@ -309,11 +311,17 @@ void MainMenu::onBatteryLevelChange(unsigned cid)
     }
 }
 
-void MainMenu::volumeChanged(unsigned something)
+void MainMenu::volumeChanged(unsigned volumeHandle)
 {
     /*
      * TODO: A game was deleted or added. Rebuild the menu.
      */
+
+    if (itemIndexCurrent >= 0) {
+        ASSERT(itemIndexCurrent < arraysize(items));
+        MainMenuItem *item = items[itemIndexCurrent];
+        item->onVolumeChanged(volumeHandle);
+    }
 }
 
 void MainMenu::gameMenuEvent()
