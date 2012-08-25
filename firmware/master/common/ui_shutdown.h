@@ -45,6 +45,7 @@ private:
     void drawDigit(unsigned number);
 
     void beginDigit(unsigned number);
+    void resetTimestamp();
 
     static float easeInAndOut(float t);
 

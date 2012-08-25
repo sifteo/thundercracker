@@ -33,7 +33,9 @@ namespace {
 
 UIShutdown::UIShutdown(UICoordinator &uic)
     : uic(uic), digit(kFirstDigit), done(false)
-{}
+{
+    resetTimestamp();
+}
 
 void UIShutdown::init()
 {
@@ -55,12 +57,15 @@ void UIShutdown::init()
     beginDigit(digit);
 }
 
+void UIShutdown::resetTimestamp()
+{
+    digitTimestamp = SysTime::ticks() - SysTime::msTicks(100);
+}
+
 void UIShutdown::beginDigit(unsigned number)
 {
-    uic.finish();
-
     digit = number;
-    digitTimestamp = SysTime::ticks() - SysTime::msTicks(100);
+    resetTimestamp();
     drawDigit(number);
 
     uic.letterboxWindow(kDigitHeight * TILE);
@@ -79,7 +84,7 @@ void UIShutdown::animate()
         return;
 
     CubeSlot &cube = CubeSlots::instances[uic.avb.cube];
-    float t = (SysTime::ticks() - digitTimestamp) / kSlideDuration;
+    float t = int(SysTime::ticks() - digitTimestamp) / kSlideDuration;
 
     if (t > 1.0f) {
         if (digit == 1) {
