@@ -309,7 +309,7 @@ void MainMenu::onBatteryLevelChange(unsigned cid)
     }
 }
 
-void MainMenu::volumesChanged(unsigned)
+void MainMenu::volumeChanged(unsigned something)
 {
     /*
      * TODO: A game was deleted or added. Rebuild the menu.
