@@ -173,9 +173,17 @@ bool CubeSlot::radioProduce(PacketTransmission &tx, SysTime::Ticks now)
      */
 
     if (UNLIKELY(CubeSlots::sendShutdown & cv)) {
-        // Ask the cube to shut down (it will disconnect)
+        /*
+         * Ask the cube to shut down (it will disconnect)
+         *
+         * Use a much lower than usual retry count, by disabling software retries,
+         * so that this disconnect doesn't cause a noticeable hiccup in communications
+         * with other cubes.
+         */
+
         codec.encodeShutdown(tx.packet);
         ASSERT(!tx.packet.isFull());
+        tx.numSoftwareRetries = 0;
 
     } else if (UNLIKELY(CubeSlots::sendStipple & cv)) {
         // Send a stipple pattern
