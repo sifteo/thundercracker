@@ -49,6 +49,7 @@
 
 #define ALWAYS_INLINE   inline __attribute__ ((always_inline))
 #define NEVER_INLINE    __attribute__ ((noinline))
+#define NORETURN        __attribute__ ((noreturn))
 
 #define LIKELY(x)       __builtin_expect((x), 1)
 #define UNLIKELY(x)     __builtin_expect((x), 0)

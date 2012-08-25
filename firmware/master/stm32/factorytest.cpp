@@ -292,7 +292,11 @@ void FactoryTest::audioTestHandler(uint8_t argc, const uint8_t *args)
          */
 
         const int16_t TriangleData[] = { 0x7FFF, 0x8000 };
-        const void *userTriangleData = SvmMemory::copyToUserRAM(0, TriangleData, sizeof TriangleData);
+
+        SvmMemory::VirtAddr triangleDataVA = SvmMemory::VIRTUAL_RAM_BASE;
+        SvmMemory::PhysAddr triangleDataPA;
+        SvmMemory::mapRAM(triangleDataVA, sizeof TriangleData, triangleDataPA);
+        memcpy(triangleDataPA, TriangleData, sizeof TriangleData);
 
         const _SYSAudioModule Triangle = {
             /* sampleRate */ 262,   // near enough to C-4 (261.626Hz)
@@ -302,7 +306,7 @@ void FactoryTest::audioTestHandler(uint8_t argc, const uint8_t *args)
             /* type       */ _SYS_PCM,
             /* volume     */ _SYS_AUDIO_MAX_VOLUME,
             /* dataSize   */ sizeof TriangleData,
-            /* pData      */ reinterpret_cast<uintptr_t>(userTriangleData),
+            /* pData      */ triangleDataVA,
         };
 
         AudioMixer::instance.play(&Triangle, 0, _SYS_LOOP_REPEAT);

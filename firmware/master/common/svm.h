@@ -132,47 +132,6 @@ inline const char* faultString(FaultCode code)
     }
 }
 
-inline const char* faultString14(FaultCode code)
-{
-    // Short fault strings, 14 characters or less
-    switch (code) {
-    //                                  123456789ABCDE
-    case F_STACK_OVERFLOW:      return "Stack overflow";
-    case F_BAD_STACK:           return "Bad stack";
-    case F_BAD_CODE_ADDRESS:    return "Bad code addr";
-    case F_BAD_SYSCALL:         return "Bad syscall #";
-    case F_LOAD_ADDRESS:        return "Load addr err";
-    case F_STORE_ADDRESS:       return "Store addr err";
-    case F_LOAD_ALIGNMENT:      return "Load align err";
-    case F_STORE_ALIGNMENT:     return "Store align";
-    case F_CODE_FETCH:          return "Code fetch err";
-    case F_CODE_ALIGNMENT:      return "Code align err";
-    case F_CPU_SIM:             return "CPU sim fault";
-    case F_RESERVED_SVC:        return "Reserved SVC";
-    case F_RESERVED_ADDROP:     return "Reserved aop";
-    case F_ABORT:               return "Usermode abort";
-    case F_LONG_STACK_LOAD:     return "Stack load err";
-    case F_LONG_STACK_STORE:    return "Stack store";
-    case F_PRELOAD_ADDRESS:     return "Bad preload";
-    case F_RETURN_FRAME:        return "Return FP err";
-    case F_LOG_FETCH:           return "LOG addr err";
-    case F_SYSCALL_ADDRESS:     return "Syscall addr";
-    case F_SYSCALL_PARAM:       return "Syscall param";
-    case F_SCRIPT_EXCEPTION:    return "Script error";
-    case F_BAD_VOLUME_HANDLE:   return "Bad FS volume";
-    case F_BAD_ELF_HEADER:      return "Bad ELF header";
-    case F_BAD_ASSET_IMAGE:     return "Bad AssetImage";
-    case F_NO_LAUNCHER:         return "No launcher";
-    case F_SYSCALL_ADDR_ALIGN:  return "Syscall align";
-    case F_BAD_ASSETSLOT:       return "Bad AssetSlot";    
-    case F_RWDATA_SEG:          return "RWDATA error";
-    case F_NOT_RESPONDING:      return "Not responding";
-    case F_BAD_ASSET_CONFIG:    return "Bad AssetCfg";
-    case F_BAD_ASSET_LOADER:    return "Bad AssetLdr";
-    default:                    return "Unknown";
-    }
-}
-
 
 /***************************************************************************
  * Debugger Support

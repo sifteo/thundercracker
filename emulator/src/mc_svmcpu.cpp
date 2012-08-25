@@ -623,8 +623,7 @@ static void emulateSTRSPImm(uint16_t instr)
     if (!SvmMemory::isAddrAligned(addr, 4))
         return emulateFault(F_STORE_ALIGNMENT);
 
-    SvmMemory::squashPhysicalAddr(regs[Rt]);
-    *reinterpret_cast<uint32_t*>(addr) = regs[Rt];
+    *reinterpret_cast<uint32_t*>(addr) = SvmMemory::squashPhysicalAddr(regs[Rt]);
 
     svmCyclesElapsed += MCTiming::CPU_LOAD_STORE;
 }
@@ -674,10 +673,8 @@ static void emulateADDSpImm(uint16_t instr)
      *     hosts, the squash will have no effect and we'll still be using
      *     32-bit physical addresses.
      */
-    reg_t sp = regs[REG_SP];
-    SvmMemory::squashPhysicalAddr(sp);
-    
-    regs[Rd] = sp + (imm8 << 2);
+
+    regs[Rd] = SvmMemory::squashPhysicalAddr(regs[REG_SP]) + (imm8 << 2);
 }
 
 static void emulateLDRLitPool(uint16_t instr)
@@ -715,8 +712,7 @@ static void emulateSTR(uint32_t instr)
     if (!SvmMemory::isAddrAligned(addr, 4))
         return emulateFault(F_STORE_ALIGNMENT);
 
-    SvmMemory::squashPhysicalAddr(regs[Rt]);
-    *reinterpret_cast<uint32_t*>(addr) = regs[Rt];
+    *reinterpret_cast<uint32_t*>(addr) = SvmMemory::squashPhysicalAddr(regs[Rt]);
 
     svmCyclesElapsed += MCTiming::CPU_LOAD_STORE;
 }

@@ -42,6 +42,7 @@ public:
         PowerManager,
         UsbOUT,
         AudioPull,
+        FaultLogger,
         Debugger,
         AssetLoader,
         Pause,

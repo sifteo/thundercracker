@@ -13,6 +13,7 @@
 #include "radio.h"
 #include "shutdown.h"
 #include "idletimeout.h"
+#include "faultlogger.h"
 
 #ifdef SIFTEO_SIMULATOR
 #   include "mc_timing.h"
@@ -52,6 +53,7 @@ ALWAYS_INLINE void Tasks::taskInvoke(unsigned id)
         case Tasks::Pause:          return Pause::task();
         case Tasks::CubeConnector:  return CubeConnector::task();
         case Tasks::Heartbeat:      return heartbeatTask();
+        case Tasks::FaultLogger:    return FaultLogger::task();
     #endif
 
     #if !defined(SIFTEO_SIMULATOR) && !defined(BOOTLOADER)

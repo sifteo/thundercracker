@@ -12,8 +12,8 @@
 #include "svmloader.h"
 #include "event.h"
 #include "tasks.h"
-#include "ui_panic.h"
 #include "cubeslots.h"
+#include "faultlogger.h"
 
 #include <math.h>
 #include <sifteo/abi.h>
@@ -90,13 +90,6 @@ void SvmRuntime::initStack(const StackInfo &stack)
 #endif
 }
 
-ALWAYS_INLINE void SvmRuntime::dumpRegister(UIPanic &msg, unsigned reg)
-{
-    reg_t value = SvmCpu::reg(reg);
-    SvmMemory::squashPhysicalAddr(value);
-    msg << uint32_t(value);
-}
-
 void SvmRuntime::fault(FaultCode code)
 {
     // Try to find a handler for this fault. If nobody steps up,
@@ -110,39 +103,12 @@ void SvmRuntime::fault(FaultCode code)
     if (SvmDebugPipe::fault(code))
         return;
 
-    /* 
-     * Unhandled fault; panic!
-     *
-     * Draw a message to one enabled cube, and exit after a home-button press.
+    /*
+     * Unless the fault gets eaten by a handler above, pass it on to
+     * the FaultLogger which asynchronously stores it in SysLFS
+     * and displays a UI. When it's done, it will exit().
      */
-
-    UIPanic msg;
-    msg.init(0x10000);
-
-    // User-facing description
-    msg.at(1,1) << "Oh no!";
-    msg.at(1,2) << "Press button";
-    msg.at(1,3) << "to continue.";
-
-    // Getting more developer-oriented now... fault description
-    msg.at(1,5) << "In Volume<" << uint8_t(SvmLoader::getRunningVolume().block.code) << ">";
-    msg.at(1,6) << "Fault 0x" << uint8_t(code) << ":";
-    msg.at(1,7) << faultString14(code);
-
-    // Begin the "Wall of text" register dump, after one blank line
-    uint32_t pcVA = SvmRuntime::reconstructCodeAddr(SvmCpu::reg(REG_PC));
-    msg.at(1,9) << "PC: " << pcVA;
-
-    dumpRegister(msg.at(1,10) << "SP: ", REG_SP);
-
-    // Only room for first 4 GPRs
-    for (unsigned r = 0; r < 4; r++)
-        dumpRegister(msg.at(1,11+r) << 'r' << char('0' + r) << ": ", r);
-
-    msg.paintAndWait();
-
-    // Exit with an error (Back to the launcher)
-    SvmLoader::exit(true);
+    FaultLogger::reportSvmFault(code);
 }
 
 void SvmRuntime::call(reg_t addr)
@@ -151,32 +117,14 @@ void SvmRuntime::call(reg_t addr)
     adjustSP(-(int)(sizeof(CallFrame) / sizeof(uint32_t)));
     CallFrame *fp = reinterpret_cast<CallFrame*>(SvmCpu::reg(REG_SP));
 
-    reg_t sFP = SvmCpu::reg(REG_FP);
-    reg_t sR2 = SvmCpu::reg(2);
-    reg_t sR3 = SvmCpu::reg(3);
-    reg_t sR4 = SvmCpu::reg(4);
-    reg_t sR5 = SvmCpu::reg(5);
-    reg_t sR6 = SvmCpu::reg(6);
-    reg_t sR7 = SvmCpu::reg(7);
-
-    // Because this is a store to RAM, on simulated builds
-    // we may need to squash 64-bit pointers.
-    SvmMemory::squashPhysicalAddr(sFP);
-    SvmMemory::squashPhysicalAddr(sR2);
-    SvmMemory::squashPhysicalAddr(sR3);
-    SvmMemory::squashPhysicalAddr(sR4);
-    SvmMemory::squashPhysicalAddr(sR5);
-    SvmMemory::squashPhysicalAddr(sR6);
-    SvmMemory::squashPhysicalAddr(sR7);
-
     fp->pc = reconstructCodeAddr(SvmCpu::reg(REG_PC));
-    fp->fp = sFP;
-    fp->r2 = sR2;
-    fp->r3 = sR3;
-    fp->r4 = sR4;
-    fp->r5 = sR5;
-    fp->r6 = sR6;
-    fp->r7 = sR7;
+    fp->fp = SvmMemory::squashPhysicalAddr(SvmCpu::reg(REG_FP));
+    fp->r2 = SvmMemory::squashPhysicalAddr(SvmCpu::reg(2));
+    fp->r3 = SvmMemory::squashPhysicalAddr(SvmCpu::reg(3));
+    fp->r4 = SvmMemory::squashPhysicalAddr(SvmCpu::reg(4));
+    fp->r5 = SvmMemory::squashPhysicalAddr(SvmCpu::reg(5));
+    fp->r6 = SvmMemory::squashPhysicalAddr(SvmCpu::reg(6));
+    fp->r7 = SvmMemory::squashPhysicalAddr(SvmCpu::reg(7));
 
     // This is now the current frame
     SvmCpu::setReg(REG_FP, reinterpret_cast<reg_t>(fp));

@@ -7,7 +7,7 @@
 #include "flash_device.h"
 #include "flash_lfs.h"
 #include "svmdebugger.h"
-#include "ui_panic.h"
+#include "faultlogger.h"
 #include <string.h>
 
 uint8_t FlashBlock::mem[NUM_CACHE_BLOCKS][BLOCK_SIZE] BLOCK_ALIGN;
@@ -170,9 +170,7 @@ FlashBlock *FlashBlock::recycleBlock(uint32_t blockAddr)
         } while (--count);
     }
 
-    ASSERT(0 && "Oh no, all cache blocks are in use. Is there a reference leak?");
-    UIPanic::haltForever();
-    return 0;
+    FaultLogger::internalError(FaultLogger::F_OUT_OF_CACHE_BLOCKS);
 }
 
 void FlashBlock::load(uint32_t blockAddr, unsigned flags)
@@ -302,16 +300,20 @@ void FlashBlock::invalidate(uint32_t addrBegin, uint32_t addrEnd, unsigned flags
 
         if (blockAddrEnd > addrBegin && blockAddrBegin < addrEnd) {
             // Block is in range. Invalidate it.
-
-            if (block->refCount) {
-                // In use. If it's backed by flash at all, reload it.
-                if (block->address != INVALID_ADDRESS)
-                    block->load(block->address, flags);
-            } else {
-                // Nobody's using this block, quietly mark it as invalid / anonymous
-                block->address = INVALID_ADDRESS;
-            }
+            block->invalidateBlock(flags);
         }
+    }
+}
+
+void FlashBlock::invalidateBlock(unsigned flags)
+{
+    if (refCount) {
+        // In use. If it's backed by flash at all, reload it.
+        if (address != INVALID_ADDRESS)
+            load(address, flags);
+    } else {
+        // Nobody's using this block, quietly mark it as invalid / anonymous
+        address = INVALID_ADDRESS;
     }
 }
 
