@@ -53,6 +53,7 @@ private:
     Sifteo::MenuItem menuItems[Shared::MAX_ITEMS + 1];
     int itemIndexCurrent;
     int itemIndexChoice;
+    unsigned numGames;
 
     static const Sifteo::MenuAssets menuAssets;
 
@@ -73,6 +74,7 @@ private:
 
     // Set up the Main Menu's data structures, and empty its lists of items.
     void init();
+    void initMenu(unsigned initialIndex, bool popUp);
 
     // event handlers
     void volumeChanged(unsigned volumeHandle);

@@ -32,6 +32,17 @@ static void drawText(MainMenuItem::IconBuffer &icon, const char *text, Int2 pos)
     }
 }
 
+static unsigned populate(Array<MainMenuItem*, Shared::MAX_ITEMS> &items)
+{
+    ELFMainMenuItem::findGames(items);
+    unsigned numGames = items.count();
+
+    GetGamesApplet::add(items);
+    StatusApplet::add(items);
+
+    return numGames;
+}
+
 const MenuAssets MainMenu::menuAssets = {
     &Menu_BgTile, &Menu_Footer, NULL, {&Menu_Tip0, &Menu_Tip1, &Menu_Tip2, NULL}
 };
@@ -70,14 +81,21 @@ void MainMenu::init()
     _SYS_asset_bindSlots(Volume::running(), Shared::NUM_SLOTS);
 }
 
+void MainMenu::initMenu(unsigned initialIndex, bool popUp)
+{
+    ASSERT(initialIndex < items.count());
+    // (Re)initialize the menu
+    menu.init(Shared::video[mainCube], &menuAssets, menuItems);
+    menu.setIconYOffset(8);
+    menu.anchor(initialIndex, popUp);
+    itemIndexCurrent = -1;
+}
+
 void MainMenu::run()
 {
     init();
 
-    // Populate the menu
-    ELFMainMenuItem::findGames(items);
-    GetGamesApplet::add(items);
-    StatusApplet::add(items);
+    numGames = populate(items);
 
     // Using our now-final list of items, build our AssetConfiguration
     prepareAssets();
@@ -136,12 +154,11 @@ void MainMenu::eventLoop()
                 }
             }
 
-            // (Re)initialize the menu on that cube
-            menu.init(Shared::video[mainCube], &menuAssets, menuItems);
-            menu.setIconYOffset(8);
-            if (itemIndexCurrent >= 0)
-                menu.anchor(itemIndexCurrent, true);
-            itemIndexCurrent = -1;
+            if (itemIndexCurrent >= 0) {
+                initMenu(itemIndexCurrent, true);
+            } else {
+                initMenu(0, false);
+            }
         }
 
         MenuEvent e;
@@ -331,10 +348,44 @@ void MainMenu::onBatteryLevelChange(unsigned cid)
 
 void MainMenu::volumeChanged(unsigned volumeHandle)
 {
-    /*
-     * TODO: A game was deleted or added. Rebuild the menu.
-     */
+    Array<MainMenuItem*, Shared::MAX_ITEMS> newItems;
+    unsigned newGames = populate(newItems);
+    int itemIndexNew = -1;
+    bool hopUp = false;
 
+    // If the menu is stopped at an applet (not a game), stay at that location.
+    if (itemIndexCurrent >= numGames) {
+        itemIndexNew = newGames + numGames - itemIndexCurrent;
+    }
+
+    // If the menu is stopped at a game, stay at that game so long as it still exists.
+    if (itemIndexCurrent >= 0) {
+        for (unsigned i = 0, e = newItems.count(); i != e; ++i) {
+            if (newItems[i]->getVolume() == items[itemIndexCurrent]->getVolume()) {
+                itemIndexNew = i;
+                break;
+            }
+        }
+        // Return the menu to *near* where it left off.
+        hopUp = true;
+        itemIndexNew = itemIndexCurrent - 1;
+        // But avoid going off either end of the menu.
+        while (itemIndexNew >= newGames) itemIndexNew--;
+        if (itemIndexNew < 0) itemIndexNew = 0;
+    }
+
+    // Commit the new items to the menu
+    items = newItems;
+    numGames = newGames;
+
+    // Update the menu
+    prepareAssets();
+    initMenu(itemIndexNew, hopUp);
+
+    /* XXX: Because the menu is being reinitialized/relaunched, this will never
+     * be called. This code remains in case dynamic menu item addition/removal
+     * happens.
+     */
     if (itemIndexCurrent >= 0) {
         ASSERT(itemIndexCurrent < items.count());
         MainMenuItem *item = items[itemIndexCurrent];
@@ -579,7 +630,9 @@ void MainMenu::prepareAssets()
      * an AssetConfiguration array.
      */
 
-    ASSERT(menuAssetConfig.empty());
+    if (!menuAssetConfig.empty()) {
+        menuAssetConfig.clear();
+    }
 
     // Add our local AssetGroup to the config
     menuAssetConfig.append(Shared::primarySlot, MenuGroup);
