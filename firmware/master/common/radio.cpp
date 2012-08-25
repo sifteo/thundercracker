@@ -216,6 +216,7 @@ void RadioManager::processRetries(const CubeSlot &slot, unsigned retries)
      * larger buckets, since we'll want to jump away in larger increments.
      */
 
+
     unsigned channel = slot.getRadioAddress()->channel;
     unsigned bucket = channel / 3; // 3 == roundup(MAX_RF_CHANNEL / 32)
     ASSERT(bucket < 32);
@@ -224,8 +225,7 @@ void RadioManager::processRetries(const CubeSlot &slot, unsigned retries)
     if (retries > CHANNEL_HOP_THRESHOLD) {
         if (retryBucketMask & bucketBit) {
             // initiate hop!
-            // still leaving this disabled by default pending a little more testing
-            // Atomic::Or(CubeSlots::pendingHop, slot.bit());
+            Atomic::Or(CubeSlots::pendingHop, slot.bit());
         } else {
             retryBucketMask |= bucketBit;
             return;
@@ -233,6 +233,22 @@ void RadioManager::processRetries(const CubeSlot &slot, unsigned retries)
     }
 
     retryBucketMask &= ~bucketBit;
+}
+
+bool RadioManager::channelMightBeNoisy(unsigned channel)
+{
+    /*
+     * Based on our current mask of channels that any transmission required
+     * more than CHANNEL_HOP_THRESHOLD retries for.
+     *
+     * This is not great, since this mask is only maintained momentarily...
+     * Could be greatly improved by tracking noise profile more persistently.
+     */
+
+    ASSERT(channel <= MAX_RF_CHANNEL);
+
+    unsigned bucket = channel / 3; // 3 == roundup(MAX_RF_CHANNEL / 32)
+    return retryBucketMask & Intrinsic::LZ(bucket);
 }
 
 ALWAYS_INLINE bool RadioManager::dispatchProduce(unsigned id, PacketTransmission &tx, SysTime::Ticks now)

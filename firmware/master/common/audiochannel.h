@@ -45,7 +45,7 @@ public:
 
     void setSpeed(uint32_t sampleRate);
 
-    void setVolume(uint16_t newVolume) {
+    ALWAYS_INLINE void setVolume(uint16_t newVolume) {
         ASSERT(newVolume <= _SYS_AUDIO_MAX_VOLUME);
         volume = clamp((int)newVolume, 0, _SYS_AUDIO_MAX_VOLUME);
     }

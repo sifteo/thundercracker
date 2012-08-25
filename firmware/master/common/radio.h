@@ -210,6 +210,8 @@ class RadioManager {
     static void timeout();
     static void processRetries(const CubeSlot &slot, unsigned retries);
 
+    static bool channelMightBeNoisy(unsigned channel);
+
     /*
      * FIFO buffer of slot numbers that have pending acknowledgments.
      * This lets us match up ACKs with endpoints. Accessed ONLY in

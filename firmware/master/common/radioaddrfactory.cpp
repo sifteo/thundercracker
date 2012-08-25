@@ -6,7 +6,6 @@
 #include <protocol.h>
 #include "radioaddrfactory.h"
 
-
 const uint8_t RadioAddrFactory::gf84[0x100] = {
     // Lookup table for Galois Field multiplication by our chosen polynomial, 0x84.
     0x00, 0x84, 0x13, 0x97, 0x26, 0xa2, 0x35, 0xb1, 0x4c, 0xc8, 0x5f, 0xdb, 0x6a, 0xee, 0x79, 0xfd,
@@ -42,10 +41,40 @@ void RadioAddrFactory::random(RadioAddress &addr, _SYSPseudoRandomState &prng)
 }
 
 
-unsigned RadioAddrFactory::randomChannel(_SYSPseudoRandomState &prng)
+unsigned RadioAddrFactory::randomChannel(_SYSPseudoRandomState &prng, unsigned currentChannel)
 {
-    // XXX: This is where we should avoid noisy channels
-    return PRNG::valueBounded(&prng, MAX_RF_CHANNEL);
+    /*
+     * Select a quasi randomized channel that is not likely to be noisy.
+     *
+     * If we're transitioning from a known channel, jump away at least a WiFi
+     * channel's worth, plus a bit more for good measure.
+     *
+     * Otherwise, choose a random starting point and ensure it's not noisy.
+     */
+
+    const unsigned MAX_INCREMENT = 8;
+
+    unsigned newChannel;
+    if (currentChannel > MAX_RF_CHANNEL) {
+        newChannel = PRNG::valueBounded(&prng, MAX_RF_CHANNEL);
+    } else {
+        unsigned offset = PRNG::valueBounded(&prng, MAX_INCREMENT);
+        newChannel = (currentChannel + WIFI_CHANNEL_WIDTH + offset) % MAX_RF_CHANNEL;
+    }
+
+    /*
+     * Cycle through channels until we find one that we think is clear.
+     * Give up searching if we don't find anything good before we wrap back
+     * around to the same WiFi channel that we're trying to escape.
+     */
+    while (((newChannel - currentChannel) % MAX_RF_CHANNEL) < 60 &&
+           (RadioManager::channelMightBeNoisy(newChannel)))
+    {
+        unsigned offset = PRNG::valueBounded(&prng, MAX_INCREMENT);
+        newChannel = (currentChannel + offset) % MAX_RF_CHANNEL;
+    }
+
+    return newChannel;
 }
 
 
