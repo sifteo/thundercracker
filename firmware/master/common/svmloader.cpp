@@ -233,6 +233,12 @@ void SvmLoader::exit(bool fault)
 
     case RUNLEVEL_LAUNCHER:
         // Launcher exited! Shut down.
+
+        #ifdef SIFTEO_SIMULATOR
+        // Must preserve the error code here, so that unit tests and other scripts work.
+        SystemMC::exit(fault);
+        #endif
+
         return _SYS_shutdown(0);
     }
 }
