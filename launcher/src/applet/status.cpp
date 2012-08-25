@@ -92,12 +92,10 @@ void StatusApplet::arrive()
     }
 }
 
-void StatusApplet::add(MainMenu &m)
+void StatusApplet::add(Array<MainMenuItem*, Shared::MAX_ITEMS> &items)
 {
     static StatusApplet instance;
-    instance.menu = NULL;
-    instance.menuItemIndex = -1;
-    m.append(&instance);
+    items.append(&instance);
 }
 
 void StatusApplet::drawIcon(Sifteo::CubeID menuCube)

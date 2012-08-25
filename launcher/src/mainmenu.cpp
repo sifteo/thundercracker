@@ -6,6 +6,9 @@
 #include "shared.h"
 #include "mainmenu.h"
 #include "mainmenuitem.h"
+#include "elfmainmenuitem.h"
+#include "applet/getgames.h"
+#include "applet/status.h"
 #include "defaultloadinganimation.h"
 #include "assets.gen.h"
 #include <sifteo.h>
@@ -68,6 +71,13 @@ void MainMenu::init()
 
 void MainMenu::run()
 {
+    init();
+
+    // Populate the menu
+    ELFMainMenuItem::findGames(items);
+    GetGamesApplet::add(items);
+    StatusApplet::add(items);
+
     // Using our now-final list of items, build our AssetConfiguration
     prepareAssets();
 
@@ -557,8 +567,9 @@ void MainMenu::prepareAssets()
     // about to fill in, and it NULL-terminates the list.
     bzero(menuItems);
 
-    // Set up each menu item
+    // Set up each menu item and initialize it's state
     for (unsigned I = 0, E = items.count(); I != E; ++I) {
         items[I]->getAssets(menuItems[I], menuAssetConfig);
+        items[I]->setMenuInfo(NULL, -1);
     }
 }

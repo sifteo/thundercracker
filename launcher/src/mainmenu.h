@@ -21,12 +21,6 @@
 class MainMenu
 {
 public:
-
-    /**
-     * Set up the Main Menu's data structures, and empty its lists of items.
-     */
-    void init();
-
     /**
      * Append a new item to the internal list of menu items. The MainMenuItem
      * object must remain valid until the menu is run.
@@ -70,6 +64,9 @@ private:
     Sifteo::AssetLoader loader;
     Shared::AssetConfiguration menuAssetConfig;
     DefaultLoadingAnimation loadingAnimation;
+
+    // Set up the Main Menu's data structures, and empty its lists of items.
+    void init();
 
     // event handlers
     void volumeChanged(unsigned volumeHandle);

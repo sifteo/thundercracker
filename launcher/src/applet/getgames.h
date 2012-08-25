@@ -16,5 +16,5 @@ public:
     virtual void getAssets(Sifteo::MenuItem &assets, Shared::AssetConfiguration &config);
     virtual void exec();
 
-    static void add(MainMenu &menu);
+    static void add(Sifteo::Array<MainMenuItem*, Shared::MAX_ITEMS> &items);
 };

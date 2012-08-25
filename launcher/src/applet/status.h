@@ -22,7 +22,7 @@ public:
     virtual void onVolumeChanged(unsigned volumeHandle);
 
     
-    static void add(MainMenu &m);
+    static void add(Sifteo::Array<MainMenuItem*, Shared::MAX_ITEMS> &items);
 
 private:
     void drawIcon(Sifteo::CubeID menuCube);

@@ -33,7 +33,7 @@ public:
     }
 
     /// Look for all games on the system, and add them to the MainMenu.
-    static void findGames(MainMenu &menu);
+    static void findGames(Sifteo::Array<MainMenuItem*, Shared::MAX_ITEMS> &items);
 
     /// See if we can automatically execute a single game. (Simulator only)
     static void autoexec();

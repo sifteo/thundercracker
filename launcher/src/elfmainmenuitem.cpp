@@ -49,7 +49,7 @@ void ELFMainMenuItem::autoexec()
     inst.exec();
 }
 
-void ELFMainMenuItem::findGames(MainMenu &menu)
+void ELFMainMenuItem::findGames(Array<MainMenuItem*, Shared::MAX_ITEMS> &items)
 {
     /*
      * Get the list of games from our filesystem. (Limited
@@ -72,7 +72,7 @@ void ELFMainMenuItem::findGames(MainMenu &menu)
         Volume vol = volumes[volI];
 
         if (inst->init(vol)) {
-            menu.append(inst);
+            items.append(inst);
             itemI++;
         }
         volI++;

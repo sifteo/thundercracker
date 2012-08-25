@@ -20,8 +20,8 @@ void GetGamesApplet::exec()
 	// Anything to do here?
 }
 
-void GetGamesApplet::add(MainMenu &menu)
+void GetGamesApplet::add(Array<MainMenuItem*, Shared::MAX_ITEMS> &items)
 {
     static GetGamesApplet instance;
-    menu.append(&instance);
+    items.append(&instance);
 }
