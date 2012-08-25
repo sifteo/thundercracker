@@ -63,7 +63,7 @@ void FaultLogger::reportSvmFault(unsigned code)
 
     Tasks::trigger(Tasks::FaultLogger);
 
-    UART("\r\nPC = "); UART_HEX(regs.pc);
+    UART("PC = "); UART_HEX(regs.pc);
     UART("\r\nSP = "); UART_HEX(regs.sp);
     UART("\r\nFP = "); UART_HEX(regs.fp);
     UART("\r\nGPR =");

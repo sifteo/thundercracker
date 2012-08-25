@@ -52,7 +52,9 @@ void UIShutdown::init()
 
     uic.setPanX(TILE/2);
     uic.setPanY(0);
+    
     uic.paint();
+    uic.finish();
 
     beginDigit(digit);
 }
