@@ -7,8 +7,8 @@ Sound_NonPossibleAction = sound{ "sounds/UI_nonPossibleAction_2012.08.20.aif_NRM
 Sound_TiltClick = sound{ "sounds/UI_tiltClick_2012.08.20.aif_NRML.wav" }
 Sound_NoCubesConnected = sound{ "sounds/UI_cubeLost_2012.08.20.aif_NRML.wav" }
 Sound_LoadingGame = sound { "sounds/UI_loadingBlip_2012.08.24.wav" }
+Sound_CubeConnect = sound{ "sounds/UI_pairedCube_2012.08.20.aif_NRML.wav" }
+Sound_CubeDisconnect = sound{ "sounds/UI_unPairedCube_2012.08.20.aif_NRML.wav" }
 
-Tracker_CubeConnect = tracker{ "sounds/UI_pairedCube_2012.08.20.xm", loop=false }
-Tracker_CubeDisconnect = tracker{ "sounds/UI_unPairedCube_2012.08.20.xm", loop=false }
 Tracker_MenuMusic = tracker{ "sounds/UI_menuMusic04_2012.08.20.xm" }
 Tracker_Startup = tracker{ "sounds/UI_startup_2012.08.22.xm", loop=false }
