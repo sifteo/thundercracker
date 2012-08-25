@@ -50,7 +50,7 @@ public:
      * be dispatched while we're in syscalls, since the internal call() we
      * generate must occur *after* the syscall's return value has been stored.
      */
-    static void dispatchEventsOnReturn() {
+    static ALWAYS_INLINE void dispatchEventsOnReturn() {
         eventDispatchFlag = true;
     }
 
@@ -58,8 +58,15 @@ public:
      * Using the current codeBlock and PC, reconstruct the current
      * virtual program counter. Used for debugging, and for function calls.
      */
-    static unsigned reconstructCodeAddr(reg_t pc) {
+    static ALWAYS_INLINE unsigned reconstructCodeAddr(reg_t pc) {
         return SvmMemory::reconstructCodeAddr(codeBlock, pc);
+    }
+
+    /**
+     * Get a pointer to the cache block we're currently running code from
+     */
+    static ALWAYS_INLINE FlashBlock *getCodeBlock() {
+        return &*codeBlock;
     }
 
     /**
@@ -67,7 +74,7 @@ public:
      * since the resulting return pointer would not be valid coming from
      * untrusted stack memory, and when it's not already in an event handler.
      */
-    static bool canSendEvent() {
+    static ALWAYS_INLINE bool canSendEvent() {
         return eventFrame == 0 && (SvmCpu::reg(REG_PC) & 3) == 0;
     }
 
@@ -171,8 +178,6 @@ private:
     static void svcIndirectOperation(uint8_t imm8);
     static void addrOp(uint8_t opnum, reg_t addr);
     static void breakpoint();
-
-    static void dumpRegister(UIPanic &msg, unsigned reg);
 
 #ifdef SIFTEO_SIMULATOR
     static SvmMemory::PhysAddr topOfStackPA;

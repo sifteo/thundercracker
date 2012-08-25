@@ -36,7 +36,13 @@ public:
     void run();
 
 private:
-    Sifteo::SystemTime connectSfxDelayTimestamp;
+    bool startupXmModHasFinished;
+    int trackerVolume;
+    static const int kTrackerVolumeNormal = 64;
+    static const int kTrackerVolumeDucked = kTrackerVolumeNormal / 2;
+    static const unsigned kUIResponseSoundChannel = 0;
+    static const unsigned kConnectSoundChannel = 1;
+
     Sifteo::SystemTime time;
     Sifteo::CubeID mainCube;
     Sifteo::CubeSet connectingCubes;    // Displaying logo OR still loading

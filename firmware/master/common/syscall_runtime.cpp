@@ -139,13 +139,13 @@ void _SYS_log(uint32_t t, uintptr_t v1, uintptr_t v2, uintptr_t v3,
     uint32_t type = tag.getType();
     uint32_t arity = tag.getArity();
 
-    SvmMemory::squashPhysicalAddr(v1);
-    SvmMemory::squashPhysicalAddr(v2);
-    SvmMemory::squashPhysicalAddr(v3);
-    SvmMemory::squashPhysicalAddr(v4);
-    SvmMemory::squashPhysicalAddr(v5);
-    SvmMemory::squashPhysicalAddr(v6);
-    SvmMemory::squashPhysicalAddr(v7);
+    v1 = SvmMemory::squashPhysicalAddr(v1);
+    v2 = SvmMemory::squashPhysicalAddr(v2);
+    v3 = SvmMemory::squashPhysicalAddr(v3);
+    v4 = SvmMemory::squashPhysicalAddr(v4);
+    v5 = SvmMemory::squashPhysicalAddr(v5);
+    v6 = SvmMemory::squashPhysicalAddr(v6);
+    v7 = SvmMemory::squashPhysicalAddr(v7);
 
     switch (type) {
 

@@ -316,7 +316,7 @@ public:
      * This operation only needs to be performed on 32-bit stores. Not on
      * loads, not on other kinds of stores.
      */
-    static void squashPhysicalAddr(Svm::reg_t &r) {
+    static ALWAYS_INLINE uint32_t squashPhysicalAddr(Svm::reg_t r) {
 #ifdef SIFTEO_SIMULATOR
         if (r != (uint32_t)r) {
             uintptr_t offset = reinterpret_cast<uint8_t*>(r) - userRAM; 
@@ -324,16 +324,7 @@ public:
                 r = offset + VIRTUAL_RAM_BASE;
         }
 #endif
-    }
-
-    /*
-     * ALERT! You should probably not be using this function.
-     * Its main purpose in life is to allow factory test code to
-     * place audio data into valid virtual memory. This should NEVER
-     * be used during actual application runtime.
-     */
-    static void* copyToUserRAM(size_t destOffset, const void *src, size_t sz) {
-        return memcpy(userRAM + destOffset, src, sz);
+        return r;
     }
 
 private:

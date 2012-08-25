@@ -2,7 +2,7 @@
  * Thundercracker Launcher -- Confidential, not for redistribution.
  * Copyright <c> 2012 Sifteo, Inc. All rights reserved.
  */
-
+// #define MENU_LOGS_ENABLED 1
 #include "shared.h"
 #include "mainmenu.h"
 #include "mainmenuitem.h"
@@ -22,7 +22,7 @@ static const unsigned kClickSpeedFast = 300;
 
 static const unsigned kConnectSfxDelayMS = 2000;
 static const unsigned kDisplayBlueLogoTimeMS = 2000;
-static const unsigned kNoCubesConnectedSfxMS = 5000;
+static const unsigned kNoCubesConnectedSfxMS = 10000;
 
 
 static void drawText(MainMenuItem::IconBuffer &icon, const char *text, Int2 pos)
@@ -40,6 +40,8 @@ void MainMenu::init()
 {
     // Play the startup sound as early as possible
     AudioTracker::play(Tracker_Startup);
+    startupXmModHasFinished = false;
+    trackerVolume = kTrackerVolumeNormal;
 
     Events::cubeConnect.set(&MainMenu::cubeConnect, this);
     Events::cubeDisconnect.set(&MainMenu::cubeDisconnect, this);
@@ -52,7 +54,6 @@ void MainMenu::init()
     loader.init();
 
     time = SystemTime::now();
-    connectSfxDelayTimestamp = time;
     connectingCubes.clear();
 
     items.clear();
@@ -124,9 +125,10 @@ void MainMenu::eventLoop()
                 CubeSet usable = CubeSet::connected() & ~connectingCubes;
 
                 if (usable.empty()) {
+                    System::paint();
                     updateMusic();
                     updateConnecting();
-                    System::paint();
+                    System::yield();
                     continue;
                 } else {
                     mainCube = *usable.begin();
@@ -165,7 +167,7 @@ void MainMenu::waitForACube()
     while (CubeSet::connected().empty()) {
         if ((SystemTime::now() - sfxTime).milliseconds() >= kNoCubesConnectedSfxMS) {
             sfxTime = SystemTime::now();
-            AudioChannel(0).play(Sound_NoCubesConnected);
+            AudioChannel(kConnectSoundChannel).play(Sound_NoCubesConnected);
         }
         System::yield();
     }
@@ -180,10 +182,10 @@ void MainMenu::handleEvent(MenuEvent &e)
         case MENU_ITEM_PRESS:
             ASSERT(e.item < items.count());
             if (items[e.item]->getCubeRange().isEmpty()) {
-                AudioChannel(0).play(Sound_NonPossibleAction);
+                AudioChannel(kUIResponseSoundChannel).play(Sound_NonPossibleAction);
                 performDefault = false;
             } else if (canLaunchItem(e.item)) {
-                AudioChannel(0).play(Sound_ConfirmClick);
+                AudioChannel(kUIResponseSoundChannel).play(Sound_ConfirmClick);
                 itemIndexChoice = e.item;
             } else {
                 toggleCubeRangeAlert(e.item);
@@ -246,10 +248,11 @@ void MainMenu::cubeConnect(unsigned cid)
 {
     SystemTime now = SystemTime::now();
 
-    // Only play a connect sfx if it's been a while since the last one (or since boot)
-    if (now - connectSfxDelayTimestamp > TimeDelta::fromMillisec(kConnectSfxDelayMS)) {
-        connectSfxDelayTimestamp = now;
-        AudioTracker::play(Tracker_CubeConnect);
+    AudioChannel soundChannel(kConnectSoundChannel);
+    if (!soundChannel.isPlaying() && startupXmModHasFinished) {
+        AudioTracker::setVolume(kTrackerVolumeDucked);
+        trackerVolume = kTrackerVolumeDucked;
+        soundChannel.play(Sound_CubeConnect);
     }
 
     // Reset this cube's connection timestamp. We won't use it until it has shown the logo for a while.
@@ -287,7 +290,12 @@ void MainMenu::cubeConnect(unsigned cid)
 
 void MainMenu::cubeDisconnect(unsigned cid)
 {
-    AudioTracker::play(Tracker_CubeDisconnect);
+    AudioChannel soundChannel(kConnectSoundChannel);
+    if (!soundChannel.isPlaying() && startupXmModHasFinished) {
+        AudioTracker::setVolume(kTrackerVolumeDucked);
+        trackerVolume = kTrackerVolumeDucked;
+        soundChannel.play(Sound_CubeDisconnect);
+    }
 
     connectingCubes.clear(cid);
 
@@ -415,19 +423,22 @@ void MainMenu::updateConnecting()
 
 void MainMenu::updateSound()
 {
+    if (!startupXmModHasFinished)
+        return;
+
     Sifteo::TimeDelta dt = Sifteo::SystemTime::now() - time;
     
     if (menu.getState() == MENU_STATE_TILTING) {
         unsigned threshold = abs(Shared::video[mainCube].virtualAccel().x) > kFastClickAccelThreshold ? kClickSpeedNormal : kClickSpeedFast;
         if (dt.milliseconds() >= threshold) {
             time += dt;
-            AudioChannel(0).play(Sound_TiltClick);
+            AudioChannel(kUIResponseSoundChannel).play(Sound_TiltClick);
         }
     } else if (menu.getState() == MENU_STATE_INERTIA) {
         unsigned threshold = 400;
         if (dt.milliseconds() >= threshold) {
             time += dt;
-            AudioChannel(0).play(Sound_TiltClick);
+            AudioChannel(kUIResponseSoundChannel).play(Sound_TiltClick);
         }
     }
 }
@@ -439,8 +450,18 @@ void MainMenu::updateMusic()
      * (This lets the startup sound finish if it's still going)
      */
 
-    if (AudioTracker::isStopped())
+    if (AudioTracker::isStopped()) {
+        startupXmModHasFinished = true;
         AudioTracker::play(Tracker_MenuMusic);
+    }
+
+    // if the tracker was previously ducked and the sample we were ducking from
+    // has completed, bring it back up
+    if (trackerVolume < kTrackerVolumeNormal &&
+        !AudioChannel(kConnectSoundChannel).isPlaying())
+    {
+        AudioTracker::setVolume(trackerVolume++);
+    }
 }
 
 bool MainMenu::canLaunchItem(unsigned index)
@@ -454,7 +475,7 @@ bool MainMenu::canLaunchItem(unsigned index)
 void MainMenu::toggleCubeRangeAlert(unsigned index)
 {
     if (cubeRangeSavedIcon == NULL) {
-        AudioChannel(0).play(Sound_NonPossibleAction);
+        AudioChannel(kUIResponseSoundChannel).play(Sound_NonPossibleAction);
 
         ASSERT(index < items.count());
         MainMenuItem *item = items[index];

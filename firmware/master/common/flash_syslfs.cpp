@@ -16,6 +16,7 @@ int SysLFS::read(Key k, uint8_t *buffer, unsigned bufferSize)
 {
     // System internal version of _SYS_fs_objectRead()
     
+    STATIC_ASSERT(kEnd == 0x100);
     ASSERT(FlashLFSIndexRecord::isKeyAllowed(k));
 
     FlashLFS &lfs = SysLFS::get();
@@ -529,7 +530,7 @@ bool SysLFS::CubeAssetsRecord::markAccessed(FlashVolume vol, unsigned numSlots, 
 SysLFS::Key SysLFS::AssetSlotRecord::makeKey(Key cubeKey, unsigned slot)
 {
     unsigned i = cubeKey - kCubeBase;
-    ASSERT(i < kCubeCount);
+    ASSERT(i < NUM_PAIRINGS);
     ASSERT(slot < ASSET_SLOTS_PER_CUBE);
     return Key(kAssetSlotBase + i * ASSET_SLOTS_PER_CUBE + slot);
 }
@@ -537,7 +538,7 @@ SysLFS::Key SysLFS::AssetSlotRecord::makeKey(Key cubeKey, unsigned slot)
 bool SysLFS::AssetSlotRecord::decodeKey(Key slotKey, Key &cubeKey, unsigned &slot)
 {
     unsigned i = slotKey - kAssetSlotBase;
-    if (i < kAssetSlotCount) {
+    if (i < NUM_TOTAL_ASSET_SLOTS) {
         cubeKey = (Key) ((i / ASSET_SLOTS_PER_CUBE) + kCubeBase);
         slot = i % ASSET_SLOTS_PER_CUBE;
         return true;
@@ -711,7 +712,7 @@ void SysLFS::deleteCube(unsigned index)
      * Delete all saved information about a particular cube index
      */
 
-    ASSERT(index < kCubeCount);
+    ASSERT(index < NUM_PAIRINGS);
 
     Key cubeKey = Key(kCubeBase + index);
     write(cubeKey, 0, 0);
@@ -886,4 +887,44 @@ bool SysLFS::AssetSlotRecord::cleanupDeletedVolumes(const FlashMapBlock::Set &al
     }
 
     return changed;
+}
+
+SysLFS::Key SysLFS::FaultHeader::readLatest()
+{
+    /*
+     * Read the header from the most recent fault, storing it in *this.
+     * Does NOT check the CRC. We don't want to overwrite fault logs
+     * yet, even if they've been corrupted.
+     *
+     * Returns kEnd if no faults have been logged yet.
+     */
+    
+    FlashLFS &lfs = SysLFS::get();
+    FlashLFSObjectIter iter(lfs);
+
+    while (iter.previous(FlashLFSKeyQuery())) {
+        unsigned k = iter.record()->getKey();
+        unsigned index = k - kFaultBase;
+
+        if (index < NUM_FAULTS) {
+            FlashDevice::read(iter.address(), (uint8_t*) this, sizeof *this);
+            return SysLFS::Key(k);
+        }
+    }
+
+    return kEnd;
+}
+
+SysLFS::Key SysLFS::FaultHeader::nextKey(Key k)
+{
+    // Round-robin allocation of fault keys, creating a small
+    // write-only ring buffer of fault data.
+
+    unsigned index = k - kFaultBase;
+
+    index++;
+    if (index >= SysLFS::NUM_FAULTS)
+        index = 0;
+
+    return SysLFS::Key(kFaultBase + index);
 }

@@ -5,7 +5,7 @@
 
 #include "svmcpu.h"
 #include "svmruntime.h"
-#include "ui_panic.h"
+#include "faultlogger.h"
 #include "flash_blockcache.h"
 
 #include "vectors.h"
@@ -53,8 +53,7 @@ void run(reg_t sp, reg_t pc)
         : [sp_arg] "r"(sp), [target] "r"(pc | 0x1)
     );
 
-    // Cannot be reached unless we jumped into bad code that the validator failed to catch!
-    UIPanic::haltForever();
+    FaultLogger::internalError(FaultLogger::F_SVMCPU_RUN_RETURN);
 }
 
 } // namespace SvmCpu
@@ -143,12 +142,6 @@ NAKED_HANDLER ISR_SVCall()
  */
 NAKED_HANDLER ISR_HardFault()
 {
-    /*
-     * Extraordinary measures... Clobber *all* code in the cache, so that we fault
-     * again if any of it actually runs.
-     */
-    FlashBlock::invalidate(FlashBlock::F_ABORT_TRAP);
-
     // XXX: Currently has bogus userspace registers!
     SvmRuntime::fault(F_UNKNOWN);
 

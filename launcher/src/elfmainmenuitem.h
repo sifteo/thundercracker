@@ -54,6 +54,9 @@ private:
     /// Max number of bootstrap asset groups (Limited by max size of metadata values)
     static const unsigned MAX_BOOTSTRAP_GROUPS = _SYS_MAX_METADATA_ITEM_BYTES / sizeof(_SYSMetadataBootAsset);
 
+    /// Period (in ms) for loading sound while bootstrapping a game.
+    static const unsigned LOADING_SOUND_PERIOD = 333;
+
     struct SlotInfo {
         unsigned totalBytes;
         unsigned totalTiles;

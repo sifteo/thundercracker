@@ -56,10 +56,10 @@ OBJS_COMMON = \
     $(MASTER_DIR)/common/usbprotocol.o \
     $(MASTER_DIR)/common/elfprogram.o \
     $(MASTER_DIR)/common/ui_assets.o \
-    $(MASTER_DIR)/common/ui_panic.o \
     $(MASTER_DIR)/common/ui_coordinator.o \
     $(MASTER_DIR)/common/ui_menu.o \
     $(MASTER_DIR)/common/ui_shutdown.o \
+    $(MASTER_DIR)/common/ui_fault.o \
     $(MASTER_DIR)/common/pause.o \
     $(MASTER_DIR)/common/ui_pause.o \
     $(MASTER_DIR)/common/ui_cuberange.o \
@@ -69,7 +69,8 @@ OBJS_COMMON = \
     $(MASTER_DIR)/common/ledsequencer.o \
     $(MASTER_DIR)/common/shutdown.o \
     $(MASTER_DIR)/common/motion.o   \
-    $(MASTER_DIR)/common/idletimeout.o
+    $(MASTER_DIR)/common/idletimeout.o \
+    $(MASTER_DIR)/common/faultlogger.o
 
 # Sources common to all stm32 builds (currently master & testjig)
 OBJS_STM32 = \

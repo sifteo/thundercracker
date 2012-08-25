@@ -7,6 +7,7 @@
 #include "mainmenu.h"
 #include "assetloaderbypassdelegate.h"
 #include "nineblock.h"
+#include "assets.gen.h"
 #include <sifteo.h>
 #include <sifteo/menu.h>
 using namespace Sifteo;
@@ -225,7 +226,16 @@ void ELFMainMenuItem::bootstrap(Sifteo::CubeSet cubes, ProgressDelegate &progres
     ScopedAssetLoader loader;
     loader.start(config, cubes);
 
+    Sifteo::SystemTime time = SystemTime::now();
+
     while (!loader.isComplete()) {
+        // Play loading blip every so often
+        Sifteo::TimeDelta dt = Sifteo::SystemTime::now() - time;
+        if (dt.milliseconds() >= LOADING_SOUND_PERIOD) {
+            time += dt;
+            AudioChannel(0).play(Sound_LoadingGame);
+        }
+
         progress.paint(cubes, loader.averageProgress(100));
         System::paint();
     }

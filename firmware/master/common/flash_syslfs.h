@@ -44,8 +44,10 @@ namespace SysLFS {
     const unsigned TILES_PER_ASSET_SLOT = _SYS_TILES_PER_ASSETSLOT;
     const unsigned ASSET_GROUPS_PER_SLOT = _SYS_ASSET_GROUPS_PER_SLOT;
 
-    // This cannot be changed without modifying the Key layout below
+    // These cannot be changed without modifying the Key layout below
     const unsigned NUM_PAIRINGS = _SYS_NUM_CUBE_SLOTS;
+    const unsigned NUM_TOTAL_ASSET_SLOTS = NUM_PAIRINGS * ASSET_SLOTS_PER_CUBE;
+    const unsigned NUM_FAULTS = 16;
 
     /*
      * Key space
@@ -54,13 +56,72 @@ namespace SysLFS {
      */
 
     enum Key {
-        kPairingMRU     = 0x26,
-        kPairingID      = 0x27,
-        kCubeBase       = 0x28,
-        kCubeCount      = NUM_PAIRINGS,
-        kAssetSlotBase  = kCubeBase + kCubeCount,
-        kAssetSlotCount = NUM_PAIRINGS * ASSET_SLOTS_PER_CUBE,
-        kEnd            = kAssetSlotBase + kAssetSlotCount,
+        kFaultBase      = 0x16,
+        kPairingMRU     = kFaultBase + NUM_FAULTS,
+        kPairingID,
+        kCubeBase,
+        kAssetSlotBase  = kCubeBase + NUM_PAIRINGS,
+        kEnd            = kAssetSlotBase + NUM_TOTAL_ASSET_SLOTS,
+    };
+
+    /*
+     * Fault records.
+     *
+     * Any time a fatal error occurs, we give the user a brief message
+     * (containing only a 'reference number'), and we log the rest of
+     * the data to SysLFS for later sync'ing by TW.
+     *
+     * These fault logs should include all of the relevant info we
+     * can think to stuff into a SysLFS record.
+     */
+
+    enum FaultRecordType {
+        kFaultSVM = 1,
+    };
+
+    struct FaultHeader {
+        uint16_t reference;
+        uint8_t recordType;
+        uint8_t runningVolume;
+        uint32_t code;
+        uint64_t uptime;
+
+        Key readLatest();
+        static Key nextKey(Key k);
+    };
+
+    struct FaultCubeInfo {
+        uint32_t sysConnected;
+        uint32_t userConnected;
+        uint8_t minUserCubes;
+        uint8_t maxUserCubes;
+        uint16_t reserved;
+    };
+
+    struct FaultRegisters {
+        uint32_t pc;
+        uint32_t sp;
+        uint32_t fp;
+        uint32_t gpr[8];
+    };
+
+    struct FaultVolumeInfo {
+        _SYSUUID uuid;
+        uint8_t package[64];
+        uint8_t version[32];
+    };
+
+    struct FaultMemoryDumps {
+        uint8_t stack[256];         // Dumped from 'sp'
+        uint8_t codePage[256];      // Entire page containing 'pc'
+    };        
+
+    struct FaultRecordSvm {
+        FaultHeader header;
+        FaultCubeInfo cubes;
+        FaultRegisters regs;
+        FaultVolumeInfo vol;
+        FaultMemoryDumps mem;
     };
 
     /*

@@ -153,6 +153,9 @@ public:
     static void anonymous(FlashBlockRef &ref);
     static void anonymous(FlashBlockRef &ref, uint8_t fillByte);
 
+    // Single-block invalidate
+    void invalidateBlock(unsigned flags = 0);
+
 private:
     ALWAYS_INLINE void incRef() {
         ASSERT(refCount <= MAX_REFCOUNT);

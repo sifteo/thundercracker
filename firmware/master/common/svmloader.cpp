@@ -17,7 +17,7 @@
 #include "tasks.h"
 #include "cubeslots.h"
 #include "cube.h"
-#include "ui_panic.h"
+#include "faultlogger.h"
 #include "ui_pause.h"
 #include "audiomixer.h"
 #include "event.h"
@@ -147,12 +147,16 @@ FlashVolume SvmLoader::findLauncher()
     FlashVolume vol;
 
     vi.begin();
-    do {
-        if (!vi.next(vol))
-            SvmRuntime::fault(F_NO_LAUNCHER);
-    } while (vol.getType() != FlashVolume::T_LAUNCHER);
+    while (vi.next(vol)) {
+        if (vol.getType() == FlashVolume::T_LAUNCHER)
+            return vol;
+    }
 
-    return vol;
+    // No launcher! Log a fault, then stick in a task loop.
+
+    SvmRuntime::fault(F_NO_LAUNCHER);
+    while (1)
+        Tasks::idle();
 }
 
 void SvmLoader::runLauncher()
@@ -228,17 +232,13 @@ void SvmLoader::exit(bool fault)
         return execLauncher();
 
     case RUNLEVEL_LAUNCHER:
-        /*
-         * Launcher exited! Normally this doesn't happen. In a production
-         * version of the launcher this would be a fatal error. In
-         * simulation, however, we use this to exit the simulator.
-         */
+        // Launcher exited! Shut down.
 
         #ifdef SIFTEO_SIMULATOR
         // Must preserve the error code here, so that unit tests and other scripts work.
         SystemMC::exit(fault);
         #endif
 
-        return UIPanic::haltForever();
+        return _SYS_shutdown(0);
     }
 }
