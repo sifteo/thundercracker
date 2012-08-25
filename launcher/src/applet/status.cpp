@@ -66,6 +66,7 @@ void StatusApplet::exec()
 
 void StatusApplet::arrive()
 {
+    ASSERT(menu);
     // The number of cubes connected, or the base and menu cube battery status
     // could have changed while the Status applet was inactive.
     drawIcon(menu->cube());

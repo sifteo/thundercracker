@@ -125,7 +125,7 @@ void MainMenu::eventLoop()
             }
 
             // (Re)initialize the menu on that cube
-            menu.init(Shared::video[mainCube], &menuAssets, &menuItems[0]);
+            menu.init(Shared::video[mainCube], &menuAssets, menuItems);
             menu.setIconYOffset(8);
             if (itemIndexCurrent >= 0)
                 menu.anchor(itemIndexCurrent, true);
@@ -168,7 +168,7 @@ void MainMenu::handleEvent(MenuEvent &e)
     switch (e.type) {
 
         case MENU_ITEM_PRESS:
-            ASSERT(e.item < arraysize(items));
+            ASSERT(e.item < items.count());
             if (items[e.item]->getCubeRange().isEmpty()) {
                 AudioChannel(0).play(Sound_NonPossibleAction);
                 performDefault = false;
@@ -286,7 +286,7 @@ void MainMenu::cubeDisconnect(unsigned cid)
         mainCube = CubeID();
 
     if (itemIndexCurrent >= 0) {
-        ASSERT(itemIndexCurrent < arraysize(items));
+        ASSERT(itemIndexCurrent < items.count());
         MainMenuItem *item = items[itemIndexCurrent];
         item->onCubeDisconnect(cid);
     }
@@ -305,7 +305,7 @@ void MainMenu::neighborAdded(unsigned firstID, unsigned firstSide,
 void MainMenu::onBatteryLevelChange(unsigned cid)
 {
     if (itemIndexCurrent >= 0) {
-        ASSERT(itemIndexCurrent < arraysize(items));
+        ASSERT(itemIndexCurrent < items.count());
         MainMenuItem *item = items[itemIndexCurrent];
         item->onCubeBatteryLevelChange(cid);
     }
@@ -318,7 +318,7 @@ void MainMenu::volumeChanged(unsigned volumeHandle)
      */
 
     if (itemIndexCurrent >= 0) {
-        ASSERT(itemIndexCurrent < arraysize(items));
+        ASSERT(itemIndexCurrent < items.count());
         MainMenuItem *item = items[itemIndexCurrent];
         item->onVolumeChanged(volumeHandle);
     }
@@ -388,7 +388,7 @@ void MainMenu::updateConnecting()
 
                 // Dispatch connected event to current applet now that the cube is ready
                 if (itemIndexCurrent >= 0) {
-                    ASSERT(itemIndexCurrent < arraysize(items));
+                    ASSERT(itemIndexCurrent < items.count());
                     MainMenuItem *item = items[itemIndexCurrent];
                     item->onCubeConnect(cube);
                 }
@@ -435,7 +435,7 @@ void MainMenu::updateMusic()
 
 bool MainMenu::canLaunchItem(unsigned index)
 {
-    ASSERT(index < arraysize(items));
+    ASSERT(index < items.count());
     MainMenuItem *item = items[index];
 
     return CubeSet::connected().count() >= item->getCubeRange().sys.minCubes;
@@ -446,7 +446,7 @@ void MainMenu::toggleCubeRangeAlert(unsigned index)
     if (cubeRangeSavedIcon == NULL) {
         AudioChannel(0).play(Sound_NonPossibleAction);
 
-        ASSERT(index < arraysize(items));
+        ASSERT(index < items.count());
         MainMenuItem *item = items[index];
         
         cubeRangeSavedIcon = menuItems[index].icon;
@@ -503,7 +503,7 @@ void MainMenu::execItem(unsigned index)
 {
     DefaultLoadingAnimation anim;
 
-    ASSERT(index < arraysize(items));
+    ASSERT(index < items.count());
     MainMenuItem *item = items[index];
 
     item->getCubeRange().set();
@@ -513,7 +513,7 @@ void MainMenu::execItem(unsigned index)
 
 void MainMenu::arriveItem(unsigned index)
 {
-    ASSERT(index < arraysize(items));
+    ASSERT(index < items.count());
     MainMenuItem *item = items[index];
     item->setMenuInfo(&menu, index);
     item->arrive();
@@ -521,7 +521,7 @@ void MainMenu::arriveItem(unsigned index)
 
 void MainMenu::departItem(unsigned index)
 {
-    ASSERT(index < arraysize(items));
+    ASSERT(index < items.count());
     MainMenuItem *item = items[index];
     item->depart();
     item->setMenuInfo(NULL, -1);
@@ -537,7 +537,7 @@ void MainMenu::departItem(unsigned index)
 
 void MainMenu::paint(unsigned index)
 {
-    ASSERT(index < arraysize(items));
+    ASSERT(index < items.count());
     items[index]->paint();
 }
 
