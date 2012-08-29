@@ -466,7 +466,20 @@ void PaintControl::setToggle(CubeSlot *cube, _SYSVideoBuffer *vbuf,
     PAINT_LOG((LOG_PREFIX "setToggle\n", LOG_PARAMS));
 
     asyncTimestamp = timestamp;
+    /*
+     * XXX: I have observed the base, while waiting for finish(), deadlock because
+     *      it's waiting to receive a frameACK from a cube in order to change
+     *      _SYS_VF_TOGGLE, but since we never send a packet with _SYS_VF_TOGGLE
+     *      changed, the cube will never trigger a new render to give us that ACK.
+     *
+     *      I am not sure this is the totally correct fix, but in the worst case we
+     *      should only pay a penalty of transmitting a few extra radio packets,
+     *      rather than hanging the system.
+     */
+#if 0
     flags.setTo(_SYS_VF_TOGGLE, !(cube->getLastFrameACK() & FRAME_ACK_TOGGLE));
+#endif
+    flags.toggle(_SYS_VF_TOGGLE);
 }
 
 void PaintControl::makeSynchronous(CubeSlot *cube, _SYSVideoBuffer *vbuf)
