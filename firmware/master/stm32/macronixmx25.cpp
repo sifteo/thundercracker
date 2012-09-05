@@ -270,13 +270,13 @@ bool MacronixMX25::waitForDma()
             /*
              * Recover from terrible hardware badness!
              *
-             * (UART logging here disabled by default so as not to make a slight
-             * performance hiccup significantly less slight.)
+             * XXX: with this UART log commented out, this reinit step would
+             *      not succeed in all cases. We would prefer to avoid it,
+             *      of course, but leaving it in for now until the situation
+             *      is more completely resolved.
              */
 
-            #ifdef UART_DMA_TIMEOUT_DEBUG
-                UART("DMA timeout\r\n");
-            #endif
+            UART("DMA timeout\r\n");
 
             spi.init();
             success = false;
