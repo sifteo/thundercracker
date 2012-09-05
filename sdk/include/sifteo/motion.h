@@ -350,7 +350,7 @@ public:
 
 class TiltShakeRecognizer {
 public:
-    static const int kFilterLatency = MotionBuffer<>::TICK_HZ / 10;
+    static const int kFilterLatency = MotionBuffer<>::TICK_HZ / 30;
     static const int kTiltThresholdMin = 15;
     static const int kTiltThresholdMax = 30;
     static const int kShakeThresholdMin = 1000;
@@ -462,11 +462,11 @@ public:
      *
      * Returns a bitmap of ChangeFlags which describe which changes just occurred.
      */
-    unsigned update()
+    unsigned update( int latency = kFilterLatency )
     {
         unsigned changed = 0;
 
-        median.calculate(buffer, kFilterLatency);
+        median.calculate(buffer, latency);
         auto m = median.median();
         int wobble = median.range().len2();
 
