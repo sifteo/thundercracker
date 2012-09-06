@@ -39,7 +39,7 @@ struct VRAMFlags {
             clear(flags);
     }
 
-    void apply(_SYSVideoBuffer *vbuf);
+    bool apply(_SYSVideoBuffer *vbuf);
 };
 
 

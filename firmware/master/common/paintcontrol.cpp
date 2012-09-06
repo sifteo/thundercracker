@@ -520,7 +520,7 @@ bool PaintControl::canMakeSynchronous(CubeSlot *cube, _SYSVideoBuffer *vbuf,
         && timestamp > asyncTimestamp + fpsLow;
 }
 
-void VRAMFlags::apply(_SYSVideoBuffer *vbuf)
+bool VRAMFlags::apply(_SYSVideoBuffer *vbuf)
 {
     // Atomic update via XOR.
     uint8_t x = vf ^ vfPrev;
@@ -530,5 +530,8 @@ void VRAMFlags::apply(_SYSVideoBuffer *vbuf)
         VRAM::xorb(*vbuf, offsetof(_SYSVideoRAM, flags), x, 0);
         VRAM::unlock(*vbuf);
         vfPrev = vf;
+        return true;
     }
+
+    return false;
 }
