@@ -137,7 +137,7 @@ class CubeSlot {
 
     ALWAYS_INLINE SysLFS::Key getCubeRecordKey() const {
         ASSERT(cubeRecord >= SysLFS::kCubeBase);
-        ASSERT(cubeRecord < SysLFS::kCubeBase + SysLFS::NUM_PAIRINGS);
+        ASSERT(cubeRecord < static_cast<SysLFS::Key>(SysLFS::kCubeBase + SysLFS::NUM_PAIRINGS));
         return cubeRecord;
     }
 
