@@ -149,7 +149,7 @@ bool Event::dispatchCubePID(PriorityID pid, _SYSCubeID cid)
                  * Disconnect events are delivered once the game is resumed.
                  */
                 if (CubeSlots::belowCubeRange())
-                    Pause::cubeRange();
+                    Pause::mainLoop(Pause::ModeCubeRange);
 
                 CubeSlots::instances[cid].userDisconnect();
                 return callCubeEvent(_SYS_CUBE_DISCONNECT, cid);

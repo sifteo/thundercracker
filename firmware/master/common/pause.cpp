@@ -11,10 +11,7 @@
 #include "svmloader.h"
 #include "svmclock.h"
 
-#include "ui_pause.h"
-#include "ui_cuberange.h"
 #include "ui_shutdown.h"
-#include "ui_coordinator.h"
 
 BitVector<Pause::NUM_WORK_ITEMS> Pause::taskWork;
 
@@ -40,9 +37,8 @@ void Pause::task()
             break;
 
         case LowBattery:
-            lowBattery();
+            mainLoop(ModeLowBattery);
             break;
-
         }
     }
 }
@@ -69,14 +65,8 @@ void Pause::onButtonChange()
     /*
      * Game is running, and button was pressed - execute the pause menu.
      */
-    if (HomeButton::isPressed()) {
-        const uint32_t excludedTasks =
-            Intrinsic::LZ(Tasks::AudioPull) |
-            Intrinsic::LZ(Tasks::Pause);
-
-        UICoordinator uic(excludedTasks);
-        runPauseMenu(uic);
-    }
+    if (HomeButton::isPressed())
+        mainLoop(ModePause);
 }
 
 void Pause::monitorButtonHold()
@@ -112,106 +102,138 @@ void Pause::monitorButtonHold()
     }
 }
 
-void Pause::runPauseMenu(UICoordinator &uic)
+void Pause::mainLoop(Mode mode)
 {
     /*
-     * Long running button press handler.
-     * We may be running here as a result of one of several actions:
-     * - homebutton press during gameplay
-     * - cubes were reconnected while the cubeRange pause menu was being displayed
+     * Run the pause menu in the given mode.
      *
-     * The passed in UICoordinator should be configured based on system state
-     * when we initially entered any pause state.
+     * The pause menu can transition between modes - each
+     * mode's handler can indicate whether we should exit from
+     * the entire pause context, or whether the mode has changed.
+     *
+     * Upon mode change, we just need to be sure to init the UI element
+     * for that mode.
+     *
+     * Mode handlers are responsible for detecting their completion
+     * conditions, animating the UI, and ensuring that the UI is
+     * being shown on a connected cube.
      */
 
     if (!SvmClock::isPaused())
         SvmClock::pause();
 
+    const uint32_t excludedTasks =
+        Intrinsic::LZ(Tasks::AudioPull)  |
+        Intrinsic::LZ(Tasks::Pause);
+    UICoordinator uic(excludedTasks);
+
+    // all possible UI elements
     UIPause uiPause(uic);
-    if (uic.isAttached())
-        uiPause.init();
+    UICubeRange uiCubeRange(uic);
 
     LED::set(LEDPatterns::paused, true);
 
-    for (;;) {
+    bool finished = false;
+    Mode lastMode = static_cast<Mode>(0xff);  // garbage value forces an init
+
+    /*
+     * Run our loop, detecting mode changes and pumping the
+     * appropriate UI element.
+     */
+
+    while (!finished) {
+
+        bool modeChanged = lastMode != mode;
+        lastMode = mode;
         uic.stippleCubes(uic.connectCubes());
 
-        if (uic.pollForAttach())
-            uiPause.init();
+        switch (mode) {
 
-        uiPause.animate();
-        uic.paint();
+        case ModePause:
+            if (modeChanged && uic.isAttached())
+                uiPause.init();
+            finished = pauseModeHandler(uic, uiPause, mode);
+            break;
 
-        // Long press- shut down
+        case ModeCubeRange:
+            if (modeChanged && uic.isAttached())
+                uiCubeRange.init();
+            finished = cubeRangeModeHandler(uic, uiCubeRange, mode);
+            break;
+
+        case ModeLowBattery:
+            finished = lowBatteryModeHandler();
+            break;
+        }
+
+        // Long press - always allow shut down
         if (HomeButton::pressDuration() > SysTime::msTicks(1000)) {
             UIShutdown uiShutdown(uic);
             uiShutdown.init();
             return uiShutdown.mainLoop();
         }
+    }
+}
 
-        if (uiPause.isDone() && HomeButton::isReleased())
-            break;
-    };
+bool Pause::pauseModeHandler(UICoordinator &uic, UIPause &uip, Mode &mode)
+{
+    if (uic.pollForAttach())
+        uip.init();
+
+    uip.animate();
+    uic.paint();
+
+    // has menu finished, and button is not still potentially being held for shutdown?
+    if (uip.isDone() && HomeButton::isReleased()) {
+        cleanup(uic);
+        uip.takeAction();
+        return true;
+    }
+
+    // Did we transition back to having too few cubes?
+    if (CubeSlots::belowCubeRange())
+        mode = ModeCubeRange;
+
+    return false;
+}
+
+bool Pause::cubeRangeModeHandler(UICoordinator &uic, UICubeRange &uicr, Mode &mode)
+{
+    if (uic.pollForAttach())
+        uicr.init();
+
+    uicr.animate();
+    uic.paint();
+
+    // has menu finished, and button is not still potentially being held for shutdown?
+    if (uicr.quitWasSelected() && HomeButton::isReleased()) {
+        cleanup(uic);
+        SvmLoader::exit();
+        return true;
+    }
+
+    // Is CubeRange fulfilled yet? If so, transition to normal pause menu
+    if (!CubeSlots::belowCubeRange())
+        mode = ModePause;
+
+    return false;
+}
+
+bool Pause::lowBatteryModeHandler()
+{
+    return true;
+}
+
+void Pause::cleanup(UICoordinator &uic)
+{
+    /*
+     * Helper for common clean up tasks when transitioning
+     * out of the pause menu altogether.
+     */
 
     uic.restoreCubes(uic.uiConnected);
     LED::set(LEDPatterns::idle);
     Tasks::cancel(Tasks::Pause);
     if (SvmClock::isPaused())
         SvmClock::resume();
-    uiPause.takeAction();
-}
-
-void Pause::lowBattery()
-{
-
-}
-
-void Pause::cubeRange()
-{
-    /*
-     * A disconnection event has brought the number of cubes connected
-     * to the system below the game's specified cube range.
-     *
-     * Pause until the user either connects enough cubes,
-     * or quits back to the launcher.
-     */
-
-    const uint32_t excludedTasks =
-        Intrinsic::LZ(Tasks::AudioPull)  |
-        Intrinsic::LZ(Tasks::Pause);
-
-    SvmClock::pause();
-    LED::set(LEDPatterns::paused, true);
-
-    UICoordinator uic(excludedTasks);
-    UICubeRange uiCubeRange(uic);
-
-    do {
-
-        uic.stippleCubes(uic.connectCubes());
-
-        if (uic.pollForAttach())
-            uiCubeRange.init();
-
-        uiCubeRange.animate();
-        uic.paint();
-
-    } while (CubeSlots::belowCubeRange() && !uiCubeRange.quitWasSelected());
-
-    /*
-     * 2 options: enough cubes were reconnected, or user selected quit.
-     *
-     * If cubes were reconnected, we transition to the pause menu.
-     * If quit, then quit :)
-     */
-
-    if (uiCubeRange.quitWasSelected()) {
-        uic.restoreCubes(uic.uiConnected);
-        LED::set(LEDPatterns::idle);
-        if (SvmClock::isPaused())
-            SvmClock::resume();
-        SvmLoader::exit();
-    } else {
-        runPauseMenu(uic);
-    }
 }
