@@ -80,8 +80,47 @@ class CubeSlot {
         motionWriter.setBuffer(m);
     }
 
+    // synced with SDK facing version in sdk/include/sifteo/video.h
+    enum Rotation {
+        ROT_NORMAL              = 0,
+        ROT_LEFT_90_MIRROR      = _SYS_VF_XY_SWAP,
+        ROT_MIRROR              = _SYS_VF_X_FLIP,
+        ROT_LEFT_90             = _SYS_VF_XY_SWAP | _SYS_VF_Y_FLIP,
+        ROT_180_MIRROR          = _SYS_VF_Y_FLIP,
+        ROT_RIGHT_90            = _SYS_VF_XY_SWAP | _SYS_VF_X_FLIP,
+        ROT_180                 = _SYS_VF_X_FLIP | _SYS_VF_Y_FLIP,
+        ROT_RIGHT_90_MIRROR     = _SYS_VF_XY_SWAP | _SYS_VF_X_FLIP | _SYS_VF_Y_FLIP
+    };
+
+    // synced with SDK facing version in sdk/include/sifteo/video.h
+    const Rotation rotation() {
+
+        if (!vbuf)
+            return ROT_NORMAL;
+
+        const uint8_t mask = _SYS_VF_XY_SWAP | _SYS_VF_X_FLIP | _SYS_VF_Y_FLIP;
+        uint8_t flags = VRAM::peekb(*vbuf, offsetof(_SYSVideoRAM, flags));
+        return static_cast<Rotation>(mask & flags);
+    }
+
     ALWAYS_INLINE const _SYSByte4 getAccelState() {
         return MotionUtil::captureAccelState(lastACK, getVersion());
+    }
+
+    const _SYSByte4 getVirtualAccelState() {
+
+        _SYSByte4 a = getAccelState();
+        _SYSByte4 a1 = {{ -a.y,  a.x, a.z }};
+        _SYSByte4 a2 = {{ -a.x, -a.y, a.z }};
+        _SYSByte4 a3 = {{  a.y, -a.x, a.z }};
+
+        switch (rotation()) {
+            default: ASSERT(0);
+            case ROT_NORMAL:    return a;
+            case ROT_LEFT_90:   return a1;
+            case ROT_180:       return a2;
+            case ROT_RIGHT_90:  return a3;
+        }
     }
 
     ALWAYS_INLINE const uint8_t* getRawNeighbors() const {
