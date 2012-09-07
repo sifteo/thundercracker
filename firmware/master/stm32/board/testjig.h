@@ -82,6 +82,12 @@
 #define VOLUME_CHAN         2
 #define VOLUME_GPIO         GPIOPin(&GPIOA, 1)
 
+// B A T T E R Y
+#define BATT_LVL_TIM        TIM4                    // NOTE! same as NBR_TX_TIM
+#define BATT_LVL_CHAN       2
+#define BATT_MEAS_GPIO      GPIOPin(&GPIOB,7)
+#define BATT_MEAS_GND_GPIO  GPIOPin(&GPIOA,10)
+
 // M I S C
 #define BTN_HOME_GPIO       GPIOPin(&GPIOA, 0)
 #define BTN_HOME_EXTI_VEC   EXTI2

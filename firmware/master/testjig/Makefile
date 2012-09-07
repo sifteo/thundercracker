@@ -5,7 +5,7 @@ include $(TC_DIR)/firmware/master/Makefile.objs
 include $(TC_DIR)/firmware/master/Makefile.defs
 
 # testjig specific flags
-CCFLAGS += -I. -I../bootloader -DBOARD=BOARD_TEST_JIG
+FLAGS += -I. -I../bootloader -DBOARD=BOARD_TEST_JIG
 
 # Sources specific to testjig firmware
 OBJS_STM32 += \
