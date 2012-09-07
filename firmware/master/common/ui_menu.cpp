@@ -72,7 +72,7 @@ void UIMenu::animate()
      * Sample accelerometer, with hysteresis
      */
 
-    _SYSByte4 accel = cube.getAccelState();
+    _SYSByte4 accel = cube.getVirtualAccelState();
     int accelThreshold = state == S_TILTING ? kAccelHysteresisMin : kAccelHysteresisMax;
     bool isTilting = accel.x > accelThreshold || accel.x < -accelThreshold;
 
