@@ -460,11 +460,13 @@ public:
      * the attached cube. After this call, the `tilt` and `shake` members
      * will contain the latest state.
      *
-     * Returns a bitmap of ChangeFlags which describe which changes just occurred.
-	 *
-	 * Takes as an optional parameter a "latency" value which determines how large of a duration we make our calculations over.  The default is MotionBuffer<>::TICK_HZ / 30, which calculates over a 1/30th of a second duration.
+     * @param latency (optional) Specifies the duration of the window
+     * on which the filter operates. The default is MotionBuffer<>::TICK_HZ / 30,
+     * or 1/30th of a second.
+     *
+     * @return a bitmap of ChangeFlags which describe which changes just occurred.
      */
-    unsigned update( int latency = kFilterLatency )
+    unsigned update(int latency = kFilterLatency)
     {
         unsigned changed = 0;
 
