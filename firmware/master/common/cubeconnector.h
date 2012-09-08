@@ -30,6 +30,10 @@
 
 class CubeConnector {
 public:
+
+    // threshold to engage in a reconnection sequence with a cube.
+    static const unsigned MIN_RECONNECT_BATTERY_LEVEL = 0x50;
+
     static void init();
 
     static ALWAYS_INLINE void enableReconnect() {

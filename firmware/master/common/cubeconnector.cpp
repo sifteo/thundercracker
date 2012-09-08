@@ -490,7 +490,10 @@ void CubeConnector::radioAcknowledge(const PacketBuffer &packet)
          */
         case ReconnectFirstContact:
         case ReconnectAltFirstContact:
-            if (packet.len >= RF_ACK_LEN_HWID && !memcmp(hwid, ack->hwid, sizeof hwid)) {
+            if (packet.len >= RF_ACK_LEN_HWID
+                && ack->battery_v >= MIN_RECONNECT_BATTERY_LEVEL
+                && !memcmp(hwid, ack->hwid, sizeof hwid))
+            {
                 txState = ReconnectBeginHop;
             }
             break;
