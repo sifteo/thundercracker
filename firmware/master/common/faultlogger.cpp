@@ -250,7 +250,11 @@ void FaultLogger::task()
      * Exit this SVM process. Currently this always causes us to return
      * to the launcher, on hardware, once we resume running userspace code.
      * On simulation, it exits Siftulator immediately.
+     *
+     * Since we're going to directly re-enter the runtime, rather than returning
+     * to the task dispatcher, make sure we're clear the fault task on our way out.
      */
 
+    Tasks::cancel(Tasks::FaultLogger);
     SvmLoader::exit(true);
 }
