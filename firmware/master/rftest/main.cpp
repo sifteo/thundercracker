@@ -10,6 +10,7 @@
 #include "radio.h"
 #include "nrf24l01.h"
 #include "homebutton.h"
+#include "bootloader.h"
 
 /*
  * RF test application specific entry point.
@@ -17,6 +18,11 @@
  */
 int main()
 {
+
+    #ifdef BOOTLOADABLE
+        NVIC.setVectorTable(NVIC.VectorTableFlash, Bootloader::SIZE);
+    #endif
+
     SysTime::init();
     PowerManager::init();
     HomeButton::init();
