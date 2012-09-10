@@ -42,16 +42,9 @@ private:
     static void beginNeighborTxHandler(uint8_t argc, uint8_t *args);
     static void stopNeighborTxHandler(uint8_t argc, uint8_t *args);
 
-    enum SensorsTransactionState {
-        StartInitial,
-        StartRepeated,
-    };
-
     struct AckPacket {
         RF_ACKType payload;
-        SensorsTransactionState startCondState;
         bool enabled;
-        bool usbWritePending;
         uint8_t len;
 
         bool ALWAYS_INLINE full() const {

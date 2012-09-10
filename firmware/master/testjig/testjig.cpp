@@ -150,17 +150,9 @@ void TestJig::onI2cEvent()
      *       additional i2c data that arrives in the meantime will be dropped.
      *       This is generally fine, since we're not tracking any specific packet.
      */
+
     if (status & I2CSlave::AddressMatch) {
-        if (ackPacket.startCondState == StartInitial) {
-            ackPacket.startCondState = StartRepeated;
-            if (ackPacket.full() && ackPacket.enabled) {
-                ackPacket.usbWritePending = true;
-                Tasks::trigger(Tasks::TestJig);
-            }
-        } else {
-            ackPacket.len = 0;
-            ackPacket.startCondState = StartInitial;
-        }
+        // pass
     }
 
     /*
@@ -193,8 +185,12 @@ void TestJig::onI2cEvent()
      * pending USB writes, and it won't overflow our buffer.
      */
     if (status & I2CSlave::RxNotEmpty) {
-        if (!ackPacket.usbWritePending && !ackPacket.full())
+
+        if (!ackPacket.full())
             ackPacket.append(byte);
+
+        if (ackPacket.full() && ackPacket.enabled)
+            Tasks::trigger(Tasks::TestJig);
     }
 }
 
@@ -207,7 +203,9 @@ void TestJig::task()
 {
     uint8_t resp[1 + sizeof(ackPacket.payload)] = { EventAckPacket };
     memcpy(resp + 1, &ackPacket.payload, sizeof ackPacket.payload);
-    ackPacket.usbWritePending = false;
+
+    // once we've copied this msg out, ackPacket is now available for more data
+    ackPacket.len = 0;
     UsbDevice::write(resp, sizeof resp);
 }
 
