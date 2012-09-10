@@ -56,6 +56,15 @@ private:
         }
     };
 
+    // double buffered i2c payload to transmit via USB
+    union I2CUsbPayload {
+        uint8_t bytes[sizeof(RF_ACKType) + 1];
+        struct {
+            RF_ACKType payload;
+            bool usbWritePending;
+        };
+    };
+
     enum I2CProtocolType {
         I2CVramMax          = 0x44,
         I2CSetNeighborID    = 0xfc,
@@ -73,6 +82,7 @@ private:
     };
 
     static AckPacket ackPacket;
+    static I2CUsbPayload i2cUsbPayload;
     static I2CWriteTransaction cubeWrite;
 };
 

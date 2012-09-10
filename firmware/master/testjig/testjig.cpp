@@ -29,6 +29,7 @@ static GPIOPin v3CurrentSign = V3_CURRENT_DIR_GPIO;
 
 TestJig::I2CWriteTransaction TestJig::cubeWrite;
 TestJig::AckPacket TestJig::ackPacket;
+TestJig::I2CUsbPayload TestJig::i2cUsbPayload;
 
 /*
  * Table of test handlers.
@@ -96,6 +97,7 @@ void TestJig::init()
 
     ackPacket.enabled = false;
     ackPacket.len = 0;
+    i2cUsbPayload.usbWritePending = false;
     cubeWrite.remaining = 0;
 
     i2c.init(JIG_SCL_GPIO, JIG_SDA_GPIO, I2C_SLAVE_ADDRESS);
@@ -152,7 +154,8 @@ void TestJig::onI2cEvent()
      */
 
     if (status & I2CSlave::AddressMatch) {
-        // pass
+        // begin new rx sequence
+        ackPacket.len = 0;
     }
 
     /*
@@ -189,8 +192,21 @@ void TestJig::onI2cEvent()
         if (!ackPacket.full())
             ackPacket.append(byte);
 
-        if (ackPacket.full() && ackPacket.enabled)
-            Tasks::trigger(Tasks::TestJig);
+        if (ackPacket.full() && ackPacket.enabled) {
+            if (!i2cUsbPayload.usbWritePending) {
+
+                /*
+                 * If our double buffer is available, stash it there until
+                 * our task can write it out over USB, and we're free to start
+                 * collecting our next packet.
+                 */
+
+                memcpy(&i2cUsbPayload.bytes[1], &ackPacket.payload, sizeof ackPacket.payload);
+                ackPacket.len = 0;
+                i2cUsbPayload.usbWritePending = true;
+                Tasks::trigger(Tasks::TestJig);
+            }
+        }
     }
 }
 
@@ -201,12 +217,12 @@ void TestJig::onI2cEvent()
  */
 void TestJig::task()
 {
-    uint8_t resp[1 + sizeof(ackPacket.payload)] = { EventAckPacket };
-    memcpy(resp + 1, &ackPacket.payload, sizeof ackPacket.payload);
+    if (!i2cUsbPayload.usbWritePending)
+        return;
 
-    // once we've copied this msg out, ackPacket is now available for more data
-    ackPacket.len = 0;
-    UsbDevice::write(resp, sizeof resp);
+    i2cUsbPayload.bytes[0] = EventAckPacket;
+    UsbDevice::write(i2cUsbPayload.bytes, sizeof i2cUsbPayload.bytes);
+    i2cUsbPayload.usbWritePending = false;
 }
 
 /*******************************************
