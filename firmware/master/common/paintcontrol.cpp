@@ -459,7 +459,7 @@ void PaintControl::enterContinuous(CubeSlot *cube, _SYSVideoBuffer *vbuf,
     PAINT_LOG((LOG_PREFIX "enterContinuous, allowed=%d\n", LOG_PARAMS, allowed));
 
     // Entering continuous mode; all synchronization goes out the window.
-    Atomic::And(vbuf->flags, ~(_SYS_VBF_SYNC_ACK | _SYS_VBF_FLAG_SYNC));
+    Atomic::And(vbuf->flags, ~_SYS_VBF_SYNC_ACK);
     Atomic::Or(vbuf->flags, _SYS_VBF_DIRTY_RENDER);
 
     // For now, we may be async even if the ACK byte does not indicate continuous rendering
@@ -507,17 +507,10 @@ void PaintControl::makeSynchronous(CubeSlot *cube, _SYSVideoBuffer *vbuf)
 
     pendingFrames = 0;
 
-    /*
-     * We can only enter SYNC_ACK state if we know that vbuf's flags
-     * match what's on real hardware. We know this after any vramFlushed().
-     *
-     * We also clear FLAG_SYNC - we won't consider flags to be in sync
-     * again until the next invocation of vramFlushed().
-     */
-    if (vbuf->flags & _SYS_VBF_FLAG_SYNC) {
-        Atomic::And(vbuf->flags, ~_SYS_VBF_FLAG_SYNC);
+    // We can only enter SYNC_ACK state if we know that vbuf's flags
+    // match what's on real hardware. We know this after any vramFlushed().
+    if (vbuf->flags & _SYS_VBF_FLAG_SYNC)
         Atomic::Or(vbuf->flags, _SYS_VBF_SYNC_ACK);
-    }
 }
 
 bool PaintControl::canMakeSynchronous(CubeSlot *cube, _SYSVideoBuffer *vbuf,
