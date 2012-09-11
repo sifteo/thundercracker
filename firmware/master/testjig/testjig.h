@@ -57,12 +57,9 @@ private:
     };
 
     // double buffered i2c payload to transmit via USB
-    union I2CUsbPayload {
+    struct I2CUsbPayload {
+        bool usbWritePending;
         uint8_t bytes[sizeof(RF_ACKType) + 1];
-        struct {
-            RF_ACKType payload;
-            bool usbWritePending;
-        };
     };
 
     enum I2CProtocolType {
