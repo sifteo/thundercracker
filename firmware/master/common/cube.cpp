@@ -393,6 +393,7 @@ void CubeSlot::radioAcknowledge(const PacketBuffer &packet)
                 Atomic::SetLZ(CubeSlots::touch, id());
             }
             Event::setCubePending(Event::PID_CUBE_TOUCH, id());
+            IdleTimeout::reset();
         }
 
         // Is this a flash reset ACK?
@@ -402,9 +403,6 @@ void CubeSlot::radioAcknowledge(const PacketBuffer &packet)
 
         // Trigger a rescan of all neighbors, during event dispatch
         Event::setCubePending(Event::PID_NEIGHBORS, id());
-        // this is a bit coarse, but we'll be conservative in staying awake
-        // if we get anything from the cubes indicating neighbors or touch might have changed.
-        IdleTimeout::reset();
     }
 
     if (packet.len >= offsetof(RF_ACKType, battery_v) + sizeof ack->battery_v) {

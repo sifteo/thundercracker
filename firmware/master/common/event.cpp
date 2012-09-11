@@ -8,6 +8,7 @@
 #include "cube.h"
 #include "neighborslot.h"
 #include "pause.h"
+#include "idletimeout.h"
 
 Event::VectorInfo Event::vectors[_SYS_NUM_VECTORS];
 Event::Params Event::params[NUM_PIDS];
@@ -113,10 +114,16 @@ bool Event::dispatchCubePID(PriorityID pid, _SYSCubeID cid)
          * matrix again, and produce any applicable events. We only
          * remove this from cubesPending after NeighborSlot finishes
          * generating events.
+         *
+         * Prevent our idle timeout from firing if a legit neighbor event
+         * was observed.
          */
         case PID_NEIGHBORS:
-            if (NeighborSlot::instances[cid].sendNextEvent())
+            if (NeighborSlot::instances[cid].sendNextEvent()) {
+                IdleTimeout::reset();
                 return true;
+            }
+
             Atomic::And(params[pid].cubesPending, ~Intrinsic::LZ(cid));
             return false;
 
