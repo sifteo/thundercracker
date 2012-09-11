@@ -235,10 +235,22 @@ void FaultLogger::task()
      * Now display the fault UI, until the user dismisses it.
      */
 
-    const uint32_t excludedTasks =
-        Intrinsic::LZ(Tasks::AudioPull)   |
+    uint32_t excludedTasks =
         Intrinsic::LZ(Tasks::FaultLogger) |
         Intrinsic::LZ(Tasks::Pause);
+
+    /*
+     * Factory test support: the default state that the base gets tested in
+     * is without a launcher installed. However, we still need to be able
+     * to test audio in this case, so we'll enable that task.
+     *
+     * Hoping that nobody else is going to be rendering audio for any other
+     * scenarios in which we fault due to missing launcher.
+     */
+
+    if (header.code != F_NO_LAUNCHER) {
+        excludedTasks |= Intrinsic::LZ(Tasks::AudioPull);
+    }
 
     UICoordinator uic(excludedTasks);
     UIFault uiFault(uic, header.reference);
