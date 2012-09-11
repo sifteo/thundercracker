@@ -487,11 +487,21 @@ void CubeConnector::radioAcknowledge(const PacketBuffer &packet)
          * We got a response back from a paired cube that we'd like to connect!
          * Assuming the HWID matches what we have on file, continue the
          * connection attempt by beginning a hop.
+         *
+         * XXX: for now, we allow cubes with any battery level to connect in the simulator
+         *      because cubes take about a second to arrive at a stable battery level
+         *      reading on startup, and that's longer than it takes for the launcher
+         *      to auto-start games in the common case.
+         *
+         *      this will be fixed more completely when we start tracking cube
+         *      battery levels persistently, and can base our behavior here on better info.
          */
         case ReconnectFirstContact:
         case ReconnectAltFirstContact:
             if (packet.len >= RF_ACK_LEN_HWID
+                #ifndef SIFTEO_SIMULATOR
                 && ack->battery_v >= MIN_RECONNECT_BATTERY_LEVEL
+                #endif
                 && !memcmp(hwid, ack->hwid, sizeof hwid))
             {
                 txState = ReconnectBeginHop;
