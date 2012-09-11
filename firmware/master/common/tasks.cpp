@@ -70,7 +70,9 @@ ALWAYS_INLINE void Tasks::taskInvoke(unsigned id)
 
 void Tasks::heartbeatTask()
 {
+#if (BOARD != BOARD_TEST_JIG)
     IdleTimeout::heartbeat();
+#endif
 
     Radio::heartbeat();
     AssetLoader::heartbeat();
