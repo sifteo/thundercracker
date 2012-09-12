@@ -352,7 +352,7 @@ class TiltShakeRecognizer {
 public:
     static const int kFilterLatency = MotionBuffer<>::TICK_HZ / 30;
     static const int kTiltThresholdMin = 15;
-    static const int kTiltThresholdMax = 30;
+    static const int kTiltThresholdMax = 26;
     static const int kShakeThresholdMin = 1000;
     static const int kShakeThresholdMax = 50000;
 
