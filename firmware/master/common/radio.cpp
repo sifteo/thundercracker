@@ -155,8 +155,7 @@ void RadioManager::produce(PacketTransmission &tx)
             tx.dest = &dummy;
             tx.packet.bytes[0] = 0xFF;
             tx.packet.len = 1;
-            tx.numSoftwareRetries = 0;
-            tx.numHardwareRetries = 0;
+            tx.noAck = true;
 
             nextPID = (thisPID + 1) & PID_MASK;
             fifo.enqueue(DUMMY_ID);
