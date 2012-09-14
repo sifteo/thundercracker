@@ -179,11 +179,16 @@ bool CubeSlot::radioProduce(PacketTransmission &tx, SysTime::Ticks now)
          * Use a much lower than usual retry count, by disabling software retries,
          * so that this disconnect doesn't cause a noticeable hiccup in communications
          * with other cubes.
+         *
+         * Special case: if we're shutting down (as guessed by checking our
+         * cube range), we can stand to wait the normal timeout to ensure
+         * cubes get shut down along with the base.
          */
 
         codec.encodeShutdown(tx.packet);
         ASSERT(!tx.packet.isFull());
-        tx.numSoftwareRetries = 0;
+        if (!(CubeSlots::minUserCubes == 0 && CubeSlots::maxUserCubes == 0))
+            tx.numSoftwareRetries = 0;
 
     } else if (UNLIKELY(CubeSlots::sendStipple & cv)) {
         // Send a stipple pattern
