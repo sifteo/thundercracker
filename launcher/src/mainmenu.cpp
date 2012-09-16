@@ -83,7 +83,12 @@ void MainMenu::init()
 
 void MainMenu::initMenu(unsigned initialIndex, bool popUp)
 {
-    ASSERT(initialIndex < items.count());
+    if (initialIndex >= items.count()) {
+        LOG("Initial index (%u) exceeds number of items (%u)!", initialIndex, items.count());
+        initialIndex = 0;
+    }
+    ASSERT(items.count() > 0);
+
     // (Re)initialize the menu
     menu.init(Shared::video[mainCube], &menuAssets, menuItems);
     menu.setIconYOffset(8);
