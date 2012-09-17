@@ -89,11 +89,6 @@ ALWAYS_INLINE void RCTimer::beginSample()
 }
 
 
-/*
- * Handle timer interrupt.
- * return true to
- * confirm that we got an updated reading as a result of this ISR.
- */
 ALWAYS_INLINE void RCTimer::isr()
 {
     uint32_t status = timer.status();
@@ -106,7 +101,7 @@ ALWAYS_INLINE void RCTimer::isr()
 
     // capture event
     if (status & (1 << timerChan)) {
-        uint16_t sample = timer.lastCapture(timerChan) - startTime;
+        int sample = timer.lastCapture(timerChan) - startTime;
 
         // keep this pin low between samples to avoid power draw
         pin.setLow();
@@ -124,11 +119,10 @@ ALWAYS_INLINE void RCTimer::isr()
 
         int state = filterState;
         if (state == INIT_FILTER_STATE)
-            filterState = int(sample) << FILTER_SHIFT;
+            filterState = sample << FILTER_SHIFT;
         else
-            filterState = state + int(sample) - (lastReading() >> FILTER_SHIFT);
+            filterState = state + sample - (filterState >> FILTER_SHIFT);
     }
 }
-
 
 #endif // RCTIMER_H

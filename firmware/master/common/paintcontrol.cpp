@@ -64,7 +64,23 @@
 #define _SYS_VBF_SYNC_ACK           (1 << 17)   // Frame ACK is synchronous (pendingFrames is 0 or 1)
 #define _SYS_VBF_TRIGGER_ON_FLUSH   (1 << 18)   // Trigger a paint from vramFlushed()
 #define _SYS_VBF_FLAG_SYNC          (1 << 19)   // This VideoBuffer has sync'ed flags with the cube
-
+/*
+ * _SYS_VBF_UNCOND_TOGGLE is a workaround for an observed case in which,
+ * while waiting for finish(), we deadlock because of an apparent failure in the
+ * synchronization between a vbuf's toggle bit, and the attached cube's frameACK
+ * count. Only seen on hardware thus far.
+ *
+ * The failure mode: pollForFinish() -> triggerPaint() sets _SYS_VBF_TRIGGER_ON_FLUSH
+ * and once vramFlushed() is invoked, setToggle() is called, but because the cube
+ * vbuf's toggle bit is already synchronized with its frameACK count, we don't
+ * generate a new delta in the flags that would cause a packet to be sent.
+ *
+ * Workaround is to detect the case in which we've been waiting for more than one
+ * interval between triggers with _SYS_VBF_TRIGGER_ON_FLUSH set, and then set
+ * _SYS_VBF_UNCOND_TOGGLE to force an edge on the toggle signal. Still not sure
+ * where the initial lack of sync is coming from.
+ */
+#define _SYS_VBF_UNCOND_TOGGLE      (1 << 20)   // We've stalled... flip the toggle no matter what
 
 /*
  * Frame rate control parameters:
@@ -221,9 +237,19 @@ void PaintControl::triggerPaint(CubeSlot *cube, SysTime::Ticks now)
 
         // When the codec calls us back in vramFlushed(), trigger a render
         if (!vf.test(_SYS_VF_CONTINUOUS)) {
-            // Trigger on the next flush
+            /*
+             * Trigger on the next flush.
+             *
+             * If we'be already been waiting on _SYS_VBF_TRIGGER_ON_FLUSH,
+             * set an unconditional toggle so we don't wait forever.
+             * See notes on _SYS_VBF_UNCOND_TOGGLE above for details.
+             */
             asyncTimestamp = now;
-            Atomic::Or(vbuf->flags, _SYS_VBF_TRIGGER_ON_FLUSH);
+            if (vbuf->flags & _SYS_VBF_TRIGGER_ON_FLUSH) {
+                Atomic::Or(vbuf->flags, _SYS_VBF_UNCOND_TOGGLE);
+            } else {
+                Atomic::Or(vbuf->flags, _SYS_VBF_TRIGGER_ON_FLUSH);
+            }
 
             // Provoke a VRAM flush, just in case this wasn't happening anyway.
             if (vbuf->lock == 0)
@@ -407,13 +433,13 @@ bool PaintControl::vramFlushed(CubeSlot *cube)
                 enterContinuous(cube, vbuf, vf, now);
         }
 
-        vf.apply(vbuf);
+        if (vf.apply(vbuf)) {
 
-        // Propagate the bits...
-        Atomic::Or(vbuf->flags, _SYS_VBF_DIRTY_RENDER);
-        Atomic::And(vbuf->flags, ~_SYS_VBF_TRIGGER_ON_FLUSH);
-
-        return true;
+            // Propagate the bits...
+            Atomic::Or(vbuf->flags, _SYS_VBF_DIRTY_RENDER);
+            Atomic::And(vbuf->flags, ~_SYS_VBF_TRIGGER_ON_FLUSH);
+            return true;
+        }
     }
 
     return false;
@@ -466,7 +492,13 @@ void PaintControl::setToggle(CubeSlot *cube, _SYSVideoBuffer *vbuf,
     PAINT_LOG((LOG_PREFIX "setToggle\n", LOG_PARAMS));
 
     asyncTimestamp = timestamp;
-    flags.setTo(_SYS_VF_TOGGLE, !(cube->getLastFrameACK() & FRAME_ACK_TOGGLE));
+
+    if (vbuf->flags & _SYS_VBF_UNCOND_TOGGLE) {
+        flags.toggle(_SYS_VF_TOGGLE);
+        Atomic::And(vbuf->flags, ~_SYS_VBF_UNCOND_TOGGLE);
+    } else {
+        flags.setTo(_SYS_VF_TOGGLE, !(cube->getLastFrameACK() & FRAME_ACK_TOGGLE));
+    }
 }
 
 void PaintControl::makeSynchronous(CubeSlot *cube, _SYSVideoBuffer *vbuf)
@@ -500,7 +532,7 @@ bool PaintControl::canMakeSynchronous(CubeSlot *cube, _SYSVideoBuffer *vbuf,
         && timestamp > asyncTimestamp + fpsLow;
 }
 
-void VRAMFlags::apply(_SYSVideoBuffer *vbuf)
+bool VRAMFlags::apply(_SYSVideoBuffer *vbuf)
 {
     // Atomic update via XOR.
     uint8_t x = vf ^ vfPrev;
@@ -510,5 +542,8 @@ void VRAMFlags::apply(_SYSVideoBuffer *vbuf)
         VRAM::xorb(*vbuf, offsetof(_SYSVideoRAM, flags), x, 0);
         VRAM::unlock(*vbuf);
         vfPrev = vf;
+        return true;
     }
+
+    return false;
 }

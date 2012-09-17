@@ -21,8 +21,8 @@ OBJS := \
     src/manifest.o      \
     src/delete.o        \
     src/paircube.o      \
-	src/reboot.o		\
-	src/backup.o
+    src/reboot.o        \
+    src/backup.o
 
 # include directories
 INCLUDES := \

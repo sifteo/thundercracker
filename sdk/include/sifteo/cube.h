@@ -9,6 +9,7 @@
 #   error This is a userspace-only header, not allowed by the current build.
 #endif
 
+#include <sifteo/limits.h>
 #include <sifteo/macros.h>
 #include <sifteo/math.h>
 #include <sifteo/array.h>
@@ -241,6 +242,26 @@ public:
      * This is a half-open interval. All IDs >= 'begin' and < 'end' are in the set.
      */
     explicit CubeSet(CubeID begin, CubeID end) : BitArray<_SYS_NUM_CUBE_SLOTS>(begin, end) {}
+
+    /**
+     * @brief Getter for the underlying bitmask
+     * 
+     * Use CubeID::bit() to match a cube to this.
+     */
+     uint32_t mask() const { 
+         return words[0]; 
+     }
+     
+     /**
+      * @brief Setter for the underlying bitmask
+      *
+      * Validates that the bit is in the CUBE_ALLOCATION range,
+      * but not necessarily connected.
+      */
+      void setMask(uint32_t mask) {
+          ASSERT( (mask & ((1<<(32-CUBE_ALLOCATION))-1)) == 0 );
+          words[0] = mask;
+      }
 
     /**
      * @brief Return a CubeSet containing all connected cubes which are visible to the

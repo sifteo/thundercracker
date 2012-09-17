@@ -75,7 +75,7 @@ int main()
     NVIC.irqPrioritize(IVT.USART3, 0x99);           //  loooooowest prio
 
     NVIC.irqEnable(IVT.VOLUME_TIM);                 // volume timer
-    NVIC.irqPrioritize(IVT.VOLUME_TIM, 0x60);       //  just below sample rate timer
+    NVIC.irqPrioritize(IVT.VOLUME_TIM, 0x55);       //  just below sample rate timer
 
     NVIC.irqEnable(IVT.PROFILER_TIM);               // sample profiler timer
     NVIC.irqPrioritize(IVT.PROFILER_TIM, 0x0);      //  highest possible priority

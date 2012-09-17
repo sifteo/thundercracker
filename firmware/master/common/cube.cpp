@@ -179,11 +179,16 @@ bool CubeSlot::radioProduce(PacketTransmission &tx, SysTime::Ticks now)
          * Use a much lower than usual retry count, by disabling software retries,
          * so that this disconnect doesn't cause a noticeable hiccup in communications
          * with other cubes.
+         *
+         * Special case: if we're shutting down (as guessed by checking our
+         * cube range), we can stand to wait the normal timeout to ensure
+         * cubes get shut down along with the base.
          */
 
         codec.encodeShutdown(tx.packet);
         ASSERT(!tx.packet.isFull());
-        tx.numSoftwareRetries = 0;
+        if (!(CubeSlots::minUserCubes == 0 && CubeSlots::maxUserCubes == 0))
+            tx.numSoftwareRetries = 0;
 
     } else if (UNLIKELY(CubeSlots::sendStipple & cv)) {
         // Send a stipple pattern
@@ -393,6 +398,7 @@ void CubeSlot::radioAcknowledge(const PacketBuffer &packet)
                 Atomic::SetLZ(CubeSlots::touch, id());
             }
             Event::setCubePending(Event::PID_CUBE_TOUCH, id());
+            IdleTimeout::reset();
         }
 
         // Is this a flash reset ACK?
@@ -402,9 +408,6 @@ void CubeSlot::radioAcknowledge(const PacketBuffer &packet)
 
         // Trigger a rescan of all neighbors, during event dispatch
         Event::setCubePending(Event::PID_NEIGHBORS, id());
-        // this is a bit coarse, but we'll be conservative in staying awake
-        // if we get anything from the cubes indicating neighbors or touch might have changed.
-        IdleTimeout::reset();
     }
 
     if (packet.len >= offsetof(RF_ACKType, battery_v) + sizeof ack->battery_v) {

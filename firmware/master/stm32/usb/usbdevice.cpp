@@ -13,6 +13,7 @@
 #include "tasks.h"
 #include "usbprotocol.h"
 #include "macros.h"
+#include "systime.h"
 
 #if ((BOARD == BOARD_TEST_JIG) && !defined(BOOTLOADER))
 #include "testjig.h"
@@ -238,11 +239,24 @@ int UsbDevice::controlRequest(Usb::SetupData *req, uint8_t **buf, uint16_t *len)
 /*
  * Block until any writes in progress have completed.
  * Also, break if we've gotten disconnected while waiting.
+ *
+ * XXX: hard coded timeout for testjig just to be conservative until we have
+ *      a more universal notion of when we're connected to a host.
  */
 bool UsbDevice::waitForPreviousWrite()
 {
-    while (configured && txInProgress)
+    #if (BOARD == BOARD_TEST_JIG)
+    SysTime::Ticks deadline = SysTime::ticks() + SysTime::msTicks(1000);
+    #endif
+
+    while (configured && txInProgress) {
         Tasks::waitForInterrupt();
+
+        #if (BOARD == BOARD_TEST_JIG)
+        if (SysTime::ticks() > deadline)
+            return false;
+        #endif
+    }
     return configured;
 }
 

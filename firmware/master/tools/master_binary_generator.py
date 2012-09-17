@@ -57,8 +57,16 @@ def run(secondary_path):
     print "#### Moving %s to %s" % (filename, destination)
     shutil.copy("master-stm32.sft", os.path.join("latest", filename))
     print "#### Moving %s to %s" % ( destination,"latest" )
+
+    filename = "master_%s.elf" % (githash)
+    shutil.copy("master-stm32.elf", os.path.join(destination, filename))
+    print "#### Moving %s to %s" % (filename, destination)
+    shutil.copy("master-stm32.elf", os.path.join("latest", filename))
+    print "#### Moving %s to %s" % ( destination,"latest" )
     
     if secondary_path != False:
+        filename = "master_%s.sft" % (githash)
+
         remote_path = os.path.join(secondary_path,githash)
         latest_remote_path = os.path.join(secondary_path,"latest")
 

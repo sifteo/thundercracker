@@ -24,7 +24,7 @@ private:
 
     enum SubSystem {
         None,
-        AudioISR,
+        FlashDMA,
         AudioPull,
         SVCISR,
         RFISR,

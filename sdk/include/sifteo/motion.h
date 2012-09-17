@@ -350,9 +350,9 @@ public:
 
 class TiltShakeRecognizer {
 public:
-    static const int kFilterLatency = MotionBuffer<>::TICK_HZ / 10;
+    static const int kFilterLatency = MotionBuffer<>::TICK_HZ / 30;
     static const int kTiltThresholdMin = 15;
-    static const int kTiltThresholdMax = 30;
+    static const int kTiltThresholdMax = 26;
     static const int kShakeThresholdMin = 1000;
     static const int kShakeThresholdMax = 50000;
 
@@ -460,13 +460,17 @@ public:
      * the attached cube. After this call, the `tilt` and `shake` members
      * will contain the latest state.
      *
-     * Returns a bitmap of ChangeFlags which describe which changes just occurred.
+     * @param latency (optional) Specifies the duration of the window
+     * on which the filter operates. The default is MotionBuffer<>::TICK_HZ / 30,
+     * or 1/30th of a second.
+     *
+     * @return a bitmap of ChangeFlags which describe which changes just occurred.
      */
-    unsigned update()
+    unsigned update(int latency = kFilterLatency)
     {
         unsigned changed = 0;
 
-        median.calculate(buffer, kFilterLatency);
+        median.calculate(buffer, latency);
         auto m = median.median();
         int wobble = median.range().len2();
 

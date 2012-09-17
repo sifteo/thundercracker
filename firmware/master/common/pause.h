@@ -4,28 +4,38 @@
 #include <stdint.h>
 #include "bits.h"
 #include "ui_coordinator.h"
+#include "ui_pause.h"
+#include "ui_cuberange.h"
 #include "homebutton.h"
 
 class Pause {
 public:
-    enum WorkItems {
+    enum WorkItem {
         ButtonPress,
         ButtonHold,
         LowBattery,
-
         NUM_WORK_ITEMS,         // Must be last
     };
 
     static BitVector<NUM_WORK_ITEMS> taskWork;
 
+    enum Mode {
+        ModePause,
+        ModeCubeRange,
+        ModeLowBattery
+    };
+
     static void task();
-    static void cubeRange();
+    static void mainLoop(Mode mode);
 
 private:
-    static void runPauseMenu(UICoordinator &uic);
     static ALWAYS_INLINE void onButtonChange();
     static ALWAYS_INLINE void monitorButtonHold();
-    static ALWAYS_INLINE void lowBattery();
+
+    static bool pauseModeHandler(UICoordinator &uic, UIPause &uip, Mode &mode);
+    static bool cubeRangeModeHandler(UICoordinator &uic, UICubeRange &uicr, Mode &mode);
+    static bool lowBatteryModeHandler();
+    static void cleanup(UICoordinator &uic);
 };
 
 #endif // PAUSE_H

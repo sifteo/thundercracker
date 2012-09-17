@@ -62,7 +62,7 @@ void CubeSlots::setCubeRange(unsigned minimum, unsigned maximum)
 
     // do we have enough cubes to continue?
     if (belowCubeRange())
-        Pause::cubeRange();
+        Pause::mainLoop(Pause::ModeCubeRange);
 }
 
 void CubeSlots::paintCubes(_SYSCubeIDVector cv, bool wait, uint32_t excludedTasks)

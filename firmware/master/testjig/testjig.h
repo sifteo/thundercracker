@@ -42,16 +42,9 @@ private:
     static void beginNeighborTxHandler(uint8_t argc, uint8_t *args);
     static void stopNeighborTxHandler(uint8_t argc, uint8_t *args);
 
-    enum SensorsTransactionState {
-        StartInitial,
-        StartRepeated,
-    };
-
     struct AckPacket {
         RF_ACKType payload;
-        SensorsTransactionState startCondState;
         bool enabled;
-        bool usbWritePending;
         uint8_t len;
 
         bool ALWAYS_INLINE full() const {
@@ -61,6 +54,12 @@ private:
         void ALWAYS_INLINE append(uint8_t b) {
             payload.bytes[len++] = b;
         }
+    };
+
+    // double buffered i2c payload to transmit via USB
+    struct I2CUsbPayload {
+        bool usbWritePending;
+        uint8_t bytes[sizeof(RF_ACKType) + 1];
     };
 
     enum I2CProtocolType {
@@ -80,6 +79,7 @@ private:
     };
 
     static AckPacket ackPacket;
+    static I2CUsbPayload i2cUsbPayload;
     static I2CWriteTransaction cubeWrite;
 };
 

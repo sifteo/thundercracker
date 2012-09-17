@@ -172,7 +172,7 @@ void Profiler::prettyPrintSamples(const std::map<Addr, Count> &addresses, uint64
 const char *Profiler::subSystemName(SubSystem s)
 {
     switch (s) {
-    case AudioISR:  return "AudioISR";
+    case FlashDMA:  return "FlashDMA";
     case AudioPull: return "AudioPull";
     case SVCISR:    return "SVCISR";
     case RFISR:     return "RFISR";

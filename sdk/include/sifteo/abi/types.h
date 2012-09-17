@@ -68,10 +68,10 @@ struct _SYSInt3 {
 };
 
 union _SYSByte4 {
-    uint32_t value;
     struct {
         int8_t x, y, z, w;
     };
+    uint32_t value;
 };
 
 /*

@@ -35,11 +35,11 @@ class GPIOPin {
         : value(bit | (uintptr_t)port) {}
 
     ALWAYS_INLINE void setHigh() const {
-        port()->ODR |= bit();
+        port()->BSRR = bit();
     }
 
     ALWAYS_INLINE void setLow() const {
-        port()->ODR &= ~bit();
+        port()->BRR = bit();
     }
 
     /*
@@ -131,7 +131,7 @@ class GPIOPin {
     }
 
  private:
-    uintptr_t value;
+    const uintptr_t value;
 };
 
 #endif

@@ -12,6 +12,7 @@
 #include "cubeslots.h"
 #include "cubeconnector.h"
 #include "flash_preerase.h"
+#include "idletimeout.h"
 
 #ifndef SIFTEO_SIMULATOR
 #   include "powermanager.h"
@@ -57,8 +58,10 @@ void ShutdownManager::shutdown()
 
     LOG(("SHUTDOWN: Entering USB-sleep state\n"));
 
-    while (!HomeButton::isPressed())
+    while (!HomeButton::isPressed()) {
         Tasks::idle(excludedTasks);
+        IdleTimeout::reset();   // don't let the watchdog kill us
+    }
 
     /*
      * Back to life! From the user's perspective, this looks like a

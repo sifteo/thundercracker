@@ -235,10 +235,22 @@ void FaultLogger::task()
      * Now display the fault UI, until the user dismisses it.
      */
 
-    const uint32_t excludedTasks =
-        Intrinsic::LZ(Tasks::AudioPull)   |
+    uint32_t excludedTasks =
         Intrinsic::LZ(Tasks::FaultLogger) |
         Intrinsic::LZ(Tasks::Pause);
+
+    /*
+     * Factory test support: the default state that the base gets tested in
+     * is without a launcher installed. However, we still need to be able
+     * to test audio in this case, so we'll enable that task.
+     *
+     * Hoping that nobody else is going to be rendering audio for any other
+     * scenarios in which we fault due to missing launcher.
+     */
+
+    if (header.code != F_NO_LAUNCHER) {
+        excludedTasks |= Intrinsic::LZ(Tasks::AudioPull);
+    }
 
     UICoordinator uic(excludedTasks);
     UIFault uiFault(uic, header.reference);
@@ -250,7 +262,11 @@ void FaultLogger::task()
      * Exit this SVM process. Currently this always causes us to return
      * to the launcher, on hardware, once we resume running userspace code.
      * On simulation, it exits Siftulator immediately.
+     *
+     * Since we're going to directly re-enter the runtime, rather than returning
+     * to the task dispatcher, make sure we're clear the fault task on our way out.
      */
 
+    Tasks::cancel(Tasks::FaultLogger);
     SvmLoader::exit(true);
 }
