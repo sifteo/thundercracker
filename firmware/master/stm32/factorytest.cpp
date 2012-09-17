@@ -358,7 +358,7 @@ void FactoryTest::rfPacketTestHandler(uint8_t argc, const uint8_t *args)
     rfTransmissionsRemaining = *reinterpret_cast<const uint16_t*>(&args[1]) * 2;
 
     while (rfTransmissionsRemaining)
-        Tasks::work(Intrinsic::LZ(Tasks::UsbOUT)); // don't process more USB traffic until we're out of this handler
+        Tasks::waitForInterrupt();
 
     NRF24L01::setRfTestEnabled(false);
 
@@ -367,6 +367,8 @@ void FactoryTest::rfPacketTestHandler(uint8_t argc, const uint8_t *args)
      */
     const uint8_t report[] = { args[0], args[1], args[2],
                                rfSuccessCount & 0xff, (rfSuccessCount >> 8) & 0xff };
+    UART_HEX(rfSuccessCount);
+    UART("\r\n");
     UsbDevice::write(report, sizeof report);
 }
 
