@@ -201,6 +201,15 @@ void SystemMC::doRadioPacket()
         RadioManager::produce(buf.ptx);
         ASSERT(buf.ptx.dest != NULL);
         buf.packet.len = buf.ptx.packet.len;
+
+        /*
+         * As we don't model ACKs very closely, simply treat noAck packets
+         * as though they simply have no retries.
+         */
+        if (buf.ptx.noAck == true) {
+            buf.ptx.numHardwareRetries = 0;
+            buf.ptx.numSoftwareRetries = 0;
+        }
         
         ASSERT(buf.ptx.numHardwareRetries <= PacketTransmission::MAX_HARDWARE_RETRIES);
         buf.triesRemaining = RadioMC::maxTries();
