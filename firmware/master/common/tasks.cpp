@@ -71,7 +71,9 @@ ALWAYS_INLINE void Tasks::taskInvoke(unsigned id)
 void Tasks::heartbeatTask()
 {
 #if (BOARD != BOARD_TEST_JIG)
+  #ifndef DISABLE_IDLETIMEOUT
     IdleTimeout::heartbeat();
+  #endif
 #endif
 
     Radio::heartbeat();
