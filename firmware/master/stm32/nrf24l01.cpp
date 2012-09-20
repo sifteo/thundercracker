@@ -348,11 +348,15 @@ void NRF24L01::pulseCE()
      * so it's a bit cheaper this way.
      *
      * The pulse ends in the spi completion handler.
+     *
+     * We're clocking the nRF SPI @ 9MHz, making a single clock cycle ~11ns.
+     * So we need to send at least (10us / 11ns) / 8 (bits/byte) = 12 bytes.
+     * Bump up to 15 for a little margin.
      */
 
     txnState = TXPulseCE;
     ce.setHigh();
-    spi.txDma(txData, 10);
+    spi.txDma(txData, 15);
 }
 
 void NRF24L01::staticSpiCompletionHandler()
