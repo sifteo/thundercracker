@@ -168,7 +168,7 @@ void sensors_init()
 
     __asm
         ; Reset -- NOTE vector 0x0000 __start__stack main-thread
-        ; TF0   -- NOTE vector 0x000b 2 irq-prio-2
+        ; TF0   -- NOTE vector 0x000b 2 irq-prio-0
         ; TF1   -- NOTE vector 0x001b 2 irq-prio-3
         ; TF2   -- NOTE vector 0x002b 2 irq-prio-3
         ; Radio -- NOTE vector 0x004b 2 irq-prio-0
