@@ -12,6 +12,7 @@
 #include "bits.h"
 #include "ringbuffer.h"
 #include "systime.h"
+#include "rfspectrum.h"
 
 class CubeSlot;
 class RadioManager;
@@ -250,6 +251,8 @@ class RadioManager {
     static const unsigned PID_COUNT = 4;
     static const unsigned PID_MASK = PID_COUNT - 1;
     static uint8_t nextPID;
+
+    static RFSpectrumModel rfSpectrumModel;
 
     // Priority queues for each PID value
     static uint32_t schedule[PID_COUNT];

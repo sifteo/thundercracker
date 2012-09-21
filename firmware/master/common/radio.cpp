@@ -23,6 +23,7 @@ uint32_t RadioManager::schedule[RadioManager::PID_COUNT];
 uint32_t RadioManager::nextSchedule[RadioManager::PID_COUNT];
 _SYSPseudoRandomState RadioManager::prngISR;
 uint32_t RadioManager::retryBucketMask = 0;
+RFSpectrumModel RadioManager::rfSpectrumModel;
 
 
 void RadioManager::produce(PacketTransmission &tx)
@@ -215,6 +216,8 @@ void RadioManager::processRetries(const CubeSlot &slot, unsigned retries)
      * larger buckets, since we'll want to jump away in larger increments.
      */
 
+
+    rfSpectrumModel.update(slot.getRadioAddress()->channel, retries);
 
     unsigned channel = slot.getRadioAddress()->channel;
     unsigned bucket = channel / 3; // 3 == roundup(MAX_RF_CHANNEL / 32)
