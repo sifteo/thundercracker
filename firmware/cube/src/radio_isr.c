@@ -822,11 +822,15 @@ rx_complete_1:
 
         ; Push back our disconnection deadline. We disconnect if there have not been
         ; any radio packets in 256 to 512 TF0 ticks. (There is an uncertainty of one
-        ; low-byte rollover, making this the minimum nonzero timeout). This about 1
-        ; to 2 seconds.
+        ; low-byte rollover, making this the minimum nonzero timeout).
+
+        ; The base has a disconnect timeout maximum of 1525 millis
+        ; for a single cube. we still want to avoid disconnecting while the
+        ; base times out more than one cube before it gets around to us.
+        ; we wait up to 3 to 4 seconds.
 
         mov     a, _sensor_tick_counter_high
-        add     a, #2
+        add     a, #4
         mov     _radio_packet_deadline, a
 
         ; nRF Interrupt acknowledge
