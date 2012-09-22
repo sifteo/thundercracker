@@ -1,6 +1,7 @@
 
-TESTS := \
-	aes128
+TESTS :=        \
+	aes128      \
+    rfspectrum
     
 all: $(TESTS)
 

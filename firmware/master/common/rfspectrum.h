@@ -24,7 +24,7 @@ public:
      * Bucketize the spectrum - we don't need to track each 1MHz channel
      * independently.
      */
-    static const unsigned NUM_BUCKETS = MAX_RF_CHANNEL >> 1;
+    static const unsigned NUM_BUCKETS = (MAX_RF_CHANNEL >> 1) + 1;
 
     /*
      * Buckets with a noise rating beneath this value are considered safe.
@@ -42,16 +42,10 @@ public:
     void update(unsigned channel, unsigned retry_count);
     unsigned allocateChannel() const;
 
-    ALWAYS_INLINE bool channelIsClear(unsigned channel) const {
-        return buckets[channel >> 1] < CLEAR_CHANNEL_THRESH;
-    }
-
-#ifdef SIFTEO_SIMULATOR
-    // getter for testing
-    unsigned noise(unsigned channel) {
+    // Return the estimated energy on the given channel
+    ALWAYS_INLINE unsigned energry(unsigned channel) {
         return buckets[channel >> 1];
     }
-#endif
 
 private:
 
