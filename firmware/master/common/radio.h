@@ -109,7 +109,7 @@ struct PacketTransmission {
      * by a secondary timeout)
      */
     static const unsigned DEFAULT_HARDWARE_RETRIES = MAX_HARDWARE_RETRIES;
-    static const unsigned DEFAULT_SOFTWARE_RETRIES = 32;
+    static const unsigned DEFAULT_SOFTWARE_RETRIES = 128;
 
     ALWAYS_INLINE void init() {
         noAck = 0;
