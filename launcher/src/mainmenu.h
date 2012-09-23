@@ -59,6 +59,7 @@ private:
     Sifteo::MenuItem menuItems[Shared::MAX_ITEMS + 1];
     int itemIndexCurrent;
     int itemIndexChoice;
+    int delayedItemIndexChoice;
 
     static const Sifteo::MenuAssets menuAssets;
 

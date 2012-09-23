@@ -143,15 +143,10 @@ void MainMenu::eventLoop()
             updateMusic();
             updateAlerts();
             handleEvent(e);
-        }
 
-        if (itemIndexChoice >= 0) {
-            return execItem(itemIndexChoice);
-        }
-        if (delayedItemIndexChoice >= 0 && areEnoughCubesConnected(e.item)) {
-            LOG("fire it up!\n");
-            delayedItemIndexChoice = -1;
-            // ...
+            if (itemIndexChoice >= 0) {
+                return execItem(itemIndexChoice);
+            }
         }
     }
 }
@@ -201,7 +196,6 @@ void MainMenu::handleEvent(MenuEvent &e)
             if (itemIndexCurrent >= 0) {
                 if (cubeRangeSavedIcon != NULL) {
                     toggleCubeRangeAlert(itemIndexCurrent);
-                    delayedItemIndexChoice = -1;
                 }
                 departItem(itemIndexCurrent);
             }
@@ -379,7 +373,6 @@ void MainMenu::updateConnecting()
     /*
      * Let cubes participate in the loading animation until the whole load is done
      */
-
     if (!loadingCubes.empty()) {
         if (loader.isComplete()) {
             // Loading is done!
@@ -400,6 +393,12 @@ void MainMenu::updateConnecting()
                     ASSERT(itemIndexCurrent < arraysize(items));
                     MainMenuItem *item = items[itemIndexCurrent];
                     item->onCubeConnect(cube);
+                }
+
+                // If a game was waiting on a cube to launch, try again.
+                if (delayedItemIndexChoice >= 0 && areEnoughCubesConnected(delayedItemIndexChoice)) {
+                    itemIndexChoice = delayedItemIndexChoice;
+                    delayedItemIndexChoice = -1;
                 }
             }
 
@@ -503,6 +502,8 @@ void MainMenu::toggleCubeRangeAlert(unsigned index)
         
         menu.replaceIcon(index, cubeRangeAlertIcon);
     } else {
+        // Restore item icon state and cancel pending launch.
+        delayedItemIndexChoice = -1;
         menu.replaceIcon(index, cubeRangeSavedIcon);
         cubeRangeSavedIcon = NULL;
     }
