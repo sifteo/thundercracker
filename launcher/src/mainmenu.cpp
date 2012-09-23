@@ -53,6 +53,7 @@ void MainMenu::init()
 
     items.clear();
     itemIndexCurrent = -1;
+    delayedItemIndexChoice = -1;
     cubeRangeSavedIcon = NULL;
 
     /*
@@ -147,6 +148,11 @@ void MainMenu::eventLoop()
         if (itemIndexChoice >= 0) {
             return execItem(itemIndexChoice);
         }
+        if (delayedItemIndexChoice >= 0 && areEnoughCubesConnected(e.item)) {
+            LOG("fire it up!\n");
+            delayedItemIndexChoice = -1;
+            // ...
+        }
     }
 }
 
@@ -175,6 +181,8 @@ void MainMenu::handleEvent(MenuEvent &e)
                 performDefault = false;
             } else if (!areEnoughCubesConnected(e.item)) {
                 toggleCubeRangeAlert(e.item);
+                // Run the game once enough cubes have been added, or when the menu navigates away from this item.
+                delayedItemIndexChoice = e.item;
                 performDefault = false;
             } else {
                 AudioChannel(kUIResponseSoundChannel).play(Sound_ConfirmClick);
@@ -192,8 +200,8 @@ void MainMenu::handleEvent(MenuEvent &e)
         case MENU_ITEM_DEPART:
             if (itemIndexCurrent >= 0) {
                 if (cubeRangeSavedIcon != NULL) {
-                    menu.replaceIcon(itemIndexCurrent, cubeRangeSavedIcon);
-                    cubeRangeSavedIcon = NULL;
+                    toggleCubeRangeAlert(itemIndexCurrent);
+                    delayedItemIndexChoice = -1;
                 }
                 departItem(itemIndexCurrent);
             }
