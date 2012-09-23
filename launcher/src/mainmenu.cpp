@@ -53,7 +53,6 @@ void MainMenu::init()
 
     items.clear();
     itemIndexCurrent = -1;
-    delayedItemIndexChoice = -1;
     cubeRangeSavedIcon = NULL;
 
     /*
@@ -177,7 +176,6 @@ void MainMenu::handleEvent(MenuEvent &e)
             } else if (!areEnoughCubesConnected(e.item)) {
                 toggleCubeRangeAlert();
                 // Run the game once enough cubes have been added, or when the menu navigates away from this item.
-                delayedItemIndexChoice = e.item;
                 performDefault = false;
             } else {
                 AudioChannel(kUIResponseSoundChannel).play(Sound_ConfirmClick);
@@ -394,14 +392,14 @@ void MainMenu::updateConnecting()
                     ASSERT(itemIndexCurrent < arraysize(items));
                     MainMenuItem *item = items[itemIndexCurrent];
                     item->onCubeConnect(cube);
+
+                    // If a game was waiting on a cube to launch, try again.
+                    if (cubeRangeSavedIcon && areEnoughCubesConnected(itemIndexCurrent)) {
+                        itemIndexChoice = itemIndexCurrent;
+                    }
                 }
 
-                // If a game was waiting on a cube to launch, try again.
-                if (delayedItemIndexChoice >= 0 && areEnoughCubesConnected(delayedItemIndexChoice)) {
-                    itemIndexChoice = delayedItemIndexChoice;
-                    delayedItemIndexChoice = -1;
-                    updateCubeRangeAlert();
-                }
+                updateCubeRangeAlert();
             }
 
             loadingCubes.clear();
@@ -520,7 +518,6 @@ void MainMenu::toggleCubeRangeAlert()
         updateCubeRangeAlert();
     } else {
         // Restore item icon state and cancel pending launch.
-        delayedItemIndexChoice = -1;
         menu.replaceIcon(itemIndexCurrent, cubeRangeSavedIcon);
         cubeRangeSavedIcon = NULL;
     }
