@@ -95,7 +95,7 @@ private:
 
     void prepareAssets();
     
-    bool canLaunchItem(unsigned index);
+    bool areEnoughCubesConnected(unsigned index);
     void toggleCubeRangeAlert(unsigned index);
     void updateAlerts();
 

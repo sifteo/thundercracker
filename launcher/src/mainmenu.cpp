@@ -144,8 +144,9 @@ void MainMenu::eventLoop()
             handleEvent(e);
         }
 
-        if (itemIndexChoice >= 0)
+        if (itemIndexChoice >= 0) {
             return execItem(itemIndexChoice);
+        }
     }
 }
 
@@ -172,12 +173,12 @@ void MainMenu::handleEvent(MenuEvent &e)
             if (items[e.item]->getCubeRange().isEmpty()) {
                 AudioChannel(kUIResponseSoundChannel).play(Sound_NonPossibleAction);
                 performDefault = false;
-            } else if (canLaunchItem(e.item)) {
-                AudioChannel(kUIResponseSoundChannel).play(Sound_ConfirmClick);
-                itemIndexChoice = e.item;
-            } else {
+            } else if (!areEnoughCubesConnected(e.item)) {
                 toggleCubeRangeAlert(e.item);
                 performDefault = false;
+            } else {
+                AudioChannel(kUIResponseSoundChannel).play(Sound_ConfirmClick);
+                itemIndexChoice = e.item;
             }
             break;
 
@@ -446,7 +447,7 @@ void MainMenu::updateMusic()
     }
 }
 
-bool MainMenu::canLaunchItem(unsigned index)
+bool MainMenu::areEnoughCubesConnected(unsigned index)
 {
     ASSERT(index < arraysize(items));
     MainMenuItem *item = items[index];
