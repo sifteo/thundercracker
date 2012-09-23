@@ -175,7 +175,7 @@ void MainMenu::handleEvent(MenuEvent &e)
                 AudioChannel(kUIResponseSoundChannel).play(Sound_NonPossibleAction);
                 performDefault = false;
             } else if (!areEnoughCubesConnected(e.item)) {
-                toggleCubeRangeAlert(e.item);
+                toggleCubeRangeAlert();
                 // Run the game once enough cubes have been added, or when the menu navigates away from this item.
                 delayedItemIndexChoice = e.item;
                 performDefault = false;
@@ -195,7 +195,7 @@ void MainMenu::handleEvent(MenuEvent &e)
         case MENU_ITEM_DEPART:
             if (itemIndexCurrent >= 0) {
                 if (cubeRangeSavedIcon != NULL) {
-                    toggleCubeRangeAlert(itemIndexCurrent);
+                    toggleCubeRangeAlert();
                 }
                 departItem(itemIndexCurrent);
             }
@@ -298,6 +298,7 @@ void MainMenu::cubeDisconnect(unsigned cid)
         ASSERT(itemIndexCurrent < arraysize(items));
         MainMenuItem *item = items[itemIndexCurrent];
         item->onCubeDisconnect(cid);
+        updateCubeRangeAlert();
     }
 
 }
@@ -399,6 +400,7 @@ void MainMenu::updateConnecting()
                 if (delayedItemIndexChoice >= 0 && areEnoughCubesConnected(delayedItemIndexChoice)) {
                     itemIndexChoice = delayedItemIndexChoice;
                     delayedItemIndexChoice = -1;
+                    updateCubeRangeAlert();
                 }
             }
 
@@ -462,49 +464,64 @@ bool MainMenu::areEnoughCubesConnected(unsigned index)
     return CubeSet::connected().count() >= item->getCubeRange().sys.minCubes;
 }
 
-void MainMenu::toggleCubeRangeAlert(unsigned index)
+void MainMenu::updateCubeRangeAlert()
 {
+    if (cubeRangeSavedIcon == NULL) return;
+    if (itemIndexCurrent < 0) return;
+
+    ASSERT(itemIndexCurrent < arraysize(items));
+    MainMenuItem *item = items[itemIndexCurrent];
+
+    // Build a new cubeRangeAlertIcon with the updated number of cubes.
+    cubeRangeAlertIcon.init();
+    cubeRangeAlertIcon.image(vec(0,0), Icon_MoreCubes);
+
+    String<2> buffer;
+    buffer << item->getCubeRange().sys.minCubes;
+    drawText(
+        cubeRangeAlertIcon,
+        buffer.c_str(),
+        vec(item->getCubeRange().sys.minCubes < 10 ? 3 : 2, 3));
+    
+    unsigned numCubes = CubeSet::connected().count();
+    unsigned numIcons = 12;
+    
+    if (item->getCubeRange().sys.maxCubes <= numIcons) {
+        for (int i = 0; i < numIcons; ++i) {
+            Int2 pos = vec((i % 4) * 2 + 2, (i / 4) * 2 + 6);
+            if (i < numCubes) {
+                cubeRangeAlertIcon.image(pos, MoreCubesStates, 3);
+            } else if (i < item->getCubeRange().sys.minCubes) {
+                cubeRangeAlertIcon.image(pos, MoreCubesStates, 2);
+            } else if (i < item->getCubeRange().sys.maxCubes) {
+                cubeRangeAlertIcon.image(pos, MoreCubesStates, 1);
+            } else {
+                cubeRangeAlertIcon.image(pos, MoreCubesStates, 0);
+            }
+        }
+    }
+    
+    menu.replaceIcon(itemIndexCurrent, cubeRangeAlertIcon);
+}
+
+void MainMenu::toggleCubeRangeAlert()
+{
+    if (itemIndexCurrent < 0) {
+        LOG("toggleCubeRangeAlert called when not stopped at an item!\n");
+        return;
+    }
+
     if (cubeRangeSavedIcon == NULL) {
         AudioChannel(kUIResponseSoundChannel).play(Sound_NonPossibleAction);
 
-        ASSERT(index < arraysize(items));
-        MainMenuItem *item = items[index];
-        
-        cubeRangeSavedIcon = menuItems[index].icon;
-        
-        cubeRangeAlertIcon.init();
-        cubeRangeAlertIcon.image(vec(0,0), Icon_MoreCubes);
+        ASSERT(itemIndexCurrent < arraysize(items));
+        cubeRangeSavedIcon = menuItems[itemIndexCurrent].icon;
 
-        String<2> buffer;
-        buffer << item->getCubeRange().sys.minCubes;
-        drawText(
-            cubeRangeAlertIcon,
-            buffer.c_str(),
-            vec(item->getCubeRange().sys.minCubes < 10 ? 3 : 2, 3));
-        
-        unsigned numCubes = CubeSet::connected().count();
-        unsigned numIcons = 12;
-        
-        if (item->getCubeRange().sys.maxCubes <= numIcons) {
-            for (int i = 0; i < numIcons; ++i) {
-                Int2 pos = vec((i % 4) * 2 + 2, (i / 4) * 2 + 6);
-                if (i < numCubes) {
-                    cubeRangeAlertIcon.image(pos, MoreCubesStates, 3);
-                } else if (i < item->getCubeRange().sys.minCubes) {
-                    cubeRangeAlertIcon.image(pos, MoreCubesStates, 2);
-                } else if (i < item->getCubeRange().sys.maxCubes) {
-                    cubeRangeAlertIcon.image(pos, MoreCubesStates, 1);
-                } else {
-                    cubeRangeAlertIcon.image(pos, MoreCubesStates, 0);
-                }
-            }
-        }
-        
-        menu.replaceIcon(index, cubeRangeAlertIcon);
+        updateCubeRangeAlert();
     } else {
         // Restore item icon state and cancel pending launch.
         delayedItemIndexChoice = -1;
-        menu.replaceIcon(index, cubeRangeSavedIcon);
+        menu.replaceIcon(itemIndexCurrent, cubeRangeSavedIcon);
         cubeRangeSavedIcon = NULL;
     }
 }
@@ -517,7 +534,7 @@ void MainMenu::updateAlerts()
 
     if (cubeRangeSavedIcon != NULL && itemIndexCurrent != -1) {
         if (motion.shake || motion.tilt.x != 0 || motion.tilt.y != 0) {
-            toggleCubeRangeAlert(itemIndexCurrent);
+            toggleCubeRangeAlert();
         }
     }
 }

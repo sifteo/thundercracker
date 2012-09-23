@@ -97,7 +97,8 @@ private:
     void prepareAssets();
     
     bool areEnoughCubesConnected(unsigned index);
-    void toggleCubeRangeAlert(unsigned index);
+    void updateCubeRangeAlert();
+    void toggleCubeRangeAlert();
     void updateAlerts();
 
     void handleEvent(Sifteo::MenuEvent &e);
