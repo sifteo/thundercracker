@@ -16,7 +16,7 @@ with open(filepath, "w") as f:
     while True:
         line = port.readline().strip()
         time = str(datetime.datetime.now())
-        log = "%s: %s" % (time, line)
-        print log
+        log = "%s: %s\n" % (time, line)
+        print log.strip()
         f.write(log)
         f.flush()
