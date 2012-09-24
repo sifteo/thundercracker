@@ -164,15 +164,50 @@ bool CubeSlot::radioProduce(PacketTransmission &tx, SysTime::Ticks now)
     ackOptionalFIFO <<= 1;
     pendingChannelFIFO <<= 1;
 
-    /* 
-     * First priority: Send VRAM data.
+    /*
+     * First priority: radio hops
+     *
+     * If we detect that communications are getting flaky (according
+     * to our software retry count) we may opt to try and move a cube
+     * to a new (and hopefully better) channel.
+     *
+     * Hops are asynchronous. They need to go at the end of the packet since
+     * they're a type of escape, which means that we send a short packet
+     * whenever we try to hop. The current motivation to put them at
+     * highest priority is that maintaining a (slightly less optimized)
+     * link to the cube is more important than encoding packets more efficiently
+     * that won't actually get delivered.
+     *
+     * Fortunately these appear to happen only once every several minutes
+     * during normal operation.
+     *
+     * Note that we do want to retry, but if the hop succeeds and we drop
+     * an ACK, that would appear to be a timeout even though it doesn't
+     * represent a problem. (If we really did drop all transmit attempts,
+     * the cube will not have hopped and we'll disconnect it.)
+     *
+     * We need to remember not to worry about retries then, by storing a
+     * bit in our "ackOptional" queue.
+     *
+     *
+     * Next priority: Send VRAM data.
      *
      * Normally this comes from a general-purpose VideoBuffer, though we
      * do have some special-purpose ways to send VRAM data without a
      * VideoBuffer.
      */
 
-    if (UNLIKELY(CubeSlots::sendShutdown & cv)) {
+    if (UNLIKELY(CubeSlots::pendingHop & cv)) {
+        unsigned ch = RadioManager::suggestChannel();
+        if (codec.escChannelHop(tx.packet, ch)) {
+            pendingChannel = ch;
+            Atomic::And(CubeSlots::pendingHop, ~cv);
+            pendingChannelFIFO |= 1;
+            ackOptionalFIFO |= 1;
+            return true;
+        }
+
+    } else if (UNLIKELY(CubeSlots::sendShutdown & cv)) {
         /*
          * Ask the cube to shut down (it will disconnect)
          *
@@ -238,38 +273,6 @@ bool CubeSlot::radioProduce(PacketTransmission &tx, SysTime::Ticks now)
         // Otherwise, maybe the loader needs a full ACK before it can make progress?
         if (AssetLoader::needFullACK(id()) && codec.escRequestAck(tx.packet))
             return true;
-    }
-
-    /*
-     * Low priority: Opportunistic radio hops
-     *
-     * If we detect that communications are getting flaky (according
-     * to our software retry count) we may opt to try and move a cube
-     * to a new (and hopefully better) channel.
-     *
-     * Hops are asynchronous. We perform them when the radio would otherwise
-     * be idle, and they need to go at the end of the packet since they're
-     * a type of escape.
-     *
-     * Note that we do want to retry, but if the hop succeeds and we drop
-     * an ACK, that would appear to be a timeout even though it doesn't
-     * represent a problem. (If we really did drop all transmit attempts,
-     * the cube will not have hopped and we'll disconnect it.)
-     *
-     * We need to remember not to worry about retries then, by storing a
-     * bit in our "ackOptional" queue.
-     */
-
-    if (CubeSlots::pendingHop & cv) {
-        PRNG::collectTimingEntropy(&RadioManager::prngISR);
-        unsigned ch = RadioAddrFactory::randomChannel(RadioManager::prngISR, address.channel);
-        if (codec.escChannelHop(tx.packet, ch)) {
-            pendingChannel = ch;
-            Atomic::And(CubeSlots::pendingHop, ~cv);
-            pendingChannelFIFO |= 1;
-            ackOptionalFIFO |= 1;
-            return true;
-        }
     }
 
     /*
