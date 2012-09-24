@@ -401,6 +401,7 @@ void CubeConnector::radioProduce(PacketTransmission &tx)
         case PairingFirstVerify ... PairingFinalVerify:
             tx.dest = &pairingAddr;
             tx.packet.len = 1;
+            tx.numSoftwareRetries = CUBECONNECTOR_SOFT_RETRIES;
             tx.packet.bytes[0] = 0xff;
             rxState.enqueue(txState);
             break;
@@ -413,6 +414,7 @@ void CubeConnector::radioProduce(PacketTransmission &tx)
             newCubeRecord();
             if (chooseConnectionAddr()) {
                 tx.dest = &pairingAddr;
+                tx.numSoftwareRetries = CUBECONNECTOR_SOFT_RETRIES;
                 produceRadioHop(tx.packet);
                 rxState.enqueue(PairingBeginHop);
                 break;
@@ -425,6 +427,7 @@ void CubeConnector::radioProduce(PacketTransmission &tx)
         case ReconnectBeginHop:
             if (chooseConnectionAddr()) {
                 tx.dest = &reconnectAddr;
+                tx.numSoftwareRetries = CUBECONNECTOR_SOFT_RETRIES;
                 produceRadioHop(tx.packet);
                 rxState.enqueue(ReconnectBeginHop);
                 break;
@@ -442,6 +445,7 @@ void CubeConnector::radioProduce(PacketTransmission &tx)
          */
         case HopConfirm:
             tx.dest = &connectionAddr;
+            tx.numSoftwareRetries = CUBECONNECTOR_SOFT_RETRIES;
             tx.packet.len = 1;
             tx.packet.bytes[0] = 0x79;
             rxState.enqueue(txState);

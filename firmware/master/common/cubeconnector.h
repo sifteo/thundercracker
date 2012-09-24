@@ -75,6 +75,9 @@ private:
         NUM_WORK_ITEMS,         // Must be last
     };
 
+    // number of soft retries used for both pairing & reconnection.
+    static const unsigned CUBECONNECTOR_SOFT_RETRIES = 32;
+
     static uint8_t neighborKey;
     static bool reconnectEnabled;
 
