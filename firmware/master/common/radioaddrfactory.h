@@ -19,7 +19,6 @@ class RadioAddrFactory {
 public:
 
     static void random(RadioAddress &addr, _SYSPseudoRandomState &prng);
-    static unsigned randomChannel(_SYSPseudoRandomState &prng, unsigned currentChannel = 0xff);
 
     static void fromHardwareID(RadioAddress &addr, uint64_t hwid);
     static void convertPrimaryToAlternateChannel(RadioAddress &addr);

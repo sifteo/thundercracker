@@ -39,8 +39,8 @@ public:
     }
 
     void init();
-    void update(unsigned channel, unsigned retry_count);
-    unsigned allocateChannel() const;
+    void update(unsigned channel, unsigned retryCount);
+    unsigned suggestChannel();
 
     // Return the estimated energy on the given channel
     ALWAYS_INLINE unsigned energry(unsigned channel) {

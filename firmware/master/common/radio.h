@@ -211,7 +211,9 @@ class RadioManager {
     static void timeout();
     static void processRetries(const CubeSlot &slot, unsigned retries);
 
-    static bool channelMightBeNoisy(unsigned channel);
+    ALWAYS_INLINE static unsigned suggestChannel() {
+        return rfSpectrumModel.suggestChannel();
+    }
 
     /*
      * FIFO buffer of slot numbers that have pending acknowledgments.

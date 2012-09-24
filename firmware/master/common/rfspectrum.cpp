@@ -1,6 +1,8 @@
 #include "rfspectrum.h"
-#include "string.h"
 #include "radio.h"
+#include "prng.h"
+
+#include "string.h"
 
 const unsigned RFSpectrumModel::MAX_RETRIES =
         PacketTransmission::DEFAULT_HARDWARE_RETRIES *
@@ -14,11 +16,11 @@ void RFSpectrumModel::init()
     memset(buckets, 0, sizeof buckets);
 }
 
-void RFSpectrumModel::update(unsigned channel, unsigned retry_count)
+void RFSpectrumModel::update(unsigned channel, unsigned retryCount)
 {
     unsigned bucket = channel >> 1;
 
-    ASSERT(retry_count <= MAX_RETRIES);
+    ASSERT(retryCount <= MAX_RETRIES);
     ASSERT(bucket < NUM_BUCKETS);
 
     for (unsigned i = 0; i < NUM_BUCKETS; ++i) {
@@ -27,16 +29,46 @@ void RFSpectrumModel::update(unsigned channel, unsigned retry_count)
         uint16_t &bucketVal = buckets[i];
 
         // fixed point 16.16 linear interpolation
-        int64_t result64 = static_cast<int64_t>((bucketVal * (ONE - sf)) + (retry_count * sf));
+        int64_t result64 = static_cast<int64_t>((bucketVal * (ONE - sf)) + (retryCount * sf));
         bucketVal = result64 >> FIXPT_SHIFT;
     }
 }
 
-unsigned RFSpectrumModel::allocateChannel() const
+unsigned RFSpectrumModel::suggestChannel()
 {
     /*
      * Find the channel least likely to be noisy at the moment.
+     *
+     * Should only be called in ISR context, as we access RadioManager::prngISR.
+     *
+     * Start from a randomized channel, because in the event that we don't have
+     * a very well populated model (ie, on startup, or if we only have a couple
+     * cubes connected), we might have several buckets with 0 energy, but we'd
+     * like to spread the cubes out as much as possible to improve our model.
      */
 
-    return 0;
+    PRNG::collectTimingEntropy(&RadioManager::prngISR);
+
+    unsigned ch = PRNG::valueBounded(&RadioManager::prngISR, NUM_BUCKETS - 1);
+    unsigned energy = buckets[ch];
+
+    unsigned chIter = ch;
+    for (unsigned i = 0; i < NUM_BUCKETS; ++i) {
+        if (buckets[chIter] < energy) {
+            energy = buckets[chIter];
+            ch = chIter;
+        }
+        chIter = (chIter + 1) % NUM_BUCKETS;
+    }
+
+    /*
+     * buckets are 2 channels wide, so it's a bit arbitrary which one of them
+     * we actually suggest, once we've chosen the bucket.
+     */
+    ch *= 2;
+    ch += (PRNG::value(&RadioManager::prngISR) & 0x1);
+
+    ASSERT(ch <= MAX_RF_CHANNEL);
+
+    return ch;
 }
