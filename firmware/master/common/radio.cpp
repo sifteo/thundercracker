@@ -22,7 +22,6 @@ uint8_t RadioManager::nextPID;
 uint32_t RadioManager::schedule[RadioManager::PID_COUNT];
 uint32_t RadioManager::nextSchedule[RadioManager::PID_COUNT];
 _SYSPseudoRandomState RadioManager::prngISR;
-uint32_t RadioManager::retryBucketMask = 0;
 RFSpectrumModel RadioManager::rfSpectrumModel;
 
 
@@ -216,41 +215,14 @@ void RadioManager::processRetries(const CubeSlot &slot, unsigned retries)
      * larger buckets, since we'll want to jump away in larger increments.
      */
 
-
-    rfSpectrumModel.update(slot.getRadioAddress()->channel, retries);
-
     unsigned channel = slot.getRadioAddress()->channel;
-    unsigned bucket = channel / 3; // 3 == roundup(MAX_RF_CHANNEL / 32)
-    ASSERT(bucket < 32);
-    unsigned bucketBit = Intrinsic::LZ(bucket);
+    rfSpectrumModel.update(channel, retries);
 
-    if (retries > CHANNEL_HOP_THRESHOLD) {
-        if (retryBucketMask & bucketBit) {
-            // initiate hop!
-            Atomic::Or(CubeSlots::pendingHop, slot.bit());
-        } else {
-            retryBucketMask |= bucketBit;
-            return;
-        }
+    unsigned energy = rfSpectrumModel.energry(channel);
+    if (energy > CHANNEL_HOP_THRESHOLD) {
+        // XXX: hop other connected cubes within some range of this channel?
+        Atomic::Or(CubeSlots::pendingHop, slot.bit());
     }
-
-    retryBucketMask &= ~bucketBit;
-}
-
-bool RadioManager::channelMightBeNoisy(unsigned channel)
-{
-    /*
-     * Based on our current mask of channels that any transmission required
-     * more than CHANNEL_HOP_THRESHOLD retries for.
-     *
-     * This is not great, since this mask is only maintained momentarily...
-     * Could be greatly improved by tracking noise profile more persistently.
-     */
-
-    ASSERT(channel <= MAX_RF_CHANNEL);
-
-    unsigned bucket = channel / 3; // 3 == roundup(MAX_RF_CHANNEL / 32)
-    return retryBucketMask & Intrinsic::LZ(bucket);
 }
 
 ALWAYS_INLINE bool RadioManager::dispatchProduce(unsigned id, PacketTransmission &tx, SysTime::Ticks now)
