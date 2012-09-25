@@ -206,8 +206,9 @@ bool CubeSlot::radioProduce(PacketTransmission &tx, SysTime::Ticks now)
             ackOptionalFIFO |= 1;
             return true;
         }
+    }
 
-    } else if (UNLIKELY(CubeSlots::sendShutdown & cv)) {
+    if (UNLIKELY(CubeSlots::sendShutdown & cv)) {
         /*
          * Ask the cube to shut down (it will disconnect)
          *
