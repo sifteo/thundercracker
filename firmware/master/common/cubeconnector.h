@@ -103,6 +103,7 @@ private:
     static void refillReconnectQueue();
     static bool popReconnectQueue();
     static void newCubeRecord();
+    static bool hwidIsPaired(const uint8_t *id);
 
     static bool chooseConnectionAddr();
     static void produceRadioHop(PacketBuffer &buf);

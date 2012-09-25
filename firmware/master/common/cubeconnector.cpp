@@ -281,6 +281,16 @@ bool CubeConnector::popReconnectQueue()
     return true;
 }
 
+bool CubeConnector::hwidIsPaired(const uint8_t *id)
+{
+    for (int i = SysLFS::NUM_PAIRINGS - 1; i >= 0; --i) {
+        if (!memcmp(&savedPairingID.hwid[i], id, HWID_LEN))
+            return true;
+    }
+
+    return false;
+}
+
 void CubeConnector::newCubeRecord()
 {
     /*
@@ -465,10 +475,18 @@ void CubeConnector::radioAcknowledge(const PacketBuffer &packet)
          * this cube is neighbored with us and not a different base.
          *
          * Store the HWID, so we can check it during each verify.
+         *
+         * We also work around an edge case here: if a previously paired cube
+         * is positioned directly next to a base when the base turns on,
+         * the cube can respond more quickly to a neighbor RX event
+         * and go into pairing mode, rather than waiting for us to reconnect it.
+         *
+         * Check explicitly for this case here before we progress any further
+         * through the state machine.
          */
         case PairingFirstContact:
             nextNeighborKey();
-            if (packet.len >= RF_ACK_LEN_HWID) {
+            if (packet.len >= RF_ACK_LEN_HWID && !hwidIsPaired(ack->hwid)) {
                 memcpy(hwid, ack->hwid, sizeof hwid);
                 txState = packetRxState + 1;
             }
