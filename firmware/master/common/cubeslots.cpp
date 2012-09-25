@@ -33,6 +33,15 @@ _SYSCubeID CubeSlots::maxUserCubes = _SYS_NUM_CUBE_SLOTS;
 
 void CubeSlots::setCubeRange(unsigned minimum, unsigned maximum)
 {
+    /*
+     * update our counts asap, as the radio may preempt us,
+     * and we'd like to be up to date for it, especially with respect to
+     * the shutdown message that may get pended for additional cubes.
+     */
+
+    minUserCubes = minimum;
+    maxUserCubes = maximum;
+
     // if we have too many cubes connected, shutdown the extras
     int excessCount = numConnected() - maximum;
     if (excessCount > 0) {
@@ -50,9 +59,6 @@ void CubeSlots::setCubeRange(unsigned minimum, unsigned maximum)
             Atomic::Or(sendShutdown, Intrinsic::LZ(excessID));
         }
     }
-
-    minUserCubes = minimum;
-    maxUserCubes = maximum;
 
     // ensure reconnection is enabled if we have room, or disabled if we don't
     if (connectionSlotsAvailable())
