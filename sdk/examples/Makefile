@@ -4,6 +4,7 @@ SUBDIRS = \
 	mandelbrot \
 	membrane \
 	menudemo \
+	pairing \
 	sensors \
 	stampy \
 	stars \
