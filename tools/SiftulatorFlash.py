@@ -15,6 +15,67 @@ CURRENT_VERSION = 1
 
 HEADER_FORMAT = "<QIIIIIIIIII"
 
+VOL_MAGIC = 0x5f4c4f5674666953
+VOL_HEADER_FORMAT = "<QHHHHHHIIBBH"
+
+# Block Size: firmware/master/common/flash_map.h
+BLOCK_SIZE      = 128 * 1024
+BLOCK_MASK      = BLOCK_SIZE - 1
+
+# Volume Types: firmware/master/common/flash_volume.h
+T_LAUNCHER      = 0x4e4c
+T_GAME          = 0x4e4c
+T_LFS           = 0x5346
+T_ERASE_LOG     = 0x4c45
+T_DELETED       = 0x0000
+T_INCOMPLETE    = 0xFFFF
+
+# Erase Log info: firmware/master/common/erase_log.h
+ERASELOG_RECORD_FORMAT = "<IBBH"
+
+EL_ERASED = 0xFF
+EL_POPPED = 0x00
+EL_VALID  = 0x5F
+
+class Volume:
+    def __init__(self, storageFile, blockCode):
+        self.blockCode = blockCode
+        self.rawBytes = storageFile.mcRead((self.blockCode - 1) * BLOCK_SIZE, BLOCK_SIZE)
+        self._readHeader()
+        self._readPayload(storageFile)
+
+    def _readHeader(self):
+
+        volHdrSize = struct.calcsize(VOL_HEADER_FORMAT)
+        hdr = self.rawBytes[:volHdrSize]
+
+        self.magic,                 \
+            self.type,              \
+            self.payloadBlocks,     \
+            self.dataBytes,         \
+            self.payloadBlocksCpl,  \
+            self.dataBytesCpl,      \
+            self.typeCopy,          \
+            self.crcMap,            \
+            self.crcErase,          \
+            self.parentBlock,       \
+            self.parentBlockCpl,    \
+            self.reserved = struct.unpack(VOL_HEADER_FORMAT, hdr)
+
+    def _readPayload(self, storageFile):
+
+        payloadLen = BLOCK_SIZE - storageFile.mc_pageSize
+        volHdrSize = struct.calcsize(VOL_HEADER_FORMAT)
+
+        self.payload = self.rawBytes[volHdrSize:payloadLen]
+
+    def isValid(self):
+
+        return self.magic == VOL_MAGIC and                                  \
+                self.type == self.typeCopy and                              \
+                (self.payloadBlocks ^ self.payloadBlocksCpl) == 0xFFFF and  \
+                (self.dataBytes ^ self.dataBytesCpl) == 0xFFFF and          \
+                (self.parentBlock ^ self.parentBlockCpl) == 0xFF
 
 class StorageFile:
     def __init__(self, path):
@@ -28,9 +89,16 @@ class StorageFile:
         if len(hdr) != size:
             raise IOError("Unexpected end-of-file while reading header")
 
-        self.magic, self.version, self.fileSize, self.cube_count, \
-            self.cube_nvmSize, self.cube_extSize, self.cube_sectorSize, \
-            self.mc_pageSize, self.mc_sectorSize, self.mc_capacity, \
+        self.magic,                 \
+            self.version,           \
+            self.fileSize,          \
+            self.cube_count,        \
+            self.cube_nvmSize,      \
+            self.cube_extSize,      \
+            self.cube_sectorSize,   \
+            self.mc_pageSize,       \
+            self.mc_sectorSize,     \
+            self.mc_capacity,       \
             self.uniqueID = struct.unpack(HEADER_FORMAT, hdr)
 
         if self.magic != MAGIC:
@@ -39,6 +107,9 @@ class StorageFile:
 
         if self.version != CURRENT_VERSION:
             raise ValueError("Unsupported flash storage file version!")
+
+    def mcNumBlocks(self):
+        return self.mc_capacity / BLOCK_SIZE
 
     def mcRead(self, offset=0, size=None):
         """Read a section of the MC filesystem. By default, reads the whole thing."""
@@ -62,6 +133,9 @@ class StorageFile:
             data[size - self.mc_sectorSize:size] in emptySectors):
                 size -= self.mc_sectorSize
         return data[:size]
+
+    def mcVolume(self, blockCode):
+        return Volume(self, blockCode)
 
 
 def zapSysLFSVolumes(flashImage):
