@@ -1,10 +1,10 @@
 SUBDIRS = \
 	accelchart \
 	assetslot \
+	connection \
 	mandelbrot \
 	membrane \
 	menudemo \
-	pairing \
 	sensors \
 	stampy \
 	stars \

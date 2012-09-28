@@ -1,4 +1,4 @@
-APP = pairing
+APP = connection
 
 include $(SDK_DIR)/Makefile.defs
 
