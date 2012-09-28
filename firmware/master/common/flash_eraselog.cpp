@@ -30,7 +30,7 @@ void FlashEraseLog::writePopFlag(unsigned index)
 {
     uint8_t flag = F_POPPED;
     FlashDevice::write(indexToFlashAddress(index) + offsetof(Record, flag), &flag, sizeof flag);
-}    
+}
 
 void FlashEraseLog::readRecord(Record &r, unsigned index)
 {
@@ -160,6 +160,9 @@ void FlashEraseLog::commit(Record &rec)
 
     ASSERT(writeIndex < NUM_RECORDS);
     ASSERT(volume.block.isValid());
+
+    // make sure we're only comitting erased blocks
+    DEBUG_ONLY(rec.block.verifyErased();)
 
     rec.flag = F_VALID;
     rec.check = computeCheck(rec);
