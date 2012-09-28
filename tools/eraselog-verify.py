@@ -1,73 +1,88 @@
 #!/usr/bin/env python
 
 #
-# Tool for verifying erase log contents within a filesystem dump.
+# Tool to verify erase log contents in a filesystem dump.
 # Can operate on persistent filesystem files from the Siftulator (run with -F)
-# or the output from swiss backup (capturing filesystem contents from hardware).
+# or the output from `swiss backup` (capturing filesystem contents from hardware).
 #
 
 import sys, struct
 from collections import namedtuple
 import SiftulatorFlash
 
-path = sys.argv[1]
-storageFile = SiftulatorFlash.StorageFile(path)
-
 ####################################################
-# first find the erase log, and make sure there's only one    
+# first find the erase log, and make sure there's only one
 ####################################################
 
-eraseLogBlock = -1
+def findEraseLog():
 
-for i in range(storageFile.mcNumBlocks()):
-    
-    vol = storageFile.mcVolume(i + 1)
-    
-    if vol.isValid():
-        if vol.type == SiftulatorFlash.T_ERASE_LOG:
-            
-            if eraseLogBlock >= 0:
-                raise ValueError("more than one erase log!")
-            
-            eraseLogBlock = vol.blockCode
+    eraseLog = None
 
-if eraseLogBlock < 0:
-    print "no erase log in this FS, sorry"
-    sys.exit(0)
+    for i in range(storageFile.mcNumBlocks()):
+
+        vol = storageFile.mcVolume(i + 1)
+
+        if vol.isValid():
+            if vol.type == SiftulatorFlash.T_ERASE_LOG:
+                if eraseLog != None:
+                    raise ValueError("more than one erase log!")
+                eraseLog = vol
+
+    return eraseLog
 
 ####################################################
-# iterate through the erase log records and for any EL_VALID records,
-# ensure they're actually erased
+# collect block codes for any EL_VALID records in the erase log
 ####################################################
 
-eraseLogPayload = storageFile.mcVolume(eraseLogBlock).payload
-eraseLogRecSize = struct.calcsize(SiftulatorFlash.ERASELOG_RECORD_FORMAT)
-numEraseLogRecords = len(eraseLogPayload) / eraseLogRecSize
+def findValidErasedBlocks(eraseLog):
 
-erasedBlocks = []
+    payload = eraseLog.payload
+    RecordSize = struct.calcsize(SiftulatorFlash.ERASELOG_RECORD_FORMAT)
+    numEraseLogRecords = len(payload) / RecordSize
 
-for i in range(numEraseLogRecords):
-    
-    offset = i * eraseLogRecSize
-    recdata = eraseLogPayload[offset:offset + eraseLogRecSize]
-    
     EraseLogRecord = namedtuple('EraseLogRecord', 'eraseCount, blockCode, flag, check')
-    record = EraseLogRecord._make(struct.unpack(SiftulatorFlash.ERASELOG_RECORD_FORMAT, recdata))
-        
-    if record.flag == SiftulatorFlash.EL_VALID:
-        print "valid erase record:", record
-        erasedBlocks.append(record.blockCode)
+    erasedBlocks = []
+
+    for i in range(numEraseLogRecords):
+
+        offset = i * RecordSize
+        recdata = payload[offset:offset + RecordSize]
+        record = EraseLogRecord._make(struct.unpack(SiftulatorFlash.ERASELOG_RECORD_FORMAT, recdata))
+
+        if record.flag == SiftulatorFlash.EL_VALID:
+            print "valid erase record:", record
+            erasedBlocks.append(record.blockCode)
+
+    return erasedBlocks
 
 ####################################################
 # verify all bytes are erased (0xff)
 ####################################################
 
+def verifyErasedBlocks(blocks):
+
+    for eb in blocks:
+        erasedVol = storageFile.mcVolume(eb)
+        for i, b in enumerate(erasedVol.rawBytes):
+            if b != '\xff':
+                print "!!! byte %d not erased in block %d (index %d)" % (i, eb, eb - 1)
+
+
+####################################################
+# main
+####################################################
+
+path = sys.argv[1]
+storageFile = SiftulatorFlash.StorageFile(path)
+
+elog = findEraseLog()
+if elog == None:
+    print "no erase log in this FS, sorry"
+    sys.exit(0)
+
+print "reading from erase log in block %d (index %d)" % (elog.blockCode, elog.blockCode - 1)
+blocks = findValidErasedBlocks(elog)
+
 print "verifying erased blocks are erased..."
-
-for eb in erasedBlocks:
-    erasedVol = storageFile.mcVolume(eb)
-    for byte in erasedVol.rawBytes:
-        if (byte and 0xff) != 0xff:
-            print "not erased in block", eb
-
+verifyErasedBlocks(blocks)
 print "done."
