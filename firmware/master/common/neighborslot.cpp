@@ -166,11 +166,21 @@ void NeighborSlot::resetSlots(_SYSCubeIDVector cv)
     }
 }
 
-void NeighborSlot::resetPairs(_SYSCubeIDVector cv)
+void NeighborSlot::resetPairs() {
+    int c = id();
+    c = c * _SYS_NUM_CUBE_SLOTS - ((c*(c-1))>>1) - 1;
+    for(int i=0; i<int(CubeNeighborPair::NUM_UNIQUE_PAIRS); ++i) {
+        if (c - i > c) {
+            CubeNeighborPair::matrix[i].clear();
+        }
+    }
+}
+
+void NeighborSlot::resetAllPairs()
 {
     for (CubeNeighborPair *p = CubeNeighborPair::matrix;
         p != CubeNeighborPair::matrix + CubeNeighborPair::NUM_UNIQUE_PAIRS; ++p) {
-        p->clear(); // TODO: check that vec(p) & cv != 0?
+        p->clear();
     }
 }
 
@@ -178,11 +188,6 @@ void NeighborSlot::doResetSlot() {
     memset(neighbors.sides, _SYS_NEIGHBOR_NONE, sizeof neighbors);
     memset(prevNeighbors, 0x00, sizeof prevNeighbors);
 }
-
-void NeighborSlot::doResetPairs() {
-    resetPairs(Intrinsic::LZ(id()));
-}
-
 
 bool NeighborSlot::addNeighborToSide(_SYSNeighborID dstId, _SYSSideID side)
 {

@@ -34,7 +34,8 @@ public:
     bool sendNextEvent();
 
     static void resetSlots(_SYSCubeIDVector cv);
-    static void resetPairs(_SYSCubeIDVector cv);
+    static void resetAllPairs();
+    void resetPairs();
     
     const _SYSNeighborState &getNeighborState() {
         return neighbors;
@@ -48,7 +49,6 @@ private:
     bool removeNeighborFromSide(_SYSNeighborID id, _SYSSideID side);
 
     void doResetSlot();
-    void doResetPairs();
 
     uint8_t prevNeighbors[4];       // in the raw RF ACK format
     _SYSNeighborState neighbors;    // these are ABI NeighborIDs.
