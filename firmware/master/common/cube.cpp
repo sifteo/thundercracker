@@ -88,7 +88,8 @@ void CubeSlot::disconnect()
 
     setVideoBuffer(0);
     setMotionBuffer(0);
-    NeighborSlot::resetSlots(cv);
+
+    // NeighborSlot::resetSlots(cv); // slots will get reset when the neighbor event is dispatched "just in time"
     NeighborSlot::resetPairs(cv);
 }
 

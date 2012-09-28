@@ -76,24 +76,50 @@ bool NeighborSlot::sendNextEvent()
      * another event. If no events can be disptached, returns 'false'.
      */
 
-    const uint8_t *rawNeighbors = CubeSlots::instances[id()].getRawNeighbors();
+     if (CubeSlots::instances[id()].isSysConnected()) {
 
-    for (_SYSSideID side=0; side<4; ++side) {
-        _SYSNeighborID prev = hardwareNeighborToABI(prevNeighbors[side]);
-        _SYSNeighborID next = hardwareNeighborToABI(rawNeighbors[side]);
+        const uint8_t *rawNeighbors = CubeSlots::instances[id()].getRawNeighbors();
 
-        if (prev != next) {
-            // Neighbor changed
+        for (_SYSSideID side=0; side<4; ++side) {
+            _SYSNeighborID prev = hardwareNeighborToABI(prevNeighbors[side]);
+            _SYSNeighborID next = hardwareNeighborToABI(rawNeighbors[side]);
 
-            if (prev != _SYS_NEIGHBOR_NONE && removeNeighborFromSide(prev, side))
-                return true;
+            // filter out zombies
+            if (next < _SYS_NUM_CUBE_SLOTS && !CubeSlots::instances[next].isSysConnected()) {
+                next = _SYS_NEIGHBOR_NONE;
+            }
 
-            if (next != _SYS_NEIGHBOR_NONE && addNeighborToSide(next, side))
-                return true;
+            if (prev != next) {
+                // Neighbor changed
+
+                if (prev != _SYS_NEIGHBOR_NONE && removeNeighborFromSide(prev, side))
+                    return true;
+
+                if (next != _SYS_NEIGHBOR_NONE && addNeighborToSide(next, side))
+                    return true;
+            }
+
+            // If we made it this far, commit the state to memory.
+            if (next == _SYS_NEIGHBOR_NONE) {
+                prevNeighbors[side] = next; 
+            } else {
+                prevNeighbors[side] = rawNeighbors[side];
+            }
+        }
+    
+    } else {
+
+        for(_SYSSideID side=0; side<4; ++side) {
+            _SYSNeighborID prev = neighbors.sides[side];
+            if (prev != _SYS_NEIGHBOR_NONE) {
+                // kill zombie neighbor
+                if (removeNeighborFromSide(prev, side)) {
+                    return true;
+                }
+            }
         }
 
-        // If we made it this far, commit the state to memory.
-        prevNeighbors[side] = rawNeighbors[side];
+        doResetSlot();
     }
 
     // No more events
@@ -135,8 +161,7 @@ void NeighborSlot::resetSlots(_SYSCubeIDVector cv)
 {
     while (cv) {
         _SYSCubeID cubeId = Intrinsic::CLZ(cv);
-        memset(instances[cubeId].neighbors.sides, _SYS_NEIGHBOR_NONE, sizeof instances[cubeId].neighbors);
-        memset(instances[cubeId].prevNeighbors, 0x00, sizeof instances[cubeId].prevNeighbors);
+        instances[cubeId].doResetSlot();
         cv ^= Intrinsic::LZ(cubeId);
     }
 }
@@ -145,9 +170,19 @@ void NeighborSlot::resetPairs(_SYSCubeIDVector cv)
 {
     for (CubeNeighborPair *p = CubeNeighborPair::matrix;
         p != CubeNeighborPair::matrix + CubeNeighborPair::NUM_UNIQUE_PAIRS; ++p) {
-        p->clear();
+        p->clear(); // TODO: check that vec(p) & cv != 0?
     }
 }
+
+void NeighborSlot::doResetSlot() {
+    memset(neighbors.sides, _SYS_NEIGHBOR_NONE, sizeof neighbors);
+    memset(prevNeighbors, 0x00, sizeof prevNeighbors);
+}
+
+void NeighborSlot::doResetPairs() {
+    resetPairs(Intrinsic::LZ(id()));
+}
+
 
 bool NeighborSlot::addNeighborToSide(_SYSNeighborID dstId, _SYSSideID side)
 {

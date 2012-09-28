@@ -47,6 +47,9 @@ private:
     bool clearSide(_SYSSideID side);
     bool removeNeighborFromSide(_SYSNeighborID id, _SYSSideID side);
 
+    void doResetSlot();
+    void doResetPairs();
+
     uint8_t prevNeighbors[4];       // in the raw RF ACK format
     _SYSNeighborState neighbors;    // these are ABI NeighborIDs.
 };

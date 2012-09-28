@@ -127,6 +127,7 @@ static void onNeighborAdd(void* ctxt, unsigned cube0, unsigned side0, unsigned c
 }
 
 static void onNeighborRemove(void* ctxt, unsigned cube0, unsigned side0, unsigned cube1, unsigned side1) {
+    LOG("NEIGHBOR REMOVE\n");
 	if (isActive(cube0)) { repaintActiveCube(cube0); }
 	if (isActive(cube1)) { repaintActiveCube(cube1); }
 }
