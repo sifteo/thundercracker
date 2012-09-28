@@ -16,45 +16,81 @@ AssetSlot gMainSlot = AssetSlot::allocate()
 
 // GLOBALS
 
-static VideoBuffer vbuf[CUBE_ALLOCATION];
-static CubeSet newCubes;
-static CubeSet lostCubes;
-static CubeSet reconnectedCubes;
-static CubeSet dirtyCubes;
-static CubeSet activeCubes;
+static VideoBuffer vbuf[CUBE_ALLOCATION]; // one video-buffer per cube
+static CubeSet newCubes; // new cubes as a result of paint()
+static CubeSet lostCubes; // lost cubes as a result of paint()
+static CubeSet reconnectedCubes; // reconnected (lost->new) cubes as a result of paint()
+static CubeSet dirtyCubes; // dirty cubes as a result of paint()
+static CubeSet activeCubes; // cubes showing the active scene
 
-static AssetLoader loader;
-static AssetConfiguration<1> config;
+static AssetLoader loader; // global asset loader (each cube will have symmetric assets)
+static AssetConfiguration<1> config; // global asset configuration (will just hold the bootstrap group)
 
 // FUNCTIONS
 
-static void repaintActiveCube(CubeID cid) {
-	Int2 restPositions[4] = {
-		vec(64 - Bars[0].pixelWidth()/2,0),
-		vec(0, 64 - Bars[1].pixelHeight()/2),
-		vec(64 - Bars[2].pixelWidth()/2, 128-Bars[2].pixelHeight()),
-		vec(128-Bars[3].pixelWidth(), 64 - Bars[3].pixelHeight()/2)
-	};
-	auto& g = vbuf[cid];
-	
-	auto neighbors = g.physicalNeighbors();
-	auto anyNeighbors = 0;
-	for(int side=0; side<4; ++side) {
-		if (neighbors.hasNeighborAt(Side(side))) {
-			anyNeighbors = 1;
-			g.sprites[side].setImage(Bars[side]);
-			g.sprites[side].move(restPositions[side]);
-		} else {
-			g.sprites[side].hide();
-		}
-	}
-	g.bg0.image(vec(0,0), Backgrounds, anyNeighbors);
+static Int2 getRestPosition(Side s) {
+    // Look up the top-left pixel of the bar for the given side.
+    // We use a switch so that the compiler can optimize this
+    // however if feels is best.
+    switch(s) {
+    case TOP: return vec(64 - Bars[0].pixelWidth()/2,0);
+    case LEFT: return vec(0, 64 - Bars[1].pixelHeight()/2);
+    case BOTTOM: return vec(64 - Bars[2].pixelWidth()/2, 128-Bars[2].pixelHeight());
+    case RIGHT: return vec(128-Bars[3].pixelWidth(), 64 - Bars[3].pixelHeight()/2);
+    default: return vec(0,0);
+    }
 }
 
-static void initActiveCube(CubeID cid) {
+static int barSpriteCount(CubeID cid) {
+    // how many bars are showing on this cube?
+    ASSERT(activeCubes.test(cid));
+    int result = 0;
+    for(int i=0; i<4; ++i) {
+        if (!vbuf[cid].sprites[i].isHidden()) {
+            result++;
+        }
+    }
+    return result;
+}
+
+static void showSideBar(CubeID cid, Side s) {
+    // if cid is not showing a bar on side s, show it and check if the
+    // smiley should wake up
+    ASSERT(activeCubes.test(cid));
+    if (vbuf[cid].sprites[s].isHidden()) {
+        vbuf[cid].sprites[s].setImage(Bars[s]);
+        vbuf[cid].sprites[s].move(getRestPosition(s));
+        if (barSpriteCount(cid) == 1) {
+        	vbuf[cid].bg0.image(vec(0,0), Backgrounds, 1);
+        }
+    }
+}
+
+static void hideSideBar(CubeID cid, Side s) {
+    // if cid is showing a bar on side s, hide it and check if the
+    // smiley should go to sleep
+    ASSERT(activeCubes.test(cid));
+    if (!vbuf[cid].sprites[s].isHidden()) {
+        vbuf[cid].sprites[s].hide();
+        if (barSpriteCount(cid) == 0) {
+            vbuf[cid].bg0.image(vec(0,0), Backgrounds, 0);
+        }
+    }
+}
+
+static void activateCube(CubeID cid) {
+    // mark cube as active and render its canvas
 	activeCubes.mark(cid);
 	vbuf[cid].initMode(BG0_SPR_BG1);
-	repaintActiveCube(cid);
+	vbuf[cid].bg0.image(vec(0,0), Backgrounds, 0);
+	auto neighbors = vbuf[cid].physicalNeighbors();
+	for(int side=0; side<4; ++side) {
+		if (neighbors.hasNeighborAt(Side(side))) {
+            showSideBar(cid, Side(side));
+		} else {
+            hideSideBar(cid, Side(side));
+		}
+	}
 }
 
 static void paintWrapper() {
@@ -64,7 +100,7 @@ static void paintWrapper() {
 	reconnectedCubes.clear();
 	dirtyCubes.clear();
 
-	// paint and collect events
+	// fire events
 	System::paint();
 
 	// dynamically load assets just-in-time
@@ -78,25 +114,32 @@ static void paintWrapper() {
 					vec(0, 4), loader.cubeProgress(cid, 128), BG0ROMDrawable::ORANGE, 8
 				);
 			}
+			// fire events while we wait
 			System::paint();
 		}
 		loader.finish();
 	}
 
 	// repaint cubes
-	for(CubeID cid : (newCubes|dirtyCubes)) {
-		initActiveCube(cid);
+	for(CubeID cid : dirtyCubes) {
+		activateCube(cid);
 	}
+	
+	// also, handle lost cubes, if you so desire :)
 }
 
 static void onCubeConnect(void* ctxt, unsigned cid) {
+    // this cube is either new or reconnected
 	if (lostCubes.test(cid)) {
+	    // this is a reconnected cube since it was already lost this paint()
 		lostCubes.clear(cid);
 		reconnectedCubes.mark(cid);
-		dirtyCubes.mark(cid);
 	} else {
+	    // this is a brand-spanking new cube
 		newCubes.mark(cid);
 	}
+	// begin showing some loading art (have to use BG0ROM since we don't have assets)
+	dirtyCubes.mark(cid);
 	auto& g = vbuf[cid];
 	g.attach(cid);
 	g.initMode(BG0_ROM);
@@ -106,6 +149,7 @@ static void onCubeConnect(void* ctxt, unsigned cid) {
 }
 
 static void onCubeDisconnect(void* ctxt, unsigned cid) {
+    // mark as lost and clear from other cube sets
 	lostCubes.mark(cid);
 	newCubes.clear(cid);
 	reconnectedCubes.clear(cid);
@@ -114,28 +158,33 @@ static void onCubeDisconnect(void* ctxt, unsigned cid) {
 }
 
 static void onCubeRefresh(void* ctxt, unsigned cid) {
+    // mark this cube for a future repaint
 	dirtyCubes.mark(cid);
 }
 
 static bool isActive(NeighborID nid) {
+    // Does this nid indicate an active cube?
 	return nid.isCube() && activeCubes.test(nid);
 }
 
 static void onNeighborAdd(void* ctxt, unsigned cube0, unsigned side0, unsigned cube1, unsigned side1) {
-	if (isActive(cube0)) { repaintActiveCube(cube0); }
-	if (isActive(cube1)) { repaintActiveCube(cube1); }
+    // update art on active cubes (not loading cubes or base)
+	if (isActive(cube0)) { showSideBar(cube0, Side(side0)); }
+	if (isActive(cube1)) { showSideBar(cube1, Side(side1)); }
 }
 
 static void onNeighborRemove(void* ctxt, unsigned cube0, unsigned side0, unsigned cube1, unsigned side1) {
-    LOG("NEIGHBOR REMOVE\n");
-	if (isActive(cube0)) { repaintActiveCube(cube0); }
-	if (isActive(cube1)) { repaintActiveCube(cube1); }
+    // update art on active cubes (not loading cubes or base)
+    if (isActive(cube0)) { hideSideBar(cube0, Side(side0)); }
+	if (isActive(cube1)) { hideSideBar(cube1, Side(side1)); }
 }
 
 void main() {
+    // initialize asset configuration and loader
 	config.append(gMainSlot, BootstrapAssets);
 	loader.init();
 
+    // subscribe to events
 	Events::cubeConnect.set(onCubeConnect);
 	Events::cubeDisconnect.set(onCubeDisconnect);
 	Events::cubeRefresh.set(onCubeRefresh);
@@ -143,10 +192,13 @@ void main() {
 	Events::neighborAdd.set(onNeighborAdd);
 	Events::neighborRemove.set(onNeighborRemove);
 	
+	// initialize cubes
 	for(CubeID cid : CubeSet::connected()) {
 		vbuf[cid].attach(cid);
-		initActiveCube(cid);
+		activateCube(cid);
 	}
+	
+	// run loop
 	for(;;) {
 		paintWrapper();
 	}
