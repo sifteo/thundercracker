@@ -27,6 +27,3 @@ Within each of the 256-byte index blocks, you'll find:
 3. Zero or more index records
 
 An index record or an anchor can be either "valid" (CRC matches), "empty" (all 0xFF), or "invalid" (any other values). Empty records mark the beginning of the free space in the index. Valid records correspond with a real space allocation in the object data area, whereas invalid records are assumed *not* to have any corresponding allocated space, since the FS assumes that invalid records only arise if power fails during an FS write.
-
-Below that, at address 0x0CC0200, you start seeing object data. Everything here is padded to 16-byte boundaries, but without reading the index it's hard to tell what's what.
-

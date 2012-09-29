@@ -19,8 +19,13 @@ VOL_MAGIC = 0x5f4c4f5674666953
 VOL_HEADER_FORMAT = "<QHHHHHHIIBBH"
 
 # Block Size: firmware/master/common/flash_map.h
-BLOCK_SIZE      = 128 * 1024
-BLOCK_MASK      = BLOCK_SIZE - 1
+CACHE_BLOCK_SIZE    = 0x100
+BLOCK_SIZE          = 128 * 1024
+BLOCK_MASK          = BLOCK_SIZE - 1
+# Maximum size of type-specific data that will fit within the same
+# FlashBlock as the FlashVolumeHeader, given a minimal single-block
+# volume header.
+MAX_MAPPABLE_DATA_BYTES = CACHE_BLOCK_SIZE - 32 - 4 - 4
 
 # Volume Types: firmware/master/common/flash_volume.h
 T_LAUNCHER      = 0x4e4c
@@ -30,6 +35,20 @@ T_ERASE_LOG     = 0x4c45
 T_DELETED       = 0x0000
 T_INCOMPLETE    = 0xFFFF
 
+# LFS info:
+
+LFS_NUM_ROWS = (MAX_MAPPABLE_DATA_BYTES - 4) / 2
+
+LFS_HEADER_FORMAT = "<I" + ("H" * LFS_NUM_ROWS)
+LFS_INDEX_ANCHOR_FORMAT = "<BBB"
+LFS_INDEX_RECORD_FORMAT = "<BBHB"
+
+# Object sizes are 8-bit, measured in multiples of SIZE_UNIT
+LFS_SIZE_SHIFT  = 4
+LFS_SIZE_UNIT   = 1 << LFS_SIZE_SHIFT
+LFS_SIZE_MASK   = LFS_SIZE_UNIT - 1
+LFS_MAX_SIZE    = 0xFF << LFS_SIZE_SHIFT
+
 # Erase Log info: firmware/master/common/erase_log.h
 ERASELOG_RECORD_FORMAT = "<IBBH"
 
@@ -37,12 +56,69 @@ EL_ERASED = 0xFF
 EL_POPPED = 0x00
 EL_VALID  = 0x5F
 
+def ror8(byte, n):
+    byte &= 0xff
+    return ((byte >> n) | (byte << (8 - n))) & 0xff
+
+def lfsComputeCheckByte(a, b):
+
+    result = 0x42 ^ (a & 0xff) ^ ror8(b, 1) ^ ror8(a, 3) ^ ror8(b, 5)
+    if result == 0xFF:
+        result = 0x7F
+    return result
+
+class FlashLFSIndexRecord:
+
+    SIZE_SHIFT = 4
+
+    def __init__(self, bytes):
+
+        self.key,       \
+        self.size,      \
+        self.crc,       \
+        self.check =  struct.unpack(LFS_INDEX_RECORD_FORMAT, bytes)
+
+    def isValid(self):
+        return self.check == lfsComputeCheckByte(self.key, self.size)
+
+    def isEmpty(self):
+        return self.key == 0xff and     \
+                self.size == 0xff and   \
+                self.crc == 0xffff and  \
+                self.check == 0xff
+
+    def sizeInBytes(self):
+        return self.size << self.SIZE_SHIFT
+
+class FlashLFSIndexAnchor:
+
+    OFFSET_SHIFT = LFS_SIZE_SHIFT
+    # OFFSET_UNIT = FlashLFSIndexRecord::SIZE_UNIT
+    # OFFSET_MASK = FlashLFSIndexRecord::SIZE_MASK
+    # MAX_OFFSET = FlashMapBlock::BLOCK_SIZE
+
+    def __init__(self, bytes):
+
+        self.offsetLow,     \
+        self.offsetHigh,    \
+        self.check =  struct.unpack(LFS_INDEX_ANCHOR_FORMAT, bytes)
+
+    def isValid(self):
+        return self.check == lfsComputeCheckByte(self.offsetLow, self.offsetHigh)
+
+    def offsetInBytes(self):
+        return (self.offsetLow | (self.offsetHigh << 8)) << self.OFFSET_SHIFT
+
+    def isEmpty(self):
+        return self.offsetLow == 0xff and self.offsetHigh == 0xff and self.check == 0xff
+
+
 class Volume:
     def __init__(self, storageFile, blockCode):
         self.blockCode = blockCode
         self.rawBytes = storageFile.mcRead((self.blockCode - 1) * BLOCK_SIZE, BLOCK_SIZE)
         self._readHeader()
-        self._readPayload(storageFile)
+        self.payload = self.rawBytes[storageFile.mc_pageSize:]
 
     def _readHeader(self):
 
@@ -62,12 +138,7 @@ class Volume:
             self.parentBlockCpl,    \
             self.reserved = struct.unpack(VOL_HEADER_FORMAT, hdr)
 
-    def _readPayload(self, storageFile):
-
-        payloadLen = BLOCK_SIZE - storageFile.mc_pageSize
-        volHdrSize = struct.calcsize(VOL_HEADER_FORMAT)
-
-        self.payload = self.rawBytes[volHdrSize:payloadLen]
+        self.headerPadding = self.rawBytes[volHdrSize:0x100]
 
     def isValid(self):
 

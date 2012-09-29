@@ -22,11 +22,10 @@ def findEraseLog():
 
         vol = storageFile.mcVolume(i + 1)
 
-        if vol.isValid():
-            if vol.type == SiftulatorFlash.T_ERASE_LOG:
-                if eraseLog != None:
-                    raise ValueError("more than one erase log!")
-                eraseLog = vol
+        if vol.isValid() and vol.type == SiftulatorFlash.T_ERASE_LOG:
+            if eraseLog != None:
+                raise ValueError("more than one erase log!")
+            eraseLog = vol
 
     return eraseLog
 
