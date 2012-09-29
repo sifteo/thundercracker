@@ -27,7 +27,7 @@ kAssetSlotBase  = kCubeBase + NUM_PAIRINGS
 kEnd            = kAssetSlotBase + NUM_TOTAL_ASSET_SLOTS
 
 ####################################################
-# first find the erase log, and make sure there's only one
+# find all SysLFS blocks - type T_LFS and no parent
 ####################################################
 
 def findSysLFSBlocks():
@@ -74,6 +74,9 @@ def verifyIndexBlock(block):
     TODO: validate CRCs on object data.
     """
 
+    valid = 0
+    invalid = 0
+
     anchor = None
     # first find a valid index
     while block.tell() < (block.len - 3):
@@ -83,38 +86,54 @@ def verifyIndexBlock(block):
 
     # did we find a good one?
     if not anchor.isValid():
-        return True
+        return True, valid, invalid
 
     # iterate index records
     while block.tell() < (block.len - 5):
         record = FlashLFSIndexRecord(block.read(5))
         # empty records indicate the end of the block
         if record.isEmpty():
-            return True
+            return True, valid, invalid
 
-        print "%s sizeInBytes %d" % (keyDetail(record.key), record.sizeInBytes())
+        # print "%s sizeInBytes %d" % (keyDetail(record.key), record.sizeInBytes())
         if not record.isValid():
-            print "!!! invalid record"
+            invalid = invalid + 1
+            # print "!!! invalid record"
+        else:
+            valid = valid + 1
 
-    return False
+    return False, valid, invalid
 
-def verifySysLFSIndex(block):
+def verifySysLFSIndex(blockCode):
     """
     Step through the index block and verify its records are valid
     """
 
     indexBlockLen = 0x100
-    vol = storageFile.mcVolume(block)
+    vol = storageFile.mcVolume(blockCode)
 
     end = len(vol.payload)
     start = end - indexBlockLen
 
+    indexBlocks = 0
+    validRecords = 0
+    invalidRecords = 0
+
     while start > 0:
         block = StringIO.StringIO(vol.payload[start:end])
-        if verifyIndexBlock(block) is True:
+        done, valid, invalid = verifyIndexBlock(block)
+        indexBlocks = indexBlocks + 1
+        if done is True:
             break
+
+        validRecords = validRecords + valid
+        invalidRecords = invalidRecords + invalid
+
         start = start - indexBlockLen
         end = end - indexBlockLen
+
+    print "verified SysLFS block %d (index %d).\n\tindexBlocks traversed: %d\n\tvalidRecords: %d\n\tinvalidRecords %d" % \
+            (blockCode, blockCode - 1, indexBlocks, validRecords, invalidRecords)
 
 
 ####################################################
@@ -130,6 +149,5 @@ if len(syslfsBlocks) == 0:
     sys.exit(0)
 
 for block in syslfsBlocks:
-    print "verifying SysLFS block %d (index %d)" % (block, block - 1)
     verifySysLFSIndex(block)
 
