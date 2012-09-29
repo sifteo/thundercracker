@@ -237,7 +237,7 @@ class RadioManager {
     static fifo_t fifo;
     static bool enabled;
 
-    static const unsigned CHANNEL_HOP_THRESHOLD = 13 * PacketTransmission::DEFAULT_HARDWARE_RETRIES;
+    static const unsigned CHANNEL_HOP_THRESHOLD = 5 * PacketTransmission::DEFAULT_HARDWARE_RETRIES;
 
     // ID for the CubeConnector. Must not collide with any CubeSlot ID.
     static const unsigned CONNECTOR_ID = _SYS_NUM_CUBE_SLOTS;
