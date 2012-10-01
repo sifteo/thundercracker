@@ -23,6 +23,7 @@ void main() {
 	}
 	TimeDelta time(0.f);
 	for(;;) {
+		System::keepAwake();
 		auto startTime = SystemTime::now();
 		loader.start(config1);
 		for(CubeID cid : CubeSet::connected()) {
