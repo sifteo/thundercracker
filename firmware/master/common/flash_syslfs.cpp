@@ -715,10 +715,10 @@ void SysLFS::deleteCube(unsigned index)
     ASSERT(index < NUM_PAIRINGS);
 
     Key cubeKey = Key(kCubeBase + index);
-    write(cubeKey, 0, 0);
+    write(cubeKey, 0, 0, true);
 
     for (unsigned i = 0; i < ASSET_SLOTS_PER_CUBE; ++i)
-        write(AssetSlotRecord::makeKey(cubeKey, i), 0, 0);
+        write(AssetSlotRecord::makeKey(cubeKey, i), 0, 0, true);
 }
 
 void SysLFS::cleanupDeletedVolumes()
