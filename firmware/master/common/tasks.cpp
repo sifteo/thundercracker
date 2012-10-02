@@ -172,7 +172,7 @@ void Tasks::idle(uint32_t exclude)
 
 void Tasks::heartbeatISR()
 {
-    #ifndef WATCHDOG_DISABLE
+    #ifndef DISABLE_WATCHDOG
 
     // Check the watchdog timer
     if (++watchdogCounter >= WATCHDOG_DURATION) {
@@ -198,7 +198,7 @@ void Tasks::heartbeatISR()
         SvmRuntime::fault(Svm::F_NOT_RESPONDING);
         #endif
     }
-    #endif // WATCHDOG_DISABLE
+    #endif // DISABLE_WATCHDOG
 
     // Defer to a Task for everything else
     trigger(Heartbeat);
