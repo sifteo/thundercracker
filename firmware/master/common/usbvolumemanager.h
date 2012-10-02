@@ -3,6 +3,7 @@
 
 #include "usbprotocol.h"
 #include "flash_volume.h"
+#include "sysinfo.h"
 
 class UsbVolumeManager
 {
@@ -27,6 +28,7 @@ public:
         FlashDeviceRead,
         WriteCommitOK,
         WriteCommitFail,
+        BaseSysInfo
     };
 
     struct VolumeOverviewReply {
@@ -61,6 +63,11 @@ public:
         uint32_t length;
     };
 
+    struct SysInfoReply {
+        uint8_t baseUniqueID[SysInfo::UniqueIdNumBytes];
+        uint8_t baseHwRevision;
+    };
+
     static void onUsbData(const USBProtocolMsg &m);
 
 private:
@@ -73,6 +80,7 @@ private:
     static ALWAYS_INLINE void pairCube(const USBProtocolMsg &m, USBProtocolMsg &reply);
     static ALWAYS_INLINE void pairingSlotDetail(const USBProtocolMsg &m, USBProtocolMsg &reply);
     static ALWAYS_INLINE void flashDeviceRead(const USBProtocolMsg &m, USBProtocolMsg &reply);
+    static ALWAYS_INLINE void baseSysInfo(const USBProtocolMsg &m, USBProtocolMsg &reply);
 };
 
 #endif // _USB_VOLUME_MANAGER_H

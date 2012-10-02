@@ -128,6 +128,10 @@ void UsbVolumeManager::onUsbData(const USBProtocolMsg &m)
         flashDeviceRead(m, reply);
         break;
 
+    case BaseSysInfo:
+        baseSysInfo(m, reply);
+        break;
+
     }
 
 #ifndef SIFTEO_SIMULATOR
@@ -320,4 +324,13 @@ void UsbVolumeManager::flashDeviceRead(const USBProtocolMsg &m, USBProtocolMsg &
 
     FlashDevice::read(address, reply.castPayload<uint8_t>(), length);
     reply.len += length;
+}
+
+void UsbVolumeManager::baseSysInfo(const USBProtocolMsg &m, USBProtocolMsg &reply)
+{
+    reply.header |= BaseSysInfo;
+
+    SysInfoReply *r = reply.zeroCopyAppend<SysInfoReply>();
+    memcpy(r->baseUniqueID, SysInfo::UniqueId, SysInfo::UniqueIdNumBytes);
+    r->baseHwRevision = SysInfo::HardwareRev;
 }
