@@ -302,7 +302,7 @@ namespace SysLFS {
     }
 
     template <typename T>
-    inline bool write(Key k, const T &obj, bool gc=true) {
+    inline bool writeObject(Key k, const T &obj, bool gc=true) {
         return write(k, (const uint8_t*) &obj, sizeof obj, gc) == sizeof obj;
     }
 

@@ -715,10 +715,10 @@ void SysLFS::deleteCube(unsigned index)
     ASSERT(index < NUM_PAIRINGS);
 
     Key cubeKey = Key(kCubeBase + index);
-    write(cubeKey, 0, 0, true);
+    write(cubeKey, 0, 0);
 
     for (unsigned i = 0; i < ASSET_SLOTS_PER_CUBE; ++i)
-        write(AssetSlotRecord::makeKey(cubeKey, i), 0, 0, true);
+        write(AssetSlotRecord::makeKey(cubeKey, i), 0, 0);
 }
 
 void SysLFS::cleanupDeletedVolumes()
@@ -804,10 +804,10 @@ void SysLFS::cleanupDeletedVolumes()
                 excluded.mark(key);
 
                 if (cr.cleanupDeletedVolumes(allVolumes)) {
-                    if (SysLFS::write(key, cr, false))
+                    if (SysLFS::writeObject(key, cr, false))
                         continue;
                     // Enable GC, and restart iteration.
-                    SysLFS::write(key, cr);
+                    SysLFS::writeObject(key, cr);
                     break;
                 }
             }
@@ -824,10 +824,10 @@ void SysLFS::cleanupDeletedVolumes()
                 excluded.mark(key);
 
                 if (asr.cleanupDeletedVolumes(allVolumes)) {
-                    if (SysLFS::write(key, asr, false))
+                    if (SysLFS::writeObject(key, asr, false))
                         continue;
                     // Enable GC, and restart iteration.
-                    SysLFS::write(key, asr);
+                    SysLFS::writeObject(key, asr);
                     break;
                 }
             }

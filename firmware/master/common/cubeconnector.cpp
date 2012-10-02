@@ -107,11 +107,11 @@ void CubeConnector::task()
         switch (index) {
  
             case TaskSavePairingID:
-                SysLFS::write(SysLFS::kPairingID, savedPairingID);
+                SysLFS::writeObject(SysLFS::kPairingID, savedPairingID);
                 break;
 
             case TaskSavePairingMRU:
-                SysLFS::write(SysLFS::kPairingMRU, savedPairingMRU);
+                SysLFS::writeObject(SysLFS::kPairingMRU, savedPairingMRU);
                 break;
 
             case TaskRecyclePairings:

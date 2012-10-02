@@ -276,7 +276,7 @@ void UsbVolumeManager::pairCube(const USBProtocolMsg &m, USBProtocolMsg &reply)
     }
 
     rec.hwid[payload->pairingSlot] = payload->hwid;
-    if (!SysLFS::write(SysLFS::kPairingID, rec)) {
+    if (!SysLFS::writeObject(SysLFS::kPairingID, rec)) {
         ASSERT(0);
     }
 }

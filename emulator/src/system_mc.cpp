@@ -147,7 +147,7 @@ void SystemMC::pairCube(unsigned cubeID, unsigned pairingID)
     ASSERT(hwid != uint64_t(-1));
 
     rec.hwid[pairingID] = hwid;
-    if (!SysLFS::write(SysLFS::kPairingID, rec)) {
+    if (!SysLFS::writeObject(SysLFS::kPairingID, rec)) {
         ASSERT(0);
     }
 
