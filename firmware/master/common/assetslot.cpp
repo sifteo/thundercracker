@@ -62,7 +62,7 @@ void VirtAssetSlots::rebindCube(_SYSCubeID cube)
         bool needWrite = false;
         bool needErase = false;
 
-        if (!SysLFS::read(ck, cr))
+        if (!SysLFS::readObject(ck, cr))
             cr.init();
 
         if (!cr.assets.checkBinding(volume, numSlots)) {

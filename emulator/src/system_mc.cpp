@@ -140,7 +140,7 @@ void SystemMC::pairCube(unsigned cubeID, unsigned pairingID)
     ASSERT(cubeID < _SYS_NUM_CUBE_SLOTS);
     ASSERT(pairingID < arraysize(rec.hwid));
 
-    if (!SysLFS::read(SysLFS::kPairingID, rec))
+    if (!SysLFS::readObject(SysLFS::kPairingID, rec))
         rec.init();
 
     uint64_t hwid = sys->cubes[cubeID].getHWID();

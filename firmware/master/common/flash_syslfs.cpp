@@ -132,7 +132,7 @@ void SysLFS::PairingIDRecord::init()
 
 void SysLFS::PairingIDRecord::load()
 {
-    if (!read(SysLFS::kPairingID, *this))
+    if (!readObject(SysLFS::kPairingID, *this))
         init();
 }
 
@@ -144,7 +144,7 @@ void SysLFS::PairingMRURecord::init()
 
 void SysLFS::PairingMRURecord::load()
 {
-    if (!read(SysLFS::kPairingMRU, *this))
+    if (!readObject(SysLFS::kPairingMRU, *this))
         init();
 
     /*
