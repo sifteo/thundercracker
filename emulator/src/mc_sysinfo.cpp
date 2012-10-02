@@ -22,4 +22,5 @@ namespace SysInfo {
 
     const void* UniqueId = reinterpret_cast<void*>(&uidBytes[0]);
 
+    const unsigned HardwareRev = 2; // currently BOARD_TC_MASTER_REV2 in board.h
 }

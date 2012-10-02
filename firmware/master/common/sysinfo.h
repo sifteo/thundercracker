@@ -7,8 +7,11 @@
  * General system information.
  */
 namespace SysInfo {
+
     extern const void* UniqueId;
     static const unsigned UniqueIdNumBytes = 12;
+
+    extern const unsigned HardwareRev;
 
 #ifdef SIFTEO_SIMULATOR
     void init();
