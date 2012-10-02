@@ -29,7 +29,7 @@ int Manifest::run(int argc, char **argv, IODevice &_dev)
         return 1;
 
     Manifest m(_dev, rpc);
-    bool success = m.getVolumeOverview() && m.dumpOverview() && m.dumpVolumes();
+    bool success = m.dumpBaseSysInfo() && m.getVolumeOverview() && m.dumpOverview() && m.dumpVolumes();
 
     return success ? 0 : 1;
 }
@@ -124,6 +124,28 @@ const char *Manifest::getFirmwareVersion(USBProtocolMsg &buffer)
     return buffer.castPayload<char>();
 }
 
+const UsbVolumeManager::SysInfoReply *Manifest::getBaseSysInfo(USBProtocolMsg &buffer)
+{
+    buffer.init(USBProtocol::Installer);
+    buffer.header |= UsbVolumeManager::BaseSysInfo;
+
+    dev.writePacket(buffer.bytes, buffer.len);
+
+    while (dev.numPendingINPackets() == 0) {
+        dev.processEvents();
+    }
+
+    buffer.len = dev.readPacket(buffer.bytes, buffer.MAX_LEN);
+    if ((buffer.header & 0xff) != UsbVolumeManager::BaseSysInfo) {
+        fprintf(stderr, "unexpected response\n");
+        return 0;
+    }
+
+    if (buffer.payloadLen() >= sizeof(UsbVolumeManager::SysInfoReply))
+        return buffer.castPayload<UsbVolumeManager::SysInfoReply>();
+    return 0;
+}
+
 bool Manifest::getVolumeOverview()
 {
     USBProtocolMsg m(USBProtocol::Installer);
@@ -154,6 +176,21 @@ const char *Manifest::getVolumeTypeString(unsigned type)
 
     snprintf(volTypeBuffer, sizeof volTypeBuffer, "%04x", type);
     return volTypeBuffer;
+}
+
+bool Manifest::dumpBaseSysInfo()
+{
+    USBProtocolMsg buffer;
+    const UsbVolumeManager::SysInfoReply *sysInfo = getBaseSysInfo(buffer);
+    if (!sysInfo) {
+        return false;
+    }
+
+    printf("Hardware ID: ");
+    for (unsigned i = 0; i < sizeof(sysInfo->baseUniqueID); ++i) {
+        printf("%x", sysInfo->baseUniqueID[i]);
+    }
+    printf("  Hardware Revision: %d\n", sysInfo->baseHwRevision);
 }
 
 bool Manifest::dumpOverview()
