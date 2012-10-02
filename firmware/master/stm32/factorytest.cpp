@@ -2,6 +2,7 @@
 #include "usart.h"
 #include "board.h"
 #include "macros.h"
+#include "sysinfo.h"
 
 #include "radio.h"
 #include "nrf24l01.h"
@@ -222,8 +223,8 @@ void FactoryTest::ledHandler(uint8_t argc, const uint8_t *args)
  */
 void FactoryTest::uniqueIdHandler(uint8_t argc, const uint8_t *args)
 {
-    uint8_t response[2 + Board::UniqueIdNumBytes] = { sizeof response, args[0] };
-    memcpy(response + 2, Board::UniqueId, Board::UniqueIdNumBytes);
+    uint8_t response[2 + SysInfo::UniqueIdNumBytes] = { sizeof response, args[0] };
+    memcpy(response + 2, SysInfo::UniqueId, SysInfo::UniqueIdNumBytes);
 
     if (argc >= 2)
         UsbDevice::write(&response[1], sizeof response - 1);

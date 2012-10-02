@@ -51,6 +51,7 @@ LOCAL_OBJS = \
     src/mc_gdbserver.o \
     src/mc_syscall_math.o \
     src/mc_neighbor.o \
+    src/mc_sysinfo.o \
     resources/data.o \
     resources/firmware-sbt.o
 

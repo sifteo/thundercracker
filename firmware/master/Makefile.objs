@@ -106,7 +106,8 @@ OBJS_STM32 = \
     $(MASTER_DIR)/stm32/led.stm32.o \
     $(MASTER_DIR)/stm32/neighbor_tx.stm32.o \
     $(MASTER_DIR)/stm32/syscall_math.stm32.o \
-    $(MASTER_DIR)/stm32/batterylevel.stm32.o
+    $(MASTER_DIR)/stm32/batterylevel.stm32.o \
+    $(MASTER_DIR)/stm32/sysinfo.stm32.o
 
 # Library code.
 #

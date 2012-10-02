@@ -32,6 +32,7 @@
 #include "tasks.h"
 #include "mc_timing.h"
 #include "lodepng.h"
+#include "sysinfo.h"
 #include "crc.h"
 #include "volume.h"
 #include "homebutton.h"
@@ -56,6 +57,7 @@ bool SystemMC::init(System *sys)
     }
 
     FlashStack::init();
+    SysInfo::init();
     Crc32::init();
 
     if (instance->sys->opt_headless) {
