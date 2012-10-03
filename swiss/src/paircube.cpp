@@ -125,10 +125,36 @@ bool PairCube::getValidPairingSlot(const char *s, unsigned &pairingSlot)
 
 bool PairCube::getValidHWID(const char *s, uint64_t &hwid)
 {
-    int rv = sscanf(s, "%llx", &hwid);
-    if (rv != 1 || hwid == ~0) {
-        fprintf(stderr, "error: invalid HWID: 0x%llx\n", hwid);
+    // ensure the input is of an appropriate length - hwid is 8 bytes
+    const uint8_t hwidDigits = 8 * 2;
+    if (strlen(s) != hwidDigits) {
+        fprintf(stderr, "error, invalid HWID: incorrect length\n");
         return false;
+    }
+
+    /*
+     * Verify the input is valid, and construct the 64-bit hwid.
+     * This must generate the appropriate result on 64- and 32-bit machines.
+     */
+    for (unsigned i = 0; i < hwidDigits; i++) {
+
+        hwid <<= 4;
+        char c = s[i];
+
+        // convert hex character to its value and add
+        if (c >= '0' && c <= '9') {
+            hwid += c - '0';
+        }
+        else if (c >= 'A' && c <= 'F') {
+            hwid += s[i] - 'A' + 10;
+        }
+        else if (c >= 'a' && c <= 'f') {
+            hwid += c - 'a' + 10;
+        }
+        else {
+            fprintf(stderr, "error, invalid HWID: %c is not hex\n", c);
+            return false;
+        }
     }
 
     return true;
