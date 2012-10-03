@@ -191,6 +191,8 @@ bool Manifest::dumpBaseSysInfo()
         printf("%x", sysInfo->baseUniqueID[i]);
     }
     printf("  Hardware Revision: %d\n", sysInfo->baseHwRevision);
+
+    return true;
 }
 
 bool Manifest::dumpOverview()
