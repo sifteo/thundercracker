@@ -4,6 +4,7 @@
 #include "macros.h"
 #include "usbprotocol.h"
 #include "deployer.h"
+#include "progressbar.h"
 
 #include <stdio.h>
 #include <errno.h>
@@ -179,8 +180,9 @@ bool FwLoader::sendFirmwareFile(FILE *f, uint32_t crc, uint32_t size)
 
     // encrpyted data starts after the magic number
     fseek(f, sizeof(uint64_t), SEEK_SET);
-    unsigned percent = 0;
+
     unsigned progress = 0;
+    ScopedProgressBar progressBar(initialBytesToSend);
 
     /*
      * Payload should be back to back AES128::BLOCK_SIZE chunks.
@@ -201,14 +203,10 @@ bool FwLoader::sendFirmwareFile(FILE *f, uint32_t crc, uint32_t size)
         progress += numBytes;
         initialBytesToSend -= numBytes;
 
-        const unsigned progressPercent = ((float)progress / (float)filesz) * 100;
-        if (progressPercent != percent) {
-            percent = progressPercent;
-            fprintf(stderr, "progress: %d%%\n", percent);
-            fflush(stderr);
-            if (isRPC) {
-                fprintf(stdout, "::progress:%u:%u\n", percent, 100); fflush(stdout);
-            }
+        progressBar.update(progress);
+        if (isRPC) {
+            fprintf(stdout, "::progress:%u:%u\n", progress, filesz - AES128::BLOCK_SIZE);
+            fflush(stdout);
         }
     }
 

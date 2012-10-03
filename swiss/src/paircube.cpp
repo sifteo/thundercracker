@@ -146,7 +146,7 @@ bool PairCube::getValidHWID(const char *s, uint64_t &hwid)
             hwid += c - '0';
         }
         else if (c >= 'A' && c <= 'F') {
-            hwid += s[i] - 'A' + 10;
+            hwid += c - 'A' + 10;
         }
         else if (c >= 'a' && c <= 'f') {
             hwid += c - 'a' + 10;
