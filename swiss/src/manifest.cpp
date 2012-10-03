@@ -235,6 +235,9 @@ bool Manifest::dumpVolumes()
             static UsbVolumeManager::VolumeDetailReply zero;
             detail = &zero;
         }
+        // copy the type, since it appears to get overwritten between here and when
+        // its needed for the RPC message
+        uint16_t cpType = detail->type;
 
         table.cell() << std::setiosflags(std::ios::hex) << std::setw(2) << std::setfill('0') << volBlockCode;
         table.cell() << getVolumeTypeString(detail->type);
@@ -252,7 +255,7 @@ bool Manifest::dumpVolumes()
             
             fprintf(stdout, "::volume:%u:%u:%u:%u:%s:%s:%s\n",
                 volBlockCode,
-                detail->type,
+                cpType,
                 detail->selfBytes,
                 detail->childBytes,
                 package.c_str(),
