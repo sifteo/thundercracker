@@ -174,6 +174,13 @@ class Radio {
      */
     static void setTxPower(TxPower pwr);
     static TxPower txPower();
+
+    #ifndef SIFTEO_SIMULATOR
+    static void onTransitionToUsbPower();
+
+private:
+    static void reinit();
+    #endif
 };
 
 

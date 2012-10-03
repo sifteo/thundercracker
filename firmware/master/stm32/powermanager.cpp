@@ -3,6 +3,7 @@
 #include "usb/usbdevice.h"
 #include "systime.h"
 #include "tasks.h"
+#include "radio.h"
 
 #include "macros.h"
 
@@ -98,8 +99,12 @@ void PowerManager::vbusDebounce()
     }
 
     State s = state();
-    if (s != lastState)
+    if (s != lastState) {
         setState(s);
+        if (s == UsbPwr) {
+            Radio::onTransitionToUsbPower();
+        }
+    }
 }
 
 void PowerManager::setState(State s)
