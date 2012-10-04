@@ -19,7 +19,7 @@ namespace BatteryLevel
     /*
      * Lower than this, and it's not worth starting up.
      */
-    static const int STARTUP_THRESHOLD = 0x1C92;
+    static const int STARTUP_THRESHOLD = 0x1C30;
 
     /*
      * Empirically measured maximum jitter in battery level readings
