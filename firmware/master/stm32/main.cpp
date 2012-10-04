@@ -27,6 +27,8 @@
 #include "led.h"
 #include "batterylevel.h"
 
+static void ensureMinimumBatteryLevel();
+
 /*
  * Application specific entry point.
  * All low level init is done in setup.cpp.
@@ -109,7 +111,6 @@ int main()
 
     // This is the earliest point at which it's safe to use Usart::Dbg.
     Usart::Dbg.init(UART_RX_GPIO, UART_TX_GPIO, 115200);
-    UART(("Firmware " TOSTRING(SDK_VERSION) "\r\n"));
 
 #ifdef REV2_GDB_REWORK
     DBGMCU_CR |= (1 << 30) |        // TIM14 stopped when core is halted
@@ -134,33 +135,23 @@ int main()
     HomeButton::init();
     NeighborTX::init();
 
-    // NOTE: NeighborTX & BatteryLevel share a timer - Battery level expects
-    //       it to have already been init'd.
+    /*
+     * NOTE: NeighborTX & BatteryLevel share a timer - Battery level expects
+     *      it to have already been init'd.
+     *
+     *      Also, CubeConnector is currently the only system to initiate neighbor
+     *      transmissions, so wait until we do our battery check before init'ing
+     *      him to avoid any conflicts.
+     */
+
     BatteryLevel::init();
-    /*
-     * Take a battery sample
-     */
-    BatteryLevel::beginCapture();
-
-    /*
-     * Check the battery sample (only if not connected to USB)
-     * Shouldn't need to block long as Radio::init has a built
-     * in delay
-     */
-     while((BatteryLevel::currentLevel() == 0xffff) && (!PowerManager::state()));
-
-    /*
-     * Shutdown if the current battery level is below the startup threshold
-     * Spin infinitely until full shutdown. (shutdown is not instantaneous)
-     */
-    if( (BatteryLevel::currentLevel()-BatteryLevel::THRESHOLD_DIFF) <= BatteryLevel::STARTUP_THRESHOLD ) {
-      UART("Battery Low! Shutting Down..\r\n");
-      PowerManager::batteryPowerOff();
-      for (;;) {
-        Tasks::idle(0xffffffff);
-        Tasks::resetWatchdog();
-      }
+    if (PowerManager::state() == PowerManager::BatteryPwr) {
+        ensureMinimumBatteryLevel();
     }
+
+    // wait until after we know we're going to continue starting up before
+    // showing signs of life :)
+    UART(("Firmware " TOSTRING(SDK_VERSION) "\r\n"));
 
     CubeConnector::init();
 
@@ -179,4 +170,39 @@ int main()
      */
 
     SvmLoader::runLauncher();
+}
+
+void ensureMinimumBatteryLevel()
+{
+    /*
+     * Kick off our first sample and wait for it to complete.
+     */
+
+    BatteryLevel::beginCapture();
+
+    int batteryLevel;
+    do {
+        batteryLevel = BatteryLevel::currentLevel();
+    } while (batteryLevel == BatteryLevel::UNINITIALIZED);
+
+    /*
+     * To be a bit conservative, we assume that any sample we take is skewed by
+     * our MAX_JITTER in the positive direction. Correct for this, and see if
+     * we're still above the required thresh to continue powering on.
+     *
+     * If not, shut ourselves down, and hope our batteries get replaced soon.
+     */
+    if (batteryLevel - BatteryLevel::MAX_JITTER < BatteryLevel::STARTUP_THRESHOLD) {
+
+        PowerManager::batteryPowerOff();
+        /*
+         * wait to for power to drain. if somebody keeps their finger
+         * on the homebutton, we may be here a little while, so don't
+         * get zapped by the watchdog on our way out
+         */
+        for (;;) {
+            Atomic::Barrier();
+            Tasks::resetWatchdog();
+        }
+    }
 }

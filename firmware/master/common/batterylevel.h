@@ -11,10 +11,20 @@ namespace BatteryLevel
     void captureIsr();
 
     /*
-     * Value of low battery startup threshold
+     * Sentinel value to help determine whether a sample has successfully
+     * been taken after startup.
+     */
+    static const int UNINITIALIZED = 0xffff;
+
+    /*
+     * Lower than this, and it's not worth starting up.
      */
     static const int STARTUP_THRESHOLD = 0x1C92;
-    static const int THRESHOLD_DIFF = 0x00B1;
+
+    /*
+     * Empirically measured maximum jitter in battery level readings
+     */
+    static const int MAX_JITTER = 0xB1;
 }
 
 #endif // BATTERYLEVEL_H

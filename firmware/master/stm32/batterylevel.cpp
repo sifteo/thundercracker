@@ -16,8 +16,10 @@ static int lastReading;
  *
  * See neighbor_protocol.h for neighbor transmission periods.
  */
-static unsigned delayPrescaleCounter = 0;
+
 static const unsigned DELAY_PRESCALER = 833;
+// no delay for first sample - want to capture initial value immediately
+static unsigned delayPrescaleCounter = DELAY_PRESCALER;
 
 /*
  * Max discharge time is 3ms.
@@ -33,16 +35,9 @@ namespace BatteryLevel {
 void init()
 {
     /*
-     * We want the battery level to be measured first thing on
-     * startup. We assume everything is charged before running
-     * beginCapture()
-     */
-    delayPrescaleCounter = DELAY_PRESCALER;
-
-    /*
      * Setting lastReading for comparison on startup
      */
-    lastReading = 0xffff;
+    lastReading = UNINITIALIZED;
 
     /*
      * BATT_MEAS can always remain configured as an input.
@@ -86,8 +81,11 @@ void beginCapture()
         delayPrescaleCounter = 0;
 
         //Returns if there is no battery or if USB is connected
-        if (BATT_MEAS_GPIO.isLow() || PowerManager::state())
+        if (BATT_MEAS_GPIO.isLow() ||
+            PowerManager::state() == PowerManager::UsbPwr)
+        {
             return;
+        }
 
         NeighborTX::pause();
 
