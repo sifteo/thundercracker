@@ -2,6 +2,7 @@
 #define IO_DEVICE_H
 
 #include <stdint.h>
+#include "usbprotocol.h"
 
 /*
  * Simple backend interface.
@@ -28,6 +29,24 @@ public:
     virtual int maxOUTPacketSize() const = 0;
     virtual int numPendingOUTPackets() const = 0;
     virtual int writePacket(const uint8_t *buf, unsigned len) = 0;
+
+    bool writeAndWaitForReply(USBProtocolMsg &buf) {
+
+        uint32_t headerToMatch = buf.header;
+        writePacket(buf.bytes, buf.len);
+
+        while (numPendingINPackets() == 0) {
+            processEvents();
+        }
+
+        buf.len = readPacket(buf.bytes, buf.MAX_LEN);
+        if (buf.header != headerToMatch) {
+            fprintf(stderr, "unexpected response\n");
+            return 0;
+        }
+
+        return true;
+    }
 };
 
 #endif // IO_DEVICE_H
