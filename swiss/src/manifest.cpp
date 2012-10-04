@@ -192,6 +192,14 @@ bool Manifest::dumpBaseSysInfo()
     }
     printf("  Hardware Revision: %d\n", sysInfo->baseHwRevision);
 
+    if (isRPC) {
+        fprintf(stdout, "::hardware:");
+        for (unsigned i = 0; i < sizeof(sysInfo->baseUniqueID); ++i) {
+            fprintf(stdout, "%x", sysInfo->baseUniqueID[i]);
+        }
+        fprintf(stdout, ":%u\n", sysInfo->baseHwRevision);
+    }
+
     return true;
 }
 
