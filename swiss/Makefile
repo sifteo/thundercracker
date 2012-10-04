@@ -22,7 +22,8 @@ OBJS := \
     src/delete.o        \
     src/paircube.o      \
     src/reboot.o        \
-    src/backup.o
+    src/backup.o        \
+    src/util.o          \
 
 # include directories
 INCLUDES := \

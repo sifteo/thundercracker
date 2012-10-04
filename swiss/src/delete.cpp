@@ -1,4 +1,5 @@
 #include "delete.h"
+#include "util.h"
 #include "usbprotocol.h"
 
 #include <stdio.h>
@@ -24,7 +25,7 @@ int Delete::run(int argc, char **argv, IODevice &_dev)
     } else if (argc == 2 && !strcmp(argv[1], "--sys")) {
         success = m.deleteSysLFS();
 
-    } else if (argc == 2 && parseVolumeCode(argv[1], volCode)) {
+    } else if (argc == 2 && Util::parseVolumeCode(argv[1], volCode)) {
         success = m.deleteVolume(volCode);
 
     } else {
@@ -119,19 +120,4 @@ bool Delete::deleteVolume(unsigned code)
     }
 
     return true;
-}
-
-bool Delete::parseVolumeCode(const char *str, unsigned &code)
-{
-    /*
-     * Volume codes are 8-bit hexadecimal strings.
-     * Returns true and fills in 'code' if valid.
-     */
-
-    if (!*str)
-        return false;
-
-    char *end;
-    code = strtol(str, &end, 16);
-    return !*end && code < 0x100;
 }
