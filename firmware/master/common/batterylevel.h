@@ -6,7 +6,8 @@
 namespace BatteryLevel
 {
     void init();
-    int  currentLevel();
+    int  raw();
+    int  scaled();
     void beginCapture();
     void captureIsr();
 
@@ -14,17 +15,17 @@ namespace BatteryLevel
      * Sentinel value to help determine whether a sample has successfully
      * been taken after startup.
      */
-    static const int UNINITIALIZED = 0xffff;
+    static const unsigned UNINITIALIZED = 0xffff;
 
     /*
      * Lower than this, and it's not worth starting up.
      */
-    static const int STARTUP_THRESHOLD = 0x1C30;
+    static const unsigned STARTUP_THRESHOLD = 0x1C30;
 
     /*
      * Empirically measured maximum jitter in battery level readings
      */
-    static const int MAX_JITTER = 0xB1;
+    static const unsigned MAX_JITTER = 0xB1;
 }
 
 #endif // BATTERYLEVEL_H

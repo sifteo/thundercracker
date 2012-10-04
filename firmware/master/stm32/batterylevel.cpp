@@ -4,8 +4,9 @@
 #include "neighbor_tx.h"
 #include "neighbor_protocol.h"
 #include "powermanager.h"
+#include "macros.h"
 
-static int lastReading;
+static unsigned lastReading;
 
 /*
  * As we're sharing a timer with NeighborTX, the end of each neighbor transmission
@@ -61,9 +62,24 @@ void init()
     timer.enableChannel(BATT_LVL_CHAN);
 }
 
-int currentLevel()
+int raw()
 {
     return lastReading;
+}
+
+int scaled()
+{
+    /*
+     * Temporary cheesy linear scaling.
+     *
+     * We need some battery curves, and then we'd like to chunk our values into
+     * the number of visual buckets that the UI represents.
+     */
+    const unsigned MAX = 0x2500;
+    const unsigned MIN = 0x1baa;
+    const unsigned RANGE = MAX - MIN;
+    const unsigned clamped = clamp(lastReading, MIN, MAX);
+    return (clamped - STARTUP_THRESHOLD) * _SYS_BATTERY_MAX / RANGE;
 }
 
 void beginCapture()

@@ -12,6 +12,10 @@
 #include "svmruntime.h"
 #include "cubeslots.h"
 #include "cube.h"
+#include "batterylevel.h"
+#ifndef SIFTEO_SIMULATOR
+#include "powermanager.h"
+#endif
 
 extern "C" {
 
@@ -38,9 +42,24 @@ uint32_t _SYS_cubeBatteryLevel(_SYSCubeID cid)
 uint32_t _SYS_sysBatteryLevel()
 {
     /*
-     * XXX: Implement me!
+     * XXX: Same as above - we should be tracking battery levels over time
+     *      and doing a better job of creating a linear representation.
      */
-    return 0xcccc;
+
+    #ifdef SIFTEO_SIMULATOR
+
+    return _SYS_BATTERY_MAX;
+
+    #else
+
+    if (PowerManager::state() == PowerManager::UsbPwr) {
+        // we can't detect battery level accurately while on USB power.
+        return _SYS_BATTERY_MAX;
+    } else {
+        return BatteryLevel::scaled();
+    }
+
+    #endif
 }
 
 

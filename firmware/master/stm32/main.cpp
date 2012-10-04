@@ -180,9 +180,9 @@ void ensureMinimumBatteryLevel()
 
     BatteryLevel::beginCapture();
 
-    int batteryLevel;
+    unsigned batteryLevel;
     do {
-        batteryLevel = BatteryLevel::currentLevel();
+        batteryLevel = BatteryLevel::raw();
     } while (batteryLevel == BatteryLevel::UNINITIALIZED);
 
     /*
