@@ -133,11 +133,37 @@ int main()
     FlashStack::init();
     HomeButton::init();
     NeighborTX::init();
-    CubeConnector::init();
 
     // NOTE: NeighborTX & BatteryLevel share a timer - Battery level expects
     //       it to have already been init'd.
     BatteryLevel::init();
+    /*
+     * Take a battery sample
+     */
+    BatteryLevel::beginCapture();
+
+    /*
+     * Check the battery sample (only if not connected to USB)
+     * Shouldn't need to block long as Radio::init has a built
+     * in delay
+     */
+     while((BatteryLevel::currentLevel() == 0xffff) && (!PowerManager::state()));
+
+    /*
+     * Shutdown if the current battery level is below the startup threshold
+     * Spin infinitely until full shutdown. (shutdown is not instantaneous)
+     */
+    if( (BatteryLevel::currentLevel()-BatteryLevel::THRESHOLD_DIFF) <= BatteryLevel::STARTUP_THRESHOLD ) {
+      UART("Battery Low! Shutting Down..\r\n");
+      PowerManager::batteryPowerOff();
+      for (;;) {
+        Tasks::idle(0xffffffff);
+        Tasks::resetWatchdog();
+      }
+    }
+
+    CubeConnector::init();
+
     Volume::init();
     AudioOutDevice::init();
     AudioOutDevice::start();

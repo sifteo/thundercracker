@@ -9,18 +9,18 @@ static int lastReading;
 
 /*
  * As we're sharing a timer with NeighborTX, the end of each neighbor transmission
- * is an opportunity for us to begin a sample. However, our charge time is max
- * 2.5s, so we never want to run more frequently than that.
+ * is an opportunity for us to begin a sample. Lets wait 2.5 seconds between
+ * each sample. The minimum amount of wait time is 75 ms (DELAY_PRESCALER ~= 25)
  *
  * 2500 / (NUM_TX_WAIT_PERIODS * BIT_PERIOD_TICKS * TICK) ~= 833
  *
  * See neighbor_protocol.h for neighbor transmission periods.
  */
-static unsigned chargePrescaleCounter = 0;
-static const unsigned CHARGE_PRESCALER = 833;
+static unsigned delayPrescaleCounter = 0;
+static const unsigned DELAY_PRESCALER = 833;
 
 /*
- * Max discharge time is 50ms.
+ * Max discharge time is 3ms.
  * To configure our timer at this resolution, we need to use the maximum
  * period (0xffff), and select a prescaler that gets us as close as possible.
  *
@@ -32,6 +32,18 @@ namespace BatteryLevel {
 
 void init()
 {
+    /*
+     * We want the battery level to be measured first thing on
+     * startup. We assume everything is charged before running
+     * beginCapture()
+     */
+    delayPrescaleCounter = DELAY_PRESCALER;
+
+    /*
+     * Setting lastReading for comparison on startup
+     */
+    lastReading = 0xffff;
+
     /*
      * BATT_MEAS can always remain configured as an input.
      * To charge (default state), BATT_MEAS_GND => input/float.
@@ -69,11 +81,12 @@ void beginCapture()
      * BATT_LVL_TIM is shared with neighbor transmit
      */
 
-    if (chargePrescaleCounter++ == CHARGE_PRESCALER) {
+    if (delayPrescaleCounter++ == DELAY_PRESCALER) {
 
-        chargePrescaleCounter = 0;
+        delayPrescaleCounter = 0;
 
-        if (BATT_MEAS_GPIO.isLow())
+        //Returns if there is no battery or if USB is connected
+        if (BATT_MEAS_GPIO.isLow() || PowerManager::state())
             return;
 
         NeighborTX::pause();
