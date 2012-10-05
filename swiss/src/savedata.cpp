@@ -16,16 +16,25 @@
 int SaveData::run(int argc, char **argv, IODevice &_dev)
 {
     bool success = false;
+    bool rpc = false;
     SaveData saveData(_dev);
 
     if (!_dev.open(IODevice::SIFTEO_VID, IODevice::BASE_PID))
         return 1;
 
     if (argc >= 4 && !strcmp(argv[1], "extract")) {
+        int ipath = 3;
+        int ivol = 2;
+        
+        if (!strcmp(argv[2], "--rpc")) {
+            ipath = 4;
+            ivol = 3;
+            rpc = true;
+        }
 
         unsigned volume;
-        const char *path = argv[3];
-        success = Util::parseVolumeCode(argv[2], volume) && saveData.extract(volume, path);
+        const char *path = argv[ipath];
+        success = Util::parseVolumeCode(argv[ivol], volume) && saveData.extract(volume, path, rpc);
 
     } else if (argc >= 3 && !strcmp(argv[1], "restore")) {
 
@@ -43,7 +52,7 @@ SaveData::SaveData(IODevice &_dev) :
     dev(_dev)
 {}
 
-bool SaveData::extract(unsigned volume, const char *filepath)
+bool SaveData::extract(unsigned volume, const char *filepath, bool rpc)
 {
     /*
      * Retrieve all LFS volumes for a given parent volume.
@@ -74,7 +83,7 @@ bool SaveData::extract(unsigned volume, const char *filepath)
         return false;
     }
 
-    return writeVolumes(reply, fout);
+    return writeVolumes(reply, fout, rpc);
 }
 
 
@@ -172,9 +181,10 @@ bool SaveData::writeFileHeader(FILE *f, unsigned volBlockCode, unsigned numVolum
     return writeStr(packageID, f) && writeStr(version, f);
 }
 
-bool SaveData::writeVolumes(UsbVolumeManager::LFSDetailReply *reply, FILE *f)
+bool SaveData::writeVolumes(UsbVolumeManager::LFSDetailReply *reply, FILE *f, bool rpc)
 {
     ScopedProgressBar pb(reply->count * BLOCK_SIZE);
+    unsigned progTotal = reply->count * BLOCK_SIZE;
     unsigned overallProgress = 0;
 
     /*
@@ -200,6 +210,9 @@ bool SaveData::writeVolumes(UsbVolumeManager::LFSDetailReply *reply, FILE *f)
                 }
 
                 pb.update(overallProgress + replyProgress);
+                if (rpc) {
+                    fprintf(stdout, "::progress:%u:%u\n", overallProgress + replyProgress, progTotal); fflush(stdout);
+                }
                 sendRequest(baseAddress, requestProgress);
             }
         }
