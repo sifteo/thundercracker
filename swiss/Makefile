@@ -24,6 +24,7 @@ OBJS := \
     src/reboot.o        \
     src/backup.o        \
     src/util.o          \
+    src/metadata.o      \
 
 # include directories
 INCLUDES := \
