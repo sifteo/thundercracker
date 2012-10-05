@@ -64,6 +64,7 @@ void UsbVolumeManager::onUsbData(const USBProtocolMsg &m)
         if (writer.isPayloadComplete()) {
             writer.commit();
             reply.header |= WriteCommitOK;
+            reply.append(&writer.volume.block.code, 1);
         } else {
             reply.header |= WriteCommitFail;
         }
