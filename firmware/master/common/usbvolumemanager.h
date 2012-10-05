@@ -28,7 +28,8 @@ public:
         FlashDeviceRead,
         WriteCommitOK,
         WriteCommitFail,
-        BaseSysInfo
+        BaseSysInfo,
+        LFSDetail
     };
 
     struct VolumeOverviewReply {
@@ -46,6 +47,17 @@ public:
     struct VolumeMetadataRequest {
         unsigned volume;
         unsigned key;
+    };
+
+    struct LFSDetailRecord {
+        unsigned address;
+        unsigned size;
+    };
+
+    struct LFSDetailReply {
+        unsigned count;
+        // should never be this many, but this fits easily into a 64-byte USB packet
+        LFSDetailRecord records[6];
     };
 
     struct PairCubeRequest {
@@ -77,6 +89,7 @@ private:
     static ALWAYS_INLINE void volumeOverview(USBProtocolMsg &reply);
     static ALWAYS_INLINE void volumeDetail(const USBProtocolMsg &m, USBProtocolMsg &reply);
     static ALWAYS_INLINE void volumeMetadata(const USBProtocolMsg &m, USBProtocolMsg &reply);
+    static ALWAYS_INLINE void lfsDetail(const USBProtocolMsg &m, USBProtocolMsg &reply);
     static ALWAYS_INLINE void pairCube(const USBProtocolMsg &m, USBProtocolMsg &reply);
     static ALWAYS_INLINE void pairingSlotDetail(const USBProtocolMsg &m, USBProtocolMsg &reply);
     static ALWAYS_INLINE void flashDeviceRead(const USBProtocolMsg &m, USBProtocolMsg &reply);

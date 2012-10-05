@@ -132,6 +132,10 @@ void UsbVolumeManager::onUsbData(const USBProtocolMsg &m)
         baseSysInfo(m, reply);
         break;
 
+    case LFSDetail:
+        lfsDetail(m, reply);
+        break;
+
     }
 
 #ifndef SIFTEO_SIMULATOR
@@ -247,6 +251,55 @@ void UsbVolumeManager::volumeMetadata(const USBProtocolMsg &m, USBProtocolMsg &r
         if (meta) {
             size = MIN(size, reply.bytesFree());
             reply.append(meta, size);
+        }
+    }
+}
+
+void UsbVolumeManager::lfsDetail(const USBProtocolMsg &m, USBProtocolMsg &reply)
+{
+    /*
+     * Find all the LFS children of the given parent volume, and populate
+     * our response with each of their details.
+     */
+
+    if (m.payloadLen() < sizeof(unsigned)) {
+        return;
+    }
+
+    unsigned parentBlockCode = *m.castPayload<unsigned>();
+    FlashVolume vol = FlashMapBlock::fromCode(parentBlockCode);
+
+    LFSDetailReply *r = reply.zeroCopyAppend<LFSDetailReply>();
+    r->count= 0;
+    reply.header |= LFSDetail;
+
+    // does the parent volume exist?
+    if (!vol.isValid()) {
+        return;
+    }
+
+    /*
+     * Populate our overview bitmap with the indexes of all the
+     * LFS children of parentBlockCode.
+     */
+
+    FlashVolumeIter vi;
+    FlashVolume child;
+    vi.begin();
+
+    while (vi.next(child)) {
+        if (child.getParent().block.code == parentBlockCode) {
+
+            FlashBlockRef ref;
+            FlashVolumeHeader *hdr = FlashVolumeHeader::get(ref, child.block);
+            ASSERT(hdr->isHeaderValid());
+
+            if (hdr->type == FlashVolume::T_LFS) {
+                ASSERT(r->count < arraysize(r->records));
+                LFSDetailRecord &rec = r->records[r->count++];
+                rec.address = child.block.address();
+                rec.size = FlashMapBlock::BLOCK_SIZE;
+            }
         }
     }
 }
