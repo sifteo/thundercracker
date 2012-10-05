@@ -17,6 +17,8 @@ namespace BatteryLevel
      */
     static const unsigned UNINITIALIZED = 0xffff;
 
+    static const unsigned STARTUP_THRESHOLD = 0x1C30;
+
     /*
      * Empirically measured maximum jitter in battery level readings
      */

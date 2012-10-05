@@ -11,9 +11,9 @@ enum State {
   Calibration,
 };
 
-static int lastReading;
-static int lastCalibrationReading;
-static BatteryLevel::State currentState;
+static unsigned lastReading;
+static unsigned lastCalibrationReading;
+static State currentState;
 
 /*
  * As we're sharing a timer with NeighborTX, the end of each neighbor transmission
