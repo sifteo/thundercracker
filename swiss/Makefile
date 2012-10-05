@@ -25,6 +25,7 @@ OBJS := \
     src/backup.o        \
     src/util.o          \
     src/metadata.o      \
+    src/savedata.o
 
 # include directories
 INCLUDES := \
