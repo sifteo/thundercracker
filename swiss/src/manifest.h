@@ -20,9 +20,6 @@ private:
     bool dumpOverview();
     bool dumpVolumes();
 
-    bool getMetadata(USBProtocolMsg &buffer, unsigned volBlockCode, unsigned key);
-    const char *getMetadataString(USBProtocolMsg &buffer, unsigned volBlockCode, unsigned key);
-    const char *getMetadataStringRPC(USBProtocolMsg &buffer, unsigned volBlockCode, unsigned key);
     const char *getFirmwareVersion(USBProtocolMsg &buffer);
     UsbVolumeManager::VolumeDetailReply *getVolumeDetail(USBProtocolMsg &buffer, unsigned volBlockCode);
     const UsbVolumeManager::SysInfoReply *getBaseSysInfo(USBProtocolMsg &buffer);

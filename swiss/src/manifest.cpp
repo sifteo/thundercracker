@@ -2,6 +2,7 @@
 #include "usbprotocol.h"
 #include "elfdebuginfo.h"
 #include "tabularlist.h"
+#include "metadata.h"
 
 #include <sifteo/abi/elf.h>
 #include <sifteo/abi/types.h>
@@ -37,48 +38,6 @@ int Manifest::run(int argc, char **argv, IODevice &_dev)
 Manifest::Manifest(IODevice &_dev, bool rpc) :
     dev(_dev), isRPC(rpc)
 {}
-
-bool Manifest::getMetadata(USBProtocolMsg &buffer, unsigned volBlockCode, unsigned key)
-{
-    buffer.init(USBProtocol::Installer);
-    buffer.header |= UsbVolumeManager::VolumeMetadata;
-    UsbVolumeManager::VolumeMetadataRequest *req = buffer.zeroCopyAppend<UsbVolumeManager::VolumeMetadataRequest>();
-
-    req->volume = volBlockCode;
-    req->key = key;
-
-    dev.writePacket(buffer.bytes, buffer.len);
-
-    while (dev.numPendingINPackets() == 0) {
-        dev.processEvents();
-    }
-
-    buffer.len = dev.readPacket(buffer.bytes, buffer.MAX_LEN);
-    if ((buffer.header & 0xff) != UsbVolumeManager::VolumeMetadata) {
-        fprintf(stderr, "unexpected response\n");
-        return false;
-    }
-
-    return buffer.payloadLen() != 0;
-}
-
-const char *Manifest::getMetadataString(USBProtocolMsg &buffer, unsigned volBlockCode, unsigned key)
-{
-    if (!getMetadata(buffer, volBlockCode, key))
-        return "(none)";
-
-    buffer.bytes[sizeof buffer.bytes - 1] = 0;
-    return buffer.castPayload<char>();
-}
-
-const char *Manifest::getMetadataStringRPC(USBProtocolMsg &buffer, unsigned volBlockCode, unsigned key)
-{
-    if (!getMetadata(buffer, volBlockCode, key))
-        return "";
-
-    buffer.bytes[sizeof buffer.bytes - 1] = 0;
-    return buffer.castPayload<char>();
-}
 
 UsbVolumeManager::VolumeDetailReply *Manifest::getVolumeDetail(USBProtocolMsg &buffer, unsigned volBlockCode)
 {
@@ -234,6 +193,8 @@ bool Manifest::dumpVolumes()
     table.cell() << "TITLE";
     table.endRow();
 
+    Metadata metadata(dev);
+
     // Volume table
     while (overview.bits.clearFirst(volBlockCode)) {
         USBProtocolMsg buffer;
@@ -247,28 +208,32 @@ bool Manifest::dumpVolumes()
         // its needed for the RPC message
         uint16_t cpType = detail->type;
 
+        std::string package = metadata.getString(volBlockCode, _SYS_METADATA_PACKAGE_STR);
+        std::string version = metadata.getString(volBlockCode, _SYS_METADATA_VERSION_STR);
+        std::string title   = metadata.getString(volBlockCode, _SYS_METADATA_TITLE_STR);
+
         table.cell() << std::setiosflags(std::ios::hex) << std::setw(2) << std::setfill('0') << volBlockCode;
         table.cell() << getVolumeTypeString(detail->type);
         table.cell(table.RIGHT) << (detail->selfBytes / 1024);
         table.cell(table.RIGHT) << (detail->childBytes / 1024);
-        table.cell() << getMetadataString(buffer, volBlockCode, _SYS_METADATA_PACKAGE_STR);
-        table.cell() << getMetadataString(buffer, volBlockCode, _SYS_METADATA_VERSION_STR);
-        table.cell() << getMetadataString(buffer, volBlockCode, _SYS_METADATA_TITLE_STR);
+        table.cell() << package;
+        table.cell() << version;
+        table.cell() << title;
         table.endRow();
         
         if (isRPC) {
-            std::string package = getMetadataStringRPC(buffer, volBlockCode, _SYS_METADATA_PACKAGE_STR);
-            std::string version = getMetadataStringRPC(buffer, volBlockCode, _SYS_METADATA_VERSION_STR);
-            std::string title = getMetadataStringRPC(buffer, volBlockCode, _SYS_METADATA_TITLE_STR);
+            std::string packageRPC = package == "(none)" ? "" : package;
+            std::string versionRPC = version == "(none)" ? "" : package;
+            std::string titleRPC = title == "(none)" ? "" : package;
             
             fprintf(stdout, "::volume:%u:%u:%u:%u:%s:%s:%s\n",
                 volBlockCode,
                 cpType,
                 detail->selfBytes,
                 detail->childBytes,
-                package.c_str(),
-                version.c_str(),
-                title.c_str());
+                packageRPC.c_str(),
+                versionRPC.c_str(),
+                titleRPC.c_str());
             fflush(stdout);
         }
     }
