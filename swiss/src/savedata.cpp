@@ -125,6 +125,8 @@ static bool writeStr(const std::string &s, FILE *f)
 
     if (fwrite(s.c_str(), length, 1, f) != 1)
         return false;
+
+    return true;
 }
 
 
@@ -203,6 +205,8 @@ bool SaveData::writeVolumes(UsbVolumeManager::LFSDetailReply *reply, FILE *f)
         }
         overallProgress += BLOCK_SIZE;
     }
+
+    return true;
 }
 
 
