@@ -53,15 +53,20 @@ bool SaveData::extract(unsigned volume, const char *filepath)
      * We don't do any parsing of the data at this point.
      */
 
-    FILE *fout = fopen(filepath, "wb");
-    if (!fout) {
-        fprintf(stderr, "couldn't open %s: %s\n", filepath, strerror(errno));
-        return false;
-    }
-
     USBProtocolMsg buf;
     UsbVolumeManager::LFSDetailReply *reply = getLFSDetail(buf, volume);
     if (!reply) {
+        return false;
+    }
+
+    if (reply->count == 0) {
+        printf("no savedata found for volume 0x%x\n", volume);
+        return true;
+    }
+
+    FILE *fout = fopen(filepath, "wb");
+    if (!fout) {
+        fprintf(stderr, "couldn't open %s: %s\n", filepath, strerror(errno));
         return false;
     }
 
