@@ -6,8 +6,9 @@
 namespace BatteryLevel
 {
     void init();
-    int  raw();
-    int  scaled();
+    unsigned raw();
+    unsigned vsys();
+    unsigned scaled();
     void beginCapture();
     void captureIsr();
 

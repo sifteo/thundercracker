@@ -6,13 +6,15 @@
 #include "powermanager.h"
 #include "macros.h"
 
+namespace BatteryLevel {
+
 enum State {
-  Capture,
-  Calibration,
+    Capture,
+    Calibration,
 };
 
 static unsigned lastReading;
-static unsigned lastCalibrationReading;
+static unsigned lastVsysReading;
 static State currentState;
 
 /*
@@ -38,7 +40,7 @@ static unsigned delayPrescaleCounter = DELAY_PRESCALER;
  */
 static const unsigned DISCHARGE_PRESCALER = 3;
 
-namespace BatteryLevel {
+
 
 void init()
 {
@@ -46,7 +48,7 @@ void init()
      * Setting lastReading for comparison on startup
      */
     lastReading = UNINITIALIZED;
-    lastCalibrationReading = UNINITIALIZED;
+    lastVsysReading = UNINITIALIZED;
 
     /*
      * Set the current state
@@ -75,12 +77,17 @@ void init()
     timer.enableChannel(BATT_LVL_CHAN);
 }
 
-int raw()
+unsigned raw()
 {
     return lastReading;
 }
 
-int scaled()
+unsigned vsys()
+{
+    return lastVsysReading;
+}
+
+unsigned scaled()
 {
     /*
      * Temporary cheesy linear scaling.
@@ -129,8 +136,7 @@ void beginCapture()
          * then BATT_MEAS_GPIO was set as an output
          * in the captureISR
          */
-        if (currentState == Calibration)
-        {
+        if (currentState == Calibration) {
             BATT_MEAS_GPIO.setControl(GPIOPin::IN_FLOAT);
         }
 
@@ -158,31 +164,24 @@ void captureIsr()
      * We don't need to track a start time, as we always reset the timer
      * before kicking off a new capture.
      *
-     * TBD what kind of treatment to give this signal.
+     * We alternately sample VSYS and VBATT in order to establish a consistent
+     * baseline - store the capture appropriately.
      */
 
-    int temp = timer.lastCapture(BATT_LVL_CHAN);
+    unsigned capture = timer.lastCapture(BATT_LVL_CHAN);
 
-    if(currentState == Capture)
-    {
-        lastReading = temp;
+    if (currentState == Capture) {
+        lastReading = capture;
 
         BATT_MEAS_GPIO.setControl(GPIOPin::OUT_2MHZ);
         BATT_MEAS_GPIO.setHigh();
 
         currentState = Calibration;
-        UART("Cap: ");
-        UART_HEX(lastReading);
-        UART("\r\n");
 
-    } else if  (currentState == Calibration)
-    {
-        lastCalibrationReading = temp;
+    } else if  (currentState == Calibration) {
+        lastVsysReading = capture;
 
         currentState = Capture;
-        UART("Cal: ");
-        UART_HEX(lastCalibrationReading);
-        UART("\r\n");
     }
 
     NeighborTX::resume();
