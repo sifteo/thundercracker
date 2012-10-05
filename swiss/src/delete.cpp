@@ -42,63 +42,27 @@ Delete::Delete(IODevice &_dev) :
 bool Delete::deleteEverything()
 {
     USBProtocolMsg m(USBProtocol::Installer);
-
     m.header |= UsbVolumeManager::DeleteEverything;
-    dev.writePacket(m.bytes, m.len);
 
-    while (dev.numPendingINPackets() == 0) {
-        dev.processEvents();
-    }
-
-    m.len = dev.readPacket(m.bytes, m.MAX_LEN);
-    if ((m.header & 0xff) != UsbVolumeManager::DeleteEverything) {
-        fprintf(stderr, "unexpected response\n");
-        return false;
-    }
-
-    return true;
+    return dev.writeAndWaitForReply(m);
 }
 
 bool Delete::deleteReformat()
 {
     USBProtocolMsg m(USBProtocol::Installer);
+    m.header |= UsbVolumeManager::DeleteReformat;
 
     fprintf(stderr, "This will take a few minutes...\n");
 
-    m.header |= UsbVolumeManager::DeleteReformat;
-    dev.writePacket(m.bytes, m.len);
-
-    while (dev.numPendingINPackets() == 0) {
-        dev.processEvents();
-    }
-
-    m.len = dev.readPacket(m.bytes, m.MAX_LEN);
-    if ((m.header & 0xff) != UsbVolumeManager::DeleteReformat) {
-        fprintf(stderr, "unexpected response\n");
-        return false;
-    }
-
-    return true;
+    return dev.writeAndWaitForReply(m);
 }
 
 bool Delete::deleteSysLFS()
 {
     USBProtocolMsg m(USBProtocol::Installer);
-
     m.header |= UsbVolumeManager::DeleteSysLFS;
-    dev.writePacket(m.bytes, m.len);
 
-    while (dev.numPendingINPackets() == 0) {
-        dev.processEvents();
-    }
-
-    m.len = dev.readPacket(m.bytes, m.MAX_LEN);
-    if ((m.header & 0xff) != UsbVolumeManager::DeleteSysLFS) {
-        fprintf(stderr, "unexpected response\n");
-        return false;
-    }
-
-    return true;
+    return dev.writeAndWaitForReply(m);
 }
 
 bool Delete::deleteVolume(unsigned code)
@@ -107,17 +71,7 @@ bool Delete::deleteVolume(unsigned code)
     m.header |= UsbVolumeManager::DeleteVolume;
     m.append((uint8_t*) &code, sizeof code);
 
+    return dev.writeAndWaitForReply(m);
+
     dev.writePacket(m.bytes, m.len);
-
-    while (dev.numPendingINPackets() == 0) {
-        dev.processEvents();
-    }
-
-    m.len = dev.readPacket(m.bytes, m.MAX_LEN);
-    if ((m.header & 0xff) != UsbVolumeManager::DeleteVolume) {
-        fprintf(stderr, "unexpected response\n");
-        return false;
-    }
-
-    return true;
 }
