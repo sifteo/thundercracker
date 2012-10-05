@@ -223,8 +223,8 @@ bool Manifest::dumpVolumes()
         
         if (isRPC) {
             std::string packageRPC = package == "(none)" ? "" : package;
-            std::string versionRPC = version == "(none)" ? "" : package;
-            std::string titleRPC = title == "(none)" ? "" : package;
+            std::string versionRPC = version == "(none)" ? "" : version;
+            std::string titleRPC = title == "(none)" ? "" : title;
             
             fprintf(stdout, "::volume:%u:%u:%u:%u:%s:%s:%s\n",
                 volBlockCode,
