@@ -189,7 +189,7 @@ public:
      * If any marked bits exist, returns true and puts the bit's index
      * in "index". Iff the entire vector is zero, returns false.
      */
-    bool findFirst(unsigned &index)
+    bool findFirst(unsigned &index) const
     {
         const unsigned NUM_WORDS = (tSize + 31) / 32;
 
@@ -252,6 +252,25 @@ public:
             }
         }
         return false;
+    }
+
+    /**
+     * Population count.
+     * Return the total number of set bits in the vector.
+     */
+    unsigned popcount() const {
+
+        const unsigned NUM_WORDS = (tSize + 31) / 32;
+        unsigned count = 0;
+
+        if (NUM_WORDS > 1) {
+            for (unsigned w = 0; w < NUM_WORDS; w++) {
+                count += Intrinsic::POPCOUNT(words[w]);
+            }
+        } else {
+            count = Intrinsic::POPCOUNT(words[0]);
+        }
+        return count;
     }
 };
 
