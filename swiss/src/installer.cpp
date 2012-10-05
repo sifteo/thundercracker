@@ -229,11 +229,17 @@ bool Installer::commit()
 
     m.len = dev.readPacket(m.bytes, m.MAX_LEN);
 
-    if ((m.header & 0xff) == UsbVolumeManager::WriteCommitOK) {
-        fprintf(stderr, "successfully committed new volume\n");
-        return true;
+    if ((m.header & 0xff) != UsbVolumeManager::WriteCommitOK) {
+        fprintf(stderr, "failed to write volume!\n");
+        return false;
     }
 
-    fprintf(stderr, "failed to write volume!\n");
-    return false;
+    if (m.payloadLen() >= 1) {
+        uint8_t volumeBlockCode = m.payload[0];
+        fprintf(stderr, "successfully committed new volume 0x%x\n", volumeBlockCode);
+    } else {
+        fprintf(stderr, "successfully committed new volume\n");
+    }
+
+    return true;
 }
