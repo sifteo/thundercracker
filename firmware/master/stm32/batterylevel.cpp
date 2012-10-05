@@ -6,7 +6,14 @@
 #include "powermanager.h"
 #include "macros.h"
 
-static unsigned lastReading;
+enum State {
+  Capture,
+  Calibration,
+};
+
+static int lastReading;
+static int lastCalibrationReading;
+static BatteryLevel::State currentState;
 
 /*
  * As we're sharing a timer with NeighborTX, the end of each neighbor transmission
@@ -39,6 +46,12 @@ void init()
      * Setting lastReading for comparison on startup
      */
     lastReading = UNINITIALIZED;
+    lastCalibrationReading = UNINITIALIZED;
+
+    /*
+     * Set the current state
+     */
+    currentState = Capture;
 
     /*
      * BATT_MEAS can always remain configured as an input.
@@ -92,7 +105,9 @@ void beginCapture()
      * BATT_LVL_TIM is shared with neighbor transmit
      */
 
-    if (delayPrescaleCounter++ == DELAY_PRESCALER) {
+    if (currentState == Calibration ||
+        delayPrescaleCounter++ == DELAY_PRESCALER)
+    {
 
         delayPrescaleCounter = 0;
 
@@ -108,6 +123,16 @@ void beginCapture()
         HwTimer timer(&BATT_LVL_TIM);
         timer.setPeriod(0xffff, DISCHARGE_PRESCALER);
         timer.setCount(0);
+
+        /*
+         * If the current state is the calibration state
+         * then BATT_MEAS_GPIO was set as an output
+         * in the captureISR
+         */
+        if (currentState == Calibration)
+        {
+            BATT_MEAS_GPIO.setControl(GPIOPin::IN_FLOAT);
+        }
 
         BATT_MEAS_GND_GPIO.setControl(GPIOPin::OUT_2MHZ);
         BATT_MEAS_GND_GPIO.setLow();
@@ -135,7 +160,30 @@ void captureIsr()
      *
      * TBD what kind of treatment to give this signal.
      */
-    lastReading = timer.lastCapture(BATT_LVL_CHAN);
+
+    int temp = timer.lastCapture(BATT_LVL_CHAN);
+
+    if(currentState == Capture)
+    {
+        lastReading = temp;
+
+        BATT_MEAS_GPIO.setControl(GPIOPin::OUT_2MHZ);
+        BATT_MEAS_GPIO.setHigh();
+
+        currentState = Calibration;
+        UART("Cap: ");
+        UART_HEX(lastReading);
+        UART("\r\n");
+
+    } else if  (currentState == Calibration)
+    {
+        lastCalibrationReading = temp;
+
+        currentState = Capture;
+        UART("Cal: ");
+        UART_HEX(lastCalibrationReading);
+        UART("\r\n");
+    }
 
     NeighborTX::resume();
 }
