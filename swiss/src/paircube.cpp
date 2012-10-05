@@ -53,19 +53,7 @@ bool PairCube::pair(const char *slotStr, const char *hwidStr)
     req->hwid = hwid;
     req->pairingSlot = pairingSlot;
 
-    dev.writePacket(m.bytes, m.len);
-    while (dev.numPendingINPackets() == 0) {
-        dev.processEvents();
-    }
-
-    // check response
-    m.len = dev.readPacket(m.bytes, m.MAX_LEN);
-    if ((m.header & 0xff) != UsbVolumeManager::PairCube) {
-        fprintf(stderr, "unexpected response\n");
-        return false;
-    }
-
-    return true;
+    return dev.writeAndWaitForReply(m);
 }
 
 bool PairCube::dumpPairingData(bool rpc)
@@ -166,17 +154,8 @@ UsbVolumeManager::PairingSlotDetailReply *PairCube::pairingSlotDetail(USBProtoco
     buf.header |= UsbVolumeManager::PairingSlotDetail;
     buf.append((uint8_t*) &pairingSlot, sizeof pairingSlot);
 
-    dev.writePacket(buf.bytes, buf.len);
-    while (dev.numPendingINPackets() == 0) {
-        dev.processEvents();
-    }
-
-    // check response
-    buf.len = dev.readPacket(buf.bytes, buf.MAX_LEN);
-    if ((buf.header & 0xff) != UsbVolumeManager::PairingSlotDetail) {
-        fprintf(stderr, "unexpected response\n");
+    if (!dev.writeAndWaitForReply(buf))
         return 0;
-    }
 
     if (buf.payloadLen() >= sizeof(UsbVolumeManager::PairingSlotDetailReply))
         return buf.castPayload<UsbVolumeManager::PairingSlotDetailReply>();
