@@ -4,6 +4,7 @@
 #include "metadata.h"
 #include "progressbar.h"
 
+#include <errno.h>
 #include <string>
 
 #ifdef _WIN32
