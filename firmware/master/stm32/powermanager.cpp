@@ -141,7 +141,7 @@ void PowerManager::shutdownIfVBattIsCritical(unsigned vbatt, unsigned vsys)
      * If not, shut ourselves down, and hope our batteries get replaced soon.
      */
 
-    if (vbatt < vsys - BatteryLevel::MAX_JITTER) {
+    if (vbatt - BatteryLevel::MAX_JITTER < vsys) {
 
         batteryPowerOff();
         /*
