@@ -188,5 +188,5 @@ void ensureMinimumBatteryLevel()
            BatteryLevel::raw() == BatteryLevel::UNINITIALIZED)
         ;
 
-    PowerManager::shutdownIfVBattIsCritical(BatteryLevel::vsys(), BatteryLevel::raw());
+    PowerManager::shutdownIfVBattIsCritical(BatteryLevel::raw(), BatteryLevel::vsys());
 }
