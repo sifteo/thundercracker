@@ -13,7 +13,7 @@ public:
 
     static int run(int argc, char **argv, IODevice &_dev);
 
-    bool extract(unsigned volume, const char *filepath);
+    bool extract(unsigned volume, const char *filepath, bool rpc=false);
     bool restore(const char *filepath);
 
 private:
@@ -24,7 +24,7 @@ private:
     bool writeFileHeader(FILE *f, unsigned volBlockCode, unsigned numVolumes);
     bool extractLFSVolume(unsigned address, unsigned len, FILE *f);
 
-    bool writeVolumes(UsbVolumeManager::LFSDetailReply *reply, FILE *f);
+    bool writeVolumes(UsbVolumeManager::LFSDetailReply *reply, FILE *f, bool rpc=false);
     bool sendRequest(unsigned baseAddr, unsigned &progress);
     bool writeReply(FILE *f, unsigned &progress);
 
