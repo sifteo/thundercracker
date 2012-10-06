@@ -180,31 +180,13 @@ void ensureMinimumBatteryLevel()
 
     BatteryLevel::beginCapture();
 
-    unsigned batteryLevel, calibrationLevel;
-    do {
-        batteryLevel = BatteryLevel::raw();
-        calibrationLevel = BatteryLevel::vsys();
-    } while (calibrationLevel == BatteryLevel::UNINITIALIZED ||
-        batteryLevel == BatteryLevel::UNINITIALIZED);
+    // we unforuntately don't have anything better to do while we wait, since
+    // we can't proceed until we know this is OK. Our startup process is
+    // ultimately bottlenecked by the radio's power on delay anyway, and
+    // this time is taken into account for that, so we're still OK.
+    while (BatteryLevel::vsys() == BatteryLevel::UNINITIALIZED ||
+           BatteryLevel::raw() == BatteryLevel::UNINITIALIZED)
+        ;
 
-    /*
-     * To be a bit conservative, we assume that any sample we take is skewed by
-     * our MAX_JITTER in the positive direction. Correct for this, and see if
-     * we're still above the required thresh to continue powering on.
-     *
-     * If not, shut ourselves down, and hope our batteries get replaced soon.
-     */
-     if (batteryLevel < calibrationLevel - BatteryLevel::MAX_JITTER) {
-    
-        PowerManager::batteryPowerOff();
-        /*
-         * wait to for power to drain. if somebody keeps their finger
-         * on the homebutton, we may be here a little while, so don't
-         * get zapped by the watchdog on our way out
-         */
-        for (;;) {
-            Atomic::Barrier();
-            Tasks::resetWatchdog();
-        }
-    }
+    PowerManager::shutdownIfVBattIsCritical(BatteryLevel::vsys(), BatteryLevel::raw());
 }

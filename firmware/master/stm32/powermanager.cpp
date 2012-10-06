@@ -4,6 +4,7 @@
 #include "systime.h"
 #include "tasks.h"
 #include "radio.h"
+#include "batterylevel.h"
 
 #include "macros.h"
 
@@ -128,4 +129,29 @@ void PowerManager::setState(State s)
 #endif
 
     lastState = s;
+}
+
+void PowerManager::shutdownIfVBattIsCritical(unsigned vbatt, unsigned vsys)
+{
+    /*
+     * To be a bit conservative, we assume that any sample we take is skewed by
+     * our MAX_JITTER in the positive direction. Correct for this, and see if
+     * we're still above the required thresh to continue powering on.
+     *
+     * If not, shut ourselves down, and hope our batteries get replaced soon.
+     */
+
+    if (vbatt < vsys - BatteryLevel::MAX_JITTER) {
+
+        batteryPowerOff();
+        /*
+         * wait to for power to drain. if somebody keeps their finger
+         * on the homebutton, we may be here a little while, so don't
+         * get zapped by the watchdog on our way out
+         */
+        for (;;) {
+            Atomic::Barrier();
+            Tasks::resetWatchdog();
+        }
+    }
 }

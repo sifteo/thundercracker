@@ -178,6 +178,8 @@ void captureIsr()
 
         currentState = Calibration;
 
+        PowerManager::shutdownIfVBattIsCritical(lastReading, lastVsysReading);
+
     } else if  (currentState == Calibration) {
         lastVsysReading = capture;
 
