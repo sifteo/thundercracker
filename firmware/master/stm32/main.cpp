@@ -27,8 +27,6 @@
 #include "led.h"
 #include "batterylevel.h"
 
-static void ensureMinimumBatteryLevel();
-
 /*
  * Application specific entry point.
  * All low level init is done in setup.cpp.
@@ -146,7 +144,24 @@ int main()
 
     BatteryLevel::init();
     if (PowerManager::state() == PowerManager::BatteryPwr) {
-        ensureMinimumBatteryLevel();
+
+        /*
+         * Ensure we have enough juise to make it worth starting up!
+         *
+         * Kick off our first sample and wait for it to complete.
+         * Once our first vsys and vbatt samples have been taken, the
+         * PowerManager will shut us down if we're at a critical level.
+         */
+
+        BatteryLevel::beginCapture();
+
+        // we unforuntately don't have anything better to do while we wait, since
+        // we can't proceed until we know this is OK. Our startup process is
+        // ultimately bottlenecked by the radio's power on delay anyway, and
+        // this time is taken into account for that, so we're still OK.
+        while (BatteryLevel::vsys() == BatteryLevel::UNINITIALIZED ||
+               BatteryLevel::raw() == BatteryLevel::UNINITIALIZED)
+            ;
     }
 
     // wait until after we know we're going to continue starting up before
@@ -170,23 +185,4 @@ int main()
      */
 
     SvmLoader::runLauncher();
-}
-
-void ensureMinimumBatteryLevel()
-{
-    /*
-     * Kick off our first sample and wait for it to complete.
-     */
-
-    BatteryLevel::beginCapture();
-
-    // we unforuntately don't have anything better to do while we wait, since
-    // we can't proceed until we know this is OK. Our startup process is
-    // ultimately bottlenecked by the radio's power on delay anyway, and
-    // this time is taken into account for that, so we're still OK.
-    while (BatteryLevel::vsys() == BatteryLevel::UNINITIALIZED ||
-           BatteryLevel::raw() == BatteryLevel::UNINITIALIZED)
-        ;
-
-    PowerManager::shutdownIfVBattIsCritical(BatteryLevel::raw(), BatteryLevel::vsys());
 }

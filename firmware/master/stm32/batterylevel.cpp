@@ -9,8 +9,8 @@
 namespace BatteryLevel {
 
 enum State {
-    Capture,
-    Calibration,
+    VBattCapture,
+    VSysCapture,
 };
 
 static unsigned lastReading;
@@ -51,9 +51,10 @@ void init()
     lastVsysReading = UNINITIALIZED;
 
     /*
-     * Set the current state
+     * Take a VBatt sample first, since its charge time is much longer than
+     * the VSys charge time.
      */
-    currentState = Capture;
+    currentState = VBattCapture;
 
     /*
      * BATT_MEAS can always remain configured as an input.
@@ -112,9 +113,7 @@ void beginCapture()
      * BATT_LVL_TIM is shared with neighbor transmit
      */
 
-    if (currentState == Calibration ||
-        delayPrescaleCounter++ == DELAY_PRESCALER)
-    {
+    if (currentState == VSysCapture || delayPrescaleCounter++ == DELAY_PRESCALER) {
 
         delayPrescaleCounter = 0;
 
@@ -139,7 +138,7 @@ void beginCapture()
          * then BATT_MEAS_GPIO was set as an output
          * in the captureISR
          */
-        if (currentState == Calibration) {
+        if (currentState == VSysCapture) {
             BATT_MEAS_GPIO.setControl(GPIOPin::IN_FLOAT);
         }
 
@@ -170,20 +169,21 @@ void captureIsr()
 
     unsigned capture = timer.lastCapture(BATT_LVL_CHAN);
 
-    if (currentState == Capture) {
+    if (currentState == VBattCapture) {
         lastReading = capture;
 
         BATT_MEAS_GPIO.setControl(GPIOPin::OUT_2MHZ);
         BATT_MEAS_GPIO.setHigh();
 
-        currentState = Calibration;
+        currentState = VSysCapture;
+
+    } else if (currentState == VSysCapture) {
+
+        lastVsysReading = capture;
 
         PowerManager::shutdownIfVBattIsCritical(lastReading, lastVsysReading);
 
-    } else if  (currentState == Calibration) {
-        lastVsysReading = capture;
-
-        currentState = Capture;
+        currentState = VBattCapture;
     }
 
     NeighborTX::resume();
