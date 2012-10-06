@@ -180,10 +180,12 @@ void ensureMinimumBatteryLevel()
 
     BatteryLevel::beginCapture();
 
-    unsigned batteryLevel;
+    unsigned batteryLevel, calibrationLevel;
     do {
         batteryLevel = BatteryLevel::raw();
-    } while (batteryLevel == BatteryLevel::UNINITIALIZED);
+        calibrationLevel = BatteryLevel::vsys();
+    } while (calibrationLevel == BatteryLevel::UNINITIALIZED ||
+        batteryLevel == BatteryLevel::UNINITIALIZED);
 
     /*
      * To be a bit conservative, we assume that any sample we take is skewed by
@@ -192,8 +194,8 @@ void ensureMinimumBatteryLevel()
      *
      * If not, shut ourselves down, and hope our batteries get replaced soon.
      */
-    if (batteryLevel - BatteryLevel::MAX_JITTER < BatteryLevel::STARTUP_THRESHOLD) {
-
+     if (batteryLevel < calibrationLevel - BatteryLevel::MAX_JITTER) {
+    
         PowerManager::batteryPowerOff();
         /*
          * wait to for power to drain. if somebody keeps their finger
