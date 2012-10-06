@@ -106,7 +106,7 @@ OBJS += \
     $(GLFWLIB)/input.o
 
 ifeq ($(BUILD_PLATFORM),Darwin)
-    LIBS += -framework Cocoa
+    LIBS += -framework Cocoa -framework IOKit
     INCLUDES += -I$(GLFWLIB)/cocoa
     OBJS += \
         $(GLFWLIB)/cocoa/cocoa_enable.o     \
