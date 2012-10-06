@@ -97,10 +97,10 @@ unsigned scaled()
      * the number of visual buckets that the UI represents.
      */
     const unsigned MAX = 0x2500;
-    const unsigned MIN = 0x1baa;
+    const unsigned MIN = lastVsysReading;
     const unsigned RANGE = MAX - MIN;
     const unsigned clamped = clamp(lastReading, MIN, MAX);
-    return (clamped - STARTUP_THRESHOLD) * _SYS_BATTERY_MAX / RANGE;
+    return (clamped - MIN) * _SYS_BATTERY_MAX / RANGE;
 }
 
 void beginCapture()
