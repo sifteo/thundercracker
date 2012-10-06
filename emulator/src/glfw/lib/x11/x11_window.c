@@ -431,6 +431,7 @@ static _GLFWfbconfig *getFBConfigs( unsigned int *found )
     GLXFBConfig *fbconfigs;
     _GLFWfbconfig *result;
     int i, count = 0;
+    GLboolean trustWindowBit = GL_TRUE;
 
     *found = 0;
 
@@ -441,6 +442,14 @@ static _GLFWfbconfig *getFBConfigs( unsigned int *found )
             fprintf( stderr, "GLXFBConfigs are not supported by the X server\n" );
             return NULL;
         }
+    }
+
+    if( strcmp( glXGetClientString( _glfwLibrary.display, GLX_VENDOR ),
+                "Chromium" ) == 0 )
+    {
+        // This is a (hopefully temporary) workaround for Chromium (VirtualBox
+        // GL) not setting the window bit on any GLXFBConfigs
+        trustWindowBit = GL_FALSE;
     }
 
     if( _glfwWin.has_GLX_SGIX_fbconfig )
@@ -489,8 +498,11 @@ static _GLFWfbconfig *getFBConfigs( unsigned int *found )
 
         if( !( getFBConfigAttrib( fbconfigs[i], GLX_DRAWABLE_TYPE ) & GLX_WINDOW_BIT ) )
         {
-            // Only consider window GLXFBConfigs
-            continue;
+            if( trustWindowBit )
+            {
+                // Only consider window GLXFBConfigs
+                continue;
+            }
         }
 
         result[*found].redBits = getFBConfigAttrib( fbconfigs[i], GLX_RED_SIZE );
@@ -1391,24 +1403,8 @@ int _glfwPlatformOpenWindow( int width, int height,
     _GLFWfbconfig closest;
 
     // Clear platform specific GLFW window state
-    _glfwWin.visual           = (XVisualInfo*)NULL;
-    _glfwWin.colormap         = (Colormap)0;
-    _glfwWin.context          = (GLXContext)NULL;
-    _glfwWin.window           = (Window)0;
-    _glfwWin.pointerGrabbed   = GL_FALSE;
-    _glfwWin.pointerHidden    = GL_FALSE;
-    _glfwWin.keyboardGrabbed  = GL_FALSE;
-    _glfwWin.overrideRedirect = GL_FALSE;
-    _glfwWin.FS.modeChanged   = GL_FALSE;
-    _glfwWin.Saver.changed    = GL_FALSE;
     _glfwWin.refreshRate      = wndconfig->refreshRate;
     _glfwWin.windowNoResize   = wndconfig->windowNoResize;
-
-    _glfwWin.wmDeleteWindow    = None;
-    _glfwWin.wmPing            = None;
-    _glfwWin.wmState           = None;
-    _glfwWin.wmStateFullscreen = None;
-    _glfwWin.wmActiveWindow    = None;
 
     // As the 2.x API doesn't understand multiple display devices, we hardcode
     // this choice and hope for the best
@@ -1798,6 +1794,11 @@ void _glfwPlatformPollEvents( void )
     {
         _glfwPlatformSetMouseCursorPos( _glfwWin.width/2,
                                         _glfwWin.height/2 );
+
+        // NOTE: This is a temporary fix.  It works as long as you use offsets
+        //       accumulated over the course of a frame, instead of performing
+        //       the necessary actions per callback call.
+        XFlush( _glfwLibrary.display );
     }
 
     if( closeRequested && _glfwWin.windowCloseCallback )
@@ -1852,6 +1853,9 @@ void _glfwPlatformHideMouseCursor( void )
             _glfwWin.pointerGrabbed = GL_TRUE;
         }
     }
+
+    // Move cursor to the middle of the window
+    _glfwPlatformSetMouseCursorPos( _glfwWin.width / 2, _glfwWin.height / 2 );
 }
 
 

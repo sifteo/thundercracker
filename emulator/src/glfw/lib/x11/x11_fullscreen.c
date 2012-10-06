@@ -360,14 +360,6 @@ int _glfwPlatformGetVideoModes( GLFWvidmode *list, int maxcount )
     int viscount, rgbcount, rescount;
     int *rgbarray;
     struct _glfwResolution *resarray;
-#if defined( _GLFW_HAS_XRANDR )
-    XRRScreenConfiguration *sc;
-    XRRScreenSize *sizelist;
-    int sizecount;
-#elif defined( _GLFW_HAS_XF86VIDMODE )
-    XF86VidModeModeInfo **modelist;
-    int modecount, width, height;
-#endif
 
     // Get display and screen
     dpy = _glfwLibrary.display;
@@ -421,6 +413,10 @@ int _glfwPlatformGetVideoModes( GLFWvidmode *list, int maxcount )
 #if defined( _GLFW_HAS_XRANDR )
     if( _glfwLibrary.XRandR.available )
     {
+        XRRScreenConfiguration *sc;
+        XRRScreenSize *sizelist;
+        int sizecount;
+
         sc = XRRGetScreenInfo( dpy, RootWindow( dpy, screen ) );
         sizelist = XRRConfigSizes( sc, &sizecount );
 
@@ -438,6 +434,9 @@ int _glfwPlatformGetVideoModes( GLFWvidmode *list, int maxcount )
 #elif defined( _GLFW_HAS_XF86VIDMODE )
     if( _glfwLibrary.XF86VidMode.available )
     {
+        XF86VidModeModeInfo **modelist;
+        int modecount, width, height;
+
         XF86VidModeGetAllModeLines( dpy, screen, &modecount, &modelist );
 
         resarray = (struct _glfwResolution*) malloc( sizeof(struct _glfwResolution) * modecount );
@@ -509,11 +508,7 @@ int _glfwPlatformGetVideoModes( GLFWvidmode *list, int maxcount )
 void _glfwPlatformGetDesktopMode( GLFWvidmode *mode )
 {
     Display *dpy;
-    int     bpp, screen;
-#if defined( _GLFW_HAS_XF86VIDMODE )
-    XF86VidModeModeInfo **modelist;
-    int     modecount;
-#endif
+    int bpp, screen;
 
     // Get display and screen
     dpy = _glfwLibrary.display;
@@ -538,6 +533,9 @@ void _glfwPlatformGetDesktopMode( GLFWvidmode *mode )
 #elif defined( _GLFW_HAS_XF86VIDMODE )
     if( _glfwLibrary.XF86VidMode.available )
     {
+        XF86VidModeModeInfo **modelist;
+        int modecount;
+
         if( _glfwWin.FS.modeChanged )
         {
             // The old (desktop) mode is stored in _glfwWin.FS.oldMode

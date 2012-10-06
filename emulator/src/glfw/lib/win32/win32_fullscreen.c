@@ -313,7 +313,7 @@ void _glfwPlatformGetDesktopMode( GLFWvidmode *mode )
     (void) EnumDisplaySettings( NULL, ENUM_REGISTRY_SETTINGS, &dm );
 
     // Return desktop mode parameters
-    mode->Width  = dm.dmPelsWidth;
+    mode->Width = dm.dmPelsWidth;
     mode->Height = dm.dmPelsHeight;
     bpp2rgb( dm.dmBitsPerPel, &mode->RedBits, &mode->GreenBits, &mode->BlueBits );
 }

@@ -84,11 +84,11 @@ GLFWAPI int GLFWAPIENTRY glfwGetVideoModes( GLFWvidmode *list, int maxcount )
 
 GLFWAPI void GLFWAPIENTRY glfwGetDesktopMode( GLFWvidmode *mode )
 {
-    if( !_glfwInitialized || mode == (GLFWvidmode*) 0 )
+    if( !_glfwInitialized || !mode )
     {
         return;
     }
 
-    _glfwPlatformGetDesktopMode( mode );
+    *mode = _glfwLibrary.desktopMode;
 }
 

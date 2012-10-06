@@ -27,8 +27,7 @@
 //
 //========================================================================
 
-// Needed for _NSGetProgname
-#include <crt_externs.h>
+#include <sys/param.h>
 
 #include <internal.h>
 
@@ -43,157 +42,44 @@
 
 @end
 
-@interface GLFWApplication : NSApplication
-@end
+//========================================================================
+// Change to our application bundle's resources directory, if present
+//========================================================================
 
-@implementation GLFWApplication
-
-// From http://cocoadev.com/index.pl?GameKeyboardHandlingAlmost
-// This works around an AppKit bug, where key up events while holding
-// down the command key don't get sent to the key window.
-- (void)sendEvent:(NSEvent *)event
+static void changeToResourcesDirectory( void )
 {
-    if( [event type] == NSKeyUp && ( [event modifierFlags] & NSCommandKeyMask ) )
+    char resourcesPath[MAXPATHLEN];
+
+    CFBundleRef bundle = CFBundleGetMainBundle();
+    if( !bundle )
+        return;
+
+    CFURLRef resourcesURL = CFBundleCopyResourcesDirectoryURL( bundle );
+
+    CFStringRef last = CFURLCopyLastPathComponent( resourcesURL );
+    if( CFStringCompare( CFSTR( "Resources" ), last, 0 ) != kCFCompareEqualTo )
     {
-        [[self keyWindow] sendEvent:event];
+        CFRelease( last );
+        CFRelease( resourcesURL );
+        return;
     }
-    else
+
+    CFRelease( last );
+
+    if( !CFURLGetFileSystemRepresentation( resourcesURL,
+                                           true,
+                                           (UInt8*) resourcesPath,
+                                           MAXPATHLEN) )
     {
-        [super sendEvent:event];
+        CFRelease( resourcesURL );
+        return;
     }
+
+    CFRelease( resourcesURL );
+
+    chdir( resourcesPath );
 }
 
-@end
-
-// Prior to Snow Leopard, we need to use this oddly-named semi-private API
-// to get the application menu working properly.  Need to be careful in
-// case it goes away in a future OS update.
-@interface NSApplication (NSAppleMenu)
-- (void)setAppleMenu:(NSMenu *)m;
-@end
-
-// Keys to search for as potential application names
-NSString *GLFWNameKeys[] =
-{
-    @"CFBundleDisplayName",
-    @"CFBundleName",
-    @"CFBundleExecutable",
-};
-
-//========================================================================
-// Try to figure out what the calling application is called
-//========================================================================
-static NSString *findAppName( void )
-{
-    NSDictionary *infoDictionary = [[NSBundle mainBundle] infoDictionary];
-
-    unsigned int i;
-    for( i = 0; i < sizeof(GLFWNameKeys) / sizeof(GLFWNameKeys[0]); i++ )
-    {
-        id name = [infoDictionary objectForKey:GLFWNameKeys[i]];
-        if (name &&
-            [name isKindOfClass:[NSString class]] &&
-            ![@"" isEqualToString:name])
-        {
-            return name;
-        }
-    }
-
-    // If we get here, we're unbundled
-    if( !_glfwLibrary.Unbundled )
-    {
-        // Could do this only if we discover we're unbundled, but it should
-        // do no harm...
-        ProcessSerialNumber psn = { 0, kCurrentProcess };
-        TransformProcessType( &psn, kProcessTransformToForegroundApplication );
-
-        // Having the app in front of the terminal window is also generally
-        // handy.  There is an NSApplication API to do this, but...
-        SetFrontProcess( &psn );
-
-        _glfwLibrary.Unbundled = GL_TRUE;
-    }
-
-    char **progname = _NSGetProgname();
-    if( progname && *progname )
-    {
-        // TODO: UTF8?
-        return [NSString stringWithUTF8String:*progname];
-    }
-
-    // Really shouldn't get here
-    return @"GLFW Application";
-}
-
-//========================================================================
-// Set up the menu bar (manually)
-// This is nasty, nasty stuff -- calls to undocumented semi-private APIs that
-// could go away at any moment, lots of stuff that really should be
-// localize(d|able), etc.  Loading a nib would save us this horror, but that
-// doesn't seem like a good thing to require of GLFW's clients.
-//========================================================================
-static void setUpMenuBar( void )
-{
-    NSString *appName = findAppName();
-
-    NSMenu *bar = [[NSMenu alloc] init];
-    [NSApp setMainMenu:bar];
-
-    NSMenuItem *appMenuItem =
-        [bar addItemWithTitle:@"" action:NULL keyEquivalent:@""];
-    NSMenu *appMenu = [[NSMenu alloc] init];
-    [appMenuItem setSubmenu:appMenu];
-
-    [appMenu addItemWithTitle:[NSString stringWithFormat:@"About %@", appName]
-                       action:@selector(orderFrontStandardAboutPanel:)
-                keyEquivalent:@""];
-    [appMenu addItem:[NSMenuItem separatorItem]];
-    NSMenu *servicesMenu = [[NSMenu alloc] init];
-    [NSApp setServicesMenu:servicesMenu];
-    [[appMenu addItemWithTitle:@"Services"
-                       action:NULL
-                keyEquivalent:@""] setSubmenu:servicesMenu];
-    [appMenu addItem:[NSMenuItem separatorItem]];
-    [appMenu addItemWithTitle:[NSString stringWithFormat:@"Hide %@", appName]
-                       action:@selector(hide:)
-                keyEquivalent:@"h"];
-    [[appMenu addItemWithTitle:@"Hide Others"
-                       action:@selector(hideOtherApplications:)
-                keyEquivalent:@"h"]
-        setKeyEquivalentModifierMask:NSAlternateKeyMask | NSCommandKeyMask];
-    [appMenu addItemWithTitle:@"Show All"
-                       action:@selector(unhideAllApplications:)
-                keyEquivalent:@""];
-    [appMenu addItem:[NSMenuItem separatorItem]];
-    [appMenu addItemWithTitle:[NSString stringWithFormat:@"Quit %@", appName]
-                       action:@selector(terminate:)
-                keyEquivalent:@"q"];
-
-    NSMenuItem *windowMenuItem =
-        [bar addItemWithTitle:@"" action:NULL keyEquivalent:@""];
-    NSMenu *windowMenu = [[NSMenu alloc] initWithTitle:@"Window"];
-    [NSApp setWindowsMenu:windowMenu];
-    [windowMenuItem setSubmenu:windowMenu];
-
-    [windowMenu addItemWithTitle:@"Miniaturize"
-                          action:@selector(performMiniaturize:)
-                   keyEquivalent:@"m"];
-    [windowMenu addItemWithTitle:@"Zoom"
-                          action:@selector(performZoom:)
-                   keyEquivalent:@""];
-    [windowMenu addItem:[NSMenuItem separatorItem]];
-    [windowMenu addItemWithTitle:@"Bring All to Front"
-                          action:@selector(arrangeInFront:)
-                   keyEquivalent:@""];
-
-    // At least guard the call to private API to avoid an exception if it
-    // goes away.  Hopefully that means the worst we'll break in future is to
-    // look ugly...
-    if( [NSApp respondsToSelector:@selector(setAppleMenu:)] )
-    {
-        [NSApp setAppleMenu:appMenu];
-    }
-}
 
 //========================================================================
 // Terminate GLFW when exiting application
@@ -225,6 +111,7 @@ static void initThreads( void )
     _glfwThrd.First.Next     = NULL;
 }
 
+
 //************************************************************************
 //****               Platform implementation functions                ****
 //************************************************************************
@@ -235,10 +122,7 @@ static void initThreads( void )
 
 int _glfwPlatformInit( void )
 {
-    _glfwLibrary.AutoreleasePool = [[NSAutoreleasePool alloc] init];
-
-    // Implicitly create shared NSApplication instance
-    [GLFWApplication sharedApplication];
+    _glfwLibrary.autoreleasePool = [[NSAutoreleasePool alloc] init];
 
     _glfwLibrary.OpenGLFramework =
         CFBundleGetBundleWithIdentifier( CFSTR( "com.apple.opengl" ) );
@@ -256,18 +140,10 @@ int _glfwPlatformInit( void )
      *         we want paths provided on the command line to work intuitively.
      */
 #if 0
-    NSString* resourcePath = [[NSBundle mainBundle] resourcePath];
-
-    if( access( [resourcePath cStringUsingEncoding:NSUTF8StringEncoding], R_OK ) == 0 )
-    {
-        chdir( [resourcePath cStringUsingEncoding:NSUTF8StringEncoding] );
-    }
+    changeToResourcesDirectory();
 #endif
 
-    // Setting up menu bar must go exactly here else weirdness ensues
-    setUpMenuBar();
-
-    [NSApp finishLaunching];
+    _glfwPlatformGetDesktopMode( &_glfwLibrary.desktopMode );
 
     /*
      * SIFTEO: Fuck this atexit() handler. It will segfault trying to clean
@@ -280,13 +156,24 @@ int _glfwPlatformInit( void )
 
     initThreads();
 
-    _glfwPlatformSetTime( 0.0 );
+    _glfwInitTimer();
 
-    _glfwLibrary.DesktopMode =
-	(NSDictionary *)CGDisplayCurrentMode( CGMainDisplayID() );
+    _glfwInitJoysticks();
+
+    _glfwLibrary.eventSource = CGEventSourceCreate( kCGEventSourceStateHIDSystemState );
+    if( !_glfwLibrary.eventSource )
+    {
+        return GL_FALSE;
+    }
+
+    CGEventSourceSetLocalEventsSuppressionInterval( _glfwLibrary.eventSource,
+                                                    0.0 );
+
+    _glfwPlatformSetTime( 0.0 );
 
     return GL_TRUE;
 }
+
 
 //========================================================================
 // Close window, if open, and shut down GLFW
@@ -301,8 +188,16 @@ int _glfwPlatformTerminate( void )
     // TODO: Kill all non-main threads?
     // TODO: Probably other cleanup
 
-    [_glfwLibrary.AutoreleasePool release];
-    _glfwLibrary.AutoreleasePool = nil;
+    if( _glfwLibrary.eventSource )
+    {
+        CFRelease( _glfwLibrary.eventSource );
+        _glfwLibrary.eventSource = NULL;
+    }
+
+    _glfwTerminateJoysticks();
+
+    [_glfwLibrary.autoreleasePool release];
+    _glfwLibrary.autoreleasePool = nil;
 
     return GL_TRUE;
 }

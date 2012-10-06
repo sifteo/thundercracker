@@ -233,6 +233,8 @@ int _glfwPlatformInit( void )
     // Try to load libGL.so if necessary
     initLibraries();
 
+    _glfwPlatformGetDesktopMode( &_glfwLibrary.desktopMode );
+
     // Install atexit() routine
     atexit( glfw_atexit );
 

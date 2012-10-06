@@ -43,7 +43,7 @@
 // Include files
 #include <windows.h>
 #include <mmsystem.h>
-#include <GL/glfw.h>
+#include "../../include/GL/glfw.h"
 
 
 //========================================================================
@@ -416,6 +416,9 @@ GLFWGLOBAL struct {
 
     // Window opening hints
     _GLFWhints      hints;
+
+    // Initial desktop mode
+    GLFWvidmode     desktopMode;
 
 // ========= PLATFORM SPECIFIC PART ======================================
 
