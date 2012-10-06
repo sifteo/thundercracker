@@ -43,7 +43,7 @@
 // Include files
 #include <windows.h>
 #include <mmsystem.h>
-#include <glfw.h>
+#include <GL/glfw.h>
 
 
 //========================================================================
