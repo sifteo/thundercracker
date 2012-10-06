@@ -131,6 +131,9 @@ void beginCapture()
         timer.setPeriod(0xffff, DISCHARGE_PRESCALER);
         timer.setCount(0);
 
+        BATT_MEAS_GND_GPIO.setControl(GPIOPin::OUT_2MHZ);
+        BATT_MEAS_GND_GPIO.setLow();
+
         /*
          * If the current state is the calibration state
          * then BATT_MEAS_GPIO was set as an output
@@ -139,9 +142,6 @@ void beginCapture()
         if (currentState == Calibration) {
             BATT_MEAS_GPIO.setControl(GPIOPin::IN_FLOAT);
         }
-
-        BATT_MEAS_GND_GPIO.setControl(GPIOPin::OUT_2MHZ);
-        BATT_MEAS_GND_GPIO.setLow();
 
         timer.enableCompareCaptureIsr(BATT_LVL_CHAN);
     }
