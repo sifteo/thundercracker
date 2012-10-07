@@ -44,6 +44,15 @@ public:
         FallingEdge         = 1 << 1
     };
 
+    enum Event {
+        UpdateEvent     = 1 << 0,
+        CC1GEvent       = 1 << 1,
+        CC2GEvent       = 1 << 2,
+        CC3GEvent       = 1 << 3,
+        CC4GEvent       = 1 << 4,
+        TriggerEvent    = 1 << 6
+    };
+
     ALWAYS_INLINE HwTimer(volatile TIM_t *_hw) :
         tim(_hw) {}
 
@@ -126,6 +135,10 @@ public:
 
     void ALWAYS_INLINE setDuty(int ch, uint16_t duty) const {
         tim->compareCapRegs[ch - 1].CCR = duty;
+    }
+
+    void ALWAYS_INLINE generateEvent(uint16_t mask) const {
+        tim->EGR = mask;
     }
 
     void setDutyDma(int ch, const uint16_t *data, uint16_t len) const;

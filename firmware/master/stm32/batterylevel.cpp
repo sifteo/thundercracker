@@ -13,7 +13,6 @@ enum State {
     VSysCapture,
 };
 
-uint16_t startTime;
 static unsigned lastReading;
 static unsigned lastVsysReading;
 static State currentState;
@@ -129,7 +128,15 @@ void beginCapture()
 
         HwTimer timer(&BATT_LVL_TIM);
         timer.setPeriod(0xffff, DISCHARGE_PRESCALER);
-        startTime = timer.count();
+        /*
+         * We need to generate an update event in order to latch in the new
+         * prescaler - otherwise it would only be applied at the next
+         * update event.
+         *
+         * This also has the nice side effect of resetting the counter,
+         * so we don't need to track the start time.
+         */
+        timer.generateEvent(HwTimer::UpdateEvent);
 
         BATT_MEAS_GND_GPIO.setControl(GPIOPin::OUT_2MHZ);
         BATT_MEAS_GND_GPIO.setLow();
@@ -165,7 +172,7 @@ void captureIsr()
      * baseline - store the capture appropriately.
      */
 
-    unsigned capture = timer.lastCapture(BATT_LVL_CHAN) - startTime;
+    unsigned capture = timer.lastCapture(BATT_LVL_CHAN);
 
     if (currentState == VBattCapture) {
 
