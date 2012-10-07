@@ -175,8 +175,9 @@ IRQ_HANDLER ISR_FN(NBR_TX_TIM)()
         }
     }
 
-    if (status & (1 << BATT_LVL_CHAN))
+    if (status & (1 << BATT_LVL_CHAN)) {
         BatteryLevel::captureIsr();
+    }
 }
 
 void NeighborTX::floatSide(unsigned side)

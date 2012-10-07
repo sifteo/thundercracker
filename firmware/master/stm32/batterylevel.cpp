@@ -13,6 +13,7 @@ enum State {
     VSysCapture,
 };
 
+uint16_t startTime;
 static unsigned lastReading;
 static unsigned lastVsysReading;
 static State currentState;
@@ -128,7 +129,7 @@ void beginCapture()
 
         HwTimer timer(&BATT_LVL_TIM);
         timer.setPeriod(0xffff, DISCHARGE_PRESCALER);
-        timer.setCount(0);
+        startTime = timer.count();
 
         BATT_MEAS_GND_GPIO.setControl(GPIOPin::OUT_2MHZ);
         BATT_MEAS_GND_GPIO.setLow();
@@ -160,16 +161,15 @@ void captureIsr()
     timer.disableCompareCaptureIsr(BATT_LVL_CHAN);
 
     /*
-     * We don't need to track a start time, as we always reset the timer
-     * before kicking off a new capture.
-     *
      * We alternately sample VSYS and VBATT in order to establish a consistent
      * baseline - store the capture appropriately.
      */
 
-    unsigned capture = timer.lastCapture(BATT_LVL_CHAN);
+    unsigned capture = timer.lastCapture(BATT_LVL_CHAN) - startTime;
 
     if (currentState == VBattCapture) {
+
+
         lastReading = capture;
 
         BATT_MEAS_GPIO.setControl(GPIOPin::OUT_2MHZ);
