@@ -103,3 +103,9 @@ ifeq ($(JTAGKEY),)
 else 
     PROG_CONFIG := jtagkey2.cfg
 endif
+
+# gold master disables timeouts
+ifneq ($(GOLD_MASTER),)
+    FLAGS += -DDISABLE_IDLETIMEOUT -DDISABLE_WATCHDOG
+    FLAGS += -DGOLD_MASTER 
+endif
