@@ -16,7 +16,7 @@
 #   define RADIO_UART_HEX(_i)
 #endif
 
-RadioManager::fifo_t RadioManager::fifo;
+uint8_t RadioManager::currentProducer;
 bool RadioManager::enabled;
 uint8_t RadioManager::nextPID;
 uint32_t RadioManager::schedule[RadioManager::PID_COUNT];
@@ -158,7 +158,7 @@ void RadioManager::produce(PacketTransmission &tx)
             tx.noAck = true;
 
             nextPID = (thisPID + 1) & PID_MASK;
-            fifo.enqueue(DUMMY_ID);
+            currentProducer = DUMMY_ID;
             return;
         }
 
@@ -179,7 +179,7 @@ void RadioManager::produce(PacketTransmission &tx)
         if (dispatchProduce(producer, tx, now)) {
             nextSchedule[thisPID] |= producerBit;
             nextPID = (thisPID + 1) & PID_MASK;
-            fifo.enqueue(producer);
+            currentProducer = producer;
             return;
         }
 
@@ -190,17 +190,60 @@ void RadioManager::produce(PacketTransmission &tx)
 
 void RadioManager::ackWithPacket(const PacketBuffer &packet, unsigned retries)
 {
-    dispatchAcknowledge(fifo.dequeue(), packet, retries);
+//    dispatchAcknowledge(currentProducer, packet, retries);
+    RADIO_UART_STR("\r\nack ");
+    RADIO_UART_HEX(currentProducer);
+
+    if (currentProducer == CONNECTOR_ID)
+        return CubeConnector::radioAcknowledge(packet);
+
+    if (currentProducer >= NUM_PRODUCERS) {
+        ASSERT(currentProducer == DUMMY_ID);
+        return;
+    }
+
+    CubeSlot &slot = CubeSlot::getInstance(currentProducer);
+    processRetries(slot, retries);
+    if (slot.isSysConnected())
+        slot.radioAcknowledge(packet);
 }
 
 void RadioManager::ackEmpty(unsigned retries)
 {
-    dispatchEmptyAcknowledge(fifo.dequeue(), retries);
+    RADIO_UART_STR("\r\nack0 ");
+    RADIO_UART_HEX(currentProducer);
+
+    if (currentProducer == CONNECTOR_ID)
+        return CubeConnector::radioEmptyAcknowledge();
+
+   if (currentProducer >= NUM_PRODUCERS) {
+        ASSERT(currentProducer == DUMMY_ID);
+        return;
+    }
+
+    CubeSlot &slot = CubeSlot::getInstance(currentProducer);
+
+    processRetries(slot, retries);
+    if (slot.isSysConnected())
+        slot.radioEmptyAcknowledge();
 }
 
 void RadioManager::timeout()
 {
-    dispatchTimeout(fifo.dequeue());
+    RADIO_UART_STR("\r\nTIMEOUT ");
+    RADIO_UART_HEX(currentProducer);
+
+    if (currentProducer == CONNECTOR_ID)
+        return CubeConnector::radioTimeout();
+
+    if (currentProducer >= NUM_PRODUCERS) {
+        ASSERT(currentProducer == DUMMY_ID);
+        return;
+    }
+
+    CubeSlot &slot = CubeSlot::getInstance(currentProducer);
+    if (slot.isSysConnected())
+        slot.radioTimeout();
 }
 
 void RadioManager::processRetries(const CubeSlot &slot, unsigned retries)
@@ -239,61 +282,4 @@ ALWAYS_INLINE bool RadioManager::dispatchProduce(unsigned id, PacketTransmission
 
     CubeSlot &slot = CubeSlot::getInstance(id);
     return slot.isSysConnected() && slot.radioProduce(tx, now);
-}
-
-ALWAYS_INLINE void RadioManager::dispatchAcknowledge(unsigned id, const PacketBuffer &packet, unsigned retries)
-{
-    RADIO_UART_STR("\r\nack ");
-    RADIO_UART_HEX(id);
-
-    if (id == CONNECTOR_ID)
-        return CubeConnector::radioAcknowledge(packet);
-
-    if (id >= NUM_PRODUCERS) {
-        ASSERT(id == DUMMY_ID);
-        return;
-    }
-
-    CubeSlot &slot = CubeSlot::getInstance(id);
-    processRetries(slot, retries);
-    if (slot.isSysConnected())
-        slot.radioAcknowledge(packet);
-}
-
-ALWAYS_INLINE void RadioManager::dispatchEmptyAcknowledge(unsigned id, unsigned retries)
-{
-    RADIO_UART_STR("\r\nack0 ");
-    RADIO_UART_HEX(id);
-
-    if (id == CONNECTOR_ID)
-        return CubeConnector::radioEmptyAcknowledge();
-
-   if (id >= NUM_PRODUCERS) {
-        ASSERT(id == DUMMY_ID);
-        return;
-    }
-
-    CubeSlot &slot = CubeSlot::getInstance(id);
-
-    processRetries(slot, retries);
-    if (slot.isSysConnected())
-        slot.radioEmptyAcknowledge();
-}
-
-ALWAYS_INLINE void RadioManager::dispatchTimeout(unsigned id)
-{
-    RADIO_UART_STR("\r\nTIMEOUT ");
-    RADIO_UART_HEX(id);
-
-    if (id == CONNECTOR_ID)
-        return CubeConnector::radioTimeout();
-
-    if (id >= NUM_PRODUCERS) {
-        ASSERT(id == DUMMY_ID);
-        return;
-    }
-
-    CubeSlot &slot = CubeSlot::getInstance(id);
-    if (slot.isSysConnected())
-        slot.radioTimeout();
 }
