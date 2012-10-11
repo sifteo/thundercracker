@@ -24,8 +24,6 @@ RadioAddress CubeConnector::pairingAddr = { 0, RF_PAIRING_ADDRESS };
 RadioAddress CubeConnector::connectionAddr;
 RadioAddress CubeConnector::reconnectAddr;
 
-RingBuffer<RadioManager::FIFO_DEPTH, uint8_t, uint8_t> CubeConnector::rxState;
-
 SysLFS::PairingIDRecord CubeConnector::savedPairingID;
 SysLFS::PairingMRURecord CubeConnector::savedPairingMRU;
 BitVector<SysLFS::NUM_PAIRINGS> CubeConnector::reconnectQueue;
@@ -35,6 +33,7 @@ BitVector<CubeConnector::NUM_WORK_ITEMS> CubeConnector::taskWork;
 bool CubeConnector::reconnectEnabled;
 uint8_t CubeConnector::neighborKey;
 uint8_t CubeConnector::txState;
+uint8_t CubeConnector::rxState;
 uint8_t CubeConnector::pairingPacketCounter;
 uint8_t CubeConnector::hwid[HWID_LEN];
 _SYSCubeID CubeConnector::cubeID;
@@ -60,7 +59,6 @@ void CubeConnector::init()
     // State machine init
     enableReconnect();
     txState = PairingFirstContact;
-    rxState.init();
 }
 
 void CubeConnector::unpair(_SYSCubeID cid)
@@ -362,7 +360,7 @@ void CubeConnector::radioProduce(PacketTransmission &tx)
             tx.packet.bytes[0] = 0xff;
             tx.numSoftwareRetries = 0;
             tx.numHardwareRetries = 0;
-            rxState.enqueue(PairingFirstContact);
+            rxState = PairingFirstContact;
             break;
 
         /*
@@ -382,7 +380,7 @@ void CubeConnector::radioProduce(PacketTransmission &tx)
                 tx.packet.bytes[0] = 0xff;
                 tx.numSoftwareRetries = 0;
                 tx.numHardwareRetries = 0;
-                rxState.enqueue(ReconnectFirstContact);
+                rxState = ReconnectFirstContact;
                 break;
             }
             goto case_PairingFirstContact;
@@ -394,7 +392,7 @@ void CubeConnector::radioProduce(PacketTransmission &tx)
             tx.packet.bytes[0] = 0xff;
             tx.numSoftwareRetries = 0;
             tx.numHardwareRetries = 0;
-            rxState.enqueue(txState);
+            rxState = txState;
             break;
 
         /*
@@ -413,7 +411,7 @@ void CubeConnector::radioProduce(PacketTransmission &tx)
             tx.packet.len = 1;
             tx.numSoftwareRetries = CUBECONNECTOR_SOFT_RETRIES;
             tx.packet.bytes[0] = 0xff;
-            rxState.enqueue(txState);
+            rxState = txState;
             break;
 
         /*
@@ -426,7 +424,7 @@ void CubeConnector::radioProduce(PacketTransmission &tx)
                 tx.dest = &pairingAddr;
                 tx.numSoftwareRetries = CUBECONNECTOR_SOFT_RETRIES;
                 produceRadioHop(tx.packet);
-                rxState.enqueue(PairingBeginHop);
+                rxState = PairingBeginHop;
                 break;
             }
             goto case_PairingFirstContact;
@@ -439,7 +437,7 @@ void CubeConnector::radioProduce(PacketTransmission &tx)
                 tx.dest = &reconnectAddr;
                 tx.numSoftwareRetries = CUBECONNECTOR_SOFT_RETRIES;
                 produceRadioHop(tx.packet);
-                rxState.enqueue(ReconnectBeginHop);
+                rxState = ReconnectBeginHop;
                 break;
             }
             goto case_ReconnectFirstContact;
@@ -458,16 +456,15 @@ void CubeConnector::radioProduce(PacketTransmission &tx)
             tx.numSoftwareRetries = CUBECONNECTOR_SOFT_RETRIES;
             tx.packet.len = 1;
             tx.packet.bytes[0] = 0x79;
-            rxState.enqueue(txState);
+            rxState = txState;
             break;
     };
 }
 
 void CubeConnector::radioAcknowledge(const PacketBuffer &packet)
 {
-    RF_ACKType *ack = (RF_ACKType *) packet.bytes;
-    unsigned packetRxState = rxState.dequeue();
-    switch (packetRxState) {
+    const RF_ACKType *ack = reinterpret_cast<const RF_ACKType*>(packet.bytes);
+    switch (rxState) {
 
         /*
          * When we get a response to the first packet, start
@@ -488,7 +485,7 @@ void CubeConnector::radioAcknowledge(const PacketBuffer &packet)
             nextNeighborKey();
             if (packet.len >= RF_ACK_LEN_HWID && !hwidIsPaired(ack->hwid)) {
                 memcpy(hwid, ack->hwid, sizeof hwid);
-                txState = packetRxState + 1;
+                txState = rxState + 1;
             }
             break;
 
@@ -499,7 +496,7 @@ void CubeConnector::radioAcknowledge(const PacketBuffer &packet)
         case PairingFirstVerify ... PairingFinalVerify:
             nextNeighborKey();
             if (packet.len >= RF_ACK_LEN_HWID && !memcmp(hwid, ack->hwid, sizeof hwid)) {
-                txState = packetRxState + 1;
+                txState = rxState + 1;
             } else {
                 txState = PairingFirstContact;
             }
@@ -577,8 +574,7 @@ void CubeConnector::radioAcknowledge(const PacketBuffer &packet)
 
 void CubeConnector::radioTimeout()
 {
-    unsigned packetRxState = rxState.dequeue();
-    switch (packetRxState) {
+    switch (rxState) {
 
         /*
          * Our hop packet timed out. That's actually fine, since it
@@ -619,8 +615,6 @@ void CubeConnector::radioEmptyAcknowledge()
     /*
      * Empty ACKs don't really mean anything to us, since a disconnected
      * cube should always be sending us a full ACK packet (which we need
-     * in order to verify its identity). So, just dequeue the state and
-     * don't act on it.
+     * in order to verify its identity).
      */
-    rxState.dequeue();
 }
