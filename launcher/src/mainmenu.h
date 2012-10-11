@@ -59,7 +59,7 @@ private:
     Sifteo::MenuItem menuItems[Shared::MAX_ITEMS + 1];
     int itemIndexCurrent;
     int itemIndexChoice;
-
+    
     static const Sifteo::MenuAssets menuAssets;
 
     /**
@@ -95,8 +95,9 @@ private:
 
     void prepareAssets();
     
-    bool canLaunchItem(unsigned index);
-    void toggleCubeRangeAlert(unsigned index);
+    bool areEnoughCubesConnected(unsigned index);
+    void updateCubeRangeAlert();
+    void toggleCubeRangeAlert();
     void updateAlerts();
 
     void handleEvent(Sifteo::MenuEvent &e);
