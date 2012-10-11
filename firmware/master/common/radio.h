@@ -222,26 +222,30 @@ class RadioManager {
         return rfSpectrumModel.suggestChannel();
     }
 
-    /*
-     * FIFO buffer of slot numbers that have pending acknowledgments.
-     * This lets us match up ACKs with endpoints. Accessed ONLY in
-     * interrupt context.
-     *
-     * The size must be deep enough to cover the worst-case
-     * queueing depth of the Radio implementation. On real hardware
-     * this will be quite small. This is also independent of the
-     * number of cubes in use. Must be a power of two.
-     */
-    static const unsigned FIFO_DEPTH = 8;
-
     /**
      * Shared pseudorandom number generator, usable by anyone in Radio ISR context
      */
     static _SYSPseudoRandomState prngISR;
 
  private:
-    typedef RingBuffer<FIFO_DEPTH, uint8_t, uint8_t> fifo_t;
-    static fifo_t fifo;
+
+    /*
+     * Several entities in the system can serve as a 'producer' for the radio:
+     * primarily, each cube and the CubeConnector.
+     *
+     * The nRF chip that we use provides a 3-slot FIFO buffer for transmissions,
+     * but we only ever use one of them at a time - unfortunately, when a
+     * transmission has timed out, the only way to move on to the next
+     * one is to flush the TX FIFO, which removes *all* pending transmissions.
+     *
+     * Rather than re-load the FIFO in these scenarios, we only ever use
+     * one slot (currentProducer) so we're free to flush at any time.
+     *
+     * Accessed ONLY in interrupt context.
+     */
+
+    static uint8_t currentProducer;
+
     static bool enabled;
 
     static const unsigned CHANNEL_HOP_THRESHOLD = 5 * PacketTransmission::DEFAULT_HARDWARE_RETRIES;
@@ -268,9 +272,6 @@ class RadioManager {
     
     // Dispatch to a paritcular producer, by ID
     static ALWAYS_INLINE bool dispatchProduce(unsigned id, PacketTransmission &tx, SysTime::Ticks now);
-    static ALWAYS_INLINE void dispatchAcknowledge(unsigned id, const PacketBuffer &packet, unsigned retries);
-    static ALWAYS_INLINE void dispatchEmptyAcknowledge(unsigned id, unsigned retries);
-    static ALWAYS_INLINE void dispatchTimeout(unsigned id);
 };
 
 #endif

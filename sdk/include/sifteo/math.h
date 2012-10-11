@@ -846,7 +846,7 @@ template <typename T> inline T dot(Vector3<T> u, Vector3<T> v) {
 }
 
 /// Vector cross-product
-template <typename T> inline Vector3<T> cross(T u, T v) {
+template <typename T> inline T cross(T u, T v) {
     return vec(u.y * v.z - u.z * v.y,
                u.z * v.x - u.x * v.z,
                u.x * v.y - u.y * v.x);

@@ -92,7 +92,7 @@ private:
     static RadioAddress reconnectAddr;
 
     static uint8_t txState;
-    static RingBuffer<RadioManager::FIFO_DEPTH, uint8_t, uint8_t> rxState;
+    static uint8_t rxState;
     static uint8_t pairingPacketCounter;
     static uint8_t hwid[HWID_LEN];
     static _SYSCubeID cubeID;

@@ -31,8 +31,9 @@
 
 #define CUBE_FEATURE_NAP				0x02
 #define CUBE_FEATURE_ACCEL_XY_FLIP		0x02
+#define CUBE_FEATURE_ASSET_CRC		    0x03
 
-#define CUBE_VERSION_LATEST				0x02
+#define CUBE_VERSION_LATEST				0x03
 
 
 /**************************************************************************

@@ -179,7 +179,7 @@ class I2CAccelerometer {
 
     // Matches device register layout. Assumes little-endian.
     union {
-        uint8_t bytes[0x31];
+        uint8_t bytes[0x3e];
         struct {
             uint8_t reserved0[7];       // 00
             uint8_t status_reg;         // 07
