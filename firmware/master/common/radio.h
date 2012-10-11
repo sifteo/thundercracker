@@ -222,18 +222,6 @@ class RadioManager {
         return rfSpectrumModel.suggestChannel();
     }
 
-    /*
-     * FIFO buffer of slot numbers that have pending acknowledgments.
-     * This lets us match up ACKs with endpoints. Accessed ONLY in
-     * interrupt context.
-     *
-     * The size must be deep enough to cover the worst-case
-     * queueing depth of the Radio implementation. On real hardware
-     * this will be quite small. This is also independent of the
-     * number of cubes in use. Must be a power of two.
-     */
-    static const unsigned FIFO_DEPTH = 8;
-
     /**
      * Shared pseudorandom number generator, usable by anyone in Radio ISR context
      */
