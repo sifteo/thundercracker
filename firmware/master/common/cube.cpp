@@ -37,9 +37,8 @@ void CubeSlot::connect(SysLFS::Key cubeRecord, const RadioAddress &addr, const R
     Atomic::And(CubeSlots::touch, ~cv);
     Atomic::And(CubeSlots::waitingOnCubes, ~cv);
     Atomic::And(CubeSlots::pendingHop, ~cv);
-    pendingPackets = 0;
-    ackOptionalFIFO = 0;
-    pendingChannelFIFO = 0;
+    pendingChannel = INVALID_CHANNEL;
+    ackOptional = false;
     napDeadline = 0;
 
     // Store new identity
@@ -158,12 +157,6 @@ bool CubeSlot::radioProduce(PacketTransmission &tx, SysTime::Ticks now)
     tx.dest = getRadioAddress();
     tx.packet.len = 0;
 
-    // At this point, we're guranteed to transmit.
-    // Enqueue a 'false' bit in our ACK Optional fifo.
-    pendingPackets++;
-    ackOptionalFIFO <<= 1;
-    pendingChannelFIFO <<= 1;
-
     /*
      * First priority: radio hops
      *
@@ -178,7 +171,7 @@ bool CubeSlot::radioProduce(PacketTransmission &tx, SysTime::Ticks now)
      * link to the cube is more important than encoding packets more efficiently
      * that won't actually get delivered.
      *
-     * Fortunately these appear to happen only once every several minutes
+     * Fortunately these tend to happen only once every several minutes
      * during normal operation.
      *
      * Note that we do want to retry, but if the hop succeeds and we drop
@@ -186,15 +179,8 @@ bool CubeSlot::radioProduce(PacketTransmission &tx, SysTime::Ticks now)
      * represent a problem. (If we really did drop all transmit attempts,
      * the cube will not have hopped and we'll disconnect it.)
      *
-     * We need to remember not to worry about retries then, by storing a
-     * bit in our "ackOptional" queue.
-     *
-     *
-     * Next priority: Send VRAM data.
-     *
-     * Normally this comes from a general-purpose VideoBuffer, though we
-     * do have some special-purpose ways to send VRAM data without a
-     * VideoBuffer.
+     * We need to remember not to worry about retries then, by setting our
+     * "ackOptional" flag.
      */
 
     if (UNLIKELY(CubeSlots::pendingHop & cv)) {
@@ -202,11 +188,18 @@ bool CubeSlot::radioProduce(PacketTransmission &tx, SysTime::Ticks now)
         if (codec.escChannelHop(tx.packet, ch)) {
             pendingChannel = ch;
             Atomic::And(CubeSlots::pendingHop, ~cv);
-            pendingChannelFIFO |= 1;
-            ackOptionalFIFO |= 1;
+            ackOptional = true;
             return true;
         }
     }
+
+    /*
+     * Next priority: Send VRAM data.
+     *
+     * Normally this comes from a general-purpose VideoBuffer, though we
+     * do have some special-purpose ways to send VRAM data without a
+     * VideoBuffer.
+     */
 
     if (UNLIKELY(CubeSlots::sendShutdown & cv)) {
         /*
@@ -323,20 +316,14 @@ bool CubeSlot::radioProduce(PacketTransmission &tx, SysTime::Ticks now)
 
 void CubeSlot::radioEmptyAcknowledge()
 {
-    // Dequeue from ACK Optional fifo
-    ASSERT(pendingPackets);
-    pendingPackets--;
+    ackOptional = false;
 
     applyPendingChannelHop();
 }
 
 void CubeSlot::radioAcknowledge(const PacketBuffer &packet)
 {
-    RF_ACKType *ack = (RF_ACKType *) packet.bytes;
-
-    // Dequeue from ACK Optional fifo
-    ASSERT(pendingPackets);
-    pendingPackets--;
+    ackOptional = false;
 
     applyPendingChannelHop();
 
@@ -345,6 +332,8 @@ void CubeSlot::radioAcknowledge(const PacketBuffer &packet)
         ASSERT(0 && "Empty ACK packet. Radio bug?");
         return;
     }
+
+    const RF_ACKType *ack = reinterpret_cast<const RF_ACKType*>(packet.bytes);
 
     // If this is a query response, it doesn't follow the usual ACK format.
     // (Queries include an ID, so this isn't subject to the 'stale ACK' test below)
@@ -436,12 +425,8 @@ void CubeSlot::radioAcknowledge(const PacketBuffer &packet)
 
 void CubeSlot::radioTimeout()
 {
-    // Dequeue from ACK Optional fifo
-    ASSERT(pendingPackets);
-    pendingPackets--;
-
     // If an ACK was required, disconnect the cube. Otherwise, ignore.
-    if (((ackOptionalFIFO >> pendingPackets) & 1) == 0) {
+    if (!ackOptional) {
         disconnect();
     } else {
         /*
@@ -452,6 +437,8 @@ void CubeSlot::radioTimeout()
          */
         applyPendingChannelHop();
     }
+
+    ackOptional = false;
 }
 
 uint64_t CubeSlot::getHWID() const
