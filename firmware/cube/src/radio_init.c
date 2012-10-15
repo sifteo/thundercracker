@@ -223,22 +223,25 @@ void radio_set_idle_addr(void)
         add     a, #(255 - MAX_RF_CHANNEL + MIN_RF_CHANNEL)
         jc      5$
 
-        ; Handle idle_hop, rotate our channel by 62.
+        ; Handle idle_hop, rotate our channel by half its legal range,
+        ; and wrap around at MIN_RF_CHANNEL
 
         jnb     _radio_idle_hop, 6$
 
         mov     a, r0
-        add     a, #(MAX_RF_CHANNEL / 2)
+        add     a, #((MAX_RF_CHANNEL - MIN_RF_CHANNEL) / 2)
         mov     r0, a               ; Assume this channel is good
-        add     a, #(255 - MAX_RF_CHANNEL)
+        add     a, #(255 - MAX_RF_CHANNEL + MIN_RF_CHANNEL)
         jnc     6$                  ; It was good. Keep using that.
-        mov     r0, a               ; It overflowed. Use the version we adjusted
+        ; It overflowed. Wrap the version we adjusted at MIN_RF_CHANNEL
+        add     a, #(MIN_RF_CHANNEL)
+        mov     r0, a
 
 6$:     mov     a, r0
         acall   _radio_tx_sync      ; Write channel
         setb    _RF_CSN             ; End SPI transfer
 
-    __endasm ;
+    __endasm;
 
     radio_rx_enable();
 }
