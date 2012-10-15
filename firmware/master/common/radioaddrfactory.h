@@ -23,10 +23,18 @@ public:
     static void fromHardwareID(RadioAddress &addr, uint64_t hwid);
     static void convertPrimaryToAlternateChannel(RadioAddress &addr, uint8_t cubeVersion);
 
-private:
+    static ALWAYS_INLINE void rfMinMaxChannels(uint8_t &min, uint8_t &max, uint8_t cubeVersion) {
 
-    // 802.11 g/n channels are 20MHz wide, nordic channels are 1MHz
-    static const unsigned WIFI_CHANNEL_WIDTH = 20;
+        if (cubeVersion < CUBE_FEATURE_RF_COMPLIANT) {
+            min = NONCOMPLIANT_MIN_RF_CHANNEL;
+            max = NONCOMPLIANT_MAX_RF_CHANNEL;
+        } else {
+            min = MIN_RF_CHANNEL;
+            max = MAX_RF_CHANNEL;
+        }
+    }
+
+private:
 
     static const uint8_t gf84[0x100];
 

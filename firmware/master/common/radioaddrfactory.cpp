@@ -71,13 +71,7 @@ void RadioAddrFactory::fromHardwareID(RadioAddress &addr, uint64_t hwid)
      * maintain backwards compatibility and the ability to talk to them.
      */
     uint8_t minRfChannel, maxRfChannel;
-    if (cubeVersion < CUBE_FEATURE_RF_COMPLIANT) {
-        minRfChannel = NONCOMPLIANT_MIN_RF_CHANNEL;
-        maxRfChannel = NONCOMPLIANT_MAX_RF_CHANNEL;
-    } else {
-        minRfChannel = MIN_RF_CHANNEL;
-        maxRfChannel = MAX_RF_CHANNEL;
-    }
+    rfMinMaxChannels(minRfChannel, maxRfChannel, cubeVersion);
 
     for (;;) {
         addr.channel = reg & 0x7F;
@@ -96,14 +90,18 @@ void RadioAddrFactory::fromHardwareID(RadioAddress &addr, uint64_t hwid)
  */
 void RadioAddrFactory::convertPrimaryToAlternateChannel(RadioAddress &addr, uint8_t cubeVersion)
 {
-    uint8_t maxRfChannel;
-    if (cubeVersion < CUBE_FEATURE_RF_COMPLIANT) {
-        maxRfChannel = NONCOMPLIANT_MAX_RF_CHANNEL;
-    } else {
-        maxRfChannel = MAX_RF_CHANNEL;
-    }
+    uint8_t minRfChannel, maxRfChannel;
+    rfMinMaxChannels(minRfChannel, maxRfChannel, cubeVersion);
 
-    if ((addr.channel += maxRfChannel / 2) > maxRfChannel) {
-        addr.channel -= maxRfChannel + 1;
+    /*
+     * Alternate channel is the channel rotated by half our legal range,
+     * wrapped at MIN_RF_CHANNEL
+     */
+
+    unsigned alternate = addr.channel + ((maxRfChannel - minRfChannel) / 2);
+    if (alternate > maxRfChannel) {
+        addr.channel = (alternate & 0xff) + minRfChannel;
+    } else {
+        addr.channel = alternate;
     }
 }
