@@ -113,8 +113,11 @@ void FactoryTest::produce(PacketTransmission &tx)
      * listening on, send to both and treat a timeout on both as
      * a failure.
      */
+
+    uint8_t cubeVersion = CUBE_FEATURE_RF_COMPLIANT;
+
     if (rfTestAddr.channel == rfTestAddrPrimaryChannel)
-        RadioAddrFactory::convertPrimaryToAlternateChannel(rfTestAddr);
+        RadioAddrFactory::convertPrimaryToAlternateChannel(rfTestAddr, cubeVersion);
     else
         rfTestAddr.channel = rfTestAddrPrimaryChannel;
 

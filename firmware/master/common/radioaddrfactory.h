@@ -21,7 +21,7 @@ public:
     static void random(RadioAddress &addr, _SYSPseudoRandomState &prng);
 
     static void fromHardwareID(RadioAddress &addr, uint64_t hwid);
-    static void convertPrimaryToAlternateChannel(RadioAddress &addr);
+    static void convertPrimaryToAlternateChannel(RadioAddress &addr, uint8_t cubeVersion);
 
 private:
 

@@ -42,6 +42,8 @@ void RadioAddrFactory::random(RadioAddress &addr, _SYSPseudoRandomState &prng)
 
 void RadioAddrFactory::fromHardwareID(RadioAddress &addr, uint64_t hwid)
 {
+    // Low 8 bits of HWID are a version code.
+    const uint8_t cubeVersion = hwid & 0xff;
     uint8_t reg;
 
     // Feed first two bytes into CRC, to collect entropy
@@ -62,9 +64,24 @@ void RadioAddrFactory::fromHardwareID(RadioAddress &addr, uint64_t hwid)
     // Pick a legal channel, using the last entropy byte
     reg = gf84[reg] ^ hwid; hwid >>= 8;
 
-    while (1) {
+    /*
+     * There are at least a handful of cubes out there in the world that were
+     * shipped with non-fcc-compliant RF channel configurations. If we're
+     * talking to one of them, go ahead and break the rules, in order to
+     * maintain backwards compatibility and the ability to talk to them.
+     */
+    uint8_t minRfChannel, maxRfChannel;
+    if (cubeVersion < CUBE_FEATURE_RF_COMPLIANT) {
+        minRfChannel = NONCOMPLIANT_MIN_RF_CHANNEL;
+        maxRfChannel = NONCOMPLIANT_MAX_RF_CHANNEL;
+    } else {
+        minRfChannel = MIN_RF_CHANNEL;
+        maxRfChannel = MAX_RF_CHANNEL;
+    }
+
+    for (;;) {
         addr.channel = reg & 0x7F;
-        if (addr.channel <= MAX_RF_CHANNEL)
+        if (minRfChannel <= addr.channel && addr.channel <= maxRfChannel)
             break;
         reg = ~gf84[reg];
     }
@@ -77,8 +94,16 @@ void RadioAddrFactory::fromHardwareID(RadioAddress &addr, uint64_t hwid)
  * For example, disconnected cubes toggle between their primary
  * and alternate channels listening for connection beacons.
  */
-void RadioAddrFactory::convertPrimaryToAlternateChannel(RadioAddress &addr)
+void RadioAddrFactory::convertPrimaryToAlternateChannel(RadioAddress &addr, uint8_t cubeVersion)
 {
-    if ((addr.channel += MAX_RF_CHANNEL / 2) > MAX_RF_CHANNEL)
-        addr.channel -= MAX_RF_CHANNEL + 1;
+    uint8_t maxRfChannel;
+    if (cubeVersion < CUBE_FEATURE_RF_COMPLIANT) {
+        maxRfChannel = NONCOMPLIANT_MAX_RF_CHANNEL;
+    } else {
+        maxRfChannel = MAX_RF_CHANNEL;
+    }
+
+    if ((addr.channel += maxRfChannel / 2) > maxRfChannel) {
+        addr.channel -= maxRfChannel + 1;
+    }
 }

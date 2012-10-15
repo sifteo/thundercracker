@@ -23,6 +23,12 @@ public:
     /*
      * Bucketize the spectrum - we don't need to track each 1MHz channel
      * independently.
+     *
+     * We can get away with using MAX_RF_CHANNEL here,
+     * as opposed to NONCOMPLIANT_MAX_RF_CHANNEL, since we're only dealing
+     * with these channels once cubes are already fully connected, and the
+     * channel they're on is fully under our control, whereas with
+     * pairing/reconnection, we need to accomodate some older cubes' behavior.
      */
     static const unsigned NUM_BUCKETS = (MAX_RF_CHANNEL >> 1) + 1;
 
