@@ -334,7 +334,7 @@ rx_flush:
         mov     _SPIRDAT, #RF_CMD_FLUSH_RX      ; RX_FLUSH command
         SPI_WAIT                                ; Wait for command byte
         mov     a, _SPIRDAT                     ; Ignore dummy STATUS byte
-        ljmp    #rx_complete_0                  ; Skip the RX loop (and end SPI transaction)
+        ajmp    #rx_complete_0                  ; Skip the RX loop (and end SPI transaction)
 
 no_rx_flush:
         inc     a                               ; Is packet not max-length?
@@ -412,7 +412,7 @@ rxs_default:
         jnz     27$
         mov     AR_LOW, R_INPUT
         mov     R_STATE, #(rxs_rle - rxs_default)
-        RX_NEXT_NYBBLE_L
+        RX_NEXT_NYBBLE
 
         ; ------------ Nybble 01ss -- Copy
 
@@ -429,7 +429,7 @@ rxs_default:
         cjne    a, #0x8, 12$
         mov     AR_SAMPLE, R_INPUT
         mov     R_STATE, #(rxs_diff_1 - rxs_default)
-        RX_NEXT_NYBBLE_L
+        RX_NEXT_NYBBLE
 12$:
 
         ; ------------ Nybble 11xx -- Literal Index
@@ -446,7 +446,7 @@ rxs_default:
         mov     R_STATE, #(rxs_literal - rxs_default)
 
 rx_next_sjmp:
-        RX_NEXT_NYBBLE_L
+        RX_NEXT_NYBBLE
 
         ;-------------------------------------------
         ; 4-bit diff
@@ -456,7 +456,7 @@ rxs_diff_1:
         mov     a, R_INPUT
         anl     a, #0xF
         cjne    a, #7, rxs_diff_2
-        ljmp    rx_special              ; Redundant copy encoding, special meaning
+        ajmp    rx_special              ; Redundant copy encoding, special meaning
 
         ;-------------------------------------------
         ; Literal 14-bit index
@@ -689,7 +689,7 @@ rxs_wrdelta_1_fragment:
         add     a, #4           ; n+5  (rx_write_deltas already adds 1)
         mov     R_LOW, a
 
-        ljmp    _rx_write_deltas
+        ajmp    _rx_write_deltas
 
         ;--------------------------------------------------------------------
         ; Special escape codes (8-bit copy encoding)
@@ -863,7 +863,7 @@ rx_complete_1:
         SPI_WAIT                ; End SPI transaction, then go to rx_begin_packet
         mov     a, _SPIRDAT
         setb    _RF_CSN
-        ljmp    rx_begin_packet
+        ajmp    rx_begin_packet
 1$:     SPI_WAIT                ; End SPI transaction, then send ACK
         mov     a, _SPIRDAT
         setb    _RF_CSN
