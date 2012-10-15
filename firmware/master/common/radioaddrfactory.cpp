@@ -98,10 +98,10 @@ void RadioAddrFactory::convertPrimaryToAlternateChannel(RadioAddress &addr, uint
      * wrapped at MIN_RF_CHANNEL
      */
 
-    unsigned alternate = addr.channel + ((maxRfChannel - minRfChannel) / 2);
-    if (alternate > maxRfChannel) {
-        addr.channel = (alternate & 0xff) + minRfChannel;
+    unsigned rotated = addr.channel + ((maxRfChannel - minRfChannel) / 2);
+    if (rotated > maxRfChannel) {
+        addr.channel = rotated - maxRfChannel - 1 + minRfChannel;
     } else {
-        addr.channel = alternate;
+        addr.channel = rotated;
     }
 }

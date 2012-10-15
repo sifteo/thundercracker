@@ -231,7 +231,7 @@ void radio_set_idle_addr(void)
         mov     a, r0
         add     a, #((MAX_RF_CHANNEL - MIN_RF_CHANNEL) / 2)
         mov     r0, a               ; Assume this channel is good
-        add     a, #(255 - MAX_RF_CHANNEL + MIN_RF_CHANNEL)
+        add     a, #(255 - MAX_RF_CHANNEL)
         jnc     6$                  ; It was good. Keep using that.
         ; It overflowed. Wrap the version we adjusted at MIN_RF_CHANNEL
         add     a, #(MIN_RF_CHANNEL)
