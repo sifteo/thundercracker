@@ -50,6 +50,8 @@ private:
     static uint16_t rfSuccessCount;
     static RadioAddress rfTestAddr;
     static uint8_t rfTestAddrPrimaryChannel;
+    static uint8_t rfTestCubeVersion;
+
     static const uint8_t RF_TEST_BYTE = 0x11;
 
     static void handleRfPacketComplete();
