@@ -29,11 +29,12 @@
  * various features.
  */
 
-#define CUBE_FEATURE_NAP				0x02
-#define CUBE_FEATURE_ACCEL_XY_FLIP		0x02
-#define CUBE_FEATURE_ASSET_CRC		    0x03
+#define CUBE_FEATURE_NAP                0x02
+#define CUBE_FEATURE_ACCEL_XY_FLIP      0x02
+#define CUBE_FEATURE_ASSET_CRC          0x03
+#define CUBE_FEATURE_RF_COMPLIANT       0x04
 
-#define CUBE_VERSION_LATEST				0x03
+#define CUBE_VERSION_LATEST             0x04
 
 
 /**************************************************************************
@@ -184,7 +185,19 @@
  * Max supported channel in the nRF is 125, but the max FCC legal channel is 83.
  * Note that our RF_PAIRING_CHANNELS must fall within this limit too.
  */
-#define MAX_RF_CHANNEL          83
+#define MIN_RF_CHANNEL                  2
+#define MAX_RF_CHANNEL                  79
+
+/*
+ * A small batch of cubes were shipped with a MAX_RF_CHANNEL of 83. This is
+ * FCC noncompliant, as our bandwidth when transmitting at the extremes of
+ * the allowed band bleed over into unsanctioned territory.
+ *
+ * We still want to be able to interoperate with those cubes however, so we
+ * can derive their channels based on the older min/max values they're using.
+ */
+#define NONCOMPLIANT_MIN_RF_CHANNEL     0
+#define NONCOMPLIANT_MAX_RF_CHANNEL     83
 
 /*
  * The channel is derived from the neighbor ID (24-31) via Galois Field

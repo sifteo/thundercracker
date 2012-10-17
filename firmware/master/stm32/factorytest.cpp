@@ -28,6 +28,7 @@ uint16_t FactoryTest::rfSuccessCount;
 volatile uint16_t FactoryTest::rfTransmissionsRemaining;
 RadioAddress FactoryTest::rfTestAddr;
 uint8_t FactoryTest::rfTestAddrPrimaryChannel;
+uint8_t FactoryTest::rfTestCubeVersion;
 
 FactoryTest::TestHandler const FactoryTest::handlers[] = {
     nrfCommsHandler,            // 0
@@ -113,8 +114,9 @@ void FactoryTest::produce(PacketTransmission &tx)
      * listening on, send to both and treat a timeout on both as
      * a failure.
      */
+
     if (rfTestAddr.channel == rfTestAddrPrimaryChannel)
-        RadioAddrFactory::convertPrimaryToAlternateChannel(rfTestAddr);
+        RadioAddrFactory::convertPrimaryToAlternateChannel(rfTestAddr, rfTestCubeVersion);
     else
         rfTestAddr.channel = rfTestAddrPrimaryChannel;
 
@@ -350,6 +352,7 @@ void FactoryTest::rfPacketTestHandler(uint8_t argc, const uint8_t *args)
     memcpy(&hwid, &args[3], sizeof hwid);
     RadioAddrFactory::fromHardwareID(rfTestAddr, hwid);
     rfTestAddrPrimaryChannel = rfTestAddr.channel;
+    rfTestCubeVersion = hwid & 0xff;
 
     NRF24L01::setRfTestEnabled(true);
 
