@@ -139,9 +139,14 @@ void FactoryTest::produce(PacketTransmission &tx)
 void FactoryTest::nrfCommsHandler(uint8_t argc, const uint8_t *args)
 {
     Radio::TxPower pwr = static_cast<Radio::TxPower>(args[1]);
+
+    RadioManager::disableRadio();
     Radio::setTxPower(pwr);
 
     const uint8_t response[] = { 3, args[0], Radio::txPower() };
+
+    RadioManager::enableRadio();
+
     Usart::Dbg.write(response, sizeof response);
 }
 
