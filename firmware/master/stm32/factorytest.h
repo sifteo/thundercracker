@@ -28,18 +28,21 @@ public:
      */
     static void produce(PacketTransmission &tx);
     static void ALWAYS_INLINE ackWithPacket(const PacketBuffer &packet, unsigned retries) {
-        rfSuccessCount++;
-        if (rfTransmissionsRemaining)
+        if (rfTransmissionsRemaining) {
+            rfSuccessCount++;
             rfTransmissionsRemaining--;
+        }
     }
     static void ALWAYS_INLINE timeout() {
-        if (rfTransmissionsRemaining)
+        if (rfTransmissionsRemaining) {
             rfTransmissionsRemaining--;
+        }
     }
     static void ALWAYS_INLINE ackEmpty(unsigned retries) {
-        rfSuccessCount++;
-        if (rfTransmissionsRemaining)
+        if (rfTransmissionsRemaining) {
+            rfSuccessCount++;
             rfTransmissionsRemaining--;
+        }
     }
 
 private:

@@ -105,7 +105,7 @@ else
 endif
 
 # gold master disables timeouts
-ifneq ($(GOLD_MASTER),)
+ifneq ($(RFTEST_GOLD_MASTER),)
     FLAGS += -DDISABLE_IDLETIMEOUT -DDISABLE_WATCHDOG
-    FLAGS += -DGOLD_MASTER 
+    FLAGS += -DRFTEST_GOLD_MASTER 
 endif

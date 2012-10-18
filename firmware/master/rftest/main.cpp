@@ -39,7 +39,7 @@ int main()
      * we detect a button press.
      */
     uint8_t channelIdx = 0;
-    const uint8_t channels[5] = {2, 40, 80, 128, 129};		// channel>127 (special) 128:PRX 129:tx-sweep
+    const uint8_t channels[5] = {4, 41, 79, 128, 129};		// channel>127 (special) 128:PRX 129:tx-sweep
 
     NRF24L01::instance.setConstantCarrier(true, channels[channelIdx]);
     bool lastButton = HomeButton::isPressed();

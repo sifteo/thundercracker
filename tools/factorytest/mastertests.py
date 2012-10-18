@@ -12,6 +12,14 @@ ExternalFlashCommsID        = 1
 ExternalFlashReadWriteID    = 2
 LedID                       = 3
 UniqueIdID                  = 4
+VolumeCalibrationID         = 5
+BatteryCalibrationID        = 6
+HomeButtonID                = 7
+ShutdownID                  = 8
+AudioTestID                 = 9
+BootloadRequestID           = 10
+RFPacketTestID              = 11
+RebootRequestID             = 12
 
 # testjig command IDs
 SetUsbEnabledID             = 0

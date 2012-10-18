@@ -20,8 +20,6 @@ NRF24L01 NRF24L01::instance(RF_CE_GPIO,
                                       RF_SPI_MISO_GPIO,     //   MISO
                                       RF_SPI_MOSI_GPIO,     //   MOSI
                                       staticSpiCompletionHandler));
-bool NRF24L01::rfTestModeEnabled = false;
-
 
 void NRF24L01::init()
 {

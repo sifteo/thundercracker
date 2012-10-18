@@ -40,10 +40,6 @@ public:
     void setConstantCarrier(bool enabled, unsigned channel = 0);
     void setPRXMode(bool enabled);
 
-    static void setRfTestEnabled(bool enabled) {
-        rfTestModeEnabled = enabled;
-    }
-
     void isr();
     GPIOPin irq;
 
@@ -150,34 +146,36 @@ public:
      * Helpers to forward RF events to the appropriate destination.
      */
 
-    static bool rfTestModeEnabled;
-
     static void ALWAYS_INLINE timeout() {
-        if (rfTestModeEnabled)
+#ifdef RFTEST_GOLD_MASTER
             FactoryTest::timeout();
-        else
+#else
             RadioManager::timeout();
+#endif
     }
 
     static void ALWAYS_INLINE ackEmpty(unsigned retries) {
-        if (rfTestModeEnabled)
+#ifdef RFTEST_GOLD_MASTER
             FactoryTest::ackEmpty(retries);
-        else
+#else
             RadioManager::ackEmpty(retries);
+#endif
     }
 
     static void ALWAYS_INLINE ackWithPacket(const PacketBuffer &packet, unsigned retries) {
-        if (rfTestModeEnabled)
+#ifdef RFTEST_GOLD_MASTER
             FactoryTest::ackWithPacket(packet, retries);
-        else
+#else
             RadioManager::ackWithPacket(packet, retries);
+#endif
     }
 
     static void ALWAYS_INLINE produce(PacketTransmission &tx) {
-        if (rfTestModeEnabled)
+#ifdef RFTEST_GOLD_MASTER
             FactoryTest::produce(tx);
-        else
+#else
             RadioManager::produce(tx);
+#endif
     }
 
     unsigned ALWAYS_INLINE retryCount() const {

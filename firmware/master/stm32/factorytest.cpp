@@ -353,17 +353,12 @@ void FactoryTest::rfPacketTestHandler(uint8_t argc, const uint8_t *args)
     rfTestAddrPrimaryChannel = rfTestAddr.channel;
     rfTestCubeVersion = hwid & 0xff;
 
-    NRF24L01::setRfTestEnabled(true);
-
-    rfSuccessCount = 0;
     // multiply transmission count by 2 since we're sending
     // each attempt to both channels a cube might be listening on
     rfTransmissionsRemaining = *reinterpret_cast<const uint16_t*>(&args[1]) * 2;
 
     while (rfTransmissionsRemaining)
         Tasks::waitForInterrupt();
-
-    NRF24L01::setRfTestEnabled(false);
 
     /*
      * Respond with the number of packets sent, and the number of successful transmissions
@@ -373,6 +368,7 @@ void FactoryTest::rfPacketTestHandler(uint8_t argc, const uint8_t *args)
     UART_HEX(rfSuccessCount);
     UART("\r\n");
     UsbDevice::write(report, sizeof report);
+    rfSuccessCount = 0;
 }
 
 IRQ_HANDLER ISR_USART3()
