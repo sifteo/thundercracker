@@ -21,8 +21,7 @@
 
 extern unsigned     __data_start;
 
-uint8_t FactoryTest::commandBuf[FactoryTest::UART_MAX_COMMAND_LEN];
-uint8_t FactoryTest::commandLen;
+FactoryTest::UartCommand FactoryTest::uartCommand;
 
 uint16_t FactoryTest::rfSuccessCount;
 volatile uint16_t FactoryTest::rfTransmissionsRemaining;
@@ -48,7 +47,6 @@ FactoryTest::TestHandler const FactoryTest::handlers[] = {
 
 void FactoryTest::init()
 {
-    commandLen = 0;
 }
 
 /*
@@ -61,25 +59,21 @@ void FactoryTest::init()
 void FactoryTest::onUartIsr()
 {
     uint8_t rxbyte;
-    uint16_t status = Usart::Dbg.isr(&rxbyte);
+    uint16_t status = Usart::Dbg.isr(rxbyte);
+
     if (status & Usart::STATUS_RXED) {
 
-        // avoid overflow - reset
-        if (commandLen >= UART_MAX_COMMAND_LEN)
-            commandLen = 0;
+        uartCommand.append(rxbyte);
 
-        commandBuf[commandLen++] = rxbyte;
-
-        if (commandBuf[UART_LEN_INDEX] == commandLen) {
+        if (uartCommand.complete()) {
             // dispatch to the appropriate handler
-            uint8_t cmd = commandBuf[UART_CMD_INDEX];
-            if (cmd < arraysize(handlers)) {
-                TestHandler handler = handlers[cmd];
-                // arg[0] is always the command byte
-                handler(commandLen - 1, commandBuf + 1);
+            uint8_t opcode = uartCommand.opcode();
+            if (opcode < arraysize(handlers)) {
+                TestHandler handler = handlers[opcode];
+                handler(uartCommand.len - 1, &uartCommand.buf[1]);
             }
 
-            commandLen = 0;
+            uartCommand.len = 0;
         }
     }
 }
