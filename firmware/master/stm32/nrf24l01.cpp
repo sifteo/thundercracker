@@ -195,7 +195,7 @@ Radio::TxPower NRF24L01::txPower()
     uint8_t setup = spi.transfer(0);
     spi.end();
 
-    return static_cast<Radio::TxPower>(setup);
+    return static_cast<Radio::TxPower>(setup & (0x3 << 1));
 }
 
 void NRF24L01::isr()
