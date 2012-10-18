@@ -173,8 +173,7 @@ void TestJig::onI2cEvent()
     // send next byte
     if (status & I2CSlave::TxEmpty) {
         if (cubeWrite.remaining > 0) {
-            byte = *(cubeWrite.data);
-            cubeWrite.data++;
+            byte = *cubeWrite.ptr++;
             cubeWrite.remaining--;
         } else {
             byte = 0xff;
@@ -326,40 +325,14 @@ void TestJig::writeToCubeI2CHandler(uint8_t argc, uint8_t *args)
 {
     uint8_t transactionsWritten = 0;
 
-    argc--; // step past command
-    uint8_t *pArgs = args + 1;
+    while (cubeWrite.remaining > 0)
+        ;
 
-    while (argc > 0) {
-
-        uint8_t numBytes;
-        if (pArgs[0] == I2CSetNeighborID)
-            numBytes = 2;
-        else if (pArgs[0] == I2CFlashFifo)
-            numBytes = 2;
-        else if (pArgs[0] == I2CFlashReset)
-            numBytes = 1;
-        else if (pArgs[0] < I2CVramMax)
-            numBytes = 3;
-        else
-            break;
-
-        if (numBytes > argc)
-            break;
-
-        cubeWrite.data = pArgs;
-        cubeWrite.remaining = numBytes;
-
-        // step to the next transaction
-        argc -= numBytes;
-        pArgs += numBytes;
-        transactionsWritten++;
-
-        // wait for previous vram transactions to complete.
-        // need to wait for this before returning since
-        // cubeWrite has a pointer to argc and we need to keep it in scope
-        while (cubeWrite.remaining > 0)
-            ;
-    }
+    // step past command
+    uint8_t len = argc - 1;
+    memcpy(cubeWrite.data, &args[1], len);
+    cubeWrite.ptr = cubeWrite.data;
+    cubeWrite.remaining = len;
 
     const uint8_t response[] = { args[0], transactionsWritten };
     UsbDevice::write(response, sizeof response);

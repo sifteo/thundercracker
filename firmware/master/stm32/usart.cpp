@@ -77,7 +77,7 @@ void Usart::deinit()
  * Return the status register to indicate what kind of event we responded to.
  * If we received a byte and the caller provided a buf, give it to them.
  */
-uint16_t Usart::isr(uint8_t *buf)
+uint16_t Usart::isr(uint8_t &byte)
 {
     uint16_t sr = uart->SR;
     uint8_t  dr = uart->DR;  // always read DR to reset SR
@@ -89,9 +89,7 @@ uint16_t Usart::isr(uint8_t *buf)
 
     // RXNE: data available
     if (sr & STATUS_RXED) {
-        if (buf) {
-            *buf = dr;
-        }
+        byte = dr;
     }
 
     // TXE: transmission complete

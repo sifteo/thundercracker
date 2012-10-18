@@ -19,7 +19,7 @@ bool WaveDecoder::loadFile(std::vector<unsigned char>& buffer, const std::string
     }
 
     const char riff[4] = { 'R', 'I', 'F', 'F' };
-    if (memcmp(rd.riff, riff, sizeof riff)) {
+    if (memcmp(rd.header.id, riff, sizeof riff)) {
         log.error("header didn't match (RIFF)\n");
         return false;
     }
@@ -42,7 +42,7 @@ bool WaveDecoder::loadFile(std::vector<unsigned char>& buffer, const std::string
     }
 
     const char fmt[4] = { 'f', 'm', 't', ' ' };
-    if (memcmp(fd.header.subchunk1ID, fmt, sizeof fmt)) {
+    if (memcmp(fd.header.id, fmt, sizeof fmt)) {
         log.error("header didn't match (fmt)\n");
         return false;
     }
@@ -75,7 +75,7 @@ bool WaveDecoder::loadFile(std::vector<unsigned char>& buffer, const std::string
      * Verify that at least in this case, ExtraParamSize is 0.
      */
     unsigned pos = ftell(f);
-    unsigned offset = sizeof(RiffDescriptor) + sizeof(fd.header) + fd.header.subchunk1Size;
+    unsigned offset = sizeof(RiffDescriptor) + sizeof(fd.header) + fd.header.size;
     if (offset > pos) {
         uint16_t extraParamSize;
         if (fread(&extraParamSize, 1, sizeof extraParamSize, f) != sizeof extraParamSize) {
@@ -89,23 +89,34 @@ bool WaveDecoder::loadFile(std::vector<unsigned char>& buffer, const std::string
         }
     }
 
-    DataDescriptor dd;
-    if (fread(&dd, 1, sizeof dd, f) != sizeof dd) {
-        log.error("DataDescriptor: i/o failure\n");
-        return false;
+    while (!feof(f)) {
+
+        ChunkHeader sc;
+        if (fread(&sc, 1, sizeof sc, f) != sizeof sc) {
+            log.error("i/o failure reading ChunkHeader\n");
+            return false;
+        }
+
+        static const char datachunk[4] = { 'd', 'a', 't', 'a' };
+
+        if (memcmp(sc.id, datachunk, sizeof datachunk) == 0) {
+            // found it!
+            buffer.resize(sc.size);
+            if (fread(&buffer.front(), 1, sc.size, f) != sc.size) {
+                log.error("i/o failure while reading data chunk\n");
+                return false;
+            }
+
+            return true;
+        }
+
+        // some other subchunk - skip it and keep looking
+        if (fseek(f, sc.size, SEEK_CUR) != 0) {
+            log.error("i/o failure while seeking past chunk\n");
+            return false;
+        }
     }
 
-    const char datachunk[4] = { 'd', 'a', 't', 'a' };
-    if (memcmp(dd.subchunk2ID, datachunk, sizeof datachunk)) {
-        log.error("header didn't match (data)\n");
-        return false;
-    }
-
-    buffer.resize(dd.subchunk2Size);
-    if (fread(&buffer.front(), 1, dd.subchunk2Size, f) != dd.subchunk2Size) {
-        log.error("Read: i/o failure\n");
-        return false;
-    }
-
-    return true;
+    log.error("didn't find a 'data' subchunk\n");
+    return false;
 }

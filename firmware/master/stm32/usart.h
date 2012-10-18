@@ -39,7 +39,7 @@ public:
     void put(char c);
     char get();
 
-    uint16_t isr(uint8_t *buf = 0);
+    uint16_t isr(uint8_t &byte);
 
 private:
     volatile USART_t *uart;

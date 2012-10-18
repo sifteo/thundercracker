@@ -75,7 +75,8 @@ private:
         // volatile to ensure it gets re-loaded while we're waiting for it to
         // get updated from within the i2c irq
         volatile uint8_t remaining;
-        uint8_t *data;
+        uint8_t *ptr;
+        uint8_t data[64];
     };
 
     static AckPacket ackPacket;
