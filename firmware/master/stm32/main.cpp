@@ -72,7 +72,7 @@ int main()
     NVIC.irqPrioritize(IVT.LED_SEQUENCER_TIM, 0x75);
 
     NVIC.irqEnable(IVT.USART3);                     // factory test uart
-    NVIC.irqPrioritize(IVT.USART3, 0x99);           //  loooooowest prio
+    NVIC.irqPrioritize(IVT.USART3, 0x52);           //  high enough to avoid overruns
 
     NVIC.irqEnable(IVT.VOLUME_TIM);                 // volume timer
     NVIC.irqPrioritize(IVT.VOLUME_TIM, 0x55);       //  just below sample rate timer
