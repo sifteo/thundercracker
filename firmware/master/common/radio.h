@@ -167,14 +167,6 @@ class Radio {
         dBm0                    = 3 << 1
     };
 
-    /*
-     * Setter/getter for transmit power.
-     * We don't strictly need a getter, but it is used for testing purposes
-     * to verify that we can read/write registers properly.
-     */
-    static void setTxPower(TxPower pwr);
-    static TxPower txPower();
-
     #ifndef SIFTEO_SIMULATOR
     static void onTransitionToUsbPower();
 

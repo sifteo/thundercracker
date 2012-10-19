@@ -178,14 +178,6 @@ void NRF24L01::setConstantCarrier(bool enabled, unsigned channel)
     }
 }
 
-void NRF24L01::setTxPower(Radio::TxPower pwr)
-{
-    spi.begin();
-    spi.transfer(CMD_W_REGISTER | REG_RF_SETUP);
-    spi.transfer(0x08 | pwr);   // enforce 2Mbit/sec transfer rate
-    spi.end();
-}
-
 void NRF24L01::setChannel(uint8_t ch)
 {
     spi.begin();
@@ -202,16 +194,6 @@ uint8_t NRF24L01::channel()
     spi.end();
 
     return ch;
-}
-
-Radio::TxPower NRF24L01::txPower()
-{
-    spi.begin();
-    spi.transfer(CMD_R_REGISTER | REG_RF_SETUP);
-    uint8_t setup = spi.transfer(0);
-    spi.end();
-
-    return static_cast<Radio::TxPower>(setup & (0x3 << 1));
 }
 
 void NRF24L01::isr()

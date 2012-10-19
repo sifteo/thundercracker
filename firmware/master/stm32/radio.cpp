@@ -47,16 +47,6 @@ void Radio::init()
     RadioManager::enableRadio();
 }
 
-void Radio::setTxPower(TxPower pwr)
-{
-    NRF24L01::instance.setTxPower(pwr);
-}
-
-Radio::TxPower Radio::txPower()
-{
-    return NRF24L01::instance.txPower();
-}
-
 void Radio::onTransitionToUsbPower()
 {
     /*

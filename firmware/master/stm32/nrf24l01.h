@@ -34,9 +34,6 @@ public:
     void init();
     void beginTransmitting();
 
-    void setTxPower(Radio::TxPower pwr);
-    Radio::TxPower txPower();
-
     void setChannel(uint8_t ch);
     uint8_t channel();
 
