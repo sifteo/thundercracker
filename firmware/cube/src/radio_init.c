@@ -218,9 +218,9 @@ void radio_set_idle_addr(void)
         anl     a, #0x7F            ; Only examine low 7 bits
         mov     r0, a               ; Save channel
         ; Ensure our channel is between MAX_RF_CHANNEL and MIN_RF_CHANNEL
-        subb    a, #(MIN_RF_CHANNEL)
+        add     a, #(255 - MAX_RF_CHANNEL)
         jc      5$
-        add     a, #(255 - MAX_RF_CHANNEL + MIN_RF_CHANNEL)
+        subb    a, #(255 - MAX_RF_CHANNEL + MIN_RF_CHANNEL)
         jc      5$
 
         ; Handle idle_hop, rotate our channel by half its legal range,
