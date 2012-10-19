@@ -49,7 +49,8 @@ public:
         CubeConnector,
         Heartbeat,
         Profiler,
-        TestJig
+        TestJig,
+        FactoryTest
     };
 
     static void init() {

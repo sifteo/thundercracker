@@ -23,6 +23,7 @@
 #   include "usb/usbdevice.h"
 #   include "sampleprofiler.h"
 #   include "powermanager.h"
+#   include "factorytest.h"
 #   if (BOARD == BOARD_TEST_JIG)
 #       include "testjig.h"
 #   endif
@@ -40,6 +41,7 @@ ALWAYS_INLINE void Tasks::taskInvoke(unsigned id)
     #ifndef SIFTEO_SIMULATOR
         case Tasks::PowerManager:   return PowerManager::vbusDebounce();
         case Tasks::UsbOUT:         return UsbDevice::handleOUTData();
+        case Tasks::FactoryTest:    return FactoryTest::task();
 
         #if (BOARD == BOARD_TEST_JIG)
         case Tasks::TestJig:        return TestJig::task();
