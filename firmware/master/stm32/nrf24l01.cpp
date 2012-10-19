@@ -186,6 +186,24 @@ void NRF24L01::setTxPower(Radio::TxPower pwr)
     spi.end();
 }
 
+void NRF24L01::setChannel(uint8_t ch)
+{
+    spi.begin();
+    spi.transfer(CMD_W_REGISTER | REG_RF_CH);
+    spi.transfer(ch);
+    spi.end();
+}
+
+uint8_t NRF24L01::channel()
+{
+    spi.begin();
+    spi.transfer(CMD_R_REGISTER | REG_RF_CH);
+    uint8_t ch = spi.transfer(0);
+    spi.end();
+
+    return ch;
+}
+
 Radio::TxPower NRF24L01::txPower()
 {
     spi.begin();
@@ -276,6 +294,7 @@ void NRF24L01::handleTimeout()
         spi.transfer(CMD_FLUSH_TX);
         spi.end();
 
+        txnState = Idle;
         timeout();
         beginTransmitting();
     }
@@ -311,6 +330,7 @@ void NRF24L01::beginTransmitting()
     if (!RadioManager::isRadioEnabled()) {
         // Do nothing. This will break the cycle of transmit/irq,
         // until the heartbeat task wakes us up again.
+        txnState = Idle;
         return;
     }
 
@@ -453,7 +473,9 @@ void NRF24L01::onSpiComplete()
         break;
 
     case TXPulseCE:
-        txnState = Idle;
+        if (softRetriesLeft == 0) {
+            txnState = Idle;
+        }
         ce.setLow();
         break;
 

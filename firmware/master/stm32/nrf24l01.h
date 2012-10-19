@@ -37,6 +37,9 @@ public:
     void setTxPower(Radio::TxPower pwr);
     Radio::TxPower txPower();
 
+    void setChannel(uint8_t ch);
+    uint8_t channel();
+
     void setConstantCarrier(bool enabled, unsigned channel = 0);
     void setPRXMode(bool enabled);
 
@@ -44,6 +47,22 @@ public:
     GPIOPin irq;
 
     uint32_t irqCount;
+
+    enum TransactionState {
+        Idle,
+        RXStatus,
+        RXPayload,
+        TXChannel,
+        TXAddressTx,
+        TXAddressRx,
+        TXSetupRetr,
+        TXPayload,
+        TXPulseCE
+    };
+
+    ALWAYS_INLINE TransactionState state() const {
+        return txnState;
+    }
 
  private:
     enum Command {
@@ -101,19 +120,9 @@ public:
     PacketTransmission txBuffer;
     PacketBuffer rxBuffer;
 
-    enum TransactionState {
-        Idle,
-        RXStatus,
-        RXPayload,
-        TXChannel,
-        TXAddressTx,
-        TXAddressRx,
-        TXSetupRetr,
-        TXPayload,
-        TXPulseCE
-    };
-
-    TransactionState txnState;
+    // volatile primarily so that factorytest can poll on this, while it
+    // may only get updated from ISR context
+    volatile TransactionState txnState;
 
     /*
      * Current retry counts.

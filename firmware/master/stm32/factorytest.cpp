@@ -18,6 +18,7 @@
 #include "cube.h"
 #include "tasks.h"
 #include "radioaddrfactory.h"
+#include "nrf24l01.h"
 
 extern unsigned     __data_start;
 
@@ -149,12 +150,15 @@ void FactoryTest::produce(PacketTransmission &tx)
  */
 void FactoryTest::nrfCommsHandler(uint8_t argc, const uint8_t *args)
 {
-    Radio::TxPower pwr = static_cast<Radio::TxPower>(args[1]);
-
     RadioManager::disableRadio();
-    Radio::setTxPower(pwr);
 
-    const uint8_t response[] = { 3, args[0], Radio::txPower() };
+    while (NRF24L01::instance.state() != NRF24L01::Idle) {
+        Tasks::resetWatchdog();
+    }
+
+    uint8_t chan = args[1];
+    NRF24L01::instance.setChannel(chan);
+    const uint8_t response[] = { 3, args[0], NRF24L01::instance.channel() };
 
     RadioManager::enableRadio();
 
