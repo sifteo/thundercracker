@@ -16,6 +16,8 @@ public:
     static void onUartIsr();
     static void usbHandler(const USBProtocolMsg &m);
 
+    static void task();
+
     /*
      * RF test handlers.
      *

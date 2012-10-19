@@ -64,18 +64,29 @@ void FactoryTest::onUartIsr()
     if (status & Usart::STATUS_RXED) {
 
         uartCommand.append(rxbyte);
-
-        if (uartCommand.complete()) {
-            // dispatch to the appropriate handler
-            uint8_t opcode = uartCommand.opcode();
-            if (opcode < arraysize(handlers)) {
-                TestHandler handler = handlers[opcode];
-                handler(uartCommand.len - 1, &uartCommand.buf[1]);
-            }
-
-            uartCommand.len = 0;
-        }
+        if (uartCommand.complete())
+            Tasks::trigger(Tasks::FactoryTest);
     }
+}
+
+
+void FactoryTest::task()
+{
+    /*
+     * As the UART ISR runs at a reasonably high priority to avoid
+     * getting overrun, we offload the handler execution to a task.
+     */
+
+    if (!uartCommand.complete())
+        return;
+
+    uint8_t opcode = uartCommand.opcode();
+    if (opcode < arraysize(handlers)) {
+        TestHandler handler = handlers[opcode];
+        handler(uartCommand.len - 1, &uartCommand.buf[1]);
+    }
+
+    uartCommand.len = 0;
 }
 
 /*
