@@ -29,7 +29,7 @@ void IdleTimeout::heartbeat()
 
         const uint32_t excludedTasks =
             Intrinsic::LZ(Tasks::AudioPull)     |
-            Intrinsic::LZ(Tasks::Pause);        |
+            Intrinsic::LZ(Tasks::Pause)         |
             Intrinsic::LZ(Tasks::Heartbeat)     |
             Intrinsic::LZ(Tasks::FaultLogger);
 
