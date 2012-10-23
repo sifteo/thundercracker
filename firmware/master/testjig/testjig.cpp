@@ -13,6 +13,7 @@
 #include "i2c.h"
 #include "neighbor_tx.h"
 #include "neighbor_rx.h"
+#include "pulse_rx.h"
 #include "gpio.h"
 #include "macros.h"
 #include "dac.h"
@@ -46,6 +47,8 @@ TestJig::TestHandler const TestJig::handlers[] = {
     setCubeSensorsEnabledHandler,           // 7
     beginNeighborTxHandler,                 // 8
     stopNeighborTxHandler,                  // 9
+    beginNoiseCheckHandler,                 // 10
+    stopNoiseCheckHandler,                  // 11
 };
 
 void TestJig::init()
@@ -374,6 +377,35 @@ void TestJig::stopNeighborTxHandler(uint8_t argc, uint8_t *args)
     UsbDevice::write(response, sizeof response);
 }
 
+/*
+ * No args.
+ */
+void TestJig::beginNoiseCheckHandler(uint8_t argc, uint8_t *args)
+{
+    /*
+     * NeighborRX and PulseRX share input pins.
+     * Since the neighbor protocol disables irq
+     * of the masked side, we stop NeighborRX
+     * before starting pulseRX, just in case.
+     */
+    NeighborRX::stop();
+    PulseRX::init();
+    PulseRX::start();
+
+    const uint8_t response[] = { args[0] };
+    UsbDevice::write(response, sizeof response);
+}
+
+/*
+ * No args.
+ */
+void TestJig::stopNoiseCheckHandler(uint8_t argc, uint8_t *args)
+{
+    const uint8_t response[] = { args[0], (PulseRX::count() >> 8) & 0xff, PulseRX::count() & 0xff };
+    PulseRX::stop();
+    UsbDevice::write(response, sizeof response);
+}
+
 /*******************************************
  * I N T E R R U P T  H A N D L E R S
  ******************************************/
@@ -389,6 +421,7 @@ IRQ_HANDLER ISR_EXTI0()
 IRQ_HANDLER ISR_EXTI1()
 {
     NeighborRX::pulseISR(3);
+    PulseRX::pulseISR();
 }
 
 IRQ_HANDLER ISR_I2C1_EV()
