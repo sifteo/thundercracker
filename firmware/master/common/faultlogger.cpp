@@ -246,11 +246,20 @@ void FaultLogger::task()
      *
      * Hoping that nobody else is going to be rendering audio for any other
      * scenarios in which we fault due to missing launcher.
+     *
+     * Furthermore, since we don't have a launcher to revert to, don't bother
+     * and just wait here for further instructions. Extra credit would be to
+     * wake up and execute the launcher if we detected that it got installed
+     * while we were waiting here.
      */
 
-    if (header.code != F_NO_LAUNCHER) {
-        excludedTasks |= Intrinsic::LZ(Tasks::AudioPull);
+    if (header.code == F_NO_LAUNCHER) {
+        for (;;) {
+            Tasks::work(excludedTasks);
+        }
     }
+
+    excludedTasks |= Intrinsic::LZ(Tasks::AudioPull);
 
     UICoordinator uic(excludedTasks);
     UIFault uiFault(uic, header.reference);
