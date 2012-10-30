@@ -11,37 +11,79 @@ import sys, os, platform
 import shutil, datetime
 import subprocess, multiprocessing
 
+########################################################
+## Defines
+########################################################
+DIR = os.path.dirname(os.path.realpath(__file__))
+TC_DIR = DIR+"/../../.."
+MASTER_UNVERSIONED = "master-stm32.sft"
+LAUNCHER_UNVERSIONED = "launcher.elf"
+CLEAN = True
 
+####################################
+## Checks to see if directory exists.
+## Deletes old one if it does exist
+####################################
+def check_and_mkdir(path):
+    # ensure our destination exists
+    try:
+        os.stat(path)
+        print "#### Removing %s" % path
+        shutil.rmtree(path)
+    except:
+        pass
+
+    os.mkdir(path)
+
+########################################################################
+## Copies raw filename renamed to the versioned_filename at the target path
+########################################################################
+def copy_to_dir(raw_filename,versioned_filename,target_path):
+    shutil.copy(raw_filename, os.path.join(target_path, versioned_filename))
+    print "#### Moving %s to %s" % ( versioned_filename, target_path )
+
+##############################
+## Our main execution function
+##############################
 def run(secondary_path): 
     print "\n#### Master Binary Generator\n"
 
+    #grab githash
+    githash = subprocess.check_output(["git", "describe", "--tags"]).strip()
+
+    #set up directory pointers.
+    latest_dir = os.path.join(DIR, "../latest")
+    launcher_dir = os.path.join(TC_DIR,"launcher")
+    build_dir = os.path.join( DIR, "../", githash)
+
+    #one time operations if secondary_path is defined
+    if secondary_path != False:
+      remote_build_dir = os.path.join(secondary_path,githash)
+      remote_latest_dir = os.path.join(secondary_path,"latest")
+
+    else:
+      remote_build_dir = None
+      remote_latest_dir = None
+
+    #master firmware filename
+    master_filename = "master_%s.sft" % (githash)
+
+    #launcher filename
+    launcher_filename = "launcher_%s.elf" % (githash)
+
     # one time operations
     date = datetime.date.today().isoformat()
-    githash = subprocess.check_output(["git", "describe", "--tags"]).strip()
-    subprocess.check_call(["make", "clean"])
-    DIR = os.path.dirname(__file__)
 
-    # ensure our destination exists
-    destination = githash
-    try:
-        os.stat(destination)
-    except:
-        os.mkdir(destination)
+    ############################
+    #### Process base firmware
+    ############################
 
-    try:
-        os.stat("latest")
-        print "#### Removing latest dir."
-        shutil.rmtree("latest")
-        os.mkdir("latest")
-    except:
-        os.mkdir("latest")
+    #run make clean on master firmware directory
+    if CLEAN:
+      subprocess.check_call(["make", "clean"])
 
-    def removeRelPath(p):
-        print "Removing", p
-        try:
-            os.remove(os.path.join(DIR, p))
-        except:
-            pass
+    check_and_mkdir(build_dir)
+    check_and_mkdir(latest_dir)
 
     # Set dem environment variables
     myenv = dict(os.environ)
@@ -52,41 +94,35 @@ def run(secondary_path):
     subprocess.call(["make", cores, "encrypted"], env=myenv)
 
     # Do a little renaming
-    filename = "master_%s.sft" % (githash)
-    shutil.copy("master-stm32.sft", os.path.join(destination, filename))
-    print "#### Moving %s to %s" % (filename, destination)
-    shutil.copy("master-stm32.sft", os.path.join("latest", filename))
-    print "#### Moving %s to %s" % ( destination,"latest" )
+    copy_to_dir(MASTER_UNVERSIONED,master_filename,latest_dir)
+    copy_to_dir(MASTER_UNVERSIONED,master_filename,build_dir)
 
-    filename = "master_%s.elf" % (githash)
-    shutil.copy("master-stm32.elf", os.path.join(destination, filename))
-    print "#### Moving %s to %s" % (filename, destination)
-    shutil.copy("master-stm32.elf", os.path.join("latest", filename))
-    print "#### Moving %s to %s" % ( destination,"latest" )
-    
     if secondary_path != False:
-        filename = "master_%s.sft" % (githash)
 
-        remote_path = os.path.join(secondary_path,githash)
-        latest_remote_path = os.path.join(secondary_path,"latest")
+        check_and_mkdir(remote_latest_dir)
+        check_and_mkdir(remote_build_dir)
 
-        try:
-            os.stat(os.path.join(secondary_path,"latest"))
-            print "#### Removing remote latest dir."
-            shutil.rmtree(os.path.join(secondary_path,"latest"))
-            os.mkdir(os.path.join(secondary_path,"latest"))
-        except:
-            os.mkdir(os.path.join(secondary_path,"latest"))
+        copy_to_dir(MASTER_UNVERSIONED,master_filename, remote_latest_dir)
+        copy_to_dir(MASTER_UNVERSIONED,master_filename, remote_build_dir)
 
-        try:
-            os.stat(remote_path)
-        except:
-            os.mkdir(remote_path)
-        shutil.copy("master-stm32.sft", os.path.join(remote_path, filename))
-        print "#### Moving %s to %s" % (filename, remote_path)
+    ############################
+    #### Process launcher
+    ############################
 
-        shutil.copy("master-stm32.sft", os.path.join(latest_remote_path, filename))
-        print "#### Moving %s to %s" % (filename, latest_remote_path)
+    ### Changing directories!!!
+    os.chdir( launcher_dir )
+    
+    if CLEAN:
+      subprocess.check_call(["make", "clean"])
+
+    subprocess.check_call(["make"])
+
+    copy_to_dir(LAUNCHER_UNVERSIONED,launcher_filename,latest_dir)
+    copy_to_dir(LAUNCHER_UNVERSIONED,launcher_filename,build_dir)
+
+    if secondary_path != False:
+        copy_to_dir(LAUNCHER_UNVERSIONED,launcher_filename,remote_latest_dir)
+        copy_to_dir(LAUNCHER_UNVERSIONED,launcher_filename,remote_build_dir)
 
     #Prints out version at the end for any excel copy paste action
     print "#### Git Version: %s" % githash
