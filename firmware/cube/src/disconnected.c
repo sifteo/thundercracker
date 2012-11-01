@@ -665,10 +665,10 @@ fp_bounce_axis_ret:
     /*
      * Check sleep timer
      */
-
+#ifndef RFTEST_GOLD_CUBE
     if (disc_sleep_timer == sensor_tick_counter_high)
         vram.mode = _SYS_VM_SLEEP;
-
+#endif
     /*
      * Radio:
      *
