@@ -41,7 +41,6 @@ ALWAYS_INLINE void Tasks::taskInvoke(unsigned id)
     #ifndef SIFTEO_SIMULATOR
         case Tasks::PowerManager:   return PowerManager::vbusDebounce();
         case Tasks::UsbOUT:         return UsbDevice::handleOUTData();
-        case Tasks::FactoryTest:    return FactoryTest::task();
 
         #if (BOARD == BOARD_TEST_JIG)
         case Tasks::TestJig:        return TestJig::task();
@@ -60,6 +59,7 @@ ALWAYS_INLINE void Tasks::taskInvoke(unsigned id)
 
     #if !defined(SIFTEO_SIMULATOR) && !defined(BOOTLOADER)
         case Tasks::Profiler:       return SampleProfiler::task();
+        case Tasks::FactoryTest:    return FactoryTest::task();
     #endif
 
     }
