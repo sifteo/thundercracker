@@ -22,6 +22,7 @@ public:
     static void init();
     static void onTestDataReceived(uint8_t *buf, unsigned len);
     static void onI2cEvent();
+    static void onI2cError();
     static void task();
 
 private:
@@ -76,7 +77,7 @@ private:
     struct I2CWriteTransaction {
         // volatile to ensure it gets re-loaded while we're waiting for it to
         // get updated from within the i2c irq
-        volatile uint8_t remaining;
+        volatile int remaining;
         uint8_t *ptr;
         uint8_t data[64];
     };

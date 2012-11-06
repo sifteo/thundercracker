@@ -133,14 +133,17 @@ void NeighborRX::callback(unsigned side, unsigned msg)
     UsbDevice::write(response, sizeof response);
 }
 
+ALWAYS_INLINE static bool flagsMatch(uint32_t value, uint32_t flags) {
+    return (value & flags) == flags;
+}
+
 /*
  * Called from ISR context when an i2c event has occurred.
  * If the host has asked us to report on i2c related
  */
 void TestJig::onI2cEvent()
 {
-    uint8_t byte;
-    uint16_t status = i2c.irqEvStatus();
+    uint32_t status = i2c.status();
 
     /*
      * Dataflow is as follows:
@@ -156,9 +159,24 @@ void TestJig::onI2cEvent()
      *       This is generally fine, since we're not tracking any specific packet.
      */
 
-    if (status & I2CSlave::AddressMatch) {
+    if (flagsMatch(status, I2CSlave::RxAddressMatched)) {
         // begin new rx sequence
         ackPacket.len = 0;
+
+    }
+
+    if (flagsMatch(status, I2CSlave::TxAddressMatched)) {
+
+        /*
+         * begin new TX sequence if we have data ready to go, otherwise
+         * send 0xff to just keep the cube alive.
+         */
+
+        if (cubeWrite.remaining > 0) {
+            i2c.write(*cubeWrite.ptr);
+        } else {
+            i2c.write(0xff);
+        }
     }
 
     /*
@@ -169,30 +187,50 @@ void TestJig::onI2cEvent()
      *
      * It's a bit gross, but treat a NACK as equivalent to a STOP to work around this.
      */
+
     if (status & (I2CSlave::Nack | I2CSlave::StopBit)) {
         cubeWrite.remaining = 0;
-    }
 
-    // send next byte
-    if (status & I2CSlave::TxEmpty) {
-        if (cubeWrite.remaining > 0) {
-            byte = *cubeWrite.ptr++;
-            cubeWrite.remaining--;
-        } else {
-            byte = 0xff;
+        if (status & I2CSlave::StopBit) {
+            i2c.onStopBit();
         }
     }
 
-    i2c.isrEV(status, &byte);
+    if (flagsMatch(status, I2CSlave::ByteTransmitted)) {
 
-    /*
-     * We received a byte. Capture it if we won't overwrite any
-     * pending USB writes, and it won't overflow our buffer.
-     */
-    if (status & I2CSlave::RxNotEmpty) {
+        /*
+         * our previous byte was written - update our count and continue
+         * sending if we're not done.
+         *
+         * Otherwise, write 0xff to keep the cube alive.
+         */
 
-        if (!ackPacket.full())
+        if (cubeWrite.remaining > 0) {
+
+            cubeWrite.ptr++;
+            cubeWrite.remaining--;
+        }
+
+        // more to write?
+        if (cubeWrite.remaining > 0) {
+            i2c.write(*cubeWrite.ptr);
+        } else {
+            i2c.write(0xff);
+        }
+    }
+
+    if (flagsMatch(status, I2CSlave::ByteReceived)) {
+
+        /*
+         * We received a byte. Capture it if we won't overwrite any
+         * pending USB writes, and it won't overflow our buffer.
+         */
+
+        uint8_t byte = i2c.read();
+
+        if (!ackPacket.full()) {
             ackPacket.append(byte);
+        }
 
         if (ackPacket.full() && ackPacket.enabled) {
             if (!i2cUsbPayload.usbWritePending) {
@@ -210,6 +248,11 @@ void TestJig::onI2cEvent()
             }
         }
     }
+}
+
+void TestJig::onI2cError()
+{
+    i2c.isrER();
 }
 
 /*
@@ -431,5 +474,5 @@ IRQ_HANDLER ISR_I2C1_EV()
 
 IRQ_HANDLER ISR_I2C1_ER()
 {
-    i2c.isrER();
+    TestJig::onI2cError();
 }
