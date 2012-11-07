@@ -30,11 +30,10 @@ def run(secondary_path):
 
     try:
         os.stat("latest")
-        print "#### Removing latest dir."
-        shutil.rmtree("latest")
-        os.mkdir("latest")
+        print "#### Removing latest symlink."
+        os.remove("latest")
     except:
-        os.mkdir("latest")
+        pass
 
     def removeRelPath(p):
         print "Removing", p
@@ -54,8 +53,8 @@ def run(secondary_path):
     filename = "testjig_%s.hex" % (githash)
     shutil.copy("testjig.hex", os.path.join(destination, filename))
     print "#### Moving %s to %s" % (filename, destination)
-    shutil.copy("testjig.hex", os.path.join("latest", filename))
-    print "#### Moving %s to %s" % ( destination,"latest" )
+    os.symlink( destination, "latest" )
+    print "#### Making symlink to %s" % ( "latest" )
 
     #Prints out version at the end for any excel copy paste action
     print "#### Git Version: %s" % githash
