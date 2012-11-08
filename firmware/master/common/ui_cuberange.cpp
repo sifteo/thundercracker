@@ -5,8 +5,8 @@
 
 const UIMenu::Item UICubeRange::items[NUM_ITEMS] = {
     // Note: labels with an even number of characters will center perfectly
-    { "Connect Cube", UI_IMAGE_INDEX(iconResume), false },
-    { "Quit",         UI_IMAGE_INDEX(iconQuit),   true },
+    { "Connect Cube", UI_IMAGE_INDEX(iconCubeRange), false },
+    { "Quit",         UI_IMAGE_INDEX(iconQuit),      true },
 };
 
 UICubeRange::UICubeRange(UICoordinator &uic) :

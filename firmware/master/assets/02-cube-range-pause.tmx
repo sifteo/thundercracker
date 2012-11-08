@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<map version="1.0" orientation="orthogonal" width="8" height="16" tilewidth="8" tileheight="8">
+ <tileset firstgid="1" name="tilerom-atlas" tilewidth="8" tileheight="8">
+  <image source="../../cube/tilerom/tilerom-atlas.png" width="1024" height="1024"/>
+ </tileset>
+ <layer name="cube range" width="8" height="16">
+  <data encoding="base64" compression="zlib">
+   eJxrV2Zg6MSBu4G4F4j71RkYJmLBk6HyM4HsXlVMPJtO8nOB8vPR8EJ1iPxiIF4KxMux4JVA3E6E/6dqA/2LBcP9D2T3amLi2XSSnwuUn4+GF2oT538AECxcuw==
+  </data>
+ </layer>
+</map>
