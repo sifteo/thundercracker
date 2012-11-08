@@ -386,13 +386,15 @@ void CubeConnector::radioProduce(PacketTransmission &tx)
             goto case_PairingFirstContact;
 
         case ReconnectAltFirstContact:
-            RadioAddrFactory::convertPrimaryToAlternateChannel(reconnectAddr, hwid[0]);
-            tx.dest = &reconnectAddr;
-            tx.packet.len = 1;
-            tx.packet.bytes[0] = 0xff;
-            tx.numSoftwareRetries = 0;
-            tx.numHardwareRetries = 0;
-            rxState = txState;
+            if (reconnectEnabled) {
+                RadioAddrFactory::convertPrimaryToAlternateChannel(reconnectAddr, hwid[0]);
+                tx.dest = &reconnectAddr;
+                tx.packet.len = 1;
+                tx.packet.bytes[0] = 0xff;
+                tx.numSoftwareRetries = 0;
+                tx.numHardwareRetries = 0;
+                rxState = txState;
+            }
             break;
 
         /*
