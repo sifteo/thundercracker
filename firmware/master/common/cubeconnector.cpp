@@ -394,8 +394,9 @@ void CubeConnector::radioProduce(PacketTransmission &tx)
                 tx.numSoftwareRetries = 0;
                 tx.numHardwareRetries = 0;
                 rxState = txState;
+                break;
             }
-            break;
+            goto case_PairingFirstContact;
 
         /*
          * After establishing first contact, we gain some trust that we're
