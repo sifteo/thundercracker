@@ -3,15 +3,14 @@
  * Copyright <c> 2012 Sifteo, Inc. All rights reserved.
  */
 
-#include "pulse_rx.h"
-#include "board.h"
 #include "gpio.h"
+#include "board.h"
 #include "vectors.h"
+#include "pulse_rx.h"
 
-namespace {
-    static const GPIOPin pin = NBR_IN4_GPIO;
-#define MAX_VALUE 65535
-    static uint16_t pulseCounter;
+PulseRX::PulseRX(GPIOPin p) :
+        pin(p)
+{
 }
 
 void PulseRX::init()
@@ -24,7 +23,7 @@ void PulseRX::init()
 
 void PulseRX::start()
 {
-    pulseCounter = 0;
+    pulseCount = 0;
     pin.irqEnable();
 }
 
@@ -35,12 +34,12 @@ void PulseRX::stop()
 
 uint16_t PulseRX::count()
 {
-    return pulseCounter;
+    return pulseCount;
 }
 
 void PulseRX::pulseISR()
 {
     // Saturate counter
-    if (pulseCounter < MAX_VALUE)
-        pulseCounter++;
+    if (pulseCount < maxCount)
+        pulseCount++;
 }

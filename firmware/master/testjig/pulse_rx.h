@@ -7,17 +7,26 @@
 #define _PULSE_RX_H
 
 #include <stdint.h>
+#include "gpio.h"
+
 
 class PulseRX {
 public:
-    static void init();
+    PulseRX(GPIOPin);
 
-    static void start();
-    static void stop();
+    void init();
 
-    static uint16_t count();
+    void start();
+    void stop();
 
-    static void pulseISR();
+    uint16_t count();
+
+    void pulseISR();
+
+private:
+    static const uint16_t maxCount = 65535;
+    GPIOPin pin;
+    uint16_t pulseCount;
 };
 
 #endif

@@ -28,6 +28,9 @@ static Adc adc(&PWR_MEASURE_ADC);
 static GPIOPin usbCurrentSign = USB_CURRENT_DIR_GPIO;
 static GPIOPin v3CurrentSign = V3_CURRENT_DIR_GPIO;
 
+static PulseRX PulseRX2v0Rail(NBR_IN4_GPIO);
+static PulseRX PulseRX3v3Rail(NBR_IN3_GPIO);
+
 TestJig::I2CWriteTransaction TestJig::cubeWrite;
 TestJig::AckPacket TestJig::ackPacket;
 TestJig::I2CUsbPayload TestJig::i2cUsbPayload;
@@ -432,8 +435,12 @@ void TestJig::beginNoiseCheckHandler(uint8_t argc, uint8_t *args)
      * before starting pulseRX, just in case.
      */
     NeighborRX::stop();
-    PulseRX::init();
-    PulseRX::start();
+
+    // setup and start noise test on both rails simultaneously
+    PulseRX2v0Rail.init();
+    PulseRX3v3Rail.init();
+    PulseRX2v0Rail.start();
+    PulseRX3v3Rail.start();
 
     const uint8_t response[] = { args[0] };
     UsbDevice::write(response, sizeof response);
@@ -444,8 +451,13 @@ void TestJig::beginNoiseCheckHandler(uint8_t argc, uint8_t *args)
  */
 void TestJig::stopNoiseCheckHandler(uint8_t argc, uint8_t *args)
 {
-    const uint8_t response[] = { args[0], (PulseRX::count() >> 8) & 0xff, PulseRX::count() & 0xff };
-    PulseRX::stop();
+    uint8_t response[] = { args[0], \
+            (PulseRX2v0Rail.count() >> 8) & 0xff, PulseRX2v0Rail.count() & 0xff, \
+            (PulseRX3v3Rail.count() >> 8) & 0xff, PulseRX3v3Rail.count() & 0xff \
+    };
+    PulseRX2v0Rail.stop();
+    PulseRX3v3Rail.stop();
+
     UsbDevice::write(response, sizeof response);
 }
 
@@ -459,12 +471,13 @@ void TestJig::stopNoiseCheckHandler(uint8_t argc, uint8_t *args)
 IRQ_HANDLER ISR_EXTI0()
 {
     NeighborRX::pulseISR(2);
+    PulseRX3v3Rail.pulseISR();
 }
 
 IRQ_HANDLER ISR_EXTI1()
 {
     NeighborRX::pulseISR(3);
-    PulseRX::pulseISR();
+    PulseRX2v0Rail.pulseISR();
 }
 
 IRQ_HANDLER ISR_I2C1_EV()
