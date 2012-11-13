@@ -19,6 +19,9 @@ public:
     UsbVolumeManager::VolumeDetailReply *getVolumeDetail(USBProtocolMsg &msg, unsigned volBlockCode);
     const UsbVolumeManager::SysInfoReply *getBaseSysInfo(USBProtocolMsg &msg);
 
+    bool pairCube(USBProtocolMsg &msg, uint64_t hwid, unsigned slot);
+    UsbVolumeManager::PairingSlotDetailReply *pairingSlotDetail(USBProtocolMsg &msg, unsigned pairingSlot);
+
     // helpers
     bool waitForReply(uint32_t header, USBProtocolMsg &msg);
     bool writeAndWaitForReply(USBProtocolMsg &msg);

@@ -94,6 +94,37 @@ const UsbVolumeManager::SysInfoReply *BaseDevice::getBaseSysInfo(USBProtocolMsg 
 }
 
 
+bool BaseDevice::pairCube(USBProtocolMsg &msg, uint64_t hwid, unsigned slot)
+{
+    msg.init(USBProtocol::Installer);
+    msg.header |= UsbVolumeManager::PairCube;
+
+    UsbVolumeManager::PairCubeRequest *req = msg.zeroCopyAppend<UsbVolumeManager::PairCubeRequest>();
+    req->hwid = hwid;
+    req->pairingSlot = slot;
+
+    return writeAndWaitForReply(msg);
+}
+
+
+UsbVolumeManager::PairingSlotDetailReply *BaseDevice::pairingSlotDetail(USBProtocolMsg &msg, unsigned pairingSlot)
+{
+    msg.init(USBProtocol::Installer);
+    msg.header |= UsbVolumeManager::PairingSlotDetail;
+    msg.append((uint8_t*) &pairingSlot, sizeof pairingSlot);
+
+    if (!writeAndWaitForReply(msg)) {
+        return 0;
+    }
+
+    if (msg.payloadLen() >= sizeof(UsbVolumeManager::PairingSlotDetailReply)) {
+        return msg.castPayload<UsbVolumeManager::PairingSlotDetailReply>();
+    }
+
+    return 0;
+}
+
+
 bool BaseDevice::waitForReply(uint32_t header, USBProtocolMsg &msg)
 {
     while (dev.numPendingINPackets() == 0) {

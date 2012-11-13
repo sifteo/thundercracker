@@ -19,7 +19,6 @@ private:
 
     static bool getValidPairingSlot(const char *s, unsigned &pairingSlot);
     static bool getValidHWID(const char *s, uint64_t &hwid);
-    UsbVolumeManager::PairingSlotDetailReply *pairingSlotDetail(USBProtocolMsg &buf, unsigned pairingSlot);
 };
 
 #endif // PAIRCUBE_H

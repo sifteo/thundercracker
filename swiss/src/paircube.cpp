@@ -1,4 +1,5 @@
 #include "paircube.h"
+#include "basedevice.h"
 #include "tabularlist.h"
 #include <sifteo/abi/types.h>
 
@@ -46,14 +47,9 @@ bool PairCube::pair(const char *slotStr, const char *hwidStr)
     if (!getValidHWID(hwidStr, hwid))
         return false;
 
-    USBProtocolMsg m(USBProtocol::Installer);
-    m.header |= UsbVolumeManager::PairCube;
-
-    UsbVolumeManager::PairCubeRequest *req = m.zeroCopyAppend<UsbVolumeManager::PairCubeRequest>();
-    req->hwid = hwid;
-    req->pairingSlot = pairingSlot;
-
-    return dev.writeAndWaitForReply(m);
+    USBProtocolMsg m;
+    BaseDevice base(dev);
+    return base.pairCube(m, hwid, pairingSlot);
 }
 
 bool PairCube::dumpPairingData(bool rpc)
@@ -68,9 +64,12 @@ bool PairCube::dumpPairingData(bool rpc)
     table.cell() << "HWID";
     table.endRow();
 
+
+    BaseDevice base(dev);
+
     for (unsigned i = 0; i < _SYS_NUM_CUBE_SLOTS; ++i) {
         USBProtocolMsg m;
-        UsbVolumeManager::PairingSlotDetailReply *reply = pairingSlotDetail(m, i);
+        UsbVolumeManager::PairingSlotDetailReply *reply = base.pairingSlotDetail(m, i);
 
         if (!reply) {
             static UsbVolumeManager::PairingSlotDetailReply zero;
@@ -146,19 +145,4 @@ bool PairCube::getValidHWID(const char *s, uint64_t &hwid)
     }
 
     return true;
-}
-
-UsbVolumeManager::PairingSlotDetailReply *PairCube::pairingSlotDetail(USBProtocolMsg &buf, unsigned pairingSlot)
-{
-    buf.init(USBProtocol::Installer);
-    buf.header |= UsbVolumeManager::PairingSlotDetail;
-    buf.append((uint8_t*) &pairingSlot, sizeof pairingSlot);
-
-    if (!dev.writeAndWaitForReply(buf))
-        return 0;
-
-    if (buf.payloadLen() >= sizeof(UsbVolumeManager::PairingSlotDetailReply))
-        return buf.castPayload<UsbVolumeManager::PairingSlotDetailReply>();
-
-    return 0;
 }
