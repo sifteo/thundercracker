@@ -96,6 +96,11 @@ const UsbVolumeManager::SysInfoReply *BaseDevice::getBaseSysInfo(USBProtocolMsg 
 
 bool BaseDevice::pairCube(USBProtocolMsg &msg, uint64_t hwid, unsigned slot)
 {
+    /*
+     * Add a new pairing record for the given HWID in the given slot.
+     * This unconditionally overwrites a HWID already in that slot.
+     */
+
     msg.init(USBProtocol::Installer);
     msg.header |= UsbVolumeManager::PairCube;
 
@@ -109,6 +114,11 @@ bool BaseDevice::pairCube(USBProtocolMsg &msg, uint64_t hwid, unsigned slot)
 
 UsbVolumeManager::PairingSlotDetailReply *BaseDevice::pairingSlotDetail(USBProtocolMsg &msg, unsigned pairingSlot)
 {
+    /*
+     * Retrieve pairing slot detail for the requested slot, which is captured
+     * in the passed in buffer, or NULL on failure.
+     */
+
     msg.init(USBProtocol::Installer);
     msg.header |= UsbVolumeManager::PairingSlotDetail;
     msg.append((uint8_t*) &pairingSlot, sizeof pairingSlot);
@@ -122,6 +132,15 @@ UsbVolumeManager::PairingSlotDetailReply *BaseDevice::pairingSlotDetail(USBProto
     }
 
     return 0;
+}
+
+
+bool BaseDevice::requestReboot()
+{
+    USBProtocolMsg m(USBProtocol::FactoryTest);
+    m.append(12);   // reboot request command
+    dev.writePacket(m.bytes, m.len);
+    return true;
 }
 
 
