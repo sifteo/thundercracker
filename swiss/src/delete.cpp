@@ -1,4 +1,5 @@
 #include "delete.h"
+#include "basedevice.h"
 #include "util.h"
 #include "usbprotocol.h"
 
@@ -44,7 +45,7 @@ bool Delete::deleteEverything()
     USBProtocolMsg m(USBProtocol::Installer);
     m.header |= UsbVolumeManager::DeleteEverything;
 
-    return dev.writeAndWaitForReply(m);
+    return BaseDevice(dev).writeAndWaitForReply(m);
 }
 
 bool Delete::deleteReformat()
@@ -54,7 +55,7 @@ bool Delete::deleteReformat()
 
     fprintf(stderr, "This will take a few minutes...\n");
 
-    return dev.writeAndWaitForReply(m);
+    return BaseDevice(dev).writeAndWaitForReply(m);
 }
 
 bool Delete::deleteSysLFS()
@@ -62,7 +63,7 @@ bool Delete::deleteSysLFS()
     USBProtocolMsg m(USBProtocol::Installer);
     m.header |= UsbVolumeManager::DeleteSysLFS;
 
-    return dev.writeAndWaitForReply(m);
+    return BaseDevice(dev).writeAndWaitForReply(m);
 }
 
 bool Delete::deleteVolume(unsigned code)
@@ -71,7 +72,5 @@ bool Delete::deleteVolume(unsigned code)
     m.header |= UsbVolumeManager::DeleteVolume;
     m.append((uint8_t*) &code, sizeof code);
 
-    return dev.writeAndWaitForReply(m);
-
-    dev.writePacket(m.bytes, m.len);
+    return BaseDevice(dev).writeAndWaitForReply(m);
 }
