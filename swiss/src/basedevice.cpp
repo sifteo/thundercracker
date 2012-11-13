@@ -144,6 +144,23 @@ bool BaseDevice::requestReboot()
 }
 
 
+bool BaseDevice::getMetadata(USBProtocolMsg &msg, unsigned volBlockCode, unsigned key)
+{
+    msg.init(USBProtocol::Installer);
+    msg.header |= UsbVolumeManager::VolumeMetadata;
+    UsbVolumeManager::VolumeMetadataRequest *req = msg.zeroCopyAppend<UsbVolumeManager::VolumeMetadataRequest>();
+
+    req->volume = volBlockCode;
+    req->key = key;
+
+    if (!writeAndWaitForReply(msg)) {
+        return false;
+    }
+
+    return msg.payloadLen() != 0;
+}
+
+
 bool BaseDevice::waitForReply(uint32_t header, USBProtocolMsg &msg)
 {
     while (dev.numPendingINPackets() == 0) {

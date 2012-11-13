@@ -24,6 +24,8 @@ public:
 
     bool requestReboot();
 
+    bool getMetadata(USBProtocolMsg &buffer, unsigned volBlockCode, unsigned key);
+
     // helpers
     bool waitForReply(uint32_t header, USBProtocolMsg &msg);
     bool writeAndWaitForReply(USBProtocolMsg &msg);

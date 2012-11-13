@@ -13,10 +13,7 @@ public:
     std::string getString(unsigned volBlockCode, unsigned key);
     int getBytes(unsigned volBlockCode, unsigned key, uint8_t *buffer, unsigned len);
 
-
 private:
-    bool get(USBProtocolMsg &buffer, unsigned volBlockCode, unsigned key);
-
     IODevice &dev;
 };
 
