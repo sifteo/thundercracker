@@ -7,12 +7,7 @@
 
 #include <errno.h>
 #include <string>
-
-#ifdef _WIN32
-#   define unlink(x) _unlink(x)
-#else
-#   include <unistd.h>
-#endif
+#include <stdlib.h>
 
 int SaveData::run(int argc, char **argv, IODevice &_dev)
 {
@@ -95,13 +90,128 @@ bool SaveData::restore(const char *filepath)
      * please implement me. thank you in advance.
      */
 
+    FILE *fin = fopen(filepath, "rb");
+    if (!fin) {
+        fprintf(stderr, "couldn't open %s: %s\n", filepath, strerror(errno));
+        return false;
+    }
+
+    struct MiniHeader {
+        uint64_t    magic;
+        uint32_t    version;
+    } minihdr;
+
+    if (fread(&minihdr, sizeof minihdr, 1, fin) != 1) {
+        fprintf(stderr, "i/o error: %s\n", strerror(errno));
+        fclose(fin);
+        return false;
+    }
+
+    if (minihdr.magic != MAGIC) {
+        fprintf(stderr, "%s is not a recognized savedata file\n", filepath);
+        fclose(fin);
+        return false;
+    }
+
+    rewind(fin);
+
+    bool rv;
+
+    switch (minihdr.version) {
+    case 0x1:
+        rv = restoreV1(fin);
+        break;
+    case 0x2:
+        rv = restoreV2(fin);
+        break;
+    default:
+        fprintf(stderr, "unsupported savedata file version: 0x%x\n", minihdr.version);
+        rv = false;
+    }
+
+    fclose(fin);
+    return rv;
+}
+
+
+static bool readStr(std::string &s, FILE *f)
+{
+    /*
+     * strings are preceded by their uint32_t length.
+     * a little stupid to allocate and free the intermediate buffer, but
+     * handy to be able to return a std::string.
+     */
+
+    uint32_t length;
+
+    if (fread(&length, sizeof length, 1, f) != 1) {
+        return false;
+    }
+
+    char *buf = (char*)malloc(length);
+    if (!buf) {
+        return false;
+    }
+
+    if (fread(buf, length, 1, f) != 1) {
+        return false;
+    }
+
+    s.assign(buf, length);
+    free(buf);
+
+    return true;
+}
+
+
+bool SaveData::restoreV1(FILE *f)
+{
+    fprintf(stderr, "restoring savedata file version 0x1\n");
+
+    HeaderV1 hdr;
+    if (fread(&hdr, sizeof hdr, 1, f) != 1) {
+        fprintf(stderr, "i/o error: %s\n", strerror(errno));
+        return false;
+    }
+
     return false;
 }
 
 
+bool SaveData::restoreV2(FILE *f)
+{
+    HeaderV2 hdr;
+    if (fread(&hdr, sizeof hdr, 1, f) != 1) {
+        fprintf(stderr, "i/o error: %s\n", strerror(errno));
+        return false;
+    }
 
+    std::string packageStr, versionStr;
+    if (!readStr(packageStr, f) || !readStr(versionStr, f)) {
+        return false;
+    }
 
+#if 0
+    fprintf(stderr, "restoring savedata file version 0x2\n");
 
+    printf("version: 0x%x\n", hdr.version);
+    printf("numBlocks: 0x%x\n", hdr.numBlocks);
+    printf("mc_pageSize: 0x%x\n", hdr.mc_pageSize);
+    printf("mc_blockSize: 0x%x\n", hdr.mc_blockSize);
+
+    printf("baseUniqueID: ");
+    for (unsigned i = 0; i < sizeof(hdr.baseUniqueID); ++i) {
+        printf("%02x", hdr.baseUniqueID[i]);
+    }
+    printf("\n");
+
+    printf("baseHwRevision: 0x%x\n", hdr.baseHwRevision);
+    printf("packageStr: %s\n", packageStr.c_str());
+    printf("versionStr: %s\n", versionStr.c_str());
+#endif
+
+    return false;
+}
 
 
 bool SaveData::extractLFSVolume(unsigned address, unsigned len, FILE *f)

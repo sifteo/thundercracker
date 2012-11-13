@@ -57,6 +57,9 @@ private:
     bool sendRequest(unsigned baseAddr, unsigned &progress);
     bool writeReply(FILE *f, unsigned &progress);
 
+    bool restoreV1(FILE *f);
+    bool restoreV2(FILE *f);
+
     IODevice &dev;
 };
 
