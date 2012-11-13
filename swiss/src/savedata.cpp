@@ -1,4 +1,5 @@
 #include "savedata.h"
+#include "basedevice.h"
 #include "util.h"
 #include "bits.h"
 #include "metadata.h"
@@ -63,7 +64,8 @@ bool SaveData::extract(unsigned volume, const char *filepath, bool rpc)
      */
 
     USBProtocolMsg buf;
-    UsbVolumeManager::LFSDetailReply *reply = getLFSDetail(buf, volume);
+    BaseDevice base(dev);
+    UsbVolumeManager::LFSDetailReply *reply = base.getLFSDetail(buf, volume);
     if (!reply) {
         return false;
     }
@@ -100,22 +102,6 @@ bool SaveData::restore(const char *filepath)
 
 
 
-
-
-UsbVolumeManager::LFSDetailReply *SaveData::getLFSDetail(USBProtocolMsg &buffer, unsigned volBlockCode)
-{
-    buffer.init(USBProtocol::Installer);
-    buffer.header |= UsbVolumeManager::LFSDetail;
-    buffer.append((uint8_t*) &volBlockCode, sizeof volBlockCode);
-
-    if (!dev.writeAndWaitForReply(buffer)) {
-        return 0;
-    }
-
-    if (buffer.payloadLen() >= sizeof(UsbVolumeManager::LFSDetailReply))
-        return buffer.castPayload<UsbVolumeManager::LFSDetailReply>();
-    return 0;
-}
 
 
 bool SaveData::extractLFSVolume(unsigned address, unsigned len, FILE *f)

@@ -10,23 +10,6 @@ BaseDevice::BaseDevice(IODevice &iodevice) :
 }
 
 
-UsbVolumeManager::VolumeOverviewReply *BaseDevice::getVolumeOverview(USBProtocolMsg &msg)
-{
-    msg.init(USBProtocol::Installer);
-    msg.header |= UsbVolumeManager::VolumeOverview;
-
-    if (!writeAndWaitForReply(msg)) {
-        return 0;
-    }
-
-    if (msg.payloadLen() >= sizeof(UsbVolumeManager::VolumeOverviewReply)) {
-        return msg.castPayload<UsbVolumeManager::VolumeOverviewReply>();
-    }
-
-    return 0;
-}
-
-
 const char *BaseDevice::getFirmwareVersion(USBProtocolMsg &msg)
 {
     /*
@@ -44,6 +27,46 @@ const char *BaseDevice::getFirmwareVersion(USBProtocolMsg &msg)
 
     msg.bytes[sizeof msg.bytes - 1] = 0;
     return msg.castPayload<char>();
+}
+
+
+const UsbVolumeManager::SysInfoReply *BaseDevice::getBaseSysInfo(USBProtocolMsg &msg)
+{
+    /*
+     * Retrieve this base's SysInfo.
+     * Returns a pointer to the data, which is captured in the passed in buffer,
+     * or NULL on failure.
+     */
+
+    msg.init(USBProtocol::Installer);
+    msg.header |= UsbVolumeManager::BaseSysInfo;
+
+    if (!writeAndWaitForReply(msg)) {
+        return 0;
+    }
+
+    if (msg.payloadLen() >= sizeof(UsbVolumeManager::SysInfoReply)) {
+        return msg.castPayload<UsbVolumeManager::SysInfoReply>();
+    }
+
+    return 0;
+}
+
+
+UsbVolumeManager::VolumeOverviewReply *BaseDevice::getVolumeOverview(USBProtocolMsg &msg)
+{
+    msg.init(USBProtocol::Installer);
+    msg.header |= UsbVolumeManager::VolumeOverview;
+
+    if (!writeAndWaitForReply(msg)) {
+        return 0;
+    }
+
+    if (msg.payloadLen() >= sizeof(UsbVolumeManager::VolumeOverviewReply)) {
+        return msg.castPayload<UsbVolumeManager::VolumeOverviewReply>();
+    }
+
+    return 0;
 }
 
 
@@ -71,23 +94,18 @@ UsbVolumeManager::VolumeDetailReply *BaseDevice::getVolumeDetail(USBProtocolMsg 
 }
 
 
-const UsbVolumeManager::SysInfoReply *BaseDevice::getBaseSysInfo(USBProtocolMsg &msg)
+UsbVolumeManager::LFSDetailReply *BaseDevice::getLFSDetail(USBProtocolMsg &msg, unsigned volBlockCode)
 {
-    /*
-     * Retrieve this base's SysInfo.
-     * Returns a pointer to the data, which is captured in the passed in buffer,
-     * or NULL on failure.
-     */
-
     msg.init(USBProtocol::Installer);
-    msg.header |= UsbVolumeManager::BaseSysInfo;
+    msg.header |= UsbVolumeManager::LFSDetail;
+    msg.append((uint8_t*) &volBlockCode, sizeof volBlockCode);
 
     if (!writeAndWaitForReply(msg)) {
         return 0;
     }
 
-    if (msg.payloadLen() >= sizeof(UsbVolumeManager::SysInfoReply)) {
-        return msg.castPayload<UsbVolumeManager::SysInfoReply>();
+    if (msg.payloadLen() >= sizeof(UsbVolumeManager::LFSDetailReply)) {
+        return msg.castPayload<UsbVolumeManager::LFSDetailReply>();
     }
 
     return 0;

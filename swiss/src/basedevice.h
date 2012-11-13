@@ -14,10 +14,12 @@ class BaseDevice
 public:
     BaseDevice(IODevice &iodevice);
 
-    UsbVolumeManager::VolumeOverviewReply *getVolumeOverview(USBProtocolMsg &msg);
     const char *getFirmwareVersion(USBProtocolMsg &msg);
-    UsbVolumeManager::VolumeDetailReply *getVolumeDetail(USBProtocolMsg &msg, unsigned volBlockCode);
     const UsbVolumeManager::SysInfoReply *getBaseSysInfo(USBProtocolMsg &msg);
+
+    UsbVolumeManager::VolumeOverviewReply *getVolumeOverview(USBProtocolMsg &msg);
+    UsbVolumeManager::VolumeDetailReply *getVolumeDetail(USBProtocolMsg &msg, unsigned volBlockCode);
+    UsbVolumeManager::LFSDetailReply *getLFSDetail(USBProtocolMsg &buffer, unsigned volBlockCode);
 
     bool pairCube(USBProtocolMsg &msg, uint64_t hwid, unsigned slot);
     UsbVolumeManager::PairingSlotDetailReply *pairingSlotDetail(USBProtocolMsg &msg, unsigned pairingSlot);
