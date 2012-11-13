@@ -132,25 +132,24 @@ bool SaveData::writeFileHeader(FILE *f, unsigned volBlockCode, unsigned numVolum
      * Subset of the info specified in a Backup.
      */
 
-    struct Header {
-        uint64_t    magic;
-        uint32_t    version;
-        uint32_t    numBlocks;
-        uint32_t    mc_pageSize;
-        uint32_t    mc_blockSize;
-        _SYSUUID    appUUID;
-        // variable size
-        // uint32_t len, bytes of package string
-        // uint32_t len, bytes of version string
+    HeaderV2 hdr = {
+        MAGIC,          // magic
+        VERSION,        // version
+        numVolumes,     // numVolumes
+        PAGE_SIZE,      // mc_pageSize
+        BLOCK_SIZE,     // mc_blockSize,
     };
 
-    Header hdr = {
-        0x4556415374666953LLU,      // magic
-        1,                          // version
-        numVolumes,                 // numVolumes
-        PAGE_SIZE,                  // mc_pageSize
-        BLOCK_SIZE,                 // mc_blockSize,
-    };
+    BaseDevice base(dev);
+    USBProtocolMsg m;
+    const UsbVolumeManager::SysInfoReply *sysinfo = base.getBaseSysInfo(m);
+    if (!sysinfo) {
+        return false;
+    }
+
+    memcpy(hdr.baseUniqueID, sysinfo->baseUniqueID, sizeof(hdr.baseUniqueID));
+    hdr.baseHwRevision = sysinfo->baseHwRevision;
+
 
     Metadata metadata(dev);
     std::string packageID = metadata.getString(volBlockCode, _SYS_METADATA_PACKAGE_STR);
@@ -244,11 +243,11 @@ bool SaveData::writeReply(FILE *f, unsigned & progress)
      * Read the pending reply from the device and write it out to our file.
      */
 
-    USBProtocolMsg m;
+    USBProtocolMsg m(USBProtocol::Installer);
+    BaseDevice base(dev);
 
-    m.len = dev.readPacket(m.bytes, m.MAX_LEN);
-    if ((m.header & 0xff) != UsbVolumeManager::FlashDeviceRead) {
-        fprintf(stderr, "\nunexpected response\n");
+    uint32_t header = m.header | UsbVolumeManager::FlashDeviceRead;
+    if (!base.waitForReply(header, m)) {
         return false;
     }
 
