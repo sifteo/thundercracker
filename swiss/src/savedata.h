@@ -20,7 +20,7 @@ public:
 
 private:
     static const unsigned PAGE_SIZE = 256;
-    static const unsigned BLOCK_SIZE = 64 * 1024;
+    static const unsigned BLOCK_SIZE = 128 * 1024;
     static const uint64_t MAGIC = 0x4556415374666953LLU;
 
     struct HeaderV1 {
