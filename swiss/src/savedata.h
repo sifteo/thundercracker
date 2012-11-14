@@ -57,6 +57,8 @@ private:
     bool sendRequest(unsigned baseAddr, unsigned &progress);
     bool writeReply(FILE *f, unsigned &progress);
 
+    bool volumeCodeForPackage(const std::string & pkg, unsigned &volumeCode);
+
     bool restoreV1(FILE *f);
     bool restoreV2(FILE *f);
 

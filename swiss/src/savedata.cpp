@@ -164,6 +164,33 @@ static bool readStr(std::string &s, FILE *f)
 }
 
 
+bool SaveData::volumeCodeForPackage(const std::string & pkg, unsigned &volBlockCode)
+{
+    /*
+     * Search the installed volumes for the given package string, and retrieve
+     * its current volume code if it exists.
+     */
+
+    BaseDevice base(dev);
+    Metadata metadata(dev);
+
+    USBProtocolMsg m;
+
+    UsbVolumeManager::VolumeOverviewReply *overview = base.getVolumeOverview(m);
+    if (!overview) {
+        return false;
+    }
+
+    while (overview->bits.clearFirst(volBlockCode)) {
+        if (pkg == metadata.getString(volBlockCode, _SYS_METADATA_PACKAGE_STR)) {
+            return true;
+        }
+    }
+
+    return false;
+}
+
+
 bool SaveData::restoreV1(FILE *f)
 {
     fprintf(stderr, "restoring savedata file version 0x1\n");
