@@ -276,7 +276,50 @@ bool MacronixMX25::waitForDma()
              *      is more completely resolved.
              */
 
+#if 1
+            SPI_t spiregs;
+            memcpy(&spiregs, (void*)&SPI1, sizeof(spiregs));
+
+            DMA_t dmaregs;
+            memcpy(&dmaregs, (void*)&DMA1, sizeof(dmaregs));
+
+            DMAChannel_t dmaRxChannelRegs;
+            memcpy(&dmaRxChannelRegs, (void*)&DMA1.channels[1], sizeof(dmaRxChannelRegs));
+
+            DMAChannel_t dmaTxChannelRegs;
+            memcpy(&dmaTxChannelRegs, (void*)&DMA1.channels[2], sizeof(dmaTxChannelRegs));
+
+            UART("************** SPI:");
+            UART("\r\nCR1: ");      UART_HEX(spiregs.CR1);
+            UART("\r\nCR2: ");      UART_HEX(spiregs.CR2);
+            UART("\r\nSR: ");       UART_HEX(spiregs.SR);
+            UART("\r\nDR: ");       UART_HEX(spiregs.DR);
+            UART("\r\nCRCPR: ");    UART_HEX(spiregs.CRCPR);
+            UART("\r\nRXCRCR: ");   UART_HEX(spiregs.RXCRCR);
+            UART("\r\nTXCRCR: ");   UART_HEX(spiregs.TXCRCR);
+            UART("\r\nI2SCFGR: ");  UART_HEX(spiregs.I2SCFGR);
+            UART("\r\nI2SPR: ");    UART_HEX(spiregs.I2SPR);
+
+            UART("\r\nDMA:");
+            UART("\r\nIFCR: ");     UART_HEX(dmaregs.IFCR);
+            UART("\r\nISR: ");      UART_HEX(dmaregs.ISR);
+
+            UART("\r\nrx chan:");
+            UART("\r\nCCR: ");      UART_HEX(dmaRxChannelRegs.CCR);
+            UART("\r\nCMAR: ");     UART_HEX(dmaRxChannelRegs.CMAR);
+            UART("\r\nCNDTR: ");    UART_HEX(dmaRxChannelRegs.CNDTR);
+            UART("\r\nCPAR: ");     UART_HEX(dmaRxChannelRegs.CPAR);
+
+            UART("\r\ntx chan:");
+            UART("\r\nCCR: ");      UART_HEX(dmaTxChannelRegs.CCR);
+            UART("\r\nCMAR: ");     UART_HEX(dmaTxChannelRegs.CMAR);
+            UART("\r\nCNDTR: ");    UART_HEX(dmaTxChannelRegs.CNDTR);
+            UART("\r\nCPAR: ");     UART_HEX(dmaTxChannelRegs.CPAR);
+
+            UART("\r\n");
+#else
             UART("DMA timeout\r\n");
+#endif
 
             spi.init();
             success = false;
