@@ -1,5 +1,6 @@
 #include "savedata.h"
 #include "basedevice.h"
+#include "lfsvolume.h"
 #include "util.h"
 #include "bits.h"
 #include "metadata.h"
@@ -36,6 +37,12 @@ int SaveData::run(int argc, char **argv, IODevice &_dev)
 
         const char *path = argv[2];
         success = saveData.restore(path);
+
+    } else if (argc >= 4 && !strcmp(argv[1], "collect")) {
+
+        const char *inpath = argv[2];
+        const char *outpath = argv[3];
+        success = saveData.collect(inpath, outpath);
 
     } else {
         fprintf(stderr, "incorrect args\n");
@@ -96,71 +103,126 @@ bool SaveData::restore(const char *filepath)
         return false;
     }
 
+    int fileVersion;
+    if (!getValidFileVersion(fin, fileVersion)) {
+        fclose(fin);
+        return false;
+    }
+
+    HeaderCommon hdr;
+    if (!readHeader(fileVersion, hdr, fin)) {
+        fclose(fin);
+        return false;
+    }
+
+    Records records;
+    if (!retrieveRecords(records, hdr, fin)) {
+        fclose(fin);
+        return false;
+    }
+
+    for (Records::const_iterator it = records.begin(); it != records.end(); it++) {
+
+        uint8_t key = it->first;
+        std::vector<RecordData> recs = it->second;
+
+        for (std::vector<RecordData>::const_iterator r = recs.begin(); r != recs.end(); r++) {
+            printf("record. 0x%02x: %d bytes data\n", key, r->size());
+        }
+    }
+
+    return false;
+}
+
+bool SaveData::collect(const char *inpath, const char *outpath)
+{
+    FILE *fin = fopen(inpath, "rb");
+    if (!fin) {
+        fprintf(stderr, "couldn't open %s: %s\n", inpath, strerror(errno));
+        return false;
+    }
+
+    FILE *fout = fopen(outpath, "wb");
+    if (!fout) {
+        fprintf(stderr, "couldn't open %s: %s\n", outpath, strerror(errno));
+        return false;
+    }
+
+    int fileVersion;
+    if (!getValidFileVersion(fin, fileVersion)) {
+        fclose(fin);
+        return false;
+    }
+
+    HeaderCommon hdr;
+    if (!readHeader(fileVersion, hdr, fin)) {
+        fclose(fin);
+        return false;
+    }
+
+    Records records;
+    if (!retrieveRecords(records, hdr, fin)) {
+        fclose(fin);
+        return false;
+    }
+
+    for (Records::const_iterator it = records.begin(); it != records.end(); it++) {
+
+        uint8_t key = it->first;
+        std::vector<RecordData> recs = it->second;
+
+        for (std::vector<RecordData>::const_iterator r = recs.begin(); r != recs.end(); r++) {
+            printf("record. 0x%02x: %d bytes data\n", key, r->size());
+        }
+    }
+
+    return false;
+}
+
+
+/********************************************************
+ * Internal
+ ********************************************************/
+
+
+bool SaveData::getValidFileVersion(FILE *f, int &version)
+{
+    /*
+     * Retrieve this file's version and ensure it's valid.
+     */
+
     struct MiniHeader {
         uint64_t    magic;
         uint32_t    version;
     } minihdr;
 
-    if (fread(&minihdr, sizeof minihdr, 1, fin) != 1) {
+    if (fread(&minihdr, sizeof minihdr, 1, f) != 1) {
         fprintf(stderr, "i/o error: %s\n", strerror(errno));
-        fclose(fin);
         return false;
     }
 
     if (minihdr.magic != MAGIC) {
-        fprintf(stderr, "%s is not a recognized savedata file\n", filepath);
-        fclose(fin);
+        fprintf(stderr, "not a recognized savedata file\n");
         return false;
     }
 
-    rewind(fin);
+    rewind(f);
+    version = minihdr.version;
 
-    bool rv;
-
-    switch (minihdr.version) {
+    switch (version) {
     case 0x1:
-        rv = restoreV1(fin);
-        break;
+        fprintf(stderr, "savedata file version 0x1 detected,"
+                "there are known errors with this version, "
+                "and this data cannot be restored\n");
+        return false;
+
     case 0x2:
-        rv = restoreV2(fin);
-        break;
+        return true;
+
     default:
         fprintf(stderr, "unsupported savedata file version: 0x%x\n", minihdr.version);
-        rv = false;
-    }
-
-    fclose(fin);
-    return rv;
-}
-
-
-static bool readStr(std::string &s, FILE *f)
-{
-    /*
-     * strings are preceded by their uint32_t length.
-     * a little stupid to allocate and free the intermediate buffer, but
-     * handy to be able to return a std::string.
-     */
-
-    uint32_t length;
-
-    if (fread(&length, sizeof length, 1, f) != 1) {
         return false;
     }
-
-    char *buf = (char*)malloc(length);
-    if (!buf) {
-        return false;
-    }
-
-    if (fread(buf, length, 1, f) != 1) {
-        return false;
-    }
-
-    s.assign(buf, length);
-    free(buf);
-
-    return true;
 }
 
 
@@ -191,72 +253,56 @@ bool SaveData::volumeCodeForPackage(const std::string & pkg, unsigned &volBlockC
 }
 
 
-bool SaveData::restoreV1(FILE *f)
+bool SaveData::readHeader(int version, HeaderCommon &h, FILE *f)
 {
-    fprintf(stderr, "restoring savedata file version 0x1\n");
+    /*
+     * Given the version, convert this file's header into HeaderCommon.
+     */
 
-    HeaderV1 hdr;
-    if (fread(&hdr, sizeof hdr, 1, f) != 1) {
-        fprintf(stderr, "i/o error: %s\n", strerror(errno));
-        return false;
+    if (version == 2) {
+        HeaderV2 v2;
+        if (fread(&v2, sizeof v2, 1, f) != 1) {
+            fprintf(stderr, "i/o error: %s\n", strerror(errno));
+            return false;
+        }
+
+        h.numBlocks       = v2.numBlocks;
+        h.mc_blockSize    = v2.mc_blockSize;
+        h.mc_pageSize     = v2.mc_pageSize;
+
+        if (!readStr(h.packageStr, f) || !readStr(h.versionStr, f)) {
+            return false;
+        }
+
+        return true;
     }
 
     return false;
 }
 
 
-bool SaveData::restoreV2(FILE *f)
+bool SaveData::retrieveRecords(Records &records, const HeaderCommon &details, FILE *f)
 {
-    HeaderV2 hdr;
-    if (fread(&hdr, sizeof hdr, 1, f) != 1) {
-        fprintf(stderr, "i/o error: %s\n", strerror(errno));
+    /*
+     * Common implementation for all savedata file versions.
+     */
+
+    unsigned volBlockCode;
+    if (!volumeCodeForPackage(details.packageStr, volBlockCode)) {
+        fprintf(stderr, "cannot restore: %s in not installed\n", details.packageStr.c_str());
         return false;
     }
 
-    std::string packageStr, versionStr;
-    if (!readStr(packageStr, f) || !readStr(versionStr, f)) {
-        return false;
+    for (unsigned b = 0; b < details.numBlocks; ++b) {
+
+        LFSVolume volume(details.mc_pageSize, details.mc_blockSize);
+        if (!volume.init(f)) {
+            fprintf(stderr, "couldn't init volume\n");
+            continue;
+        }
+
+        volume.retrieveRecords(records);
     }
-
-#if 0
-    fprintf(stderr, "restoring savedata file version 0x2\n");
-
-    printf("version: 0x%x\n", hdr.version);
-    printf("numBlocks: 0x%x\n", hdr.numBlocks);
-    printf("mc_pageSize: 0x%x\n", hdr.mc_pageSize);
-    printf("mc_blockSize: 0x%x\n", hdr.mc_blockSize);
-
-    printf("baseUniqueID: ");
-    for (unsigned i = 0; i < sizeof(hdr.baseUniqueID); ++i) {
-        printf("%02x", hdr.baseUniqueID[i]);
-    }
-    printf("\n");
-
-    printf("baseHwRevision: 0x%x\n", hdr.baseHwRevision);
-    printf("packageStr: %s\n", packageStr.c_str());
-    printf("versionStr: %s\n", versionStr.c_str());
-#endif
-
-    return false;
-}
-
-
-bool SaveData::extractLFSVolume(unsigned address, unsigned len, FILE *f)
-{
-    fprintf(stderr, "extracing volume at address 0x%x, len 0x%x\n", address, len);
-    return false;
-}
-
-
-static bool writeStr(const std::string &s, FILE *f)
-{
-    uint32_t length = s.length();
-
-    if (fwrite(&length, sizeof length, 1, f) != 1)
-        return false;
-
-    if (fwrite(s.c_str(), length, 1, f) != 1)
-        return false;
 
     return true;
 }
@@ -392,4 +438,48 @@ bool SaveData::writeReply(FILE *f, unsigned & progress)
     progress += len;
 
     return fwrite(m.castPayload<uint8_t>(), len, 1, f) == 1;
+}
+
+
+bool SaveData::writeStr(const std::string &s, FILE *f)
+{
+    uint32_t length = s.length();
+
+    if (fwrite(&length, sizeof length, 1, f) != 1)
+        return false;
+
+    if (fwrite(s.c_str(), length, 1, f) != 1)
+        return false;
+
+    return true;
+}
+
+
+bool SaveData::readStr(std::string &s, FILE *f)
+{
+    /*
+     * strings are preceded by their uint32_t length.
+     * a little stupid to allocate and free the intermediate buffer, but
+     * handy to be able to return a std::string.
+     */
+
+    uint32_t length;
+
+    if (fread(&length, sizeof length, 1, f) != 1) {
+        return false;
+    }
+
+    char *buf = (char*)malloc(length);
+    if (!buf) {
+        return false;
+    }
+
+    if (fread(buf, length, 1, f) != 1) {
+        return false;
+    }
+
+    s.assign(buf, length);
+    free(buf);
+
+    return true;
 }
