@@ -5,11 +5,20 @@
 #include "usbvolumemanager.h"
 
 #include <string>
+#include <map>
+#include <vector>
 
 class SaveData
 {
 public:
     static const unsigned VERSION = 2;
+
+    /*
+     * We capture all records for a given key, and make sure they're
+     * ordered chronologically.
+     */
+    typedef std::vector<uint8_t> RecordData;
+    typedef std::map<uint8_t, std::vector<RecordData> > Records;
 
     SaveData(IODevice &_dev);
 
