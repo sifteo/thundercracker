@@ -226,8 +226,10 @@ void SPIMaster::dmaCallback(void *p, uint8_t flags)
     // to clear the status register so subsequent operations can proceed
     if (spi->hw->SR & (1 << 6)) {   // OVR - overrun flag
         (void)spi->hw->DR;
+        (void)spi->hw->SR;
     }
 
-    if (spi->completionCB)
+    if (spi->completionCB) {
         spi->completionCB();
+    }
 }
