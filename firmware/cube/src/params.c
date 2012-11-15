@@ -60,10 +60,10 @@ void params_init()
 
         setb    _FSR_WEN            ; Program value from RNG
         mov     a, _RNGDAT
+        jz      3$                  ; 0xff is  not permissible
+        cpl     a
         movx    @dptr, a
         clr     _FSR_WEN
-
-        sjmp    4$                  ; Test byte, make sure it is not 0xFF
 
 2$:     inc     dptr
         mov     a, _DPL
