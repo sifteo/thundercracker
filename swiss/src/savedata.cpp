@@ -9,6 +9,7 @@
 #include <errno.h>
 #include <string>
 #include <sstream>
+#include <stdio.h>
 #include <stdlib.h>
 
 using namespace std;
@@ -16,25 +17,36 @@ using namespace std;
 int SaveData::run(int argc, char **argv, IODevice &_dev)
 {
     bool success = false;
-    bool rpc = false;
     SaveData saveData(_dev);
 
     if (!_dev.open(IODevice::SIFTEO_VID, IODevice::BASE_PID))
         return 1;
 
     if (argc >= 4 && !strcmp(argv[1], "extract")) {
-        int ipath = 3;
-        int ivol = 2;
-        
-        if (!strcmp(argv[2], "--rpc")) {
-            ipath = 4;
-            ivol = 3;
-            rpc = true;
+
+        char *path = 0;
+        char *volumeStr = 0;
+        bool normalize = false;
+        bool rpc = false;
+
+        for (unsigned i = 2; i < argc; ++i) {
+            if (!strcmp(argv[i], "--rpc")) {
+                rpc = true;
+            } else if (!strcmp(argv[i], "--normalize")) {
+                normalize = true;
+            } else if (!volumeStr) {
+                volumeStr = argv[i];
+            } else {
+                path = argv[i];
+            }
         }
 
-        unsigned volume;
-        const char *path = argv[ipath];
-        success = Util::parseVolumeCode(argv[ivol], volume) && saveData.extract(volume, path, rpc);
+        if (!path || !volumeStr) {
+            fprintf(stderr, "incorrect args\n");
+        } else {
+            unsigned volume;
+            success = Util::parseVolumeCode(volumeStr, volume) && saveData.extract(volume, path, normalize, rpc);
+        }
 
     } else if (argc >= 3 && !strcmp(argv[1], "restore")) {
 
@@ -58,7 +70,7 @@ SaveData::SaveData(IODevice &_dev) :
     dev(_dev)
 {}
 
-bool SaveData::extract(unsigned volume, const char *filepath, bool rpc)
+bool SaveData::extract(unsigned volume, const char *filepath, bool normalized, bool rpc)
 {
     /*
      * Retrieve all LFS volumes for a given parent volume.
@@ -80,17 +92,37 @@ bool SaveData::extract(unsigned volume, const char *filepath, bool rpc)
         return true;
     }
 
-    FILE *fout = fopen(filepath, "wb");
-    if (!fout) {
+    /*
+     * If normalization has been requested, write the raw file to a temp file,
+     * feed it as the input to normalize(), and remove it.
+     *
+     * Otherwise, write the raw data to the requested file and be done.
+     */
+
+    const char *rawfilepath = normalized ? ::tmpnam(0) : filepath;
+
+    FILE *fraw = fopen(rawfilepath, "wb");
+    if (!fraw) {
         fprintf(stderr, "couldn't open %s: %s\n", filepath, strerror(errno));
         return false;
     }
 
-    if (!writeFileHeader(fout, volume, reply->count)) {
+    if (!writeFileHeader(fraw, volume, reply->count)) {
         return false;
     }
 
-    return writeVolumes(reply, fout, rpc);
+    if (!writeVolumes(reply, fraw, rpc)) {
+        return false;
+    }
+
+    if (!normalized) {
+        return true;
+    }
+
+    fclose(fraw);
+    bool rv = normalize(rawfilepath, filepath);
+    remove(rawfilepath);
+    return rv;
 }
 
 
