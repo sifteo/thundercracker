@@ -8,7 +8,10 @@
 
 #include <errno.h>
 #include <string>
+#include <sstream>
 #include <stdlib.h>
+
+using namespace std;
 
 int SaveData::run(int argc, char **argv, IODevice &_dev)
 {
@@ -38,11 +41,11 @@ int SaveData::run(int argc, char **argv, IODevice &_dev)
         const char *path = argv[2];
         success = saveData.restore(path);
 
-    } else if (argc >= 4 && !strcmp(argv[1], "collect")) {
+    } else if (argc >= 4 && !strcmp(argv[1], "normalize")) {
 
         const char *inpath = argv[2];
         const char *outpath = argv[3];
-        success = saveData.collect(inpath, outpath);
+        success = saveData.normalize(inpath, outpath);
 
     } else {
         fprintf(stderr, "incorrect args\n");
@@ -134,7 +137,7 @@ bool SaveData::restore(const char *filepath)
     return false;
 }
 
-bool SaveData::collect(const char *inpath, const char *outpath)
+bool SaveData::normalize(const char *inpath, const char *outpath)
 {
     FILE *fin = fopen(inpath, "rb");
     if (!fin) {
@@ -166,17 +169,7 @@ bool SaveData::collect(const char *inpath, const char *outpath)
         return false;
     }
 
-    for (Records::const_iterator it = records.begin(); it != records.end(); it++) {
-
-        uint8_t key = it->first;
-        std::vector<RecordData> recs = it->second;
-
-        for (std::vector<RecordData>::const_iterator r = recs.begin(); r != recs.end(); r++) {
-            printf("record. 0x%02x: %d bytes data\n", key, r->size());
-        }
-    }
-
-    return false;
+    return writeNormalizedRecords(records, hdr, fout);
 }
 
 
@@ -308,6 +301,83 @@ bool SaveData::retrieveRecords(Records &records, const HeaderCommon &details, FI
         }
 
         volume.retrieveRecords(records);
+    }
+
+    return true;
+}
+
+
+void SaveData::writeNormalizedItem(stringstream & ss, uint8_t key, uint32_t len, const void *data)
+{
+    /*
+     * Each header item in a simplified savedata file looks like:
+     * <uint8_t key> <uint32_t bloblen> <bloblen bytes of payload>
+     */
+
+    ss << key;
+    ss.write((const char*)&len, sizeof(len));
+    ss.write((const char*)data, len);
+}
+
+
+bool SaveData::writeNormalizedRecords(Records &records, const HeaderCommon &details, FILE *f)
+{
+    uint64_t magic = NORMALIZED_MAGIC;
+    if (fwrite(&magic, sizeof magic, 1, f) != 1) {
+        return false;
+    }
+
+    /*
+     * Write headers section
+     */
+
+    stringstream hs;
+    writeNormalizedItem(hs, PackageString, details.packageStr.length(), details.packageStr.c_str());
+    writeNormalizedItem(hs, VersionString, details.versionStr.length(), details.versionStr.c_str());
+    writeNormalizedItem(hs, UUID, sizeof(details.appUUID), &details.appUUID);
+    writeNormalizedItem(hs, BaseHWID, sizeof(details.baseUniqueID), &details.baseUniqueID);
+    writeNormalizedItem(hs, BaseFirmwareVersion, details.baseFirmwareVersionStr.length(), details.baseFirmwareVersionStr.c_str());
+
+    struct NormalizedSectionHeader {
+        uint32_t type;
+        uint32_t length;
+    } section;
+
+    section.type = SectionHeader;
+    section.length = hs.tellp();
+
+    if (fwrite(&section, sizeof section, 1, f) != 1) {
+        return false;
+    }
+
+    if (fwrite(hs.str().c_str(), section.length, 1, f) != 1) {
+        return false;
+    }
+
+    /*
+     * Write records section
+     */
+
+    stringstream rs;
+    for (Records::const_iterator it = records.begin(); it != records.end(); it++) {
+
+        uint8_t key = it->first;
+        std::vector<RecordData> recs = it->second;
+
+        for (std::vector<RecordData>::const_iterator r = recs.begin(); r != recs.end(); r++) {
+            writeNormalizedItem(rs, key, r->size(), &(*r)[0]);
+        }
+    }
+
+    section.type = SectionRecords;
+    section.length = rs.tellp();
+
+    if (fwrite(&section, sizeof section, 1, f) != 1) {
+        return false;
+    }
+
+    if (fwrite(rs.str().c_str(), section.length, 1, f) != 1) {
+        return false;
     }
 
     return true;

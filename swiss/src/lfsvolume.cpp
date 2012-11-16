@@ -85,8 +85,6 @@ bool LFSVolume::init(FILE *f)
     }
     payload.insert(payload.begin(), buf, buf + rxed);
 
-    printf("payload size: 0x%x 0x%x\n", payload.size(), rxed);
-
     return true;
 }
 

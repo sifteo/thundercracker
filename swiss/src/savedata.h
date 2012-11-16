@@ -13,6 +13,19 @@ class SaveData
 public:
     static const unsigned VERSION = 2;
 
+    enum NormalizedSectionTypes {
+        SectionHeader,
+        SectionRecords
+    };
+
+    enum NormalizedHeaderTypes {
+        PackageString,
+        VersionString,
+        UUID,
+        BaseHWID,
+        BaseFirmwareVersion
+    };
+
     /*
      * We capture all records for a given key, and make sure they're
      * ordered chronologically.
@@ -26,12 +39,13 @@ public:
 
     bool extract(unsigned volume, const char *filepath, bool rpc=false);
     bool restore(const char *filepath);
-    bool collect(const char *inpath, const char *outpath);
+    bool normalize(const char *inpath, const char *outpath);
 
 private:
     static const unsigned PAGE_SIZE = 256;
     static const unsigned BLOCK_SIZE = 128 * 1024;
     static const uint64_t MAGIC = 0x4556415374666953LLU;
+    static const uint64_t NORMALIZED_MAGIC = 0x4C4D524E74666953LLU;
 
     // V1 files had a fatal error in one of their size calculations.
     // we can't get anything useful from them, so treat them as unsupported.
@@ -78,6 +92,9 @@ private:
 
     static bool writeStr(const std::string &s, FILE *f);
     static bool readStr(std::string &s, FILE *f);
+
+    static void writeNormalizedItem(std::stringstream & ss, uint8_t key, uint32_t len, const void *data);
+    bool writeNormalizedRecords(Records &records, const HeaderCommon &details, FILE *f);
 
     IODevice &dev;
 };
