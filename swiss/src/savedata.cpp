@@ -122,6 +122,10 @@ bool SaveData::extract(unsigned volume, const char *filepath, bool normalized, b
     fclose(fraw);
     bool rv = normalize(rawfilepath, filepath);
     remove(rawfilepath);
+
+    printf("complete - see tools/savedata.py within your SDK installation "
+           "for a template to interpret the contents of %s\n", filepath);
+
     return rv;
 }
 
