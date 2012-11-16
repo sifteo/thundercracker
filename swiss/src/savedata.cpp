@@ -266,11 +266,17 @@ bool SaveData::readHeader(int version, HeaderCommon &h, FILE *f)
             return false;
         }
 
-        h.numBlocks       = v2.numBlocks;
-        h.mc_blockSize    = v2.mc_blockSize;
-        h.mc_pageSize     = v2.mc_pageSize;
+        h.numBlocks     = v2.numBlocks;
+        h.mc_blockSize  = v2.mc_blockSize;
+        h.mc_pageSize   = v2.mc_pageSize;
 
-        if (!readStr(h.packageStr, f) || !readStr(h.versionStr, f)) {
+        memcpy(h.appUUID.bytes, v2.appUUID.bytes, sizeof(h.appUUID.bytes));
+        memcpy(h.baseUniqueID, v2.baseUniqueID, sizeof(h.baseUniqueID));
+
+        if (!readStr(h.baseFirmwareVersionStr, f) ||
+            !readStr(h.packageStr, f) ||
+            !readStr(h.versionStr, f))
+        {
             return false;
         }
 
@@ -333,6 +339,12 @@ bool SaveData::writeFileHeader(FILE *f, unsigned volBlockCode, unsigned numVolum
     memcpy(hdr.baseUniqueID, sysinfo->baseUniqueID, sizeof(hdr.baseUniqueID));
     hdr.baseHwRevision = sysinfo->baseHwRevision;
 
+    USBProtocolMsg mFWV;
+    const char *fwv = base.getFirmwareVersion(mFWV);
+    if (!fwv) {
+        return false;
+    }
+    string baseFWVersion(fwv);
 
     Metadata metadata(dev);
     std::string packageID = metadata.getString(volBlockCode, _SYS_METADATA_PACKAGE_STR);
@@ -346,8 +358,9 @@ bool SaveData::writeFileHeader(FILE *f, unsigned volBlockCode, unsigned numVolum
     if (fwrite(&hdr, sizeof hdr, 1, f) != 1)
         return false;
 
-    return writeStr(packageID, f) && writeStr(version, f);
+    return writeStr(baseFWVersion, f) && writeStr(packageID, f) && writeStr(version, f);
 }
+
 
 bool SaveData::writeVolumes(UsbVolumeManager::LFSDetailReply *reply, FILE *f, bool rpc)
 {

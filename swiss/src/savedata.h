@@ -46,6 +46,7 @@ private:
         uint8_t     baseUniqueID[SysInfo::UniqueIdNumBytes];
         uint32_t    baseHwRevision;
         // variable size
+        // uint32_t len, bytes of base firmware version
         // uint32_t len, bytes of game package string
         // uint32_t len, bytes of game version string
     };
@@ -55,6 +56,9 @@ private:
         uint32_t    numBlocks;
         uint32_t    mc_pageSize;
         uint32_t    mc_blockSize;
+        _SYSUUID    appUUID;
+        uint8_t     baseUniqueID[SysInfo::UniqueIdNumBytes];
+        std::string baseFirmwareVersionStr;
         std::string packageStr;
         std::string versionStr;
     };
