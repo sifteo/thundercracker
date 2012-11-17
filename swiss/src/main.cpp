@@ -63,7 +63,7 @@ static const Command commands[] = {
     {
         "savedata",
         "extract or restore an application's save data",
-        "savedata (extract <volumeID> <fout> [--normalize] | restore <fin>)",
+        "savedata (extract <volumeID> <fout> [--raw] | restore <fin>)",
         SaveData::run
     },
     {

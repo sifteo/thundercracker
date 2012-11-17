@@ -55,7 +55,7 @@ To retrieve savedata, use the `swiss savedata extract` command.
 
 For instance, let's extract the save data for the __Hello World SDK Example__ shown in the manifest output above. Note that the __VOL__ code for this app is __10__, which we need to pass to swiss. The steps are as follows:
 
-    $ swiss savedata extract 10 saved.bin --normalize
+    $ swiss savedata extract 10 saved.bin
 
 Now `saved.bin` contains all the StoredObject records that were found on the Base, in a simple binary format. Since StoredObject data is opaque to the system, we don't offer any standard way of formatting or parsing it. However, __tools/savedata.py__ within your SDK installation can serve as a template for parsing these files. By default, it will print savedata contents to stdout, dumping the hex value of user data. Invoke it as follows:
 

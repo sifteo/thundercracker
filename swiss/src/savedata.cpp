@@ -28,14 +28,14 @@ int SaveData::run(int argc, char **argv, IODevice &_dev)
 
         char *path = 0;
         char *volumeStr = 0;
-        bool normalize = false;
+        bool raw = false;
         bool rpc = false;
 
         for (unsigned i = 2; i < argc; ++i) {
             if (!strcmp(argv[i], "--rpc")) {
                 rpc = true;
-            } else if (!strcmp(argv[i], "--normalize")) {
-                normalize = true;
+            } else if (!strcmp(argv[i], "--raw")) {
+                raw = true;
             } else if (!volumeStr) {
                 volumeStr = argv[i];
             } else {
@@ -47,7 +47,7 @@ int SaveData::run(int argc, char **argv, IODevice &_dev)
             fprintf(stderr, "incorrect args\n");
         } else {
             unsigned volume;
-            success = Util::parseVolumeCode(volumeStr, volume) && saveData.extract(volume, path, normalize, rpc);
+            success = Util::parseVolumeCode(volumeStr, volume) && saveData.extract(volume, path, raw, rpc);
         }
 
     } else if (argc >= 3 && !strcmp(argv[1], "restore")) {
@@ -72,7 +72,7 @@ SaveData::SaveData(IODevice &_dev) :
     dev(_dev)
 {}
 
-bool SaveData::extract(unsigned volume, const char *filepath, bool normalized, bool rpc)
+bool SaveData::extract(unsigned volume, const char *filepath, bool raw, bool rpc)
 {
     /*
      * Retrieve all LFS volumes for a given parent volume.
@@ -95,13 +95,15 @@ bool SaveData::extract(unsigned volume, const char *filepath, bool normalized, b
     }
 
     /*
-     * If normalization has been requested, write the raw file to a temp file,
-     * feed it as the input to normalize(), and remove it.
+     * If a raw file has been requested, write the raw filesystem data there
+     * and be done.
      *
-     * Otherwise, write the raw data to the requested file and be done.
+     *
+     * Otherwise, write the raw data to a tmp file, then feed it as
+     * the input to normalize(), and remove it when we're done.
      */
 
-    const char *rawfilepath = normalized ? ::tmpnam(0) : filepath;
+    const char *rawfilepath = raw ? filepath : tmpnam(0);
 
     FILE *fraw = fopen(rawfilepath, "wb");
     if (!fraw) {
@@ -117,7 +119,7 @@ bool SaveData::extract(unsigned volume, const char *filepath, bool normalized, b
         return false;
     }
 
-    if (!normalized) {
+    if (raw) {
         return true;
     }
 
