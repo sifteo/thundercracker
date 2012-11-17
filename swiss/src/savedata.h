@@ -47,6 +47,9 @@ private:
     static const uint64_t MAGIC = 0x4556415374666953LLU;
     static const uint64_t NORMALIZED_MAGIC = 0x4C4D524E74666953LLU;
 
+    static const unsigned SYSLFS_VOLUME_BLOCK_CODE = 0;
+    static const char *SYSLFS_PACKAGE_STR;
+
     // V1 files had a fatal error in one of their size calculations.
     // we can't get anything useful from them, so treat them as unsupported.
 

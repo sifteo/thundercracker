@@ -14,6 +14,8 @@
 
 using namespace std;
 
+const char * SaveData::SYSLFS_PACKAGE_STR = "com.sifteo.syslfs";
+
 int SaveData::run(int argc, char **argv, IODevice &_dev)
 {
     bool success = false;
@@ -262,6 +264,11 @@ bool SaveData::volumeCodeForPackage(const std::string & pkg, unsigned &volBlockC
      * its current volume code if it exists.
      */
 
+    if (pkg == SYSLFS_PACKAGE_STR) {
+        volBlockCode = 0;
+        return true;
+    }
+
     BaseDevice base(dev);
     Metadata metadata(dev);
 
@@ -324,7 +331,7 @@ bool SaveData::retrieveRecords(Records &records, const HeaderCommon &details, FI
 
     unsigned volBlockCode;
     if (!volumeCodeForPackage(details.packageStr, volBlockCode)) {
-        fprintf(stderr, "cannot restore: %s in not installed\n", details.packageStr.c_str());
+        fprintf(stderr, "cannot retrieve records: %s in not installed\n", details.packageStr.c_str());
         return false;
     }
 
@@ -457,8 +464,12 @@ bool SaveData::writeFileHeader(FILE *f, unsigned volBlockCode, unsigned numVolum
     std::string version = metadata.getString(volBlockCode, _SYS_METADATA_VERSION_STR);
     int uuidLen = metadata.getBytes(volBlockCode, _SYS_METADATA_UUID, hdr.appUUID.bytes, sizeof hdr.appUUID.bytes);
 
-    if (packageID.empty() || version.empty() || uuidLen <= 0) {
-        return false;
+    if (volBlockCode == SYSLFS_VOLUME_BLOCK_CODE) {
+        packageID = SYSLFS_PACKAGE_STR;
+    } else {
+        if (packageID.empty() || version.empty() || uuidLen <= 0) {
+            return false;
+        }
     }
 
     if (fwrite(&hdr, sizeof hdr, 1, f) != 1)
