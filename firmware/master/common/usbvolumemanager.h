@@ -83,6 +83,8 @@ public:
     static void onUsbData(const USBProtocolMsg &m);
 
 private:
+    static const unsigned SYSLFS_VOLUME_BLOCK_CODE = 0;
+
     static FlashVolumeWriter writer;
 
     // handlers

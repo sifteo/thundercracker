@@ -274,8 +274,8 @@ void UsbVolumeManager::lfsDetail(const USBProtocolMsg &m, USBProtocolMsg &reply)
     r->count= 0;
     reply.header |= LFSDetail;
 
-    // does the parent volume exist?
-    if (!vol.isValid()) {
+    // ensure the request is for SysLFS or an existing parent volume
+    if (parentBlockCode != SYSLFS_VOLUME_BLOCK_CODE && !vol.isValid()) {
         return;
     }
 
