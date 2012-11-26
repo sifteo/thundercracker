@@ -9,10 +9,28 @@
 #include <stdint.h>
 #include "hardware.h"
 #include "gpio.h"
+#include "dma.h"
 
 
 class SPIMaster {
  public:
+
+    enum ClockDivisor {
+        fPCLK_2     = (0 << 3),
+        fPCLK_4     = (1 << 3),
+        fPCLK_8     = (2 << 3),
+        fPCLK_16    = (3 << 3),
+        fPCLK_32    = (4 << 3),
+        fPCLK_64    = (5 << 3),
+        fPCLK_128   = (6 << 3),
+        fPCLK_256   = (7 << 3)
+    };
+
+    struct Config {
+        Dma::Priority dmaRxPrio;
+        ClockDivisor divisor;
+        // others if we need them
+    };
 
     typedef void (*CompletionCallback)();
 
@@ -25,7 +43,7 @@ class SPIMaster {
         : hw(_hw), csn(_csn), sck(_sck), miso(_miso), mosi(_mosi),
           completionCB(cb) {}
 
-    void init();
+    void init(const Config & config);
 
     ALWAYS_INLINE void begin() {
         csn.setLow();

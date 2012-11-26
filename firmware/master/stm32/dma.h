@@ -14,6 +14,13 @@ class Dma
 public:
     typedef void (*DmaIsr_t)(void *p, uint8_t flags);
 
+    enum Priority {
+        LowPrio         = (0 << 12),
+        MediumPrio      = (1 << 12),
+        HighPrio        = (2 << 12),
+        VeryHighPrio    = (3 << 12)
+    };
+
     enum IsrFlags {
         Complete        = (1 << 1),
         HalfComplete    = (1 << 2),

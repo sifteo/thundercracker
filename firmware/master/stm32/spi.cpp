@@ -7,7 +7,7 @@
 #include "board.h"
 #include "dma.h"
 
-void SPIMaster::init()
+void SPIMaster::init(const Config &config)
 {
     /*
      * Note: As another countermeasure against the DMA hangs we've
@@ -18,7 +18,6 @@ void SPIMaster::init()
      */
     
     if (hw == &SPI1) {
-        dmaPriorityBits = (1 << 12);
         RCC.APB2ENR |= (1 << 12);
 
         dmaRxChan = &DMA1.channels[1];  // DMA1, channel 2
@@ -28,7 +27,6 @@ void SPIMaster::init()
         Dma::registerHandler(&DMA1, 2, dmaCallback, this);
     }
     else if (hw == &SPI2) {
-        dmaPriorityBits = (2 << 12);
         RCC.APB1ENR |= (1 << 14);
 
         dmaRxChan = &DMA1.channels[3];  // DMA1, channel 4
@@ -38,7 +36,6 @@ void SPIMaster::init()
         Dma::registerHandler(&DMA1, 4, dmaCallback, this);
     }
     else if (hw == &SPI3) {
-        dmaPriorityBits = (3 << 12);
         RCC.APB1ENR |= (1 << 15);
 
         dmaRxChan = &DMA2.channels[0];  // DMA2, channel 1
@@ -47,6 +44,8 @@ void SPIMaster::init()
         dmaTxChan = &DMA2.channels[1];  // DMA2, channel 2
         Dma::registerHandler(&DMA2, 1, dmaCallback, this);
     }
+
+    dmaPriorityBits = config.dmaRxPrio;
 
     csn.setHigh();
     csn.setControl(GPIOPin::OUT_10MHZ);
@@ -66,10 +65,10 @@ void SPIMaster::init()
     }
 #endif
 
-    hw->CR1 =   (0 << 3) |  // BR - baud rate, no divider
-                (1 << 2) |  // MSTR - master configuration
-                (0 << 1) |  // CPOL - polarity, LOW
-                (0 << 0);   // CPHA - phase, first clock is transition
+    hw->CR1 =   config.divisor |    // BR - baud rate
+                (1 << 2) |          // MSTR - master configuration
+                (0 << 1) |          // CPOL - polarity, LOW
+                (0 << 0);           // CPHA - phase, first clock is transition
 
     hw->CR2 =   (1 << 2) |  // SSOE
                 (1 << 1) |  // TXDMAEN
@@ -157,8 +156,7 @@ void SPIMaster::transferDma(const uint8_t *txbuf, uint8_t *rxbuf, unsigned len)
 
     dmaTxChan->CNDTR = len;
     dmaTxChan->CMAR = (uint32_t)txbuf;
-    dmaTxChan->CCR =    dmaPriorityBits |
-                        (1 << 7) |  // MINC - memory pointer increment
+    dmaTxChan->CCR =    (1 << 7) |  // MINC - memory pointer increment
                         (1 << 4) |  // DIR - direction, 1 == read from memory
                         (1 << 3) |  // TEIE - transfer error ISR enable
                         (0 << 1);   // TCIE - transfer complete ISR enable
@@ -189,8 +187,7 @@ void SPIMaster::txDma(const uint8_t *txbuf, unsigned len)
 
     dmaTxChan->CNDTR = len;
     dmaTxChan->CMAR = (uint32_t)txbuf;
-    dmaTxChan->CCR =    dmaPriorityBits |
-                        (1 << 7) |  // MINC - memory pointer increment
+    dmaTxChan->CCR =    (1 << 7) |  // MINC - memory pointer increment
                         (1 << 4) |  // DIR - direction, 1 == read from memory
                         (1 << 3) |  // TEIE - transfer error ISR enable
                         (0 << 1);   // TCIE - transfer complete ISR enable

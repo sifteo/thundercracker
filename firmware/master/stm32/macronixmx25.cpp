@@ -13,13 +13,22 @@
 
 volatile bool MacronixMX25::dmaInProgress = false;
 
+/*
+ * DMA must be very highest priority since it's our highest bandwidth device.
+ * SPI1 is on APB2, clocked @ 72MHz. We'd like to run at 18MHz, so divide by 4.
+ */
+static const SPIMaster::Config spicfg = {
+    Dma::VeryHighPrio,
+    SPIMaster::fPCLK_4
+};
+
 void MacronixMX25::init()
 {
     GPIOPin writeProtect = FLASH_WP_GPIO;
     writeProtect.setControl(GPIOPin::OUT_2MHZ);
     writeProtect.setHigh();
 
-    spi.init();
+    spi.init(spicfg);
 
     // prepare to write the status register
     spi.begin();
@@ -276,7 +285,7 @@ bool MacronixMX25::waitForDma()
              *      is more completely resolved.
              */
 
-#if 1
+#if 0
             SPI_t spiregs;
             memcpy(&spiregs, (void*)&SPI1, sizeof(spiregs));
 
@@ -321,7 +330,7 @@ bool MacronixMX25::waitForDma()
             UART("DMA timeout\r\n");
 #endif
 
-            spi.init();
+            spi.init(spicfg);
             success = false;
         }
     }

@@ -30,7 +30,11 @@ void NRF24L01::init()
      * Common hardware initialization, regardless of radio usage mode.
      */
 
-    spi.init();
+    const SPIMaster::Config cfg = {
+        Dma::MediumPrio,
+        SPIMaster::fPCLK_2
+    };
+    spi.init(cfg);
 
     ce.setLow();
     ce.setControl(GPIOPin::OUT_10MHZ);
