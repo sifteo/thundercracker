@@ -18,6 +18,9 @@ void SPIMaster::init(const Config &config)
      */
     
     if (hw == &SPI1) {
+
+        RCC.APB2RSTR |= (1 << 12);
+        RCC.APB2RSTR &= ~(1 << 12);
         RCC.APB2ENR |= (1 << 12);
 
         dmaRxChan = &DMA1.channels[1];  // DMA1, channel 2
@@ -25,8 +28,11 @@ void SPIMaster::init(const Config &config)
 
         dmaTxChan = &DMA1.channels[2];  // DMA1, channel 3
         Dma::registerHandler(&DMA1, 2, dmaCallback, this);
-    }
-    else if (hw == &SPI2) {
+
+    } else if (hw == &SPI2) {
+
+        RCC.APB1RSTR |= (1 << 14);
+        RCC.APB1RSTR &= ~(1 << 14);
         RCC.APB1ENR |= (1 << 14);
 
         dmaRxChan = &DMA1.channels[3];  // DMA1, channel 4
@@ -34,8 +40,11 @@ void SPIMaster::init(const Config &config)
 
         dmaTxChan = &DMA1.channels[4];  // DMA1, channel 5
         Dma::registerHandler(&DMA1, 4, dmaCallback, this);
-    }
-    else if (hw == &SPI3) {
+
+    } else if (hw == &SPI3) {
+
+        RCC.APB1RSTR |= (1 << 15);
+        RCC.APB1RSTR &= ~(1 << 15);
         RCC.APB1ENR |= (1 << 15);
 
         dmaRxChan = &DMA2.channels[0];  // DMA2, channel 1
@@ -45,7 +54,7 @@ void SPIMaster::init(const Config &config)
         Dma::registerHandler(&DMA2, 1, dmaCallback, this);
     }
 
-    dmaPriorityBits = config.dmaRxPrio;
+    dmaRxPriorityBits = config.dmaRxPrio;
 
     csn.setHigh();
     csn.setControl(GPIOPin::OUT_10MHZ);
@@ -147,7 +156,7 @@ void SPIMaster::transferDma(const uint8_t *txbuf, uint8_t *rxbuf, unsigned len)
 {
     dmaRxChan->CNDTR = len;
     dmaRxChan->CMAR = (uint32_t)rxbuf;
-    dmaRxChan->CCR =    dmaPriorityBits |
+    dmaRxChan->CCR =    dmaRxPriorityBits |
                         (1 << 7) |  // MINC - memory pointer increment
                         (0 << 4) |  // DIR - direction, 0 == read from peripheral
                         (1 << 3) |  // TEIE - transfer error ISR enable
@@ -179,7 +188,7 @@ void SPIMaster::txDma(const uint8_t *txbuf, unsigned len)
     static uint8_t dummy;
     dmaRxChan->CNDTR = len;
     dmaRxChan->CMAR = (uint32_t)&dummy;
-    dmaRxChan->CCR =    dmaPriorityBits |
+    dmaRxChan->CCR =    dmaRxPriorityBits |
                         (0 << 7) |  // MINC - memory pointer increment
                         (0 << 4) |  // DIR - direction, 0 == read from peripheral
                         (1 << 3) |  // TEIE - transfer error ISR enable

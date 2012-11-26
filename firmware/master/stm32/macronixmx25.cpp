@@ -326,8 +326,6 @@ bool MacronixMX25::waitForDma()
             UART("\r\nCPAR: ");     UART_HEX(dmaTxChannelRegs.CPAR);
 
             UART("\r\n");
-#else
-            UART("DMA timeout\r\n");
 #endif
 
             spi.init(spicfg);

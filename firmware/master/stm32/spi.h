@@ -68,7 +68,7 @@ class SPIMaster {
     GPIOPin sck;
     GPIOPin miso;
     GPIOPin mosi;
-    uint32_t dmaPriorityBits;
+    uint32_t dmaRxPriorityBits;
 
     CompletionCallback completionCB;
     static void dmaCallback(void *p, uint8_t flags);
