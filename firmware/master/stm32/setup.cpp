@@ -42,10 +42,11 @@ extern "C" void _start()
      *   - PLL x9 => 72 MHz
      *   - SYSCLK at 72 MHz
      *   - HCLK at 72 MHz
-     *   - APB1 at 18 MHz (/4)
-     *       - SPI2 at 9 MHz
-     *   - APB2 at 36 MHz (/2)
+     *   - APB1 at 36 MHz (/2)
+     *       - SPI2 (radio) needs to be 9 MHz
+     *   - APB2 at 72 MHz (no divisor)
      *       - GPIOs
+     *       - SPI1 (flash)
      *   - USB clock at 48 MHz (PLL /1)
      *
      * Other things that depend on our clock setup:
@@ -87,7 +88,7 @@ extern "C" void _start()
                 (1 << 16)                 | // PLLSRC - HSE
                 (2 << 14)                 | // ADCPRE - div6, ADCCLK is 14Mhz max
                 (0 << 11)                 | // PPRE2 - APB2 prescaler, no divisor
-                (5 << 8)                  | // PPRE1 - APB1 prescaler, divide by 4
+                (4 << 8)                  | // PPRE1 - APB1 prescaler, divide by 2
                 (0 << 4);                   // HPRE - AHB prescaler, no divisor
 
     FLASH.ACR = (1 << 4) |  // prefetch buffer enable

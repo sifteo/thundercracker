@@ -32,7 +32,7 @@ void NRF24L01::init()
 
     const SPIMaster::Config cfg = {
         Dma::MediumPrio,
-        SPIMaster::fPCLK_2
+        SPIMaster::fPCLK_4
     };
     spi.init(cfg);
 

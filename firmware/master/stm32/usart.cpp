@@ -7,10 +7,6 @@
 #include "gpio.h"
 #include "board.h"
 
-// NOTE - these divisors must reflect the startup values configured in setup.cpp
-#define APB2RATE (72000000 / 2)
-#define APB1RATE (72000000 / 4)
-
 // static
 Usart Usart::Dbg(&UART_DBG);
 
@@ -34,6 +30,10 @@ void Usart::init(GPIOPin rx, GPIOPin tx, int rate, StopBits bits)
 
     rx.setControl(GPIOPin::IN_FLOAT);
     tx.setControl(GPIOPin::OUT_ALT_50MHZ);
+
+    // NOTE - these divisors must reflect the startup values configured in setup.cpp
+    const unsigned APB2RATE = (72000000 / 1);
+    const unsigned APB1RATE = (72000000 / 2);
 
     if (uart == &USART1)
         uart->BRR = APB2RATE / rate;
