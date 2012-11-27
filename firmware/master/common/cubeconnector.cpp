@@ -360,6 +360,7 @@ void CubeConnector::radioProduce(PacketTransmission &tx)
             tx.packet.bytes[0] = 0xff;
             tx.numSoftwareRetries = 0;
             tx.numHardwareRetries = 0;
+            tx.txPower = PacketTransmission::dBmMinus12;
             rxState = PairingFirstContact;
             break;
 
