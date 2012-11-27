@@ -219,7 +219,9 @@ bool BaseDevice::writeAndWaitForReply(USBProtocolMsg &msg)
      */
 
     uint32_t headerToMatch = msg.header;
-    dev.writePacket(msg.bytes, msg.len);
+    if (dev.writePacket(msg.bytes, msg.len) != msg.len) {
+        return false;
+    }
 
     return waitForReply(headerToMatch, msg);
 }
