@@ -52,6 +52,7 @@ public:
         TXChannel,
         TXAddressTx,
         TXAddressRx,
+        TXRfSetup,
         TXSetupRetr,
         TXPayload,
         TXPulseCE
@@ -125,7 +126,9 @@ public:
      * Current retry counts.
      */
     uint8_t softRetriesLeft;
-    uint8_t hardRetries;        // Current device setting (to avoid unnecessary SPI comms)
+    // Cached device settings to avoid unnecessary SPI comms
+    uint8_t hardRetries;
+    uint8_t transmitPower;
 
     /*
      * The extra byte here is required for the SPI command byte that must

@@ -39,6 +39,8 @@ void NRF24L01::init()
     irq.irqInit();
     irq.irqSetFallingEdge();
 
+    transmitPower = PacketTransmission::dBm0;
+
     const uint8_t radio_setup[]  = {
         /* Enable nRF24L01 features */
         2, CMD_W_REGISTER | REG_FEATURE,        0x07,
@@ -432,9 +434,9 @@ void NRF24L01::onSpiComplete()
         break;
 
     case TXAddressRx:
-        // Set retry count if necessary, otherwise FALL THROUGH to payload.
+        // Set retry count if necessary, otherwise FALL THROUGH to RF_SETUP.
         if (txBuffer.numHardwareRetries != hardRetries) {
-            txnState = TXSetupRetr;
+            txnState = TXRfSetup;
             spi.begin();
             txAddressBuffer[0] = CMD_W_REGISTER | REG_SETUP_RETR;
             txAddressBuffer[1] = AUTO_RETRY_DELAY | txBuffer.numHardwareRetries;
@@ -442,8 +444,21 @@ void NRF24L01::onSpiComplete()
             break;
         }
 
+    case TXRfSetup:
+         // Set transmit power if necessary, otherwise FALL THROUGH to payload.
+         if (txBuffer.txPower != transmitPower) {
+             txnState = TXSetupRetr;
+             spi.begin();
+             txAddressBuffer[0] = CMD_W_REGISTER | REG_RF_SETUP;
+             // enforce 2Mbit/sec transfer rate
+             txAddressBuffer[1] = 0x08 | (txBuffer.txPower & 0x6);
+             spi.txDma(txAddressBuffer, 2);
+             break;
+         }
+
     case TXSetupRetr:
         hardRetries = txBuffer.numHardwareRetries;
+        transmitPower = txBuffer.txPower;
         txnState = TXPayload;
         spi.begin();
         txData[0] = txBuffer.noAck ? CMD_W_TX_PAYLOAD_NO_ACK : CMD_W_TX_PAYLOAD;

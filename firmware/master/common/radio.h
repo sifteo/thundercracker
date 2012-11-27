@@ -93,12 +93,25 @@ struct PacketBuffer {
  */
 
 struct PacketTransmission {
+
+    /*
+     * Values for the nRF24L01's tx power register.
+     */
+
+    enum TxPower {
+        dBmMinus18              = 0,
+        dBmMinus12              = 1 << 1,
+        dBmMinus6               = 2 << 1,
+        dBm0                    = 3 << 1
+    };
+
     PacketBuffer packet;
     const RadioAddress *dest;
 
     bool noAck;
     uint8_t numHardwareRetries;
     uint8_t numSoftwareRetries;
+    uint8_t txPower;
 
     static const unsigned MAX_HARDWARE_RETRIES = 15;
 
@@ -110,11 +123,13 @@ struct PacketTransmission {
      */
     static const unsigned DEFAULT_HARDWARE_RETRIES = MAX_HARDWARE_RETRIES;
     static const unsigned DEFAULT_SOFTWARE_RETRIES = 128;
+    static const TxPower  DEFAULT_TX_POWER = dBm0;
 
     ALWAYS_INLINE void init() {
         noAck = 0;
         numHardwareRetries = DEFAULT_HARDWARE_RETRIES;
         numSoftwareRetries = DEFAULT_SOFTWARE_RETRIES;
+        txPower = DEFAULT_TX_POWER;
     }
 
     ALWAYS_INLINE PacketTransmission() {
