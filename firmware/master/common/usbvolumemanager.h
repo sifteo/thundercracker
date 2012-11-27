@@ -29,7 +29,10 @@ public:
         WriteCommitOK,
         WriteCommitFail,
         BaseSysInfo,
-        LFSDetail
+        LFSDetail,
+        WriteLFSObjectHeader,
+        WriteLFSObjectHeaderFail,
+        WriteLFSObjectPayload
     };
 
     struct VolumeOverviewReply {
@@ -80,12 +83,26 @@ public:
         uint8_t baseHwRevision;
     };
 
+    struct LFSObjectHeader {
+        _SYSVolumeHandle vh;
+        unsigned key;
+        uint32_t crc;
+        unsigned dataSize;
+    };
+
     static void onUsbData(const USBProtocolMsg &m);
 
 private:
     static const unsigned SYSLFS_VOLUME_BLOCK_CODE = 0;
 
+    struct LFSObjectWriteStatus {
+        uint32_t startAddr;
+        uint32_t currentAddr;
+        uint32_t endAddr;
+    };
+
     static FlashVolumeWriter writer;
+    static LFSObjectWriteStatus lfsWriter;
 
     // handlers
     static ALWAYS_INLINE void volumeOverview(USBProtocolMsg &reply);
@@ -96,6 +113,8 @@ private:
     static ALWAYS_INLINE void pairingSlotDetail(const USBProtocolMsg &m, USBProtocolMsg &reply);
     static ALWAYS_INLINE void flashDeviceRead(const USBProtocolMsg &m, USBProtocolMsg &reply);
     static ALWAYS_INLINE void baseSysInfo(const USBProtocolMsg &m, USBProtocolMsg &reply);
+    static ALWAYS_INLINE void beginLFSObjectWrite(const USBProtocolMsg &m, USBProtocolMsg &reply);
+    static ALWAYS_INLINE void lfsPayloadWrite(const USBProtocolMsg &m);
 };
 
 #endif // _USB_VOLUME_MANAGER_H

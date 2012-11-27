@@ -11,6 +11,7 @@
 #endif
 
 FlashVolumeWriter UsbVolumeManager::writer;
+UsbVolumeManager::LFSObjectWriteStatus UsbVolumeManager::lfsWriter;
 
 void UsbVolumeManager::onUsbData(const USBProtocolMsg &m)
 {
@@ -137,6 +138,14 @@ void UsbVolumeManager::onUsbData(const USBProtocolMsg &m)
         lfsDetail(m, reply);
         break;
 
+    case WriteLFSObjectHeader:
+        beginLFSObjectWrite(m, reply);
+        break;
+
+    case WriteLFSObjectPayload:
+        // NOTE: we don't respond to these to avoid the traffic overhead, so just return
+        lfsPayloadWrite(m);
+        return;
     }
 
 #ifndef SIFTEO_SIMULATOR
@@ -387,4 +396,90 @@ void UsbVolumeManager::baseSysInfo(const USBProtocolMsg &m, USBProtocolMsg &repl
     SysInfoReply *r = reply.zeroCopyAppend<SysInfoReply>();
     memcpy(r->baseUniqueID, SysInfo::UniqueId, SysInfo::UniqueIdNumBytes);
     r->baseHwRevision = SysInfo::HardwareRev;
+}
+
+void UsbVolumeManager::beginLFSObjectWrite(const USBProtocolMsg &m, USBProtocolMsg &reply)
+{
+    /*
+     * Begin streaming an LFS object to flash, restoring it to its parent volume.
+     *
+     * Perform all the setup to verify and allocate the new object - payload data
+     * arrives and gets written in lfsPayloadWrite()
+     *
+     * This essentially works like _SYS_fs_objectWrite() - it will simply
+     * add new entries for any specified keys.
+     */
+
+    if (m.payloadLen() < sizeof(LFSObjectHeader)) {
+        reply.header |= WriteLFSObjectHeaderFail;
+        return;
+    }
+
+    const LFSObjectHeader *payload = m.castPayload<LFSObjectHeader>();
+
+    // Programs may only write objects in their own local volume
+    FlashVolume parentVol = FlashMapBlock::fromCode(payload->vh);
+    if (!parentVol.isValid()) {
+        reply.header |= WriteLFSObjectHeaderFail;
+        return;
+    }
+
+    if (!FlashLFSIndexRecord::isKeyAllowed(payload->key) ||
+        !FlashLFSIndexRecord::isSizeAllowed(payload->dataSize)) {
+        reply.header |= WriteLFSObjectHeaderFail;
+        return;
+    }
+
+    /*
+     * Allocate the LFS object. It will only become valid once we've also
+     * written data to the filesystem which matches our above CRC.
+     */
+
+    FlashLFS &lfs = FlashLFSCache::get(parentVol);
+    FlashLFSObjectAllocator allocator(lfs, payload->key, payload->dataSize, payload->crc);
+
+    if (!allocator.allocateAndCollectGarbage()) {
+        reply.header |= WriteLFSObjectHeaderFail;
+        return;
+    }
+
+    lfsWriter.currentAddr = allocator.address();
+    lfsWriter.startAddr = allocator.address();
+    lfsWriter.endAddr = allocator.address() + payload->dataSize;
+
+    reply.header |= WriteLFSObjectHeader;
+}
+
+void UsbVolumeManager::lfsPayloadWrite(const USBProtocolMsg &m)
+{
+    /*
+     * Write an incremental chunk of LFS object data.
+     */
+
+    unsigned remaining = lfsWriter.endAddr - lfsWriter.currentAddr;
+    if (remaining) {
+        uint32_t chunk = MIN(remaining, m.payloadLen());
+
+        ASSERT(chunk > 0);
+        ASSERT(lfsWriter.currentAddr >= lfsWriter.startAddr);
+        ASSERT(lfsWriter.currentAddr + chunk <= lfsWriter.endAddr);
+
+        FlashDevice::write(lfsWriter.currentAddr, m.payload, chunk);
+
+        // Verify, on siftulator only
+        DEBUG_ONLY({
+            uint8_t buffer[FlashLFSIndexRecord::MAX_SIZE];
+            ASSERT(chunk <= sizeof buffer);
+            FlashDevice::read(lfsWriter.currentAddr, buffer, chunk);
+            ASSERT(0 == memcmp(buffer, m.payload, chunk));
+        });
+
+        lfsWriter.currentAddr += chunk;
+
+        if (lfsWriter.currentAddr == lfsWriter.endAddr) {
+            // If any refs are held to the page(s) we touched,
+            // ensure they get reloaded from flash.
+            FlashBlock::invalidate(lfsWriter.startAddr, lfsWriter.endAddr);
+        }
+    }
 }
