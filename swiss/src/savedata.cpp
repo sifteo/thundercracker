@@ -158,23 +158,19 @@ bool SaveData::restore(const char *filepath)
         return false;
     }
 
+    unsigned volBlockCode;
+    if (!volumeCodeForPackage(hdr.packageStr, volBlockCode)) {
+        fprintf(stderr, "can't restore: %s in not installed\n", hdr.packageStr.c_str());
+        return false;
+    }
+
     Records records;
     if (!retrieveRecords(records, hdr, fin)) {
         fclose(fin);
         return false;
     }
 
-    for (Records::const_iterator it = records.begin(); it != records.end(); it++) {
-
-        uint8_t key = it->first;
-        std::vector<RecordData> recs = it->second;
-
-        for (std::vector<RecordData>::const_iterator r = recs.begin(); r != recs.end(); r++) {
-            printf("record. 0x%02x: %d bytes data\n", key, r->size());
-        }
-    }
-
-    return false;
+    return restoreRecords(volBlockCode, records);
 }
 
 bool SaveData::normalize(const char *inpath, const char *outpath)
@@ -216,6 +212,63 @@ bool SaveData::normalize(const char *inpath, const char *outpath)
 /********************************************************
  * Internal
  ********************************************************/
+
+
+bool SaveData::restoreRecords(unsigned vol, const Records &records)
+{
+    ScopedProgressBar pb(records.size());
+    unsigned progress = 0;
+
+    for (Records::const_iterator it = records.begin(); it != records.end(); it++) {
+
+        const std::vector<Record> &recs = it->second;
+
+        // only restore the most recent instance of this key's payload
+        if (!recs.empty()) {
+            if (!restoreItem(vol, recs.back())) {
+                return false;
+            }
+        }
+
+        progress++;
+        pb.update(progress);
+    }
+
+    return true;
+}
+
+bool SaveData::restoreItem(unsigned parentVol, const Record & record)
+{
+    /*
+     * Restore a single key-value pair.
+     */
+
+    BaseDevice base(dev);
+
+    USBProtocolMsg m;
+    if (!base.beginLFSRestore(m, parentVol, record.key, record.payload.size(), record.crc)) {
+        return false;
+    }
+
+    unsigned progress = 0;
+
+    while (progress < record.payload.size()) {
+        m.init(USBProtocol::Installer);
+        m.header |= UsbVolumeManager::WriteLFSObjectPayload;
+
+        unsigned chunk = std::min(record.payload.size() - progress, m.bytesFree());
+        ASSERT(chunk != 0);
+
+        m.append(&record.payload[progress], chunk);
+        progress += chunk;
+
+        dev.writePacket(m.bytes, m.len);
+        while (dev.numPendingOUTPackets() > IODevice::MAX_OUTSTANDING_OUT_TRANSFERS)
+            dev.processEvents();
+    }
+
+    return true;
+}
 
 
 bool SaveData::getValidFileVersion(FILE *f, int &version)

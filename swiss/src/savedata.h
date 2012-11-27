@@ -107,6 +107,9 @@ private:
     bool readHeader(int version, HeaderCommon &h, FILE *f);
     bool retrieveRecords(Records &records, const HeaderCommon &details, FILE *f);
 
+    bool restoreRecords(unsigned vol, const Records &records);
+    bool restoreItem(unsigned parentVol, const Record &record);
+
     static bool writeStr(const std::string &s, FILE *f);
     static bool readStr(std::string &s, FILE *f);
 
