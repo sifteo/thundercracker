@@ -341,7 +341,7 @@ bool SaveData::retrieveRecords(Records &records, const HeaderCommon &details, FI
 
         LFSVolume volume(details.mc_pageSize, details.mc_blockSize);
         if (!volume.init(f)) {
-            fprintf(stderr, "couldn't init volume\n");
+            fprintf(stderr, "couldn't init volume, skipping\n");
             continue;
         }
 
