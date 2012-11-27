@@ -256,7 +256,7 @@ bool SaveData::restoreItem(unsigned parentVol, const Record & record)
         m.init(USBProtocol::Installer);
         m.header |= UsbVolumeManager::WriteLFSObjectPayload;
 
-        unsigned chunk = std::min(record.payload.size() - progress, m.bytesFree());
+        unsigned chunk = std::min(unsigned(record.payload.size() - progress), m.bytesFree());
         ASSERT(chunk != 0);
 
         m.append(&record.payload[progress], chunk);

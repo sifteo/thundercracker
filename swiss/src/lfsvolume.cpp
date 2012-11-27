@@ -74,7 +74,7 @@ bool LFSVolume::init(FILE *f)
 
     // payload is located CacheBlockSize after the beginning of the header
     if (fseek(f, pos + CacheBlockSize, SEEK_SET) != 0) {
-        fprintf(stderr, "couldn't seek to payload: %d %s\n", pos, strerror(errno));
+        fprintf(stderr, "couldn't seek to payload: %ld %s\n", pos, strerror(errno));
         return false;
     }
 
