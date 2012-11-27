@@ -156,10 +156,13 @@ bool LFSVolume::retrieveRecordsFromBlock(SaveData::Records &records, vector<uint
         if (rec.isValid()) {
             // XXX: recalculate CRC to be sure/paranoid
             unsigned objSize = rec.sizeInBytes();
-            vector<uint8_t> record(payload.begin() + objectDataIndex,
-                                   payload.begin() + objectDataIndex + objSize);
 
-            records[rec.key].push_back(record);
+            vector<uint8_t> objectData(payload.begin() + objectDataIndex,
+                                       payload.begin() + objectDataIndex + objSize);
+
+            SaveData::Record r(rec.key, rec.crc16(), objSize, objectData);
+            records[rec.key].push_back(r);
+
             objectDataIndex += objSize;
         }
     }

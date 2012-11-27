@@ -95,6 +95,10 @@ struct FlashLFSIndexRecord
     unsigned sizeInBytes() const {
         return size << SIZE_SHIFT;
     }
+
+    uint16_t crc16() const {
+        return crc[0] << 8 | crc[1];
+    }
 };
 
 class LFSVolume

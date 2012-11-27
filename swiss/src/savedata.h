@@ -30,8 +30,22 @@ public:
      * We capture all records for a given key, and make sure they're
      * ordered chronologically.
      */
-    typedef std::vector<uint8_t> RecordData;
-    typedef std::map<uint8_t, std::vector<RecordData> > Records;
+
+    struct Record {
+        unsigned key;
+        unsigned crc;
+        unsigned size;
+        std::vector<uint8_t> payload;
+
+        Record(unsigned k, unsigned c, unsigned s, const std::vector<uint8_t> &p) :
+            key(k),
+            crc(c),
+            size(s),
+            payload(p)
+        {}
+    };
+
+    typedef std::map<uint8_t, std::vector<Record> > Records;
 
     SaveData(IODevice &_dev);
 

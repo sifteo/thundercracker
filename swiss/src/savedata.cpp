@@ -406,11 +406,10 @@ bool SaveData::writeNormalizedRecords(Records &records, const HeaderCommon &deta
     stringstream rs;
     for (Records::const_iterator it = records.begin(); it != records.end(); it++) {
 
-        uint8_t key = it->first;
-        std::vector<RecordData> recs = it->second;
+        const std::vector<Record> &recs = it->second;
 
-        for (std::vector<RecordData>::const_iterator r = recs.begin(); r != recs.end(); r++) {
-            writeNormalizedItem(rs, key, r->size(), &(*r)[0]);
+        for (std::vector<Record>::const_iterator r = recs.begin(); r != recs.end(); r++) {
+            writeNormalizedItem(rs, r->key, r->payload.size(), &(r->payload[0]));
         }
     }
 
