@@ -150,12 +150,13 @@ void RadioManager::produce(PacketTransmission &tx)
              * just to force the radio to bump its PID.
              */
 
-            static const RadioAddress dummy = { 0, { 0xFF, 0xFF, 0xFF, 0xFF, 0xFF } };
+            static const RadioAddress dummy = { 81, { 0xFF, 0xFF, 0xFF, 0xFF, 0xFF } };
 
             tx.dest = &dummy;
             tx.packet.bytes[0] = 0xFF;
             tx.packet.len = 1;
             tx.noAck = true;
+            tx.dBmMinus18;
 
             nextPID = (thisPID + 1) & PID_MASK;
             currentProducer = DUMMY_ID;
