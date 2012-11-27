@@ -348,6 +348,9 @@ void CubeConnector::radioProduce(PacketTransmission &tx)
          * At the fastest, this equates to about one hop per second. Note that
          * this is designed so that we also call nextNeighborKey() on the
          * very first radioProduce() after the counter is initialized to zero.
+         *
+         * Transmit pairing packets with reduced transmit power - we only
+         * want to pair with cubes that are physically near us.
          */
         case PairingFirstContact:
         case_PairingFirstContact:
