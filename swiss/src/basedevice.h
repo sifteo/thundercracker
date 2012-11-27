@@ -14,6 +14,8 @@ class BaseDevice
 public:
     BaseDevice(IODevice &iodevice);
 
+    bool beginLFSRestore(USBProtocolMsg &m, _SYSVolumeHandle vol, unsigned key, unsigned dataSize, uint32_t crc);
+
     const char *getFirmwareVersion(USBProtocolMsg &msg);
     const UsbVolumeManager::SysInfoReply *getBaseSysInfo(USBProtocolMsg &msg);
 

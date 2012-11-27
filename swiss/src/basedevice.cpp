@@ -10,6 +10,21 @@ BaseDevice::BaseDevice(IODevice &iodevice) :
 }
 
 
+bool BaseDevice::beginLFSRestore(USBProtocolMsg &m, unsigned vol, unsigned key, unsigned dataSize, uint32_t crc)
+{
+    m.init(USBProtocol::Installer);
+    m.header |= UsbVolumeManager::WriteLFSObjectHeader;
+
+    UsbVolumeManager::LFSObjectHeader *req = m.zeroCopyAppend<UsbVolumeManager::LFSObjectHeader>();
+    req->vh = vol;
+    req->crc = crc;
+    req->key = key;
+    req->dataSize = dataSize;
+
+    return writeAndWaitForReply(m);
+}
+
+
 const char *BaseDevice::getFirmwareVersion(USBProtocolMsg &msg)
 {
     /*
