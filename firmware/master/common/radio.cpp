@@ -156,7 +156,7 @@ void RadioManager::produce(PacketTransmission &tx)
             tx.packet.bytes[0] = 0xFF;
             tx.packet.len = 1;
             tx.noAck = true;
-            tx.dBmMinus18;
+            tx.txPower = PacketTransmission::dBmMinus18;
 
             nextPID = (thisPID + 1) & PID_MASK;
             currentProducer = DUMMY_ID;
