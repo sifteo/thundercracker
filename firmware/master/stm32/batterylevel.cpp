@@ -38,7 +38,7 @@ static unsigned delayPrescaleCounter = DELAY_PRESCALER;
  *
  * 0.05 / ((1 / 36000000) * 0xffff) == 27.466
  */
-static const unsigned DISCHARGE_PRESCALER = 3;
+static const unsigned DISCHARGE_PRESCALER = 6;
 
 
 
