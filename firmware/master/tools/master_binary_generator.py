@@ -15,7 +15,7 @@ import subprocess, multiprocessing
 ## Defines
 ########################################################
 DIR = os.path.dirname(os.path.realpath(__file__))
-TC_DIR = DIR+"/../../.."
+TC_DIR = os.path.join(DIR, "..", "..", "..")
 MASTER_UNVERSIONED = "master-stm32.sft"
 LAUNCHER_UNVERSIONED = "launcher.elf"
 CLEAN = True
@@ -52,9 +52,9 @@ def run(secondary_path):
     githash = subprocess.check_output(["git", "describe", "--tags"]).strip()
 
     #set up directory pointers.
-    latest_dir = os.path.join(DIR, "../latest")
-    launcher_dir = os.path.join(TC_DIR,"launcher")
-    build_dir = os.path.join( DIR, "../", githash)
+    latest_dir = os.path.join(DIR, "..", "latest")
+    launcher_dir = os.path.join(TC_DIR, "launcher")
+    build_dir = os.path.join(DIR, "..", githash)
 
     #one time operations if secondary_path is defined
     if secondary_path != False:
