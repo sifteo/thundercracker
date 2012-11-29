@@ -32,11 +32,14 @@ extern int  main()              __attribute__((noreturn));
 extern "C" void _start()
 {
     /*
-     * Don't need to run clock start up in application FW if the bootloader
-     * has already run it.
-     */
-#ifndef BOOTLOADABLE
-    /*
+     * XXX: we would really like to avoid (re)initializing the clocks here
+     * if they've already been initialized by the bootloader but unfortunately,
+     * the shipping bootloader configures APB1 and APB2 to old values that are
+     * no longer consistent with what the rest of the system expects.
+     *
+     * Specifically, APB1 used to be at 18MHz and APB2 used to be at 36MHz,
+     * whereas they're now doubled.
+     *
      * Set up clocks:
      *   - 8 MHz HSE (xtal) osc
      *   - PLL x9 => 72 MHz
@@ -113,8 +116,10 @@ extern "C" void _start()
     mco.setControl(GPIOPin::OUT_ALT_50MHZ);
 #endif
 
+#ifndef BOOTLOADABLE
     /*
      * Enable VCC SYS asap.
+     * Don't need to re-do this if bootloader already has.
      */
     PowerManager::batteryPowerOn();
 
