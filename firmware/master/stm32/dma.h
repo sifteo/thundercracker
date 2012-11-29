@@ -27,8 +27,8 @@ public:
         Error           = (1 << 3)
     };
 
-    static void registerHandler(volatile DMA_t *dma, int channel, DmaIsr_t func, void *param);
-    static void unregisterHandler(volatile DMA_t *dma, int channel);
+    static void initChannel(volatile DMA_t *dma, int channel, DmaIsr_t func, void *param);
+    static void deinitChannel(volatile DMA_t *dma, int channel);
 
 private:
     struct DmaHandler_t {

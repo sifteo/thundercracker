@@ -24,10 +24,10 @@ void SPIMaster::init(const Config &config)
         RCC.APB2ENR |= (1 << 12);
 
         dmaRxChan = &DMA1.channels[1];  // DMA1, channel 2
-        Dma::registerHandler(&DMA1, 1, dmaCallback, this);
+        Dma::initChannel(&DMA1, 1, dmaCallback, this);
 
         dmaTxChan = &DMA1.channels[2];  // DMA1, channel 3
-        Dma::registerHandler(&DMA1, 2, dmaCallback, this);
+        Dma::initChannel(&DMA1, 2, dmaCallback, this);
 
     } else if (hw == &SPI2) {
 
@@ -36,10 +36,10 @@ void SPIMaster::init(const Config &config)
         RCC.APB1ENR |= (1 << 14);
 
         dmaRxChan = &DMA1.channels[3];  // DMA1, channel 4
-        Dma::registerHandler(&DMA1, 3, dmaCallback, this);
+        Dma::initChannel(&DMA1, 3, dmaCallback, this);
 
         dmaTxChan = &DMA1.channels[4];  // DMA1, channel 5
-        Dma::registerHandler(&DMA1, 4, dmaCallback, this);
+        Dma::initChannel(&DMA1, 4, dmaCallback, this);
 
     } else if (hw == &SPI3) {
 
@@ -48,10 +48,10 @@ void SPIMaster::init(const Config &config)
         RCC.APB1ENR |= (1 << 15);
 
         dmaRxChan = &DMA2.channels[0];  // DMA2, channel 1
-        Dma::registerHandler(&DMA2, 0, dmaCallback, this);
+        Dma::initChannel(&DMA2, 0, dmaCallback, this);
 
         dmaTxChan = &DMA2.channels[1];  // DMA2, channel 2
-        Dma::registerHandler(&DMA2, 1, dmaCallback, this);
+        Dma::initChannel(&DMA2, 1, dmaCallback, this);
     }
 
     dmaRxPriorityBits = config.dmaRxPrio;
@@ -88,12 +88,7 @@ void SPIMaster::init(const Config &config)
 
     // point DMA channels at data register
     dmaRxChan->CPAR = (uint32_t)&hw->DR;
-    dmaRxChan->CNDTR = 0;
-    dmaRxChan->CCR = 0;
-
     dmaTxChan->CPAR = (uint32_t)&hw->DR;
-    dmaTxChan->CNDTR = 0;
-    dmaTxChan->CCR = 0;
 }
 
 uint8_t SPIMaster::transfer(uint8_t b)

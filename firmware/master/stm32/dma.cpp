@@ -16,7 +16,7 @@ uint32_t Dma::Ch2Mask = 0;
 Dma::DmaHandler_t Dma::Ch1Handlers[7];
 Dma::DmaHandler_t Dma::Ch2Handlers[5];
 
-void Dma::registerHandler(volatile DMA_t *dma, int channel, DmaIsr_t func, void *param)
+void Dma::initChannel(volatile DMA_t *dma, int channel, DmaIsr_t func, void *param)
 {
     if (dma == &DMA1) {
 
@@ -44,13 +44,23 @@ void Dma::registerHandler(volatile DMA_t *dma, int channel, DmaIsr_t func, void 
         Ch2Handlers[channel].isrfunc = func;
         Ch2Handlers[channel].param = param;
     }
+
+    /*
+     * Ensure this channel's ISR status and general configuration
+     * registers are cleared.
+     */
+    dma->IFCR = 1 << (channel * 4);
+
+    volatile DMAChannel_t &ch = dma->channels[channel];
+    ch.CNDTR = 0;
+    ch.CCR = 0;
 }
 
 /*
     Disable the ISR for this channel & make it available for another registration.
     Turn off the entire DMA channel if no channels are enabled.
 */
-void Dma::unregisterHandler(volatile DMA_t *dma, int channel)
+void Dma::deinitChannel(volatile DMA_t *dma, int channel)
 {
     if (dma == &DMA1) {
 
