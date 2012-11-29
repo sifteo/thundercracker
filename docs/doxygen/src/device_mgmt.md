@@ -53,9 +53,9 @@ To retrieve savedata, use the `swiss savedata extract` command.
 
 ## Example
 
-For instance, let's extract the save data for the __Hello World SDK Example__ shown in the manifest output above. Note that the __VOL__ code for this app is __10__, which we need to pass to swiss. The steps are as follows:
+For instance, let's extract the save data for the __Hello World SDK Example__ shown in the manifest output above. Specify the package string of the game you'd like to extract from - this is the same string you used in Sifteo::Metadata::package(). The steps are as follows:
 
-    $ swiss savedata extract 10 saved.bin
+    $ swiss savedata extract com.sifteo.extras.hello saved.bin
 
 Now `saved.bin` contains all the StoredObject records that were found on the Base, in a simple binary format. Since StoredObject data is opaque to the system, we don't offer any standard way of formatting or parsing it. However, __tools/savedata.py__ within your SDK installation can serve as a template for parsing these files. By default, it will print savedata contents to stdout, dumping the hex value of user data. Invoke it as follows:
 
@@ -63,8 +63,8 @@ Now `saved.bin` contains all the StoredObject records that were found on the Bas
 
 Example output might look like:
 
-    /Users/liam/sifteo-sdk$ python tools/savedata.py out.bin
-    header - key 0, val: com.sifteo.sdk.savedata
+    /Users/liam/sifteo-sdk$ python tools/savedata.py saved.bin
+    header - key 0, val: com.sifteo.sdk.hello
     header - key 1, val: 1.1
     header - key 2, val: 97983c9a-9527-4eeb-8d57-85a015ec70b4
     header - key 3, val: 33FFDB053347333251441843
