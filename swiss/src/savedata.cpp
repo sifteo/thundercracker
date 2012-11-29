@@ -663,7 +663,13 @@ bool SaveData::readStr(std::string &s, FILE *f)
         return false;
     }
 
-    s.assign(buf);
+    s.assign(buf, length);
+
+    // trim any junk on the end
+    while (s.at(s.length() - 1) == '\0') {
+        s.erase(s.length() - 1);
+    }
+
     free(buf);
 
     return true;
