@@ -234,6 +234,9 @@ bool SaveData::restoreRecords(unsigned vol, const Records &records)
         pb.update(progress);
     }
 
+    while (dev.numPendingOUTPackets())
+        dev.processEvents();
+
     return true;
 }
 
