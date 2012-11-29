@@ -15,7 +15,7 @@ std::string Metadata::getString(unsigned volBlockCode, unsigned key)
         return "(none)";
     }
 
-    return std::string(buf.castPayload<char>(), buf.payloadLen());
+    return std::string(buf.castPayload<char>());
 }
 
 int Metadata::getBytes(unsigned volBlockCode, unsigned key, uint8_t *buffer, unsigned len)
