@@ -95,7 +95,7 @@ bool SaveData::extract(const char *pkgStr, const char *filepath, bool raw, bool 
     }
 
     if (reply->count == 0) {
-        printf("no savedata found for volume 0x%x\n", volume);
+        printf("no savedata found for %s\n", pkgStr);
         return true;
     }
 
