@@ -27,7 +27,7 @@ int SaveData::run(int argc, char **argv, IODevice &_dev)
     if (argc >= 4 && !strcmp(argv[1], "extract")) {
 
         char *path = 0;
-        char *volumeStr = 0;
+        char *pkgStr = 0;
         bool raw = false;
         bool rpc = false;
 
@@ -36,18 +36,17 @@ int SaveData::run(int argc, char **argv, IODevice &_dev)
                 rpc = true;
             } else if (!strcmp(argv[i], "--raw")) {
                 raw = true;
-            } else if (!volumeStr) {
-                volumeStr = argv[i];
+            } else if (!pkgStr) {
+                pkgStr = argv[i];
             } else {
                 path = argv[i];
             }
         }
 
-        if (!path || !volumeStr) {
+        if (!path || !pkgStr) {
             fprintf(stderr, "incorrect args\n");
         } else {
-            unsigned volume;
-            success = Util::parseVolumeCode(volumeStr, volume) && saveData.extract(volume, path, raw, rpc);
+            success = saveData.extract(pkgStr, path, raw, rpc);
         }
 
     } else if (argc >= 3 && !strcmp(argv[1], "restore")) {
@@ -72,7 +71,7 @@ SaveData::SaveData(IODevice &_dev) :
     dev(_dev)
 {}
 
-bool SaveData::extract(unsigned volume, const char *filepath, bool raw, bool rpc)
+bool SaveData::extract(const char *pkgStr, const char *filepath, bool raw, bool rpc)
 {
     /*
      * Retrieve all LFS volumes for a given parent volume.
@@ -81,6 +80,12 @@ bool SaveData::extract(unsigned volume, const char *filepath, bool raw, bool rpc
      *
      * We don't do any parsing of the data at this point.
      */
+
+    unsigned volume;
+    if (!volumeCodeForPackage(std::string(pkgStr), volume)) {
+        fprintf(stderr, "can't extract data from %s: not installed\n", pkgStr);
+        return false;
+    }
 
     USBProtocolMsg buf;
     BaseDevice base(dev);
@@ -97,7 +102,6 @@ bool SaveData::extract(unsigned volume, const char *filepath, bool raw, bool rpc
     /*
      * If a raw file has been requested, write the raw filesystem data there
      * and be done.
-     *
      *
      * Otherwise, write the raw data to a tmp file, then feed it as
      * the input to normalize(), and remove it when we're done.
@@ -128,7 +132,7 @@ bool SaveData::extract(unsigned volume, const char *filepath, bool raw, bool rpc
     remove(rawfilepath);
 
     printf("complete - see tools/savedata.py within your SDK installation "
-           "for a template to interpret the contents of %s\n", filepath);
+           "to interpret the contents of %s\n", filepath);
 
     return rv;
 }

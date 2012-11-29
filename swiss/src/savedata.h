@@ -51,7 +51,7 @@ public:
 
     static int run(int argc, char **argv, IODevice &_dev);
 
-    bool extract(unsigned volume, const char *filepath, bool raw, bool rpc);
+    bool extract(const char *pkgStr, const char *filepath, bool raw, bool rpc);
     bool restore(const char *filepath);
     bool normalize(const char *inpath, const char *outpath);
 
