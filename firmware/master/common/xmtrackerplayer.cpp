@@ -126,6 +126,7 @@ void XmTrackerPlayer::setVolume(int pVolume, uint8_t ch)
 {
     pVolume = clamp(pVolume, 0, _SYS_AUDIO_MAX_VOLUME);
     if (ch > song.nChannels) {
+        ASSERT(ch == (uint8_t)-1);
         userVolume = pVolume;
     } else {
         channels[ch].userVolume = pVolume;
@@ -148,6 +149,11 @@ void XmTrackerPlayer::pause()
     for (unsigned i = 0; i < song.nChannels; i++)
         if (mixer.isPlaying(CHANNEL_FOR(i)))
             mixer.stop(CHANNEL_FOR(i));
+}
+
+void XmTrackerPlayer::setTempoModifier(int modifier)
+{
+    // TODO:
 }
 
 inline void XmTrackerPlayer::loadNextNotes()

@@ -115,6 +115,7 @@ public:
     void stop();
     void setVolume(int volume, uint8_t ch);
     void pause();
+    void setTempoModifier(int modifier);
 
     // TODO: future:
     // void muteChannel(uint8_t), unmuteChannel(uint8_t).
