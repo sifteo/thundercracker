@@ -97,7 +97,7 @@ struct FlashLFSIndexRecord
     }
 
     uint16_t crc16() const {
-        return crc[0] << 8 | crc[1];
+        return crc[1] << 8 | crc[0];
     }
 };
 
