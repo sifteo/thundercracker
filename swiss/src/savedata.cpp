@@ -663,7 +663,7 @@ bool SaveData::readStr(std::string &s, FILE *f)
         return false;
     }
 
-    s.assign(buf, length);
+    s.assign(buf);
     free(buf);
 
     return true;
