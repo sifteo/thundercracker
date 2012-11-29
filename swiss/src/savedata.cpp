@@ -391,12 +391,6 @@ bool SaveData::retrieveRecords(Records &records, const HeaderCommon &details, FI
      * Common implementation for all savedata file versions.
      */
 
-    unsigned volBlockCode;
-    if (!volumeCodeForPackage(details.packageStr, volBlockCode)) {
-        fprintf(stderr, "cannot retrieve records: %s in not installed\n", details.packageStr.c_str());
-        return false;
-    }
-
     for (unsigned b = 0; b < details.numBlocks; ++b) {
 
         LFSVolume volume(details.mc_pageSize, details.mc_blockSize);
