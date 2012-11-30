@@ -40,6 +40,15 @@ void MacronixMX25::init()
     spi.transfer(0);    // ensure block protection is disabled
     spi.end();
 
+    /*
+     * NOTE!
+     *
+     * If you're developing with the flex connector/JTAG breakout board
+     * connected and trying to run on VBATT, the flash lines are muxed with
+     * JTAG lines and communications will fail. Running on VBATT without
+     * the flex connector in place is the key to true happiness.
+     */
+
     mightBeBusy = false;
     while (readReg(ReadStatusReg) != Ok) {
         ; // sanity checking?
