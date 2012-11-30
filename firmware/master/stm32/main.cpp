@@ -101,7 +101,7 @@ int main()
      *
      * Avoid reinitializing periphs that the bootloader has already init'd.
      */
-#ifndef BOOTLOADER
+#ifndef BOOTLOADABLE
     SysTime::init();
     PowerManager::init();
     Crc32::init();
