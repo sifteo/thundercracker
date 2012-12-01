@@ -1,10 +1,13 @@
 #include "wavedecoder.h"
+#include "script.h"
 
 #include <stdio.h>
 #include <errno.h>
 #include <string.h>
 
-bool WaveDecoder::loadFile(std::vector<unsigned char>& buffer, const std::string& filename, Stir::Logger &log)
+namespace Stir {
+
+bool WaveDecoder::loadFile(std::vector<unsigned char>& buffer, uint32_t &sampleRate, const std::string& filename, Stir::Logger &log)
 {
     FILE *f = fopen(filename.c_str(), "rb");
     if (!f) {
@@ -57,8 +60,9 @@ bool WaveDecoder::loadFile(std::vector<unsigned char>& buffer, const std::string
         return false;
     }
 
-    if (fd.sampleRate != 16000) {
-        log.error("unsupported sample rate (%d), we only support 16kHz\n", fd.sampleRate);
+    if (fd.sampleRate > Sound::STANDARD_SAMPLE_RATE) {
+        log.error("high sample rate detected for %s (%.1fkHz), %.1fkHz is max system rate",
+                  filename.c_str(), fd.sampleRate / 1000.0, Sound::STANDARD_SAMPLE_RATE / 1000.0);
         return false;
     }
 
@@ -102,11 +106,12 @@ bool WaveDecoder::loadFile(std::vector<unsigned char>& buffer, const std::string
         if (memcmp(sc.id, datachunk, sizeof datachunk) == 0) {
             // found it!
             buffer.resize(sc.size);
-            if (fread(&buffer.front(), 1, sc.size, f) != sc.size) {
+            if (fread(&buffer[0], 1, sc.size, f) != sc.size) {
                 log.error("i/o failure while reading data chunk\n");
                 return false;
             }
 
+            sampleRate = fd.sampleRate;
             return true;
         }
 
@@ -120,3 +125,5 @@ bool WaveDecoder::loadFile(std::vector<unsigned char>& buffer, const std::string
     log.error("didn't find a 'data' subchunk\n");
     return false;
 }
+
+} // namespace Stir
