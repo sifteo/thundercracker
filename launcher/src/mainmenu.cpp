@@ -142,10 +142,10 @@ void MainMenu::eventLoop()
             updateMusic();
             updateAlerts();
             handleEvent(e);
+        }
 
-            if (itemIndexChoice >= 0) {
-                return execItem(itemIndexChoice);
-            }
+        if (itemIndexChoice >= 0) {
+            return execItem(itemIndexChoice);
         }
     }
 }
