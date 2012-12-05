@@ -424,6 +424,13 @@ void UsbVolumeManager::beginLFSObjectWrite(const USBProtocolMsg &m, USBProtocolM
         return;
     }
 
+    unsigned type = parentVol.getType();
+    if (type != FlashVolume::T_GAME &&
+        type != FlashVolume::T_LAUNCHER) {
+        reply.header |= WriteLFSObjectHeaderFail;
+        return;
+    }
+
     if (!FlashLFSIndexRecord::isKeyAllowed(payload->key) ||
         !FlashLFSIndexRecord::isSizeAllowed(payload->dataSize)) {
         reply.header |= WriteLFSObjectHeaderFail;
