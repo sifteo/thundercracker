@@ -7,6 +7,7 @@
 #define MACROS_H
 
 #include <stdio.h>
+#include <stddef.h>
 #include <assert.h>
 #include <stdint.h>
 #include <inttypes.h>

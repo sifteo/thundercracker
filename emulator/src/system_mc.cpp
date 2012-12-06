@@ -32,6 +32,7 @@
 #include "tasks.h"
 #include "mc_timing.h"
 #include "lodepng.h"
+#include "sysinfo.h"
 #include "crc.h"
 #include "volume.h"
 #include "homebutton.h"
@@ -56,6 +57,7 @@ bool SystemMC::init(System *sys)
     }
 
     FlashStack::init();
+    SysInfo::init();
     Crc32::init();
 
     if (instance->sys->opt_headless) {
@@ -140,14 +142,14 @@ void SystemMC::pairCube(unsigned cubeID, unsigned pairingID)
     ASSERT(cubeID < _SYS_NUM_CUBE_SLOTS);
     ASSERT(pairingID < arraysize(rec.hwid));
 
-    if (!SysLFS::read(SysLFS::kPairingID, rec))
+    if (!SysLFS::readObject(SysLFS::kPairingID, rec))
         rec.init();
 
     uint64_t hwid = sys->cubes[cubeID].getHWID();
     ASSERT(hwid != uint64_t(-1));
 
     rec.hwid[pairingID] = hwid;
-    if (!SysLFS::write(SysLFS::kPairingID, rec)) {
+    if (!SysLFS::writeObject(SysLFS::kPairingID, rec)) {
         ASSERT(0);
     }
 

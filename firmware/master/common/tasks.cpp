@@ -23,6 +23,7 @@
 #   include "usb/usbdevice.h"
 #   include "sampleprofiler.h"
 #   include "powermanager.h"
+#   include "factorytest.h"
 #   if (BOARD == BOARD_TEST_JIG)
 #       include "testjig.h"
 #   endif
@@ -58,6 +59,7 @@ ALWAYS_INLINE void Tasks::taskInvoke(unsigned id)
 
     #if !defined(SIFTEO_SIMULATOR) && !defined(BOOTLOADER)
         case Tasks::Profiler:       return SampleProfiler::task();
+        case Tasks::FactoryTest:    return FactoryTest::task();
     #endif
 
     }
@@ -71,7 +73,9 @@ ALWAYS_INLINE void Tasks::taskInvoke(unsigned id)
 void Tasks::heartbeatTask()
 {
 #if (BOARD != BOARD_TEST_JIG)
+    #ifndef DISABLE_IDLETIMEOUT
     IdleTimeout::heartbeat();
+    #endif
 #endif
 
     Radio::heartbeat();
@@ -170,6 +174,8 @@ void Tasks::idle(uint32_t exclude)
 
 void Tasks::heartbeatISR()
 {
+    #ifndef DISABLE_WATCHDOG
+
     // Check the watchdog timer
     if (++watchdogCounter >= WATCHDOG_DURATION) {
 
@@ -194,6 +200,7 @@ void Tasks::heartbeatISR()
         SvmRuntime::fault(Svm::F_NOT_RESPONDING);
         #endif
     }
+    #endif // DISABLE_WATCHDOG
 
     // Defer to a Task for everything else
     trigger(Heartbeat);

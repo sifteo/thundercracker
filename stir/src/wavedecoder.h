@@ -7,23 +7,27 @@
 #include <vector>
 #include <string>
 
+namespace Stir {
+
 class WaveDecoder {
 public:
     WaveDecoder() {} // don't implement
-    static bool loadFile(std::vector<unsigned char>& buffer, const std::string& filename, Stir::Logger &log);
+    static bool loadFile(std::vector<unsigned char>& buffer, uint32_t &sampleRate, const std::string& filename, Stir::Logger &log);
 
 private:
+
+    struct ChunkHeader {
+        char id[4];
+        uint32_t size;
+    };
+
     struct RiffDescriptor {
-        char riff[4];
-        uint32_t chunkSize;
+        ChunkHeader header;
         char wave[4];
     };
 
     struct FormatDescriptor {
-        struct {
-            char subchunk1ID[4];
-            uint32_t subchunk1Size;
-        } header;
+        ChunkHeader header;
         uint16_t audioFormat;
         uint16_t numChannels;
         uint32_t sampleRate;
@@ -32,10 +36,9 @@ private:
         uint16_t bitsPerSample;
     };
 
-    struct DataDescriptor {
-        char subchunk2ID[4];
-        uint32_t subchunk2Size;
-    };
+
 };
+
+} // namespace Stir
 
 #endif // WAVDECODER_H

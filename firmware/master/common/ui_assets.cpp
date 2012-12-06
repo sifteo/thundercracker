@@ -21,6 +21,7 @@ extern const uint16_t v02_IconResume_data[];
 extern const uint16_t v02_ShutdownBackground_data[];
 extern const uint16_t v02_BigDigits_data[];
 extern const uint16_t v02_FaultMessage_data[];
+extern const uint16_t v02_CubeRangePause_data[];
 
 
 void UIAssets::init(unsigned version)
@@ -35,7 +36,8 @@ void UIAssets::init(unsigned version)
             iconResume          = v01_IconResume_data;
             shutdownBackground  = v01_ShutdownBackground_data;
             bigDigits           = v01_BigDigits_data;
-            faultMessage        = v02_FaultMessage_data;  // XXX
+            faultMessage        = v02_FaultMessage_data;    // XXX
+            iconCubeRange       = v02_CubeRangePause_data;  // XXX
             menuHeight          = 9;
             menuTextPalette     = 11;
             iconSize            = 5;
@@ -55,6 +57,7 @@ void UIAssets::init(unsigned version)
             shutdownBackground  = v02_MenuBackground_data;
             bigDigits           = v02_BigDigits_data;
             faultMessage        = v02_FaultMessage_data;
+            iconCubeRange       = v02_CubeRangePause_data;
             menuHeight          = 11;
             menuTextPalette     = 8;
             iconSize            = 8;

@@ -22,7 +22,12 @@ OBJS := \
     src/delete.o        \
     src/paircube.o      \
     src/reboot.o        \
-    src/backup.o
+    src/backup.o        \
+    src/util.o          \
+    src/metadata.o      \
+    src/savedata.o      \
+    src/basedevice.o    \
+    src/lfsvolume.o
 
 # include directories
 INCLUDES := \

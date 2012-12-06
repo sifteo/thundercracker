@@ -1,4 +1,5 @@
 #include "paircube.h"
+#include "basedevice.h"
 #include "tabularlist.h"
 #include <sifteo/abi/types.h>
 
@@ -46,26 +47,9 @@ bool PairCube::pair(const char *slotStr, const char *hwidStr)
     if (!getValidHWID(hwidStr, hwid))
         return false;
 
-    USBProtocolMsg m(USBProtocol::Installer);
-    m.header |= UsbVolumeManager::PairCube;
-
-    UsbVolumeManager::PairCubeRequest *req = m.zeroCopyAppend<UsbVolumeManager::PairCubeRequest>();
-    req->hwid = hwid;
-    req->pairingSlot = pairingSlot;
-
-    dev.writePacket(m.bytes, m.len);
-    while (dev.numPendingINPackets() == 0) {
-        dev.processEvents();
-    }
-
-    // check response
-    m.len = dev.readPacket(m.bytes, m.MAX_LEN);
-    if ((m.header & 0xff) != UsbVolumeManager::PairCube) {
-        fprintf(stderr, "unexpected response\n");
-        return false;
-    }
-
-    return true;
+    USBProtocolMsg m;
+    BaseDevice base(dev);
+    return base.pairCube(m, hwid, pairingSlot);
 }
 
 bool PairCube::dumpPairingData(bool rpc)
@@ -80,9 +64,12 @@ bool PairCube::dumpPairingData(bool rpc)
     table.cell() << "HWID";
     table.endRow();
 
+
+    BaseDevice base(dev);
+
     for (unsigned i = 0; i < _SYS_NUM_CUBE_SLOTS; ++i) {
         USBProtocolMsg m;
-        UsbVolumeManager::PairingSlotDetailReply *reply = pairingSlotDetail(m, i);
+        UsbVolumeManager::PairingSlotDetailReply *reply = base.pairingSlotDetail(m, i);
 
         if (!reply) {
             static UsbVolumeManager::PairingSlotDetailReply zero;
@@ -125,35 +112,37 @@ bool PairCube::getValidPairingSlot(const char *s, unsigned &pairingSlot)
 
 bool PairCube::getValidHWID(const char *s, uint64_t &hwid)
 {
-    int rv = sscanf(s, "%llx", &hwid);
-    if (rv != 1 || hwid == ~0) {
-        fprintf(stderr, "error: invalid HWID: 0x%llx\n", hwid);
+    // ensure the input is of an appropriate length - hwid is 8 bytes
+    const uint8_t hwidDigits = 8 * 2;
+    if (strlen(s) != hwidDigits) {
+        fprintf(stderr, "error, invalid HWID: incorrect length\n");
         return false;
     }
 
+    /*
+     * Verify the input is valid, and construct the 64-bit hwid.
+     * This must generate the appropriate result on 64- and 32-bit machines.
+     */
+    for (unsigned i = 0; i < hwidDigits; i++) {
+
+        hwid <<= 4;
+        char c = s[i];
+
+        // convert hex character to its value and add
+        if (c >= '0' && c <= '9') {
+            hwid += c - '0';
+        }
+        else if (c >= 'A' && c <= 'F') {
+            hwid += c - 'A' + 10;
+        }
+        else if (c >= 'a' && c <= 'f') {
+            hwid += c - 'a' + 10;
+        }
+        else {
+            fprintf(stderr, "error, invalid HWID: %c is not hex\n", c);
+            return false;
+        }
+    }
+
     return true;
-}
-
-UsbVolumeManager::PairingSlotDetailReply *PairCube::pairingSlotDetail(USBProtocolMsg &buf, unsigned pairingSlot)
-{
-    buf.init(USBProtocol::Installer);
-    buf.header |= UsbVolumeManager::PairingSlotDetail;
-    buf.append((uint8_t*) &pairingSlot, sizeof pairingSlot);
-
-    dev.writePacket(buf.bytes, buf.len);
-    while (dev.numPendingINPackets() == 0) {
-        dev.processEvents();
-    }
-
-    // check response
-    buf.len = dev.readPacket(buf.bytes, buf.MAX_LEN);
-    if ((buf.header & 0xff) != UsbVolumeManager::PairingSlotDetail) {
-        fprintf(stderr, "unexpected response\n");
-        return 0;
-    }
-
-    if (buf.payloadLen() >= sizeof(UsbVolumeManager::PairingSlotDetailReply))
-        return buf.castPayload<UsbVolumeManager::PairingSlotDetailReply>();
-
-    return 0;
 }

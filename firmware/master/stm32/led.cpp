@@ -37,7 +37,7 @@ void LED::init()
     pwmTimer.setDuty(LED_PWM_RED_CHAN, 0);
     pwmTimer.setDuty(LED_PWM_GREEN_CHAN, 0);
 
-    seqTimer.init(36000 / LEDSequencer::TICK_HZ, 1000);
+    seqTimer.init(72000 / LEDSequencer::TICK_HZ, 1000);
     seqTimer.enableUpdateIsr();
 
     outRed.setControl(GPIOPin::OUT_ALT_2MHZ);

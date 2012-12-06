@@ -13,13 +13,22 @@
 
 volatile bool MacronixMX25::dmaInProgress = false;
 
+/*
+ * DMA must be very highest priority since it's our highest bandwidth device.
+ * SPI1 is on APB2, clocked @ 72MHz. We'd like to run at 18MHz, so divide by 4.
+ */
+static const SPIMaster::Config spicfg = {
+    Dma::VeryHighPrio,
+    SPIMaster::fPCLK_4
+};
+
 void MacronixMX25::init()
 {
     GPIOPin writeProtect = FLASH_WP_GPIO;
     writeProtect.setControl(GPIOPin::OUT_2MHZ);
     writeProtect.setHigh();
 
-    spi.init();
+    spi.init(spicfg);
 
     // prepare to write the status register
     spi.begin();
@@ -30,6 +39,15 @@ void MacronixMX25::init()
     spi.transfer(WriteStatusConfigReg);
     spi.transfer(0);    // ensure block protection is disabled
     spi.end();
+
+    /*
+     * NOTE!
+     *
+     * If you're developing with the flex connector/JTAG breakout board
+     * connected and trying to run on VBATT, the flash lines are muxed with
+     * JTAG lines and communications will fail. Running on VBATT without
+     * the flex connector in place is the key to true happiness.
+     */
 
     mightBeBusy = false;
     while (readReg(ReadStatusReg) != Ok) {
@@ -276,9 +294,53 @@ bool MacronixMX25::waitForDma()
              *      is more completely resolved.
              */
 
-            UART("DMA timeout\r\n");
+#if 0
+            SPI_t spiregs;
+            memcpy(&spiregs, (void*)&SPI1, sizeof(spiregs));
 
-            spi.init();
+            DMA_t dmaregs;
+            memcpy(&dmaregs, (void*)&DMA1, sizeof(dmaregs));
+
+            DMAChannel_t dmaRxChannelRegs;
+            memcpy(&dmaRxChannelRegs, (void*)&DMA1.channels[1], sizeof(dmaRxChannelRegs));
+
+            DMAChannel_t dmaTxChannelRegs;
+            memcpy(&dmaTxChannelRegs, (void*)&DMA1.channels[2], sizeof(dmaTxChannelRegs));
+
+            UART("************** SPI:");
+            UART("\r\nCR1: ");      UART_HEX(spiregs.CR1);
+            UART("\r\nCR2: ");      UART_HEX(spiregs.CR2);
+            UART("\r\nSR: ");       UART_HEX(spiregs.SR);
+            UART("\r\nDR: ");       UART_HEX(spiregs.DR);
+            UART("\r\nCRCPR: ");    UART_HEX(spiregs.CRCPR);
+            UART("\r\nRXCRCR: ");   UART_HEX(spiregs.RXCRCR);
+            UART("\r\nTXCRCR: ");   UART_HEX(spiregs.TXCRCR);
+            UART("\r\nI2SCFGR: ");  UART_HEX(spiregs.I2SCFGR);
+            UART("\r\nI2SPR: ");    UART_HEX(spiregs.I2SPR);
+
+            UART("\r\nDMA:");
+            UART("\r\nIFCR: ");     UART_HEX(dmaregs.IFCR);
+            UART("\r\nISR: ");      UART_HEX(dmaregs.ISR);
+
+            UART("\r\nrx chan:");
+            UART("\r\nCCR: ");      UART_HEX(dmaRxChannelRegs.CCR);
+            UART("\r\nCMAR: ");     UART_HEX(dmaRxChannelRegs.CMAR);
+            UART("\r\nCNDTR: ");    UART_HEX(dmaRxChannelRegs.CNDTR);
+            UART("\r\nCPAR: ");     UART_HEX(dmaRxChannelRegs.CPAR);
+
+            UART("\r\ntx chan:");
+            UART("\r\nCCR: ");      UART_HEX(dmaTxChannelRegs.CCR);
+            UART("\r\nCMAR: ");     UART_HEX(dmaTxChannelRegs.CMAR);
+            UART("\r\nCNDTR: ");    UART_HEX(dmaTxChannelRegs.CNDTR);
+            UART("\r\nCPAR: ");     UART_HEX(dmaTxChannelRegs.CPAR);
+
+            UART("\r\n");
+
+#else
+            UART("DMA timeout\r\n");
+#endif
+
+            spi.init(spicfg);
             success = false;
         }
     }

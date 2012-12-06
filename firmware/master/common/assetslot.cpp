@@ -62,7 +62,7 @@ void VirtAssetSlots::rebindCube(_SYSCubeID cube)
         bool needWrite = false;
         bool needErase = false;
 
-        if (!SysLFS::read(ck, cr))
+        if (!SysLFS::readObject(ck, cr))
             cr.init();
 
         if (!cr.assets.checkBinding(volume, numSlots)) {
@@ -107,7 +107,7 @@ void VirtAssetSlots::rebindCube(_SYSCubeID cube)
 
         if (needWrite) {
             // Write back updated CubeRecord
-            SysLFS::write(ck, cr);
+            SysLFS::writeObject(ck, cr);
         }
 
         // Update the graphics engine's current cube bank
@@ -454,13 +454,13 @@ void VirtAssetSlot::erase(_SYSCubeIDVector cv)
                 }
 
                 // Now we need to write back the modified record. (Without GC)
-                if (SysLFS::write(key, cr, false))
+                if (SysLFS::writeObject(key, cr, false))
                     continue;
 
                 // We failed to write without garbage collection. We may be
                 // able to write with GC enabled, but at this point we'd need
                 // to restart iteration, in case volumes were deleted.
-                SysLFS::write(key, cr);
+                SysLFS::writeObject(key, cr);
                 break;
             }
 
@@ -523,7 +523,6 @@ void PhysAssetSlot::erase(_SYSCubeID cube)
     bool pendingSlot = true;
 
     FlashLFS &lfs = SysLFS::get();
-    FlashLFSObjectIter iter(lfs);
 
     SysLFS::Key cubeKey = SysLFS::CubeRecord::makeKey(cube);
     SysLFS::Key asrKey = SysLFS::AssetSlotRecord::makeKey(cubeKey, index());
@@ -539,7 +538,6 @@ void PhysAssetSlot::erase(_SYSCubeID cube)
                 return;
             }
             
-            _SYSCubeID cube;
             SysLFS::Key key = (SysLFS::Key) iter.record()->getKey();
 
             // Is this our overview record?
@@ -555,13 +553,13 @@ void PhysAssetSlot::erase(_SYSCubeID cube)
                 cr.assets.markErased(index());
 
                 // Now we need to write back the modified record. (Without GC)
-                if (SysLFS::write(key, cr, false))
+                if (SysLFS::writeObject(key, cr, false))
                     continue;
 
                 // We failed to write without garbage collection. We may be
                 // able to write with GC enabled, but at this point we'd need
                 // to restart iteration, in case volumes were deleted.
-                SysLFS::write(key, cr);
+                SysLFS::writeObject(key, cr);
                 break;
             }
 

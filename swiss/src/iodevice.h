@@ -2,6 +2,7 @@
 #define IO_DEVICE_H
 
 #include <stdint.h>
+#include "usbprotocol.h"
 
 /*
  * Simple backend interface.

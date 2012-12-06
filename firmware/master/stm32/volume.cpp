@@ -50,7 +50,7 @@ void init()
      * capture readings - we don't need anything too detailed, so we can
      * dial it down a bit.
      */
-    gVolumeTimer.init(0xfff, 3);
+    gVolumeTimer.init(0xfff, 6);
 }
 
 int systemVolume()

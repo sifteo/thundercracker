@@ -16,13 +16,13 @@
 #   define RADIO_UART_HEX(_i)
 #endif
 
-RadioManager::fifo_t RadioManager::fifo;
+uint8_t RadioManager::currentProducer;
 bool RadioManager::enabled;
 uint8_t RadioManager::nextPID;
 uint32_t RadioManager::schedule[RadioManager::PID_COUNT];
 uint32_t RadioManager::nextSchedule[RadioManager::PID_COUNT];
 _SYSPseudoRandomState RadioManager::prngISR;
-uint32_t RadioManager::retryBucketMask = 0;
+RFSpectrumModel RadioManager::rfSpectrumModel;
 
 
 void RadioManager::produce(PacketTransmission &tx)
@@ -150,15 +150,16 @@ void RadioManager::produce(PacketTransmission &tx)
              * just to force the radio to bump its PID.
              */
 
-            static const RadioAddress dummy = { 0, { 0xFF, 0xFF, 0xFF, 0xFF, 0xFF } };
+            static const RadioAddress dummy = { 81, { 0xFF, 0xFF, 0xFF, 0xFF, 0xFF } };
 
             tx.dest = &dummy;
             tx.packet.bytes[0] = 0xFF;
             tx.packet.len = 1;
             tx.noAck = true;
+            tx.txPower = PacketTransmission::dBmMinus18;
 
             nextPID = (thisPID + 1) & PID_MASK;
-            fifo.enqueue(DUMMY_ID);
+            currentProducer = DUMMY_ID;
             return;
         }
 
@@ -179,7 +180,7 @@ void RadioManager::produce(PacketTransmission &tx)
         if (dispatchProduce(producer, tx, now)) {
             nextSchedule[thisPID] |= producerBit;
             nextPID = (thisPID + 1) & PID_MASK;
-            fifo.enqueue(producer);
+            currentProducer = producer;
             return;
         }
 
@@ -190,17 +191,60 @@ void RadioManager::produce(PacketTransmission &tx)
 
 void RadioManager::ackWithPacket(const PacketBuffer &packet, unsigned retries)
 {
-    dispatchAcknowledge(fifo.dequeue(), packet, retries);
+//    dispatchAcknowledge(currentProducer, packet, retries);
+    RADIO_UART_STR("\r\nack ");
+    RADIO_UART_HEX(currentProducer);
+
+    if (currentProducer == CONNECTOR_ID)
+        return CubeConnector::radioAcknowledge(packet);
+
+    if (currentProducer >= NUM_PRODUCERS) {
+        ASSERT(currentProducer == DUMMY_ID);
+        return;
+    }
+
+    CubeSlot &slot = CubeSlot::getInstance(currentProducer);
+    processRetries(slot, retries);
+    if (slot.isSysConnected())
+        slot.radioAcknowledge(packet);
 }
 
 void RadioManager::ackEmpty(unsigned retries)
 {
-    dispatchEmptyAcknowledge(fifo.dequeue(), retries);
+    RADIO_UART_STR("\r\nack0 ");
+    RADIO_UART_HEX(currentProducer);
+
+    if (currentProducer == CONNECTOR_ID)
+        return CubeConnector::radioEmptyAcknowledge();
+
+   if (currentProducer >= NUM_PRODUCERS) {
+        ASSERT(currentProducer == DUMMY_ID);
+        return;
+    }
+
+    CubeSlot &slot = CubeSlot::getInstance(currentProducer);
+
+    processRetries(slot, retries);
+    if (slot.isSysConnected())
+        slot.radioEmptyAcknowledge();
 }
 
 void RadioManager::timeout()
 {
-    dispatchTimeout(fifo.dequeue());
+    RADIO_UART_STR("\r\nTIMEOUT ");
+    RADIO_UART_HEX(currentProducer);
+
+    if (currentProducer == CONNECTOR_ID)
+        return CubeConnector::radioTimeout();
+
+    if (currentProducer >= NUM_PRODUCERS) {
+        ASSERT(currentProducer == DUMMY_ID);
+        return;
+    }
+
+    CubeSlot &slot = CubeSlot::getInstance(currentProducer);
+    if (slot.isSysConnected())
+        slot.radioTimeout();
 }
 
 void RadioManager::processRetries(const CubeSlot &slot, unsigned retries)
@@ -215,39 +259,14 @@ void RadioManager::processRetries(const CubeSlot &slot, unsigned retries)
      * larger buckets, since we'll want to jump away in larger increments.
      */
 
-
     unsigned channel = slot.getRadioAddress()->channel;
-    unsigned bucket = channel / 3; // 3 == roundup(MAX_RF_CHANNEL / 32)
-    ASSERT(bucket < 32);
-    unsigned bucketBit = Intrinsic::LZ(bucket);
+    rfSpectrumModel.update(channel, retries);
 
-    if (retries > CHANNEL_HOP_THRESHOLD) {
-        if (retryBucketMask & bucketBit) {
-            // initiate hop!
-            Atomic::Or(CubeSlots::pendingHop, slot.bit());
-        } else {
-            retryBucketMask |= bucketBit;
-            return;
-        }
+    unsigned energy = rfSpectrumModel.energry(channel);
+    if (energy > CHANNEL_HOP_THRESHOLD) {
+        // XXX: hop other connected cubes within some range of this channel?
+        Atomic::Or(CubeSlots::pendingHop, slot.bit());
     }
-
-    retryBucketMask &= ~bucketBit;
-}
-
-bool RadioManager::channelMightBeNoisy(unsigned channel)
-{
-    /*
-     * Based on our current mask of channels that any transmission required
-     * more than CHANNEL_HOP_THRESHOLD retries for.
-     *
-     * This is not great, since this mask is only maintained momentarily...
-     * Could be greatly improved by tracking noise profile more persistently.
-     */
-
-    ASSERT(channel <= MAX_RF_CHANNEL);
-
-    unsigned bucket = channel / 3; // 3 == roundup(MAX_RF_CHANNEL / 32)
-    return retryBucketMask & Intrinsic::LZ(bucket);
 }
 
 ALWAYS_INLINE bool RadioManager::dispatchProduce(unsigned id, PacketTransmission &tx, SysTime::Ticks now)
@@ -264,61 +283,4 @@ ALWAYS_INLINE bool RadioManager::dispatchProduce(unsigned id, PacketTransmission
 
     CubeSlot &slot = CubeSlot::getInstance(id);
     return slot.isSysConnected() && slot.radioProduce(tx, now);
-}
-
-ALWAYS_INLINE void RadioManager::dispatchAcknowledge(unsigned id, const PacketBuffer &packet, unsigned retries)
-{
-    RADIO_UART_STR("\r\nack ");
-    RADIO_UART_HEX(id);
-
-    if (id == CONNECTOR_ID)
-        return CubeConnector::radioAcknowledge(packet);
-
-    if (id >= NUM_PRODUCERS) {
-        ASSERT(id == DUMMY_ID);
-        return;
-    }
-
-    CubeSlot &slot = CubeSlot::getInstance(id);
-    processRetries(slot, retries);
-    if (slot.isSysConnected())
-        slot.radioAcknowledge(packet);
-}
-
-ALWAYS_INLINE void RadioManager::dispatchEmptyAcknowledge(unsigned id, unsigned retries)
-{
-    RADIO_UART_STR("\r\nack0 ");
-    RADIO_UART_HEX(id);
-
-    if (id == CONNECTOR_ID)
-        return CubeConnector::radioEmptyAcknowledge();
-
-   if (id >= NUM_PRODUCERS) {
-        ASSERT(id == DUMMY_ID);
-        return;
-    }
-
-    CubeSlot &slot = CubeSlot::getInstance(id);
-
-    processRetries(slot, retries);
-    if (slot.isSysConnected())
-        slot.radioEmptyAcknowledge();
-}
-
-ALWAYS_INLINE void RadioManager::dispatchTimeout(unsigned id)
-{
-    RADIO_UART_STR("\r\nTIMEOUT ");
-    RADIO_UART_HEX(id);
-
-    if (id == CONNECTOR_ID)
-        return CubeConnector::radioTimeout();
-
-    if (id >= NUM_PRODUCERS) {
-        ASSERT(id == DUMMY_ID);
-        return;
-    }
-
-    CubeSlot &slot = CubeSlot::getInstance(id);
-    if (slot.isSysConnected())
-        slot.radioTimeout();
 }

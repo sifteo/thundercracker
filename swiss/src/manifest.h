@@ -4,6 +4,7 @@
 #include "iodevice.h"
 #include "usbvolumemanager.h"
 #include "bits.h"
+#include "basedevice.h"
 
 #include <string>
 
@@ -15,20 +16,15 @@ public:
     static int run(int argc, char **argv, IODevice &_dev);
 
 private:
-    bool getVolumeOverview();
+    bool dumpBaseSysInfo();
     bool dumpOverview();
     bool dumpVolumes();
-
-    bool getMetadata(USBProtocolMsg &buffer, unsigned volBlockCode, unsigned key);
-    const char *getMetadataString(USBProtocolMsg &buffer, unsigned volBlockCode, unsigned key);
-    const char *getMetadataStringRPC(USBProtocolMsg &buffer, unsigned volBlockCode, unsigned key);
-    const char *getFirmwareVersion(USBProtocolMsg &buffer);
-    UsbVolumeManager::VolumeDetailReply *getVolumeDetail(USBProtocolMsg &buffer, unsigned volBlockCode);
 
     const char *getVolumeTypeString(unsigned type);
 
     UsbVolumeManager::VolumeOverviewReply overview;
     IODevice &dev;
+    BaseDevice base;
     char volTypeBuffer[16];
     bool isRPC;
 };

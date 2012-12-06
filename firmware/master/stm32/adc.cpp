@@ -48,7 +48,7 @@ void Adc::setSampleRate(uint8_t channel, SampleRate rate)
     if (channel < 10) {
         hw->SMPR2 |= rate << (channel * 3);
     } else {
-        hw->SMPR1 |= rate << (channel * 3);
+        hw->SMPR1 |= rate << ((channel - 10) * 3);
     }
 }
 

@@ -34,20 +34,33 @@ public:
     void init();
     void beginTransmitting();
 
-    void setTxPower(Radio::TxPower pwr);
-    Radio::TxPower txPower();
+    void setChannel(uint8_t ch);
+    uint8_t channel();
 
     void setConstantCarrier(bool enabled, unsigned channel = 0);
     void setPRXMode(bool enabled);
-
-    static void setRfTestEnabled(bool enabled) {
-        rfTestModeEnabled = enabled;
-    }
 
     void isr();
     GPIOPin irq;
 
     uint32_t irqCount;
+
+    enum TransactionState {
+        Idle,
+        RXStatus,
+        RXPayload,
+        TXChannel,
+        TXAddressTx,
+        TXAddressRx,
+        TXRfSetup,
+        TXSetupRetr,
+        TXPayload,
+        TXPulseCE
+    };
+
+    ALWAYS_INLINE TransactionState state() const {
+        return txnState;
+    }
 
  private:
     enum Command {
@@ -105,25 +118,17 @@ public:
     PacketTransmission txBuffer;
     PacketBuffer rxBuffer;
 
-    enum TransactionState {
-        Idle,
-        RXStatus,
-        RXPayload,
-        TXChannel,
-        TXAddressTx,
-        TXAddressRx,
-        TXSetupRetr,
-        TXPayload,
-        TXPulseCE
-    };
-
-    TransactionState txnState;
+    // volatile primarily so that factorytest can poll on this, while it
+    // may only get updated from ISR context
+    volatile TransactionState txnState;
 
     /*
      * Current retry counts.
      */
     uint8_t softRetriesLeft;
-    uint8_t hardRetries;        // Current device setting (to avoid unnecessary SPI comms)
+    // Cached device settings to avoid unnecessary SPI comms
+    uint8_t hardRetries;
+    uint8_t transmitPower;
 
     /*
      * The extra byte here is required for the SPI command byte that must
@@ -150,34 +155,36 @@ public:
      * Helpers to forward RF events to the appropriate destination.
      */
 
-    static bool rfTestModeEnabled;
-
     static void ALWAYS_INLINE timeout() {
-        if (rfTestModeEnabled)
+#ifdef RFTEST_GOLD_MASTER
             FactoryTest::timeout();
-        else
+#else
             RadioManager::timeout();
+#endif
     }
 
     static void ALWAYS_INLINE ackEmpty(unsigned retries) {
-        if (rfTestModeEnabled)
+#ifdef RFTEST_GOLD_MASTER
             FactoryTest::ackEmpty(retries);
-        else
+#else
             RadioManager::ackEmpty(retries);
+#endif
     }
 
     static void ALWAYS_INLINE ackWithPacket(const PacketBuffer &packet, unsigned retries) {
-        if (rfTestModeEnabled)
+#ifdef RFTEST_GOLD_MASTER
             FactoryTest::ackWithPacket(packet, retries);
-        else
+#else
             RadioManager::ackWithPacket(packet, retries);
+#endif
     }
 
     static void ALWAYS_INLINE produce(PacketTransmission &tx) {
-        if (rfTestModeEnabled)
+#ifdef RFTEST_GOLD_MASTER
             FactoryTest::produce(tx);
-        else
+#else
             RadioManager::produce(tx);
+#endif
     }
 
     unsigned ALWAYS_INLINE retryCount() const {

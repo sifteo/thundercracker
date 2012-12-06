@@ -31,21 +31,39 @@ extern int  main()              __attribute__((noreturn));
 
 extern "C" void _start()
 {
+#ifdef BOOTLOADABLE
+
     /*
-     * Don't need to run clock start up in application FW if the bootloader
-     * has already run it.
+     * Update our peripheral the clocks here for the application firmware.
+     * The shipping bootloader configures APB1 and APB2 to old values that are
+     * no longer consistent with what the rest of the system expects.
+     *
+     * Specifically, APB1 used to be at 18MHz and APB2 used to be at 36MHz,
+     * whereas they're now doubled.
      */
-#ifndef BOOTLOADABLE
+
+    const uint32_t apbReset = ~((7 << 11) |
+                                (7 << 8));
+
+    const uint32_t newAPBs =    (0 << 11)   | // PPRE2 - APB2 prescaler, no divisor
+                                (4 << 8);     // PPRE1 - APB1 prescaler, divide by 2
+
+    uint32_t tmp = RCC.CFGR & apbReset;
+    RCC.CFGR = tmp | newAPBs;
+
+#else
+
     /*
      * Set up clocks:
      *   - 8 MHz HSE (xtal) osc
      *   - PLL x9 => 72 MHz
      *   - SYSCLK at 72 MHz
      *   - HCLK at 72 MHz
-     *   - APB1 at 18 MHz (/4)
-     *       - SPI2 at 9 MHz
-     *   - APB2 at 36 MHz (/2)
+     *   - APB1 at 36 MHz (/2)
+     *       - SPI2 (radio) needs to be 9 MHz
+     *   - APB2 at 72 MHz (no divisor)
      *       - GPIOs
+     *       - SPI1 (flash)
      *   - USB clock at 48 MHz (PLL /1)
      *
      * Other things that depend on our clock setup:
@@ -86,8 +104,8 @@ extern "C" void _start()
                 (RCC_CFGR_PLLXTPRE << 17) | // PLL XTPRE
                 (1 << 16)                 | // PLLSRC - HSE
                 (2 << 14)                 | // ADCPRE - div6, ADCCLK is 14Mhz max
-                (4 << 11)                 | // PPRE2 - APB2 prescaler, divide by 2
-                (5 << 8)                  | // PPRE1 - APB1 prescaler, divide by 4
+                (0 << 11)                 | // PPRE2 - APB2 prescaler, no divisor
+                (4 << 8)                  | // PPRE1 - APB1 prescaler, divide by 2
                 (0 << 4);                   // HPRE - AHB prescaler, no divisor
 
     FLASH.ACR = (1 << 4) |  // prefetch buffer enable
@@ -106,18 +124,18 @@ extern "C" void _start()
     // Enable peripheral clocks
     RCC.APB2ENR = 0x0000003d;    // GPIO/AFIO
 
-#if 0
-    // debug the clock output - MCO
-    GPIOPin mco(&GPIOA, 8); // PA8 on the keil MCBSTM32E board - change as appropriate
-    mco.setControl(GPIOPin::OUT_ALT_50MHZ);
-#endif
-
     /*
      * Enable VCC SYS asap.
      */
     PowerManager::batteryPowerOn();
 
 #endif // BOOTLOADABLE
+
+#if 0
+    // debug the clock output - MCO
+    GPIOPin mco(&GPIOA, 8); // PA8 on the keil MCBSTM32E board - change as appropriate
+    mco.setControl(GPIOPin::OUT_ALT_50MHZ);
+#endif
 
     /*
      * Application firmware can request that the bootloader try to update by

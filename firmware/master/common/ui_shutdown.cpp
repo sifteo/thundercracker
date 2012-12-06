@@ -68,9 +68,12 @@ void UIShutdown::beginDigit(unsigned number)
 {
     digit = number;
     resetTimestamp();
-    drawDigit(number);
 
-    uic.letterboxWindow(kDigitHeight * TILE);
+    if (uic.isAttached()) {
+        drawDigit(number);
+
+        uic.letterboxWindow(kDigitHeight * TILE);
+    }
 }
 
 void UIShutdown::animate()
@@ -85,14 +88,15 @@ void UIShutdown::animate()
     if (done)
         return;
 
-    CubeSlot &cube = CubeSlots::instances[uic.avb.cube];
     float t = int(SysTime::ticks() - digitTimestamp) / kSlideDuration;
 
     if (t > 1.0f) {
         if (digit == 1) {
             // Finished the last digit!
             done = true;
-            drawLogo();
+            if (uic.isAttached()) {
+                drawLogo();
+            }
 
         } else {
             // Next digit
@@ -106,7 +110,9 @@ void UIShutdown::animate()
         return;
     }
 
-    uic.setPanX(easeInAndOut(t) * kSlideWidth + kSlideOrigin);
+    if (uic.isAttached()) {
+        uic.setPanX(easeInAndOut(t) * kSlideWidth + kSlideOrigin);
+    }
 }
 
 void UIShutdown::drawBackground()
@@ -202,7 +208,7 @@ void UIShutdown::mainLoop()
     // only cancel if we see a new press during shutdown process.
     bool haveSeenRelease = HomeButton::isReleased();
 
-    while (1) {
+    for (;;) {
 
         uic.stippleCubes(uic.connectCubes());
 

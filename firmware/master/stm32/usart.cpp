@@ -7,10 +7,6 @@
 #include "gpio.h"
 #include "board.h"
 
-// NOTE - these divisors must reflect the startup values configured in setup.cpp
-#define APB2RATE (72000000 / 2)
-#define APB1RATE (72000000 / 4)
-
 // static
 Usart Usart::Dbg(&UART_DBG);
 
@@ -34,6 +30,10 @@ void Usart::init(GPIOPin rx, GPIOPin tx, int rate, StopBits bits)
 
     rx.setControl(GPIOPin::IN_FLOAT);
     tx.setControl(GPIOPin::OUT_ALT_50MHZ);
+
+    // NOTE - these divisors must reflect the startup values configured in setup.cpp
+    const unsigned APB2RATE = (72000000 / 1);
+    const unsigned APB1RATE = (72000000 / 2);
 
     if (uart == &USART1)
         uart->BRR = APB2RATE / rate;
@@ -77,7 +77,7 @@ void Usart::deinit()
  * Return the status register to indicate what kind of event we responded to.
  * If we received a byte and the caller provided a buf, give it to them.
  */
-uint16_t Usart::isr(uint8_t *buf)
+uint16_t Usart::isr(uint8_t &byte)
 {
     uint16_t sr = uart->SR;
     uint8_t  dr = uart->DR;  // always read DR to reset SR
@@ -89,9 +89,7 @@ uint16_t Usart::isr(uint8_t *buf)
 
     // RXNE: data available
     if (sr & STATUS_RXED) {
-        if (buf) {
-            *buf = dr;
-        }
+        byte = dr;
     }
 
     // TXE: transmission complete

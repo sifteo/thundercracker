@@ -138,11 +138,15 @@ private:
             localUserLoader->busyCubes = activeCubes;
     }
 
-    // When we send data to the cube, update its watchdog timer.
-    // Not for use in ISR context.
+    /*
+     * When we send data to the cube, update its watchdog timer.
+     * Not for use in ISR context.
+     *
+     * This is currently quite long, as it should happen quite rarely.
+     */
     static ALWAYS_INLINE void resetDeadline(_SYSCubeID id)
     {
-        cubeDeadline[id] = SysTime::ticks() + SysTime::msTicks(350);
+        cubeDeadline[id] = SysTime::ticks() + SysTime::msTicks(2500);
     }
 
     // Pick the next valid query ID, and return it.

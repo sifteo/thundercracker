@@ -10,6 +10,7 @@
 #include "reboot.h"
 #include "macros.h"
 #include "backup.h"
+#include "savedata.h"
 
 #include <stdio.h>
 #include <string.h>
@@ -26,7 +27,7 @@ static const Command commands[] = {
     {
         "delete",
         "delete data from the Sifteo Base",
-        "delete (--all | --sys | --reformat | volume)",
+        "delete (--all | --sys | --reformat | <volumeID>)",
         Delete::run
     },
     {
@@ -58,6 +59,12 @@ static const Command commands[] = {
         "reset the Sifteo Base, equivalent to reinserting batteries",
         "reboot",
         Reboot::run
+    },
+    {
+        "savedata",
+        "extract or restore an application's save data",
+        "savedata (extract <package> <fout> [--raw] | restore <fin>)",
+        SaveData::run
     },
     {
         "update",

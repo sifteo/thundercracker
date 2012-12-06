@@ -297,12 +297,12 @@ namespace SysLFS {
     int write(Key k, const uint8_t *data, unsigned dataSize, bool gc=true);
 
     template <typename T>
-    inline bool read(Key k, T &obj) {
+    inline bool readObject(Key k, T &obj) {
         return read(k, (uint8_t*) &obj, sizeof obj) == sizeof obj;
     }
 
     template <typename T>
-    inline bool write(Key k, const T &obj, bool gc=true) {
+    inline bool writeObject(Key k, const T &obj, bool gc=true) {
         return write(k, (const uint8_t*) &obj, sizeof obj, gc) == sizeof obj;
     }
 

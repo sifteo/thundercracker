@@ -24,6 +24,8 @@ public:
     static void batteryPowerOn();
     static void batteryPowerOff();
 
+    static void shutdownIfVBattIsCritical(unsigned vbatt, unsigned vsys);
+
     // only exposed for use via exti
     static GPIOPin vbus;
     static void onVBusEdge();

@@ -12,19 +12,22 @@
 namespace Neighbor {
 
     /*
-     * Units are in APB1 ticks, which has a rate of 36MHz.
+     * APB1 runs at a rate of 36MHz (ie, SYSCLK / 2), but if the divisor for
+     * SYSCLK is anything other than 1, TIM2-7 run at APB1 * 2.
+     *
+     * So, our effective rate for these timers is 72Mhz.
      */
-    static const unsigned TICK_HZ = 36000000;
+    static const unsigned TICK_HZ = 72000000;
 
     /*
      * Timers are set to the neighbor transmission's bit width of 16us.
      * Pulse duration is 2us.
      *
-     * 2us  / (1 / 36000000) == 72 ticks
-     * 15.75us / (1 / 36000000) == 567 ticks
+     * 2us  / (1 / 72000000) == 144 ticks
+     * 15.75us / (1 / 72000000) == 1134 ticks
      */
-    static const unsigned PULSE_LEN_TICKS = 72;
-    static const unsigned BIT_PERIOD_TICKS = 567;
+    static const unsigned PULSE_LEN_TICKS = 144;
+    static const unsigned BIT_PERIOD_TICKS = 1134;
 
     /*
      * We want to start sampling pulses somewhere in the middle of the bit
@@ -34,7 +37,7 @@ namespace Neighbor {
      * This is basically (BIT_PERIOD_TICKS / 2) plus as much as we can
      * get away with.
      */
-    static const unsigned BIT_SAMPLE_PHASE = 300;
+    static const unsigned BIT_SAMPLE_PHASE = 600;
 
     // Number of bits to wait for during an RX sequence
     static const unsigned NUM_RX_BITS = 16;

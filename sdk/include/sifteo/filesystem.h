@@ -146,15 +146,37 @@ public:
         return write(0, 0);
     }
 
-    /// Template wrapper for read() of fixed-size objects.
+    /**
+     * @brief Template wrapper for read() of fixed-size objects.
+     *
+     * @deprecated Use readObject() instead. This will be removed in a
+     * future version update.
+     */
     template <typename T>
     int read(T &buffer, _SYSVolumeHandle volume = 0) const {
         return read((void*) &buffer, sizeof buffer, volume);
     }
 
-    /// Template wrapper for write() of fixed-size objects
+    /// Template wrapper for read() of fixed-size objects.
+    template <typename T>
+    int readObject(T &buffer, _SYSVolumeHandle volume = 0) const {
+        return read((void*) &buffer, sizeof buffer, volume);
+    }
+
+    /**
+     * @brief Template wrapper for write() of fixed-size objects.
+     *
+     * @deprecated Use writeObject() instead. This will be removed in a
+     * future version update.
+     */
     template <typename T>
     int write(const T &buffer) const {
+        return write((const void*) &buffer, sizeof buffer);
+    }
+
+    /// Template wrapper for write() of fixed-size objects.
+    template <typename T>
+    int writeObject(const T &buffer) const {
         return write((const void*) &buffer, sizeof buffer);
     }
 

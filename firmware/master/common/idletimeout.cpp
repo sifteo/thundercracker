@@ -28,8 +28,10 @@ void IdleTimeout::heartbeat()
         reset();    // in case we come back, without actually powering down
 
         const uint32_t excludedTasks =
-            Intrinsic::LZ(Tasks::AudioPull)  |
-            Intrinsic::LZ(Tasks::Pause);
+            Intrinsic::LZ(Tasks::AudioPull)     |
+            Intrinsic::LZ(Tasks::Pause)         |
+            Intrinsic::LZ(Tasks::Heartbeat)     |
+            Intrinsic::LZ(Tasks::FaultLogger);
 
         if (!SvmClock::isPaused())
             SvmClock::pause();

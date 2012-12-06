@@ -63,7 +63,7 @@ void AudioOutDevice::init()
     STATIC_ASSERT(&AUDIO_PWM_TIM == &TIM1);
     AFIO.MAPR |= (1 << 6);
 
-    PwmAudioOut::sampleTimer.init(36000000 / AudioMixer::SAMPLE_HZ, 0);
+    PwmAudioOut::sampleTimer.init(72000000 / AudioMixer::SAMPLE_HZ, 0);
 
     // Init the timer, both PWM outputs inverted
     PwmAudioOut::pwmTimer.init(PwmAudioOut::PWM_PERIOD, 0);

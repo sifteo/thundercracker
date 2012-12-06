@@ -150,6 +150,19 @@ bool Event::dispatchCubePID(PriorityID pid, _SYSCubeID cid)
             // Leave our event pending, since we may need to CONNECT also.
             if (userConn && (dcFlag || !sysConn)) {
 
+                /* De-neighbor the cube just-in-time */
+                _SYSNeighborState ns = NeighborSlot::instances[cid].getNeighborState();
+                for(_SYSSideID i=0; i<4; ++i) {
+                    if (ns.sides[i] < _SYS_NUM_CUBE_SLOTS && NeighborSlot::instances[ns.sides[i]].sendNextEvent()) {
+                        IdleTimeout::reset();
+                        return true;
+                    }
+                }
+                if (NeighborSlot::instances[cid].sendNextEvent()) {
+                    IdleTimeout::reset();
+                    return true;
+                }
+
                 /*
                  * If this disconnection event takes us below the current cubeRange,
                  * execute the pause menu.
@@ -159,6 +172,8 @@ bool Event::dispatchCubePID(PriorityID pid, _SYSCubeID cid)
                     Pause::mainLoop(Pause::ModeCubeRange);
 
                 CubeSlots::instances[cid].userDisconnect();
+
+                // flag neighbors on this and it's whole neighborhood
                 return callCubeEvent(_SYS_CUBE_DISCONNECT, cid);
             }
 

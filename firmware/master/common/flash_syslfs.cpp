@@ -132,7 +132,7 @@ void SysLFS::PairingIDRecord::init()
 
 void SysLFS::PairingIDRecord::load()
 {
-    if (!read(SysLFS::kPairingID, *this))
+    if (!readObject(SysLFS::kPairingID, *this))
         init();
 }
 
@@ -144,7 +144,7 @@ void SysLFS::PairingMRURecord::init()
 
 void SysLFS::PairingMRURecord::load()
 {
-    if (!read(SysLFS::kPairingMRU, *this))
+    if (!readObject(SysLFS::kPairingMRU, *this))
         init();
 
     /*
@@ -804,10 +804,10 @@ void SysLFS::cleanupDeletedVolumes()
                 excluded.mark(key);
 
                 if (cr.cleanupDeletedVolumes(allVolumes)) {
-                    if (SysLFS::write(key, cr, false))
+                    if (SysLFS::writeObject(key, cr, false))
                         continue;
                     // Enable GC, and restart iteration.
-                    SysLFS::write(key, cr);
+                    SysLFS::writeObject(key, cr);
                     break;
                 }
             }
@@ -824,10 +824,10 @@ void SysLFS::cleanupDeletedVolumes()
                 excluded.mark(key);
 
                 if (asr.cleanupDeletedVolumes(allVolumes)) {
-                    if (SysLFS::write(key, asr, false))
+                    if (SysLFS::writeObject(key, asr, false))
                         continue;
                     // Enable GC, and restart iteration.
-                    SysLFS::write(key, asr);
+                    SysLFS::writeObject(key, asr);
                     break;
                 }
             }

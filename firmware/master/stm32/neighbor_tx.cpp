@@ -150,7 +150,9 @@ IRQ_HANDLER ISR_FN(NBR_TX_TIM)()
                 setDuty(0);
                 txPeriodTimer.setPeriod(Neighbor::BIT_PERIOD_TICKS, Neighbor::NUM_TX_WAIT_PERIODS);
                 txState = BetweenTransmissions;
+                #if BOARD != BOARD_TEST_JIG
                 BatteryLevel::beginCapture();
+                #endif
             } else {
                 // send data out big endian
                 setDuty((txData & 0x8000) ? Neighbor::PULSE_LEN_TICKS : 0);
@@ -173,8 +175,9 @@ IRQ_HANDLER ISR_FN(NBR_TX_TIM)()
         }
     }
 
-    if (status & (1 << BATT_LVL_CHAN))
+    if (status & (1 << BATT_LVL_CHAN)) {
         BatteryLevel::captureIsr();
+    }
 }
 
 void NeighborTX::floatSide(unsigned side)

@@ -2,6 +2,7 @@
 #include "usbprotocol.h"
 #include "elfdebuginfo.h"
 #include "progressbar.h"
+#include "util.h"
 
 #include <sifteo/abi/elf.h>
 
@@ -12,6 +13,7 @@
 int Installer::run(int argc, char **argv, IODevice &_dev)
 {
     bool launcher = false;
+    bool forceLauncher = false;
     bool rpc = false;
     const char *path = NULL;
 
@@ -20,6 +22,8 @@ int Installer::run(int argc, char **argv, IODevice &_dev)
             launcher = true;
         } else if (!strcmp(argv[i], "--rpc")) {
             rpc = true;
+        } else if (!strcmp(argv[i], "-f")) {
+            forceLauncher = true;
         } else if (!path) {
             path = argv[i];
         } else {
@@ -31,7 +35,7 @@ int Installer::run(int argc, char **argv, IODevice &_dev)
     Installer installer(_dev);
 
     bool success = installer.install(path,
-        IODevice::SIFTEO_VID, IODevice::BASE_PID, launcher, rpc);
+        IODevice::SIFTEO_VID, IODevice::BASE_PID, launcher, forceLauncher, rpc);
 
     return success ? 0 : 1;
 }
@@ -49,12 +53,26 @@ Installer::Installer(IODevice &_dev) :
  * - Send the content of the application.
  * - Commit the transaction.
  */
-bool Installer::install(const char *path, int vid, int pid, bool launcher, bool rpc)
+bool Installer::install(const char *path, int vid, int pid, bool launcher, bool forceLauncher, bool rpc)
 {
     isRPC = rpc;
     isLauncher = launcher;
     if (!launcher && !getPackageMetadata(path))
         return false;
+
+    if (launcher && !forceLauncher) {
+        /*
+         * Enforce the convention that the filename at least starts with 'launcher'
+         * Helps protect against people accidentally installing unintended games,
+         * or even unencrypted firmware, as the launcher.
+         */
+
+        const char *prefix = "launcher";
+        if (strncmp(Util::filepathBase(path), prefix, strlen(prefix)) != 0) {
+            puts("this doesn't look like a launcher. use the -f option to force install it.");
+            return false;
+        }
+    }
 
     FILE *f = fopen(path, "rb");
     if (!f) {
@@ -229,11 +247,20 @@ bool Installer::commit()
 
     m.len = dev.readPacket(m.bytes, m.MAX_LEN);
 
-    if ((m.header & 0xff) == UsbVolumeManager::WriteCommitOK) {
-        fprintf(stderr, "successfully committed new volume\n");
-        return true;
+    if ((m.header & 0xff) != UsbVolumeManager::WriteCommitOK) {
+        fprintf(stderr, "failed to write volume!\n");
+        return false;
     }
 
-    fprintf(stderr, "failed to write volume!\n");
-    return false;
+    if (m.payloadLen() >= 1) {
+        uint8_t volumeBlockCode = m.payload[0];
+        fprintf(stderr, "successfully committed new volume 0x%x\n", volumeBlockCode);
+        if (isRPC) {
+            fprintf(stdout, "::volume:%u\n", volumeBlockCode); fflush(stdout);
+        }
+    } else {
+        fprintf(stderr, "successfully committed new volume\n");
+    }
+
+    return true;
 }

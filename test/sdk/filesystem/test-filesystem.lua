@@ -332,6 +332,31 @@ function testAllocFail()
     assertVolumes{}
 end
 
+function testStoredObjects()
+
+    print "Testing stored objects"
+
+    for i, vol in ipairs(fs:listVolumes()) do
+        fs:deleteVolume(vol)
+    end
+
+    for it = 1, 50 do
+        -- install a game, and restore some savedata to it
+        local parentVol = fs:newVolume(TEST_VOL_TYPE, string.rep("x", 0x201011))
+
+        -- ensure we never see left over savedata for a previously deleted volume
+        local savedata = fs:readObject(parentVol, 0xff)
+        assertEquals(nil, savedata)
+
+        assertEquals(0, fs:writeObject(parentVol, 0xff, string.rep("y", 0xff)))
+
+        fs:deleteVolume(parentVol)
+
+        -- storedobjects must never be written to a deleted parent
+        assertEquals(-1, fs:writeObject(parentVol, 0xff, string.rep("y", 0xff)))
+    end
+end
+
 function testFilesystem()
     -- Dump the volumes that existed on entry
     dumpFilesystem()
@@ -340,6 +365,7 @@ function testFilesystem()
     fs:invalidateCache()
 
     -- Individual filesystem exercises
+    testStoredObjects()
     testHierarchy()
     testAllocFail()
     testVolumeSizes()

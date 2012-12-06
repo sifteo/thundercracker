@@ -16,6 +16,8 @@ public:
     static void onUartIsr();
     static void usbHandler(const USBProtocolMsg &m);
 
+    static void task();
+
     /*
      * RF test handlers.
      *
@@ -28,28 +30,54 @@ public:
      */
     static void produce(PacketTransmission &tx);
     static void ALWAYS_INLINE ackWithPacket(const PacketBuffer &packet, unsigned retries) {
-        rfSuccessCount++;
-        if (rfTransmissionsRemaining)
+        if (rfTransmissionsRemaining) {
+            rfSuccessCount++;
             rfTransmissionsRemaining--;
+        }
     }
     static void ALWAYS_INLINE timeout() {
-        if (rfTransmissionsRemaining)
+        if (rfTransmissionsRemaining) {
             rfTransmissionsRemaining--;
+        }
     }
     static void ALWAYS_INLINE ackEmpty(unsigned retries) {
-        rfSuccessCount++;
-        if (rfTransmissionsRemaining)
+        if (rfTransmissionsRemaining) {
+            rfSuccessCount++;
             rfTransmissionsRemaining--;
+        }
     }
 
 private:
-    static uint8_t commandBuf[UART_MAX_COMMAND_LEN];
-    static uint8_t commandLen;
+
+    struct UartCommand {
+        uint8_t buf[UART_MAX_COMMAND_LEN];
+        uint8_t len;
+
+        ALWAYS_INLINE void append(uint8_t byte) {
+
+            if (len >= UART_MAX_COMMAND_LEN) {
+                len = 0; // avoid overflow - reset
+            }
+            buf[len++] = byte;
+        }
+
+        ALWAYS_INLINE bool complete() const {
+            return buf[UART_LEN_INDEX] == len;
+        }
+
+        ALWAYS_INLINE uint8_t opcode() const {
+            return buf[UART_CMD_INDEX];
+        }
+    };
+
+    static UartCommand uartCommand;
 
     static volatile uint16_t rfTransmissionsRemaining;
     static uint16_t rfSuccessCount;
     static RadioAddress rfTestAddr;
     static uint8_t rfTestAddrPrimaryChannel;
+    static uint8_t rfTestCubeVersion;
+
     static const uint8_t RF_TEST_BYTE = 0x11;
 
     static void handleRfPacketComplete();

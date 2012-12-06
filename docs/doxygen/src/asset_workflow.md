@@ -103,7 +103,20 @@ Bloop = sound{ "bloop.wav", encode="pcm" }
 
 Each @b sound element specifies that a Sifteo::AssetAudio object should be generated, which can be played by a Sifteo::AudioChannel.
 
-`stir` treats `sound` files whose name ends in `.wav` as WAV files, which are widely supported in most audio editing and authoring environments. When processing WAV files, `stir` ensures that the sample rate and sample format of your audio is correct - 16kHz sample rate and signed 16-bit samples. Any other `sound` files are treated as headerless raw PCM16 data.
+`stir` treats `sound` files whose name ends in `.wav` as WAV files, which are widely supported in most audio editing and authoring environments. `stir` helps ensure that your WAV files are prepared correctly:
+
+* data format for samples is __signed 16-bit__
+* sample rate is no higher than the system max of __16kHz__
+
+### Sample Rate
+
+`stir` will detect the sample rate of your WAV files, and configure your AudioAsset to play at its native sample rate by default. You can also manipulate the rate of playback at runtime using Sifteo::AudioChannel::setSpeed().
+
+Lower sample rates will typically result in lower quality audio, but can also introduce storage savings - if the quality is acceptable and you're strapped for storage space, it can be a good tradeoff.
+
+`stir` rejects WAV files with sample rates higher than the system max of 16kHz - there's no use fetching more data than can be rendered by the audio device.
+
+### Compression
 
 The default encoding for audio data in external storage is ADPCM, which compresses your source audio to 25% of its original size. To specify that your sample be stored uncompressed, add the `encode="pcm"` option to your `sound` object, as in the `Bloop` entry above.
 

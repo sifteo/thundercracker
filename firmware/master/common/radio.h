@@ -12,6 +12,7 @@
 #include "bits.h"
 #include "ringbuffer.h"
 #include "systime.h"
+#include "rfspectrum.h"
 
 class CubeSlot;
 class RadioManager;
@@ -92,12 +93,25 @@ struct PacketBuffer {
  */
 
 struct PacketTransmission {
+
+    /*
+     * Values for the nRF24L01's tx power register.
+     */
+
+    enum TxPower {
+        dBmMinus18              = 0,
+        dBmMinus12              = 1 << 1,
+        dBmMinus6               = 2 << 1,
+        dBm0                    = 3 << 1
+    };
+
     PacketBuffer packet;
     const RadioAddress *dest;
 
     bool noAck;
     uint8_t numHardwareRetries;
     uint8_t numSoftwareRetries;
+    uint8_t txPower;
 
     static const unsigned MAX_HARDWARE_RETRIES = 15;
 
@@ -108,12 +122,14 @@ struct PacketTransmission {
      * by a secondary timeout)
      */
     static const unsigned DEFAULT_HARDWARE_RETRIES = MAX_HARDWARE_RETRIES;
-    static const unsigned DEFAULT_SOFTWARE_RETRIES = 32;
+    static const unsigned DEFAULT_SOFTWARE_RETRIES = 128;
+    static const TxPower  DEFAULT_TX_POWER = dBm0;
 
     ALWAYS_INLINE void init() {
         noAck = 0;
         numHardwareRetries = DEFAULT_HARDWARE_RETRIES;
         numSoftwareRetries = DEFAULT_SOFTWARE_RETRIES;
+        txPower = DEFAULT_TX_POWER;
     }
 
     ALWAYS_INLINE PacketTransmission() {
@@ -166,13 +182,12 @@ class Radio {
         dBm0                    = 3 << 1
     };
 
-    /*
-     * Setter/getter for transmit power.
-     * We don't strictly need a getter, but it is used for testing purposes
-     * to verify that we can read/write registers properly.
-     */
-    static void setTxPower(TxPower pwr);
-    static TxPower txPower();
+    #ifndef SIFTEO_SIMULATOR
+    static void onTransitionToUsbPower();
+
+private:
+    static void reinit();
+    #endif
 };
 
 
@@ -210,19 +225,9 @@ class RadioManager {
     static void timeout();
     static void processRetries(const CubeSlot &slot, unsigned retries);
 
-    static bool channelMightBeNoisy(unsigned channel);
-
-    /*
-     * FIFO buffer of slot numbers that have pending acknowledgments.
-     * This lets us match up ACKs with endpoints. Accessed ONLY in
-     * interrupt context.
-     *
-     * The size must be deep enough to cover the worst-case
-     * queueing depth of the Radio implementation. On real hardware
-     * this will be quite small. This is also independent of the
-     * number of cubes in use. Must be a power of two.
-     */
-    static const unsigned FIFO_DEPTH = 8;
+    ALWAYS_INLINE static unsigned suggestChannel() {
+        return rfSpectrumModel.suggestChannel();
+    }
 
     /**
      * Shared pseudorandom number generator, usable by anyone in Radio ISR context
@@ -230,12 +235,27 @@ class RadioManager {
     static _SYSPseudoRandomState prngISR;
 
  private:
-    typedef RingBuffer<FIFO_DEPTH, uint8_t, uint8_t> fifo_t;
-    static fifo_t fifo;
+
+    /*
+     * Several entities in the system can serve as a 'producer' for the radio:
+     * primarily, each cube and the CubeConnector.
+     *
+     * The nRF chip that we use provides a 3-slot FIFO buffer for transmissions,
+     * but we only ever use one of them at a time - unfortunately, when a
+     * transmission has timed out, the only way to move on to the next
+     * one is to flush the TX FIFO, which removes *all* pending transmissions.
+     *
+     * Rather than re-load the FIFO in these scenarios, we only ever use
+     * one slot (currentProducer) so we're free to flush at any time.
+     *
+     * Accessed ONLY in interrupt context.
+     */
+
+    static uint8_t currentProducer;
+
     static bool enabled;
 
-    static const unsigned CHANNEL_HOP_THRESHOLD = PacketTransmission::DEFAULT_HARDWARE_RETRIES;
-    static uint32_t retryBucketMask;
+    static const unsigned CHANNEL_HOP_THRESHOLD = 5 * PacketTransmission::DEFAULT_HARDWARE_RETRIES;
 
     // ID for the CubeConnector. Must not collide with any CubeSlot ID.
     static const unsigned CONNECTOR_ID = _SYS_NUM_CUBE_SLOTS;
@@ -251,15 +271,14 @@ class RadioManager {
     static const unsigned PID_MASK = PID_COUNT - 1;
     static uint8_t nextPID;
 
+    static RFSpectrumModel rfSpectrumModel;
+
     // Priority queues for each PID value
     static uint32_t schedule[PID_COUNT];
     static uint32_t nextSchedule[PID_COUNT];
     
     // Dispatch to a paritcular producer, by ID
     static ALWAYS_INLINE bool dispatchProduce(unsigned id, PacketTransmission &tx, SysTime::Ticks now);
-    static ALWAYS_INLINE void dispatchAcknowledge(unsigned id, const PacketBuffer &packet, unsigned retries);
-    static ALWAYS_INLINE void dispatchEmptyAcknowledge(unsigned id, unsigned retries);
-    static ALWAYS_INLINE void dispatchTimeout(unsigned id);
 };
 
 #endif

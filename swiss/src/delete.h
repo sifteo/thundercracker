@@ -18,8 +18,6 @@ public:
 
 private:
     IODevice &dev;
-
-    static bool parseVolumeCode(const char *str, unsigned &code);
 };
 
 #endif // INSTALLER_H

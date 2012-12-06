@@ -24,7 +24,6 @@ namespace Stir {
 // Important global variables
 #define GLOBAL_DEFGROUP         "_defaultGroup"
 #define GLOBAL_QUALITY          "quality"
-#define SAMPLE_RATE 16000
 
 const char Group::className[] = "group";
 const char Image::className[] = "image";
@@ -738,7 +737,7 @@ Sound::Sound(lua_State *L)
     if (Script::argMatch(L, "sample_rate")) {
         setSampleRate(lua_tonumber(L, -1));
     } else {
-        setSampleRate(SAMPLE_RATE);
+        setSampleRate(UNSPECIFIED_SAMPLE_RATE);
     }
 
     if (Script::argMatch(L, "loop_start")) {

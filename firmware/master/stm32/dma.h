@@ -14,14 +14,21 @@ class Dma
 public:
     typedef void (*DmaIsr_t)(void *p, uint8_t flags);
 
+    enum Priority {
+        LowPrio         = (0 << 12),
+        MediumPrio      = (1 << 12),
+        HighPrio        = (2 << 12),
+        VeryHighPrio    = (3 << 12)
+    };
+
     enum IsrFlags {
         Complete        = (1 << 1),
         HalfComplete    = (1 << 2),
         Error           = (1 << 3)
     };
 
-    static void registerHandler(volatile DMA_t *dma, int channel, DmaIsr_t func, void *param);
-    static void unregisterHandler(volatile DMA_t *dma, int channel);
+    static void initChannel(volatile DMA_t *dma, int channel, DmaIsr_t func, void *param);
+    static void deinitChannel(volatile DMA_t *dma, int channel);
 
 private:
     struct DmaHandler_t {

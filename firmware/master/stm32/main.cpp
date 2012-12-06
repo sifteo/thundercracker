@@ -72,7 +72,7 @@ int main()
     NVIC.irqPrioritize(IVT.LED_SEQUENCER_TIM, 0x75);
 
     NVIC.irqEnable(IVT.USART3);                     // factory test uart
-    NVIC.irqPrioritize(IVT.USART3, 0x99);           //  loooooowest prio
+    NVIC.irqPrioritize(IVT.USART3, 0x52);           //  high enough to avoid overruns
 
     NVIC.irqEnable(IVT.VOLUME_TIM);                 // volume timer
     NVIC.irqPrioritize(IVT.VOLUME_TIM, 0x55);       //  just below sample rate timer
@@ -101,7 +101,7 @@ int main()
      *
      * Avoid reinitializing periphs that the bootloader has already init'd.
      */
-#ifndef BOOTLOADER
+#ifndef BOOTLOADABLE
     SysTime::init();
     PowerManager::init();
     Crc32::init();
@@ -109,7 +109,6 @@ int main()
 
     // This is the earliest point at which it's safe to use Usart::Dbg.
     Usart::Dbg.init(UART_RX_GPIO, UART_TX_GPIO, 115200);
-    UART(("Firmware " TOSTRING(SDK_VERSION) "\r\n"));
 
 #ifdef REV2_GDB_REWORK
     DBGMCU_CR |= (1 << 30) |        // TIM14 stopped when core is halted
@@ -133,11 +132,44 @@ int main()
     FlashStack::init();
     HomeButton::init();
     NeighborTX::init();
+
+    /*
+     * NOTE: NeighborTX & BatteryLevel share a timer - Battery level expects
+     *      it to have already been init'd.
+     *
+     *      Also, CubeConnector is currently the only system to initiate neighbor
+     *      transmissions, so wait until we do our battery check before init'ing
+     *      him to avoid any conflicts.
+     */
+
+    BatteryLevel::init();
+    if (PowerManager::state() == PowerManager::BatteryPwr) {
+
+        /*
+         * Ensure we have enough juise to make it worth starting up!
+         *
+         * Kick off our first sample and wait for it to complete.
+         * Once our first vsys and vbatt samples have been taken, the
+         * PowerManager will shut us down if we're at a critical level.
+         */
+
+        BatteryLevel::beginCapture();
+
+        // we unforuntately don't have anything better to do while we wait, since
+        // we can't proceed until we know this is OK. Our startup process is
+        // ultimately bottlenecked by the radio's power on delay anyway, and
+        // this time is taken into account for that, so we're still OK.
+        while (BatteryLevel::vsys() == BatteryLevel::UNINITIALIZED ||
+               BatteryLevel::raw() == BatteryLevel::UNINITIALIZED)
+            ;
+    }
+
+    // wait until after we know we're going to continue starting up before
+    // showing signs of life :)
+    UART(("Firmware " TOSTRING(SDK_VERSION) "\r\n"));
+
     CubeConnector::init();
 
-    // NOTE: NeighborTX & BatteryLevel share a timer - Battery level expects
-    //       it to have already been init'd.
-    BatteryLevel::init();
     Volume::init();
     AudioOutDevice::init();
     AudioOutDevice::start();

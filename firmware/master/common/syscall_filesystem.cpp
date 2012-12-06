@@ -196,6 +196,14 @@ int32_t _SYS_fs_objectWrite(unsigned key, const uint8_t *data, unsigned dataSize
     FlashVolume parentVol = SvmLoader::getRunningVolume();
     ASSERT(parentVol.isValid());
 
+    /*
+     * However! If a volume has been deleted but is still running, we want to
+     * avoid writing any additional objects to its LFS child.
+     */
+    if (FlashVolume::typeIsRecyclable(parentVol.getType())) {
+        return _SYS_ENOENT;
+    }
+
     if (!FlashLFSIndexRecord::isKeyAllowed(key) ||
         !FlashLFSIndexRecord::isSizeAllowed(dataSize)) {
         SvmRuntime::fault(F_SYSCALL_PARAM);

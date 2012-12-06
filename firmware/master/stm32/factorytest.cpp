@@ -2,6 +2,7 @@
 #include "usart.h"
 #include "board.h"
 #include "macros.h"
+#include "sysinfo.h"
 
 #include "radio.h"
 #include "nrf24l01.h"
@@ -17,16 +18,17 @@
 #include "cube.h"
 #include "tasks.h"
 #include "radioaddrfactory.h"
+#include "nrf24l01.h"
 
 extern unsigned     __data_start;
 
-uint8_t FactoryTest::commandBuf[FactoryTest::UART_MAX_COMMAND_LEN];
-uint8_t FactoryTest::commandLen;
+FactoryTest::UartCommand FactoryTest::uartCommand;
 
 uint16_t FactoryTest::rfSuccessCount;
 volatile uint16_t FactoryTest::rfTransmissionsRemaining;
 RadioAddress FactoryTest::rfTestAddr;
 uint8_t FactoryTest::rfTestAddrPrimaryChannel;
+uint8_t FactoryTest::rfTestCubeVersion;
 
 FactoryTest::TestHandler const FactoryTest::handlers[] = {
     nrfCommsHandler,            // 0
@@ -46,7 +48,6 @@ FactoryTest::TestHandler const FactoryTest::handlers[] = {
 
 void FactoryTest::init()
 {
-    commandLen = 0;
 }
 
 /*
@@ -59,27 +60,34 @@ void FactoryTest::init()
 void FactoryTest::onUartIsr()
 {
     uint8_t rxbyte;
-    uint16_t status = Usart::Dbg.isr(&rxbyte);
+    uint16_t status = Usart::Dbg.isr(rxbyte);
+
     if (status & Usart::STATUS_RXED) {
 
-        // avoid overflow - reset
-        if (commandLen >= UART_MAX_COMMAND_LEN)
-            commandLen = 0;
-
-        commandBuf[commandLen++] = rxbyte;
-
-        if (commandBuf[UART_LEN_INDEX] == commandLen) {
-            // dispatch to the appropriate handler
-            uint8_t cmd = commandBuf[UART_CMD_INDEX];
-            if (cmd < arraysize(handlers)) {
-                TestHandler handler = handlers[cmd];
-                // arg[0] is always the command byte
-                handler(commandLen - 1, commandBuf + 1);
-            }
-
-            commandLen = 0;
-        }
+        uartCommand.append(rxbyte);
+        if (uartCommand.complete())
+            Tasks::trigger(Tasks::FactoryTest);
     }
+}
+
+
+void FactoryTest::task()
+{
+    /*
+     * As the UART ISR runs at a reasonably high priority to avoid
+     * getting overrun, we offload the handler execution to a task.
+     */
+
+    if (!uartCommand.complete())
+        return;
+
+    uint8_t opcode = uartCommand.opcode();
+    if (opcode < arraysize(handlers)) {
+        TestHandler handler = handlers[opcode];
+        handler(uartCommand.len - 1, &uartCommand.buf[1]);
+    }
+
+    uartCommand.len = 0;
 }
 
 /*
@@ -112,8 +120,9 @@ void FactoryTest::produce(PacketTransmission &tx)
      * listening on, send to both and treat a timeout on both as
      * a failure.
      */
+
     if (rfTestAddr.channel == rfTestAddrPrimaryChannel)
-        RadioAddrFactory::convertPrimaryToAlternateChannel(rfTestAddr);
+        RadioAddrFactory::convertPrimaryToAlternateChannel(rfTestAddr, rfTestCubeVersion);
     else
         rfTestAddr.channel = rfTestAddrPrimaryChannel;
 
@@ -141,10 +150,18 @@ void FactoryTest::produce(PacketTransmission &tx)
  */
 void FactoryTest::nrfCommsHandler(uint8_t argc, const uint8_t *args)
 {
-    Radio::TxPower pwr = static_cast<Radio::TxPower>(args[1]);
-    Radio::setTxPower(pwr);
+    RadioManager::disableRadio();
 
-    const uint8_t response[] = { 3, args[0], Radio::txPower() };
+    while (NRF24L01::instance.state() != NRF24L01::Idle) {
+        Tasks::resetWatchdog();
+    }
+
+    uint8_t chan = args[1];
+    NRF24L01::instance.setChannel(chan);
+    const uint8_t response[] = { 3, args[0], NRF24L01::instance.channel() };
+
+    RadioManager::enableRadio();
+
     Usart::Dbg.write(response, sizeof response);
 }
 
@@ -222,8 +239,8 @@ void FactoryTest::ledHandler(uint8_t argc, const uint8_t *args)
  */
 void FactoryTest::uniqueIdHandler(uint8_t argc, const uint8_t *args)
 {
-    uint8_t response[2 + Board::UniqueIdNumBytes] = { sizeof response, args[0] };
-    memcpy(response + 2, Board::UniqueId, Board::UniqueIdNumBytes);
+    uint8_t response[2 + SysInfo::UniqueIdNumBytes] = { sizeof response, args[0] };
+    memcpy(response + 2, SysInfo::UniqueId, SysInfo::UniqueIdNumBytes);
 
     if (argc >= 2)
         UsbDevice::write(&response[1], sizeof response - 1);
@@ -349,25 +366,24 @@ void FactoryTest::rfPacketTestHandler(uint8_t argc, const uint8_t *args)
     memcpy(&hwid, &args[3], sizeof hwid);
     RadioAddrFactory::fromHardwareID(rfTestAddr, hwid);
     rfTestAddrPrimaryChannel = rfTestAddr.channel;
+    rfTestCubeVersion = hwid & 0xff;
 
-    NRF24L01::setRfTestEnabled(true);
-
-    rfSuccessCount = 0;
     // multiply transmission count by 2 since we're sending
     // each attempt to both channels a cube might be listening on
     rfTransmissionsRemaining = *reinterpret_cast<const uint16_t*>(&args[1]) * 2;
 
     while (rfTransmissionsRemaining)
-        Tasks::work(Intrinsic::LZ(Tasks::UsbOUT)); // don't process more USB traffic until we're out of this handler
-
-    NRF24L01::setRfTestEnabled(false);
+        Tasks::waitForInterrupt();
 
     /*
      * Respond with the number of packets sent, and the number of successful transmissions
      */
     const uint8_t report[] = { args[0], args[1], args[2],
                                rfSuccessCount & 0xff, (rfSuccessCount >> 8) & 0xff };
+    UART_HEX(rfSuccessCount);
+    UART("\r\n");
     UsbDevice::write(report, sizeof report);
+    rfSuccessCount = 0;
 }
 
 IRQ_HANDLER ISR_USART3()

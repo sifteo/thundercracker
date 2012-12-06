@@ -94,8 +94,9 @@ private:
 
     void prepareAssets();
     
-    bool canLaunchItem(unsigned index);
-    void toggleCubeRangeAlert(unsigned index);
+    bool areEnoughCubesConnected(unsigned index);
+    void updateCubeRangeAlert();
+    void toggleCubeRangeAlert();
     void updateAlerts();
 
     void handleEvent(Sifteo::MenuEvent &e);

@@ -33,6 +33,7 @@ struct UIAssets {
             const uint16_t *shutdownBackground;
             const uint16_t *bigDigits;
             const uint16_t *faultMessage;
+            const uint16_t *iconCubeRange;
         };
     };
 

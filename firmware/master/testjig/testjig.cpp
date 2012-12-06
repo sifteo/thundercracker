@@ -13,6 +13,7 @@
 #include "i2c.h"
 #include "neighbor_tx.h"
 #include "neighbor_rx.h"
+#include "pulse_rx.h"
 #include "gpio.h"
 #include "macros.h"
 #include "dac.h"
@@ -26,6 +27,9 @@ static GPIOPin testUsbEnable = USB_PWR_GPIO;
 static Adc adc(&PWR_MEASURE_ADC);
 static GPIOPin usbCurrentSign = USB_CURRENT_DIR_GPIO;
 static GPIOPin v3CurrentSign = V3_CURRENT_DIR_GPIO;
+
+static PulseRX PulseRX2v0Rail(NBR_IN4_GPIO);
+static PulseRX PulseRX3v3Rail(NBR_IN3_GPIO);
 
 TestJig::I2CWriteTransaction TestJig::cubeWrite;
 TestJig::AckPacket TestJig::ackPacket;
@@ -46,6 +50,8 @@ TestJig::TestHandler const TestJig::handlers[] = {
     setCubeSensorsEnabledHandler,           // 7
     beginNeighborTxHandler,                 // 8
     stopNeighborTxHandler,                  // 9
+    beginNoiseCheckHandler,                 // 10
+    stopNoiseCheckHandler,                  // 11
 };
 
 void TestJig::init()
@@ -130,14 +136,17 @@ void NeighborRX::callback(unsigned side, unsigned msg)
     UsbDevice::write(response, sizeof response);
 }
 
+ALWAYS_INLINE static bool flagsMatch(uint32_t value, uint32_t flags) {
+    return (value & flags) == flags;
+}
+
 /*
  * Called from ISR context when an i2c event has occurred.
  * If the host has asked us to report on i2c related
  */
 void TestJig::onI2cEvent()
 {
-    uint8_t byte;
-    uint16_t status = i2c.irqEvStatus();
+    uint32_t status = i2c.status();
 
     /*
      * Dataflow is as follows:
@@ -153,9 +162,24 @@ void TestJig::onI2cEvent()
      *       This is generally fine, since we're not tracking any specific packet.
      */
 
-    if (status & I2CSlave::AddressMatch) {
+    if (flagsMatch(status, I2CSlave::RxAddressMatched)) {
         // begin new rx sequence
         ackPacket.len = 0;
+
+    }
+
+    if (flagsMatch(status, I2CSlave::TxAddressMatched)) {
+
+        /*
+         * begin new TX sequence if we have data ready to go, otherwise
+         * send 0xff to just keep the cube alive.
+         */
+
+        if (cubeWrite.remaining > 0) {
+            i2c.write(*cubeWrite.ptr);
+        } else {
+            i2c.write(0xff);
+        }
     }
 
     /*
@@ -166,31 +190,50 @@ void TestJig::onI2cEvent()
      *
      * It's a bit gross, but treat a NACK as equivalent to a STOP to work around this.
      */
+
     if (status & (I2CSlave::Nack | I2CSlave::StopBit)) {
         cubeWrite.remaining = 0;
-    }
 
-    // send next byte
-    if (status & I2CSlave::TxEmpty) {
-        if (cubeWrite.remaining > 0) {
-            byte = *(cubeWrite.data);
-            cubeWrite.data++;
-            cubeWrite.remaining--;
-        } else {
-            byte = 0xff;
+        if (status & I2CSlave::StopBit) {
+            i2c.onStopBit();
         }
     }
 
-    i2c.isrEV(status, &byte);
+    if (flagsMatch(status, I2CSlave::ByteTransmitted)) {
 
-    /*
-     * We received a byte. Capture it if we won't overwrite any
-     * pending USB writes, and it won't overflow our buffer.
-     */
-    if (status & I2CSlave::RxNotEmpty) {
+        /*
+         * our previous byte was written - update our count and continue
+         * sending if we're not done.
+         *
+         * Otherwise, write 0xff to keep the cube alive.
+         */
 
-        if (!ackPacket.full())
+        if (cubeWrite.remaining > 0) {
+
+            cubeWrite.ptr++;
+            cubeWrite.remaining--;
+        }
+
+        // more to write?
+        if (cubeWrite.remaining > 0) {
+            i2c.write(*cubeWrite.ptr);
+        } else {
+            i2c.write(0xff);
+        }
+    }
+
+    if (flagsMatch(status, I2CSlave::ByteReceived)) {
+
+        /*
+         * We received a byte. Capture it if we won't overwrite any
+         * pending USB writes, and it won't overflow our buffer.
+         */
+
+        uint8_t byte = i2c.read();
+
+        if (!ackPacket.full()) {
             ackPacket.append(byte);
+        }
 
         if (ackPacket.full() && ackPacket.enabled) {
             if (!i2cUsbPayload.usbWritePending) {
@@ -208,6 +251,11 @@ void TestJig::onI2cEvent()
             }
         }
     }
+}
+
+void TestJig::onI2cError()
+{
+    i2c.isrER();
 }
 
 /*
@@ -326,40 +374,14 @@ void TestJig::writeToCubeI2CHandler(uint8_t argc, uint8_t *args)
 {
     uint8_t transactionsWritten = 0;
 
-    argc--; // step past command
-    uint8_t *pArgs = args + 1;
+    while (cubeWrite.remaining > 0)
+        ;
 
-    while (argc > 0) {
-
-        uint8_t numBytes;
-        if (pArgs[0] == I2CSetNeighborID)
-            numBytes = 2;
-        else if (pArgs[0] == I2CFlashFifo)
-            numBytes = 2;
-        else if (pArgs[0] == I2CFlashReset)
-            numBytes = 1;
-        else if (pArgs[0] < I2CVramMax)
-            numBytes = 3;
-        else
-            break;
-
-        if (numBytes > argc)
-            break;
-
-        cubeWrite.data = pArgs;
-        cubeWrite.remaining = numBytes;
-
-        // step to the next transaction
-        argc -= numBytes;
-        pArgs += numBytes;
-        transactionsWritten++;
-
-        // wait for previous vram transactions to complete.
-        // need to wait for this before returning since
-        // cubeWrite has a pointer to argc and we need to keep it in scope
-        while (cubeWrite.remaining > 0)
-            ;
-    }
+    // step past command
+    uint8_t len = argc - 1;
+    memcpy(cubeWrite.data, &args[1], len);
+    cubeWrite.ptr = cubeWrite.data;
+    cubeWrite.remaining = len;
 
     const uint8_t response[] = { args[0], transactionsWritten };
     UsbDevice::write(response, sizeof response);
@@ -401,6 +423,44 @@ void TestJig::stopNeighborTxHandler(uint8_t argc, uint8_t *args)
     UsbDevice::write(response, sizeof response);
 }
 
+/*
+ * No args.
+ */
+void TestJig::beginNoiseCheckHandler(uint8_t argc, uint8_t *args)
+{
+    /*
+     * NeighborRX and PulseRX share input pins.
+     * Since the neighbor protocol disables irq
+     * of the masked side, we stop NeighborRX
+     * before starting pulseRX, just in case.
+     */
+    NeighborRX::stop();
+
+    // setup and start noise test on both rails simultaneously
+    PulseRX2v0Rail.init();
+    PulseRX3v3Rail.init();
+    PulseRX2v0Rail.start();
+    PulseRX3v3Rail.start();
+
+    const uint8_t response[] = { args[0] };
+    UsbDevice::write(response, sizeof response);
+}
+
+/*
+ * No args.
+ */
+void TestJig::stopNoiseCheckHandler(uint8_t argc, uint8_t *args)
+{
+    uint8_t response[] = { args[0], \
+            (PulseRX2v0Rail.count() >> 8) & 0xff, PulseRX2v0Rail.count() & 0xff, \
+            (PulseRX3v3Rail.count() >> 8) & 0xff, PulseRX3v3Rail.count() & 0xff \
+    };
+    PulseRX2v0Rail.stop();
+    PulseRX3v3Rail.stop();
+
+    UsbDevice::write(response, sizeof response);
+}
+
 /*******************************************
  * I N T E R R U P T  H A N D L E R S
  ******************************************/
@@ -411,11 +471,13 @@ void TestJig::stopNeighborTxHandler(uint8_t argc, uint8_t *args)
 IRQ_HANDLER ISR_EXTI0()
 {
     NeighborRX::pulseISR(2);
+    PulseRX3v3Rail.pulseISR();
 }
 
 IRQ_HANDLER ISR_EXTI1()
 {
     NeighborRX::pulseISR(3);
+    PulseRX2v0Rail.pulseISR();
 }
 
 IRQ_HANDLER ISR_I2C1_EV()
@@ -425,5 +487,5 @@ IRQ_HANDLER ISR_I2C1_EV()
 
 IRQ_HANDLER ISR_I2C1_ER()
 {
-    i2c.isrER();
+    TestJig::onI2cError();
 }

@@ -75,6 +75,9 @@ private:
         NUM_WORK_ITEMS,         // Must be last
     };
 
+    // number of soft retries used for both pairing & reconnection.
+    static const unsigned CUBECONNECTOR_SOFT_RETRIES = 32;
+
     static uint8_t neighborKey;
     static bool reconnectEnabled;
 
@@ -89,7 +92,7 @@ private:
     static RadioAddress reconnectAddr;
 
     static uint8_t txState;
-    static RingBuffer<RadioManager::FIFO_DEPTH, uint8_t, uint8_t> rxState;
+    static uint8_t rxState;
     static uint8_t pairingPacketCounter;
     static uint8_t hwid[HWID_LEN];
     static _SYSCubeID cubeID;
@@ -100,6 +103,7 @@ private:
     static void refillReconnectQueue();
     static bool popReconnectQueue();
     static void newCubeRecord();
+    static bool hwidIsPaired(const uint8_t *id);
 
     static bool chooseConnectionAddr();
     static void produceRadioHop(PacketBuffer &buf);

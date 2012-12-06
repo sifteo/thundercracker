@@ -4,34 +4,58 @@
 #include "neighbor_tx.h"
 #include "neighbor_protocol.h"
 #include "powermanager.h"
+#include "macros.h"
 
-static int lastReading;
+namespace BatteryLevel {
+
+enum State {
+    VBattCapture,
+    VSysCapture,
+};
+
+static unsigned lastReading;
+static unsigned lastVsysReading;
+static State currentState;
 
 /*
  * As we're sharing a timer with NeighborTX, the end of each neighbor transmission
- * is an opportunity for us to begin a sample. However, our charge time is max
- * 2.5s, so we never want to run more frequently than that.
+ * is an opportunity for us to begin a sample. Lets wait 2.5 seconds between
+ * each sample. The minimum amount of wait time is 75 ms (DELAY_PRESCALER ~= 25)
  *
  * 2500 / (NUM_TX_WAIT_PERIODS * BIT_PERIOD_TICKS * TICK) ~= 833
  *
  * See neighbor_protocol.h for neighbor transmission periods.
  */
-static unsigned chargePrescaleCounter = 0;
-static const unsigned CHARGE_PRESCALER = 833;
+
+static const unsigned DELAY_PRESCALER = 833;
+// no delay for first sample - want to capture initial value immediately
+static unsigned delayPrescaleCounter = DELAY_PRESCALER;
 
 /*
- * Max discharge time is 50ms.
+ * Max discharge time is 3ms.
  * To configure our timer at this resolution, we need to use the maximum
  * period (0xffff), and select a prescaler that gets us as close as possible.
  *
  * 0.05 / ((1 / 36000000) * 0xffff) == 27.466
  */
-static const unsigned DISCHARGE_PRESCALER = 3;
+static const unsigned DISCHARGE_PRESCALER = 6;
 
-namespace BatteryLevel {
+
 
 void init()
 {
+    /*
+     * Setting lastReading for comparison on startup
+     */
+    lastReading = UNINITIALIZED;
+    lastVsysReading = UNINITIALIZED;
+
+    /*
+     * Take a VBatt sample first, since its charge time is much longer than
+     * the VSys charge time.
+     */
+    currentState = VBattCapture;
+
     /*
      * BATT_MEAS can always remain configured as an input.
      * To charge (default state), BATT_MEAS_GND => input/float.
@@ -54,9 +78,29 @@ void init()
     timer.enableChannel(BATT_LVL_CHAN);
 }
 
-int currentLevel()
+unsigned raw()
 {
     return lastReading;
+}
+
+unsigned vsys()
+{
+    return lastVsysReading;
+}
+
+unsigned scaled()
+{
+    /*
+     * Temporary cheesy linear scaling.
+     *
+     * We need some battery curves, and then we'd like to chunk our values into
+     * the number of visual buckets that the UI represents.
+     */
+    const unsigned MAX = 0x2500;
+    const unsigned MIN = lastVsysReading;
+    const unsigned RANGE = MAX - MIN;
+    const unsigned clamped = clamp(lastReading, MIN, MAX);
+    return (clamped - MIN) * _SYS_BATTERY_MAX / RANGE;
 }
 
 void beginCapture()
@@ -69,21 +113,42 @@ void beginCapture()
      * BATT_LVL_TIM is shared with neighbor transmit
      */
 
-    if (chargePrescaleCounter++ == CHARGE_PRESCALER) {
+    if (currentState == VSysCapture || delayPrescaleCounter++ == DELAY_PRESCALER) {
 
-        chargePrescaleCounter = 0;
+        delayPrescaleCounter = 0;
 
-        if (BATT_MEAS_GPIO.isLow())
+        //Returns if there is no battery or if USB is connected
+        if (BATT_MEAS_GPIO.isLow() ||
+            PowerManager::state() == PowerManager::UsbPwr)
+        {
             return;
+        }
 
         NeighborTX::pause();
 
         HwTimer timer(&BATT_LVL_TIM);
         timer.setPeriod(0xffff, DISCHARGE_PRESCALER);
-        timer.setCount(0);
+        /*
+         * We need to generate an update event in order to latch in the new
+         * prescaler - otherwise it would only be applied at the next
+         * update event.
+         *
+         * This also has the nice side effect of resetting the counter,
+         * so we don't need to track the start time.
+         */
+        timer.generateEvent(HwTimer::UpdateEvent);
 
         BATT_MEAS_GND_GPIO.setControl(GPIOPin::OUT_2MHZ);
         BATT_MEAS_GND_GPIO.setLow();
+
+        /*
+         * If the current state is the calibration state
+         * then BATT_MEAS_GPIO was set as an output
+         * in the captureISR
+         */
+        if (currentState == VSysCapture) {
+            BATT_MEAS_GPIO.setControl(GPIOPin::IN_FLOAT);
+        }
 
         timer.enableCompareCaptureIsr(BATT_LVL_CHAN);
     }
@@ -103,12 +168,30 @@ void captureIsr()
     timer.disableCompareCaptureIsr(BATT_LVL_CHAN);
 
     /*
-     * We don't need to track a start time, as we always reset the timer
-     * before kicking off a new capture.
-     *
-     * TBD what kind of treatment to give this signal.
+     * We alternately sample VSYS and VBATT in order to establish a consistent
+     * baseline - store the capture appropriately.
      */
-    lastReading = timer.lastCapture(BATT_LVL_CHAN);
+
+    unsigned capture = timer.lastCapture(BATT_LVL_CHAN);
+
+    if (currentState == VBattCapture) {
+
+
+        lastReading = capture;
+
+        BATT_MEAS_GPIO.setControl(GPIOPin::OUT_2MHZ);
+        BATT_MEAS_GPIO.setHigh();
+
+        currentState = VSysCapture;
+
+    } else if (currentState == VSysCapture) {
+
+        lastVsysReading = capture;
+
+        PowerManager::shutdownIfVBattIsCritical(lastReading, lastVsysReading);
+
+        currentState = VBattCapture;
+    }
 
     NeighborTX::resume();
 }

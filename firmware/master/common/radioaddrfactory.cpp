@@ -29,7 +29,7 @@ const uint8_t RadioAddrFactory::gf84[0x100] = {
 
 void RadioAddrFactory::random(RadioAddress &addr, _SYSPseudoRandomState &prng)
 {
-    addr.channel = randomChannel(prng);
+    addr.channel = RadioManager::suggestChannel();
 
     for (unsigned i = 0; i < arraysize(addr.id); ++i) {
         unsigned value = PRNG::valueBounded(&prng, 255 - 4) + 1;
@@ -40,46 +40,10 @@ void RadioAddrFactory::random(RadioAddress &addr, _SYSPseudoRandomState &prng)
     }
 }
 
-
-unsigned RadioAddrFactory::randomChannel(_SYSPseudoRandomState &prng, unsigned currentChannel)
-{
-    /*
-     * Select a quasi randomized channel that is not likely to be noisy.
-     *
-     * If we're transitioning from a known channel, jump away at least a WiFi
-     * channel's worth, plus a bit more for good measure.
-     *
-     * Otherwise, choose a random starting point and ensure it's not noisy.
-     */
-
-    const unsigned MAX_INCREMENT = 8;
-
-    unsigned newChannel;
-    if (currentChannel > MAX_RF_CHANNEL) {
-        newChannel = PRNG::valueBounded(&prng, MAX_RF_CHANNEL);
-    } else {
-        unsigned offset = PRNG::valueBounded(&prng, MAX_INCREMENT);
-        newChannel = (currentChannel + WIFI_CHANNEL_WIDTH + offset) % MAX_RF_CHANNEL;
-    }
-
-    /*
-     * Cycle through channels until we find one that we think is clear.
-     * Give up searching if we don't find anything good before we wrap back
-     * around to the same WiFi channel that we're trying to escape.
-     */
-    while (((newChannel - currentChannel) % MAX_RF_CHANNEL) < 60 &&
-           (RadioManager::channelMightBeNoisy(newChannel)))
-    {
-        unsigned offset = PRNG::valueBounded(&prng, MAX_INCREMENT);
-        newChannel = (currentChannel + offset) % MAX_RF_CHANNEL;
-    }
-
-    return newChannel;
-}
-
-
 void RadioAddrFactory::fromHardwareID(RadioAddress &addr, uint64_t hwid)
 {
+    // Low 8 bits of HWID are a version code.
+    const uint8_t cubeVersion = hwid & 0xff;
     uint8_t reg;
 
     // Feed first two bytes into CRC, to collect entropy
@@ -100,9 +64,18 @@ void RadioAddrFactory::fromHardwareID(RadioAddress &addr, uint64_t hwid)
     // Pick a legal channel, using the last entropy byte
     reg = gf84[reg] ^ hwid; hwid >>= 8;
 
-    while (1) {
+    /*
+     * There are at least a handful of cubes out there in the world that were
+     * shipped with non-fcc-compliant RF channel configurations. If we're
+     * talking to one of them, go ahead and break the rules, in order to
+     * maintain backwards compatibility and the ability to talk to them.
+     */
+    uint8_t minRfChannel, maxRfChannel;
+    rfMinMaxChannels(minRfChannel, maxRfChannel, cubeVersion);
+
+    for (;;) {
         addr.channel = reg & 0x7F;
-        if (addr.channel <= MAX_RF_CHANNEL)
+        if (minRfChannel <= addr.channel && addr.channel <= maxRfChannel)
             break;
         reg = ~gf84[reg];
     }
@@ -115,8 +88,20 @@ void RadioAddrFactory::fromHardwareID(RadioAddress &addr, uint64_t hwid)
  * For example, disconnected cubes toggle between their primary
  * and alternate channels listening for connection beacons.
  */
-void RadioAddrFactory::convertPrimaryToAlternateChannel(RadioAddress &addr)
+void RadioAddrFactory::convertPrimaryToAlternateChannel(RadioAddress &addr, uint8_t cubeVersion)
 {
-    if ((addr.channel += MAX_RF_CHANNEL / 2) > MAX_RF_CHANNEL)
-        addr.channel -= MAX_RF_CHANNEL + 1;
+    uint8_t minRfChannel, maxRfChannel;
+    rfMinMaxChannels(minRfChannel, maxRfChannel, cubeVersion);
+
+    /*
+     * Alternate channel is the channel rotated by half our legal range,
+     * wrapped at MIN_RF_CHANNEL
+     */
+
+    unsigned rotated = addr.channel + ((maxRfChannel - minRfChannel) / 2);
+    if (rotated > maxRfChannel) {
+        addr.channel = rotated - maxRfChannel - 1 + minRfChannel;
+    } else {
+        addr.channel = rotated;
+    }
 }

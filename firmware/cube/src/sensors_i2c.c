@@ -327,6 +327,31 @@ fs_3:
 fs_4:
         orl     _W2CON0, #W2CON0_START
         mov     _W2DAT, #FACTORY_ADDR_RX
+
+        ;
+        ; Touch sensing
+        ;
+        ; During normal operation, the touch flag is only cleared upon receipt
+        ; of an RF packet, in order to be sure that the base does not drop
+        ; any touch transitions because of a lost packet. During factory test,
+        ; we will not receive any RF packets, so we need to check for touch
+        ; releases ourselves
+        ;
+        ; Doing this within this particular state in the factorytest i2c
+        ; state machine is not strictly required, but we want to do it
+        ; in a state which is not part of a loop, and which only gets
+        ; invoked if we have already received an ACK from the testjig
+        ;
+        ; Warning: This code assumes that (MISC_TOUCH >> 1) == NB0_FLAG_TOUCH.
+        ;
+        mov     a, _MISC_PORT
+        rr      a
+        xrl     a, (_ack_data + RF_ACK_NEIGHBOR + 0)
+        anl     a, #NB0_FLAG_TOUCH
+        jz      1$
+        xrl     (_ack_data + RF_ACK_NEIGHBOR + 0), a
+
+1$:
         NEXT    (fs_5)
 
         ; 5. RX address finished. Subsequent bytes will be reads.

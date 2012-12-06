@@ -16,7 +16,7 @@ void SampleProfiler::init()
     subsys = None;
 
     // Highest prime number under 1000
-    timer.init(997, 35);
+    timer.init(997, 70);
 }
 
 void SampleProfiler::onUSBData(const USBProtocolMsg &m)

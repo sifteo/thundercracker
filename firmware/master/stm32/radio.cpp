@@ -20,6 +20,7 @@
 
 static uint8_t radioStartup = 0;
 static uint32_t radioWatchdog = 0;
+static SysTime::Ticks reinitPowerOnDelay;
 
 
 void Radio::init()
@@ -40,19 +41,45 @@ void Radio::init()
     while (SysTime::ticks() < SysTime::msTicks(110));
     radioStartup = 1;
     radioWatchdog = 0;
+    reinitPowerOnDelay = 0;
 
     NRF24L01::instance.init();
     RadioManager::enableRadio();
 }
 
-void Radio::setTxPower(TxPower pwr)
+void Radio::onTransitionToUsbPower()
 {
-    NRF24L01::instance.setTxPower(pwr);
+    /*
+     * Work around a bit of a hardware bug.
+     *
+     * When we're running on batteries, and transition to USB power, the radio
+     * can lose power briefly. Since we need to wait for the radio's first
+     * 100ms power on, start that count running as soon as possible here.
+     *
+     * This signals the watchdog to reinit the radio, below.
+     */
+
+    reinitPowerOnDelay = SysTime::ticks() + SysTime::msTicks(110);
 }
 
-Radio::TxPower Radio::txPower()
+void Radio::reinit()
 {
-    return NRF24L01::instance.txPower();
+    /*
+     * As with init() above, we need to accomodate the radio's power on delays,
+     * and then schedule transmission to begin once we've seen enough heartbeats
+     * to ensure that the radio's 2nd power on delay has been satisfied.
+     *
+     * We need the RadioManager to count the previous abandoned packet as
+     * timed out - it likely did not get where it was going, but more
+     * importantly, if we treated it as anything else, we could be out of sync
+     * with the cube we were transmitting to.
+     */
+
+    while (SysTime::ticks() < reinitPowerOnDelay);
+    radioStartup = 1;
+
+    RadioManager::timeout();
+    NRF24L01::instance.init();
 }
 
 void Radio::heartbeat()
@@ -76,8 +103,9 @@ void Radio::heartbeat()
         return;
     }
 
-    if (!RadioManager::isRadioEnabled())
+    if (!RadioManager::isRadioEnabled()) {
         return;
+    }
 
     /*
      * If no IRQs have happened since the last heartbeat, something
@@ -87,8 +115,16 @@ void Radio::heartbeat()
 
     if (radioWatchdog == NRF24L01::instance.irqCount) {
         NVIC.irqDisable(IVT.RF_EXTI_VEC);
-        NRF24L01::instance.beginTransmitting();
+
+        if (reinitPowerOnDelay) {
+            reinit();
+            reinitPowerOnDelay = 0;
+        } else {
+            NRF24L01::instance.beginTransmitting();
+        }
+
         NVIC.irqEnable(IVT.RF_EXTI_VEC);
     }
+
     radioWatchdog = NRF24L01::instance.irqCount;
 }

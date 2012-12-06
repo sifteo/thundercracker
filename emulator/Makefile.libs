@@ -91,37 +91,59 @@ endif
 #######################################################################
 # GLFW, a cross-platform window system layer
 
-INCLUDES += -Isrc/glfw
+GLFWLIB := src/glfw/lib
+INCLUDES += -I$(GLFWLIB) -Isrc/glfw/include
 OBJS += \
-    src/glfw/enable.o	   src/glfw/window.o src/glfw/joystick.o  src/glfw/thread.o \
-    src/glfw/fullscreen.o  src/glfw/init.o   src/glfw/stream.o	  src/glfw/time.o   \
-    src/glfw/glext.o	   src/glfw/input.o
+    $(GLFWLIB)/enable.o                     \
+    $(GLFWLIB)/window.o                     \
+    $(GLFWLIB)/joystick.o                   \
+    $(GLFWLIB)/thread.o                     \
+    $(GLFWLIB)/fullscreen.o                 \
+    $(GLFWLIB)/init.o                       \
+    $(GLFWLIB)/stream.o                     \
+    $(GLFWLIB)/time.o                       \
+    $(GLFWLIB)/glext.o                      \
+    $(GLFWLIB)/input.o
+
 ifeq ($(BUILD_PLATFORM),Darwin)
-	LIBS += -framework Cocoa
-	INCLUDES += -Isrc/glfw/cocoa
-	OBJS += \
-	    src/glfw/cocoa/cocoa_enable.o      src/glfw/cocoa/cocoa_thread.o	\
-	    src/glfw/cocoa/cocoa_fullscreen.o  src/glfw/cocoa/cocoa_time.o	\
-	    src/glfw/cocoa/cocoa_glext.o       src/glfw/cocoa/cocoa_window.o	\
-	    src/glfw/cocoa/cocoa_init.o	       src/glfw/cocoa/cocoa_joystick.o
+    LIBS += -framework Cocoa -framework IOKit
+    INCLUDES += -I$(GLFWLIB)/cocoa
+    OBJS += \
+        $(GLFWLIB)/cocoa/cocoa_enable.o     \
+        $(GLFWLIB)/cocoa/cocoa_thread.o     \
+        $(GLFWLIB)/cocoa/cocoa_fullscreen.o \
+        $(GLFWLIB)/cocoa/cocoa_time.o       \
+        $(GLFWLIB)/cocoa/cocoa_glext.o      \
+        $(GLFWLIB)/cocoa/cocoa_window.o     \
+        $(GLFWLIB)/cocoa/cocoa_init.o       \
+        $(GLFWLIB)/cocoa/cocoa_joystick.o
+
 else ifeq ($(BUILD_PLATFORM),windows32)
-	LIBS += -lmingw32 -lwinmm -lgdi32 -lm -mwindows
-	INCLUDES += -Isrc/glfw/win32
-	OBJS += \
-	    src/glfw/win32/win32_init.o	       src/glfw/win32/win32_joystick.o	\
-	    src/glfw/win32/win32_enable.o      src/glfw/win32/win32_thread.o	\
-	    src/glfw/win32/win32_fullscreen.o  src/glfw/win32/win32_time.o	\
-	    src/glfw/win32/win32_glext.o       src/glfw/win32/win32_window.o
+    LIBS += -lmingw32 -lwinmm -lgdi32 -lm -mwindows
+    INCLUDES += -I$(GLFWLIB)/win32
+    OBJS += \
+        $(GLFWLIB)/win32/win32_init.o       \
+        $(GLFWLIB)/win32/win32_joystick.o   \
+        $(GLFWLIB)/win32/win32_enable.o     \
+        $(GLFWLIB)/win32/win32_thread.o     \
+        $(GLFWLIB)/win32/win32_fullscreen.o \
+        $(GLFWLIB)/win32/win32_time.o       \
+        $(GLFWLIB)/win32/win32_glext.o      \
+        $(GLFWLIB)/win32/win32_window.o
 else
-	LIBS += -lX11 -lpthread
-	INCLUDES += -Isrc/glfw/x11
-	FLAGS += -D_GLFW_HAS_PTHREAD -D_GLFW_HAS_GLXGETPROCADDRESS
-	OBJS += \
-	    src/glfw/x11/x11_enable.o	   src/glfw/x11/x11_keysym2unicode.o	\
-	    src/glfw/x11/x11_fullscreen.o  src/glfw/x11/x11_thread.o		\
-	    src/glfw/x11/x11_glext.o	   src/glfw/x11/x11_time.o		\
-	    src/glfw/x11/x11_init.o	   src/glfw/x11/x11_window.o		\
-	    src/glfw/x11/x11_joystick.o
+    LIBS += -lX11 -lpthread
+    INCLUDES += -I$(GLFWLIB)/x11
+    FLAGS += -D_GLFW_HAS_PTHREAD -D_GLFW_HAS_GLXGETPROCADDRESS
+    OBJS += \
+        $(GLFWLIB)/x11/x11_enable.o         \
+        $(GLFWLIB)/x11/x11_keysym2unicode.o \
+        $(GLFWLIB)/x11/x11_fullscreen.o     \
+        $(GLFWLIB)/x11/x11_thread.o         \
+        $(GLFWLIB)/x11/x11_glext.o          \
+        $(GLFWLIB)/x11/x11_time.o           \
+        $(GLFWLIB)/x11/x11_init.o           \
+        $(GLFWLIB)/x11/x11_window.o         \
+        $(GLFWLIB)/x11/x11_joystick.o
 endif
 
 #######################################################################

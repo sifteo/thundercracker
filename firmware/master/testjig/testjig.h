@@ -22,6 +22,7 @@ public:
     static void init();
     static void onTestDataReceived(uint8_t *buf, unsigned len);
     static void onI2cEvent();
+    static void onI2cError();
     static void task();
 
 private:
@@ -41,6 +42,8 @@ private:
     static void setCubeSensorsEnabledHandler(uint8_t argc, uint8_t *args);
     static void beginNeighborTxHandler(uint8_t argc, uint8_t *args);
     static void stopNeighborTxHandler(uint8_t argc, uint8_t *args);
+    static void beginNoiseCheckHandler(uint8_t argc, uint8_t *args);
+    static void stopNoiseCheckHandler(uint8_t argc, uint8_t *args);
 
     struct AckPacket {
         RF_ACKType payload;
@@ -74,8 +77,9 @@ private:
     struct I2CWriteTransaction {
         // volatile to ensure it gets re-loaded while we're waiting for it to
         // get updated from within the i2c irq
-        volatile uint8_t remaining;
-        uint8_t *data;
+        volatile int remaining;
+        uint8_t *ptr;
+        uint8_t data[64];
     };
 
     static AckPacket ackPacket;

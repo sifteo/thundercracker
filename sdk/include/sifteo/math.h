@@ -748,7 +748,7 @@ template <typename T> struct Vector3 {
      *
      * The returned vector will have a magnitude of 1.0.
      */
-    T normalize() const {
+    Vector3<T> normalize() const {
         return *this / len();
     }
 
@@ -838,6 +838,18 @@ typedef Vector3<double>             Double3;    ///< Typedef for a 2-vector of d
 template <typename T> inline Vector3<T> vec(T x, T y, T z) {
     Vector3<T> result = { x, y, z };
     return result;
+}
+
+/// Vector dot-product
+template <typename T> inline T dot(Vector3<T> u, Vector3<T> v) {
+    return u.x * v.x + u.y * v.y + u.z * v.z;
+}
+
+/// Vector cross-product
+template <typename T> inline T cross(T u, T v) {
+    return vec(u.y * v.z - u.z * v.y,
+               u.z * v.x - u.x * v.z,
+               u.x * v.y - u.y * v.x);
 }
 
 // Vector operations

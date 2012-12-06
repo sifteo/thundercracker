@@ -81,12 +81,12 @@ void FlashBlock::dumpStats()
      * Log the N 'hottest' blocks; those with the most repeated misses.
      */
 
-    unsigned hotBlocks[arraysize(stats.periodic.blockMissCounts)];
-    for (unsigned i = 0; i < arraysize(hotBlocks); ++i)
+    std::vector<unsigned> hotBlocks(arraysize(stats.periodic.blockMissCounts));
+    for (unsigned i = 0; i < hotBlocks.size(); ++i)
         hotBlocks[i] = i;
 
-    std::partial_sort(&hotBlocks[0], &hotBlocks[numHotBlocks],
-        &hotBlocks[arraysize(hotBlocks)], hotBlockSort);
+    std::partial_sort(hotBlocks.begin(), hotBlocks.begin() + numHotBlocks,
+                      hotBlocks.end(), hotBlockSort);
 
     for (unsigned i = 0; i < numHotBlocks; ++i) {
         uint32_t blockNum = hotBlocks[i];

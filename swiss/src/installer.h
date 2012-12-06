@@ -13,7 +13,7 @@ public:
 
     static int run(int argc, char **argv, IODevice &_dev);
 
-    bool install(const char *path, int vid, int pid, bool launcher=false, bool rpc=false);
+    bool install(const char *path, int vid, int pid, bool launcher, bool forceLauncher, bool rpc);
 
 private:
     bool sendHeader(uint32_t filesz);

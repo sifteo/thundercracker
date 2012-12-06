@@ -50,55 +50,19 @@ void I2CSlave::isrER()
 {
     uint32_t status = hw->SR1;
 
-    if (status & Nack) {        // AF: acknowledge failure
+    if (status & Nack) {            // AF: acknowledge failure
         hw->SR1 &= ~Nack;
     }
 
-    if (status & (1 << 9)) {    // ARLO: arbitrarion lost
+    if (status & (1 << 9)) {        // ARLO: arbitrarion lost
         hw->SR1 &= ~(1 << 9);
     }
 
-    if (status & (1 << 8)) {    // BERR: bus error
+    if (status & (1 << 8)) {        // BERR: bus error
         hw->SR1 &= ~(1 << 8);
     }
 
-    if (status & OverUnderRun) {   // OVR: Overrun/underrun
+    if (status & OverUnderRun) {    // OVR: Overrun/underrun
         hw->SR1 &= ~OverUnderRun;
-    }
-}
-
-/*
- * IRQ for i2c events.
- *
- * We expect whoever is calling us here has gotten our status(), and set
- * the contents of 'byte' accordingly.
- *
- * If data has become available, write it to 'byte'.
- * If TX is empty, write 'byte' to DR.
- */
-void I2CSlave::isrEV(uint16_t sr1, uint8_t *byte)
-{
-    // ADDR: Address match for incoming transaction.
-    if (sr1 & AddressMatch) {
-        // second step to clear ADDR is to read SR2, dummy style
-        (void)hw->SR2;
-    }
-
-    // RXNE: data register not empty, byte has arrived
-    if (sr1 & RxNotEmpty) {
-        *byte = hw->DR;
-    }
-
-    // TXE: data register empty, time to transmit next byte
-    if (sr1 & TxEmpty) {
-        hw->DR = *byte;
-    }
-
-    // STOPF: Slave has detected a STOP condition on the bus
-    // NOTE: STOP does not get set in the case of a NACK
-    if (sr1 & StopBit) {
-        // second step to clear STOP bit is to write to CR1
-        // just write something harmless
-        hw->CR1 |= 0x1;
     }
 }

@@ -20,8 +20,6 @@ NRF24L01 NRF24L01::instance(RF_CE_GPIO,
                                       RF_SPI_MISO_GPIO,     //   MISO
                                       RF_SPI_MOSI_GPIO,     //   MOSI
                                       staticSpiCompletionHandler));
-bool NRF24L01::rfTestModeEnabled = false;
-
 
 void NRF24L01::init()
 {
@@ -32,7 +30,11 @@ void NRF24L01::init()
      * Common hardware initialization, regardless of radio usage mode.
      */
 
-    spi.init();
+    const SPIMaster::Config cfg = {
+        Dma::MediumPrio,
+        SPIMaster::fPCLK_4
+    };
+    spi.init(cfg);
 
     ce.setLow();
     ce.setControl(GPIOPin::OUT_10MHZ);
@@ -40,6 +42,8 @@ void NRF24L01::init()
     irq.setControl(GPIOPin::IN_FLOAT);
     irq.irqInit();
     irq.irqSetFallingEdge();
+
+    transmitPower = PacketTransmission::dBm0;
 
     const uint8_t radio_setup[]  = {
         /* Enable nRF24L01 features */
@@ -180,22 +184,22 @@ void NRF24L01::setConstantCarrier(bool enabled, unsigned channel)
     }
 }
 
-void NRF24L01::setTxPower(Radio::TxPower pwr)
+void NRF24L01::setChannel(uint8_t ch)
 {
     spi.begin();
-    spi.transfer(CMD_W_REGISTER | REG_RF_SETUP);
-    spi.transfer(0x08 | pwr);   // enforce 2Mbit/sec transfer rate
+    spi.transfer(CMD_W_REGISTER | REG_RF_CH);
+    spi.transfer(ch);
     spi.end();
 }
 
-Radio::TxPower NRF24L01::txPower()
+uint8_t NRF24L01::channel()
 {
     spi.begin();
-    spi.transfer(CMD_R_REGISTER | REG_RF_SETUP);
-    uint8_t setup = spi.transfer(0);
+    spi.transfer(CMD_R_REGISTER | REG_RF_CH);
+    uint8_t ch = spi.transfer(0);
     spi.end();
 
-    return static_cast<Radio::TxPower>(setup);
+    return ch;
 }
 
 void NRF24L01::isr()
@@ -278,6 +282,7 @@ void NRF24L01::handleTimeout()
         spi.transfer(CMD_FLUSH_TX);
         spi.end();
 
+        txnState = Idle;
         timeout();
         beginTransmitting();
     }
@@ -313,6 +318,7 @@ void NRF24L01::beginTransmitting()
     if (!RadioManager::isRadioEnabled()) {
         // Do nothing. This will break the cycle of transmit/irq,
         // until the heartbeat task wakes us up again.
+        txnState = Idle;
         return;
     }
 
@@ -348,11 +354,15 @@ void NRF24L01::pulseCE()
      * so it's a bit cheaper this way.
      *
      * The pulse ends in the spi completion handler.
+     *
+     * We're clocking the nRF SPI @ 9MHz, making a single clock cycle ~11ns.
+     * So we need to send at least (10us / 11ns) / 8 (bits/byte) = 12 bytes.
+     * Bump up to 15 for a little margin.
      */
 
     txnState = TXPulseCE;
     ce.setHigh();
-    spi.txDma(txData, 10);
+    spi.txDma(txData, 15);
 }
 
 void NRF24L01::staticSpiCompletionHandler()
@@ -428,9 +438,9 @@ void NRF24L01::onSpiComplete()
         break;
 
     case TXAddressRx:
-        // Set retry count if necessary, otherwise FALL THROUGH to payload.
+        // Set retry count if necessary, otherwise FALL THROUGH to RF_SETUP.
         if (txBuffer.numHardwareRetries != hardRetries) {
-            txnState = TXSetupRetr;
+            txnState = TXRfSetup;
             spi.begin();
             txAddressBuffer[0] = CMD_W_REGISTER | REG_SETUP_RETR;
             txAddressBuffer[1] = AUTO_RETRY_DELAY | txBuffer.numHardwareRetries;
@@ -438,8 +448,21 @@ void NRF24L01::onSpiComplete()
             break;
         }
 
+    case TXRfSetup:
+         // Set transmit power if necessary, otherwise FALL THROUGH to payload.
+         if (txBuffer.txPower != transmitPower) {
+             txnState = TXSetupRetr;
+             spi.begin();
+             txAddressBuffer[0] = CMD_W_REGISTER | REG_RF_SETUP;
+             // enforce 2Mbit/sec transfer rate
+             txAddressBuffer[1] = 0x08 | (txBuffer.txPower & 0x6);
+             spi.txDma(txAddressBuffer, 2);
+             break;
+         }
+
     case TXSetupRetr:
         hardRetries = txBuffer.numHardwareRetries;
+        transmitPower = txBuffer.txPower;
         txnState = TXPayload;
         spi.begin();
         txData[0] = txBuffer.noAck ? CMD_W_TX_PAYLOAD_NO_ACK : CMD_W_TX_PAYLOAD;
@@ -451,7 +474,9 @@ void NRF24L01::onSpiComplete()
         break;
 
     case TXPulseCE:
-        txnState = Idle;
+        if (softRetriesLeft == 0) {
+            txnState = Idle;
+        }
         ce.setLow();
         break;
 

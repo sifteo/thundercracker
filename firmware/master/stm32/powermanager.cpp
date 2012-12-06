@@ -3,6 +3,8 @@
 #include "usb/usbdevice.h"
 #include "systime.h"
 #include "tasks.h"
+#include "radio.h"
+#include "batterylevel.h"
 
 #include "macros.h"
 
@@ -98,8 +100,14 @@ void PowerManager::vbusDebounce()
     }
 
     State s = state();
-    if (s != lastState)
+    if (s != lastState) {
         setState(s);
+#if !defined(BOOTLOADER)
+        if (s == UsbPwr) {
+            Radio::onTransitionToUsbPower();
+        }
+#endif
+    }
 }
 
 void PowerManager::setState(State s)
@@ -121,4 +129,29 @@ void PowerManager::setState(State s)
 #endif
 
     lastState = s;
+}
+
+void PowerManager::shutdownIfVBattIsCritical(unsigned vbatt, unsigned vsys)
+{
+    /*
+     * To be a bit conservative, we assume that any sample we take is skewed by
+     * our MAX_JITTER in the positive direction. Correct for this, and see if
+     * we're still above the required thresh to continue powering on.
+     *
+     * If not, shut ourselves down, and hope our batteries get replaced soon.
+     */
+
+    if (vbatt - BatteryLevel::MAX_JITTER < vsys) {
+
+        batteryPowerOff();
+        /*
+         * wait to for power to drain. if somebody keeps their finger
+         * on the homebutton, we may be here a little while, so don't
+         * get zapped by the watchdog on our way out
+         */
+        for (;;) {
+            Atomic::Barrier();
+            Tasks::resetWatchdog();
+        }
+    }
 }

@@ -1,6 +1,7 @@
 SUBDIRS = \
 	accelchart \
 	assetslot \
+	connection \
 	mandelbrot \
 	membrane \
 	menudemo \

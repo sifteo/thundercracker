@@ -5,13 +5,13 @@
 
 #include "crc.h"
 #include "hardware.h"
-#include "board.h"
+#include "sysinfo.h"
 
 
 void Crc32::addUniqueness()
 {
-    const uint32_t* id = reinterpret_cast<const uint32_t*>(Board::UniqueId);
-    const unsigned numWords = Board::UniqueIdNumBytes / sizeof(uint32_t);
+    const uint32_t* id = reinterpret_cast<const uint32_t*>(SysInfo::UniqueId);
+    const unsigned numWords = SysInfo::UniqueIdNumBytes / sizeof(uint32_t);
         
     for (unsigned i = 0; i != numWords; ++i) {
         add(*id);
