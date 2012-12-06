@@ -227,7 +227,9 @@ void UsbVolumeManager::volumeDetail(const USBProtocolMsg &m, USBProtocolMsg &rep
         FlashVolume child;
         vi.begin();
         while (vi.next(child)) {
-            if (child.getParent().block.code == volBlockCode) {
+            if (!FlashVolume::typeIsRecyclable(child.getType()) &&
+                child.getParent().block.code == volBlockCode)
+            {
                 hdr = FlashVolumeHeader::get(ref, child.block);
                 ASSERT(hdr->isHeaderValid());
                 r->childBytes += hdr->volumeSizeInBytes();
