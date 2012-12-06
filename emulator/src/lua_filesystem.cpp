@@ -576,12 +576,17 @@ int LuaFilesystem::writeObject(lua_State *L)
         return 0;
     }
 
+    if (FlashVolume::typeIsRecyclable(vol.getType())) {
+        lua_pushinteger(L, -1);
+        return 1;
+    }
+
     if (!FlashLFSIndexRecord::isKeyAllowed(key)) {
         lua_pushfstring(L, "invalid key");
         lua_error(L);
         return 0;
     }
-    
+
     if (!FlashLFSIndexRecord::isSizeAllowed(dataStrLen)) {
         lua_pushfstring(L, "invalid data size");
         lua_error(L);
@@ -609,5 +614,6 @@ int LuaFilesystem::writeObject(lua_State *L)
     FlashDevice::write(allocator.address(), dataStr, dataStrLen);
 
     FlashDevice::setStealthIO(-1);
-    return 0;
+    lua_pushinteger(L, 0);
+    return 1;
 }
