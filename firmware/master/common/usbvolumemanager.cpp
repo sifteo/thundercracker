@@ -424,9 +424,7 @@ void UsbVolumeManager::beginLFSObjectWrite(const USBProtocolMsg &m, USBProtocolM
         return;
     }
 
-    unsigned type = parentVol.getType();
-    if (type != FlashVolume::T_GAME &&
-        type != FlashVolume::T_LAUNCHER) {
+    if (FlashVolume::typeIsRecyclable(parentVol.getType())) {
         reply.header |= WriteLFSObjectHeaderFail;
         return;
     }
