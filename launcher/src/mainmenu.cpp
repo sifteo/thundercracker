@@ -332,7 +332,6 @@ void MainMenu::cubeDisconnect(unsigned cid)
         item->onCubeDisconnect(cid);
         updateCubeRangeAlert();
     }
-
 }
 
 void MainMenu::neighborAdded(unsigned firstID, unsigned firstSide,
@@ -356,34 +355,43 @@ void MainMenu::onBatteryLevelChange(unsigned cid)
 void MainMenu::volumeChanged(unsigned volumeHandle)
 {
     Array<MainMenuItem*, Shared::MAX_ITEMS> newItems;
-    unsigned newGames = populate(newItems);
-    int itemIndexNew = -1;
+    int numGamesNew = populate(newItems);
+    int itemIndexNew;
     bool hopUp = false;
 
     // If the menu is stopped at an applet (not a game), stay at that location.
     if (itemIndexCurrent >= numGames) {
-        itemIndexNew = newGames + numGames - itemIndexCurrent;
-    }
+        itemIndexNew = numGamesNew + numGames - itemIndexCurrent;
 
-    // If the menu is stopped at a game, stay at that game so long as it still exists.
-    if (itemIndexCurrent >= 0) {
+    } else if (itemIndexCurrent >= 0) {
+        /*
+         * If the menu is stopped at a game, stay at that game,
+         * so long as it still exists.
+         */
+#if 0
+        /*
+         * This will never work currently, since even if the same game gets
+         * installed, its volume will be different. This seems like it might
+         * want to compare based on package string instead.
+         */
         for (unsigned i = 0, e = newItems.count(); i != e; ++i) {
             if (newItems[i]->getVolume() == items[itemIndexCurrent]->getVolume()) {
                 itemIndexNew = i;
                 break;
             }
         }
+#endif
+
         // Return the menu to *near* where it left off.
         hopUp = true;
-        itemIndexNew = itemIndexCurrent - 1;
+
         // But avoid going off either end of the menu.
-        while (itemIndexNew >= newGames) itemIndexNew--;
-        if (itemIndexNew < 0) itemIndexNew = 0;
+        itemIndexNew = clamp(itemIndexCurrent - 1, 0, numGamesNew);
     }
 
     // Commit the new items to the menu
     items = newItems;
-    numGames = newGames;
+    numGames = numGamesNew;
 
     // Update the menu
     prepareAssets();

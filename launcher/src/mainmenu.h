@@ -53,7 +53,7 @@ private:
     Sifteo::MenuItem menuItems[Shared::MAX_ITEMS + 1];
     int itemIndexCurrent;
     int itemIndexChoice;
-    unsigned numGames;
+    int numGames;
 
     static const Sifteo::MenuAssets menuAssets;
 
