@@ -45,7 +45,7 @@ def copy_to_dir(raw_filename,versioned_filename,target_path):
 ##############################
 ## Our main execution function
 ##############################
-def run(secondary_path): 
+def run(secondary_path, build_launcher):
     print "\n#### Master Binary Generator\n"
 
     #grab githash
@@ -105,24 +105,21 @@ def run(secondary_path):
         copy_to_dir(MASTER_UNVERSIONED,master_filename, remote_latest_dir)
         copy_to_dir(MASTER_UNVERSIONED,master_filename, remote_build_dir)
 
-    ############################
-    #### Process launcher
-    ############################
+    if build_launcher:
+        ### Changing directories!!!
+        os.chdir( launcher_dir )
 
-    ### Changing directories!!!
-    os.chdir( launcher_dir )
-    
-    if CLEAN:
-      subprocess.check_call(["make", "clean"])
+        if CLEAN:
+          subprocess.check_call(["make", "clean"])
 
-    subprocess.check_call(["make"])
+        subprocess.check_call(["make"])
 
-    copy_to_dir(LAUNCHER_UNVERSIONED,launcher_filename,latest_dir)
-    copy_to_dir(LAUNCHER_UNVERSIONED,launcher_filename,build_dir)
+        copy_to_dir(LAUNCHER_UNVERSIONED,launcher_filename,latest_dir)
+        copy_to_dir(LAUNCHER_UNVERSIONED,launcher_filename,build_dir)
 
-    if secondary_path != False:
-        copy_to_dir(LAUNCHER_UNVERSIONED,launcher_filename,remote_latest_dir)
-        copy_to_dir(LAUNCHER_UNVERSIONED,launcher_filename,remote_build_dir)
+        if secondary_path != False:
+            copy_to_dir(LAUNCHER_UNVERSIONED,launcher_filename,remote_latest_dir)
+            copy_to_dir(LAUNCHER_UNVERSIONED,launcher_filename,remote_build_dir)
 
     #Prints out version at the end for any excel copy paste action
     print "#### Git Version: %s" % githash
@@ -133,9 +130,13 @@ if __name__ == '__main__':
         print >> sys.stderr, "usage: python master_binary_generator.py <secondary_path>"
         sys.exit(1)
 
-    if len(sys.argv) == 2 :
-        secondary_path = sys.argv[1]
-    else:
-        secondary_path = False
+    secondary_path = False
+    build_launcher = True
 
-    run(secondary_path)
+    for arg in sys.argv[1:]:
+        if arg == "--no-launcher":
+            build_launcher = False
+        elif secondary_path == False:
+            secondary_path = arg
+
+    run(secondary_path, build_launcher)

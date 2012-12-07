@@ -7,10 +7,12 @@
 #include <vector>
 #include <string>
 
+namespace Stir {
+
 class WaveDecoder {
 public:
     WaveDecoder() {} // don't implement
-    static bool loadFile(std::vector<unsigned char>& buffer, const std::string& filename, Stir::Logger &log);
+    static bool loadFile(std::vector<unsigned char>& buffer, uint32_t &sampleRate, const std::string& filename, Stir::Logger &log);
 
 private:
 
@@ -36,5 +38,7 @@ private:
 
 
 };
+
+} // namespace Stir
 
 #endif // WAVDECODER_H

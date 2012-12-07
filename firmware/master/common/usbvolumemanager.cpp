@@ -227,7 +227,9 @@ void UsbVolumeManager::volumeDetail(const USBProtocolMsg &m, USBProtocolMsg &rep
         FlashVolume child;
         vi.begin();
         while (vi.next(child)) {
-            if (child.getParent().block.code == volBlockCode) {
+            if (!FlashVolume::typeIsRecyclable(child.getType()) &&
+                child.getParent().block.code == volBlockCode)
+            {
                 hdr = FlashVolumeHeader::get(ref, child.block);
                 ASSERT(hdr->isHeaderValid());
                 r->childBytes += hdr->volumeSizeInBytes();
@@ -420,6 +422,11 @@ void UsbVolumeManager::beginLFSObjectWrite(const USBProtocolMsg &m, USBProtocolM
     // Programs may only write objects in their own local volume
     FlashVolume parentVol = FlashMapBlock::fromCode(payload->vh);
     if (!parentVol.isValid()) {
+        reply.header |= WriteLFSObjectHeaderFail;
+        return;
+    }
+
+    if (FlashVolume::typeIsRecyclable(parentVol.getType())) {
         reply.header |= WriteLFSObjectHeaderFail;
         return;
     }

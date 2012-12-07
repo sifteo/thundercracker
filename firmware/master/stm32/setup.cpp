@@ -31,15 +31,29 @@ extern int  main()              __attribute__((noreturn));
 
 extern "C" void _start()
 {
+#ifdef BOOTLOADABLE
+
     /*
-     * XXX: we would really like to avoid (re)initializing the clocks here
-     * if they've already been initialized by the bootloader but unfortunately,
-     * the shipping bootloader configures APB1 and APB2 to old values that are
+     * Update our peripheral the clocks here for the application firmware.
+     * The shipping bootloader configures APB1 and APB2 to old values that are
      * no longer consistent with what the rest of the system expects.
      *
      * Specifically, APB1 used to be at 18MHz and APB2 used to be at 36MHz,
      * whereas they're now doubled.
-     *
+     */
+
+    const uint32_t apbReset = ~((7 << 11) |
+                                (7 << 8));
+
+    const uint32_t newAPBs =    (0 << 11)   | // PPRE2 - APB2 prescaler, no divisor
+                                (4 << 8);     // PPRE1 - APB1 prescaler, divide by 2
+
+    uint32_t tmp = RCC.CFGR & apbReset;
+    RCC.CFGR = tmp | newAPBs;
+
+#else
+
+    /*
      * Set up clocks:
      *   - 8 MHz HSE (xtal) osc
      *   - PLL x9 => 72 MHz
@@ -110,20 +124,18 @@ extern "C" void _start()
     // Enable peripheral clocks
     RCC.APB2ENR = 0x0000003d;    // GPIO/AFIO
 
+    /*
+     * Enable VCC SYS asap.
+     */
+    PowerManager::batteryPowerOn();
+
+#endif // BOOTLOADABLE
+
 #if 0
     // debug the clock output - MCO
     GPIOPin mco(&GPIOA, 8); // PA8 on the keil MCBSTM32E board - change as appropriate
     mco.setControl(GPIOPin::OUT_ALT_50MHZ);
 #endif
-
-#ifndef BOOTLOADABLE
-    /*
-     * Enable VCC SYS asap.
-     * Don't need to re-do this if bootloader already has.
-     */
-    PowerManager::batteryPowerOn();
-
-#endif // BOOTLOADABLE
 
     /*
      * Application firmware can request that the bootloader try to update by

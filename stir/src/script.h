@@ -280,6 +280,8 @@ class Sound {
 public:
     static const char className[];
     static Lunar<Sound>::RegType methods[];
+    static const uint32_t UNSPECIFIED_SAMPLE_RATE = 0;
+    static const uint32_t STANDARD_SAMPLE_RATE = 16000;
 
     Sound(lua_State *L);
     

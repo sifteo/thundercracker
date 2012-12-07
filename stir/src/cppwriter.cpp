@@ -172,12 +172,29 @@ bool CPPSourceWriter::writeSound(const Sound &sound)
     std::string filepath = sound.getFile();
     unsigned sz = filepath.size();
 
+    /*
+     * If the sample rate has not been explicitly specified in assets.lua,
+     * and we have a WAV file, default to its native sample rate.
+     *
+     * Otherwise, use the standard 16kHz sample rate.
+     */
+    uint32_t sampleRate = sound.getSampleRate();
+
     if (sz >= 4 && filepath.substr(sz - 4) == ".wav") {
-        if (!WaveDecoder::loadFile(raw, filepath, mLog))
+        uint32_t waveNativeSampleRate;
+        if (!WaveDecoder::loadFile(raw, waveNativeSampleRate, filepath, mLog))
             return false;
+
+        if (sampleRate == Sound::UNSPECIFIED_SAMPLE_RATE) {
+            sampleRate = waveNativeSampleRate;
+        }
     }
     else {
         LodePNG::loadFile(raw, filepath);
+    }
+
+    if (sampleRate == Sound::UNSPECIFIED_SAMPLE_RATE) {
+        sampleRate = Sound::STANDARD_SAMPLE_RATE;
     }
 
     uint32_t numSamples = raw.size() / sizeof(int16_t);
@@ -222,7 +239,7 @@ bool CPPSourceWriter::writeSound(const Sound &sound)
 
     mStream <<
         "extern const Sifteo::AssetAudio " << sound.getName() << " = {{\n" <<
-        indent << "/* sampleRate */ " << sound.getSampleRate() << ",\n" <<
+        indent << "/* sampleRate */ " << sampleRate << ",\n" <<
         indent << "/* loopStart  */ " << sound.getLoopStart() << ",\n" <<
         indent << "/* loopEnd    */ " << loopEnd << ",\n" <<
         indent << "/* loopType   */ " << (loopType == _SYS_LOOP_ONCE ? "_SYS_LOOP_ONCE" : "_SYS_LOOP_REPEAT") << ",\n" <<
