@@ -9,7 +9,9 @@
 #include "nineblock.h"
 #include "assets.gen.h"
 #include <sifteo.h>
+#include <sifteo/asset.h>
 #include <sifteo/menu.h>
+
 using namespace Sifteo;
 
 ELFMainMenuItem ELFMainMenuItem::instances[MAX_INSTANCES];
@@ -153,15 +155,14 @@ bool ELFMainMenuItem::checkIcon(MappedVolume &map)
     return true;
 }
 
-void ELFMainMenuItem::getAssets(Sifteo::MenuItem &assets, Shared::AssetConfiguration &config)
+void ELFMainMenuItem::getAssets(Sifteo::MenuItem &menuItem, Shared::AssetConfiguration &config)
 {
     if (hasValidIcon) {
         /*
          * Gather an icon from this volume.
          */
 
-        MappedVolume map;
-        map.attach(volume);
+        MappedVolume map(volume);
 
         // We already validated the icon metadata
         auto iconMeta = map.metadata<_SYSMetadataImage>(_SYS_METADATA_ICON_96x96);
@@ -177,7 +178,7 @@ void ELFMainMenuItem::getAssets(Sifteo::MenuItem &assets, Shared::AssetConfigura
         // which won't be available later. Copy / decompress it into RAM.
         icon.buffer.init();
         icon.buffer.image(vec(0,0), iconSrc);
-        assets.icon = icon.buffer;
+        menuItem.icon = icon.buffer;
 
         // Remember to load this asset group later
         config.append(Shared::iconSlot, icon.group, volume);
@@ -189,7 +190,7 @@ void ELFMainMenuItem::getAssets(Sifteo::MenuItem &assets, Shared::AssetConfigura
 
         icon.buffer.init();
         NineBlock::generate(crc32(uuid), icon.buffer);
-        assets.icon = icon.buffer;
+        menuItem.icon = icon.buffer;
     }
 }
 

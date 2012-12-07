@@ -17,7 +17,7 @@ class MainMenu;
 class ELFMainMenuItem : public MainMenuItem
 {
 public:
-    virtual void getAssets(Sifteo::MenuItem &assets, Shared::AssetConfiguration &config);
+    virtual void getAssets(Sifteo::MenuItem &menuItem, Shared::AssetConfiguration &config);
     virtual void bootstrap(Sifteo::CubeSet cubes, ProgressDelegate &progress);
 
     virtual Sifteo::Volume getVolume() {
