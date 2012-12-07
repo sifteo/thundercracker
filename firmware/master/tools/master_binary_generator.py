@@ -15,7 +15,7 @@ import subprocess, multiprocessing
 ## Defines
 ########################################################
 DIR = os.path.dirname(os.path.realpath(__file__))
-TC_DIR = os.path.join(DIR, "..", "..", "..")
+TC_DIR = os.path.normpath(os.path.join(DIR, "..", "..", ".."))
 MASTER_UNVERSIONED = "master-stm32.sft"
 LAUNCHER_UNVERSIONED = "launcher.elf"
 CLEAN = True
@@ -35,6 +35,22 @@ def check_and_mkdir(path):
 
     os.mkdir(path)
 
+####################################
+## Check to make sure we're in the SDK shell
+####################################
+def ensureRunningFromSDKShell():
+    if  os.getenv("SDK_DIR") == None:
+        error("SDK directory not defined!")
+
+####################################
+## Error dialog
+####################################
+def error(detail):
+    print "########################################################"
+    print "## ERROR: ", detail
+    print "########################################################"
+    sys.exit(1)
+
 ########################################################################
 ## Copies raw filename renamed to the versioned_filename at the target path
 ########################################################################
@@ -47,6 +63,8 @@ def copy_to_dir(raw_filename,versioned_filename,target_path):
 ##############################
 def run(secondary_path, build_launcher):
     print "\n#### Master Binary Generator\n"
+
+    ensureRunningFromSDKShell()
 
     #grab githash
     githash = subprocess.check_output(["git", "describe", "--tags"]).strip()
@@ -105,9 +123,15 @@ def run(secondary_path, build_launcher):
         copy_to_dir(MASTER_UNVERSIONED,master_filename, remote_latest_dir)
         copy_to_dir(MASTER_UNVERSIONED,master_filename, remote_build_dir)
 
+     ############################
+     #### Process launcher
+     ############################
+
     if build_launcher:
         ### Changing directories!!!
         os.chdir( launcher_dir )
+
+        print "#### Changing directory to %s." % launcher_dir
 
         if CLEAN:
           subprocess.check_call(["make", "clean"])
