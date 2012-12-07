@@ -129,7 +129,7 @@ bool ELFMainMenuItem::checkIcon(MappedVolume &map)
         LOG("LAUNCHER: Warning, no 96x96 icon found.\n");
         return false;
     }
-    if (iconMeta->width != icon.image.tileWidth() || iconMeta->height != icon.image.tileHeight()) {
+    if (iconMeta->width != icon.buffer.tileWidth() || iconMeta->height != icon.buffer.tileHeight()) {
         LOG("LAUNCHER: Warning, icon size is incorrect.\n");
         return false;
     }
@@ -141,7 +141,7 @@ bool ELFMainMenuItem::checkIcon(MappedVolume &map)
     unsigned tileAllocation = iconGroup.tileAllocation();
 
     // Check the size of this group. It should be no larger than the worst-case uncompressed size
-    unsigned maxTileAllocation = roundup(icon.image.numTiles(), _SYS_ASSET_GROUP_SIZE_UNIT);
+    unsigned maxTileAllocation = roundup(icon.buffer.numTiles(), _SYS_ASSET_GROUP_SIZE_UNIT);
     if (tileAllocation > maxTileAllocation) {
         LOG("LAUNCHER: Warning, icon AssetGroup is too large. "
             "Make sure your icon is in an AssetGroup by itself! Found a "
@@ -166,8 +166,8 @@ void ELFMainMenuItem::getAssets(Sifteo::MenuItem &assets, Shared::AssetConfigura
         // We already validated the icon metadata
         auto iconMeta = map.metadata<_SYSMetadataImage>(_SYS_METADATA_ICON_96x96);
         ASSERT(iconMeta);
-        ASSERT(iconMeta->width == icon.image.tileWidth());
-        ASSERT(iconMeta->height == icon.image.tileHeight());
+        ASSERT(iconMeta->width == icon.buffer.tileWidth());
+        ASSERT(iconMeta->height == icon.buffer.tileHeight());
 
         // Mapping translation; convert to an AssetImage and AssetGroup.
         AssetImage iconSrc;
@@ -175,9 +175,9 @@ void ELFMainMenuItem::getAssets(Sifteo::MenuItem &assets, Shared::AssetConfigura
 
         // The above AssetImage still references data in the mapped volume,
         // which won't be available later. Copy / decompress it into RAM.
-        icon.image.init();
-        icon.image.image(vec(0,0), iconSrc);
-        assets.icon = icon.image;
+        icon.buffer.init();
+        icon.buffer.image(vec(0,0), iconSrc);
+        assets.icon = icon.buffer;
 
         // Remember to load this asset group later
         config.append(Shared::iconSlot, icon.group, volume);
@@ -187,9 +187,9 @@ void ELFMainMenuItem::getAssets(Sifteo::MenuItem &assets, Shared::AssetConfigura
          * No icon? Create a randomly generated icon.
          */
 
-        icon.image.init();
-        NineBlock::generate(crc32(uuid), icon.image);
-        assets.icon = icon.image;
+        icon.buffer.init();
+        NineBlock::generate(crc32(uuid), icon.buffer);
+        assets.icon = icon.buffer;
     }
 }
 

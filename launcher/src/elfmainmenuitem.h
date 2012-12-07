@@ -79,7 +79,7 @@ private:
      * information about the load address of this icon's assets on each cube.
      */
     struct {
-        IconBuffer image;
+        IconBuffer buffer;
         Sifteo::AssetGroup group;
     } icon;
 
