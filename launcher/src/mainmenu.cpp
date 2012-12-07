@@ -57,7 +57,6 @@ void MainMenu::init()
     Events::cubeConnect.set(&MainMenu::cubeConnect, this);
     Events::cubeDisconnect.set(&MainMenu::cubeDisconnect, this);
     Events::neighborAdd.set(&MainMenu::neighborAdded, this);
-    Events::gameMenu.set(&MainMenu::gameMenuEvent, this);
     Events::cubeBatteryLevelChange.set(&MainMenu::onBatteryLevelChange, this);
     Events::volumeCommit.set(&MainMenu::volumeChanged, this);
     Events::volumeDelete.set(&MainMenu::volumeChanged, this);
@@ -406,15 +405,6 @@ void MainMenu::volumeChanged(unsigned volumeHandle)
         MainMenuItem *item = items[itemIndexCurrent];
         item->onVolumeChanged(volumeHandle);
     }
-}
-
-void MainMenu::gameMenuEvent()
-{
-    /*
-     * TODO: GameMenu event is delivered on home button press.
-     *       If we're presenting UI to unpair a cube, now is the time
-     *       to actually unpair it.
-     */
 }
 
 void MainMenu::updateConnecting()
