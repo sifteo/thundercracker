@@ -38,7 +38,7 @@ void main()
     while (1) {
         // Update tilt
         int xTilt = (cube.accel().xy()).x;
-        if (abs(xTilt - tempoModifier) > 2) {
+        if (abs(xTilt - tempoModifier) > 2 && xTilt >= -100) {
             tracker.setTempoModifier(xTilt);
             tempoModifier = xTilt;
             LOG("tempo modifier: %d%%\n", tempoModifier);
