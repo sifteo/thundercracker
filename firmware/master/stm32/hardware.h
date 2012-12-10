@@ -212,6 +212,37 @@ extern volatile GPIO_t GPIOG;
 
 extern volatile AFIO_t AFIO;
 
+
+/*
+ * SD Host Interface
+ */
+
+struct SDIO_t {
+    uint32_t POWER;
+    uint32_t CLKCR;
+    uint32_t ARG;
+    uint32_t CMD;
+    uint32_t RESPCMD;
+    uint32_t RESP1;
+    uint32_t RESP2;
+    uint32_t RESP3;
+    uint32_t RESP4;
+    uint32_t DTIMER;
+    uint32_t DLEN;
+    uint32_t DCTRL;
+    uint32_t DCOUNT;
+    uint32_t STA;
+    uint32_t ICR;
+    uint32_t MASK;
+    uint32_t RESERVED0[2];
+    uint32_t FIFOCNT;
+    uint32_t RESERVED1[13];
+    uint32_t FIFO;
+};
+
+extern volatile SDIO_t SDIO;
+
+
 /*
  * SPI / I2S
  */
