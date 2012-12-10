@@ -156,6 +156,7 @@ private:
      * spec. It can be both dissatisfying and confusing, but is retained here
      * for consistency.
      */
+    int8_t userBpm; // Scaling factor for bpm, in percent.
     uint8_t bpm;    // Speed of piece (yes, tempo)
     uint8_t tempo;  // Ticks per note
     uint8_t delay;  // Delay added to end of pattern
@@ -198,6 +199,7 @@ private:
     void process();
     void commit();
     uint8_t patternOrderTable(uint16_t order);
+    void setCallbackInterval();
     void tick();
 };
 

@@ -50,9 +50,9 @@ bool XmTrackerPlayer::play(const struct _SYSXMSong *pSong)
     // resume playback
     if (!pSong) {
         if (isPaused()) {
-            AudioMixer::instance.setTrackerCallbackInterval(2500000 / bpm);
-            tick();
             paused = false;
+            setCallbackInterval();
+            tick();
             return true;
         } else {
             LOG((LGPFX"Warning: resume() called while not paused.\n"));
@@ -78,6 +78,7 @@ bool XmTrackerPlayer::play(const struct _SYSXMSong *pSong)
     paused = false;
 
     volume = kMaxVolume;
+    userBpm = 0;
     bpm = song.bpm;
     ticks = tempo = song.tempo;
     delay = 0;
@@ -102,7 +103,7 @@ bool XmTrackerPlayer::play(const struct _SYSXMSong *pSong)
         ch.state = STATE_STOPPED;
     }
 
-    AudioMixer::instance.setTrackerCallbackInterval(2500000 / bpm);
+    setCallbackInterval();
     tick();
 
     return true;
@@ -118,8 +119,8 @@ void XmTrackerPlayer::stop()
                 mixer.stop(CHANNEL_FOR(i));
     }
 
-    AudioMixer::instance.setTrackerCallbackInterval(0);
     hasSong = false;
+    setCallbackInterval();
 }
 
 void XmTrackerPlayer::setVolume(int pVolume, uint8_t ch)
@@ -142,7 +143,7 @@ void XmTrackerPlayer::pause()
     }
 
     paused = true;
-    AudioMixer::instance.setTrackerCallbackInterval(0);
+    setCallbackInterval();
 
     ASSERT(song.nChannels);
     AudioMixer &mixer = AudioMixer::instance;
@@ -153,7 +154,9 @@ void XmTrackerPlayer::pause()
 
 void XmTrackerPlayer::setTempoModifier(int modifier)
 {
-    // TODO:
+    ASSERT(modifier > -100 && modifier < INT16_MAX);
+    userBpm = modifier;
+    setCallbackInterval();
 }
 
 inline void XmTrackerPlayer::loadNextNotes()
@@ -1160,8 +1163,7 @@ void XmTrackerPlayer::commit()
         }
     }
 
-    // Call back at (24 / 60 * bpm) Hz
-    mixer.setTrackerCallbackInterval(2500000 / bpm);
+    setCallbackInterval();
 }
 
 uint8_t XmTrackerPlayer::patternOrderTable(uint16_t order)
@@ -1190,6 +1192,21 @@ uint8_t XmTrackerPlayer::patternOrderTable(uint16_t order)
     return buf;
 }
 
+void XmTrackerPlayer::setCallbackInterval()
+{
+    AudioMixer &mixer = AudioMixer::instance;
+
+    if (isStopped() || isPaused() || userBpm <= -100) {
+        mixer.setTrackerCallbackInterval(0);
+    } else {
+        // Call back at (24 / 60 * bpm) Hz
+        // -> (2500000 / bpm) usec
+        // -> (2500000 / (bpm * (100 + userBpm) / 100)) usec
+        // -> (250000000 / (bpm * (userBpm + 100))) usec
+        mixer.setTrackerCallbackInterval(250000000 / (bpm * (userBpm + 100)));
+    }
+}
+
 void XmTrackerPlayer::tick()
 {
     if (++ticks >= tempo * (delay + 1)) {
@@ -1205,5 +1222,4 @@ void XmTrackerPlayer::tick()
 
     // update mixer
     commit();
-    //if (isStopped()) return;
 }

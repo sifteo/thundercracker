@@ -27,6 +27,7 @@ void main()
 {
     const CubeID cube(0);
     static VideoBuffer vid;
+    int tempoModifier = 0;
 
     tracker.play(*mods[current]);
     Events::cubeTouch.set(onTouch);
@@ -35,6 +36,14 @@ void main()
     vid.attach(cube);
 
     while (1) {
+        // Update tilt
+        int xTilt = (cube.accel().xy()).x;
+        if (abs(xTilt - tempoModifier) > 2) {
+            tracker.setTempoModifier(xTilt);
+            tempoModifier = xTilt;
+            LOG("tempo modifier: %d%%\n", tempoModifier);
+        }
+
         unsigned frame = SystemTime::now().cycleFrame(0.5, Cat.numFrames());
         vid.bg0.image(vec(0,0), Cat, frame);
         System::paint();
