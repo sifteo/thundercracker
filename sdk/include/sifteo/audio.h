@@ -232,6 +232,18 @@ struct AudioTracker {
         ASSERT(volume >= 0 && volume <= _SYS_AUDIO_MAX_VOLUME);
         _SYS_tracker_setVolume(volume, ch);
     }
+
+    /**
+     * @brief Scale tempo for current song.
+     *
+     * Must only be called while a module is playing.
+     * @param modifier Value with which to increase/decrease tempo, in percent.
+     */
+    static void setTempoModifier(int modifier)
+    {
+        ASSERT(modifier > -100);
+        _SYS_tracker_setTempoModifier(modifier);
+    }
 };
 
 /**

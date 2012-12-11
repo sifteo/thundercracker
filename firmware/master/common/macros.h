@@ -36,6 +36,10 @@
 #define UINT16_MAX 0xffff
 #endif
 
+#ifndef INT16_MAX
+#define INT16_MAX 0x7fff
+#endif
+
 #ifndef UINT32_MAX
 #define UINT32_MAX 0xffffffff
 #endif

@@ -115,4 +115,9 @@ void _SYS_tracker_pause()
     XmTrackerPlayer::instance.pause();
 }
 
+void _SYS_tracker_setTempoModifier(int modifier)
+{
+    XmTrackerPlayer::instance.setTempoModifier(modifier);
+}
+
 }  // extern "C"
