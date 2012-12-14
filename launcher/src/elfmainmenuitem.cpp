@@ -62,6 +62,8 @@ void ELFMainMenuItem::findGames(Array<MainMenuItem*, Shared::MAX_ITEMS> &items)
     Array<Volume, MAX_INSTANCES> volumes;
     Volume::list(Volume::T_GAME, volumes);
 
+    items.clear();
+
     /*
      * Create an ELFMainMenuItem for each, skipping any volumes
      * that cause init() to return false.

@@ -64,8 +64,8 @@ void MainMenu::init()
 
     time = SystemTime::now();
     connectingCubes.clear();
+    loadingCubes.clear();
 
-    items.clear();
     itemIndexCurrent = -1;
     cubeRangeSavedIcon = NULL;
 
@@ -81,10 +81,6 @@ void MainMenu::init()
 
 void MainMenu::initMenu(unsigned initialIndex, bool popUp)
 {
-    if (initialIndex >= items.count()) {
-        LOG("Initial index (%u) exceeds number of items (%u)!", initialIndex, items.count());
-        initialIndex = 0;
-    }
     ASSERT(items.count() > 0);
 
     // (Re)initialize the menu
@@ -345,7 +341,7 @@ void MainMenu::volumeChanged(unsigned volumeHandle)
 {
     Array<MainMenuItem*, Shared::MAX_ITEMS> newItems;
     int numGamesNew = populate(newItems);
-    int itemIndexNew;
+    int itemIndexNew = -1;
     bool hopUp = false;
 
     // If the menu is stopped at an applet (not a game), stay at that location.
@@ -357,25 +353,19 @@ void MainMenu::volumeChanged(unsigned volumeHandle)
          * If the menu is stopped at a game, stay at that game,
          * so long as it still exists.
          */
-#if 0
-        /*
-         * This will never work currently, since even if the same game gets
-         * installed, its volume will be different. This seems like it might
-         * want to compare based on package string instead.
-         */
         for (unsigned i = 0, e = newItems.count(); i != e; ++i) {
             if (newItems[i]->getVolume() == items[itemIndexCurrent]->getVolume()) {
                 itemIndexNew = i;
                 break;
             }
         }
-#endif
 
-        // Return the menu to *near* where it left off.
-        hopUp = true;
-
-        // But avoid going off either end of the menu.
-        itemIndexNew = clamp(itemIndexCurrent - 1, 0, numGamesNew);
+        if (itemIndexNew < 0) {
+            // Return the menu to *near* where it left off,
+            // but avoid going off either end of the menu.
+            hopUp = true;
+            itemIndexNew = clamp(itemIndexCurrent, 0, numGamesNew);
+        }
     }
 
     // Commit the new items to the menu
@@ -384,9 +374,29 @@ void MainMenu::volumeChanged(unsigned volumeHandle)
 
     // Update the menu
     prepareAssets();
-    initMenu(itemIndexNew, hopUp);
 
-    /* XXX: Because the menu is being reinitialized/relaunched, this will never
+    /*
+     * In prepareAssets(), we re-init each of the menu items, which clears
+     * each asset's group baseAddress, meaning it will not be valid when the menu
+     * wants to draw the thumbnail, even if the AssetImage is still happily
+     * installed.
+     *
+     * So we need to re-load everybody and reinit the menu. It's a bit of a cop out
+     * to back through cubeConnect(), since we could possibly jump straight to the
+     * loading animation, but this is the lowest touch route for the moment.
+     */
+
+    mainCube = CubeID::UNDEFINED;
+    itemIndexCurrent = itemIndexNew;
+    loader.init();
+
+    for (CubeID cube : CubeSet::connected()) {
+        cubeConnect(cube);
+    }
+
+#if 0
+    /*
+     * XXX: Because the menu is being reinitialized/relaunched, this will never
      * be called. This code remains in case dynamic menu item addition/removal
      * happens.
      */
@@ -395,6 +405,7 @@ void MainMenu::volumeChanged(unsigned volumeHandle)
         MainMenuItem *item = items[itemIndexCurrent];
         item->onVolumeChanged(volumeHandle);
     }
+#endif
 }
 
 void MainMenu::updateConnecting()
@@ -650,9 +661,7 @@ void MainMenu::prepareAssets()
      * an AssetConfiguration array.
      */
 
-    if (!menuAssetConfig.empty()) {
-        menuAssetConfig.clear();
-    }
+    menuAssetConfig.clear();
 
     // Add our local AssetGroup to the config
     menuAssetConfig.append(Shared::primarySlot, MenuGroup);
