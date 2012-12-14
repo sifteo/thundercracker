@@ -27,6 +27,9 @@
 #include "led.h"
 #include "batterylevel.h"
 
+SysTime::Ticks sampleTicks[100];
+uint8_t sampleTicksPointer;
+
 /*
  * Application specific entry point.
  * All low level init is done in setup.cpp.
@@ -183,6 +186,39 @@ int main()
     /*
      * Start the game runtime, and execute the Launcher app.
      */
+    SysTime::Ticks now = SysTime::ticks();
+
+    UART_HEX(now>>32);
+    UART_HEX(now & 0xFFFFFFFF);
+    UART("\n");
+
+    SysTime::Ticks deadline = now + SysTime::msTicks(1000);
+
+    UART_HEX(deadline>>32);
+    UART_HEX(deadline & 0xFFFFFFFF);
+    UART("\n");
+
+    while( now < deadline ) {
+        now = SysTime::ticks();
+        Tasks::work();
+    }
+
+    while (PowerManager::vbus.isLow()){
+        Tasks::work();
+    }
+
+    UART("Samples in micro seconds:\n");
+
+    UART("Sample Tick pointer:");
+    UART_HEX(sampleTicksPointer);
+    UART("\n");
+
+    for(int i = 0; i< sampleTicksPointer; i++) {
+        UART_HEX(sampleTicks[i] & 0xFFFFFFFF);
+        UART("\n");
+    }
+
+    UART("Sampling complete!\n");
 
     SvmLoader::runLauncher();
 }

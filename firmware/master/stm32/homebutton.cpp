@@ -13,6 +13,13 @@ namespace HomeButton {
 
 void init()
 {
+
+    sampleTicksPointer = 0;
+
+    for(int i = 0; i < 100; i++) {
+        sampleTicks[i] = 0;
+    }
+
     GPIOPin homeButton = BTN_HOME_GPIO;
     homeButton.setControl(GPIOPin::IN_FLOAT);
     homeButton.irqInit();
@@ -32,6 +39,11 @@ bool isPressed()
 #if (BOARD >= BOARD_TC_MASTER_REV2)
 IRQ_HANDLER ISR_EXTI2()
 {
+    if(sampleTicksPointer < 100) {
+        sampleTicks[sampleTicksPointer] = SysTime::ticks();
+        sampleTicksPointer++;
+    }
+
     BTN_HOME_GPIO.irqAcknowledge();
     HomeButton::update();
     Pause::taskWork.atomicMark(Pause::ButtonPress);
