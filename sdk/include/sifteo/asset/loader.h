@@ -142,15 +142,68 @@ public:
 /**
  * @brief An AssetLoader coordinates asset loading operations on one or more cubes.
  *
- * The AssetLoader is a transient object; it can exist only when an actual
- * asset loading operation is taking place, and be deleted or recycled
- * afterwards. Your game can allocate AssetLoaders on the stack, or as part of a union.
+ * An AssetLoader may be a transient object; it only needs to exist when an
+ * asset loading operation is taking place, and can be deleted or recycled
+ * afterwards. AssetLoaders can be allocated on the stack, or as part of a union.
  *
- * A single AssetLoader can support any combination of concurrent asset loading
- * operations on any number of cubes, up to the defined CUBE_ALLOCATION. Individual
- * asset loading operations on these cubes are sequenced via AssetConfiguration objects.
- * Each cube may share the same AssetConfiguration, or a different AssetConfiguration
- * may be loaded on each cube, or any combination in-between.
+ * A single AssetLoader can load any combination of AssetConfiguration objects concurrently
+ * to any number of cubes, up to the defined CUBE_ALLOCATION. Each AssetConfiguration operates
+ * on its own CubeSet, such that a different AssetConfiguration may be loaded on each cube,
+ * or any combination of cubes.
+ *
+ * <b>Single AssetConfiguration Example</b>
+ * \code
+ * #include "assets.gen.h"
+ * using namespace Sifteo;
+ *
+ * // allocate a slot into which our assets will be loaded
+ * static AssetSlot MenuSlot = AssetSlot::allocate();
+ *
+ * // assume assets.gen.h provides a Sifteo::AssetGroup called MenuGroup
+ *
+ * AssetConfiguration<1> config;
+ * config.append(MenuSlot, MenuGroup);
+ *
+ * // load a single configuration to the set of all connected cubes
+ * AssetLoader loader;
+ * loader.init();
+ * loader.start(config, CubeSet::connected());
+ *
+ * // and wait until the load is complete
+ * // NOTE - it is also possible to poll for completion using AssetLoader::isComplete()
+ * loader.finish();
+ * \endcode
+ *
+ * <b>Multiple AssetConfiguration Example</b>
+ * \code
+ * #include "assets.gen.h"
+ * using namespace Sifteo;
+ *
+ * static AssetSlot MenuSlot = AssetSlot::allocate();
+ * static AssetSlot AnimationSlot = AssetSlot::allocate();
+ *
+ * // assume assets.gen.h provides two Sifteo::AssetGroup objects
+ * // called MenuGroup and AnimationGroup
+ *
+ * AssetConfiguration<1> menuConfig;
+ * menuConfig.append(MenuSlot, MenuGroup);
+ *
+ * AssetConfiguration<1> animationConfig;
+ * animationConfig.append(AnimationSlot, AnimationGroup);
+ *
+ * AssetLoader loader;
+ * loader.init();
+ *
+ * // load menuConfig to cubes 0 and 1
+ * CubeSet cubeset01(0, 2);
+ * loader.start(menuConfig, cubeset01);
+ *
+ * // load animationConfig to cubes 2 and 3
+ * CubeSet cubeset23(2, 4);
+ * loader.start(animationConfig, cubeset23);
+ *
+ * loader.finish();
+ * \endcode
  */
 
 struct AssetLoader {
