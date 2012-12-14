@@ -10,6 +10,7 @@
 #include "systime.h"
 
 extern SysTime::Ticks sampleTicks[100];
+extern bool samplePolarity[100];
 extern uint8_t sampleTicksPointer;
 
 namespace HomeButton

@@ -17,6 +17,7 @@ void init()
     sampleTicksPointer = 0;
 
     for(int i = 0; i < 100; i++) {
+        samplePolarity[i] = 0;
         sampleTicks[i] = 0;
     }
 
@@ -41,6 +42,13 @@ IRQ_HANDLER ISR_EXTI2()
 {
     if(sampleTicksPointer < 100) {
         sampleTicks[sampleTicksPointer] = SysTime::ticks();
+        
+        if(BTN_HOME_GPIO.isHigh()){
+            samplePolarity[sampleTicksPointer] = 1;
+        } else {
+            samplePolarity[sampleTicksPointer] = 0;
+        }
+            
         sampleTicksPointer++;
     }
 

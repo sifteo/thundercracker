@@ -29,6 +29,7 @@
 
 SysTime::Ticks sampleTicks[100];
 uint8_t sampleTicksPointer;
+bool samplePolarity[100];
 
 /*
  * Application specific entry point.
@@ -202,6 +203,8 @@ int main()
         now = SysTime::ticks();
         Tasks::work();
     }
+    
+    LED::set(LEDPatterns::panic, true);
 
     while (PowerManager::vbus.isLow()){
         Tasks::work();
@@ -214,6 +217,8 @@ int main()
     UART("\n");
 
     for(int i = 0; i< sampleTicksPointer; i++) {
+        UART_HEX(samplePolarity[i]);
+        UART("-");
         UART_HEX(sampleTicks[i] & 0xFFFFFFFF);
         UART("\n");
     }
