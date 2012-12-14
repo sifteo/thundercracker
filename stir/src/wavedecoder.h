@@ -3,6 +3,7 @@
 
 #include "logger.h"
 
+#include <stdio.h>
 #include <stdint.h>
 #include <vector>
 #include <string>
@@ -27,7 +28,6 @@ private:
     };
 
     struct FormatDescriptor {
-        ChunkHeader header;
         uint16_t audioFormat;
         uint16_t numChannels;
         uint32_t sampleRate;
@@ -36,7 +36,9 @@ private:
         uint16_t bitsPerSample;
     };
 
-
+    static bool readAndValidateRiff(Stir::Logger &log, FILE *f);
+    static bool readAndValidateFormat(const ChunkHeader &header, FormatDescriptor &fd, Stir::Logger &log, FILE *f);
+    static bool readDataChunk(const ChunkHeader &header, std::vector<unsigned char>& buffer, Stir::Logger &log, FILE *f);
 };
 
 } // namespace Stir
