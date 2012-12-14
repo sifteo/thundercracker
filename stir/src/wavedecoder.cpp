@@ -17,7 +17,7 @@ bool WaveDecoder::loadFile(std::vector<unsigned char>& buffer, uint32_t &sampleR
     if (fseek(f, 0, SEEK_END) != 0) {
         return false;
     }
-    unsigned filesz = ftell(f);
+    long filesz = ftell(f);
     rewind(f);
 
     /*
