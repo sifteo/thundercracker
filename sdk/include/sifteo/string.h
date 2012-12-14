@@ -250,7 +250,7 @@ public:
      * where i is the index of the first non-matching character.
      */
     template <class T> int compare(const T &other) const {
-        return strncmp(*this, other, min(capacity(), other.capacity()));
+        return strncmp(*this, other, MIN(capacity(), other.capacity()));
     }
 
     /**

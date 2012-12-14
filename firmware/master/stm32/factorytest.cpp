@@ -256,9 +256,9 @@ void FactoryTest::uniqueIdHandler(uint8_t argc, const uint8_t *args)
 void FactoryTest::volumeCalibrationHandler(uint8_t argc, const uint8_t *args)
 {
     Volume::CalibrationState cs = args[1] ? Volume::CalibrationHigh : Volume::CalibrationLow;
-    uint16_t rawValue = Volume::calibrate(cs);
+    uint32_t rawValue = Volume::calibrate(cs);
 
-    const uint8_t response[] = { args[0], args[1], rawValue & 0xff, (rawValue >> 8) & 0xff };
+    const uint8_t response[] = { args[0], args[1], rawValue & 0xff, (rawValue >> 8) & 0xff, (rawValue >> 16) & 0xff, (rawValue >> 24) & 0xff };
     UsbDevice::write(response, sizeof response);
 }
 
