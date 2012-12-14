@@ -438,49 +438,52 @@ void MainMenu::updateConnecting()
         }
     }
 
-    if (!beginLoadingAnim.empty())
+    if (!beginLoadingAnim.empty()) {
         loadingAnimation.begin(beginLoadingAnim);
+    }
 
     /*
      * Let cubes participate in the loading animation until the whole load is done
      */
-    if (!loadingCubes.empty()) {
-        if (loader.isComplete()) {
-            // Loading is done!
-
-            loadingAnimation.end(loadingCubes);
-
-            // Draw an idle screen on each cube, and remove it from connectingCubes
-            for (CubeID cube : loadingCubes) {
-                auto& vid = Shared::video[cube];
-                vid.initMode(BG0);
-                vid.bg0.erase(Menu_StripeTile);
-                vid.bg0.image(vec(0,0), Menu_IdleCube);
-
-                connectingCubes.clear(cube);
-
-                // Dispatch connected event to current applet now that the cube is ready
-                if (itemIndexCurrent >= 0) {
-                    ASSERT(itemIndexCurrent < items.count());
-                    MainMenuItem *item = items[itemIndexCurrent];
-                    item->onCubeConnect(cube);
-
-                    // If a game was waiting on a cube to launch, try again.
-                    if (cubeRangeSavedIcon && areEnoughCubesConnected(itemIndexCurrent)) {
-                        itemIndexChoice = itemIndexCurrent;
-                    }
-                }
-
-                updateCubeRangeAlert();
-            }
-
-            loadingCubes.clear();
-
-        } else {
-            // Still loading, update progress
-            loadingAnimation.paint(loadingCubes, loader.averageProgress(100));
-        }
+    if (loadingCubes.empty()) {
+        // nothing to do
+        return;
     }
+
+    if (!loader.isComplete()) {
+        // Still loading, update progress
+        loadingAnimation.paint(loadingCubes, loader.averageProgress(100));
+        return;
+    }
+
+    // Loading is done!
+    loadingAnimation.end(loadingCubes);
+
+    // Draw an idle screen on each cube, and remove it from connectingCubes
+    for (CubeID cube : loadingCubes) {
+        auto& vid = Shared::video[cube];
+        vid.initMode(BG0);
+        vid.bg0.erase(Menu_StripeTile);
+        vid.bg0.image(vec(0,0), Menu_IdleCube);
+
+        connectingCubes.clear(cube);
+
+        // Dispatch connected event to current applet now that the cube is ready
+        if (itemIndexCurrent >= 0) {
+            ASSERT(itemIndexCurrent < items.count());
+            MainMenuItem *item = items[itemIndexCurrent];
+            item->onCubeConnect(cube);
+
+            // If a game was waiting on a cube to launch, try again.
+            if (cubeRangeSavedIcon && areEnoughCubesConnected(itemIndexCurrent)) {
+                itemIndexChoice = itemIndexCurrent;
+            }
+        }
+
+        updateCubeRangeAlert();
+    }
+
+    loadingCubes.clear();
 }
 
 void MainMenu::updateSound()
