@@ -81,8 +81,6 @@ private:
     void cubeConnect(unsigned cid);
     void cubeDisconnect(unsigned cid);
     void cubeTouch(unsigned cid);
-    void neighborAdded(unsigned firstID, unsigned firstSide,
-                       unsigned secondID, unsigned secondSide);
     void onBatteryLevelChange(unsigned cid);
 
     void waitForACube();

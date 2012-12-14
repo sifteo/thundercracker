@@ -56,7 +56,6 @@ void MainMenu::init()
 
     Events::cubeConnect.set(&MainMenu::cubeConnect, this);
     Events::cubeDisconnect.set(&MainMenu::cubeDisconnect, this);
-    Events::neighborAdd.set(&MainMenu::neighborAdded, this);
     Events::cubeBatteryLevelChange.set(&MainMenu::onBatteryLevelChange, this);
     Events::volumeCommit.set(&MainMenu::volumeChanged, this);
     Events::volumeDelete.set(&MainMenu::volumeChanged, this);
@@ -331,15 +330,6 @@ void MainMenu::cubeDisconnect(unsigned cid)
         item->onCubeDisconnect(cid);
         updateCubeRangeAlert();
     }
-}
-
-void MainMenu::neighborAdded(unsigned firstID, unsigned firstSide,
-                             unsigned secondID, unsigned secondSide)
-{
-    /*
-     * XXX: used to unpair neighbors here, but TBD how that is
-     * going to work going forward.
-     */
 }
 
 void MainMenu::onBatteryLevelChange(unsigned cid)
