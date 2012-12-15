@@ -56,6 +56,10 @@ bool WaveDecoder::loadFile(std::vector<unsigned char>& buffer, uint32_t &sampleR
 
         } else if (memcmp(header.id, datachunk, sizeof datachunk) == 0) {
             foundData = readDataChunk(header, buffer, log, f);
+            // if we already found format, we already have everything we need
+            if (foundFmt) {
+                break;
+            }
 
         } else {
             // some other subchunk - skip it and keep looking
