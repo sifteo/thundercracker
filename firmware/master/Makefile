@@ -12,4 +12,9 @@ OBJS_STM32 += \
 
 FLAGS += -I$(MASTER_DIR)/bootloader
 
+ifneq ($(CLOUDBASE),)
+    FLAGS += -DCLOUDBASE
+    OBJS_STM32 += $(MASTER_DIR)/stm32/cloudbase.stm32.o
+endif
+
 include Makefile.rules
