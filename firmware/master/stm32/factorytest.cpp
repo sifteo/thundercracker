@@ -386,7 +386,15 @@ void FactoryTest::rfPacketTestHandler(uint8_t argc, const uint8_t *args)
     rfSuccessCount = 0;
 }
 
+#ifdef CLOUDBASE
+#include "cloudbase.h"
+#endif
+
 IRQ_HANDLER ISR_USART3()
 {
+#ifdef CLOUDBASE
+   CloudBase::onUartIsr();
+#else
     FactoryTest::onUartIsr();
+#endif
 }
