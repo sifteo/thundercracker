@@ -44,6 +44,10 @@ void CloudBase::processByte(uint8_t c)
     // otherwise, we're processing an unescaped byte
     switch (c) {
     case END:
+        if (!rxBuf.synced) {
+            rxBuf.reset();
+            rxBuf.synced = true;
+        }
         if (rxBuf.len) {
             Tasks::trigger(Tasks::CloudBase);
         }
@@ -79,12 +83,14 @@ void CloudBase::processPacket()
     case Commit:
         if (writer.isPayloadComplete()) {
             writer.commit();
+            rxBuf.synced = false;
         }
         break;
     }
 
-    // XXX: return something slightly more useful here - counter, or at least status?
-    Usart::Dbg.put(0xff);
+    // return the first byte of this packet's payload to give at least a little confidence that
+    // we're transferring the data we think we are
+    Usart::Dbg.put(rxBuf.payload()[0]);
 
     rxBuf.reset();
 }

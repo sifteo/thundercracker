@@ -32,6 +32,7 @@ private:
         uint8_t data[BUF_SIZE];
         uint8_t len;
         bool escaped;
+        bool synced;
 
         void reset() {
             len = 0;
