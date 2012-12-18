@@ -54,12 +54,10 @@ class Installer:
 
     def sync(self):
         """
-        Slurp out the greeting from the WiFly and reset the SLIP decoder
-        by sending it a single END byte
+        Slurp out any pre-existing data from the socket, including the greeting from the WiFly,
+        and reset the SLIP decoder by sending it a single END byte
         """
-        hello = self.sock.recv(1024)
-        if len(hello) != 7:
-            raise ValueError("unexpected start state")
+        self.sock.recv(1024)
         self.sock.send(chr(END))
 
     def writeHeader(self, sz, package):
