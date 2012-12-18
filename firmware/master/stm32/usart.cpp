@@ -88,12 +88,12 @@ uint16_t Usart::isr(uint8_t &byte)
     }
 
     // RXNE: data available
-    if (sr & STATUS_RXED) {
+    if (sr & StatusRxed) {
         byte = dr;
     }
 
     // TXE: transmission complete
-    if (sr & STATUS_TXED) {
+    if (sr & StatusTxed) {
 
     }
 

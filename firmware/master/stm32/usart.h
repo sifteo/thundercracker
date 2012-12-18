@@ -14,18 +14,22 @@ class Usart
 {
 public:
 
-    static const uint16_t STATUS_OVERRUN    = (1 << 3);
-    static const uint16_t STATUS_RXED       = (1 << 5);
-    static const uint16_t STATUS_TXED       = (1 << 7);
+    // compatible with the return value from isr()
+    enum Status {
+        StatusOverrun   = (1 << 3),
+        StatusRxed      = (1 << 5),
+        StatusTxed      = (1 << 7)
+    };
+
+    enum StopBits {
+        Stop1   = 0,
+        Stop0_5 = 1,
+        Stop2   = 2,
+        Stop1_5 = 3
+    };
 
     static Usart Dbg;
 
-    enum StopBits {
-        Stop1 = 0,
-        Stop0_5 = 1,
-        Stop2 = 2,
-        Stop1_5 = 3
-    };
     Usart(volatile USART_t *hw) : uart(hw)
     {}
     void init(GPIOPin rx, GPIOPin tx, int rate, StopBits bits = Stop1);

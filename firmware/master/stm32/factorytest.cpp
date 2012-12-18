@@ -62,7 +62,7 @@ void FactoryTest::onUartIsr()
     uint8_t rxbyte;
     uint16_t status = Usart::Dbg.isr(rxbyte);
 
-    if (status & Usart::STATUS_RXED) {
+    if (status & Usart::StatusRxed) {
 
         uartCommand.append(rxbyte);
         if (uartCommand.complete())
