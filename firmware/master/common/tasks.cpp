@@ -27,6 +27,9 @@
 #   if (BOARD == BOARD_TEST_JIG)
 #       include "testjig.h"
 #   endif
+#   ifdef CLOUDBASE
+#       include "cloudbase.h"
+#   endif
 #endif
 
 
@@ -60,6 +63,10 @@ ALWAYS_INLINE void Tasks::taskInvoke(unsigned id)
     #if !defined(SIFTEO_SIMULATOR) && !defined(BOOTLOADER)
         case Tasks::Profiler:       return SampleProfiler::task();
         case Tasks::FactoryTest:    return FactoryTest::task();
+    #endif
+
+    #ifdef CLOUDBASE
+        case Tasks::CloudBase:      return CloudBase::task();
     #endif
 
     }
