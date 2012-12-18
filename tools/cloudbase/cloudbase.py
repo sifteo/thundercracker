@@ -47,41 +47,60 @@ class SlipPacket:
 class Installer:
     def __init__(self, host, port):
         self.sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        # self.sock.connect(host, port)
+        self.sock.connect((host, port))
+
+        self.sync()
+
+
+    def sync(self):
+        """
+        Slurp out the greeting from the WiFly and reset the SLIP decoder
+        by sending it a single END byte
+        """
+        hello = self.sock.recv(1024)
+        if len(hello) != 7:
+            raise ValueError("unexpected start state")
+        self.sock.send(chr(END))
 
     def writeHeader(self, sz, package):
         pkt = SlipPacket(OP_WRITE_HEADER)
         pkt.append(sz & 0xff).append((sz >> 8) & 0xff).append((sz >> 16) & 0xff).append((sz >> 24) & 0xff)
         for c in package:
-            pkt.append(c)
+            pkt.append(ord(c))
         return self.send(pkt)
 
     def writeFileContents(self, sz, filepath):
         with open(filepath, 'rb') as f:
             while sz > 0:
-                chunksz = min(sz, MAX_PACKET - 2)
                 pkt = SlipPacket(OP_PAYLOAD)
-
-                while pkt.length() < chunksz:
-                    pkt.append(f.read(1))
+                while sz > 0 and pkt.length() < MAX_PACKET - 2:
+                    pkt.append(ord(f.read(1)))
+                    sz -= 1
                 self.send(pkt)
-                sz -= pkt.length()
 
     def commit(self):
         pkt = SlipPacket(OP_COMMIT)
-        return self.send(pkt)
+        return self.send(pkt, False)
 
-    def send(self, pkt):
+    def send(self, pkt, check=True):
         """
         Send this packet and wait for a response byte
         """
         pkt.end()
-        # print pkt.data
         if pkt.length() > MAX_PACKET:
             raise ValueError("packet too large")
-        return 0
-        # self.sock.send(pkt.data)
-        # return self.sock.recv(1)
+
+        self.sock.send("".join(chr(c) for c in pkt.data))
+        rv = ord(self.sock.recv(1))
+        if check == False:
+            return
+
+        # if out check byte is an ESC, we expect to see the decoded result in rv
+        if pkt.data[1] == ESC:
+            if rv not in [ESC, END]:
+                raise ValueError("encoded first byte did not match (%x != %x)" % (rv, pkt.data[1]))
+        elif rv != pkt.data[1]:
+            raise ValueError("first byte did not match (%x != %x)" % (rv, pkt.data[1]))
 
 
 def installableELFSize(filepath):
@@ -114,8 +133,8 @@ if __name__ == '__main__':
     parser.add_argument('filepath', default='membrane.elf', help='path to the file to be installed or deleted')
     parser.add_argument('packageStr', default='com.sifteo.membrane', help='path to the file to be installed or deleted')
     #parser.add_argument('filepath', help='path to the file to be installed or deleted')
-    #parser.add_argument('--ip', default='169.254.1.1', help='ip address to connect to')
-    parser.add_argument('--ip', default='127.0.0.1', help='ip address to connect to')
+    parser.add_argument('--ip', default='169.254.1.1', help='ip address to connect to')
+    #parser.add_argument('--ip', default='127.0.0.1', help='ip address to connect to')
     parser.add_argument('--port', default=2000, type=int, help='port to connect to')
 
     args = parser.parse_args()
