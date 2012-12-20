@@ -117,13 +117,6 @@ void beginCapture()
 
         delayPrescaleCounter = 0;
 
-        //Returns if there is no battery or if USB is connected
-        if (BATT_MEAS_GPIO.isLow() ||
-            PowerManager::state() == PowerManager::UsbPwr)
-        {
-            return;
-        }
-
         NeighborTX::pause();
 
         HwTimer timer(&BATT_LVL_TIM);
@@ -151,6 +144,14 @@ void beginCapture()
         }
 
         timer.enableCompareCaptureIsr(BATT_LVL_CHAN);
+
+        /*
+         * We force capture if no battery is detected
+         * just to proceed to vsys measurement
+         */
+        if (BATT_MEAS_GPIO.isLow()) {
+            captureIsr();
+        }
     }
 }
 
@@ -188,7 +189,12 @@ void captureIsr()
 
         lastVsysReading = capture;
 
-        PowerManager::shutdownIfVBattIsCritical(lastReading, lastVsysReading);
+        /*
+         * Check and take action if we are on battery power
+         */
+        if (PowerManager::state() == PowerManager::BatteryPwr) {
+            PowerManager::shutdownIfVBattIsCritical(lastReading, lastVsysReading);
+        }
 
         currentState = VBattCapture;
     }
