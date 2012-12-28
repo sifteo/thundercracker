@@ -55,7 +55,7 @@ vm
 
 Operating System
 ----------------
-  
+
 The code here should all run on Windows, Mac OS X, or Linux. Right now
 the Linux port is infrequently maintained, but in theory it should
 still work. In all cases, the build is Makefile based, and we compile
@@ -82,6 +82,22 @@ Optional dependencies:
 
 1. OpenOCD, for installing and debugging master firmware
 2. The Python Imaging Library, used by other code generation tools
+3. Linux only:
+
+- The UUID Library for the generation of Universally Unique Identifiers
+- Libusb allows accessing to USB devices on most operating systems
+- Mesa is an open-source OpenGL, it's used in the simulator
+- GLU (OpenGL Utility Library), allows interfaces for building mipmaps
+- Libasound, a library to use ALSA, Advanced Linux Sound Architecture
+- The ia32-libs package is needed in 64 bits computers
+
+On most debian-like distros, you still need the arm toolchain (see below)
+but the following command should install all of the useful deps (if you
+already have one it will be skipped)::
+
+  sudo apt-get install -y g++ doxygen upx-ucl python-imaging openocd \
+                          uuid-dev libusb-1.0-0-dev mesa-common-dev \
+                          libglu1-mesa-dev libasound2-dev ia32-libs
 
 Most of these dependencies are very easy to come by, and your favorite
 Linux distro or Mac OS package manager has them already. The ARM cross
