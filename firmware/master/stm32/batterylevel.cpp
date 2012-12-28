@@ -143,14 +143,15 @@ void beginCapture()
             BATT_MEAS_GPIO.setControl(GPIOPin::IN_FLOAT);
         }
 
-        timer.enableCompareCaptureIsr(BATT_LVL_CHAN);
-
         /*
-         * We force capture if no battery is detected
-         * just to proceed to vsys measurement
+         * If the battery is too low (< min(Vih)) or not present,
+         * we dont bother to run the timer and set input capture
+         * to zero (as though the capacitor drained out immediately)
          */
         if (BATT_MEAS_GPIO.isLow()) {
-            captureIsr();
+            process(0);
+        } else {
+            timer.enableCompareCaptureIsr(BATT_LVL_CHAN);
         }
     }
 }
@@ -163,20 +164,24 @@ void captureIsr()
      *
      * Once our discharge has completed, we can resume normal neighbor transmission.
      */
-    BATT_MEAS_GND_GPIO.setControl(GPIOPin::IN_FLOAT);
-
     HwTimer timer(&BATT_LVL_TIM);
     timer.disableCompareCaptureIsr(BATT_LVL_CHAN);
 
+    unsigned capture = timer.lastCapture(BATT_LVL_CHAN);
+    process(capture);
+}
+
+
+void process(unsigned capture)
+{
     /*
      * We alternately sample VSYS and VBATT in order to establish a consistent
      * baseline - store the capture appropriately.
      */
 
-    unsigned capture = timer.lastCapture(BATT_LVL_CHAN);
+    BATT_MEAS_GND_GPIO.setControl(GPIOPin::IN_FLOAT);
 
     if (currentState == VBattCapture) {
-
 
         lastReading = capture;
 
