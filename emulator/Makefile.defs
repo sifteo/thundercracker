@@ -20,7 +20,7 @@ OSVERSION := $(shell python $(TC_DIR)/tools/osversion.py)
 FLAGS += -DOS_VERSION=$(OSVERSION)
 
 # Disable unwanted warnings, but be generally pretty pedantic
-WARNFLAGS += -Wall -Werror -Wno-unused -Wno-strict-aliasing -Wno-uninitialized
+WARNFLAGS += -Wall -Werror -Wno-unused -Wno-strict-aliasing -Wno-uninitialized -Wno-narrowing
 
 # Resources
 ifeq ($(BUILD_PLATFORM), windows32)
@@ -45,7 +45,7 @@ endif
 ifeq ($(BUILD_PLATFORM), windows32)
     FLAGS += -march=i686 -mtune=core2
 endif
-    
+
 # Linker flags
 ifneq ($(BUILD_PLATFORM),Darwin)
 	# Not supported on Apple's LLVM GCC frontend
