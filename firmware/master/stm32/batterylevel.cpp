@@ -91,16 +91,23 @@ unsigned vsys()
 unsigned scaled()
 {
     /*
-     * Temporary cheesy linear scaling.
-     *
-     * We need some battery curves, and then we'd like to chunk our values into
-     * the number of visual buckets that the UI represents.
+     * We assume a linear profile
+     * Must calibrate on the assembly line to find the range
+     * It is hardcoded for now.
      */
-    const unsigned MAX = 0x2500;
-    const unsigned MIN = lastVsysReading;
-    const unsigned RANGE = MAX - MIN;
-    const unsigned clamped = clamp(lastReading, MIN, MAX);
-    return (clamped - MIN) * _SYS_BATTERY_MAX / RANGE;
+    const unsigned RANGE = 3250;
+    unsigned minL, maxL;
+    if (PowerManager::state() == PowerManager::BatteryPwr) {
+        minL = lastVsysReading;
+        maxL = MAX(minL + RANGE, minL);
+    } else {
+        // We are on usb power
+        maxL = lastVsysReading;
+        minL = MIN(maxL - RANGE, maxL);
+    }
+
+    unsigned clamped = clamp(lastReading, minL, maxL);
+    return (clamped - minL) * _SYS_BATTERY_MAX / RANGE;
 }
 
 void beginCapture()
@@ -187,12 +194,15 @@ void process(unsigned capture)
 
         BATT_MEAS_GPIO.setControl(GPIOPin::OUT_2MHZ);
         BATT_MEAS_GPIO.setHigh();
+        //UART("\r\nVbat: "); UART_HEX(lastReading);
 
         currentState = VSysCapture;
 
     } else if (currentState == VSysCapture) {
 
         lastVsysReading = capture;
+        UART("\r\nVsys: "); UART_HEX(lastVsysReading); UART(" Vbat: "); UART_HEX(lastReading); UART(" Vscl: "); UART_HEX(scaled());
+        //UART("\r\nVsys: "); UART_HEX(lastVsysReading);
 
         /*
          * Check and take action if we are on battery power
