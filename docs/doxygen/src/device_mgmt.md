@@ -13,6 +13,8 @@ You can easily use `swiss` from within an SDK shell - just double click on the a
 * Mac OS X: double click `sifteo-sdk-shell.command`
 * Linux: run `sifteo-sdk-shell.sh`
 
+@note If you're using linux, a udev rule file might be useful, check out the instructions at the end of this page: @ref linuxAndUSB
+
 # Install Apps          {#install}
 
 To install a new version of your application to your Sifteo base, use the `swiss install` command as follows:
@@ -119,3 +121,30 @@ If you need to force an update, you can use the following recovery process:
 After one second, the red LED illuminates and you can install the update as normal:
 
     $ swiss update myNewFirmware.sft
+
+## Linux and USB        {#linuxAndUSB}
+
+As a security precaution on Linux, unknown USB devices can only be accessed by root. The following allow identifying the Sifteo base with its vendor and product IDs, mounts it to /dev/sifteo, and (for Debian-based distros) grants read/write permissions to the plugdev group.
+To install these rules, execute these instructions:
+
+    $ RULES='SUBSYSTEMS=="usb", ATTRS{idProduct}=="0105", ATTRS{idVendor}=="22fa", MODE:="0666", GROUP="plugdev", SYMLINK+="sifteo"'
+    $ echo $RULES | sudo tee /etc/udev/rules.d/42-sifteo.rules
+    $ sudo restart udev
+
+### Debian-based distros:
+
+A user needs to be a member of the plugdev group to access hot-pluggable devices (Sifteo base, digital cameras, USB drives, etc.). Make sure you are in this group by running the "groups" command and checking if the output includes “plugdev”. If not, add yourself to plugdev with:
+
+    $ sudo usermod -a -G plugdev $USER
+
+Then log back out and log back in.
+After that’s done, restart udev:
+
+    $ sudo restart udev
+
+### Red Hat-based distros:
+
+    $ udevadm control --reload-rules
+
+After restarting udev, you might need to unplug and re-plug your Sifteo base.
+
