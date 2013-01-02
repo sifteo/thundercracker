@@ -71,7 +71,7 @@ endif
 
 ifeq ($(DEBUG),)
 	FLAGS += -DNDEBUG
-	FLAGS += -O3 -fomit-frame-pointer
+	FLAGS += -O0 -fomit-frame-pointer
 endif
 
 # Automatic dependency generation (*.d files)
