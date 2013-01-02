@@ -304,7 +304,6 @@ void TestJig::setSimulatedBatteryVoltageHandler(uint8_t argc, uint8_t *args)
     
     //Have to divide the targeted voltage by two. 
     //Gets multiplied by the gain stage of the external opamp (gain == 2)
-    val /= 2;
     Dac::write(BATTERY_SIM_DAC_CH, val);
 
     // no response data - just indicate that we're done
