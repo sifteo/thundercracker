@@ -196,6 +196,7 @@ void _SYS_tracker_setVolume(int volume, _SYSAudioChannelID ch) _SC(140);
 void _SYS_tracker_pause() _SC(141);
 uint32_t _SYS_tracker_isPaused() _SC(142);
 void _SYS_tracker_setTempoModifier(int modifier) _SC(184);
+void _SYS_tracker_setPosition(uint16_t phrase, uint16_t row) _SC(185);
 
 // Asset group/slot management
 uint32_t _SYS_asset_slotTilesFree(_SYSAssetSlot slot, _SYSCubeIDVector cv) _SC(143);
