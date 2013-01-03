@@ -7,7 +7,13 @@
 #define _BOARD_TESTJIG_H
 
 // C L O C K
+#if TEST_JIG_REV == 2
+#define RCC_CFGR_PLLXTPRE   1
+#elif TEST_JIG_REV == 1
 #define RCC_CFGR_PLLXTPRE   0
+#else
+#error TEST_JIG_REV not configured
+#endif
 
 // U S B
 #define USB_DM_GPIO         GPIOPin(&GPIOA, 11)
@@ -101,12 +107,18 @@
 #define LED_RED1_GPIO       GPIOPin(&GPIOC,0)
 #define LED_RED2_GPIO       GPIOPin(&GPIOC,1)
 
+#define DIP_SWITCH1_GPIO    GPIOPin(&GPIOC,12)
+#define DIP_SWITCH2_GPIO    GPIOPin(&GPIOC,13)
+#define DIP_SWITCH3_GPIO    GPIOPin(&GPIOC,14)
+#define DIP_SWITCH4_GPIO    GPIOPin(&GPIOC,15)
+
 #define JIG_I2C             I2C1
 #define JIG_SCL_GPIO        GPIOPin(&GPIOB, 6)
 #define JIG_SDA_GPIO        GPIOPin(&GPIOB, 7)
 
 #define PWR_MEASURE_ADC     ADC1
 #define USB_PWR_GPIO        GPIOPin(&GPIOB, 15)
+#define VBATT_EN_GPIO       GPIOPin(&GPIOA, 8)
 
 #define USB_CURRENT_GPIO    GPIOPin(&GPIOA, 4)
 #define USB_CURRENT_DIR_GPIO GPIOPin(&GPIOC, 5)
