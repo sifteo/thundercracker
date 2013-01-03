@@ -50,6 +50,11 @@ int main()
     PowerManager::init();   // fires up USB
     Tasks::init();
 
+    // This is the earliest point at which it's safe to use Usart::Dbg.
+    Usart::Dbg.init(UART_RX_GPIO, UART_TX_GPIO, 115200);
+
+    UART("Sifteo Testjig\r\nVersion: " TOSTRING(SDK_VERSION) "\r\n");
+
     /*
      * Once the TestJig is initialized, test commands from the host will arrive
      * over USB and get processed within Tasks::work().
