@@ -23,6 +23,8 @@ static I2CSlave i2c(&I2C1);
 
 // control for the pass-through USB of the master under test
 static GPIOPin testUsbEnable = USB_PWR_GPIO;
+static GPIOPin vbattEnable = VBATT_EN_GPIO;
+
 
 static Adc adc(&PWR_MEASURE_ADC);
 static GPIOPin usbCurrentSign = USB_CURRENT_DIR_GPIO;
@@ -52,6 +54,7 @@ TestJig::TestHandler const TestJig::handlers[] = {
     stopNeighborTxHandler,                  // 9
     beginNoiseCheckHandler,                 // 10
     stopNoiseCheckHandler,                  // 11
+    setVBattEnabledHandler,                 // 12
 };
 
 void TestJig::init()
@@ -86,7 +89,7 @@ void TestJig::init()
     Dac::init();
     Dac::configureChannel(BATTERY_SIM_DAC_CH);
     Dac::enableChannel(BATTERY_SIM_DAC_CH);
-    Dac::write(BATTERY_SIM_DAC_CH, 0); // default to off
+    Dac::write(BATTERY_SIM_DAC_CH, DAC_1V2); // default to off
 
     GPIOPin v3CurrentPin = V3_CURRENT_GPIO;
     v3CurrentPin.setControl(GPIOPin::IN_ANALOG);
@@ -100,6 +103,9 @@ void TestJig::init()
 
     testUsbEnable.setControl(GPIOPin::OUT_2MHZ);
     testUsbEnable.setHigh();    // default to enabled
+
+    vbattEnable.setControl(GPIOPin::OUT_2MHZ);
+    vbattEnable.setHigh();      // default to enabled
 
     ackPacket.enabled = false;
     ackPacket.len = 0;
@@ -295,6 +301,23 @@ void TestJig::setUsbEnabledHandler(uint8_t argc, uint8_t *args)
 }
 
 /*
+ * args[1] == non-zero for enable, 0 for disable
+ */
+void TestJig::setVBattEnabledHandler(uint8_t argc, uint8_t *args)
+{
+    bool enable = args[1];
+    if (enable) {
+        vbattEnable.setHigh();
+    } else {
+        vbattEnable.setLow();
+    }
+
+    // no response data - just indicate that we're done
+    const uint8_t response[] = { args[0] };
+    UsbDevice::write(response, sizeof response);
+}
+
+/*
  * args[1] == value, LSB
  * args[2] == value, MSB
  */
@@ -302,8 +325,6 @@ void TestJig::setSimulatedBatteryVoltageHandler(uint8_t argc, uint8_t *args)
 {
     uint16_t val = (args[1] | args[2] << 8);
     
-    //Have to divide the targeted voltage by two. 
-    //Gets multiplied by the gain stage of the external opamp (gain == 2)
     Dac::write(BATTERY_SIM_DAC_CH, val);
 
     // no response data - just indicate that we're done

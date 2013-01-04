@@ -25,6 +25,13 @@ public:
     static void onI2cError();
     static void task();
 
+    enum DAC_Out {
+        DAC_0v0             = 0,
+        DAC_1V2             = 1490,
+        DAC_2V2             = 2730,
+        DAC_2V8             = 3475
+    };
+
 private:
     static const unsigned I2C_SLAVE_ADDRESS = 0x55;
     static const unsigned NUM_CURRENT_SAMPLES = 100;
@@ -33,6 +40,7 @@ private:
     static const TestHandler handlers[];
 
     static void setUsbEnabledHandler(uint8_t argc, uint8_t *args);
+    static void setVBattEnabledHandler(uint8_t argc, uint8_t *args);
     static void setSimulatedBatteryVoltageHandler(uint8_t argc, uint8_t *args);
     static void getBatterySupplyCurrentHandler(uint8_t argc, uint8_t *args);
     static void getUsbCurrentHandler(uint8_t argc, uint8_t *args);
