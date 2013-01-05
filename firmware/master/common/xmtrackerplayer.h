@@ -116,9 +116,7 @@ public:
     void setVolume(int volume, uint8_t ch);
     void pause();
     void setTempoModifier(int modifier);
-
-    // TODO: future:
-    // void muteChannel(uint8_t), unmuteChannel(uint8_t).
+    void setPatternBreak(uint16_t phrase, uint16_t row);
 
 private:
     // Frequency and period computation
@@ -166,6 +164,7 @@ private:
     XmTrackerPattern pattern; // The current pattern
     struct {
         bool force;
+        bool userspace;
         uint16_t phrase;
         uint16_t row;
     } next;

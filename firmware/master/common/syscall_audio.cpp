@@ -120,4 +120,9 @@ void _SYS_tracker_setTempoModifier(int modifier)
     XmTrackerPlayer::instance.setTempoModifier(modifier);
 }
 
+void _SYS_tracker_setPosition(uint16_t phrase, uint16_t row)
+{
+    XmTrackerPlayer::instance.setPatternBreak(phrase, row);
+}
+
 }  // extern "C"

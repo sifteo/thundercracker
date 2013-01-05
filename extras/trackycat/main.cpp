@@ -10,7 +10,7 @@ static Metadata M = Metadata()
     .package("com.sifteo.extras.trackycat", "1.0")
     .cubeRange(1);
 
-static const AssetTracker *mods[] = { &Bubbles, &Vox, &Jungle1, &Guitar };
+static const AssetTracker *mods[] = { &Bubbles, &Vox, &Jungle1, &Guitar, &Second, &Dizzy, &Unreal };
 static unsigned current = 0;
 static AudioTracker tracker;
 
@@ -20,6 +20,8 @@ void onTouch(void * unused, unsigned cube)
         current = (current + 1) % arraysize(mods);
         tracker.stop();
         tracker.play(*mods[current]);
+        // // Seek to beginning of song.
+        // tracker.setPosition(0, 0);
     }
 }
 

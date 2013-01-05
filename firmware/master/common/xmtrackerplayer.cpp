@@ -159,6 +159,17 @@ void XmTrackerPlayer::setTempoModifier(int modifier)
     setCallbackInterval();
 }
 
+void XmTrackerPlayer::setPatternBreak(uint16_t phrase, uint16_t row)
+{
+    // Userspace is not allowed to take advantage of the implied behaviour utilized by setting pattern breaks that are out of range.
+    ASSERT(phrase < song.patternOrderTableSize);
+
+    // Row boundary checking is done by loadNextNotes, enabled by the userspace flag.
+    next.userspace = true;
+    
+    processPatternBreak(phrase, row);
+}
+
 inline void XmTrackerPlayer::loadNextNotes()
 {
     if (ticks) {
@@ -196,11 +207,16 @@ inline void XmTrackerPlayer::loadNextNotes()
         if (next.row >= pattern.nRows()) {
             LOG((LGPFX"Warning: next row (%u) is larger than pattern (%u rows).\n",
                  next.row, pattern.nRows()));
+            // If this pattern break was requested from userspace, this is an assertion failure.
+            if (next.userspace) {
+                ASSERT(next.row < pattern.nRows());
+            }
             stop();
             return;
         }
         
         next.force = false;
+        next.userspace = false;
 
 #ifdef XMTRACKERDEBUG
         LOG((LGPFX"Debug: Relocating to phrase %u, row %u.\n", phrase, next.row));
@@ -605,6 +621,7 @@ void XmTrackerPlayer::processTremolo(XmTrackerChannel &channel)
 
 void XmTrackerPlayer::processPatternBreak(uint16_t nextPhrase, uint16_t nextRow)
 {
+    // This method overrides all previous pattern position instructions, including itself, each time it is called (between calls to loadNextNotes).
     next.force = true;
 
     // Adjust phrase as appropriate
@@ -861,7 +878,14 @@ void XmTrackerPlayer::processEffects(XmTrackerChannel &channel)
 
                 case fxLoopPattern:
                     if (ticks) break;
-                    ASSERT_BREAK(!next.force);
+
+                    // Loops shouldn't be (internally) set more than once per beat; though userspace may have already set one.
+                    if (next.force) {
+                        if (!next.userspace) {
+                            ASSERT(!next.force);
+                        }
+                        break;
+                    }
 
                     if (!nparam) {
                         // Remember new boundary
