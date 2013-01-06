@@ -251,6 +251,7 @@ uint32_t _SYS_fs_runningVolume() _SC(168);
 uint32_t _SYS_fs_previousVolume() _SC(171);
 uint32_t _SYS_fs_info(_SYSFilesystemInfo *buffer, uint32_t bufferSize) _SC(172);
 
+void _SYS_usb_write(const uint8_t * data, unsinged len) _SC(184);
 
 #ifdef __cplusplus
 }  // extern "C"
