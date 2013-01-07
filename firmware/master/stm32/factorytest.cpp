@@ -12,6 +12,7 @@
 #include "volume.h"
 #include "homebutton.h"
 #include "powermanager.h"
+#include "batterylevel.h"
 #include "audiomixer.h"
 #include "svmmemory.h"
 #include "bootloader.h"
@@ -267,7 +268,16 @@ void FactoryTest::volumeCalibrationHandler(uint8_t argc, const uint8_t *args)
  */
 void FactoryTest::batteryCalibrationHandler(uint8_t argc, const uint8_t *args)
 {
+    uint32_t vsys = BatteryLevel::vsys();
+    uint32_t vraw = BatteryLevel::raw();
+    uint32_t vscl = BatteryLevel::scaled();
 
+    const uint8_t response[] = { args[0], \
+            vsys & 0xff, (vsys >> 8) & 0xff, (vsys >> 16) & 0xff, (vsys >> 24) & 0xff, \
+            vraw & 0xff, (vraw >> 8) & 0xff, (vraw >> 16) & 0xff, (vraw >> 24) & 0xff, \
+            vscl & 0xff, (vscl >> 8) & 0xff, (vscl >> 16) & 0xff, (vscl >> 24) & 0xff, \
+        };
+    UsbDevice::write(response, sizeof response);
 }
 
 /*

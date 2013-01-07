@@ -91,16 +91,23 @@ unsigned vsys()
 unsigned scaled()
 {
     /*
-     * Temporary cheesy linear scaling.
-     *
-     * We need some battery curves, and then we'd like to chunk our values into
-     * the number of visual buckets that the UI represents.
+     * We assume a linear profile
+     * Must calibrate on the assembly line to find the range
+     * It is hardcoded for now.
      */
-    const unsigned MAX = 0x2500;
-    const unsigned MIN = lastVsysReading;
-    const unsigned RANGE = MAX - MIN;
-    const unsigned clamped = clamp(lastReading, MIN, MAX);
-    return (clamped - MIN) * _SYS_BATTERY_MAX / RANGE;
+    const unsigned RANGE = 3250;
+    unsigned minL, maxL;
+    if (PowerManager::state() == PowerManager::BatteryPwr) {
+        minL = lastVsysReading;
+        maxL = MAX(minL + RANGE, minL);
+    } else {
+        // We are on usb power
+        maxL = lastVsysReading;
+        minL = MIN(maxL - RANGE, maxL);
+    }
+
+    unsigned clamped = clamp(lastReading, minL, maxL);
+    return (clamped - minL) * _SYS_BATTERY_MAX / RANGE;
 }
 
 void beginCapture()
@@ -116,13 +123,6 @@ void beginCapture()
     if (currentState == VSysCapture || delayPrescaleCounter++ == DELAY_PRESCALER) {
 
         delayPrescaleCounter = 0;
-
-        //Returns if there is no battery or if USB is connected
-        if (BATT_MEAS_GPIO.isLow() ||
-            PowerManager::state() == PowerManager::UsbPwr)
-        {
-            return;
-        }
 
         NeighborTX::pause();
 
@@ -150,7 +150,16 @@ void beginCapture()
             BATT_MEAS_GPIO.setControl(GPIOPin::IN_FLOAT);
         }
 
-        timer.enableCompareCaptureIsr(BATT_LVL_CHAN);
+        /*
+         * If the battery is too low (< min(Vih)) or not present,
+         * we dont bother to run the timer and set input capture
+         * to zero (as though the capacitor drained out immediately)
+         */
+        if (BATT_MEAS_GPIO.isLow()) {
+            process(0);
+        } else {
+            timer.enableCompareCaptureIsr(BATT_LVL_CHAN);
+        }
     }
 }
 
@@ -162,33 +171,45 @@ void captureIsr()
      *
      * Once our discharge has completed, we can resume normal neighbor transmission.
      */
-    BATT_MEAS_GND_GPIO.setControl(GPIOPin::IN_FLOAT);
-
     HwTimer timer(&BATT_LVL_TIM);
     timer.disableCompareCaptureIsr(BATT_LVL_CHAN);
 
+    unsigned capture = timer.lastCapture(BATT_LVL_CHAN);
+    process(capture);
+}
+
+
+void process(unsigned capture)
+{
     /*
      * We alternately sample VSYS and VBATT in order to establish a consistent
      * baseline - store the capture appropriately.
      */
 
-    unsigned capture = timer.lastCapture(BATT_LVL_CHAN);
+    BATT_MEAS_GND_GPIO.setControl(GPIOPin::IN_FLOAT);
 
     if (currentState == VBattCapture) {
-
 
         lastReading = capture;
 
         BATT_MEAS_GPIO.setControl(GPIOPin::OUT_2MHZ);
         BATT_MEAS_GPIO.setHigh();
+        //UART("\r\nVbat: "); UART_HEX(lastReading);
 
         currentState = VSysCapture;
 
     } else if (currentState == VSysCapture) {
 
         lastVsysReading = capture;
+        UART("\r\nVsys: "); UART_HEX(lastVsysReading); UART(" Vbat: "); UART_HEX(lastReading); UART(" Vscl: "); UART_HEX(scaled());
+        //UART("\r\nVsys: "); UART_HEX(lastVsysReading);
 
-        PowerManager::shutdownIfVBattIsCritical(lastReading, lastVsysReading);
+        /*
+         * Check and take action if we are on battery power
+         */
+        if (PowerManager::state() == PowerManager::BatteryPwr) {
+            PowerManager::shutdownIfVBattIsCritical(lastReading, lastVsysReading);
+        }
 
         currentState = VBattCapture;
     }

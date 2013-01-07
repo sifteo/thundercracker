@@ -52,12 +52,7 @@ uint32_t _SYS_sysBatteryLevel()
 
     #else
 
-    if (PowerManager::state() == PowerManager::UsbPwr) {
-        // we can't detect battery level accurately while on USB power.
-        return _SYS_BATTERY_MAX;
-    } else {
-        return BatteryLevel::scaled();
-    }
+    return BatteryLevel::scaled();
 
     #endif
 }
