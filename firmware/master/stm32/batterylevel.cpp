@@ -194,15 +194,12 @@ void process(unsigned capture)
 
         BATT_MEAS_GPIO.setControl(GPIOPin::OUT_2MHZ);
         BATT_MEAS_GPIO.setHigh();
-        //UART("\r\nVbat: "); UART_HEX(lastReading);
 
         currentState = VSysCapture;
 
     } else if (currentState == VSysCapture) {
 
         lastVsysReading = capture;
-        UART("\r\nVsys: "); UART_HEX(lastVsysReading); UART(" Vbat: "); UART_HEX(lastReading); UART(" Vscl: "); UART_HEX(scaled());
-        //UART("\r\nVsys: "); UART_HEX(lastVsysReading);
 
         /*
          * Check and take action if we are on battery power
