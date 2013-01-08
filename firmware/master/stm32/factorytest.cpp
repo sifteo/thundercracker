@@ -277,7 +277,7 @@ void FactoryTest::batteryCalibrationHandler(uint8_t argc, const uint8_t *args)
             vraw & 0xff, (vraw >> 8) & 0xff, (vraw >> 16) & 0xff, (vraw >> 24) & 0xff, \
             vscl & 0xff, (vscl >> 8) & 0xff, (vscl >> 16) & 0xff, (vscl >> 24) & 0xff, \
         };
-    UsbDevice::write(response, sizeof response);
+    Usart::Dbg.write(response, sizeof response);
 }
 
 /*
