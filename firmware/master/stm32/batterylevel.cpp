@@ -9,12 +9,33 @@
 
 namespace BatteryLevel {
 
+static unsigned lastReading;
+
+#if BOARD == BOARD_TC_MASTER_REV3
+static Adc adc(&PWR_MEASURE_ADC);
+
+void init() {
+    GPIO vbattMeas = VBATT_MEAS_GPIO;
+    vbattMeas.setControl(GPIOPin::IN_ANALOG);
+
+    Adc.init();
+    adc.setSampleRate(VBATT_ADC_CHAN, Adc::SampleRate_55_5);
+}
+
+unsigned scaled() {
+    return lastReading;
+}
+
+void beginCapture() {
+    lastReading = adc.sample(VBATT_ADC_CHAN);
+}
+
+#elif BOARD == BOARD_TC_MASTER_REV2
 enum State {
     VBattCapture,
     VSysCapture,
 };
 
-static unsigned lastReading;
 static unsigned lastVsysReading;
 static State currentState;
 
@@ -214,5 +235,8 @@ void process(unsigned capture)
 
     NeighborTX::resume();
 }
+#else
+#error Invalid board type. See BatteryLevel.cpp.
+#endif
 
 } // namespace BatteryLevel
