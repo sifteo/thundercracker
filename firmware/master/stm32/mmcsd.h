@@ -1,6 +1,8 @@
 #ifndef MMCSD_H
 #define MMCSD_H
 
+#include "macros.h"
+
 namespace MMCSD {
 
 static const unsigned BlockSize     = 512;
@@ -65,6 +67,19 @@ enum DataResponse {
     DataRejectedWrite       = 0x0D
 };
 
+
+struct R7 {
+
+    uint8_t bytes[5];
+
+    ALWAYS_INLINE uint8_t r1() const {
+        return bytes[0];
+    }
+
+    ALWAYS_INLINE uint8_t cmdVersion() const {
+        return bytes[1];
+    }
+};
 
 /*
  * CSD version 2.0

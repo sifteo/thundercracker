@@ -1,5 +1,8 @@
 #include "sdcardspi.h"
-#include "mmcsd.h"
+#include "tasks.h"
+#include "systime.h"
+
+volatile bool SDCardSpi::dmaInProgress;
 
 // Table for CRC-7 (polynomial x^7 + x^3 + 1)
 const uint8_t SDCardSpi::crc7LUT[256] = {
@@ -39,8 +42,10 @@ const uint8_t SDCardSpi::crc7LUT[256] = {
 
 void SDCardSpi::sendHeader(uint8_t cmd, uint32_t arg)
 {
-    // Wait for the bus to become idle if a write operation was in progress.
-    //    wait(mmcp);
+    unsigned i = 0;
+    while (spi.transfer(0xff) == 0xff && i++ < 0xff) {
+        ;
+    }
 
     uint8_t buf[6] = {
         0x40 | cmd,
@@ -53,29 +58,32 @@ void SDCardSpi::sendHeader(uint8_t cmd, uint32_t arg)
     uint8_t crc = crc7(0, buf, 5);
     buf[5] = ((crc & 0x7F) << 1) | 0x01;    // shift to correct position and add stop bit
 
+    dmaInProgress = true;
     spi.txDma(buf, sizeof buf);
-    // XXX: wait for DMA
+    waitForDma();
 }
 
 uint8_t SDCardSpi::receiveR1()
 {
-    for (unsigned i = 0; i < 9; i++) {
-        uint8_t r1 = spi.transfer(0xff);
+    uint8_t r1;
+    for (unsigned i = 0; i < 0xff; i++) {
+        r1 = spi.transfer(0xff);
         if (r1 != 0xFF) {
-            return r1;
+            break;
         }
     }
 
-    return 0xFF;
+    return r1;
 }
 
-uint8_t SDCardSpi::receiveR3(uint8_t* buf)
+uint8_t SDCardSpi::receiveR3(MMCSD::R7 &response)
 {
-    uint8_t r1 = receiveR1();
-    spi.transferDma(buf, buf, 4);
-    // XXX: wait for DMA
+    dmaInProgress = true;
+    response.bytes[0] = receiveR1();
+    spi.transferDma(&response.bytes[1], &response.bytes[1], sizeof(response.bytes) - 1);
+    waitForDma();
 
-    return r1;
+    return response.r1();
 }
 
 uint8_t SDCardSpi::sendCommandR1(uint8_t cmd, uint32_t arg)
@@ -88,7 +96,7 @@ uint8_t SDCardSpi::sendCommandR1(uint8_t cmd, uint32_t arg)
     return r1;
 }
 
-uint8_t SDCardSpi::sendCommandR3(uint8_t cmd, uint32_t arg, uint8_t *response)
+uint8_t SDCardSpi::sendCommandR3(uint8_t cmd, uint32_t arg, MMCSD::R7 &response)
 {
     spi.begin();
     sendHeader(cmd, arg);
@@ -112,9 +120,10 @@ bool SDCardSpi::readCxD(uint8_t cmd, uint32_t cxd[4])
         uint8_t b = spi.transfer(0xff);
         if (b == 0xFE) {
 
-            uint8_t buf[16 + 2];
+            uint8_t buf[16 + 2];    // 16 bytes of data and 2 for CRC. CRC is ignored for now.
+            dmaInProgress = true;
             spi.transferDma(buf, buf, sizeof buf);
-            // XXX: wait for DMA
+            waitForDma();
 
             uint8_t *bp = buf;
 
@@ -135,26 +144,43 @@ bool SDCardSpi::readCxD(uint8_t cmd, uint32_t cxd[4])
 
 bool SDCardSpi::connect()
 {
-    uint8_t r3[4];
+    // Slow clock mode during init, must be between 100kHz and 400kHz
+    const SPIMaster::Config cfgSlow = {
+        Dma::VeryHighPrio,
+        SPIMaster::fPCLK_128    // 36MHz / 128 == 281.250kHz
+    };
 
-    // Slow clock mode and 128 clock pulses.
-//    spi.init();
+    // full clock mode
+    const SPIMaster::Config cfgFull = {
+        Dma::VeryHighPrio,
+        SPIMaster::fPCLK_2      // 36MHz / 2 == 18MHz
+    };
 
-    uint8_t dummy[16];
-    spi.transferDma(dummy, dummy, sizeof dummy);
+    spi.init(cfgSlow);
+
+    // ensure we wait 128 clock pulses, chip select is still high
+    uint8_t clockPulses[128 / 8];
+    dmaInProgress = true;
+
+    spi.end();
+    spi.transferDma(clockPulses, clockPulses, sizeof clockPulses);
+    waitForDma();
 
     // SPI mode selection.
-    unsigned i = 0;
-    for (;;) {
-        if (sendCommandR1(MMCSD::CmdGoIdleState, 0) == 0x01) {
+    for (unsigned i = 0;;) {
+        uint8_t r1temp = sendCommandR1(MMCSD::CmdGoIdleState, 0);
+
+        if (r1temp == 0x01) {
             break;
         }
 
         if (++i >= CMD0_RETRY) {
-            goto failed;
+            // XXX: disabling for now, since init is only working when my SC card is
+            //      powered up while the MCU is already running...this lets us idle till then
+//            goto failed;
         }
 
-        // delay here?
+        delayMillis(10);
     }
 
     /*
@@ -164,13 +190,15 @@ bool SDCardSpi::connect()
      * This method is based on "How to support SDC Ver2 and high capacity cards"
      * by ElmChan.
      */
-    if (sendCommandR3(MMCSD::CmdSendIfCond, MMCSD::Cmd8Pattern, r3) != 0x05) {
 
-        // Switch to SDHC mode.
-        for (i = 0;;) {
-            if ((sendCommandR1(MMCSD::CmdAppCmd, 0) == 0x01) &&
-                (sendCommandR3(MMCSD::CmdAppOpCond, 0x400001aa, r3) == 0x00))
-            {
+    MMCSD::R7 res;
+    if (sendCommandR3(MMCSD::CmdSendIfCond, MMCSD::Cmd8Pattern, res) != 0x05) {
+
+        for (unsigned i = 0;;) {
+            // set HCS to indicate that we're SDHC/SDXC friendly
+            uint8_t appCmd = sendCommandR1(MMCSD::CmdAppCmd, 0);
+            uint8_t appopcondR1 = sendCommandR3(MMCSD::CmdAppOpCond, 0x400001aa, res);
+            if (appCmd == 0x01 && appopcondR1 == 0x00) {
                 break;
             }
 
@@ -178,27 +206,31 @@ bool SDCardSpi::connect()
                 goto failed;
             }
 
-            // delay here?
+            delayMillis(10);
         }
 
         // Execute dedicated read on OCR register
-        sendCommandR3(MMCSD::CmdReadOCR, 0, r3);
+        if (sendCommandR3(MMCSD::CmdReadOCR, 0, res) != 0x00) {
+            goto failed;
+        }
 
         // Check if CCS is set in response. Card operates in block mode if set.
-        if (r3[0] & 0x40) {
+        if (res.cmdVersion() & 0x40) {
             // store this
+        } else {
+
         }
     }
 
     // Initialization.
-    i = 0;
-    for (;;) {
+    for (unsigned i = 0;;) {
 
         uint8_t b = sendCommandR1(MMCSD::CmdInit, 0);
         if (b == 0x00) {
             break;
         }
 
+        // the only valid incomplete result is Idle
         if (b != 0x01) {
             goto failed;
         }
@@ -207,28 +239,32 @@ bool SDCardSpi::connect()
             goto failed;
         }
 
-        // delay here?
+        delayMillis(10);
     }
 
     // Initialization complete, full speed.
-//    spi.init();
+    spi.init(cfgFull);
 
     // Setting block size.
     if (sendCommandR1(MMCSD::CmdSetBlocklen, MMCSD::BlockSize) != 0x00) {
+        UART("CmdSetBlocklen failed\r\n");
         goto failed;
     }
 
     // Determine capacity.
-    if (readCxD(MMCSD::CmdSendCSD, csd)) {
+    if (!readCxD(MMCSD::CmdSendCSD, csd)) {
+        UART("CmdSendCSD failed\r\n");
         goto failed;
     }
 
     capacity = getCapacity(csd);
     if (capacity == 0) {
+        UART("getCapacity failed\r\n");
         goto failed;
     }
 
-    if (readCxD(MMCSD::CmdSendCID, cid)) {
+    if (!readCxD(MMCSD::CmdSendCID, cid)) {
+        UART("CmdSendCID failed\r\n");
         goto failed;
     }
 
@@ -275,7 +311,7 @@ bool SDCardSpi::read(uint32_t startblk, uint8_t *buf, unsigned numBlocks)
                                        0, 0, 0, 0, 1, 0xFF };
 
     spi.txDma(stopcmd, sizeof stopcmd);
-    // XXX: wait for DMA
+    waitForDma();
 
     uint8_t result = receiveR1();
     if (result != MMCSD::R1Success) {
@@ -296,11 +332,11 @@ bool SDCardSpi::readBlock(uint8_t *buf, unsigned len)
     uint8_t b = spi.transfer(0xff);
     if (b == 0xFE) {
         spi.transferDma(buf, buf, len);
-        // XXX: wait for DMA
+        waitForDma();
 
         uint8_t crc[2];
         spi.transferDma(crc, crc, sizeof crc);
-        // XXX: wait for DMA
+        waitForDma();
 
         // do anything with CRC?
         return true;
@@ -318,21 +354,21 @@ bool SDCardSpi::write(uint32_t startblk, const uint8_t *buf, unsigned len)
 
     if (receiveR1() != MMCSD::R1Success) {
         spi.end();
-        //    spiStop(mmcp->config->spip);
+        // deinit spi?
         return false;
     }
 
     static const uint8_t start[] = { 0xFF, 0xFC };
     spi.txDma(start, sizeof start);
-    // XXX: wait for DMA
+    waitForDma();
 
     spi.txDma(buf, MMCSD::BlockSize);
-    // XXX: wait for DMA
+    waitForDma();
 
     uint8_t b[3];
     spi.transferDma(b, b, sizeof b);
     // first 2 bytes are CRC - we ignore. last is status
-    // wait for DMA
+    waitForDma();
 
     if ((b[2] & 0x1F) != MMCSD::DataAccepted) {
         // Handle error. deinit spi?
@@ -342,7 +378,7 @@ bool SDCardSpi::write(uint32_t startblk, const uint8_t *buf, unsigned len)
 
     static const uint8_t stop[] = { 0xFD, 0xFF };
     spi.txDma(stop, sizeof stop);
-    // XXX: wait for DMA
+    waitForDma();
     spi.end();
 
     return true;
@@ -389,13 +425,10 @@ uint32_t SDCardSpi::getCapacity(uint32_t csd[4])
 
 uint32_t SDCardSpi::getSlice(uint32_t *data, uint32_t end, uint32_t start)
 {
-    unsigned startidx, endidx, startoff;
-    uint32_t endmask;
-
-    startidx = start / 32;
-    startoff = start % 32;
-    endidx   = end / 32;
-    endmask  = (1 << ((end % 32) + 1)) - 1;
+    unsigned startidx = start / 32;
+    unsigned startoff = start % 32;
+    unsigned endidx   = end / 32;
+    uint32_t endmask  = (1 << ((end % 32) + 1)) - 1;
 
     // One or two pieces?
     if (startidx < endidx) {
@@ -403,4 +436,31 @@ uint32_t SDCardSpi::getSlice(uint32_t *data, uint32_t end, uint32_t start)
     }
 
     return (data[startidx] & endmask) >> startoff;
+}
+
+void SDCardSpi::dmaCompletionCallback()
+{
+    dmaInProgress = false;
+}
+
+bool SDCardSpi::waitForDma()
+{
+    while (dmaInProgress) {
+        Tasks::waitForInterrupt();
+    }
+
+    return true;
+}
+
+void SDCardSpi::delayMillis(unsigned ms)
+{
+    /*
+     * terrible helper to deal with SC busy-ness.
+     */
+
+    SysTime::Ticks deadline = SysTime::ticks() + SysTime::msTicks(ms);
+    while (SysTime::ticks() < deadline) {
+        Tasks::idle();
+        Tasks::resetWatchdog(); // temp
+    }
 }
