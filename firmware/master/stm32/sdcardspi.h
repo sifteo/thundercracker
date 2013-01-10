@@ -44,6 +44,7 @@ private:
     bool erase(uint32_t startblk, uint32_t endblk);
 
     bool waitForDma();
+    uint8_t waitForNotBusy(unsigned tries);
     void delayMillis(unsigned ms);
 
     static const uint8_t crc7LUT[256];

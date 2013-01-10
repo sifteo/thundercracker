@@ -42,10 +42,7 @@ const uint8_t SDCardSpi::crc7LUT[256] = {
 
 void SDCardSpi::sendHeader(uint8_t cmd, uint32_t arg)
 {
-    unsigned i = 0;
-    while (spi.transfer(0xff) == 0xff && i++ < 0xff) {
-        ;
-    }
+    waitForNotBusy(0xff);
 
     uint8_t buf[6] = {
         0x40 | cmd,
@@ -65,15 +62,7 @@ void SDCardSpi::sendHeader(uint8_t cmd, uint32_t arg)
 
 uint8_t SDCardSpi::receiveR1()
 {
-    uint8_t r1;
-    for (unsigned i = 0; i < 0xff; i++) {
-        r1 = spi.transfer(0xff);
-        if (r1 != 0xFF) {
-            break;
-        }
-    }
-
-    return r1;
+    return waitForNotBusy(0xff);
 }
 
 uint8_t SDCardSpi::receiveR3(MMCSD::R7 &response)
@@ -450,6 +439,24 @@ bool SDCardSpi::waitForDma()
     }
 
     return true;
+}
+
+uint8_t SDCardSpi::waitForNotBusy(unsigned tries)
+{
+    /*
+     * While busy, the SD Card will reply with 0xff.
+     *
+     * XXX: there appears to be no better way to detect the busy
+     *      state of the card, but this should at least be interrupt
+     *      driven on a per-byte basis.
+     */
+
+    uint8_t r = 0xff;
+    while (tries-- && r == 0xff) {
+        r = spi.transfer(0xff);
+    }
+
+    return r;
 }
 
 void SDCardSpi::delayMillis(unsigned ms)
