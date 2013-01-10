@@ -117,6 +117,17 @@ void PowerManager::setState(State s)
 
     switch (s) {
     case BatteryPwr:
+        /*
+         * Currently does not recover well when USB is unplugged
+         * becuase the boost is not enabled during this period and takes ~100 us
+         * to power on. We may need to employ the use of a load switch to keep the
+         * boost running in all situations
+         */
+
+        #if BOARD==BOARD_TC_MASTER_REV3
+        batteryPowerOn();
+        #endif
+
         UsbDevice::deinit();
         vcc3v3.setLow();
         break;
@@ -124,6 +135,12 @@ void PowerManager::setState(State s)
     case UsbPwr:
         vcc3v3.setHigh();
         UsbDevice::init();
+
+        //Disable boost on USB power
+        #if BOARD==BOARD_TC_MASTER_REV3
+        batteryPowerOff();
+        #endif
+
         break;
     }
 #endif
