@@ -3,6 +3,8 @@
 #include "machine.h"
 #include "tasks.h"
 #include "pause.h"
+#include "batterylevel.h"
+#include "volume.h"
 
 #include "ui_coordinator.h"
 #include "ui_shutdown.h"
@@ -17,6 +19,11 @@ unsigned IdleTimeout::countdown = IdleTimeout::IDLE_TIMEOUT_SYSTICKS;
 void IdleTimeout::heartbeat()
 {
     ASSERT(countdown > 0);
+
+    #if BOARD == BOARD_TC_MASTER_REV3
+    BatteryLevel::beginCapture();
+    Volume::beginCapture();
+    #endif
 
     /*
      * TODO: if we've already shut down, but we're still alive since we're plugged
