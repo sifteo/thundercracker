@@ -17,6 +17,7 @@ namespace Volume
 
     void init();
     int calibrate(CalibrationState state);
+    void beginCapture();
 
     /*
      * Current system volume.
