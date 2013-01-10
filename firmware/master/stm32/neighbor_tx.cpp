@@ -150,7 +150,7 @@ IRQ_HANDLER ISR_FN(NBR_TX_TIM)()
                 setDuty(0);
                 txPeriodTimer.setPeriod(Neighbor::BIT_PERIOD_TICKS, Neighbor::NUM_TX_WAIT_PERIODS);
                 txState = BetweenTransmissions;
-                #if BOARD != BOARD_TEST_JIG
+                #if BOARD != BOARD_TEST_JIG && BOARD != BOARD_MASTER_REV3
                 BatteryLevel::beginCapture();
                 #endif
             } else {
