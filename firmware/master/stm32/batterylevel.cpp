@@ -41,7 +41,7 @@ unsigned vsys() {
 }
 
 unsigned scaled() {
-    return ((lastReading - minIn) * (rangeOut/rangeIn)) + minOut;;
+    return (MIN(lastReading, lastReading - minIn) * (rangeOut/rangeIn)) + minOut;
 }
 
 void beginCapture() {
