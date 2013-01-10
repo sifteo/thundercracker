@@ -19,21 +19,25 @@ static const unsigned maxIn = 0xfff;                //Max ADC value possible
 static const unsigned minIn = 0x7c1;                //1.6V shutdown voltage
 static const unsigned maxOut = _SYS_BATTERY_MAX;
 static const unsigned minOut = 0x0000;
-static const unsigned rangeIn = maxIn - maxIn;
+static const unsigned rangeIn = maxIn - minIn;
 static const unsigned rangeOut = maxOut - minOut;
 
 void init() {
     lastReading = UNINITIALIZED;
 
-    GPIO vbattMeas = VBATT_MEAS_GPIO;
+    GPIOPin vbattMeas = VBATT_MEAS_GPIO;
     vbattMeas.setControl(GPIOPin::IN_ANALOG);
 
-    Adc.init();
+    adc.init();
     adc.setSampleRate(VBATT_ADC_CHAN, Adc::SampleRate_55_5);
 }
 
 unsigned raw() {
     return lastReading;
+}
+
+unsigned vsys() {
+    return maxIn;
 }
 
 unsigned scaled() {
