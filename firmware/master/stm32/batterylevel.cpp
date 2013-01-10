@@ -5,6 +5,7 @@
 #include "neighbor_protocol.h"
 #include "powermanager.h"
 #include "macros.h"
+#include "adc.h"
 
 namespace BatteryLevel {
 
