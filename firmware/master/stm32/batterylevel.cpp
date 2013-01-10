@@ -6,6 +6,7 @@
 #include "powermanager.h"
 #include "macros.h"
 #include "adc.h"
+#include <sifteo/abi.h>
 
 namespace BatteryLevel {
 
@@ -13,6 +14,13 @@ static unsigned lastReading;
 
 #if BOARD == BOARD_TC_MASTER_REV3
 static Adc adc(&PWR_MEASURE_ADC);
+
+static const unsigned maxIn = 0xfff;                //Max ADC value possible
+static const unsigned minIn = 0x7c1;                //1.6V shutdown voltage
+static const unsigned maxOut = _SYS_BATTERY_MAX;
+static const unsigned minOut = 0x0000;
+static const unsigned rangeIn = maxIn - maxIn;
+static const unsigned rangeOut = maxOut - minOut;
 
 void init() {
     GPIO vbattMeas = VBATT_MEAS_GPIO;
@@ -23,7 +31,7 @@ void init() {
 }
 
 unsigned scaled() {
-    return lastReading;
+    return ((lastReading - minIn) * (rangeOut/rangeIn)) + minOut;;
 }
 
 void beginCapture() {
