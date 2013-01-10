@@ -3,9 +3,12 @@
 #include "rctimer.h"
 #include "board.h"
 #include "macros.h"
+#include "adc.h"
 #include <sifteo/abi/audio.h>
 
+#if BOARD == BOARD_TC_MASTER_REV2
 static RCTimer gVolumeTimer(HwTimer(&VOLUME_TIM), VOLUME_CHAN, VOLUME_GPIO);
+#endif
 
 static uint32_t calibratedMin;
 static uint64_t calibratedScale;
@@ -13,6 +16,48 @@ static uint64_t calibratedScale;
 
 namespace Volume {
 
+#if BOARD == BOARD_TC_MASTER_REV3
+
+static unsigned lastReading;
+
+static Adc adc(&PWR_MEASURE_ADC);
+
+void init()
+{
+    lastReading = 0;
+
+    GPIOPin faderMeas = FADER_MEAS_GPIO;
+    faderMeas.setControl(GPIOPin::IN_ANALOG);
+
+    adc.setSampleRate(FADER_ADC_CHAN, Adc::SampleRate_55_5);
+
+}
+
+int systemVolume()
+{
+    //Shift current ADC reading of volume slider over to align with magnitude of MAX_VOLUME
+    return lastReading << 4;
+}
+
+void beginCapture()
+{
+    lastReading = adc.sample(FADER_ADC_CHAN);
+}
+
+int calibrate(CalibrationState state)
+{
+
+    switch (state) {
+    case CalibrationLow:
+        break;
+    case CalibrationHigh:
+        break;
+    }
+
+    return 0;
+}
+
+#elif BOARD == BOARD_TC_MASTER_REV2
 void init()
 {
     /*
@@ -79,10 +124,13 @@ int calibrate(CalibrationState state)
 
     return currentRawValue;
 }
+#else
+#error #error Invalid board type. See Volume.cpp.
+#endif
 
 } // namespace Volume
 
-#if (BOARD != BOARD_TEST_JIG)
+#if (BOARD == BOARD_TC_MASTER_REV2)
 IRQ_HANDLER ISR_TIM5()
 {
     gVolumeTimer.isr();    // must clear the TIM IRQ internally
