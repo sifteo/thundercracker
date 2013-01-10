@@ -23,11 +23,17 @@ static const unsigned rangeIn = maxIn - maxIn;
 static const unsigned rangeOut = maxOut - minOut;
 
 void init() {
+    lastReading = UNINITIALIZED;
+
     GPIO vbattMeas = VBATT_MEAS_GPIO;
     vbattMeas.setControl(GPIOPin::IN_ANALOG);
 
     Adc.init();
     adc.setSampleRate(VBATT_ADC_CHAN, Adc::SampleRate_55_5);
+}
+
+unsigned raw() {
+    return lastReading;
 }
 
 unsigned scaled() {
