@@ -175,9 +175,11 @@ IRQ_HANDLER ISR_FN(NBR_TX_TIM)()
         }
     }
 
+    #if BOARD == BOARD_TC_MASTER_REV2
     if (status & (1 << BATT_LVL_CHAN)) {
         BatteryLevel::captureIsr();
     }
+    #endif
 }
 
 void NeighborTX::floatSide(unsigned side)
