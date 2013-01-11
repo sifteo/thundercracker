@@ -20,7 +20,7 @@ namespace Volume {
 
 static unsigned lastReading;
 
-static Adc adc(&PWR_MEASURE_ADC);
+// static Adc adc(&PWR_MEASURE_ADC);
 
 void init()
 {
@@ -29,7 +29,8 @@ void init()
     GPIOPin faderMeas = FADER_MEAS_GPIO;
     faderMeas.setControl(GPIOPin::IN_ANALOG);
 
-    adc.setSampleRate(FADER_ADC_CHAN, Adc::SampleRate_55_5);
+    Adc::setCallback(FADER_ADC_CHAN, Volume::adcCallback);
+    Adc::setSampleRate(FADER_ADC_CHAN, Adc::SampleRate_55_5);
 
 }
 
@@ -41,7 +42,7 @@ int systemVolume()
 
 void beginCapture()
 {
-    lastReading = adc.sample(FADER_ADC_CHAN);
+    Adc::sample(FADER_ADC_CHAN);
 }
 
 int calibrate(CalibrationState state)
@@ -55,6 +56,10 @@ int calibrate(CalibrationState state)
     }
 
     return 0;
+}
+
+void adcCallback(uint16_t sample) {
+    lastReading = sample;
 }
 
 #elif BOARD == BOARD_TC_MASTER_REV2
