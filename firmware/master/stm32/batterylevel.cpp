@@ -46,6 +46,7 @@ unsigned scaled() {
 
 void beginCapture() {
     lastReading = adc.sample(VBATT_ADC_CHAN);
+    PowerManager::shutdownIfVBattIsCritical(lastReading, minIn);
 }
 
 #elif BOARD == BOARD_TC_MASTER_REV2
