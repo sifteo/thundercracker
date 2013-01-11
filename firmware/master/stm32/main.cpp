@@ -85,6 +85,9 @@ int main()
     NVIC.irqEnable(IVT.NBR_TX_TIM);                 // Neighbor transmit
     NVIC.irqPrioritize(IVT.NBR_TX_TIM, 0x60);       //  just below sample rate timer
 
+    NVIC.irqEnable(IVT.ADC1_2);                     // adc sample
+    NVIC.irqPrioritize(IVT.ADC1_2,0x80);            // low priority. only used for battery/fader measurement
+
     /*
      * For SVM to operate properly, SVC needs to have a very low priority
      * (we'll be inside it most of the time) and any fault handlers which have
