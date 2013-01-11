@@ -14,6 +14,8 @@
 #include "shutdown.h"
 #include "idletimeout.h"
 #include "faultlogger.h"
+#include "batterylevel.h"
+#include "volume.h"
 
 #ifdef SIFTEO_SIMULATOR
 #   include "mc_timing.h"
@@ -72,6 +74,11 @@ ALWAYS_INLINE void Tasks::taskInvoke(unsigned id)
 
 void Tasks::heartbeatTask()
 {
+    #if BOARD == BOARD_TC_MASTER_REV3
+    BatteryLevel::beginCapture();
+    Volume::beginCapture();
+    #endif
+
 #if (BOARD != BOARD_TEST_JIG)
     #ifndef DISABLE_IDLETIMEOUT
     IdleTimeout::heartbeat();
