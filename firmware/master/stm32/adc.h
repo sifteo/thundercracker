@@ -11,6 +11,8 @@
 class Adc
 {
 public:
+    typedef void (*AdcIsr_t)(uint16_t sample);
+
     enum SampleRate {
         SampleRate_1_5,     // 1.5 ADC cycles
         SampleRate_7_5,     // 7.5 ADC cycles
@@ -22,17 +24,19 @@ public:
         SampleRate_239_5    // 239.5 ADC cycles
     };
 
-    Adc(volatile ADC_t *adc) :
-        hw(adc)
-    {}
-
-    void init();
-
-    void setSampleRate(uint8_t channel, SampleRate rate);
-    uint16_t sample(uint8_t channel);
+    static void init();
+    static void setCallback(uint8_t ch, AdcIsr_t funct);
+    static void setSampleRate(uint8_t ch, SampleRate rate);
+    static bool sample(uint8_t ch);
 
 private:
-    volatile ADC_t *hw;
+    static bool isBusy();
+
+    static void serveIsr(AdcIsr_t &handler);
+
+    static AdcIsr_t ADCHandlers[16];
+
+    friend void ISR_ADC1_2();
 };
 
 #endif // ADC_H

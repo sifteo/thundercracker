@@ -13,7 +13,6 @@ namespace BatteryLevel {
 static unsigned lastReading;
 
 #if BOARD == BOARD_TC_MASTER_REV3
-static Adc adc(&PWR_MEASURE_ADC);
 
 static const unsigned maxIn = 0xfff;                //Max ADC value possible
 static const unsigned minIn = 0x7c1;                //1.6V shutdown voltage
@@ -28,8 +27,9 @@ void init() {
     GPIOPin vbattMeas = VBATT_MEAS_GPIO;
     vbattMeas.setControl(GPIOPin::IN_ANALOG);
 
-    adc.init();
-    adc.setSampleRate(VBATT_ADC_CHAN, Adc::SampleRate_55_5);
+    Adc::init();
+    Adc::setCallback(VBATT_ADC_CHAN,BatteryLevel::adcCallback);
+    Adc::setSampleRate(VBATT_ADC_CHAN,Adc::SampleRate_55_5);
 }
 
 unsigned raw() {
@@ -45,8 +45,13 @@ unsigned scaled() {
 }
 
 void beginCapture() {
-    lastReading = adc.sample(VBATT_ADC_CHAN);
+    Adc::sample(VBATT_ADC_CHAN);
+
     PowerManager::shutdownIfVBattIsCritical(lastReading, minIn);
+}
+
+void adcCallback(uint16_t sample) {
+    lastReading = sample;
 }
 
 #elif BOARD == BOARD_TC_MASTER_REV2
