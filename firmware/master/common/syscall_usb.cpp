@@ -5,7 +5,7 @@
 
 extern "C" {
   void _SYS_usb_write(const uint8_t * data, unsigned len) {
-#ifdef SIFTEO_SIMULATOR
+#ifndef SIFTEO_SIMULATOR
     UsbDevice::write(data, len);
 #endif
   }
