@@ -23,6 +23,8 @@ namespace BatteryLevel
      * Empirically measured maximum jitter in battery level readings
      */
     static const unsigned MAX_JITTER = 0x81;
+
+    static void adcCallback(uint16_t);
 }
 
 #endif // BATTERYLEVEL_H
