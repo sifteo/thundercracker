@@ -35,6 +35,9 @@ void MacronixMX25::init()
     spi.transfer(WriteEnable);
     spi.end();
 
+    SysTime::Ticks now = SysTime::ticks();
+    while(SysTime::ticks() < now + SysTime::nsTicks(10));
+
     spi.begin();
     spi.transfer(WriteStatusConfigReg);
     spi.transfer(0);    // ensure block protection is disabled
