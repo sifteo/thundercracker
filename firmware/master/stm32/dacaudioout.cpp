@@ -25,9 +25,11 @@
 
 namespace DacAudioOut {
     static const HwTimer sampleTimer(&AUDIO_SAMPLE_TIM);
-    
+
     static const uint16_t maxDacSample = 0xfff;
     static const uint16_t maxRawSample = 0xffff;
+
+    static GPIOPin ampEn = AUDIO_DAC_EN_GPIO;
 }
 
 #if BOARD == BOARD_TC_MASTER_REV3
@@ -38,6 +40,9 @@ void AudioOutDevice::init()
 
     GPIOPin dacOut = AUDIO_DAC_PIN;
     dacOut.setControl(GPIOPin::IN_ANALOG);
+
+    DacAudioOut::ampEn.setControl(GPIOPin::OUT_2MHZ);
+    DacAudioOut::ampEn.setLow();
 
     Dac::init();
     Dac::configureChannel(AUDIO_DAC_CHAN);
@@ -50,6 +55,7 @@ void AudioOutDevice::init()
 void AudioOutDevice::start()
 {
     // Start clocking out samples
+    DacAudioOut::ampEn.setHigh();
     DacAudioOut::sampleTimer.enableUpdateIsr();
 }
 
@@ -57,6 +63,7 @@ void AudioOutDevice::start()
 void AudioOutDevice::stop()
 {
     // No more sample data
+    DacAudioOut::ampEn.setLow();
     DacAudioOut::sampleTimer.disableUpdateIsr();
 }
 
@@ -81,10 +88,10 @@ IRQ_HANDLER ISR_FN(AUDIO_SAMPLE_TIM)()
      */
 
     // Acknowledge IRQ by clearing timer status
-    AUDIO_SAMPLE_TIM.SR = 0; 
+    AUDIO_SAMPLE_TIM.SR = 0;
 
     while (!AudioMixer::output.empty()) {
-        
+
         uint16_t duty = AudioMixer::output.dequeue() + 0x8000;
         duty = duty * DacAudioOut::maxDacSample / DacAudioOut::maxRawSample; // scale to 12bit DAC output
         Dac::write(AUDIO_DAC_CHAN, duty, Dac::RightAlign12Bit);
