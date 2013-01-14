@@ -21,8 +21,9 @@
 #include "gpio.h"
 #include "hwtimer.h"
 #include "prng.h"
+#include "dac.h"
 
-namespace PwmAudioOut {
+namespace DacAudioOut {
 
     /*
      * The frequency of our PWM carrier is 72MHz / PWM_PERIOD.
@@ -55,23 +56,23 @@ namespace PwmAudioOut {
     static const HwTimer sampleTimer(&AUDIO_SAMPLE_TIM);
     static const GPIOPin outA(&AUDIO_PWMA_PORT, AUDIO_PWMA_PIN);
     static const GPIOPin outB(&AUDIO_PWMB_PORT, AUDIO_PWMB_PIN);
+    
+    static const uint16_t maxDacSample = 0xfff;
+    static const uint16_t maxRawSample = 0xffff;
 }
 
-#if BOARD == BOARD_TC_MASTER_REV2
+#if BOARD == BOARD_TC_MASTER_REV3
 
 void AudioOutDevice::init()
 {
-    // TIM1 partial remap for complementary channels
-    STATIC_ASSERT(&AUDIO_PWM_TIM == &TIM1);
-    AFIO.MAPR |= (1 << 6);
+    DacAudioOut::sampleTimer.init(72000000 / AudioMixer::SAMPLE_HZ, 0);
 
-    PwmAudioOut::sampleTimer.init(72000000 / AudioMixer::SAMPLE_HZ, 0);
+    GPIOPin dacOut = AUDIO_DAC_PIN;
+    dacOut.setControl(GPIOPin::IN_ANALOG);
 
-    // Init the timer, both PWM outputs inverted
-    PwmAudioOut::pwmTimer.init(PwmAudioOut::PWM_PERIOD, 0);
-    PwmAudioOut::pwmTimer.configureChannelAsOutput(AUDIO_PWM_CHAN,
-        HwTimer::ActiveLow, HwTimer::Pwm1, HwTimer::ComplementaryOutput);
-    PwmAudioOut::pwmTimer.invertComplementaryOutput(AUDIO_PWM_CHAN);
+    Dac::init();
+    Dac::configureChannel(AUDIO_DAC_CHAN);
+    Dac::enableChannel(AUDIO_DAC_CHAN);
 
     // Must set up default I/O state
     stop();
@@ -79,35 +80,15 @@ void AudioOutDevice::init()
 
 void AudioOutDevice::start()
 {
-    // Start PWM
-    PwmAudioOut::pwmTimer.enableChannel(AUDIO_PWM_CHAN);
-    PwmAudioOut::pwmTimer.setDuty(AUDIO_PWM_CHAN, 0);
-    
     // Start clocking out samples
-    PwmAudioOut::sampleTimer.enableUpdateIsr();
+    DacAudioOut::sampleTimer.enableUpdateIsr();
 }
 
 
 void AudioOutDevice::stop()
 {
     // No more sample data
-    PwmAudioOut::sampleTimer.disableUpdateIsr();
-
-    // Stop PWM, put speaker back in idle state
-    PwmAudioOut::pwmTimer.disableChannel(AUDIO_PWM_CHAN);
-
-    /*
-     * High is the best default "off" state for both BTL outputs,
-     * since that's what they'll float to during powerup. (Both have
-     * pull-up resistors).
-     *
-     * We modulate sound by, depending on the sample's sign, "pulling"
-     * one or the other leg of the speaker down from this default High state.
-     */
-    PwmAudioOut::outA.setControl(GPIOPin::OUT_2MHZ);
-    PwmAudioOut::outB.setControl(GPIOPin::OUT_2MHZ);
-    PwmAudioOut::outA.setHigh();
-    PwmAudioOut::outB.setHigh();
+    DacAudioOut::sampleTimer.disableUpdateIsr();
 }
 
 
@@ -133,39 +114,14 @@ IRQ_HANDLER ISR_FN(AUDIO_SAMPLE_TIM)()
     // Acknowledge IRQ by clearing timer status
     AUDIO_SAMPLE_TIM.SR = 0; 
 
-    // Default state, zero volts across speaker.
-    GPIOPin::Control ctrlA = GPIOPin::OUT_2MHZ;
-    GPIOPin::Control ctrlB = GPIOPin::OUT_2MHZ;
-
     while (!AudioMixer::output.empty()) {
-        int sample = AudioMixer::output.dequeue();
-
-        if (sample > 0) {
-            // + output held HIGH, - output modulated
-            ctrlA = GPIOPin::OUT_ALT_50MHZ;
-
-        } else if (sample < 0) {
-            // + output modulated, - output held HIGH
-            sample = -sample;
-            ctrlB = GPIOPin::OUT_ALT_50MHZ;
-
-        } else {
-            // Duty doesn't matter, skip it
-            break;
-        }
-
-        unsigned duty = (sample * (PwmAudioOut::PWM_PERIOD - PwmAudioOut::PWM_TURNON_TIME)) >> 15;
-        duty += PwmAudioOut::PWM_TURNON_TIME;
-
-        const HwTimer pwmTimer(&AUDIO_PWM_TIM);
-        pwmTimer.setDuty(AUDIO_PWM_CHAN, duty);
+        
+        uint16_t duty = AudioMixer::output.dequeue() + 0x8000;
+        duty = duty * DacAudioOut::maxDacSample / DacAudioOut::maxRawSample; // scale to 12bit DAC output
+        Dac::write(AUDIO_DAC_CHAN, duty, Dac::RightAlign12Bit);
 
         break;
     }
-
-    GPIOPin::setControl(&AUDIO_PWMA_PORT, AUDIO_PWMA_PIN, ctrlA);
-    GPIOPin::setControl(&AUDIO_PWMB_PORT, AUDIO_PWMB_PIN, ctrlB);
-
     // Ask for more audio data
     Tasks::trigger(Tasks::AudioPull);
 }
