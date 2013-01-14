@@ -69,7 +69,7 @@ int main()
     NVIC.irqPrioritize(IVT.AUDIO_SAMPLE_TIM, 0x50); //  pretty high priority! (would cause audio jitter)
 
     NVIC.irqEnable(IVT.LED_SEQUENCER_TIM);          // LED sequencer timer
-    NVIC.irqPrioritize(IVT.LED_SEQUENCER_TIM, 0x75);
+    NVIC.irqPrioritize(IVT.LED_SEQUENCER_TIM, 0x85);
 
     NVIC.irqEnable(IVT.USART3);                     // factory test uart
     NVIC.irqPrioritize(IVT.USART3, 0x52);           //  high enough to avoid overruns
@@ -81,7 +81,7 @@ int main()
     NVIC.irqPrioritize(IVT.PROFILER_TIM, 0x0);      //  highest possible priority
 
     NVIC.irqEnable(IVT.NBR_TX_TIM);                 // Neighbor transmit
-    NVIC.irqPrioritize(IVT.NBR_TX_TIM, 0x60);       //  just below sample rate timer
+    NVIC.irqPrioritize(IVT.NBR_TX_TIM, 0x60);       //  just below volume timer
 
     /*
      * For SVM to operate properly, SVC needs to have a very low priority
