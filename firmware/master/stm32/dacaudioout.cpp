@@ -24,38 +24,7 @@
 #include "dac.h"
 
 namespace DacAudioOut {
-
-    /*
-     * The frequency of our PWM carrier is 72MHz / PWM_PERIOD.
-     *
-     * Higher periods / lower frequencies give us more effective
-     * resolution and better power efficiency, whereas lower
-     * periods / higher frequencies reduce carrier noise at the cost
-     * of power and resolution.
-     *
-     * We want the PWM frequency to be far enough above the range of
-     * human hearing that we don't get any audible aliasing back down
-     * into frequencies we can hear. I can still hear the carrier
-     * pretty clearly at 40 Khz. 50 KHz seems to be fine.
-     */
-    static const unsigned PWM_PERIOD = 1440;
-
-    /*
-     * We have a small discontinuity around the zero crossing due to
-     * the turn-on time for our FETs. This is a small adjustment we add
-     * to our PWM duty cycle in order to account for this. This value
-     * should be equal to the duration, in PWM clock ticks, of this
-     * turn-on time.
-     *
-     * How to tune this? If quiet sounds drop out, increase it.
-     * If quiet sounds are distorted, decrease it.
-     */
-    static const unsigned PWM_TURNON_TIME = 5;
-
-    static const HwTimer pwmTimer(&AUDIO_PWM_TIM);
     static const HwTimer sampleTimer(&AUDIO_SAMPLE_TIM);
-    static const GPIOPin outA(&AUDIO_PWMA_PORT, AUDIO_PWMA_PIN);
-    static const GPIOPin outB(&AUDIO_PWMB_PORT, AUDIO_PWMB_PIN);
     
     static const uint16_t maxDacSample = 0xfff;
     static const uint16_t maxRawSample = 0xffff;
