@@ -8,13 +8,19 @@ class SDCardSpi
 {
 public:
     SDCardSpi(SPIMaster spimaster) :
-        spi(spimaster)
+        spi(spimaster),
+        blockAddresses(false)
     {}
 
     bool connect();
 
+    unsigned capacity() const {
+        return mCapacity;
+    }
+
     bool read(uint32_t startblk, uint8_t *buf, unsigned numBlocks);
     bool write(uint32_t startblk, const uint8_t *buf, unsigned len);
+    bool erase(uint32_t startblk, uint32_t endblk);
 
     static void dmaCompletionCallback();
 
@@ -27,35 +33,30 @@ private:
     SPIMaster spi;
     uint32_t cid[4];
     uint32_t csd[4];
-    uint32_t capacity;
+    uint32_t mCapacity;
+    bool blockAddresses;
     static volatile bool dmaInProgress;
 
+    bool select();
+
+    uint8_t sendCommand(uint8_t cmd, uint32_t arg);
+    uint8_t sendOneCommand(uint8_t cmd, uint32_t arg);
     void sendHeader(uint8_t cmd, uint32_t arg);
 
     uint8_t receiveR1();
     uint8_t receiveR3(MMCSD::R7 &response);
 
-    uint8_t sendCommandR1(uint8_t cmd, uint32_t arg);
-    uint8_t sendCommandR3(uint8_t cmd, uint32_t arg, MMCSD::R7 &response);
-
     bool readCxD(uint8_t cmd, uint32_t cxd[4]);
     bool readBlock(uint8_t *buf, unsigned len);
 
-    bool erase(uint32_t startblk, uint32_t endblk);
+    bool beginWrite(unsigned startblk);
+    bool writeBlock(const uint8_t *buf, unsigned len);
 
     bool waitForDma();
-    uint8_t waitForNotBusy(unsigned tries);
+    uint8_t waitForResponse(unsigned tries);
+    bool waitForIdle(unsigned tries);
     void delayMillis(unsigned ms);
 
-    static const uint8_t crc7LUT[256];
-    static ALWAYS_INLINE uint8_t crc7(uint8_t crc, const uint8_t *buf, unsigned len) {
-        while (len--) {
-            crc = crc7LUT[(crc << 1) ^ *buf];
-            buf++;
-        }
-
-        return crc;
-    }
     static uint32_t getCapacity(uint32_t csd[4]);
     static uint32_t getSlice(uint32_t *data, uint32_t end, uint32_t start);
 };

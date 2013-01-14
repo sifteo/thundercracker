@@ -34,17 +34,17 @@ enum Command {
     CmdSendCSD              = 9,
     CmdSendCID              = 10,
     CmdStopTransmission     = 12,
-    CmdSendStatus           = 13,
+    CmdSendStatus           = 0x80 | 13,
     CmdSetBlocklen          = 16,
     CmdReadSingleBlock      = 17,
     CmdReadMultiBlock       = 18,
-    CmdSetBlockCount        = 23,
+    CmdSetBlockCount        = 0x80 | 23,
     CmdWriteBlock           = 24,
     CmdWriteMultiBlock      = 25,
     CmdEraseRWBlockStart    = 32,
     CmdEraseRWBlockEnd      = 33,
     CmdErase                = 38,
-    CmdAppOpCond            = 41,
+    CmdAppOpCond            = 0x80 | 41,
     CmdLockUnlock           = 42,
     CmdAppCmd               = 55,
     CmdReadOCR              = 58
@@ -61,10 +61,13 @@ enum R1Bits {
     R1ParamErr              = 1 << 6
 };
 
-enum DataResponse {
+enum DataCmdResponse {
     DataAccepted            = 0x05,
     DataRejectedCRC         = 0x0B,
-    DataRejectedWrite       = 0x0D
+    DataRejectedWrite       = 0x0D,
+    DataWriteMultiple       = 0XFC,
+    DataStopTxfer           = 0XFD,
+    DataStartBlock          = 0xFE
 };
 
 

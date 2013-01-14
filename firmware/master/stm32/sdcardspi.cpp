@@ -2,47 +2,40 @@
 #include "tasks.h"
 #include "systime.h"
 
+#include "string.h"
+
 volatile bool SDCardSpi::dmaInProgress;
 
-// Table for CRC-7 (polynomial x^7 + x^3 + 1)
-const uint8_t SDCardSpi::crc7LUT[256] = {
-    0x00, 0x09, 0x12, 0x1b, 0x24, 0x2d, 0x36, 0x3f,
-    0x48, 0x41, 0x5a, 0x53, 0x6c, 0x65, 0x7e, 0x77,
-    0x19, 0x10, 0x0b, 0x02, 0x3d, 0x34, 0x2f, 0x26,
-    0x51, 0x58, 0x43, 0x4a, 0x75, 0x7c, 0x67, 0x6e,
-    0x32, 0x3b, 0x20, 0x29, 0x16, 0x1f, 0x04, 0x0d,
-    0x7a, 0x73, 0x68, 0x61, 0x5e, 0x57, 0x4c, 0x45,
-    0x2b, 0x22, 0x39, 0x30, 0x0f, 0x06, 0x1d, 0x14,
-    0x63, 0x6a, 0x71, 0x78, 0x47, 0x4e, 0x55, 0x5c,
-    0x64, 0x6d, 0x76, 0x7f, 0x40, 0x49, 0x52, 0x5b,
-    0x2c, 0x25, 0x3e, 0x37, 0x08, 0x01, 0x1a, 0x13,
-    0x7d, 0x74, 0x6f, 0x66, 0x59, 0x50, 0x4b, 0x42,
-    0x35, 0x3c, 0x27, 0x2e, 0x11, 0x18, 0x03, 0x0a,
-    0x56, 0x5f, 0x44, 0x4d, 0x72, 0x7b, 0x60, 0x69,
-    0x1e, 0x17, 0x0c, 0x05, 0x3a, 0x33, 0x28, 0x21,
-    0x4f, 0x46, 0x5d, 0x54, 0x6b, 0x62, 0x79, 0x70,
-    0x07, 0x0e, 0x15, 0x1c, 0x23, 0x2a, 0x31, 0x38,
-    0x41, 0x48, 0x53, 0x5a, 0x65, 0x6c, 0x77, 0x7e,
-    0x09, 0x00, 0x1b, 0x12, 0x2d, 0x24, 0x3f, 0x36,
-    0x58, 0x51, 0x4a, 0x43, 0x7c, 0x75, 0x6e, 0x67,
-    0x10, 0x19, 0x02, 0x0b, 0x34, 0x3d, 0x26, 0x2f,
-    0x73, 0x7a, 0x61, 0x68, 0x57, 0x5e, 0x45, 0x4c,
-    0x3b, 0x32, 0x29, 0x20, 0x1f, 0x16, 0x0d, 0x04,
-    0x6a, 0x63, 0x78, 0x71, 0x4e, 0x47, 0x5c, 0x55,
-    0x22, 0x2b, 0x30, 0x39, 0x06, 0x0f, 0x14, 0x1d,
-    0x25, 0x2c, 0x37, 0x3e, 0x01, 0x08, 0x13, 0x1a,
-    0x6d, 0x64, 0x7f, 0x76, 0x49, 0x40, 0x5b, 0x52,
-    0x3c, 0x35, 0x2e, 0x27, 0x18, 0x11, 0x0a, 0x03,
-    0x74, 0x7d, 0x66, 0x6f, 0x50, 0x59, 0x42, 0x4b,
-    0x17, 0x1e, 0x05, 0x0c, 0x33, 0x3a, 0x21, 0x28,
-    0x5f, 0x56, 0x4d, 0x44, 0x7b, 0x72, 0x69, 0x60,
-    0x0e, 0x07, 0x1c, 0x15, 0x2a, 0x23, 0x38, 0x31,
-    0x46, 0x4f, 0x54, 0x5d, 0x62, 0x6b, 0x70, 0x79
-};
-
-void SDCardSpi::sendHeader(uint8_t cmd, uint32_t arg)
+bool SDCardSpi::select()
 {
-    waitForNotBusy(0xff);
+    spi.begin();
+    spi.transfer(0xFF);     // Dummy clock (force DO enabled)
+
+    return waitForIdle(0xfff);
+}
+
+uint8_t SDCardSpi::sendCommand(uint8_t cmd, uint32_t arg)
+{
+    // Is this an ACMD? Send a CMD55 first
+    uint8_t r1;
+    if (cmd & 0x80) {
+        r1 = sendOneCommand(MMCSD::CmdAppCmd, 0);
+        if (r1 > MMCSD::R1IdleState) {
+            return r1;
+        }
+    }
+
+    return sendOneCommand(cmd & 0x7F, arg);
+}
+
+uint8_t SDCardSpi::sendOneCommand(uint8_t cmd, uint32_t arg)
+{
+    /*
+     * Should only be called from within sendCommand()
+     */
+
+    spi.end();
+    select();
 
     uint8_t buf[6] = {
         0x40 | cmd,
@@ -52,8 +45,44 @@ void SDCardSpi::sendHeader(uint8_t cmd, uint32_t arg)
         arg
     };
 
-    uint8_t crc = crc7(0, buf, 5);
-    buf[5] = ((crc & 0x7F) << 1) | 0x01;    // shift to correct position and add stop bit
+    /*
+     * Shortcut: we never enable CRC mode, so just hardcode the correct CRC
+     * for the few commands that we use before we're initialized
+     */
+    switch (cmd) {
+    case MMCSD::CmdGoIdleState: buf[5] = 0x95; break;
+    case MMCSD::CmdSendIfCond:  buf[5] = 0X87; break;
+    default:                    buf[5] = 0x01; break;   // stop bit for dummy CRC
+    }
+
+    dmaInProgress = true;
+    spi.txDma(buf, sizeof buf);
+    waitForDma();
+
+    return waitForResponse(10);
+}
+
+void SDCardSpi::sendHeader(uint8_t cmd, uint32_t arg)
+{
+    waitForIdle(0xff);
+
+    uint8_t buf[6] = {
+        0x40 | cmd,
+        arg >> 24,
+        arg >> 16,
+        arg >> 8,
+        arg
+    };
+
+    /*
+     * Shortcut: we never enable CRC mode, so just hardcode the  CRC
+     * for the few commands that we use before we're initialized
+     */
+    switch (cmd) {
+    case MMCSD::CmdGoIdleState: buf[5] = 0x95; break;
+    case MMCSD::CmdSendIfCond:  buf[5] = 0X87; break;
+    default:                    buf[5] = 0xff; break;
+    }
 
     dmaInProgress = true;
     spi.txDma(buf, sizeof buf);
@@ -62,7 +91,7 @@ void SDCardSpi::sendHeader(uint8_t cmd, uint32_t arg)
 
 uint8_t SDCardSpi::receiveR1()
 {
-    return waitForNotBusy(0xff);
+    return waitForResponse(0xff);
 }
 
 uint8_t SDCardSpi::receiveR3(MMCSD::R7 &response)
@@ -75,55 +104,32 @@ uint8_t SDCardSpi::receiveR3(MMCSD::R7 &response)
     return response.r1();
 }
 
-uint8_t SDCardSpi::sendCommandR1(uint8_t cmd, uint32_t arg)
-{
-    spi.begin();
-    sendHeader(cmd, arg);
-    uint8_t r1 = receiveR1();
-    spi.end();
-
-    return r1;
-}
-
-uint8_t SDCardSpi::sendCommandR3(uint8_t cmd, uint32_t arg, MMCSD::R7 &response)
-{
-    spi.begin();
-    sendHeader(cmd, arg);
-    uint8_t r1 = receiveR3(response);
-    spi.end();
-
-    return r1;
-}
-
 bool SDCardSpi::readCxD(uint8_t cmd, uint32_t cxd[4])
 {
     spi.begin();
-    sendHeader(cmd, 0);
-    if (receiveR1() != 0) {
+    if (sendCommand(cmd, 0) != 0) {
         spi.end();
         return false;
     }
 
-    // Wait for data availability.
+    /*
+     * Wait for data availability.
+     * XXX: should at least be interrupt driven.
+     */
     for (unsigned i = 0; i < WAIT_DATA; i++) {
-        uint8_t b = spi.transfer(0xff);
-        if (b == 0xFE) {
+        if (spi.transfer(0xff) == MMCSD::DataStartBlock) {
 
-            uint8_t buf[16 + 2];    // 16 bytes of data and 2 for CRC. CRC is ignored for now.
+            uint8_t buf[16 + 2];    // 16 bytes of data and 2 for CRC
             dmaInProgress = true;
             spi.transferDma(buf, buf, sizeof buf);
             waitForDma();
 
             uint8_t *bp = buf;
-
             for (int i = 3; i >= 0; --i) {
                 cxd[i] = uint32_t((bp[0] << 24) | (bp[1] << 16) | (bp[2] << 8) | bp[3]);
                 bp += 4;
             }
-
-            // last 2 bytes are CRC - ignore for now
             spi.end();
-
             return true;
         }
     }
@@ -149,17 +155,19 @@ bool SDCardSpi::connect()
 
     // ensure we wait 128 clock pulses, chip select is still high
     uint8_t clockPulses[128 / 8];
-    dmaInProgress = true;
 
     spi.end();
+    dmaInProgress = true;
     spi.transferDma(clockPulses, clockPulses, sizeof clockPulses);
     waitForDma();
 
+    uint8_t r1;
+
     // SPI mode selection.
     for (unsigned i = 0;;) {
-        uint8_t r1temp = sendCommandR1(MMCSD::CmdGoIdleState, 0);
 
-        if (r1temp == 0x01) {
+        r1 = sendCommand(MMCSD::CmdGoIdleState, 0);
+        if (r1 == MMCSD::R1IdleState) {
             break;
         }
 
@@ -180,14 +188,17 @@ bool SDCardSpi::connect()
      * by ElmChan.
      */
 
-    MMCSD::R7 res;
-    if (sendCommandR3(MMCSD::CmdSendIfCond, MMCSD::Cmd8Pattern, res) != 0x05) {
+    r1 = sendCommand(MMCSD::CmdSendIfCond, MMCSD::Cmd8Pattern);
+    if (r1 != 0x05) {
+
+        uint8_t r7[4];
+        dmaInProgress = true;
+        spi.transferDma(r7, r7, sizeof r7);
+        waitForDma();
 
         for (unsigned i = 0;;) {
             // set HCS to indicate that we're SDHC/SDXC friendly
-            uint8_t appCmd = sendCommandR1(MMCSD::CmdAppCmd, 0);
-            uint8_t appopcondR1 = sendCommandR3(MMCSD::CmdAppOpCond, 0x400001aa, res);
-            if (appCmd == 0x01 && appopcondR1 == 0x00) {
+            if (sendCommand(MMCSD::CmdAppOpCond, 0x40000000) == MMCSD::R1Success) {
                 break;
             }
 
@@ -199,28 +210,30 @@ bool SDCardSpi::connect()
         }
 
         // Execute dedicated read on OCR register
-        if (sendCommandR3(MMCSD::CmdReadOCR, 0, res) != 0x00) {
+        if (sendCommand(MMCSD::CmdReadOCR, 0) != 0x00) {
             goto failed;
         }
 
-        // Check if CCS is set in response. Card operates in block mode if set.
-        if (res.cmdVersion() & 0x40) {
-            // store this
-        } else {
+        dmaInProgress = true;
+        spi.transferDma(r7, r7, sizeof r7);
+        waitForDma();
 
+        // Check if CCS is set in response. Card operates in block mode if set.
+        if (r7[0] & 0x40) {
+            blockAddresses = true;
         }
     }
 
     // Initialization.
     for (unsigned i = 0;;) {
 
-        uint8_t b = sendCommandR1(MMCSD::CmdInit, 0);
-        if (b == 0x00) {
+        r1 = sendCommand(MMCSD::CmdInit, 0);
+        if (r1 == MMCSD::R1Success) {
             break;
         }
 
         // the only valid incomplete result is Idle
-        if (b != 0x01) {
+        if (r1 != MMCSD::R1IdleState) {
             goto failed;
         }
 
@@ -235,25 +248,21 @@ bool SDCardSpi::connect()
     spi.init(cfgFull);
 
     // Setting block size.
-    if (sendCommandR1(MMCSD::CmdSetBlocklen, MMCSD::BlockSize) != 0x00) {
-        UART("CmdSetBlocklen failed\r\n");
+    if (sendCommand(MMCSD::CmdSetBlocklen, MMCSD::BlockSize) != 0x00) {
         goto failed;
     }
 
     // Determine capacity.
     if (!readCxD(MMCSD::CmdSendCSD, csd)) {
-        UART("CmdSendCSD failed\r\n");
         goto failed;
     }
 
-    capacity = getCapacity(csd);
-    if (capacity == 0) {
-        UART("getCapacity failed\r\n");
+    mCapacity = getCapacity(csd);
+    if (mCapacity == 0) {
         goto failed;
     }
 
     if (!readCxD(MMCSD::CmdSendCID, cid)) {
-        UART("CmdSendCID failed\r\n");
         goto failed;
     }
 
@@ -336,38 +345,71 @@ bool SDCardSpi::readBlock(uint8_t *buf, unsigned len)
     return false;
 }
 
-bool SDCardSpi::write(uint32_t startblk, const uint8_t *buf, unsigned len)
-{
-    spi.begin();
-    sendHeader(MMCSD::CmdWriteMultiBlock, startblk);
 
-    if (receiveR1() != MMCSD::R1Success) {
-        spi.end();
-        // deinit spi?
+bool SDCardSpi::beginWrite(unsigned startblk)
+{
+    if (!blockAddresses) {
+        startblk *= MMCSD::BlockSize;
+    }
+
+    if (sendCommand(MMCSD::CmdSetBlockCount, 1)           != MMCSD::R1Success ||
+        sendCommand(MMCSD::CmdWriteMultiBlock, startblk)  != MMCSD::R1Success)
+    {
         return false;
     }
 
-    static const uint8_t start[] = { 0xFF, 0xFC };
-    spi.txDma(start, sizeof start);
+    return true;
+}
+
+bool SDCardSpi::writeBlock(const uint8_t *buf, unsigned len)
+{
+    if (!waitForIdle(0xfff)) {
+        return false;
+    }
+
+    const uint8_t start[] = { 0xff, MMCSD::DataWriteMultiple };
+    dmaInProgress = true;
+    spi.txDma(start, sizeof(start));
     waitForDma();
 
+    dmaInProgress = true;
     spi.txDma(buf, MMCSD::BlockSize);
     waitForDma();
 
-    uint8_t b[3];
+    uint8_t b[] = { 0xff, 0xff, 0xff };   // 2 bytes of CRC, 1 of status
+    dmaInProgress = true;
     spi.transferDma(b, b, sizeof b);
-    // first 2 bytes are CRC - we ignore. last is status
     waitForDma();
 
-    if ((b[2] & 0x1F) != MMCSD::DataAccepted) {
+    uint8_t status = b[2];
+    if ((status & 0x1F) != MMCSD::DataAccepted) {
         // Handle error. deinit spi?
         spi.end();
         return false;
     }
 
+    return true;
+}
+
+bool SDCardSpi::write(uint32_t startblk, const uint8_t *buf, unsigned len)
+{
+    /*
+     * XXX: make fast path for single block writes
+     */
+
+    if (!beginWrite(startblk)) {
+        return false;
+    }
+
+    if (!writeBlock(buf, len)) {
+        return false;
+    }
+
     static const uint8_t stop[] = { 0xFD, 0xFF };
+    dmaInProgress = true;
     spi.txDma(stop, sizeof stop);
     waitForDma();
+
     spi.end();
 
     return true;
@@ -375,17 +417,27 @@ bool SDCardSpi::write(uint32_t startblk, const uint8_t *buf, unsigned len)
 
 bool SDCardSpi::erase(uint32_t startblk, uint32_t endblk)
 {
-    if (!sendCommandR1(MMCSD::CmdEraseRWBlockStart, startblk)) {
+    if (!blockAddresses) {
+        startblk *= MMCSD::BlockSize;
+        endblk *= MMCSD::BlockSize;
+    }
+
+    uint8_t r1 = sendCommand(MMCSD::CmdEraseRWBlockStart, startblk);
+    if (r1 != MMCSD::R1Success) {
         goto failed;
     }
 
-    if (!sendCommandR1(MMCSD::CmdEraseRWBlockEnd, endblk)) {
+    r1 = sendCommand(MMCSD::CmdEraseRWBlockEnd, endblk);
+    if (r1 != MMCSD::R1Success) {
         goto failed;
     }
 
-    if (!sendCommandR1(MMCSD::CmdErase, 0)) {
+    r1 = sendCommand(MMCSD::CmdErase, 0);
+    if (r1 != MMCSD::R1Success) {
         goto failed;
     }
+
+    waitForResponse(0xff);
 
     return true;
 
@@ -441,7 +493,7 @@ bool SDCardSpi::waitForDma()
     return true;
 }
 
-uint8_t SDCardSpi::waitForNotBusy(unsigned tries)
+uint8_t SDCardSpi::waitForResponse(unsigned tries)
 {
     /*
      * While busy, the SD Card will reply with 0xff.
@@ -452,11 +504,29 @@ uint8_t SDCardSpi::waitForNotBusy(unsigned tries)
      */
 
     uint8_t r = 0xff;
-    while (tries-- && r == 0xff) {
+    while (tries-- && (r & 0x80)) {
         r = spi.transfer(0xff);
     }
 
     return r;
+}
+
+bool SDCardSpi::waitForIdle(unsigned tries)
+{
+    /*
+     * While busy, the SD Card will reply with 0xff.
+     *
+     * XXX: there appears to be no better way to detect the busy
+     *      state of the card, but this should at least be interrupt
+     *      driven on a per-byte basis.
+     */
+
+    while (tries--) {
+        if (spi.transfer(0xff) == 0xff)
+            return true;
+    }
+
+    return false;
 }
 
 void SDCardSpi::delayMillis(unsigned ms)
