@@ -11,6 +11,7 @@ namespace BatteryLevel
     unsigned scaled();
     void beginCapture();
     void captureIsr();
+    void process(unsigned);
 
     /*
      * Sentinel value to help determine whether a sample has successfully
