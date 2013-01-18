@@ -11,6 +11,7 @@
 #include "macros.h"
 #include "backup.h"
 #include "savedata.h"
+#include "libusb.h"
 
 #include <stdio.h>
 #include <string.h>
