@@ -2,18 +2,19 @@
 #define USB_DEFS_H
 
 #include <stdint.h>
+#include "macros.h"
 
 namespace Usb {
 
-static inline uint8_t lowByte(uint16_t x) {
+static ALWAYS_INLINE uint8_t lowByte(uint16_t x) {
     return x & 0xff;
 }
 
-static inline uint8_t highByte(uint16_t  x) {
+static ALWAYS_INLINE uint8_t highByte(uint16_t  x) {
     return (x >> 8) & 0xff;
 }
 
-static inline bool isInEp(uint8_t addr) {
+static ALWAYS_INLINE bool isInEp(uint8_t addr) {
     return (addr & 0x80) != 0;
 }
 

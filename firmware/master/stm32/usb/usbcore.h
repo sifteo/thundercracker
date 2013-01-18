@@ -11,20 +11,20 @@ public:
                         const char **strings);
     static void reset();
 
-    static inline const Usb::DeviceDescriptor* devDescriptor() {
+    static ALWAYS_INLINE const Usb::DeviceDescriptor* devDescriptor() {
         return _dev;
     }
 
-    static inline const Usb::ConfigDescriptor* configDescriptor(uint8_t idx) {
+    static ALWAYS_INLINE const Usb::ConfigDescriptor* configDescriptor(uint8_t idx) {
         // TODO: calculate offset of subsequent configurations
         return _conf;
     }
 
-    static inline bool stringSupport() {
+    static ALWAYS_INLINE bool stringSupport() {
         return _strings != 0;
     }
 
-    static inline const char* string(uint8_t idx) {
+    static ALWAYS_INLINE const char* string(uint8_t idx) {
         return _strings[idx];
     }
 
