@@ -195,7 +195,7 @@ void UsbDevice::handleOUTData()
 void UsbDevice::init() {
     configured = false;
     txInProgress = false;
-    UsbCore::init(&dev, (Usb::ConfigDescriptor*)&configurationBlock, descriptorStrings);
+    UsbCore::init(&dev, (Usb::ConfigDescriptor*)&configurationBlock);
 }
 
 void UsbDevice::deinit()

@@ -10,18 +10,15 @@ using namespace Usb;
 
 const DeviceDescriptor *UsbCore::_dev;
 const ConfigDescriptor *UsbCore::_conf;
-const char **UsbCore::_strings;
 
 uint16_t UsbCore::address;
 uint16_t UsbCore::_config;
 
 void UsbCore::init(const DeviceDescriptor *dev,
-                const ConfigDescriptor *conf,
-                const char **strings)
+                const ConfigDescriptor *conf)
 {
     _dev = dev;
     _conf = conf;
-    _strings = strings;
 
     UsbHardware::init();
 }
@@ -67,9 +64,6 @@ int UsbCore::getDescriptor(SetupData *req, uint8_t **buf, uint16_t *len)
     }
 
     case DescriptorString: {
-        if (!UsbCore::stringSupport())
-            return 0;
-
         StringDescriptor *sd = reinterpret_cast<StringDescriptor*>(*buf);
         uint8_t strIdx = req->wValue & 0xff;
 
