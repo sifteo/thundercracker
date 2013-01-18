@@ -27,10 +27,10 @@ class UsbDevice : public IODevice {
 public:
     UsbDevice();
 
-    void processEvents() {
+    void processEvents(unsigned timeoutMillis = 0) {
         struct timeval tv = {
-            0,  // tv_sec
-            0   // tv_usec
+            0,                      // tv_sec
+            timeoutMillis * 1000    // tv_usec
         };
         libusb_handle_events_timeout_completed(0, &tv, 0);
     }

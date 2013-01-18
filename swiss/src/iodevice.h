@@ -20,7 +20,7 @@ public:
     virtual bool open(uint16_t vendorId, uint16_t productId, uint8_t interface = 0) = 0;
     virtual void close() = 0;
     virtual bool isOpen() const = 0;
-    virtual void processEvents() = 0;
+    virtual void processEvents(unsigned timeoutMillis = 0) = 0;
 
     virtual int maxINPacketSize() const = 0;
     virtual int numPendingINPackets() const = 0;
