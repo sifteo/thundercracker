@@ -14,6 +14,7 @@
 #include "usbprotocol.h"
 #include "macros.h"
 #include "systime.h"
+#include "sysinfo.h"
 
 #if ((BOARD == BOARD_TEST_JIG) && !defined(BOOTLOADER))
 #include "testjig.h"
@@ -36,7 +37,7 @@ static const Usb::DeviceDescriptor dev = {
     0x0200,                         // bcdDevice
     1,                              // iManufacturer
     2,                              // iProduct
-    0,                              // iSerialNumber
+    3,                              // iSerialNumber
     1                               // bNumConfigurations
 };
 
@@ -101,7 +102,6 @@ static const struct {
 };
 
 static const char *descriptorStrings[] = {
-    "x",
     "Sifteo Inc.",
 #if (BOARD == BOARD_TEST_JIG)
     "Sifteo TestJig",
@@ -109,6 +109,38 @@ static const char *descriptorStrings[] = {
     "Sifteo Base",
 #endif
 };
+
+int UsbDevice::writeStringDescriptor(unsigned idx, uint16_t *dst, unsigned maxLenBytes)
+{
+    /*
+     * Render a unicode version of the requested string descriptor.
+     * Special case serial number, and hex-ify our UniqueId.
+     * Returns length in bytes.
+     */
+
+    if (idx == 1 || idx == 2) {
+        // string indexes are 1-based, since 0 means "doesn't exist"
+        const char *str = descriptorStrings[idx - 1];
+        unsigned len = MIN(maxLenBytes / sizeof(uint16_t), strlen(str));
+        return UsbCore::writeAsciiDescriptor(dst, str, len);
+    }
+
+    if (idx == 3) {
+        static const char digits[] = "0123456789abcdef";
+
+        unsigned len = MIN(maxLenBytes / sizeof(uint16_t), SysInfo::UniqueIdNumBytes);
+        const uint8_t *id = static_cast<const uint8_t*>(SysInfo::UniqueId);
+
+        for (unsigned i = 0; i < len; ++i) {
+            uint8_t b = id[i];
+            *dst++ = digits[b >> 4];
+            *dst++ = digits[b & 0xf];
+        }
+        return ((len * 2) * sizeof(uint16_t)) + sizeof(uint16_t);
+    }
+
+    return 0;
+}
 
 /*
  * Windows specific descriptors.

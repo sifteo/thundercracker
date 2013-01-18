@@ -35,6 +35,21 @@ void UsbCore::reset()
     UsbDevice::handleReset();
 }
 
+int UsbCore::writeAsciiDescriptor(uint16_t *dst, const char *src, unsigned srclen)
+{
+    /*
+     * Utility to write a unicode string descriptor, given an ASCII string.
+     * We don't verify that src is actually ascii.
+     */
+
+    for (unsigned i = 0; i < srclen; i++) {
+        dst[i] = src[i];
+    }
+
+    // Return the size of the unicode string in bytes, plus a null terminator
+    return (srclen * sizeof(uint16_t)) + sizeof(uint16_t);
+}
+
 int UsbCore::getDescriptor(SetupData *req, uint8_t **buf, uint16_t *len)
 {
     switch (req->wValue >> 8) {
@@ -66,7 +81,9 @@ int UsbCore::getDescriptor(SetupData *req, uint8_t **buf, uint16_t *len)
          *
          * See http://sourceforge.net/apps/mediawiki/libwdi/index.php?title=WCID_devices
          */
-        if (strIdx == 0xee) {
+
+        switch (strIdx) {
+        case 0xee:
             sd->bLength = 18;
             sd->wstring[0] = 0x004d;    // M
             sd->wstring[1] = 0x0053;    // S
@@ -77,28 +94,21 @@ int UsbCore::getDescriptor(SetupData *req, uint8_t **buf, uint16_t *len)
             sd->wstring[6] = 0x0030;    // 0
 
             sd->wstring[7] = UsbDevice::WINUSB_COMPATIBLE_ID;   // Vendor Code & padding
-            *len = MIN(*len, sd->bLength);
-            return 1;
-        }
+            break;
 
-        // check for bogus string
-        for (unsigned i = 0; i <= strIdx; i++) {
-            if (UsbCore::string(i) == NULL)
-                return 0;
-        }
+        case 0:
+            // string index 0 returns a list of languages
+            sd->wstring[0] = 0x409; // US / English
+            sd->bLength = 4;
+            break;
 
-        sd->bLength = strlen(UsbCore::string(strIdx)) * 2 + 2;
+        default:
+            sd->bLength = UsbDevice::writeStringDescriptor(strIdx, sd->wstring, *len);
+            break;
+        }
 
         *buf = (uint8_t*)sd;
         *len = MIN(*len, sd->bLength);
-
-        for (int i = 0; i < (*len / 2) - 1; i++) {
-            sd->wstring[i] = UsbCore::string(strIdx)[i];
-        }
-
-        // string index 0 returns a list of languages
-        if (strIdx == 0)
-            sd->wstring[0] = 0x409; // US / English
 
         return 1;
     }
