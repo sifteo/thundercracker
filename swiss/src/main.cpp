@@ -1,4 +1,5 @@
 
+#include "libusb.h"
 #include "command.h"
 #include "profiler.h"
 #include "fwloader.h"
@@ -11,7 +12,6 @@
 #include "macros.h"
 #include "backup.h"
 #include "savedata.h"
-#include "libusb.h"
 
 #include <stdio.h>
 #include <string.h>
