@@ -95,7 +95,7 @@ static void usage()
 
 static void version()
 {
-    const libusb_version *v = libusb_get_version();
+    const struct libusb_version *v = libusb_get_version();
     fprintf(stderr, "swiss " TOSTRING(SDK_VERSION) ", libusb v%d.%d.%d.%d\n", v->major, v->minor, v->micro, v->nano);
 }
 
