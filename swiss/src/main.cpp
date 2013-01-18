@@ -1,5 +1,4 @@
 
-#include "libusb.h"
 #include "command.h"
 #include "profiler.h"
 #include "fwloader.h"
@@ -95,8 +94,12 @@ static void usage()
 
 static void version()
 {
+#if defined(SWISS_LINUX)
+    fprintf(stderr, "swiss " TOSTRING(SDK_VERSION) "\n");
+#else
     const struct libusb_version *v = libusb_get_version();
     fprintf(stderr, "swiss " TOSTRING(SDK_VERSION) ", libusb v%d.%d.%d.%d\n", v->major, v->minor, v->micro, v->nano);
+#endif
 }
 
 static int run(int argc, char **argv, UsbDevice &usbdev)
