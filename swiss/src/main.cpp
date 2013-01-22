@@ -94,7 +94,12 @@ static void usage()
 
 static void version()
 {
-    fprintf(stderr, "swiss, " TOSTRING(SDK_VERSION) "\n");
+#if defined(SWISS_LINUX)
+    fprintf(stderr, "swiss " TOSTRING(SDK_VERSION) "\n");
+#else
+    const struct libusb_version *v = libusb_get_version();
+    fprintf(stderr, "swiss " TOSTRING(SDK_VERSION) ", libusb v%d.%d.%d.%d\n", v->major, v->minor, v->micro, v->nano);
+#endif
 }
 
 static int run(int argc, char **argv, UsbDevice &usbdev)
@@ -129,6 +134,8 @@ int main(int argc, char **argv)
      * TODO: add support for specifying a TCP connection to siftulator.
      */
     Usb::init();
+    // XXX: provide swiss option to turn on libusb debugging
+//    libusb_set_debug(NULL, 4);
     UsbDevice usbdev;
     int rv = run(argc, argv, usbdev);
 
