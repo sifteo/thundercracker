@@ -48,7 +48,7 @@ uint32_t _SYS_sysBatteryLevel()
 
     #ifdef SIFTEO_SIMULATOR
 
-    return _SYS_BATTERY_MAX;
+    return BatteryLevel::getPercentage() * _SYS_BATTERY_MAX / 100;
 
     #else
 
