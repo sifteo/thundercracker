@@ -10,8 +10,20 @@ static ALWAYS_INLINE uint8_t lowByte(uint16_t x) {
     return x & 0xff;
 }
 
-static ALWAYS_INLINE uint8_t highByte(uint16_t  x) {
+static ALWAYS_INLINE uint8_t highByte(uint16_t x) {
     return (x >> 8) & 0xff;
+}
+
+static const unsigned REQ_DIR_MASK  = (1 << 7); // Bit 7=1: Direction bit
+static const unsigned REQ_DIR_IN    = (1 << 7); // Bit 7=1: Device-to-host
+static const unsigned REQ_DIR_OUT   = (0 << 7); // Bit 7=0: Host-to-device
+
+static ALWAYS_INLINE bool reqIsIN(uint8_t type) {
+    return (type & REQ_DIR_MASK) != 0;
+}
+
+static ALWAYS_INLINE bool reqIsOUT(uint8_t type) {
+    return (type & REQ_DIR_MASK) == 0;
 }
 
 static ALWAYS_INLINE bool isInEp(uint8_t addr) {
