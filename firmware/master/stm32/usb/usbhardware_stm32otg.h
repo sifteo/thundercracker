@@ -20,9 +20,6 @@ namespace UsbHardwareStm32Otg
         PktStsSetupData     = 6
     };
 
-    // The number of received bytes for the most recently received packet
-    uint16_t numBufferedBytes;
-
     /*
      * In order to tick along the hardware's state machine, we must read packets
      * out of usb ram as soon as they arrive. Stash them here until the application
@@ -32,7 +29,12 @@ namespace UsbHardwareStm32Otg
      * mechanism for it to tell us once it has consumed it such that we can
      * start receiving the next one.
      */
-    uint8_t packetBuf[UsbHardware::MAX_PACKET];
+    struct PacketBuf {
+        uint8_t bytes[UsbHardware::MAX_PACKET];
+        uint16_t len;
+    };
+    PacketBuf rxFifoBuf;
+
 
     struct InEndpointState {
         const uint8_t *buf;

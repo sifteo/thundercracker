@@ -238,12 +238,13 @@ uint16_t epWritePacket(uint8_t addr, const void *buf, uint16_t len)
 static void epReadFifo(void *buf, uint16_t len)
 {
     uint32_t *buf32 = static_cast<uint32_t*>(buf);
-    len = MIN(len, numBufferedBytes);
+    len = MIN(len, rxFifoBuf.len);
 
     volatile uint32_t *fifo = OTG.epFifos[0];
     uint32_t wordCount = (len + 3) / 4;
-    while (wordCount--)
+    while (wordCount--) {
         *buf32++ = *fifo;
+    }
 }
 
 /*
@@ -253,12 +254,12 @@ static void epReadFifo(void *buf, uint16_t len)
  */
 uint16_t epReadPacket(uint8_t addr, void *buf, uint16_t len)
 {
-    len = MIN(len, numBufferedBytes);
-    numBufferedBytes -= len;
+    len = MIN(len, rxFifoBuf.len);
+    rxFifoBuf.len -= len;
 
     // copy the data out of our buffer
     // TODO: UsbDevice should provide its own endpoint buffers
-    memcpy(buf, packetBuf, len);
+    memcpy(buf, rxFifoBuf.bytes, len);
 
     // unmask RXFLVL & re-enable this endpoint for more RXing
     OTG.global.GINTMSK |= (1 << 4);
@@ -292,8 +293,8 @@ void rxflvlISR()
              * it will NAK in the case the usb ram fills up.
              */
             OTG.global.GINTMSK &= ~(1 << 4);    // RXFLVL
-            numBufferedBytes = bcnt;
-            UsbHardware::epReadFifo(packetBuf, sizeof packetBuf);
+            rxFifoBuf.len = bcnt;
+            UsbHardware::epReadFifo(rxFifoBuf.bytes, sizeof rxFifoBuf.bytes);
         }
     }
 }
