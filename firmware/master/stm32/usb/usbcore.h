@@ -6,8 +6,14 @@
 class UsbCore
 {
 public:
+
+    struct Config {
+        bool enableSOF;
+    };
+
     static void init(const Usb::DeviceDescriptor *dev,
-                        const Usb::ConfigDescriptor *conf);
+                     const Usb::ConfigDescriptor *conf,
+                     const Config & cfg);
     static void reset();
 
     static ALWAYS_INLINE const Usb::DeviceDescriptor* devDescriptor() {

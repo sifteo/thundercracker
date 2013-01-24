@@ -15,12 +15,13 @@ uint16_t UsbCore::address;
 uint16_t UsbCore::_config;
 
 void UsbCore::init(const DeviceDescriptor *dev,
-                const ConfigDescriptor *conf)
+                   const ConfigDescriptor *conf,
+                   const Config & cfg)
 {
     _dev = dev;
     _conf = conf;
 
-    UsbHardware::init();
+    UsbHardware::init(cfg);
 }
 
 void UsbCore::reset()

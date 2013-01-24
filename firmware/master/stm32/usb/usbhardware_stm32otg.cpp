@@ -16,7 +16,7 @@ using namespace UsbHardwareStm32Otg;
  */
 namespace UsbHardware {
 
-void init()
+void init(const UsbCore::Config & cfg)
 {
     // turn on the peripheral clock
     RCC.AHBENR |= (1 << 12);
@@ -57,7 +57,7 @@ void init()
                         (1 << 12) |    // USBRST
                         (1 << 11) |    // USBSUSPM
                         (1 << 4)  |    // RXFLVLM
-                        (1 << 3);      // SOFM
+                        (cfg.enableSOF ? (1 << 3) : 0); // SOFM
 
     OTG.global.GINTSTS = 0xffffffff;    // clear any pending IRQs
     OTG.global.GAHBCFG |= 0x1;          // global interrupt enable

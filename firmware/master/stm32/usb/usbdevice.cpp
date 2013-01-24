@@ -195,7 +195,11 @@ void UsbDevice::handleOUTData()
 void UsbDevice::init() {
     configured = false;
     txInProgress = false;
-    UsbCore::init(&dev, (Usb::ConfigDescriptor*)&configurationBlock);
+
+    const UsbCore::Config cfg = {
+        false,  // enableSOF
+    };
+    UsbCore::init(&dev, (Usb::ConfigDescriptor*)&configurationBlock, cfg);
 }
 
 void UsbDevice::deinit()
