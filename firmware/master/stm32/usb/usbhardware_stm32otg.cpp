@@ -320,26 +320,32 @@ void inEpISR()
      * read DAINT to see which endpoints activity actually occurred on.
      */
 
-    uint16_t inEpInts = OTG.device.DAINT & 0xffff;
+    uint16_t inEpInts = OTG.device.DAINT & OTG.device.DAINTMSK;
     for (unsigned i = 0; inEpInts != 0; ++i, inEpInts >>= 1) {
 
-        uint32_t inEpInt = OTG.device.inEps[i].DIEPINT;
-        OTG.device.inEps[i].DIEPINT = 0xff;
+        volatile USBOTG_IN_EP_t & inep = OTG.device.inEps[i];
+        uint32_t inEpInt = inep.DIEPINT & OTG.device.DIEPMSK;
+        // only consider TXFE if DIEPEMPMSK is unmasked
+        if (OTG.device.DIEPEMPMSK & (1 << i)) {
+            inEpInt |= (1 << 7);
+        }
+        inep.DIEPINT = 0xff;
 
         /*
          * TXFE: transmit FIFO has room to write a packet.
          */
         if (inEpInt & (1 << 7)) {
 
+            OTG.device.DIEPEMPMSK &= ~(1 << i);
+
             InEndpointState &eps = inEndpointStates[i];
             const uint32_t* buf32 = reinterpret_cast<const uint32_t*>(eps.buf);
             volatile uint32_t* fifo = OTG.epFifos[i];
-            for (int b = eps.len; b > 0; b -= 4) {
+            unsigned nwords = (eps.len + 3) / 4;
+            while (nwords--) {
                 *fifo = *buf32++;
             }
-
             eps.len = 0;
-            OTG.device.DIEPEMPMSK &= ~(1 << i);
         }
 
         /*
@@ -361,10 +367,10 @@ void outEpISR()
      *  OUT ep activity - handles both SETUP and OUT events.
      */
 
-    uint16_t outEpInts = (OTG.device.DAINT >> 16) & 0xffff;
+    uint16_t outEpInts = (OTG.device.DAINT & OTG.device.DAINTMSK) >> 16;
     for (unsigned i = 0; outEpInts != 0; ++i, outEpInts >>= 1) {
 
-        uint32_t outEpInt = OTG.device.outEps[i].DOEPINT;
+        uint32_t outEpInt = OTG.device.outEps[i].DOEPINT & OTG.device.DOEPMSK;
         OTG.device.outEps[i].DOEPINT = 0xff;
 
         if (outEpInt & (1 << 3)) {  // setup complete
