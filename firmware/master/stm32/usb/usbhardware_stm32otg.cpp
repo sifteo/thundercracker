@@ -262,7 +262,7 @@ uint16_t epReadPacket(uint8_t addr, void *buf, uint16_t len)
     memcpy(buf, rxFifoBuf.bytes, len);
 
     // unmask RXFLVL & re-enable this endpoint for more RXing
-    OTG.global.GINTMSK |= (1 << 4);
+    OTG.global.GINTMSK |= RXFLVL;
 
     volatile USBOTG_OUT_EP_t & ep = OTG.device.outEps[addr];
     ep.DOEPTSIZ = doeptsiz[addr];
@@ -377,50 +377,42 @@ IRQ_HANDLER ISR_UsbOtg_FS()
 {
     uint32_t status = OTG.global.GINTSTS;
 
-    const uint32_t USBRST = 1 << 12;
     if (status & USBRST) {
         UsbHardware::reset();
         UsbCore::reset();
         OTG.global.GINTSTS = USBRST;
     }
 
-    const uint32_t ENUMDNE = 1 << 13;
     if (status & ENUMDNE) {
         // must wait till enum is done to configure in ep0
         OTG.device.inEps[0].DIEPCTL = 0x0 | (1 << 27); // MPSIZ 64
         OTG.global.GINTSTS = ENUMDNE;
     }
 
-    const uint32_t RXFLVL = 1 << 4; // Receive FIFO non-empty, bit is read-only
-    if (status & RXFLVL) {
+    if (status & RXFLVL) {  // this bit is read-only
         UsbHardware::rxflvlISR();
     }
 
-    const uint32_t IEPINT = 1 << 18;    // this bit is read-only
-    if (status & IEPINT) {
+    if (status & IEPINT) {  // this bit is read-only
         UsbHardware::inEpISR();
     }
 
-    const uint32_t OEPINT = 1 << 19;    // this bit is read-only
-    if (status & OEPINT) {
+    if (status & OEPINT) {  // this bit is read-only
         UsbHardware::outEpISR();
     }
 
-    const uint32_t usbsusp = 1 << 11;
-    if (status & usbsusp) {
+    if (status & USBSUSP) {
         UsbDevice::handleSuspend();
-        OTG.global.GINTSTS = usbsusp;
+        OTG.global.GINTSTS = USBSUSP;
     }
 
-    const uint32_t wkupint = 1 << 31;
-    if (status & wkupint) {
+    if (status & WKUPINT) {
         UsbDevice::handleResume();
-        OTG.global.GINTSTS = wkupint;
+        OTG.global.GINTSTS = WKUPINT;
     }
 
-    const uint32_t sof = 1 << 3;
-    if (status & sof) {
+    if (status & SOF) {
         UsbDevice::handleStartOfFrame();
-        OTG.global.GINTSTS = sof;
+        OTG.global.GINTSTS = SOF;
     }
 }
