@@ -50,14 +50,17 @@ public:
     static void handleOUTData();
 
     static int read(uint8_t *buf, unsigned len);
-    static int write(const uint8_t *buf, unsigned len);
+    // default timeout is LOOOONG to maintain same behavior as
+    // before the timeout was introduced into this API. Could look into
+    // changing this in the future.
+    static int write(const uint8_t *buf, unsigned len, unsigned timeoutMillis = 0xffffffff);
 
     static bool isConfigured() {
         return configured;
     }
 
 private:
-    static bool waitForPreviousWrite();
+    static bool waitForPreviousWrite(unsigned timeoutMillis);
 
     static bool configured;
     static volatile bool txInProgress;

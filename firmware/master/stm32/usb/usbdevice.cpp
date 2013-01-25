@@ -275,24 +275,18 @@ int UsbDevice::controlRequest(Usb::SetupData *req, uint8_t **buf, uint16_t *len)
 /*
  * Block until any writes in progress have completed.
  * Also, break if we've gotten disconnected while waiting.
- *
- * XXX: hard coded timeout for testjig just to be conservative until we have
- *      a more universal notion of when we're connected to a host.
  */
-bool UsbDevice::waitForPreviousWrite()
+bool UsbDevice::waitForPreviousWrite(unsigned timeoutMillis)
 {
-    #if (BOARD == BOARD_TEST_JIG)
-    SysTime::Ticks deadline = SysTime::ticks() + SysTime::msTicks(1000);
-    #endif
+    SysTime::Ticks deadline = SysTime::ticks() + SysTime::msTicks(timeoutMillis);
 
     while (configured && txInProgress) {
         Tasks::waitForInterrupt();
-
-        #if (BOARD == BOARD_TEST_JIG)
-        if (SysTime::ticks() > deadline)
+        if (SysTime::ticks() > deadline) {
             return false;
-        #endif
+        }
     }
+
     return configured;
 }
 
@@ -301,10 +295,11 @@ bool UsbDevice::waitForPreviousWrite()
  * len can be greater than max packet size, but must be less than the available
  * space in the TX FIFO.
  */
-int UsbDevice::write(const uint8_t *buf, unsigned len)
+int UsbDevice::write(const uint8_t *buf, unsigned len, unsigned timeoutMillis)
 {
-    if (!waitForPreviousWrite())
+    if (!waitForPreviousWrite(timeoutMillis)) {
         return 0;
+    }
 
     memcpy(epINBuf, buf, len);
     txInProgress = true;
