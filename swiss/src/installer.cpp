@@ -3,6 +3,7 @@
 #include "elfdebuginfo.h"
 #include "progressbar.h"
 #include "util.h"
+#include "basedevice.h"
 
 #include <sifteo/abi/elf.h>
 
@@ -241,13 +242,8 @@ bool Installer::commit()
 
     dev.writePacket(m.bytes, m.len);
 
-    while (dev.numPendingINPackets() == 0) {
-        dev.processEvents();
-    }
-
-    dev.readPacket(m.bytes, m.MAX_LEN, m.len);
-
-    if ((m.header & 0xff) != UsbVolumeManager::WriteCommitOK) {
+    BaseDevice baseDevice(dev);
+    if (!baseDevice.waitForReply(UsbVolumeManager::WriteCommitOK, m, 50)) {
         fprintf(stderr, "failed to write volume!\n");
         return false;
     }
