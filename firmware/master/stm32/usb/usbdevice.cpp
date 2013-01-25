@@ -171,6 +171,7 @@ static const struct {
 
 bool UsbDevice::configured;
 volatile bool UsbDevice::txInProgress;
+SysTime::Ticks UsbDevice::timestampINActivity;
 uint8_t UsbDevice::epINBuf[UsbHardware::MAX_PACKET];
 
 /*
@@ -239,22 +240,42 @@ void UsbDevice::handleStartOfFrame()
 
 }
 
-/*
- * Called in ISR context - not taking action on this at the moment.
- */
+
 void UsbDevice::inEndpointCallback(uint8_t ep)
 {
+    /*
+     * Called in ISR context when an IN transfer has completed.
+     *
+     * Update our IN activity timestamp since this means the host is listening to us.
+     */
+
     txInProgress = false;
+    timestampINActivity = SysTime::ticks();
 }
 
-/*
- * Called in ISR context. Flag the out task so that we can process the data
- * on the 'main' thread since we'll likely want to be doing some long
- * running things as a result - fetching from flash, etc.
- */
+
 void UsbDevice::outEndpointCallback(uint8_t ep)
 {
+    /*
+     * Called in ISR context when an OUT transfer has arrived.
+     *
+     * Trigger a task to handle this since we'll likely want to be doing some long
+     * running things as a result - fetching from flash, etc.
+     */
+
     Tasks::trigger(Tasks::UsbOUT);
+}
+
+void UsbDevice::onINToken(uint8_t ep)
+{
+    /*
+     * Called in ISR context when an IN token has been received but there
+     * was nothing in the TX fifo to respond with.
+     *
+     * This can give us a sense of whether the host is currently waiting on us for data.
+     */
+
+    timestampINActivity = SysTime::ticks();
 }
 
 /*

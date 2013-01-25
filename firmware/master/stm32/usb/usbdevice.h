@@ -10,6 +10,7 @@
 #include "usb/usbdefs.h"
 #include "usb/usbhardware.h"
 #include "board.h"
+#include "systime.h"
 
 class UsbDevice
 {
@@ -47,6 +48,11 @@ public:
     static void inEndpointCallback(uint8_t ep);
     static void outEndpointCallback(uint8_t ep);
 
+    static void onINToken(uint8_t ep);
+    static ALWAYS_INLINE SysTime::Ticks lastINActivity() {
+        return timestampINActivity;
+    }
+
     static void handleOUTData();
 
     static int read(uint8_t *buf, unsigned len);
@@ -64,6 +70,7 @@ private:
 
     static bool configured;
     static volatile bool txInProgress;
+    static SysTime::Ticks timestampINActivity;
 
     /*
      * For now, the STM32 hardware layer driver requires this to be static
