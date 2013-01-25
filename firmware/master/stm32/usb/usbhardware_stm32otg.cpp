@@ -101,7 +101,7 @@ void reset()
     }
 
     OTG.device.DAINTMSK = (1 << 16) | (1 << 0); // ep0 IN & OUT
-    OTG.device.DIEPMSK = 0x1;                   // xfer complete
+    OTG.device.DIEPMSK = (1 << 0) | (1 << 4);   // xfer complete & ITTXFE
     OTG.device.DOEPMSK = (1 << 3) | (1 << 0);   // setup complete, and xfer complete
 
     OTG.global.GRXFSIZ = RX_FIFO_WORDS;
@@ -356,6 +356,16 @@ void inEpISR()
                 UsbControl::controlRequest(0, TransactionIn);
             } else {
                 UsbDevice::inEndpointCallback(i);
+            }
+        }
+
+        /*
+         * ITTXFE: IN token was received while the tx fifo was empty.
+         * Allow the device to track when the host is "listening".
+         */
+        if (inEpInt & (1 << 4)) {
+            if (i != 0) {
+                UsbDevice::onINToken(i);
             }
         }
     }
