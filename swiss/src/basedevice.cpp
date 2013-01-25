@@ -194,19 +194,26 @@ bool BaseDevice::getMetadata(USBProtocolMsg &msg, unsigned volBlockCode, unsigne
 }
 
 
-bool BaseDevice::waitForReply(uint32_t header, USBProtocolMsg &msg)
+bool BaseDevice::waitForReply(uint32_t header, USBProtocolMsg &msg, unsigned tries)
 {
-    while (dev.numPendingINPackets() == 0) {
-        dev.processEvents();
+    /*
+     * Wait for a reply with the given header.
+     * Discard up to 'tries' non-matching packets while waiting.
+     */
+
+    while (tries--) {
+        while (dev.numPendingINPackets() == 0) {
+            dev.processEvents(1);
+        }
+
+        dev.readPacket(msg.bytes, msg.MAX_LEN, msg.len);
+        if (msg.header == header) {
+            return true;
+        }
     }
 
-    dev.readPacket(msg.bytes, msg.MAX_LEN, msg.len);
-    if (msg.header != header) {
-        fprintf(stderr, "unexpected response. expecting 0x%x, got 0x%x\n", header, msg.header);
-        return false;
-    }
-
-    return true;
+    fprintf(stderr, "unexpected response.\n");
+    return false;
 }
 
 

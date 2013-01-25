@@ -31,7 +31,7 @@ public:
     bool getMetadata(USBProtocolMsg &buffer, unsigned volBlockCode, unsigned key);
 
     // helpers
-    bool waitForReply(uint32_t header, USBProtocolMsg &msg);
+    bool waitForReply(uint32_t header, USBProtocolMsg &msg, unsigned tries = 1);
     bool writeAndWaitForReply(USBProtocolMsg &msg);
 
 private:
