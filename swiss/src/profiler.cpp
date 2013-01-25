@@ -82,7 +82,7 @@ bool Profiler::profile(const char *elfPath, const char *outPath)
             dev.processEvents();
 
         USBProtocolMsg m;
-        m.len = dev.readPacket(m.bytes, m.MAX_LEN);
+        dev.readPacket(m.bytes, m.MAX_LEN, m.len);
         if (!m.len)
             continue;
 

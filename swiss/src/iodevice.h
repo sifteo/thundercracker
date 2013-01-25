@@ -24,7 +24,7 @@ public:
 
     virtual int maxINPacketSize() const = 0;
     virtual int numPendingINPackets() const = 0;
-    virtual int readPacket(uint8_t *buf, unsigned maxlen) = 0;
+    virtual int readPacket(uint8_t *buf, unsigned maxlen, unsigned & rxlen) = 0;
 
     virtual int maxOUTPacketSize() const = 0;
     virtual int numPendingOUTPackets() const = 0;

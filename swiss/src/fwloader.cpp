@@ -107,7 +107,8 @@ bool FwLoader::bootloaderVersionIsCompatible()
         dev.processEvents();
 
     uint8_t usbBuf[IODevice::MAX_EP_SIZE];
-    unsigned numBytes = dev.readPacket(usbBuf, sizeof usbBuf);
+    unsigned numBytes;
+    dev.readPacket(usbBuf, sizeof usbBuf, numBytes);
     if (numBytes < 2 || usbBuf[0] != Bootloader::CmdGetVersion)
         return false;
 

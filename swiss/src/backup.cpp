@@ -115,7 +115,7 @@ bool Backup::writeReply(FILE *f)
 {
     USBProtocolMsg m;
 
-    m.len = dev.readPacket(m.bytes, m.MAX_LEN);
+    dev.readPacket(m.bytes, m.MAX_LEN, m.len);
     if ((m.header & 0xff) != UsbVolumeManager::FlashDeviceRead) {
         fprintf(stderr, "\nunexpected response\n");
         return false;

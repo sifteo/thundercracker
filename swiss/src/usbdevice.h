@@ -50,7 +50,7 @@ public:
     int numPendingINPackets() const {
         return mBufferedINPackets.size();
     }
-    int readPacket(uint8_t *buf, unsigned maxlen);
+    int readPacket(uint8_t *buf, unsigned maxlen, unsigned &rxlen);
     int readPacketSync(uint8_t *buf, int maxlen, int *transferred, unsigned timeout = -1);
 
     int numPendingOUTPackets() const {
@@ -85,17 +85,20 @@ private:
 
     libusb_device_handle *mHandle;
 
-    struct Packet {
+    struct RxPacket {
         uint8_t *buf;
-        uint8_t len;
+        unsigned len;
+        int status;
 
-        Packet(libusb_transfer *t) {
-            len = t->actual_length;
-            buf = (uint8_t*)malloc(len);
-            memcpy(buf, t->buffer, len);
+        RxPacket(libusb_transfer *t) :
+            buf((uint8_t*)malloc(t->actual_length)),
+            len(t->actual_length),
+            status(t->status)
+        {
+            memcpy(buf, t->buffer, t->actual_length);
         }
     };
-    std::list<Packet> mBufferedINPackets;
+    std::list<RxPacket> mBufferedINPackets;
 };
 
 #endif // _USB_DEVICE_H_

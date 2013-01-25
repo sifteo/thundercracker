@@ -200,7 +200,7 @@ bool BaseDevice::waitForReply(uint32_t header, USBProtocolMsg &msg)
         dev.processEvents();
     }
 
-    msg.len = dev.readPacket(msg.bytes, msg.MAX_LEN);
+    dev.readPacket(msg.bytes, msg.MAX_LEN, msg.len);
     if (msg.header != header) {
         fprintf(stderr, "unexpected response. expecting 0x%x, got 0x%x\n", header, msg.header);
         return false;

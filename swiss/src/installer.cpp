@@ -183,7 +183,7 @@ bool Installer::sendHeader(uint32_t filesz)
         dev.processEvents();
     }
 
-    m.len = dev.readPacket(m.bytes, m.MAX_LEN);
+    dev.readPacket(m.bytes, m.MAX_LEN, m.len);
     if ((m.header & 0xff) != UsbVolumeManager::WroteHeaderOK) {
         fprintf(stderr, "not enough room for this app\n");
         return false;
@@ -245,7 +245,7 @@ bool Installer::commit()
         dev.processEvents();
     }
 
-    m.len = dev.readPacket(m.bytes, m.MAX_LEN);
+    dev.readPacket(m.bytes, m.MAX_LEN, m.len);
 
     if ((m.header & 0xff) != UsbVolumeManager::WriteCommitOK) {
         fprintf(stderr, "failed to write volume!\n");
