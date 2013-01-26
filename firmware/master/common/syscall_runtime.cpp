@@ -152,7 +152,7 @@ void _SYS_log(uint32_t t, uintptr_t v1, uintptr_t v2, uintptr_t v3,
         // Stow all arguments, plus the log tag. The post-processor
         // will do some printf()-like formatting on the stored arguments.
         case _SYS_LOGTYPE_FMT: {
-            uint32_t *buffer = SvmDebugPipe::logReserve(tag);        
+            uint32_t *buffer = SvmDebugPipe::logReserve(tag);
             switch (arity) {
                 case 7: buffer[6] = v7;
                 case 6: buffer[5] = v6;
