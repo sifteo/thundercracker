@@ -183,7 +183,7 @@ void LogDecoder::formatLog(ELFDebugInfo &DI,
     }
 }
 
-size_t LogDecoder::decode(ELFDebugInfo &DI, SvmLogTag tag, const uint32_t *buffer)
+size_t LogDecoder::decode(FILE *f, ELFDebugInfo &DI, SvmLogTag tag, const uint32_t *buffer)
 {
     char outBuffer[1024];
 
@@ -201,7 +201,7 @@ size_t LogDecoder::decode(ELFDebugInfo &DI, SvmLogTag tag, const uint32_t *buffe
             } else {
                 formatLog(DI, outBuffer, sizeof outBuffer, (char*) fmt.c_str(),
                     buffer, tag.getArity());
-                writeLog(outBuffer);
+                writeLog(f, outBuffer);
             }
             return tag.getArity() * sizeof(uint32_t);
         }
@@ -212,7 +212,7 @@ size_t LogDecoder::decode(ELFDebugInfo &DI, SvmLogTag tag, const uint32_t *buffe
             ASSERT(bytes <= SvmDebugPipe::LOG_BUFFER_BYTES);
             memcpy(outBuffer, buffer, bytes);
             outBuffer[bytes] = '\0';
-            writeLog(outBuffer);
+            writeLog(f, outBuffer);
             return bytes;
         }
 
@@ -223,7 +223,7 @@ size_t LogDecoder::decode(ELFDebugInfo &DI, SvmLogTag tag, const uint32_t *buffe
             for (unsigned i = 0; i != bytes; i++) {
                 snprintf(outBuffer, sizeof outBuffer,
                     "%02x", ((uint8_t*)buffer)[i]);
-                writeLog(outBuffer);
+                writeLog(f, outBuffer);
             }
             return bytes;
         }
@@ -243,10 +243,10 @@ size_t LogDecoder::decode(ELFDebugInfo &DI, SvmLogTag tag, const uint32_t *buffe
     }
 }
 
-void LogDecoder::writeLog(const char *str)
+void LogDecoder::writeLog(FILE *f, const char *str)
 {
     if (scriptType == _SYS_SCRIPT_NONE) {
-        LOG(("%s", str));
+        fprintf(f, "%s", str);
     } else {
         scriptBuffer += str;
     }

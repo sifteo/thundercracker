@@ -9,6 +9,7 @@
 #include "elfdebuginfo.h"
 #include "svmdebugpipe.h"
 
+#include <stdio.h>
 #include <string>
 #include <map>
 
@@ -27,13 +28,13 @@ public:
 
     // Decode a log entry with the specified tag and data buffer.
     // Returns the actual number of bytes consumed from 'buffer'.
-    size_t decode(ELFDebugInfo &DI, SvmLogTag tag, const uint32_t *buffer);
+    size_t decode(FILE *f, ELFDebugInfo &DI, SvmLogTag tag, const uint32_t *buffer);
 
 private:
     void formatLog(ELFDebugInfo &DI, char *out, size_t outSize,
         char *fmt, const uint32_t *args, size_t argCount);
 
-    void writeLog(const char *str);
+    void writeLog(FILE *f, const char *str);
     void runScript();
 
     unsigned scriptType;
