@@ -80,7 +80,7 @@ void deinit()
 void reset()
 {
     // flush all TX FIFOs
-    OTG.global.GRSTCTL = (1 << 11) | (1 << 5);
+    OTG.global.GRSTCTL = (1 << 10) | (1 << 5);
     while (OTG.global.GRSTCTL & (1 << 5))
         ;
 
@@ -89,15 +89,24 @@ void reset()
     while (OTG.global.GRSTCTL & (1 << 4))
         ;
 
-    // disable OUT EPs, only if they're not already disabled.
+    // disable EPs, only if they're not already disabled.
     for (unsigned i = 0; i < 4; ++i) {
+
+        // OUT EPs
         volatile USBOTG_OUT_EP_t & ep = OTG.device.outEps[i];
-        if (ep.DOEPCTL & (1 << 31))
+        if (ep.DOEPCTL & (1 << 31)) {
             ep.DOEPCTL = (1 << 30) | (1 << 27);
-        else
-            ep.DOEPCTL = 0;
+        }
         ep.DOEPTSIZ = 0;
         ep.DOEPINT = 0xff;  // clear any pending interrupts
+
+        // IN EPs
+        volatile USBOTG_IN_EP_t & inep = OTG.device.inEps[i];
+        if (inep.DIEPCTL & (1 << 31)) {
+            inep.DIEPCTL = (1 << 30) | (1 << 27);
+        }
+        inep.DIEPTSIZ = 0;
+        inep.DIEPINT = 0xff;  // clear any pending interrupts
     }
 
     OTG.device.DAINTMSK = (1 << 16) | (1 << 0); // ep0 IN & OUT
@@ -137,11 +146,11 @@ void epINSetup(uint8_t addr, uint8_t type, uint16_t maxsize)
     OTG.global.DIEPTXF[addr - 1] = (fifoDepthInWords << 16) | fifoMemTop;
     fifoMemTop += fifoDepthInWords;
 
+    // NOTE: SNAK is avoided in order to allow ITTXFE ISRs to trigger
+    // before we've written anything out
     volatile USBOTG_IN_EP_t & ep = OTG.device.inEps[addr];
-    ep.DIEPTSIZ = maxsize;
     ep.DIEPCTL  = ((1 << 31) |     // EPENA
                    (1 << 28) |     // SD0PID
-                   (1 << 27) |     // SNAK
                    (addr << 22) |
                    (type << 18) |
                    (1 << 15) |     // USBEAP
