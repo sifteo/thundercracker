@@ -122,7 +122,7 @@ bool Listen::writeRecord(FILE *f, const USBProtocolMsg & m)
     SvmLogTag tag(m.header & 0xfffffff);
     size_t sz = logDecoder.decode(dbgInfo, tag, reinterpret_cast<const uint32_t*>(&m.payload[0]));
     if (sz != m.payloadLen() - SvmDebugPipe::LOG_BUFFER_WORDS) {
-        fprintf(stderr, "unexpected decode len: want %d got %d\n", m.payloadLen() - SvmDebugPipe::LOG_BUFFER_WORDS, sz);
+        fprintf(stderr, "unexpected decode len: want %d got %d\n", m.payloadLen() - SvmDebugPipe::LOG_BUFFER_WORDS, int(sz));
     }
 
     return true;
