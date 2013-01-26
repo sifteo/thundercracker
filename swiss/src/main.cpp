@@ -11,6 +11,7 @@
 #include "macros.h"
 #include "backup.h"
 #include "savedata.h"
+#include "listen.h"
 
 #include <stdio.h>
 #include <string.h>
@@ -35,6 +36,12 @@ static const Command commands[] = {
         "install a new game to the Sifteo Base",
         "install [-l] <app.elf>",
         Installer::run
+    },
+    {
+        "listen",
+        "listen for and decode log activity from the Sifteo base",
+        "listen <app.elf> [--fout <file.txt>]",
+        Listen::run
     },
     {
         "manifest",

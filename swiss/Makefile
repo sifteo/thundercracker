@@ -27,7 +27,9 @@ OBJS := \
     src/metadata.o      \
     src/savedata.o      \
     src/basedevice.o    \
-    src/lfsvolume.o
+    src/lfsvolume.o     \
+    src/listen.o        \
+    src/logdecoder.o
 
 # include directories
 INCLUDES := \
