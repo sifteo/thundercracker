@@ -1,6 +1,8 @@
 #include "paircube.h"
 #include "basedevice.h"
 #include "tabularlist.h"
+#include "macros.h"
+
 #include <sifteo/abi/types.h>
 
 #include <stdio.h>
@@ -88,7 +90,7 @@ bool PairCube::dumpPairingData(bool rpc)
             if (reply->hwid == ~0) {
                 fprintf(stdout, "::pairing:%u:\n", reply->pairingSlot); fflush(stdout);
             } else {
-                fprintf(stdout, "::pairing:%u:%llu\n", reply->pairingSlot, reply->hwid); fflush(stdout);
+                fprintf(stdout, "::pairing:%u:%"PRIu64"\n", reply->pairingSlot, reply->hwid); fflush(stdout);
             }
         }
     }
