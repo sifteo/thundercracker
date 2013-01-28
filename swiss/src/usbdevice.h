@@ -21,8 +21,12 @@ namespace Usb {
     }
 
     static void setDebug(unsigned level) {
-        if (level > LIBUSB_LOG_LEVEL_DEBUG) {
-            level = LIBUSB_LOG_LEVEL_DEBUG;
+
+        // older versions of libusb.h don't define LIBUSB_LOG_LEVEL_DEBUG
+        // so do it here to work around
+        static const unsigned LOG_LEVEL_DEBUG = 4;
+        if (level > LOG_LEVEL_DEBUG) {
+            level = LOG_LEVEL_DEBUG;
         }
         libusb_set_debug(NULL, level);
     }
