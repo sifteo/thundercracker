@@ -149,7 +149,7 @@ int main(int argc, char **argv)
     if (usbdev.isOpen()) {
         usbdev.close();
         while (usbdev.isOpen())
-            usbdev.processEvents();
+            usbdev.processEvents(1);
     }
 
     Usb::deinit();

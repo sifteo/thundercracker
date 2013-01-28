@@ -104,7 +104,7 @@ bool FwLoader::bootloaderVersionIsCompatible()
     dev.writePacket(versionRequest, sizeof versionRequest);
 
     while (!dev.numPendingINPackets())
-        dev.processEvents();
+        dev.processEvents(1);
 
     uint8_t usbBuf[IODevice::MAX_EP_SIZE];
     unsigned numBytes;
@@ -122,7 +122,7 @@ void FwLoader::resetBootloader()
     dev.writePacket(ptrRequest, sizeof ptrRequest);
 
     while (dev.numPendingOUTPackets())
-        dev.processEvents();
+        dev.processEvents(1);
 }
 
 /*
@@ -199,7 +199,7 @@ bool FwLoader::sendFirmwareFile(FILE *f, uint32_t crc, uint32_t size)
 
         dev.writePacket(usbBuf, numBytes + 1);
         while (dev.numPendingOUTPackets() > IODevice::MAX_OUTSTANDING_OUT_TRANSFERS)
-            dev.processEvents();
+            dev.processEvents(1);
 
         progress += numBytes;
         initialBytesToSend -= numBytes;
@@ -236,7 +236,7 @@ bool FwLoader::sendFirmwareFile(FILE *f, uint32_t crc, uint32_t size)
 
     dev.writePacket(finalBuf, p - finalBuf);
     while (dev.numPendingOUTPackets())
-        dev.processEvents();
+        dev.processEvents(1);
 
     return true;
 }

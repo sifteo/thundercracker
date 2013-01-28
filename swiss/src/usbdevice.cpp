@@ -177,7 +177,7 @@ void UsbDevice::close()
     cancelTransfers(mOutEndpoint);
 
     while (!(mOutEndpoint.pendingTransfers.empty() && mInEndpoint.pendingTransfers.empty()))
-        processEvents();
+        processEvents(1);
 
     libusb_close(mHandle);
     mHandle = 0;

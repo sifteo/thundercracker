@@ -181,7 +181,7 @@ bool Installer::sendHeader(uint32_t filesz)
 
     // wait for response that header was processed
     while (dev.numPendingINPackets() == 0) {
-        dev.processEvents();
+        dev.processEvents(1);
     }
 
     dev.readPacket(m.bytes, m.MAX_LEN, m.len);
@@ -226,7 +226,7 @@ bool Installer::sendFileContents(FILE *f, uint32_t filesz)
 
         dev.writePacket(m.bytes, m.len);
         while (dev.numPendingOUTPackets() > IODevice::MAX_OUTSTANDING_OUT_TRANSFERS)
-            dev.processEvents();
+            dev.processEvents(1);
 
         pb.update(progress);
     }

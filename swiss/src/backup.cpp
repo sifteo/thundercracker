@@ -136,7 +136,7 @@ bool Backup::writeFlashContents(FILE *f)
         sendRequest();
 
     while (1) {
-        dev.processEvents();
+        dev.processEvents(1);
 
         while (dev.numPendingINPackets() != 0) {
             if (!writeReply(f))

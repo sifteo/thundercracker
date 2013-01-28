@@ -79,7 +79,7 @@ bool Profiler::profile(const char *elfPath, const char *outPath)
     while (!interruptRequested) {
 
         while (!dev.numPendingINPackets())
-            dev.processEvents();
+            dev.processEvents(1);
 
         USBProtocolMsg m;
         dev.readPacket(m.bytes, m.MAX_LEN, m.len);
@@ -103,7 +103,7 @@ bool Profiler::profile(const char *elfPath, const char *outPath)
         dev.writePacket(m.bytes, m.len);
 
         while (dev.numPendingOUTPackets())
-            dev.processEvents();
+            dev.processEvents(1);
     }
 
     fprintf(stderr, "interrupt received, writing sample data...");
