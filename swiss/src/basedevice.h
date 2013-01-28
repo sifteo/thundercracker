@@ -32,7 +32,7 @@ public:
 
     // helpers
     bool waitForReply(uint32_t header, USBProtocolMsg &msg, unsigned tries = 1);
-    bool writeAndWaitForReply(USBProtocolMsg &msg);
+    bool writeAndWaitForReply(USBProtocolMsg &msg, unsigned tries = 1);
 
 private:
     IODevice &dev;

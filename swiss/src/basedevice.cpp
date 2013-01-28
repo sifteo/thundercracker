@@ -217,7 +217,7 @@ bool BaseDevice::waitForReply(uint32_t header, USBProtocolMsg &msg, unsigned tri
 }
 
 
-bool BaseDevice::writeAndWaitForReply(USBProtocolMsg &msg)
+bool BaseDevice::writeAndWaitForReply(USBProtocolMsg &msg, unsigned tries)
 {
     /*
      * Common helper.
@@ -230,5 +230,5 @@ bool BaseDevice::writeAndWaitForReply(USBProtocolMsg &msg)
         return false;
     }
 
-    return waitForReply(headerToMatch, msg);
+    return waitForReply(headerToMatch, msg, tries);
 }
