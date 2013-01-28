@@ -13,11 +13,18 @@
 namespace Usb {
 
     static int init() {
-        return libusb_init(0);
+        return libusb_init(NULL);
     }
 
     static void deinit() {
-        libusb_exit(0);
+        libusb_exit(NULL);
+    }
+
+    static void setDebug(unsigned level) {
+        if (level > LIBUSB_LOG_LEVEL_DEBUG) {
+            level = LIBUSB_LOG_LEVEL_DEBUG;
+        }
+        libusb_set_debug(NULL, level);
     }
 
 } // namespace Usb

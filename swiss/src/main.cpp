@@ -112,17 +112,46 @@ static void version()
 static int run(int argc, char **argv, UsbDevice &usbdev)
 {
     const unsigned numCommands = sizeof(commands) / sizeof(commands[0]);
-    const char *commandName = argv[1];
+
+    // command is first arg, fixed position
+    const char *commandName = argv[0];
 
     for (unsigned i = 0; i < numCommands; ++i) {
         if (!strcmp(commandName, commands[i].name))
-            return commands[i].run(argc - 1, argv + 1, usbdev);
+            return commands[i].run(argc, argv, usbdev);
     }
 
     fprintf(stderr, "no command named %s\n", commandName);
     usage();
 
     return 1;
+}
+
+static unsigned handleGlobalArgs(int argc, char **argv)
+{
+    /*
+     * Handle global args, not specific to any command.
+     *
+     * Return the number of args consumed - this will always include argv[0],
+     * such that we're pointing to the first command by the time we're done.
+     */
+
+    unsigned consumed = 1; // consume argv[0]
+    for (unsigned i = 1; i < argc; ++i) {
+
+        if (!strcmp(argv[i], "--libusb-debug") && i + 1 < argc) {
+
+            unsigned long level = strtoul(argv[i + 1], NULL, 0);
+            Usb::setDebug(level);
+
+            consumed += 2;
+            i++;
+            continue;
+        }
+
+    }
+
+    return consumed;
 }
 
 int main(int argc, char **argv)
@@ -141,8 +170,16 @@ int main(int argc, char **argv)
      * TODO: add support for specifying a TCP connection to siftulator.
      */
     Usb::init();
-    // XXX: provide swiss option to turn on libusb debugging
-//    libusb_set_debug(NULL, 4);
+
+    unsigned consumed = handleGlobalArgs(argc, argv);
+    argc -= consumed;
+    argv += consumed;
+
+    if (argc == 0) {
+        usage();
+        return 1;
+    }
+
     UsbDevice usbdev;
     int rv = run(argc, argv, usbdev);
 
