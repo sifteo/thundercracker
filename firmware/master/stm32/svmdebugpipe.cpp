@@ -54,6 +54,11 @@ void SvmDebugPipe::logCommit(SvmLogTag tag, uint32_t *buffer, uint32_t bytes)
         return;
     }
 
+    // ensure our check below is meaningful
+    if (SysTime::ticks() < SysTime::msTicks(500)) {
+        return;
+    }
+
     if (SysTime::ticks() - UsbDevice::lastINActivity() > SysTime::msTicks(250)) {
         return;
     }
