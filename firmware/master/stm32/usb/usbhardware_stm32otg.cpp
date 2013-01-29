@@ -146,11 +146,12 @@ void epINSetup(uint8_t addr, uint8_t type, uint16_t maxsize)
     OTG.global.DIEPTXF[addr - 1] = (fifoDepthInWords << 16) | fifoMemTop;
     fifoMemTop += fifoDepthInWords;
 
-    // NOTE: SNAK is avoided in order to allow ITTXFE ISRs to trigger
-    // before we've written anything out
+    // NOTES:
+    //      SNAK is avoided in order to allow ITTXFE ISRs to trigger
+    //      before we've written anything out
+    //      EPENA is left cleared here - it only gets set when our first transfer is prepped
     volatile USBOTG_IN_EP_t & ep = OTG.device.inEps[addr];
-    ep.DIEPCTL  = ((1 << 31) |     // EPENA
-                   (1 << 28) |     // SD0PID
+    ep.DIEPCTL  = ((1 << 28) |     // SD0PID
                    (addr << 22) |
                    (type << 18) |
                    (1 << 15) |     // USBEAP
