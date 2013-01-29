@@ -110,33 +110,33 @@ static const char *descriptorStrings[] = {
 #endif
 };
 
-int UsbDevice::writeStringDescriptor(unsigned idx, uint16_t *dst, unsigned maxLenBytes)
+int UsbDevice::writeStringDescriptor(unsigned idx, uint16_t *dst)
 {
     /*
      * Render a unicode version of the requested string descriptor.
      * Special case serial number, and hex-ify our UniqueId.
-     * Returns length in bytes.
+     *
+     * Returns length of the string in bytes - this is not constrained
+     * to the number of bytes to actually return, since we want to report
+     * the total length even if only a subset is requested.
      */
 
     if (idx == 1 || idx == 2) {
         // string indexes are 1-based, since 0 means "doesn't exist"
         const char *str = descriptorStrings[idx - 1];
-        unsigned len = MIN(maxLenBytes / sizeof(uint16_t), strlen(str));
-        return UsbCore::writeAsciiDescriptor(dst, str, len);
+        return UsbCore::writeAsciiDescriptor(dst, str, strlen(str));
     }
 
     if (idx == 3) {
         static const char digits[] = "0123456789abcdef";
 
-        unsigned len = MIN(maxLenBytes / sizeof(uint16_t), SysInfo::UniqueIdNumBytes);
         const uint8_t *id = static_cast<const uint8_t*>(SysInfo::UniqueId);
-
-        for (unsigned i = 0; i < len; ++i) {
+        for (unsigned i = 0; i < SysInfo::UniqueIdNumBytes; ++i) {
             uint8_t b = id[i];
             *dst++ = digits[b >> 4];
             *dst++ = digits[b & 0xf];
         }
-        return ((len * 2) * sizeof(uint16_t)) + sizeof(uint16_t);
+        return ((SysInfo::UniqueIdNumBytes * 2) * sizeof(uint16_t)) + sizeof(uint16_t);
     }
 
     return 0;

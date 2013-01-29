@@ -98,7 +98,7 @@ int UsbCore::getDescriptor(SetupData *req, uint8_t **buf, uint16_t *len)
             break;
 
         default:
-            sd->bLength = UsbDevice::writeStringDescriptor(strIdx, sd->wstring, *len);
+            sd->bLength = UsbDevice::writeStringDescriptor(strIdx, sd->wstring);
             break;
         }
 
