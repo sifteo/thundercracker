@@ -110,8 +110,8 @@ public:
     XmTrackerPlayer() : hasSong(0), paused(0) { memset(&song, 0, sizeof song); }
     void init();
     bool play(const struct _SYSXMSong *pSong);
-    bool isPaused() { return paused; }
-    bool isStopped() { return !hasSong; }
+    bool isPaused() const { return paused; }
+    bool isStopped() const { return !hasSong; }
     void stop();
     void setVolume(int volume, uint8_t ch);
     void pause();

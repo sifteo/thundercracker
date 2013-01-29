@@ -31,7 +31,7 @@ struct AssetAudio {
      *
      * This can be used to calculate a new speed for AudioChannel::setSpeed().
      */
-    unsigned speed() {
+    unsigned speed() const {
         return sys.sampleRate;
     }
 
