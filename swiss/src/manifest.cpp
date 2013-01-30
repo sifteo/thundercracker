@@ -79,11 +79,11 @@ bool Manifest::dumpBaseSysInfo()
          * formats in RPC mode.
          */
 
-        fprintf(stdout, "::hardware-bug:");
+        fprintf(stdout, "::hardware-id-bug:");
         for (unsigned i = 0; i < sizeof(sysInfo->baseUniqueID); ++i) {
             fprintf(stdout, "%x", sysInfo->baseUniqueID[i]);
         }
-        fprintf(stdout, ":%u\n", sysInfo->baseHwRevision);
+        fprintf(stdout, "\n");
 
         // and send the newer, correct format
         fprintf(stdout, "::hardware:");
