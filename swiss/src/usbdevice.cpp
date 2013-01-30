@@ -11,6 +11,7 @@
 
 
 UsbDevice::UsbDevice() :
+    mInterface(-1),
     mHandle(0)
 {
 }
@@ -85,6 +86,8 @@ bool UsbDevice::open(uint16_t vendorId, uint16_t productId, uint8_t interface)
         fprintf(stderr, "error claiming exclusive access to device: %s\n", libusb_error_name(r));
         return false;
     }
+
+    mInterface = interface;
 
     /*
      * Open a number of IN transfers.
