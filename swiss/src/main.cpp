@@ -185,8 +185,9 @@ int main(int argc, char **argv)
 
     if (usbdev.isOpen()) {
         usbdev.close();
-        while (usbdev.isOpen())
+        while (usbdev.isOpen()) {
             usbdev.processEvents(1);
+        }
     }
 
     Usb::deinit();

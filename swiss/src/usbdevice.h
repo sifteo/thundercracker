@@ -92,7 +92,7 @@ private:
     Endpoint mOutEndpoint;
 
     void removeTransfer(Endpoint &ep, libusb_transfer *t);
-    void cancelTransfers(Endpoint &ep);
+    void releaseTransfers(Endpoint &ep);
 
     int mInterface;
     libusb_device_handle *mHandle;
