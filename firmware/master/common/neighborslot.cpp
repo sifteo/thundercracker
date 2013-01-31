@@ -80,7 +80,7 @@ bool NeighborSlot::sendNextEvent()
 
         const uint8_t *rawNeighbors = CubeSlots::instances[id()].getRawNeighbors();
 
-        for (_SYSSideID side=0; side<4; ++side) {
+        for (_SYSSideID side = 0; side < 4; ++side) {
             _SYSNeighborID prev = hardwareNeighborToABI(prevNeighbors[side]);
             _SYSNeighborID next = hardwareNeighborToABI(rawNeighbors[side]);
 
@@ -92,11 +92,13 @@ bool NeighborSlot::sendNextEvent()
             if (prev != next) {
                 // Neighbor changed
 
-                if (prev != _SYS_NEIGHBOR_NONE && removeNeighborFromSide(prev, side))
+                if (prev != _SYS_NEIGHBOR_NONE && removeNeighborFromSide(prev, side)) {
                     return true;
+                }
 
-                if (next != _SYS_NEIGHBOR_NONE && addNeighborToSide(next, side))
+                if (next != _SYS_NEIGHBOR_NONE && addNeighborToSide(next, side)) {
                     return true;
+                }
             }
 
             // If we made it this far, commit the state to memory.
@@ -109,7 +111,7 @@ bool NeighborSlot::sendNextEvent()
     
     } else {
 
-        for(_SYSSideID side=0; side<4; ++side) {
+        for(_SYSSideID side = 0; side < 4; ++side) {
             _SYSNeighborID prev = neighbors.sides[side];
             if (prev != _SYS_NEIGHBOR_NONE) {
                 // kill zombie neighbor
@@ -172,8 +174,8 @@ void NeighborSlot::resetSlots(_SYSCubeIDVector cv)
 
 void NeighborSlot::resetPairs() {
     int c = id();
-    c = c * _SYS_NUM_CUBE_SLOTS - ((c*(c-1))>>1) - 1;
-    for(int i=0; i<int(CubeNeighborPair::NUM_UNIQUE_PAIRS); ++i) {
+    c = c * _SYS_NUM_CUBE_SLOTS - ((c * (c - 1)) >> 1) - 1;
+    for(int i = 0; i < int(CubeNeighborPair::NUM_UNIQUE_PAIRS); ++i) {
         if (c - i > c) {
             CubeNeighborPair::matrix[i].clear();
         }
@@ -202,23 +204,28 @@ bool NeighborSlot::addNeighborToSide(_SYSNeighborID dstId, _SYSSideID side)
         // Update cube neighbor matrix
         CubeNeighborPair* pair;
         dstSide = CubeNeighborPair::matrix->setSideAndGetOtherSide(id(), dstId, side, &pair);
-        if (!pair->fullyConnected())
+        if (!pair->fullyConnected()) {
             return false;
+        }
     }
 
     if (neighbors.sides[side] != dstId) {
-        if (clearSide(side))
+        if (clearSide(side)) {
             return true;
+        }
 
-        if (dstIsCube && instances[dstId].clearSide(dstSide))
+        if (dstIsCube && instances[dstId].clearSide(dstSide)) {
             return true;
+        }
 
         neighbors.sides[side] = dstId;
-        if (dstIsCube)
+        if (dstIsCube) {
             instances[dstId].neighbors.sides[dstSide] = id();
+        }
 
-        if (Event::callNeighborEvent(_SYS_NEIGHBOR_ADD, id(), side, dstId, dstSide))
+        if (Event::callNeighborEvent(_SYS_NEIGHBOR_ADD, id(), side, dstId, dstSide)) {
             return true;
+        }
     }
     
     return false;
@@ -265,12 +272,14 @@ bool NeighborSlot::removeNeighborFromSide(_SYSNeighborID dstId, _SYSSideID side)
         // Update cube neighbor matrix
         CubeNeighborPair* pair;
         CubeNeighborPair::matrix->setSideAndGetOtherSide(id(), dstId, CubeNeighborPair::NO_SIDE, &pair);
-        if (!pair->fullyDisconnected())
+        if (!pair->fullyDisconnected()) {
             return false;
+        }
     }
 
-    if (neighbors.sides[side] == dstId)
+    if (neighbors.sides[side] == dstId) {
         return clearSide(side);
+    }
 
     return false;
 }

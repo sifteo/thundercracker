@@ -152,7 +152,7 @@ bool Event::dispatchCubePID(PriorityID pid, _SYSCubeID cid)
 
                 /* De-neighbor the cube just-in-time */
                 _SYSNeighborState ns = NeighborSlot::instances[cid].getNeighborState();
-                for(_SYSSideID i=0; i<4; ++i) {
+                for(_SYSSideID i = 0; i < 4; ++i) {
                     if (ns.sides[i] < _SYS_NUM_CUBE_SLOTS && NeighborSlot::instances[ns.sides[i]].sendNextEvent()) {
                         IdleTimeout::reset();
                         return true;
