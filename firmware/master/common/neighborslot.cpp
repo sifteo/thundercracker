@@ -144,6 +144,10 @@ unsigned NeighborSlot::hardwareNeighborToABI(unsigned byte)
      * different patterns on each)
      */
 
+    if (byte == _SYS_NEIGHBOR_NONE) {
+        return _SYS_NEIGHBOR_NONE;
+    }
+
     if (byte & 0x80) {
         uint8_t id = byte & 0x1F;
 
@@ -154,7 +158,7 @@ unsigned NeighborSlot::hardwareNeighborToABI(unsigned byte)
     }
 
     // No neighbor present
-    return 0xFF;
+    return _SYS_NEIGHBOR_NONE;
 }
 
 void NeighborSlot::resetSlots(_SYSCubeIDVector cv)
