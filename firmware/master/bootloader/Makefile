@@ -15,6 +15,7 @@ OBJS_STM32 = \
     $(MASTER_DIR)/stm32/gpio.stm32.o                \
     $(MASTER_DIR)/stm32/powermanager.stm32.o        \
     $(MASTER_DIR)/stm32/systime.stm32.o             \
+    $(MASTER_DIR)/stm32/sysinfo.stm32.o             \
     $(MASTER_DIR)/bootloader/main.stm32.o           \
     $(MASTER_DIR)/bootloader/bootloader.stm32.o     \
     $(MASTER_DIR)/common/aes128.stm32.o             \

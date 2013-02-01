@@ -11,6 +11,7 @@
 
 
 UsbDevice::UsbDevice() :
+    mInterface(-1),
     mHandle(0)
 {
 }
@@ -85,6 +86,8 @@ bool UsbDevice::open(uint16_t vendorId, uint16_t productId, uint8_t interface)
         fprintf(stderr, "error claiming exclusive access to device: %s\n", libusb_error_name(r));
         return false;
     }
+
+    mInterface = interface;
 
     /*
      * Open a number of IN transfers.
@@ -168,31 +171,27 @@ void UsbDevice::close()
     if (!isOpen())
         return;
 
-    /*
-     * Cancel transfers and wait for them to complete.
-     * on OS X, libusb_close() appears to hang if we call it directly
-     * from within the completion handlers.
-     */
-    cancelTransfers(mInEndpoint);
-    cancelTransfers(mOutEndpoint);
-
-    while (!(mOutEndpoint.pendingTransfers.empty() && mInEndpoint.pendingTransfers.empty()))
-        processEvents(1);
+    int r = libusb_release_interface(mHandle, mInterface);
+    if (r < 0) {
+        fprintf(stderr, "libusb_release_interface error: %s\n", libusb_error_name(r));
+    }
 
     libusb_close(mHandle);
     mHandle = 0;
+
+    releaseTransfers(mInEndpoint);
+    releaseTransfers(mOutEndpoint);
 }
 
-void UsbDevice::cancelTransfers(Endpoint &ep)
+void UsbDevice::releaseTransfers(Endpoint &ep)
 {
     for (std::list<libusb_transfer*>::iterator i = ep.pendingTransfers.begin();
-         i != ep.pendingTransfers.end(); ++i)
+         i != ep.pendingTransfers.end();)
     {
-        int r = libusb_cancel_transfer(*i);
-
-        // Complain if this isn't an expected error.
-        if (r < 0 && r != LIBUSB_ERROR_OTHER && r != LIBUSB_ERROR_NOT_FOUND && r != LIBUSB_ERROR_NO_DEVICE)
-            fprintf(stderr, "failed to cancel transfer: %s\n", libusb_error_name(r));
+        libusb_transfer *t = *i;
+        free(t->buffer);
+        libusb_free_transfer(t);
+        i = ep.pendingTransfers.erase(i);
     }
 }
 
@@ -270,22 +269,13 @@ void UsbDevice::handleRx(libusb_transfer *t)
 {
     USB_TRACE(("USB: RX status %d\n", t->status));
 
-    if (t->status == LIBUSB_TRANSFER_CANCELLED) {
-        /*
-         * We only cancel transfers when closing the device,
-         * so we let them drain in this case.
-         */
+    mBufferedINPackets.push_back(RxPacket(t));
+
+    // re-submit
+    int r = libusb_submit_transfer(t);
+    if (r < 0) {
+        fprintf(stderr, "failed to re-submit: %s\n", libusb_error_name(r));
         removeTransfer(mInEndpoint, t);
-
-    } else {
-        mBufferedINPackets.push_back(RxPacket(t));
-
-        // re-submit
-        int r = libusb_submit_transfer(t);
-        if (r < 0) {
-            fprintf(stderr, "failed to re-submit: %s\n", libusb_error_name(r));
-            removeTransfer(mInEndpoint, t);
-        }
     }
 }
 
