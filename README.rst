@@ -106,3 +106,17 @@ CodeSourcery C++ distribution is preferred. On Mac OS, the following
 script will automatically build a compatible toolchain for your machine:
 
    https://github.com/jsnyder/arm-eabi-toolchain
+
+Environment Variables
+---------------------
+
+BOOTLOADABLE
+  Generate a binary compatible with the USB bootloader (Not JTAG)
+
+BOARD
+  Define the board to target. If unset, uses the default board in stm32/board.h
+
+HAVE_NRF8001
+  If the current BOARD has an optional nRF8001 Bluetooth Low Energy controller,
+  this enables support for it.
+
