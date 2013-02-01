@@ -56,8 +56,6 @@ void SPIMaster::init(const Config &config)
 
     dmaRxPriorityBits = config.dmaRxPrio;
 
-    csn.setHigh();
-    csn.setControl(GPIOPin::OUT_10MHZ);
     sck.setControl(GPIOPin::OUT_ALT_50MHZ);
     miso.setControl(GPIOPin::IN_FLOAT);
     mosi.setControl(GPIOPin::OUT_ALT_50MHZ);
@@ -115,26 +113,6 @@ void SPIMaster::transfer(const uint8_t *txbuf, uint8_t *rxbuf, unsigned len)
 
         while (!(hw->SR & 1));      // wait for response
         *rxbuf++ = hw->DR;          // read it
-    }
-}
-
-void SPIMaster::transferTable(const uint8_t *table)
-{
-    /*
-     * Table-driven transfers: Each is prefixed by a length byte.
-     * Terminated by a zero-length transfer.
-     */
-
-    uint8_t len;
-    while ((len = *table)) {
-        table++;
-
-        begin();
-        do {
-            transfer(*table);
-            table++;
-        } while (--len);
-        end();
     }
 }
 
