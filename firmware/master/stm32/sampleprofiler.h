@@ -14,6 +14,7 @@ public:
         AudioPull,
         SVCISR,
         RFISR,
+        BluetoothISR,
     };
 
     enum Command {
