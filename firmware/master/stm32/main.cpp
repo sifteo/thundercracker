@@ -83,6 +83,16 @@ int main()
     NVIC.irqEnable(IVT.NBR_TX_TIM);                 // Neighbor transmit
     NVIC.irqPrioritize(IVT.NBR_TX_TIM, 0x60);       //  just below volume timer
 
+#ifdef HAVE_NRF8001
+    NVIC.irqEnable(IVT.NRF8001_EXTI_VEC);             // BTLE controller IRQ
+    NVIC.irqPrioritize(IVT.NRF8001_EXTI_VEC, 0x78);   //  a little higher than radio, just below USB
+
+    NVIC.irqEnable(IVT.NRF8001_DMA_CHAN_RX);            // BTLE SPI DMA channels
+    NVIC.irqPrioritize(IVT.NRF8001_DMA_CHAN_RX, 0x74);  //  same prio as flash for now
+    NVIC.irqEnable(IVT.NRF8001_DMA_CHAN_TX);
+    NVIC.irqPrioritize(IVT.NRF8001_DMA_CHAN_TX, 0x74);
+#endif
+
     /*
      * For SVM to operate properly, SVC needs to have a very low priority
      * (we'll be inside it most of the time) and any fault handlers which have
