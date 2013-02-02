@@ -150,7 +150,10 @@ After one second, the red LED illuminates and you can install the update as norm
 
 ## Linux and USB        {#linuxAndUSB}
 
-As a security precaution on Linux, unknown USB devices can only be accessed by root. The following allow identifying the Sifteo base with its vendor and product IDs, mounts it to /dev/sifteo, and (for Debian-based distros) grants read/write permissions to the plugdev group.
+As a security precaution on Linux, unknown USB devices can only be accessed by root. This is a general Linux issue, and is not specific to Sifteo.
+
+The following [udev](http://en.wikipedia.org/wiki/Udev) rule allows the Sifteo base to be identified by its vendor and product IDs, mounts it to `/dev/sifteo`, and (for Debian-based distros) grants read/write permissions to the plugdev group.
+
 To install these rules, execute these instructions:
 
     $ RULES='SUBSYSTEMS=="usb", ATTRS{idProduct}=="0105", ATTRS{idVendor}=="22fa", MODE:="0666", GROUP="plugdev", SYMLINK+="sifteo"'
@@ -159,12 +162,11 @@ To install these rules, execute these instructions:
 
 ### Debian-based distros:
 
-A user needs to be a member of the plugdev group to access hot-pluggable devices (Sifteo base, digital cameras, USB drives, etc.). Make sure you are in this group by running the "groups" command and checking if the output includes “plugdev”. If not, add yourself to plugdev with:
+A user needs to be a member of the plugdev group to access hot-pluggable devices (Sifteo base, digital cameras, USB drives, etc.). Make sure you are in this group by running the **groups** command and checking if the output includes **plugdev**. If not, add yourself to plugdev with:
 
     $ sudo usermod -a -G plugdev $USER
 
-Then log back out and log back in.
-After that’s done, restart udev:
+Then log back out and log back in. After that’s done, restart udev:
 
     $ sudo restart udev
 
