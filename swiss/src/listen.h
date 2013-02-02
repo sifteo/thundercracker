@@ -15,12 +15,13 @@ public:
 private:
     Listen(IODevice &_dev);
 
-    bool listen(const char *elfpath, const char *outpath);
+    bool listen(const char *elfpath, const char *outpath, bool flushLogs=false);
     bool writeRecord(FILE *f, const USBProtocolMsg &m);
 
     IODevice &dev;
     ELFDebugInfo dbgInfo;
     LogDecoder logDecoder;
+
 
     static bool getFileOrStdout(FILE **f, const char *path);
     static void onSignal(int sig);
