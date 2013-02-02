@@ -43,6 +43,32 @@ Depending on what you have installed, you'll see some results similar to those b
     0d  Launcher    128      0 com.sifteo.launcher     0.1     System Launcher
     10  Game        128      0 com.sifteo.extras.hello 0.1     Hello World SDK Example
 
+# Logging {#logging}
+
+`swiss listen` accepts LOG() data from the Sifteo base, formats it, and prints it.
+
+To start logging from your base, make sure it's connected via USB, insert some calls to LOG() in your game, install it and start running it. Then execute the following in the SDK shell:
+
+    $ swiss listen mygame.elf
+
+You should see your log statements printed to the console.
+
+In order to log as efficiently as possible, the base sends the bare minimum of log info at runtime, and swiss is responsible for accessing your game's .elf to perform the printf-style formatting - this is why it's necessary for `swiss listen` to know the .elf that you're running. This has a couple nice properties:
+
+* the base does less work by offloading the more complex formatting operation to the more capable host machine
+* the base sends fewer bytes over the USB connection, instead of sending fully formatted strings
+* fewer bytes are stored on the base within your game's binary - smaller overall size, and less cache impact at runtime
+
+## Options
+
+If you'd like to send the log output to a file instead:
+
+    $ swiss listen mygame.elf --fout mylogfile.txt
+
+If you'd like to receive the log output immediately (helpful for real-time visualizations, for example), you can ask swiss to flush the log buffer after every write by specifying the `--flush-logs` option:
+
+    $ swiss listen mygame.elf --flush-logs
+
 # Retrieve Saved Data   {#savedata}
 
 At runtime, your app may store persistent data via Sifteo::StoredObject - this could be metrics, game save data, or anything you like. swiss can retrieve this data for your inspection.
