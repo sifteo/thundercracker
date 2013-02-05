@@ -304,7 +304,7 @@ bool AudioMixer::play(const struct _SYSAudioModule *mod,
     return true;
 }
 
-bool AudioMixer::isPlaying(_SYSAudioChannelID ch)
+bool AudioMixer::isPlaying(_SYSAudioChannelID ch) const
 {
     // Invalid channel?
     if (ch >= _SYS_AUDIO_MAX_CHANNELS) {
@@ -372,7 +372,7 @@ void AudioMixer::setVolume(_SYSAudioChannelID ch, uint16_t volume)
     channelSlots[ch].setVolume(volume);
 }
 
-int AudioMixer::volume(_SYSAudioChannelID ch)
+int AudioMixer::volume(_SYSAudioChannelID ch) const
 {
     // Invalid channel?
     if (ch >= _SYS_AUDIO_MAX_CHANNELS) {
@@ -405,7 +405,7 @@ void AudioMixer::setPos(_SYSAudioChannelID ch, uint32_t ofs)
     channelSlots[ch].setPos(ofs);
 }
 
-uint32_t AudioMixer::pos(_SYSAudioChannelID ch)
+uint32_t AudioMixer::pos(_SYSAudioChannelID ch) const
 {
     // Invalid channel?
     if (ch >= _SYS_AUDIO_MAX_CHANNELS) {

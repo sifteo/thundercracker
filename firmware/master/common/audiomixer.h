@@ -32,19 +32,19 @@ public:
 
     bool play(const struct _SYSAudioModule *mod, _SYSAudioChannelID ch,
         _SYSAudioLoopType loopMode = _SYS_LOOP_ONCE);
-    bool isPlaying(_SYSAudioChannelID ch);
+    bool isPlaying(_SYSAudioChannelID ch) const;
     void stop(_SYSAudioChannelID ch);
 
     void pause(_SYSAudioChannelID ch);
     void resume(_SYSAudioChannelID ch);
 
     void setVolume(_SYSAudioChannelID ch, uint16_t volume);
-    int volume(_SYSAudioChannelID ch);
+    int volume(_SYSAudioChannelID ch) const;
 
     void setSpeed(_SYSAudioChannelID ch, uint32_t samplerate);
 
     void setPos(_SYSAudioChannelID ch, uint32_t ofs);
-    uint32_t pos(_SYSAudioChannelID ch);
+    uint32_t pos(_SYSAudioChannelID ch) const;
 
     void setLoop(_SYSAudioChannelID ch, _SYSAudioLoopType loopMode);
 
