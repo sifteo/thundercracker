@@ -7,10 +7,11 @@
  * Driver for the Nordic nRF8001 Bluetooth Low Energy controller
  */
 
-#include "nrf8001.h"
+#include "nrf8001/nrf8001.h"
 #include "board.h"
 #include "sampleprofiler.h"
 
+#ifdef HAVE_NRF8001
 NRF8001 NRF8001::instance(NRF8001_REQN_GPIO,
                           NRF8001_RDYN_GPIO,
                           SPIMaster(&NRF8001_SPI,
@@ -18,6 +19,8 @@ NRF8001 NRF8001::instance(NRF8001_REQN_GPIO,
                                     NRF8001_MISO_GPIO,
                                     NRF8001_MOSI_GPIO,
                                     staticSpiCompletionHandler));
+#endif // HAVE_NRF8001
+
 
 void NRF8001::init()
 {
