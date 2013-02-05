@@ -21,7 +21,7 @@ public:
     };
 
     // Reset the internal state of the decoder
-    void init();
+    void init(bool flushLogs);
 
     // Add a handler for a new kind of script
     void setScriptHandler(unsigned type, ScriptHandler handler);
@@ -40,6 +40,7 @@ private:
     unsigned scriptType;
     std::string scriptBuffer;
     std::map<unsigned, ScriptHandler> handlers;
+    bool flushLogs;
 };
 
 #endif  // LOG_DECODER_H

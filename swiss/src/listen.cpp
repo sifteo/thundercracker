@@ -23,16 +23,22 @@ int Listen::run(int argc, char **argv, IODevice &_dev)
 
     // optional out file, defaults to stdout
     char *outpath = NULL;
+    bool flush = false;
     for (int i = 2; i < argc; ++i) {
+
+        if (strcmp(argv[i], "--flush-logs") == 0) {
+            flush = true;
+        }
 
         if (i + 1 < argc && !strcmp(argv[i], "--fout")) {
             outpath = argv[i + 1];
             i++;
         }
+
     }
 
     Listen listener(_dev);
-    return listener.listen(elfpath, outpath) ? 0 : 1;
+    return listener.listen(elfpath, outpath, flush) ? 0 : 1;
 }
 
 Listen::Listen(IODevice &_dev) :
@@ -64,7 +70,7 @@ bool Listen::getFileOrStdout(FILE **f, const char *path)
     return true;
 }
 
-bool Listen::listen(const char *elfpath, const char * outpath)
+bool Listen::listen(const char *elfpath, const char * outpath, bool flushLogs)
 {
     if (!dev.open(IODevice::SIFTEO_VID, IODevice::BASE_PID)) {
         return false;
@@ -80,7 +86,7 @@ bool Listen::listen(const char *elfpath, const char * outpath)
         return false;
     }
 
-    logDecoder.init();
+    logDecoder.init(flushLogs);
 
     while (!interruptRequested) {
 

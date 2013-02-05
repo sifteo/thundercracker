@@ -40,7 +40,7 @@ static const Command commands[] = {
     {
         "listen",
         "listen for and decode log activity from the Sifteo base",
-        "listen <app.elf> [--fout <file.txt>]",
+        "listen <app.elf> [--fout <file.txt> | --flush-logs]",
         Listen::run
     },
     {

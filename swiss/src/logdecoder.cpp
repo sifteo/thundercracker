@@ -8,8 +8,9 @@
  *      Factor out and share.
  */
 
-void LogDecoder::init()
+void LogDecoder::init(bool aFlushLogs)
 {
+    flushLogs = aFlushLogs;
     scriptType = _SYS_SCRIPT_NONE;
     scriptBuffer.clear();
     handlers.clear();
@@ -247,6 +248,9 @@ void LogDecoder::writeLog(FILE *f, const char *str)
 {
     if (scriptType == _SYS_SCRIPT_NONE) {
         fprintf(f, "%s", str);
+        if (flushLogs) {
+            fflush(f);
+        }
     } else {
         scriptBuffer += str;
     }

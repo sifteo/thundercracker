@@ -24,6 +24,9 @@ LDFLAGS += -nostdlib -lgcc
 VERSION := $(shell git describe --tags)
 FLAGS += -DSDK_VERSION=$(VERSION)
 
+OSVERSION := $(shell python $(TC_DIR)/tools/osversion.py)
+FLAGS += -DOS_VERSION=$(OSVERSION)
+
 # Always build with debug symbols (It can't hurt)
 FLAGS += -g3
 
