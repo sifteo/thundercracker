@@ -60,7 +60,7 @@ void TabularList::end()
             if ((flags & RIGHT) == 0)
                 w = -w;
 
-            printf("%s%*s", " "+!j, w, cell);
+            printf("%s%*s", j ? " " : "", w, cell);
         }
         printf("\n");
     }
