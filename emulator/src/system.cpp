@@ -28,7 +28,7 @@ System::System()
         opt_svmTrace(false),
         opt_svmFlashStats(false),
         opt_gdbServerPort(0),
-        opt_cube0Debug(NULL),
+        opt_cube0Debug(false),
         opt_mute(false),
         opt_radioNoise(0),
         mIsInitialized(false),
