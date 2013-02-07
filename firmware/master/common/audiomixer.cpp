@@ -137,8 +137,17 @@ void AudioMixer::pullAudio()
         MCAudioVisData::instance.mixerActive = AudioMixer::instance.active();
     #endif
 
-    if (!AudioMixer::instance.active() && AudioMixer::instance.trackerCallbackInterval == 0)
-        return;
+    if (!AudioMixer::instance.active()) {
+
+        // must give simulated audio device a chance to pull any
+        // data already in the mix buffer, even if all channels have emptied
+        if (!headless) {
+            AudioOutDevice::pullFromMixer();
+        }
+
+        if (AudioMixer::instance.trackerCallbackInterval == 0)
+            return;
+    }
 
     /*
      * In order to amortize the cost of iterating over channels, our
@@ -230,8 +239,15 @@ void AudioMixer::pullAudio()
          * samples flowing in order to keep its clock advancing.
          * Generate silence.
          */
-        if (!mixed && trackerInterval == 0)
-            break;
+        if (!mixed) {
+
+            #ifdef SIFTEO_SIMULATOR
+                output.enqueue(AudioOutDevice::END_OF_STREAM);
+            #endif
+
+            if (trackerInterval == 0)
+                break;
+        }
 
         trackerCountdown -= blockSize;
         samplesLeft -= blockSize;

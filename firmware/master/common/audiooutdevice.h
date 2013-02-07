@@ -20,6 +20,8 @@ public:
     static void start();
     static void stop();
 
+    static const unsigned END_OF_STREAM = 0x8000;
+
     /*
      * On real hardware, our audio device is 100% interrupt driven, and it pulls
      * directly from the mixing buffer. On Siftulator, we don't have control over
