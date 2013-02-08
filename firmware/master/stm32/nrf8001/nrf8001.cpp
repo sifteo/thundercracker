@@ -14,6 +14,10 @@
 #include "sampleprofiler.h"
 #include "systime.h"
 
+/*
+ * Hardware instance
+ */
+
 #ifdef HAVE_NRF8001
 
 NRF8001 NRF8001::instance(NRF8001_REQN_GPIO,
@@ -31,6 +35,17 @@ IRQ_HANDLER ISR_FN(NRF8001_EXTI_VEC)()
 
 #endif // HAVE_NRF8001
 
+/*
+ * States for our produceSystemCommand() state machine
+ */
+namespace SysCS {
+    enum SystemCommandState {
+        SetupFirst = 0,
+        SetupLast = SetupFirst + NB_SETUP_MESSAGES - 1,
+        Idle,
+    };
+}
+
 
 void NRF8001::init()
 {
@@ -45,8 +60,8 @@ void NRF8001::init()
     // Reset state
     txBuffer.length = 0;
     requestsPending = 0;
-    numSetupPacketsSent = 0;
-    operatingMode = 0;
+    sysCommandState = SysCS::SetupFirst;
+    sysCommandPending = false;
 
     // Output pin, requesting a transaction
     reqn.setHigh();
@@ -171,20 +186,48 @@ void NRF8001::requestTransaction()
 
 void NRF8001::produceCommand()
 {
-    // Do we need to send more SETUP data before the controller is initialized?
-    if (numSetupPacketsSent < NB_SETUP_MESSAGES)
-        return produceSetupCommand();
-
-    // The nRF8001 will sleep immediately after SETUP. We want it to stay awake.
-    if (operatingMode == OperatingMode::Standby) {
-        txBuffer.length = 1;
-        txBuffer.command = Op::Wakeup;
-        operatingMode = OperatingMode::Awake;
-        return requestTransaction();
+    // System commands are highest priority, but at most one can be pending at a time.
+    if (!sysCommandPending && produceSystemCommand()) {
+        sysCommandPending = true;
+        return;
     }
+
+    // XXX: Send data commands here if we need to.
 
     // Nothing to do.
     txBuffer.length = 0;
+}
+
+bool NRF8001::produceSystemCommand()
+{
+    switch (sysCommandState) {
+
+        default:
+        case SysCS::Idle:
+            return false;
+
+        case SysCS::SetupFirst ... SysCS::SetupLast: {
+            /*
+             * Send the next SETUP packet.
+             * Thanks a lot, Nordic, this format is terrible.
+             */
+
+            static const struct {
+                uint8_t unused;
+                uint8_t data[ACI_PACKET_MAX_LEN];
+            } packets[] = SETUP_MESSAGES_CONTENT;
+
+            STATIC_ASSERT(sizeof txBuffer == sizeof packets[0].data);
+            STATIC_ASSERT(SysCS::SetupLast - SysCS::SetupFirst == arraysize(packets) - 1);
+            STATIC_ASSERT(SysCS::SetupLast + 1 == SysCS::Idle);
+
+            memcpy(&txBuffer, packets[sysCommandState - SysCS::SetupFirst].data, sizeof txBuffer);
+            sysCommandState++;
+
+            return true;
+        }
+
+    }
 }
 
 void NRF8001::handleEvent()
@@ -196,25 +239,15 @@ void NRF8001::handleEvent()
 
     switch (rxBuffer.event) {
 
-        case Op::DeviceStartedEvent:
+        case Op::CommandResponseEvent:
             /*
-             * The nRF8001 was reset or changed modes. If we just finished SETUP,
-             * it will go to sleep. We need to remember to wake it up.
+             * The last command finished. This is where we would take note of the status
+             * if we need to. Only one system command may be pending at a time, so this
+             * lets us move to the next command if we want.
              */
-            operatingMode = rxBuffer.param[0];
-            break;
+            sysCommandPending = false;
+            return requestTransaction();
+
     }
 }
 
-void NRF8001::produceSetupCommand()
-{
-    // Thanks a lot, Nordic, this format is terrible.
-    static const struct {
-        uint8_t unused;
-        uint8_t data[ACI_PACKET_MAX_LEN];
-    } packets[] = SETUP_MESSAGES_CONTENT;
-
-    STATIC_ASSERT(sizeof txBuffer == sizeof packets[0].data);
-    memcpy(&txBuffer, packets[numSetupPacketsSent++].data, sizeof txBuffer);
-    requestTransaction();
-}

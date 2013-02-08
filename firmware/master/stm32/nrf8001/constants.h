@@ -66,7 +66,6 @@ namespace Op {
 
 namespace OperatingMode {
     enum NRF8001OperatingMode {
-        Awake   = 0x00,
         Test    = 0x01,
         Setup   = 0x02,
         Standby = 0x03,

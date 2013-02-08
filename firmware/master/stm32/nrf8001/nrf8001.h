@@ -47,18 +47,20 @@ private:
     // Owned by ISR context
     ACICommandBuffer txBuffer;
     ACIEventBuffer rxBuffer;
-    bool requestsPending;
-    uint8_t numSetupPacketsSent;
-    uint8_t operatingMode;
+    bool requestsPending;        // Need at least one more request after the current one finishes
+    uint8_t sysCommandState;     // produceSysteCommand() state machine
+    uint8_t sysCommandPending;   // Are we waiting on a response to a command?
 
     static void staticSpiCompletionHandler();
     void onSpiComplete();
 
+    // Low-level ACI interface
     void requestTransaction();   // Ask nicely for produceCommand() to be called once.
     void produceCommand();       // Fill the txBuffer if we can. ISR context only.
     void handleEvent();          // Consume the rxBuffer. ISR context only.
 
-    void produceSetupCommand();
+    // System command state machine
+    bool produceSystemCommand();
 };
 
 #endif
