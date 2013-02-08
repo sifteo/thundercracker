@@ -33,9 +33,10 @@ IRQ_HANDLER ISR_FN(NRF8001_EXTI_VEC)()
 
 void NRF8001::init()
 {
+    // 3 MHz maximum SPI clock according to data sheet. Mode 0, LSB first.
     const SPIMaster::Config cfg = {
         Dma::MediumPrio,
-        SPIMaster::fPCLK_16   // 3 MHz maximum according to data sheet
+        SPIMaster::fPCLK_16 | SPIMaster::fLSBFIRST
     };
 
     spi.init(cfg);
