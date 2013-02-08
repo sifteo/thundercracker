@@ -194,12 +194,17 @@ bool FwLoader::sendFirmwareFile(FILE *f, uint32_t crc, uint32_t size)
         const unsigned payload = MIN(dev.maxOUTPacketSize() - 1, initialBytesToSend);
         const unsigned chunk = (payload / AES128::BLOCK_SIZE) * AES128::BLOCK_SIZE;
         const int numBytes = fread(usbBuf + 1, 1, chunk, f);
-        if (numBytes != chunk)
+        if (numBytes != chunk) {
             return false;
+        }
 
-        dev.writePacket(usbBuf, numBytes + 1);
-        while (dev.numPendingOUTPackets() > IODevice::MAX_OUTSTANDING_OUT_TRANSFERS)
+        if (dev.writePacket(usbBuf, numBytes + 1) < 0) {
+            return false;
+        }
+
+        while (dev.numPendingOUTPackets() > IODevice::MAX_OUTSTANDING_OUT_TRANSFERS) {
             dev.processEvents(1);
+        }
 
         progress += numBytes;
         initialBytesToSend -= numBytes;
@@ -234,7 +239,10 @@ bool FwLoader::sendFirmwareFile(FILE *f, uint32_t crc, uint32_t size)
     memcpy(p, &size, sizeof(size));
     p += sizeof(size);
 
-    dev.writePacket(finalBuf, p - finalBuf);
+    if (dev.writePacket(finalBuf, p - finalBuf) < 0) {
+        return false;
+    }
+
     while (dev.numPendingOUTPackets())
         dev.processEvents(1);
 
