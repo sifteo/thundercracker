@@ -26,6 +26,7 @@
 #include "neighbor_tx.h"
 #include "led.h"
 #include "batterylevel.h"
+#include "nrf8001/nrf8001.h"
 
 /*
  * Application specific entry point.
@@ -186,6 +187,11 @@ int main()
 
     PowerManager::beginVbusMonitor();
     SampleProfiler::init();
+
+#ifdef HAVE_NRF8001
+    // Initialize Bluetooth LE radio. Includes a short power-on delay. (Shorter than Radio::init)
+    NRF8001::instance.init();
+#endif
 
     // Includes radio power-on delay. Initialize this last.
     Radio::init();

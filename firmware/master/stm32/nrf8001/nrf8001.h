@@ -4,7 +4,7 @@
  */
 
 /*
- * Driver for the Nordic nRF8001 Bluetooth Low Energy controller
+ * Driver for the Nordic nRF8001 Bluetooth Low Energy controller.
  */
 
 #ifndef _NRF8001_H
@@ -19,7 +19,7 @@ public:
             GPIOPin _rdyn,
             SPIMaster _spi)
         : reqn(_reqn), rdyn(_rdyn), spi(_spi)
-          {}
+        {}
 
     static NRF8001 instance;
 
@@ -35,18 +35,24 @@ public:
     };
 
     void init();
+
     void isr();
 
- private:
+private:
     GPIOPin reqn;
     GPIOPin rdyn;
     SPIMaster spi;
 
     ACICommandBuffer txBuffer;
     ACIEventBuffer rxBuffer;
+    bool requestsPending;
 
     static void staticSpiCompletionHandler();
     void onSpiComplete();
+
+    void requestTransaction();   // Ask nicely for produceCommand() to be called once.
+    void produceCommand();       // Fill the txBuffer if we can. ISR context only.
+    void handleEvent();          // Consume the rxBuffer. ISR context only.
 };
 
 #endif
