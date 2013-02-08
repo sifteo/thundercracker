@@ -81,6 +81,10 @@ public:
     struct SysInfoReply {
         uint8_t baseUniqueID[SysInfo::UniqueIdNumBytes];
         uint8_t baseHwRevision;
+        // earlier versions included only the above
+        uint8_t pad;
+        uint16_t pad2;
+        uint32_t sysVersion;
     };
 
     struct LFSObjectHeader {
