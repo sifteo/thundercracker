@@ -1,5 +1,7 @@
 #include "basedevice.h"
 
+#include <stddef.h>
+
 /*
  * iodevice is assumed to already be open/configured.
  */
@@ -60,8 +62,16 @@ const UsbVolumeManager::SysInfoReply *BaseDevice::getBaseSysInfo(USBProtocolMsg 
         return 0;
     }
 
-    if (msg.payloadLen() >= sizeof(UsbVolumeManager::SysInfoReply)) {
-        return msg.castPayload<UsbVolumeManager::SysInfoReply>();
+    UsbVolumeManager::SysInfoReply *r = msg.castPayload<UsbVolumeManager::SysInfoReply>();
+
+    // handle responses from earlier bases that don't include anything beyond baseHwRevision
+    if (msg.payloadLen() == offsetof(UsbVolumeManager::SysInfoReply, baseHwRevision) + 1) {
+        r->sysVersion = 0;
+        return r;
+    }
+
+    if (msg.payloadLen() >= sizeof(*r)) {
+        return r;
     }
 
     return 0;

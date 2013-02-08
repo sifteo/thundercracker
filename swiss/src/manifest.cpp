@@ -66,7 +66,11 @@ bool Manifest::dumpBaseSysInfo()
     for (unsigned i = 0; i < sizeof(sysInfo->baseUniqueID); ++i) {
         printf("%02x", sysInfo->baseUniqueID[i]);
     }
-    printf("  Hardware Revision: %d\n", sysInfo->baseHwRevision);
+    printf("  Hardware Revision: %d", sysInfo->baseHwRevision);
+    if (sysInfo->sysVersion) {
+        printf("  OS Version: 0x%06x", sysInfo->sysVersion);
+    }
+    printf("\n");
 
     if (isRPC) {
 
@@ -91,6 +95,10 @@ bool Manifest::dumpBaseSysInfo()
             fprintf(stdout, "%02x", sysInfo->baseUniqueID[i]);
         }
         fprintf(stdout, ":%u\n", sysInfo->baseHwRevision);
+
+        if (sysInfo->sysVersion) {
+            printf("::os-version:0x%06x\n", sysInfo->sysVersion);
+        }
     }
 
     return true;
