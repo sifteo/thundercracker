@@ -8,6 +8,7 @@
  */
 
 #include "nrf8001/nrf8001.h"
+#include "nrf8001/services.h"
 #include "board.h"
 #include "sampleprofiler.h"
 #include "systime.h"
@@ -39,9 +40,10 @@ void NRF8001::init()
 
     spi.init(cfg);
 
-    // Reset low-level buffer state
+    // Reset state
     txBuffer.length = 0;
     requestsPending = 0;
+    numSetupPacketsSent = 0;
 
     // Output pin, requesting a transaction
     reqn.setHigh();
@@ -166,13 +168,27 @@ void NRF8001::requestTransaction()
 
 void NRF8001::produceCommand()
 {
-    // XXX debug
+    // Do we need to send more SETUP data before the controller is initialized?
+    if (numSetupPacketsSent < NB_SETUP_MESSAGES)
+        return produceSetupCommand();
+
+    // Nothing to do.
     txBuffer.length = 0;
-    txBuffer.cmd[0]++;
-    requestTransaction();
 }
 
 void NRF8001::handleEvent()
 {
 }
 
+void NRF8001::produceSetupCommand()
+{
+    // Thanks a lot, Nordic, this format is terrible.
+    static const struct {
+        uint8_t unused;
+        uint8_t data[ACI_PACKET_MAX_LEN];
+    } packets[] = SETUP_MESSAGES_CONTENT;
+
+    STATIC_ASSERT(sizeof txBuffer == sizeof packets[0].data);
+    memcpy(&txBuffer, packets[numSetupPacketsSent++].data, sizeof txBuffer);
+    requestTransaction();
+}
