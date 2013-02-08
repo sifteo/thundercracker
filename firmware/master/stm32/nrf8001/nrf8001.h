@@ -29,23 +29,27 @@ public:
 private:
     struct ACICommandBuffer {
         uint8_t length;
-        uint8_t cmd[31];
+        uint8_t command;
+        uint8_t param[30];
     };
 
     struct ACIEventBuffer {
         uint8_t debug;
         uint8_t length;
-        uint8_t event[30];
+        uint8_t event;
+        uint8_t param[29];
     };
 
     GPIOPin reqn;
     GPIOPin rdyn;
     SPIMaster spi;
 
+    // Owned by ISR context
     ACICommandBuffer txBuffer;
     ACIEventBuffer rxBuffer;
     bool requestsPending;
     uint8_t numSetupPacketsSent;
+    uint8_t operatingMode;
 
     static void staticSpiCompletionHandler();
     void onSpiComplete();

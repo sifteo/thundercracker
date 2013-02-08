@@ -9,6 +9,7 @@
 
 #include "nrf8001/nrf8001.h"
 #include "nrf8001/services.h"
+#include "nrf8001/constants.h"
 #include "board.h"
 #include "sampleprofiler.h"
 #include "systime.h"
@@ -45,6 +46,7 @@ void NRF8001::init()
     txBuffer.length = 0;
     requestsPending = 0;
     numSetupPacketsSent = 0;
+    operatingMode = 0;
 
     // Output pin, requesting a transaction
     reqn.setHigh();
@@ -173,12 +175,35 @@ void NRF8001::produceCommand()
     if (numSetupPacketsSent < NB_SETUP_MESSAGES)
         return produceSetupCommand();
 
+    // The nRF8001 will sleep immediately after SETUP. We want it to stay awake.
+    if (operatingMode == OperatingMode::Standby) {
+        txBuffer.length = 1;
+        txBuffer.command = Op::Wakeup;
+        operatingMode = OperatingMode::Awake;
+        return requestTransaction();
+    }
+
     // Nothing to do.
     txBuffer.length = 0;
 }
 
 void NRF8001::handleEvent()
 {
+    if (rxBuffer.length == 0) {
+        // No pending event.
+        return;
+    }
+
+    switch (rxBuffer.event) {
+
+        case Op::DeviceStartedEvent:
+            /*
+             * The nRF8001 was reset or changed modes. If we just finished SETUP,
+             * it will go to sleep. We need to remember to wake it up.
+             */
+            operatingMode = rxBuffer.param[0];
+            break;
+    }
 }
 
 void NRF8001::produceSetupCommand()
