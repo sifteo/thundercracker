@@ -15,7 +15,8 @@
 class SPIMaster {
  public:
 
-    enum ClockDivisor {
+    enum Flags {
+        // Clock divisors
         fPCLK_2     = (0 << 3),
         fPCLK_4     = (1 << 3),
         fPCLK_8     = (2 << 3),
@@ -23,12 +24,19 @@ class SPIMaster {
         fPCLK_32    = (4 << 3),
         fPCLK_64    = (5 << 3),
         fPCLK_128   = (6 << 3),
-        fPCLK_256   = (7 << 3)
+        fPCLK_256   = (7 << 3),
+
+        // SPI clocking mode
+        fCPHA       = (1 << 0),
+        fCPOL       = (1 << 1),
+
+        // Bit order
+        fLSBFIRST   = (1 << 7)
     };
 
     struct Config {
         Dma::Priority dmaRxPrio;
-        ClockDivisor divisor;
+        unsigned flags;
         // others if we need them
     };
 
