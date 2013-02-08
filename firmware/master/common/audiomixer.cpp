@@ -242,7 +242,9 @@ void AudioMixer::pullAudio()
         if (!mixed) {
 
             #ifdef SIFTEO_SIMULATOR
+            if (!headless) {
                 output.enqueue(AudioOutDevice::END_OF_STREAM);
+            }
             #endif
 
             if (trackerInterval == 0)
