@@ -91,9 +91,9 @@ bool Installer::install(const char *path, int vid, int pid, bool launcher, bool 
     }
 
     if (launcher)
-        fprintf(stderr, "updating launcher (%d bytes)\n", fileSize);
+        printf("updating launcher (%d bytes)\n", fileSize);
     else
-        fprintf(stderr, "installing %s, version %s (%d bytes)\n",
+        printf("installing %s, version %s (%d bytes)\n",
             package.c_str(), version.c_str(), fileSize);
 
     bool success =  sendHeader(fileSize) &&
@@ -251,12 +251,12 @@ bool Installer::commit()
 
     if (m.payloadLen() >= 1) {
         uint8_t volumeBlockCode = m.payload[0];
-        fprintf(stderr, "successfully committed new volume 0x%x\n", volumeBlockCode);
+        printf("successfully committed new volume 0x%x\n", volumeBlockCode);
         if (isRPC) {
             fprintf(stdout, "::volume:%u\n", volumeBlockCode); fflush(stdout);
         }
     } else {
-        fprintf(stderr, "successfully committed new volume\n");
+        printf("successfully committed new volume\n");
     }
 
     return true;
