@@ -117,6 +117,7 @@ public:
     void pause();
     void setTempoModifier(int modifier);
     void setPatternBreak(uint16_t phrase, uint16_t row);
+    bool isUsingChannel(unsigned ch) const;
 
 private:
     // Frequency and period computation
