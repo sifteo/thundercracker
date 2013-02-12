@@ -21,6 +21,11 @@ namespace Sifteo {
 
 /**
  * @brief An audio asset, using any supported compression codec.
+ *
+ * `stir` generates an AssetAudio for each `sound` element in your assets.lua
+ * configuration file, most often from a WAV source file.
+ *
+ * See the @ref audio and @ref asset_workflow guides for details.
  */
 
 struct AssetAudio {
@@ -71,6 +76,18 @@ struct AssetAudio {
 
 /**
  * @brief A Tracker module, converted from XM format by `stir`
+ *
+ * Tracker modules are great for supporting longer musical cues with
+ * minimal storage requirements - it's efficient to have tracker modules
+ * with several minutes of music, while several minutes of sample data
+ * would be prohibitively large in many circumstances.
+ *
+ * To play an AssetTracker, see the AudioTracker.
+ *
+ * If you're looking for straight sample playback, often used for
+ * sound effects, see AssetAudio.
+ *
+ * See the @ref audio and @ref asset_workflow guides for details.
  */
 
 struct AssetTracker {
