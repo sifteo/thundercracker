@@ -30,4 +30,5 @@ void ProgressBar::redraw()
         fprintf(stdout, "%c", " #"[i < quantized]);
 
     fprintf(stdout, "]");
+    fflush(stdout);
 }
