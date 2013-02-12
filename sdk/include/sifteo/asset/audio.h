@@ -75,6 +75,31 @@ struct AssetAudio {
 
 struct AssetTracker {
     _SYSXMSong song;
+
+    /// The number of channels used by this tracker module.
+    unsigned numChannels() const {
+        return song.nChannels;
+    }
+
+    /// The number of patterns in this tracker module.
+    unsigned numPatterns() const {
+        return song.nPatterns;
+    }
+
+    /// The number of instruments in this tracker module.
+    unsigned numInstruments() const {
+        return song.nInstruments;
+    }
+
+    /// This tracker module's default tempo (ticks)
+    unsigned tempo() const {
+        return song.tempo;
+    }
+
+    /// This tracker module's default beates per minute (notes)
+    unsigned bpm() const {
+        return song.bpm;
+    }
 };
 
 /**
