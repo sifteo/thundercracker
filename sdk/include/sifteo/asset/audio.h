@@ -113,7 +113,7 @@ struct AssetTracker {
         return song.tempo;
     }
 
-    /// This tracker module's default beates per minute (notes)
+    /// This tracker module's default beats per minute (notes)
     unsigned bpm() const {
         return song.bpm;
     }
