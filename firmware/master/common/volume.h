@@ -6,6 +6,7 @@
 #ifndef _VOLUME_H
 #define _VOLUME_H
 
+#include "systime.h"
 #include <stdint.h>
 
 namespace Volume
@@ -26,6 +27,9 @@ namespace Volume
      * without dropping out completely.
      */
     int systemVolume();
+    bool isActive();
+
+    void task();
 
     static const int MAX_VOLUME = 0x10000;
     static const int MAX_VOLUME_LOG2 = 16;
