@@ -105,6 +105,12 @@ void NRF8001::isr()
     SampleProfiler::SubSystem s = SampleProfiler::subsystem();
     SampleProfiler::setSubsystem(SampleProfiler::BluetoothISR);
 
+#if 1
+    // XXX: Bogus delay to let me run two nRF8001s in lockstep off the same SPI commands.
+    //      For hardware debugging purposes only.
+    for (volatile long i = 0; i < 10000; ++i);
+#endif
+
     // Acknowledge to the IRQ controller
     rdyn.irqAcknowledge();
 
