@@ -108,6 +108,21 @@ void AudioOutDevice::stop()
     PwmAudioOut::outB.setHigh();
 }
 
+void AudioOutDevice::setLow()
+{
+    PwmAudioOut::outA.setControl(GPIOPin::OUT_2MHZ);
+    PwmAudioOut::outB.setControl(GPIOPin::OUT_2MHZ);
+    PwmAudioOut::outA.setLow();
+    PwmAudioOut::outB.setLow();
+}
+
+void AudioOutDevice::setHigh()
+{
+    PwmAudioOut::outA.setControl(GPIOPin::OUT_2MHZ);
+    PwmAudioOut::outB.setControl(GPIOPin::OUT_2MHZ);
+    PwmAudioOut::outA.setHigh();
+    PwmAudioOut::outB.setHigh();
+}
 
 IRQ_HANDLER ISR_FN(AUDIO_SAMPLE_TIM)()
 {
