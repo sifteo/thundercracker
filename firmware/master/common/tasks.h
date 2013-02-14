@@ -50,7 +50,8 @@ public:
         Heartbeat,
         Profiler,
         TestJig,
-        FactoryTest
+        FactoryTest,
+        Volume
     };
 
     static void init() {

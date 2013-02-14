@@ -24,6 +24,7 @@
 #   include "sampleprofiler.h"
 #   include "powermanager.h"
 #   include "factorytest.h"
+#   include "volume.h"
 #   if (BOARD == BOARD_TEST_JIG)
 #       include "testjig.h"
 #   endif
@@ -60,6 +61,7 @@ ALWAYS_INLINE void Tasks::taskInvoke(unsigned id)
     #if !defined(SIFTEO_SIMULATOR) && !defined(BOOTLOADER)
         case Tasks::Profiler:       return SampleProfiler::task();
         case Tasks::FactoryTest:    return FactoryTest::task();
+        case Tasks::Volume:         return Volume::task();
     #endif
 
     }
