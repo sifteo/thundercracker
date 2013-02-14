@@ -19,6 +19,8 @@ public:
     static void init();
     static void start();
     static void stop();
+    static void setLow();
+    static void setHigh();
 
     static const unsigned END_OF_STREAM = 0x8000;
 
