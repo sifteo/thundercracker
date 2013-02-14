@@ -2,21 +2,43 @@
 <!DOCTYPE AttributeServer>
 <Profile Version="1.3">
     <SetupId>0</SetupId>
-    <Device>nRF8001_Cx</Device>
+    <Device>nRF8001_Dx</Device>
     <Service Type="local" PrimaryService="true">
-        <Name>Battery</Name>
-        <Uuid>180f</Uuid>
+        <Name>Sifteo Base</Name>
+        <Uuid BaseUUID="566d00003c6f862106d3c14d4768bd75" BaseUUIDName="Sifteo">0001</Uuid>
         <Characteristic>
-            <Name>Battery Level</Name>
-            <Uuid>2a19</Uuid>
-            <DefaultValue>00</DefaultValue>
+            <Name>Data IN</Name>
+            <Uuid BaseUUID="566d00003c6f862106d3c14d4768bd75" BaseUUIDName="Sifteo">0002</Uuid>
+            <DefaultValue></DefaultValue>
             <UsePresentationFormat>0</UsePresentationFormat>
             <UserDescription></UserDescription>
-            <MaxDataLength>1</MaxDataLength>
-            <AttributeLenType>1</AttributeLenType>
+            <MaxDataLength>20</MaxDataLength>
+            <AttributeLenType>2</AttributeLenType>
             <ForceOpen>false</ForceOpen>
             <Properties>
                 <WriteWithoutResponse>false</WriteWithoutResponse>
+                <Write>false</Write>
+                <Notify>true</Notify>
+                <Indicate>false</Indicate>
+                <Broadcast>false</Broadcast>
+            </Properties>
+            <SetPipe>false</SetPipe>
+            <AckIsAuto>false</AckIsAuto>
+            <PresentationFormatDescriptor Value="0000" Exponent="0" Format="1" NameSpace="01" Unit="0000"/>
+            <PeriodForReadingThisCharacteristic>0</PeriodForReadingThisCharacteristic>
+            <PeriodForProperties/>
+        </Characteristic>
+        <Characteristic>
+            <Name>Data OUT</Name>
+            <Uuid BaseUUID="566d00003c6f862106d3c14d4768bd75" BaseUUIDName="Sifteo">0003</Uuid>
+            <DefaultValue></DefaultValue>
+            <UsePresentationFormat>0</UsePresentationFormat>
+            <UserDescription></UserDescription>
+            <MaxDataLength>20</MaxDataLength>
+            <AttributeLenType>2</AttributeLenType>
+            <ForceOpen>false</ForceOpen>
+            <Properties>
+                <WriteWithoutResponse>true</WriteWithoutResponse>
                 <Write>false</Write>
                 <Notify>false</Notify>
                 <Indicate>false</Indicate>
@@ -28,12 +50,34 @@
             <PeriodForReadingThisCharacteristic>0</PeriodForReadingThisCharacteristic>
             <PeriodForProperties/>
         </Characteristic>
+        <Characteristic>
+            <Name>Firmware Revision String</Name>
+            <Uuid>2a26</Uuid>
+            <DefaultValue></DefaultValue>
+            <UsePresentationFormat>1</UsePresentationFormat>
+            <UserDescription></UserDescription>
+            <MaxDataLength>8</MaxDataLength>
+            <AttributeLenType>1</AttributeLenType>
+            <ForceOpen>false</ForceOpen>
+            <Properties>
+                <WriteWithoutResponse>false</WriteWithoutResponse>
+                <Write>false</Write>
+                <Notify>false</Notify>
+                <Indicate>false</Indicate>
+                <Broadcast>false</Broadcast>
+            </Properties>
+            <SetPipe>true</SetPipe>
+            <AckIsAuto>false</AckIsAuto>
+            <PresentationFormatDescriptor Value="0000" Exponent="0" Format="25" NameSpace="01" Unit="0000"/>
+            <PeriodForReadingThisCharacteristic>0</PeriodForReadingThisCharacteristic>
+            <PeriodForProperties/>
+        </Characteristic>
     </Service>
     <Gapsettings>
         <Name>Sifteo Base</Name>
         <DeviceNameWriteLength>0</DeviceNameWriteLength>
         <LocalPipeOnDeviceName>false</LocalPipeOnDeviceName>
-        <DeviceNameShortLength>11</DeviceNameShortLength>
+        <DeviceNameShortLength>1</DeviceNameShortLength>
         <Apperance>0000</Apperance>
         <SecurityLevel>0</SecurityLevel>
         <AuthenticationReq>0</AuthenticationReq>
@@ -43,10 +87,10 @@
         <MinimumKeySize>7</MinimumKeySize>
         <MaximumKeySize>16</MaximumKeySize>
         <AdvertisingDataBondedBitmap>0</AdvertisingDataBondedBitmap>
-        <AdvertisingDataGeneralBitmap>0</AdvertisingDataGeneralBitmap>
-        <AdvertisingDataBrodcastBitmap>0</AdvertisingDataBrodcastBitmap>
+        <AdvertisingDataGeneralBitmap>10</AdvertisingDataGeneralBitmap>
+        <AdvertisingDataBrodcastBitmap>10</AdvertisingDataBrodcastBitmap>
         <AdvertisingDataBondedScanResponseBitmap>0</AdvertisingDataBondedScanResponseBitmap>
-        <AdvertisingDataGeneralScanResponseBitmap>0</AdvertisingDataGeneralScanResponseBitmap>
+        <AdvertisingDataGeneralScanResponseBitmap>4a</AdvertisingDataGeneralScanResponseBitmap>
         <AdvertisingDataBrodcastScanResponseBitmap>0</AdvertisingDataBrodcastScanResponseBitmap>
         <AdvertisingDataBondedBitmapCustom>0</AdvertisingDataBondedBitmapCustom>
         <AdvertisingDataGeneralBitmapCustom>0</AdvertisingDataGeneralBitmapCustom>
@@ -59,10 +103,16 @@
         <MaximumConnectionInterval>65535</MaximumConnectionInterval>
         <SlaveLatency>0</SlaveLatency>
         <TimeoutMultipler>65535</TimeoutMultipler>
-        <ServiceToAdvertise>
-            <Uuid>180f</Uuid>
-        </ServiceToAdvertise>
-        <CustomAdTypes/>
+        <CustomAdTypes>
+            <AdType index="1">
+                <Type>19</Type>
+                <Value>0000</Value>
+            </AdType>
+            <AdType index="2">
+                <Type>18</Type>
+                <Value></Value>
+            </AdType>
+        </CustomAdTypes>
     </Gapsettings>
     <Hardwaresettings>
         <Clocksource>1</Clocksource>
