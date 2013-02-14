@@ -202,6 +202,18 @@ void AudioMixer::pullAudio()
     const int mixerVolume = Volume::systemVolume();
     ASSERT(mixerVolume >= 0 && mixerVolume <= Volume::MAX_VOLUME);
 
+    #ifdef SIFTEO_SIMULATOR
+        /*
+         * Reserve one slot for an end-of-stream token in simulation.
+         * Because the mix loop may continue after the stream has ended
+         * (ie, to keep ticking the tracker's clock), ensure we only
+         * send the first end-of-stream that we see.
+         */
+        samplesLeft--;
+        bool endOfStreamSet = false;
+    #endif
+
+
     do {
         bool mixed;
         uint32_t blockSize = MIN(arraysize(blockBuffer), samplesLeft);
@@ -243,7 +255,10 @@ void AudioMixer::pullAudio()
 
             #ifdef SIFTEO_SIMULATOR
             if (!headless) {
-                output.enqueue(AudioOutDevice::END_OF_STREAM);
+                if (!endOfStreamSet) {
+                    output.enqueue(AudioOutDevice::END_OF_STREAM);
+                    endOfStreamSet = true;
+                }
             }
             #endif
 

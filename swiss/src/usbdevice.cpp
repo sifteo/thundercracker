@@ -247,7 +247,7 @@ int UsbDevice::writePacket(const uint8_t *buf, unsigned len)
 
     int r = libusb_submit_transfer(txfer);
     if (r < 0) {
-        return -1;
+        return r;
     }
 
     mOutEndpoint.pendingTransfers.push_back(txfer);

@@ -91,9 +91,9 @@ bool Installer::install(const char *path, int vid, int pid, bool launcher, bool 
     }
 
     if (launcher)
-        fprintf(stderr, "updating launcher (%d bytes)\n", fileSize);
+        printf("updating launcher (%d bytes)\n", fileSize);
     else
-        fprintf(stderr, "installing %s, version %s (%d bytes)\n",
+        printf("installing %s, version %s (%d bytes)\n",
             package.c_str(), version.c_str(), fileSize);
 
     bool success =  sendHeader(fileSize) &&
@@ -177,20 +177,12 @@ bool Installer::sendHeader(uint32_t filesz)
         m.append((uint8_t*)package.c_str(), package.size());
     }
 
-    dev.writePacket(m.bytes, m.len);
-
-    // wait for response that header was processed
-    while (dev.numPendingINPackets() == 0) {
-        dev.processEvents(1);
-    }
-
-    dev.readPacket(m.bytes, m.MAX_LEN, m.len);
-    if ((m.header & 0xff) != UsbVolumeManager::WroteHeaderOK) {
-        fprintf(stderr, "not enough room for this app\n");
+    if (dev.writePacket(m.bytes, m.len) < 0) {
         return false;
     }
 
-    return true;
+    BaseDevice baseDev(dev);
+    return baseDev.waitForReply(UsbVolumeManager::WroteHeaderOK, m);
 }
 
 /*
@@ -206,7 +198,7 @@ bool Installer::sendFileContents(FILE *f, uint32_t filesz)
     unsigned progress = 0;
     ScopedProgressBar pb(filesz);
 
-    while (1) {
+    for (;;) {
         USBProtocolMsg m(USBProtocol::Installer);
         m.header |= UsbVolumeManager::WritePayload;
 
@@ -224,12 +216,19 @@ bool Installer::sendFileContents(FILE *f, uint32_t filesz)
             return false;
         }
 
-        dev.writePacket(m.bytes, m.len);
-        while (dev.numPendingOUTPackets() > IODevice::MAX_OUTSTANDING_OUT_TRANSFERS)
+        if (dev.writePacket(m.bytes, m.len) < 0) {
+            return false;
+        }
+
+        while (dev.numPendingOUTPackets() > IODevice::MAX_OUTSTANDING_OUT_TRANSFERS) {
             dev.processEvents(1);
+        }
 
         pb.update(progress);
     }
+
+    // should never get here
+    return false;
 }
 
 /*
@@ -240,22 +239,24 @@ bool Installer::commit()
     USBProtocolMsg m(USBProtocol::Installer);
     m.header |= UsbVolumeManager::WriteCommit;
 
-    dev.writePacket(m.bytes, m.len);
+    if (dev.writePacket(m.bytes, m.len) < 0) {
+        return false;
+    }
 
     BaseDevice baseDevice(dev);
-    if (!baseDevice.waitForReply(UsbVolumeManager::WriteCommitOK, m, 50)) {
+    if (!baseDevice.waitForReply(UsbVolumeManager::WriteCommitOK, m)) {
         fprintf(stderr, "failed to write volume!\n");
         return false;
     }
 
     if (m.payloadLen() >= 1) {
         uint8_t volumeBlockCode = m.payload[0];
-        fprintf(stderr, "successfully committed new volume 0x%x\n", volumeBlockCode);
+        printf("successfully committed new volume 0x%x\n", volumeBlockCode);
         if (isRPC) {
             fprintf(stdout, "::volume:%u\n", volumeBlockCode); fflush(stdout);
         }
     } else {
-        fprintf(stderr, "successfully committed new volume\n");
+        printf("successfully committed new volume\n");
     }
 
     return true;

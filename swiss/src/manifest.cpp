@@ -97,7 +97,7 @@ bool Manifest::dumpBaseSysInfo()
         fprintf(stdout, ":%u\n", sysInfo->baseHwRevision);
 
         if (sysInfo->sysVersion) {
-            printf("::os-version:0x%06x\n", sysInfo->sysVersion);
+            printf("::os-version:%u\n", sysInfo->sysVersion);
         }
     }
 
