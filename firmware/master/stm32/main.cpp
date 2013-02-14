@@ -64,6 +64,7 @@ int main()
     NVIC.irqPrioritize(IVT.UsbOtg_FS, 0x70);        //  A little higher than radio
 
     NVIC.irqEnable(IVT.BTN_HOME_EXTI_VEC);          //  home button
+    NVIC.irqEnable(IVT.VOLUME_EXTI_VEC);            // volume slider interrupt
 
     NVIC.irqEnable(IVT.AUDIO_SAMPLE_TIM);           // sample rate timer
     NVIC.irqPrioritize(IVT.AUDIO_SAMPLE_TIM, 0x50); //  pretty high priority! (would cause audio jitter)
