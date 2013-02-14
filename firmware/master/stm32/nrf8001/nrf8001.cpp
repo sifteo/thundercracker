@@ -36,13 +36,15 @@ IRQ_HANDLER ISR_FN(NRF8001_EXTI_VEC)()
 #endif // HAVE_NRF8001
 
 /*
- * States for our produceSystemCommand() state machine
+ * States for our produceSystemCommand() state machine.
  */
 namespace SysCS {
     enum SystemCommandState {
         SetupFirst = 0,
         SetupLast = SetupFirst + NB_SETUP_MESSAGES - 1,
-        Idle,
+        Idle,           // Must follow SetupLast
+        BeginConnect,
+        RadioReset,
     };
 }
 
@@ -60,7 +62,8 @@ void NRF8001::init()
     // Reset state
     txBuffer.length = 0;
     requestsPending = 0;
-    sysCommandState = SysCS::SetupFirst;
+    dataCredits = 0;
+    sysCommandState = SysCS::RadioReset;
     sysCommandPending = false;
 
     // Output pin, requesting a transaction
@@ -206,10 +209,29 @@ bool NRF8001::produceSystemCommand()
         case SysCS::Idle:
             return false;
 
+        case SysCS::RadioReset: {
+            /*
+             * Send a RadioReset command. This may well fail if we aren't setup yet,
+             * but we ignore that error. If we experienced a soft reset of any kind, this
+             * will ensure the nRF8001 isn't in the middle of anything.
+             *
+             * After this finishes, we'll start SETUP.
+             */
+
+            txBuffer.length = 1;
+            txBuffer.command = Op::RadioReset;
+            sysCommandState = SysCS::SetupFirst;
+            dataCredits = 0;
+            return true;
+        }
+
         case SysCS::SetupFirst ... SysCS::SetupLast: {
             /*
              * Send the next SETUP packet.
              * Thanks a lot, Nordic, this format is terrible.
+             *
+             * After SETUP completes, we'll head to the Idle state.
+             * When the device finishes initializing, we'll get a DeviceStartedEvent.
              */
 
             static const struct {
@@ -227,6 +249,28 @@ bool NRF8001::produceSystemCommand()
             return true;
         }
 
+        case SysCS::BeginConnect: {
+            /*
+             * After SETUP is complete, send a 'Connect' command. This begins the potentially
+             * long-running process of looking for a peer. This is what enables advertisement
+             * broadcasts.
+             *
+             * After this command, we'll be idle until a connection event arrives.
+             *
+             * We use Apple's recommended advertising interval of 20ms here. If we need
+             * to save power, we could increase it. See the Apple Bluetooth Design Guidelines:
+             *
+             * https://developer.apple.com/hardwaredrivers/BluetoothDesignGuidelines.pdf
+             */
+
+            txBuffer.length = 5;
+            txBuffer.command = Op::Connect;
+            txBuffer.param16[0] = 0x0000;       // Infinite duration
+            txBuffer.param16[1] = 32;           // 20ms, in 0.625ms units
+            sysCommandState = SysCS::Idle;
+            return true;
+        }
+
     }
 }
 
@@ -239,15 +283,57 @@ void NRF8001::handleEvent()
 
     switch (rxBuffer.event) {
 
-        case Op::CommandResponseEvent:
+        case Op::CommandResponseEvent: {
             /*
              * The last command finished. This is where we would take note of the status
              * if we need to. Only one system command may be pending at a time, so this
              * lets us move to the next command if we want.
              */
+
             sysCommandPending = false;
-            return requestTransaction();
+            handleCommandStatus(rxBuffer.param[0], rxBuffer.param[1]);
+            if (sysCommandState != SysCS::Idle) {
+                // More work to do, ask for another transaction.
+                requestTransaction();
+            }
+            return;
+        }
+
+        case Op::DeviceStartedEvent: {
+            /*
+             * The device has changed operating modes. This happens after SETUP
+             * finishes, when the device enters Standby mode. When this happens,
+             * we want to initiate a Connect, to start broadcasting advertisements.
+             *
+             * This is also where our pool of data credits gets initialized.
+             */
+            uint8_t mode = rxBuffer.param[0];
+            dataCredits = rxBuffer.param[2];
+
+            if (mode == OperatingMode::Standby && sysCommandState == SysCS::Idle) {
+                sysCommandState = SysCS::BeginConnect;
+                requestTransaction();
+            }
+            return;
+        }
 
     }
 }
 
+void NRF8001::handleCommandStatus(unsigned command, unsigned status)
+{
+    if (command == Op::RadioReset) {
+        /*
+         * RadioReset will complain if the device hasn't been setup yet.
+         * We care not, since we send the reset just-in-case. Ignore errors here.
+         */
+        return;
+    }
+
+    if (status > ACI_STATUS_TRANSACTION_COMPLETE) {
+        /*
+         * An error occurred! For now, just try resetting as best we can...
+         */
+        sysCommandState = SysCS::RadioReset;
+    }
+}

@@ -30,7 +30,10 @@ private:
     struct ACICommandBuffer {
         uint8_t length;
         uint8_t command;
-        uint8_t param[30];
+        union {
+            uint8_t param[30];
+            uint16_t param16[15];
+        };
     };
 
     struct ACIEventBuffer {
@@ -50,6 +53,7 @@ private:
     bool requestsPending;        // Need at least one more request after the current one finishes
     uint8_t sysCommandState;     // produceSysteCommand() state machine
     uint8_t sysCommandPending;   // Are we waiting on a response to a command?
+    uint8_t dataCredits;         // Number of data packets we're allowed to send
 
     static void staticSpiCompletionHandler();
     void onSpiComplete();
@@ -59,7 +63,8 @@ private:
     void produceCommand();       // Fill the txBuffer if we can. ISR context only.
     void handleEvent();          // Consume the rxBuffer. ISR context only.
 
-    // System command state machine
+    // Mid-level ACI utilities
+    void handleCommandStatus(unsigned command, unsigned status);
     bool produceSystemCommand();
 };
 
