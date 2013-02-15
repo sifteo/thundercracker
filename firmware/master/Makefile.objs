@@ -71,7 +71,8 @@ OBJS_COMMON = \
     $(MASTER_DIR)/common/motion.o   \
     $(MASTER_DIR)/common/idletimeout.o \
     $(MASTER_DIR)/common/faultlogger.o \
-    $(MASTER_DIR)/common/rfspectrum.o
+    $(MASTER_DIR)/common/rfspectrum.o \
+    $(MASTER_DIR)/common/btprotocol.o
 
 # Sources common to all stm32 builds (currently master & testjig)
 OBJS_STM32 = \

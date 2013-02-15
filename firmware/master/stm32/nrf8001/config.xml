@@ -51,12 +51,12 @@
             <PeriodForProperties/>
         </Characteristic>
         <Characteristic>
-            <Name>Firmware Revision String</Name>
-            <Uuid>2a26</Uuid>
+            <Name>System Version</Name>
+            <Uuid BaseUUID="566d00003c6f862106d3c14d4768bd75" BaseUUIDName="Sifteo">0004</Uuid>
             <DefaultValue></DefaultValue>
-            <UsePresentationFormat>1</UsePresentationFormat>
+            <UsePresentationFormat>0</UsePresentationFormat>
             <UserDescription></UserDescription>
-            <MaxDataLength>8</MaxDataLength>
+            <MaxDataLength>4</MaxDataLength>
             <AttributeLenType>1</AttributeLenType>
             <ForceOpen>false</ForceOpen>
             <Properties>
