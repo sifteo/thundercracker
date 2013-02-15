@@ -103,6 +103,9 @@
         <MaximumConnectionInterval>65535</MaximumConnectionInterval>
         <SlaveLatency>0</SlaveLatency>
         <TimeoutMultipler>65535</TimeoutMultipler>
+        <ServiceToAdvertise>
+            <Uuid BaseUUID="566d00003c6f862106d3c14d4768bd75" BaseUUIDName="Sifteo">0001</Uuid>
+        </ServiceToAdvertise>
         <CustomAdTypes>
             <AdType index="1">
                 <Type>19</Type>
