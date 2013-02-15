@@ -5,7 +5,7 @@
  </tileset>
  <layer name="cube range" width="8" height="16">
   <data encoding="base64" compression="zlib">
-   eJwzVWBgCADiMCB2AWJPIGYE4lCoOIgdDMRuQBwCVecH5YPk2pUZGDpx4G4g7gViTlUIZlSBYBh/MlQ+FyiWA8R5QJytguDPRtMPE4fx0eXXQDGy/GIgXgrEy7HglcoQP1CCifK/JgQzakAwjA9zfy5QLAeI84A4WwPBn42mHyaOrh/GXwPFyPKE/A8A9Yc8SA==
+   eJyljzsKgDAQRNfSziMIRoiHyHW08AOeQkSsLC1FxFs6ywYNQUWweOzsvGqCmCh4oUuI+gcGMDIpUaTkMsbmyfEtugaUSjJ3s/VhKtToK3X9vs/hCs8vYAXbDXvyvu0Ln/Zn2K/lMsbmyfEtugaUWjJ3575MqNFX+vp9n8MVnv+7/wAKrzyd
   </data>
  </layer>
 </map>
