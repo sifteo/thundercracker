@@ -19,6 +19,25 @@
  * GATT characteristics.
  */
 
+/*
+ * Any hardware-specific Bluetooth LE driver which backs the BTProtocolHandler
+ * must implement a "Sifteo Base" GATT service with the following UUID:
+ *
+ * 566d0001-3c6f-8621-06d3-c14d4768bd75
+ *
+ * This service contains at least the following characteristics:
+ *
+ * 1. Data IN (Base -> Host), Notify pipe, max data length 20 bytes.
+ *    UUID: 566d0002-3c6f-8621-06d3-c14d4768bd75
+ *
+ * 2. Data OUT (Host -> Base), Write-without-response pipe, max data length 20 bytes.
+ *    UUID: 566d0003-3c6f-8621-06d3-c14d4768bd75
+ *
+ * 3. System Version, Readable characteristic, fixed length of 4 bytes.
+ *    UUID: 566d0004-3c6f-8621-06d3-c14d4768bd75
+ *    This equals the version returned by _SYS_version(), in little endian.
+ */
+
 class BTProtocolHandler {
 public:
 
