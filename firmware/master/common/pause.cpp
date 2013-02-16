@@ -212,9 +212,21 @@ bool Pause::cubeRangeModeHandler(UICoordinator &uic, UICubeRange &uicr, Mode &mo
         return true;
     }
 
-    // Is CubeRange fulfilled yet? If so, transition to normal pause menu
-    if (!CubeSlots::belowCubeRange())
+    if (!CubeSlots::belowCubeRange()) {
+        /*
+         * CubeRange is now fulfilled.
+         *
+         * If we're in the launcher, there's no reason to pause, so just resume it.
+         * Otherwise, transition to pause mode to give the user a chance
+         * to gather their thoughts before resuming their game.
+         */
+        if (SvmLoader::getRunLevel() == SvmLoader::RUNLEVEL_LAUNCHER) {
+            cleanup(uic);
+            return true;
+        }
+
         mode = ModePause;
+    }
 
     return false;
 }

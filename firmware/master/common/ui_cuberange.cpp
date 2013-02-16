@@ -16,7 +16,6 @@ UICubeRange::UICubeRange(UICoordinator &uic) :
 
 void UICubeRange::init()
 {
-    ASSERT(SvmLoader::getRunLevel() != SvmLoader::RUNLEVEL_LAUNCHER);
     menu.init(CUBERANGE);
 }
 
