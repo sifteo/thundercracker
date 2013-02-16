@@ -85,6 +85,7 @@ void Tasks::heartbeatTask()
 #ifdef SIFTEO_SIMULATOR
     BatteryLevel::heartbeat();
 #endif
+
 }
 
 

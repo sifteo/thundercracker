@@ -76,6 +76,12 @@ void init()
     HwTimer timer(&BATT_LVL_TIM);
     timer.configureChannelAsInput(BATT_LVL_CHAN, HwTimer::FallingEdge);
     timer.enableChannel(BATT_LVL_CHAN);
+
+    /*
+     * This bit vector tells which cube needs to display a warning
+     */
+
+    needWarningVect.clear();
 }
 
 unsigned raw()

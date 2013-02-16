@@ -36,7 +36,11 @@ uint32_t _SYS_cubeBatteryLevel(_SYSCubeID cid)
      *      battery chemistry.
      */
 
+#ifdef SIFTEO_SIMULATOR
+    return BatteryLevel::scaled(cid);
+#else
     return raw * _SYS_BATTERY_MAX / 255;
+#endif
 }
 
 uint32_t _SYS_sysBatteryLevel()

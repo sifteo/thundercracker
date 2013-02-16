@@ -2,6 +2,7 @@
 #define UI_LOWBATT_H
 
 #include "ui_menu.h"
+#include "batterylevel.h"
 
 class UILowBatt
 {
@@ -14,21 +15,30 @@ public:
 
     UILowBatt(UICoordinator &uic);
 
-    void init();
+    void init(unsigned _cubeNum = BatteryLevel::BASE);
     bool quitWasSelected() const;
 
     ALWAYS_INLINE void animate() {
-        return menu.animate();
+        if (cubeNum == BatteryLevel::BASE)
+            return baseMenu.animate();
+        else
+            return cubeMenu.animate();
     }
 
     ALWAYS_INLINE bool isDone() const {
-        return menu.isDone();
+        if (cubeNum == BatteryLevel::BASE)
+            return baseMenu.isDone();
+        else
+            return cubeMenu.isDone();
     }
 
 private:
-    UIMenu menu;
+    UIMenu baseMenu;
+    UIMenu cubeMenu;
+    unsigned cubeNum;
 
-    static const UIMenu::Item items[NUM_ITEMS];
+    static const UIMenu::Item baseItems[NUM_ITEMS];
+    static const UIMenu::Item cubeItems[NUM_ITEMS];
 };
 
 #endif // UILowBatt

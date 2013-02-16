@@ -204,11 +204,12 @@ void UICoordinator::idle()
     Tasks::idle(excludedTasks);
 }
 
-bool UICoordinator::pollForAttach()
+bool UICoordinator::pollForAttach(_SYSCubeID id)
 {
     /*
      * If we aren't attached, or we were attached to a disconnected cube,
-     * attach to a new primary cube. Returns 'true' if we (re)attached.
+     * attach to a new primary cube (if the required 'id' is invalid).
+     * Returns 'true' if we (re)attached.
      */
 
     if (isAttached() && !(Intrinsic::LZ(avb.cube) & CubeSlots::sysConnected)) {
@@ -218,8 +219,10 @@ bool UICoordinator::pollForAttach()
     }
 
     if (!isAttached() && uiConnected) {
-        // Grab any connected cube
-        attachToCube(Intrinsic::CLZ(uiConnected));
+        if (int(id) < _SYS_NUM_CUBE_SLOTS)
+            attachToCube(id);                          // Attach to the asked cube
+        else
+            attachToCube(Intrinsic::CLZ(uiConnected)); // Grab any connected cube
         return true;
     }
 

@@ -34,7 +34,7 @@ public:
     void restoreCubes(_SYSCubeIDVector cv);
 
     // One-cube-at-a-time operations, using 'avb'
-    bool pollForAttach();
+    bool pollForAttach(_SYSCubeID id = _SYS_CUBE_ID_INVALID);
     void attachToCube(_SYSCubeID id);
     void paint();
     void finish();

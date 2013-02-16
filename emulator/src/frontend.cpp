@@ -75,6 +75,8 @@ bool Frontend::init(System *_sys)
 
     overlay.init(&renderer, sys);
 
+    BatteryLevel::init();
+
     return true;
 }
 
@@ -455,15 +457,23 @@ void GLFWCALL Frontend::onKey(int key, int state)
             instance->postVolumeMessage();
             break;
 
-        case 'D': // turn Down the battery level
-            BatteryLevel::updatePercentage(-10); // percentage
-            instance->postBatteryMessage();
+        case 'D': { // turn Down the battery level
+            unsigned cubeNum = BatteryLevel::BASE;
+            if (instance->mousePicker.mCube)
+                cubeNum = instance->mousePicker.mCube->getId();
+            BatteryLevel::updatePercentage(-10, cubeNum);
+            instance->postBatteryMessage(cubeNum);
             break;
+        }
 
-        case 'U': // turn Up the battery level
-            BatteryLevel::updatePercentage(+10); // percentage
-            instance->postBatteryMessage();
+        case 'U': { // turn Up the battery level
+            unsigned cubeNum = BatteryLevel::BASE;
+            if (instance->mousePicker.mCube)
+                cubeNum = instance->mousePicker.mCube->getId();
+            BatteryLevel::updatePercentage(+10, cubeNum);
+            instance->postBatteryMessage(cubeNum);
             break;
+        }
 
         default:
             return;
@@ -513,10 +523,15 @@ void Frontend::postVolumeMessage()
     overlay.postMessage(s.str());
 }
 
-void Frontend::postBatteryMessage()
+void Frontend::postBatteryMessage(unsigned cubeNum)
 {
     std::stringstream s;
-    s << "Base battery level: " << BatteryLevel::getPercentage() << "%";
+    if (cubeNum == BatteryLevel::BASE)  // is it the master cube ?
+        s << "Base";
+    else
+        s << "Cube #" << cubeNum + 1;   // more convivial to start from 1 than 0
+
+    s << " battery level: " << BatteryLevel::getPercentage(cubeNum) << "%";
     overlay.postMessage(s.str());
 }
 
