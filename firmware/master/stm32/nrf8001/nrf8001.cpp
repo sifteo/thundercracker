@@ -413,12 +413,17 @@ void NRF8001::handleEvent()
         case Op::DataReceivedEvent: {
             /*
              * Data received from an nRF8001 pipe.
+             *
+             * Our data pipe is configured to auto-acknowledge. These over-the-air
+             * ACKs are used as flow control for the radio link, but we currently assume
+             * that our CPU can process incoming data as fast as we read it from the
+             * nRF8001's ACI interface.
              */
 
             int length = int(rxBuffer.length) - 1;
             uint8_t pipe = rxBuffer.param[0];
 
-            if (length > 0 && pipe == PIPE_SIFTEO_BASE_DATA_OUT_RX) {
+            if (length > 0 && pipe == PIPE_SIFTEO_BASE_DATA_OUT_RX_ACK_AUTO) {
                 BTProtocolHandler::onReceiveData(&rxBuffer.param[1], length);
             }
             return;

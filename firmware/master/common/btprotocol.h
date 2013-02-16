@@ -30,7 +30,7 @@
  * 1. Data IN (Base -> Host), Notify pipe, max data length 20 bytes.
  *    UUID: 566d0002-3c6f-8621-06d3-c14d4768bd75
  *
- * 2. Data OUT (Host -> Base), Write-without-response pipe, max data length 20 bytes.
+ * 2. Data OUT (Host -> Base), Write pipe with response, max data length 20 bytes.
  *    UUID: 566d0003-3c6f-8621-06d3-c14d4768bd75
  *
  * 3. System Version, Readable characteristic, fixed length of 4 bytes.

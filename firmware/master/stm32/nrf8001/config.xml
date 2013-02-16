@@ -38,14 +38,14 @@
             <AttributeLenType>2</AttributeLenType>
             <ForceOpen>false</ForceOpen>
             <Properties>
-                <WriteWithoutResponse>true</WriteWithoutResponse>
-                <Write>false</Write>
+                <WriteWithoutResponse>false</WriteWithoutResponse>
+                <Write>true</Write>
                 <Notify>false</Notify>
                 <Indicate>false</Indicate>
                 <Broadcast>false</Broadcast>
             </Properties>
             <SetPipe>false</SetPipe>
-            <AckIsAuto>false</AckIsAuto>
+            <AckIsAuto>true</AckIsAuto>
             <PresentationFormatDescriptor Value="0000" Exponent="0" Format="1" NameSpace="01" Unit="0000"/>
             <PeriodForReadingThisCharacteristic>0</PeriodForReadingThisCharacteristic>
             <PeriodForProperties/>
@@ -68,7 +68,7 @@
             </Properties>
             <SetPipe>true</SetPipe>
             <AckIsAuto>false</AckIsAuto>
-            <PresentationFormatDescriptor Value="0000" Exponent="0" Format="25" NameSpace="01" Unit="0000"/>
+            <PresentationFormatDescriptor Value="0000" Exponent="0" Format="1" NameSpace="01" Unit="0000"/>
             <PeriodForReadingThisCharacteristic>0</PeriodForReadingThisCharacteristic>
             <PeriodForProperties/>
         </Characteristic>
