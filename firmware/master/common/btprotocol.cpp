@@ -4,9 +4,11 @@
  */
 
 #include "btprotocol.h"
-#include "flash_device.h"
-#include "usbvolumemanager.h"
 #include "macros.h"
+
+// xxx testing only
+#include "homebutton.h"
+#include "cube.h"
 
 
 void BTProtocolHandler::onConnect()
@@ -31,6 +33,15 @@ unsigned BTProtocolHandler::onProduceData(uint8_t *buffer)
     for (unsigned i = 0; i < MAX_DATA_LEN; ++i) {
         buffer[i] = i;
     }
+
+    // To illustrate the latency we're getting, stuff home button status
+    // and Cube 0's accelerometer data in there too.
+
+    _SYSByte4 accel = CubeSlot::getInstance(0).getAccelState();
+    buffer[0] = HomeButton::isPressed();
+    buffer[10] = accel.x;
+    buffer[11] = accel.y;
+    buffer[12] = accel.z;
 
     // We always have more data
     requestProduceData();
