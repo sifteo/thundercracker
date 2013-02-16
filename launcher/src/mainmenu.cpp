@@ -53,6 +53,7 @@ void MainMenu::init()
     AudioTracker::play(Tracker_Startup);
     startupXmModHasFinished = false;
     trackerVolume = kTrackerVolumeNormal;
+    isBootstrapping = false;
 
     Events::cubeConnect.set(&MainMenu::cubeConnect, this);
     Events::cubeDisconnect.set(&MainMenu::cubeDisconnect, this);
@@ -270,6 +271,17 @@ void MainMenu::cubeConnect(unsigned cid)
         AudioTracker::setVolume(kTrackerVolumeDucked);
         trackerVolume = kTrackerVolumeDucked;
         soundChannel.play(Sound_CubeConnect);
+    }
+
+    if (isBootstrapping) {
+        /*
+         * Don't try to load the launcher's assets if we're
+         * in the middle of boostrapping the game's assets.
+         *
+         * This should only happen if a cube disconnected
+         * and reconnected during bootstrapping.
+         */
+        return;
     }
 
     // Reset this cube's connection timestamp. We won't use it until it has shown the logo for a while.
@@ -620,6 +632,7 @@ void MainMenu::execItem(unsigned index)
     MainMenuItem *item = items[index];
 
     item->getCubeRange().set();
+    isBootstrapping = true;
     item->bootstrap(CubeSet::connected(), anim);
     item->exec();
 }
