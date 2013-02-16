@@ -1,8 +1,8 @@
+#include <sifteo/abi.h>
 #include "batterylevel.h"
 #include "macros.h"
 
 namespace BatteryLevel {
-
 
 void updatePercentage(int delta) // percentage
 {
@@ -14,6 +14,11 @@ unsigned getPercentage()
     return percentage;
 }
 
+unsigned scaled()
+{
+    return percentage * _SYS_BATTERY_MAX / 100;
+}
+
 void heartbeat()
 {
     static unsigned beatDivider = 0;
@@ -23,6 +28,5 @@ void heartbeat()
         onCapture();            // trigger the warning flags
     }
 }
-
 
 } // namespace BatteryLevel

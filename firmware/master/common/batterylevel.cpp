@@ -4,7 +4,6 @@
 
 namespace BatteryLevel {
 
-
 bool needWarning()
 {
     return (neverWarned && _SYS_sysBatteryLevel() <= _SYS_BATTERY_MAX/10);
@@ -23,6 +22,5 @@ void onCapture() // warn the user (once) when reach 90% discharge
         Tasks::trigger(Tasks::Pause);
     }
 }
-
 
 } // namespace BatteryLevel

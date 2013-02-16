@@ -46,15 +46,7 @@ uint32_t _SYS_sysBatteryLevel()
      *      and doing a better job of creating a linear representation.
      */
 
-    #ifdef SIFTEO_SIMULATOR
-
-    return BatteryLevel::getPercentage() * _SYS_BATTERY_MAX / 100;
-
-    #else
-
     return BatteryLevel::scaled();
-
-    #endif
 }
 
 
