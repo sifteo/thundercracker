@@ -46,6 +46,7 @@ namespace SysCS {
         BeginConnect,
         RadioReset,
         InitSysVersion,
+        ChangeTimingRequest,
     };
 }
 
@@ -317,6 +318,36 @@ bool NRF8001::produceSystemCommand()
             return true;
         }
 
+        case SysCS::ChangeTimingRequest: {
+            /*
+             * After connecting, see if we can adjust the connection interval down
+             * so we can get higher throughput.
+             *
+             * Apple has some annoying and somewhat opaque restrictions on the connection
+             * intervals they allow, so we may have to tread lightly to get the
+             * best performance on iOS. Again, the Apple Bluetooth Design Guidelines:
+             *
+             * https://developer.apple.com/hardwaredrivers/BluetoothDesignGuidelines.pdf
+             *
+             * That design guide would imply that the best we can do is a range of 20 to 40ms.
+             * Apple seems to like picking an actual connection interval that's just below the
+             * maximum. However, intervals like 10-20ms actually do work. I've obverved an iPhone
+             * with iOS 6.1 give me a 18.75ms window in this case, which yields a max data rate
+             * of 1066 bytes/sec.
+             *
+             * This can be really annoying to test, since iOS seems to cache timing information
+             * per-device. Rebooting the phone will clear this cache.
+             */
+            
+            txBuffer.length = 9;
+            txBuffer.command = Op::ChangeTimingRequest;
+            txBuffer.param16[0] = 8;        // Minimum interval
+            txBuffer.param16[1] = 16;       // Maximum interval
+            txBuffer.param16[2] = 0;        // Slave latency
+            txBuffer.param16[3] = 30;       // Supervision timeout
+            sysCommandState = SysCS::Idle;
+            return true;
+        }
     }
 }
 
@@ -368,9 +399,13 @@ void NRF8001::handleEvent()
 
         case Op::ConnectedEvent: {
             /*
-             * Established a connection! We don't actually care, but the BTProtocolHandler might.
+             * Established a connection! Notify the BTProtocolHandler.
+             *
+             * Also, take this opportunity to see if we can get a faster
+             * pipe by lowering the default connection interval.
              */
 
+            sysCommandState = SysCS::ChangeTimingRequest;
             BTProtocolHandler::onConnect();
             return;
         }
