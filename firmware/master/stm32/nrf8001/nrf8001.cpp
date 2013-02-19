@@ -215,6 +215,7 @@ void NRF8001::produceCommand()
             txBuffer.length = len + 2;
             txBuffer.command = Op::SendData;
             txBuffer.param[0] = PIPE_SIFTEO_BASE_DATA_IN_TX;
+            dataCredits--;
             return;
         }
     }
