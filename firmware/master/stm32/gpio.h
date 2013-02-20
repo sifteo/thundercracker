@@ -102,6 +102,10 @@ class GPIOPin {
         return (EXTI.PR & bit()) != 0;
     }
 
+    ALWAYS_INLINE void softwareInterrupt() const {
+        EXTI.SWIER |= bit();
+    }
+
     ALWAYS_INLINE volatile GPIO_t *port() const {
         return (volatile GPIO_t*)(0xFFFFFF00 & value);
     }
