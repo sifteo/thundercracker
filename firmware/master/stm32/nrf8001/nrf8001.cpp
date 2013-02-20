@@ -89,6 +89,15 @@ void NRF8001::init()
 
     // Ask for the first transaction, so we can start the SETUP process.
     requestTransaction();
+
+    /*
+     * It's possible the chip is already ready, and we missed the falling edge
+     * because it happened before the IRQ was set up. To avoid getting stuck in
+     * this case, we directly pend an interrupt at this point. If the chip is in
+     * fact already waiting on us, we'll have a transaction. If not, the ISR
+     * will notice that RDYN is high and exit without doing any work.
+     */
+    rdyn.softwareInterrupt();
 }
 
 void NRF8001::isr()
@@ -111,23 +120,32 @@ void NRF8001::isr()
     rdyn.irqAcknowledge();
 
     /*
-     * Set REQN low to indicate we're ready to start the transaction.
-     * Effectively, the nRF8001's virtual "chip select" is (REQN && RDYN).
-     * If this ISR was due to a command rather than an event, REQN will
-     * already be low and this has no effect.
-     *
-     * Note that this must happen prior to produceCommand(). In case
-     * that function calls requestTransaction(), we must know that we're
-     * already in a transaction.
+     * Make sure the chip is actually ready. This serves two purposes:
+     * rejecting very small noise spikes on the RDYN line, and (more
+     * importantly) to avoid a race condition during the very first ISR
+     * we service after initialization. See the comments in NRF8001::init().
      */
-    reqn.setLow();
+    if (rdyn.isLow()) {
 
-    // Populate the transmit buffer now, or set it empty if we have nothing to say.
-    produceCommand();
+        /*
+         * Set REQN low to indicate we're ready to start the transaction.
+         * Effectively, the nRF8001's virtual "chip select" is (REQN && RDYN).
+         * If this ISR was due to a command rather than an event, REQN will
+         * already be low and this has no effect.
+         *
+         * Note that this must happen prior to produceCommand(). In case
+         * that function calls requestTransaction(), we must know that we're
+         * already in a transaction.
+         */
+        reqn.setLow();
 
-    // Fire off the asynchronous SPI transfer. We finish up in onSpiComplete().
-    STATIC_ASSERT(sizeof txBuffer == sizeof rxBuffer);
-    spi.transferDma((uint8_t*) &txBuffer, (uint8_t*) &rxBuffer, sizeof txBuffer);
+        // Populate the transmit buffer now, or set it empty if we have nothing to say.
+        produceCommand();
+
+        // Fire off the asynchronous SPI transfer. We finish up in onSpiComplete().
+        STATIC_ASSERT(sizeof txBuffer == sizeof rxBuffer);
+        spi.transferDma((uint8_t*) &txBuffer, (uint8_t*) &rxBuffer, sizeof txBuffer);
+    }
 
     SampleProfiler::setSubsystem(s);
 }
