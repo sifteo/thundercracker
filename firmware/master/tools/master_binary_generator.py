@@ -136,7 +136,7 @@ def run(secondary_path, build_launcher):
         if CLEAN:
           subprocess.check_call(["make", "clean"])
 
-        subprocess.check_call(["make"])
+        subprocess.check_call(["make","RELEASE=1"])
 
         copy_to_dir(LAUNCHER_UNVERSIONED,launcher_filename,latest_dir)
         copy_to_dir(LAUNCHER_UNVERSIONED,launcher_filename,build_dir)
