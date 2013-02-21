@@ -20,7 +20,10 @@
 
 extern static void i2c_accel_tx(const __code uint8_t *);
 
-#if HWREV >= 4
+#if HWREV >= 5
+    #define ACCEL_ADDR_TX       0x52    // 01010010 - SDO is pulled HIGH (internally)
+    #define ACCEL_ADDR_RX       0x53    // 01010011 - SDO is pulled HIGH (internally)
+#elif HWREV == 4
     #define ACCEL_ADDR_TX       0x32    // 00110010 - SDO is pulled HIGH (internally)
     #define ACCEL_ADDR_RX       0x33    // 00110011 - SDO is pulled HIGH (internally)
 #else
