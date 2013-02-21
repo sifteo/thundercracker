@@ -83,7 +83,7 @@ class Frontend {
 
     bool openWindow(int width, int height, bool fullscreen=false);
     void toggleFullscreen();
-    
+
     static void GLFWCALL onResize(int width, int height);
     static void GLFWCALL onKey(int key, int state);
     static void GLFWCALL onMouseMove(int x, int y);
@@ -121,6 +121,7 @@ class Frontend {
 
     void toggleRotationLock();
     void postVolumeMessage();
+    void postBatteryMessage();
 
     System *sys;
     unsigned frameCount;
@@ -157,7 +158,7 @@ class Frontend {
     bool mouseIsSpinning;
     bool mouseIsPulling;
     bool mouseIsTilting;
-    
+
     MousePicker mousePicker;
     ContactListener contactListener;
     FrameRateController frControl;

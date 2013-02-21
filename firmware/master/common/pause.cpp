@@ -12,6 +12,8 @@
 #include "svmclock.h"
 
 #include "ui_shutdown.h"
+#include "ui_lowbatt.h"
+#include "batterylevel.h"
 
 BitVector<Pause::NUM_WORK_ITEMS> Pause::taskWork;
 
@@ -130,6 +132,7 @@ void Pause::mainLoop(Mode mode)
     // all possible UI elements
     UIPause uiPause(uic);
     UICubeRange uiCubeRange(uic);
+    UILowBatt uiLowBatt(uic);
 
     LED::set(LEDPatterns::paused, true);
 
@@ -162,7 +165,9 @@ void Pause::mainLoop(Mode mode)
             break;
 
         case ModeLowBattery:
-            finished = lowBatteryModeHandler();
+            if (modeChanged && uic.isAttached())
+                uiLowBatt.init();
+            finished = lowBatteryModeHandler(uic, uiLowBatt, mode);
             break;
         }
 
@@ -187,7 +192,12 @@ bool Pause::pauseModeHandler(UICoordinator &uic, UIPause &uip, Mode &mode)
     if (uip.isDone() && HomeButton::isReleased()) {
         cleanup(uic);
         uip.takeAction();
-        return true;
+        if (BatteryLevel::needWarning()) {
+            mode = ModeLowBattery;
+            return false;
+        }
+        else
+            return true;
     }
 
     // Did we transition back to having too few cubes?
@@ -225,15 +235,47 @@ bool Pause::cubeRangeModeHandler(UICoordinator &uic, UICubeRange &uicr, Mode &mo
             return true;
         }
 
-        mode = ModePause;
+        if (BatteryLevel::needWarning())
+            mode = ModeLowBattery;
+        else
+            mode = ModePause;
     }
 
     return false;
 }
 
-bool Pause::lowBatteryModeHandler()
+bool Pause::lowBatteryModeHandler(UICoordinator &uic, UILowBatt &uilb, Mode &mode)
 {
-    return true;
+    if (uic.pollForAttach())
+        uilb.init();
+
+    uilb.animate();
+    uic.paint();
+
+    // has menu finished ?
+    if (uilb.isDone()) {
+        BatteryLevel::setWarningDone();
+        cleanup(uic);
+
+        if (uilb.quitWasSelected())
+            SvmLoader::exit();
+        return true;
+    }
+
+    // Did we transition back to having too few cubes?
+    if (CubeSlots::belowCubeRange()) {
+        mode = ModeCubeRange;
+        return false;
+    }
+
+    // If a cuberange warning happens it will go to pause too.
+    if (HomeButton::isPressed()) {
+        BatteryLevel::setWarningDone();
+        mode = ModePause;
+        return false;
+    }
+
+    return false;
 }
 
 void Pause::cleanup(UICoordinator &uic)
