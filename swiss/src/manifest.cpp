@@ -64,16 +64,41 @@ bool Manifest::dumpBaseSysInfo()
 
     printf("Hardware ID: ");
     for (unsigned i = 0; i < sizeof(sysInfo->baseUniqueID); ++i) {
-        printf("%x", sysInfo->baseUniqueID[i]);
+        printf("%02x", sysInfo->baseUniqueID[i]);
     }
-    printf("  Hardware Revision: %d\n", sysInfo->baseHwRevision);
+    printf("  Hardware Revision: %d", sysInfo->baseHwRevision);
+    if (sysInfo->sysVersion) {
+        printf("  OS Version: 0x%06x", sysInfo->sysVersion);
+    }
+    printf("\n");
 
     if (isRPC) {
-        fprintf(stdout, "::hardware:");
+
+        /*
+         * The base unique ID was previously printed with a %x formatter,
+         * rather than %02x, which meant we could have non-uniform HWID string lengths.
+         *
+         * In order to allow for Sync to resolve the difference between any records
+         * it may have created based on the old format, provide both the new and old
+         * formats in RPC mode.
+         */
+
+        fprintf(stdout, "::hardware-id-bug:");
         for (unsigned i = 0; i < sizeof(sysInfo->baseUniqueID); ++i) {
             fprintf(stdout, "%x", sysInfo->baseUniqueID[i]);
         }
+        fprintf(stdout, "\n");
+
+        // and send the newer, correct format
+        fprintf(stdout, "::hardware:");
+        for (unsigned i = 0; i < sizeof(sysInfo->baseUniqueID); ++i) {
+            fprintf(stdout, "%02x", sysInfo->baseUniqueID[i]);
+        }
         fprintf(stdout, ":%u\n", sysInfo->baseHwRevision);
+
+        if (sysInfo->sysVersion) {
+            printf("::os-version:%u\n", sysInfo->sysVersion);
+        }
     }
 
     return true;

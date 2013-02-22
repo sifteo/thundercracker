@@ -6,9 +6,14 @@
 class UsbCore
 {
 public:
+
+    struct Config {
+        bool enableSOF;
+    };
+
     static void init(const Usb::DeviceDescriptor *dev,
-                        const Usb::ConfigDescriptor *conf,
-                        const char **strings);
+                     const Usb::ConfigDescriptor *conf,
+                     const Config & cfg);
     static void reset();
 
     static ALWAYS_INLINE const Usb::DeviceDescriptor* devDescriptor() {
@@ -18,14 +23,6 @@ public:
     static ALWAYS_INLINE const Usb::ConfigDescriptor* configDescriptor(uint8_t idx) {
         // TODO: calculate offset of subsequent configurations
         return _conf;
-    }
-
-    static ALWAYS_INLINE bool stringSupport() {
-        return _strings != 0;
-    }
-
-    static ALWAYS_INLINE const char* string(uint8_t idx) {
-        return _strings[idx];
     }
 
     static int getDescriptor(Usb::SetupData *req, uint8_t **buf, uint16_t *len);
@@ -40,7 +37,6 @@ public:
 private:
     static const Usb::DeviceDescriptor *_dev;
     static const Usb::ConfigDescriptor *_conf;
-    static const char **_strings;
 
     static uint16_t address;
     static uint16_t _config;

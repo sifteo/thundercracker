@@ -6,6 +6,7 @@
 #include "ui_coordinator.h"
 #include "ui_pause.h"
 #include "ui_cuberange.h"
+#include "ui_lowbatt.h"
 #include "homebutton.h"
 
 class Pause {
@@ -34,8 +35,9 @@ private:
 
     static bool pauseModeHandler(UICoordinator &uic, UIPause &uip, Mode &mode);
     static bool cubeRangeModeHandler(UICoordinator &uic, UICubeRange &uicr, Mode &mode);
-    static bool lowBatteryModeHandler();
+    static bool lowBatteryModeHandler(UICoordinator &uic, UILowBatt &uilb, Mode &mode);
     static void cleanup(UICoordinator &uic);
+//    static void updateNextMode(Mode &mode);
 };
 
 #endif // PAUSE_H

@@ -38,6 +38,7 @@ private:
     static const unsigned kUpsampleFactor = 3;
     unsigned upsampleCounter;
     int lastSample;
+    bool endOfStream;
 
     // Digital low-pass filter for the above upsampler
     int16_t upsampleFilter(int16_t sample);

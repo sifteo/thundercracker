@@ -20,7 +20,7 @@ static const Color inspectorTextColor(1, 1, 1);
 
 
 FrontendOverlay::FrontendOverlay()
-    : helpVisible(false), 
+    : helpVisible(false),
       inspectorVisible(false),
       visualizerVisible(false),
       visualizerAlpha(0)
@@ -37,27 +37,27 @@ void FrontendOverlay::init(GLRenderer *_renderer, System *_sys)
 
     filteredTimeRatio = 1.0f;
     realTimeMessage[0] = '\0';
-    
+
     for (unsigned i = 0; i < System::MAX_CUBES; i++)
         cubes[i].fps[0] = '\0';
 }
 
 void FrontendOverlay::draw()
-{    
+{
     // Time stats, updated periodically
     const float statsInterval = 0.5f;
-        
+
     slowTimer.capture();
     fastTimer.capture(slowTimer);
     realTimeMessageTimer.capture(slowTimer);
-    
+
     if (slowTimer.realSeconds() > statsInterval) {
         float rtPercent = slowTimer.virtualRatio() * 100.0f;
 
         // Percent of real-time
         snprintf(realTimeMessage, sizeof realTimeMessage,
                  "%.1f%% real-time", rtPercent);
-                 
+
         // Color-coded time percentage
         if (rtPercent > 90.0f)
             realTimeColor.set(1,1,1);
@@ -73,7 +73,7 @@ void FrontendOverlay::draw()
          * (Note that opt_numCubes is not synchronized with this thread,
          * but that's okay. This only needs to be an estimated cube count.)
          */
-        
+
         for (unsigned i = 0; i < sys->opt_numCubes; i++) {
             // FPS (LCD writes per second)
             cubes[i].lcd_wr.update(slowTimer, sys->cubes[i].lcd.getFrameCount());
@@ -98,7 +98,7 @@ void FrontendOverlay::draw()
     /*
      * Drawing
      */
-    
+
     moveTo(renderer->getWidth() - margin, margin);
     text(helpHintColor, "Press 'H' for help", 1.0f);
 
@@ -107,24 +107,24 @@ void FrontendOverlay::draw()
         !visualizerVisible ? 0.0f :
         !MCAudioVisData::instance.mixerActive ? 0.5f :
         1.0f;
-    
+
     visualizerAlpha += (visTargetAlpha - visualizerAlpha) * 0.2f;
     renderer->overlayAudioVisualizer(visualizerAlpha);
 
     if (helpVisible) {
         drawHelp();
     }
-    
+
     moveTo(margin, margin);
     drawRealTimeInfo();
-    
+
     if (messageTimer) {
         text(msgColor, message.c_str());
         messageTimer--;
     }
-    
+
     fastTimer.start();
-}       
+}
 
 void FrontendOverlay::drawCubeStatus(FrontendCube *fe, int x, int y)
 {
@@ -219,11 +219,12 @@ void FrontendOverlay::drawHelp()
         "Home (B)utton, (S)creenshot, (F)ullscreen, (T)urbo, (I)nspector",
         "(Z)oom, (1):1 view, (2)x view, (Backspace) toggle rotation lock, (+)/(-) Add/remove cube",
         "Audio: (M)ute, (V)isualizer, (Up/Down) Volume",
+        "Battery: turn (U)p, (D)own",
         "",
         "Sifteo Hardware Emulator (" TOSTRING(SDK_VERSION) ")\n",
         APP_COPYRIGHT_LATIN1,
     };
-    
+
     const unsigned numLines = sizeof lines / sizeof lines[0];
     const unsigned w = renderer->getWidth();
     const unsigned h = renderer->getHeight();
@@ -231,7 +232,7 @@ void FrontendOverlay::drawHelp()
 
     renderer->overlayRect(0, top, w, h, helpBgColor.v);
     moveTo(margin, top + margin);
-    
+
     for (unsigned i = 0; i < numLines; i++)
         text(helpTextColor, lines[i]);
 }
@@ -244,12 +245,12 @@ void FrontendOverlay::drawRealTimeInfo()
     // Filter the time ratio a bit. The fastTimer is really jumpy
     float ratio = fastTimer.virtualRatio();
     filteredTimeRatio += 0.05f * (ratio - filteredTimeRatio);
-    
+
     // If we've been close to 100% for a while, hide the indicator
     if (filteredTimeRatio < 0.95f || sys->opt_turbo)
         realTimeMessageTimer.start();
     if (realTimeMessageTimer.realSeconds() < 1.0f) {
-    
+
         // Right-justify the text so it doesn't bounce so much
         x += width;
         text(realTimeColor, realTimeMessage, 1.0f);
@@ -267,7 +268,7 @@ void FrontendOverlay::drawRealTimeInfo()
 
     if (sys->opt_turbo)
         text(realTimeColor, "Turbo Mode");
-    
+
     if (sys->tracer.isEnabled())
         text(debugColor, "Trace Enabled");
 }

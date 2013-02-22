@@ -16,7 +16,7 @@ using namespace UsbHardwareStm32Otg;
  */
 namespace UsbHardware {
 
-void init()
+void init(const UsbCore::Config & cfg)
 {
     // turn on the peripheral clock
     RCC.AHBENR |= (1 << 12);
@@ -57,7 +57,7 @@ void init()
                         (1 << 12) |    // USBRST
                         (1 << 11) |    // USBSUSPM
                         (1 << 4)  |    // RXFLVLM
-                        (1 << 3);      // SOFM
+                        (cfg.enableSOF ? (1 << 3) : 0); // SOFM
 
     OTG.global.GINTSTS = 0xffffffff;    // clear any pending IRQs
     OTG.global.GAHBCFG |= 0x1;          // global interrupt enable
@@ -80,7 +80,7 @@ void deinit()
 void reset()
 {
     // flush all TX FIFOs
-    OTG.global.GRSTCTL = (1 << 11) | (1 << 5);
+    OTG.global.GRSTCTL = (1 << 10) | (1 << 5);
     while (OTG.global.GRSTCTL & (1 << 5))
         ;
 
@@ -89,19 +89,28 @@ void reset()
     while (OTG.global.GRSTCTL & (1 << 4))
         ;
 
-    // disable OUT EPs, only if they're not already disabled.
+    // disable EPs, only if they're not already disabled.
     for (unsigned i = 0; i < 4; ++i) {
+
+        // OUT EPs
         volatile USBOTG_OUT_EP_t & ep = OTG.device.outEps[i];
-        if (ep.DOEPCTL & (1 << 31))
+        if (ep.DOEPCTL & (1 << 31)) {
             ep.DOEPCTL = (1 << 30) | (1 << 27);
-        else
-            ep.DOEPCTL = 0;
+        }
         ep.DOEPTSIZ = 0;
         ep.DOEPINT = 0xff;  // clear any pending interrupts
+
+        // IN EPs
+        volatile USBOTG_IN_EP_t & inep = OTG.device.inEps[i];
+        if (inep.DIEPCTL & (1 << 31)) {
+            inep.DIEPCTL = (1 << 30) | (1 << 27);
+        }
+        inep.DIEPTSIZ = 0;
+        inep.DIEPINT = 0xff;  // clear any pending interrupts
     }
 
     OTG.device.DAINTMSK = (1 << 16) | (1 << 0); // ep0 IN & OUT
-    OTG.device.DIEPMSK = 0x1;                   // xfer complete
+    OTG.device.DIEPMSK = (1 << 0) | (1 << 4);   // xfer complete & ITTXFE
     OTG.device.DOEPMSK = (1 << 3) | (1 << 0);   // setup complete, and xfer complete
 
     OTG.global.GRXFSIZ = RX_FIFO_WORDS;
@@ -137,11 +146,12 @@ void epINSetup(uint8_t addr, uint8_t type, uint16_t maxsize)
     OTG.global.DIEPTXF[addr - 1] = (fifoDepthInWords << 16) | fifoMemTop;
     fifoMemTop += fifoDepthInWords;
 
+    // NOTES:
+    //      SNAK is avoided in order to allow ITTXFE ISRs to trigger
+    //      before we've written anything out
+    //      EPENA is left cleared here - it only gets set when our first transfer is prepped
     volatile USBOTG_IN_EP_t & ep = OTG.device.inEps[addr];
-    ep.DIEPTSIZ = maxsize;
-    ep.DIEPCTL  = ((1 << 31) |     // EPENA
-                   (1 << 28) |     // SD0PID
-                   (1 << 27) |     // SNAK
+    ep.DIEPCTL  = ((1 << 28) |     // SD0PID
                    (addr << 22) |
                    (type << 18) |
                    (1 << 15) |     // USBEAP
@@ -235,15 +245,17 @@ uint16_t epWritePacket(uint8_t addr, const void *buf, uint16_t len)
  * packet is read by the actual client, at which point we're ready to
  * receive another packet.
  */
-static void epReadFifo(void *buf, uint16_t len)
+static void epReadFifo(uint16_t len)
 {
-    uint32_t *buf32 = static_cast<uint32_t*>(buf);
-    len = MIN(len, numBufferedBytes);
-
-    volatile uint32_t *fifo = OTG.epFifos[0];
+    // there's only one shared rx fifo, so arbitrarily access via ep0
     uint32_t wordCount = (len + 3) / 4;
-    while (wordCount--)
+    volatile uint32_t *fifo = OTG.epFifos[0];
+    uint32_t *buf32 = reinterpret_cast<uint32_t*>(&rxFifoBuf.bytes[0]);
+
+    while (wordCount--) {
         *buf32++ = *fifo;
+    }
+    rxFifoBuf.len = len;
 }
 
 /*
@@ -253,21 +265,148 @@ static void epReadFifo(void *buf, uint16_t len)
  */
 uint16_t epReadPacket(uint8_t addr, void *buf, uint16_t len)
 {
-    len = MIN(len, numBufferedBytes);
-    numBufferedBytes -= len;
+    len = MIN(len, rxFifoBuf.len);
+    rxFifoBuf.len = 0;
 
     // copy the data out of our buffer
     // TODO: UsbDevice should provide its own endpoint buffers
-    memcpy(buf, packetBuf, len);
+    memcpy(buf, rxFifoBuf.bytes, len);
 
     // unmask RXFLVL & re-enable this endpoint for more RXing
-    OTG.global.GINTMSK |= (1 << 4);
+    OTG.global.GINTMSK |= RXFLVL;
 
     volatile USBOTG_OUT_EP_t & ep = OTG.device.outEps[addr];
     ep.DOEPTSIZ = doeptsiz[addr];
     ep.DOEPCTL |= (1 << 31) | (1 << 26);    // EPENA & CNAK
 
     return len;
+}
+
+void rxflvlISR()
+{
+    /*
+     * A new packet has arrived and is ready to start getting processed.
+     *
+     * In the case of both SETUP and OUT data, we need to read the data
+     * out of the RX fifo immediately, and then once the core determines
+     * the transaction is complete it will trigger OEPINT and we can
+     * take action.
+     */
+
+//    Usb::SetupData *ctrlReq;
+    uint32_t rxstsp = OTG.global.GRXSTSP;
+    uint16_t pktsts = (rxstsp >> 17) & 0xf;
+    uint16_t bcnt = (rxstsp >> 4) & 0x3ff;   // BCNT mask
+
+    switch (pktsts) {
+
+    case PktStsSetupData:
+        UsbHardware::epReadFifo(bcnt);
+#if 0
+        // XXX: capture ep0 state for improved usbcontrol handling
+        ctrlReq = (Usb::SetupData*)rxFifoBuf.bytes;
+
+        // set the state of EP0 based on the direction of this setup request
+        if (Usb::reqIsOUT(ctrlReq->bmRequestType) && ctrlReq->wLength > 0) {
+            ep0Status = UsbControl::Ep0SetupOut;
+        } else {
+            ep0Status = UsbControl::Ep0SetupReady;
+        }
+#endif
+        break;
+
+    case PktStsOutData:
+        if (bcnt > 0) {
+            UsbHardware::epReadFifo(bcnt);
+        }
+        break;
+    }
+}
+
+void inEpISR()
+{
+    /*
+     * In ep activity - IEPINT indicates global out endpoint activity, must
+     * read DAINT to see which endpoints activity actually occurred on.
+     */
+
+    uint16_t inEpInts = OTG.device.DAINT & OTG.device.DAINTMSK;
+    for (unsigned i = 0; inEpInts != 0; ++i, inEpInts >>= 1) {
+
+        volatile USBOTG_IN_EP_t & inep = OTG.device.inEps[i];
+        uint32_t inEpInt = inep.DIEPINT & OTG.device.DIEPMSK;
+        // only consider TXFE if DIEPEMPMSK is unmasked
+        if (OTG.device.DIEPEMPMSK & (1 << i)) {
+            inEpInt |= (1 << 7);
+        }
+        inep.DIEPINT = 0xff;
+
+        /*
+         * TXFE: transmit FIFO has room to write a packet.
+         */
+        if (inEpInt & (1 << 7)) {
+
+            OTG.device.DIEPEMPMSK &= ~(1 << i);
+
+            InEndpointState &eps = inEndpointStates[i];
+            const uint32_t* buf32 = reinterpret_cast<const uint32_t*>(eps.buf);
+            volatile uint32_t* fifo = OTG.epFifos[i];
+            unsigned nwords = (eps.len + 3) / 4;
+            while (nwords--) {
+                *fifo = *buf32++;
+            }
+            eps.len = 0;
+        }
+
+        /*
+         * XFRC: transmission complete
+         */
+        if (inEpInt & (1 << 0)) {
+            if (i == 0) {
+                UsbControl::controlRequest(0, TransactionIn);
+            } else {
+                UsbDevice::inEndpointCallback(i);
+            }
+        }
+
+        /*
+         * ITTXFE: IN token was received while the tx fifo was empty.
+         * Allow the device to track when the host is "listening".
+         */
+        if (inEpInt & (1 << 4)) {
+            if (i != 0) {
+                UsbDevice::onINToken(i);
+            }
+        }
+    }
+}
+
+void outEpISR()
+{
+    /*
+     *  OUT ep activity - handles both SETUP and OUT events.
+     */
+
+    uint16_t outEpInts = (OTG.device.DAINT & OTG.device.DAINTMSK) >> 16;
+    for (unsigned i = 0; outEpInts != 0; ++i, outEpInts >>= 1) {
+
+        uint32_t outEpInt = OTG.device.outEps[i].DOEPINT & OTG.device.DOEPMSK;
+        OTG.device.outEps[i].DOEPINT = 0xff;
+
+        if (outEpInt & (1 << 3)) {  // setup complete
+            UsbControl::controlRequest(0, TransactionSetup);
+        }
+
+        if (outEpInt & (1 << 0)) {  // OUT transfer complete
+            if (i == 0) {
+                UsbControl::controlRequest(0, TransactionIn);
+            } else {
+                // don't receive any more packets until UsbDevice reads this one
+                OTG.global.GINTMSK &= ~RXFLVL;
+                UsbDevice::outEndpointCallback(i);
+            }
+        }
+    }
 }
 
 void disconnect()
@@ -279,133 +418,45 @@ void disconnect()
 
 IRQ_HANDLER ISR_UsbOtg_FS()
 {
-    uint32_t status = OTG.global.GINTSTS;
+    uint32_t status = OTG.global.GINTSTS & OTG.global.GINTMSK;
 
-    const uint32_t USBRST = 1 << 12;
     if (status & USBRST) {
         UsbHardware::reset();
         UsbCore::reset();
         OTG.global.GINTSTS = USBRST;
     }
 
-    const uint32_t ENUMDNE = 1 << 13;
     if (status & ENUMDNE) {
-
         // must wait till enum is done to configure in ep0
         OTG.device.inEps[0].DIEPCTL = 0x0 | (1 << 27); // MPSIZ 64
+        OTG.device.DCTL |= (1 << 8);    // CGINAK: Clear global IN NAK
         OTG.global.GINTSTS = ENUMDNE;
     }
 
-    const uint32_t RXFLVL = 1 << 4; // Receive FIFO non-empty
-    if (status & RXFLVL) {
-
-        // RXFLVL is read-only in GINTSTS
-        uint32_t rxstsp = OTG.global.GRXSTSP;
-        uint16_t pktsts = (rxstsp >> 17) & 0xf;
-
-        /*
-         * For any packet status configurations that indicate that data has arrived,
-         * read the data out of the fifo. Once this happens, we'll either get a
-         * SETUP complete or an OUT complete event, both of which get handled
-         * via OEPINT.
-         */
-        if (pktsts == PktStsSetupData || pktsts == PktStsOutData) {
-            uint16_t bcnt = (rxstsp >> 4) & 0x3ff;  // BCNT mask
-            if (bcnt > 0) {
-                /*
-                 * mask RXFLVL until this packet gets consumed by the application.
-                 * this allows the hw to fill the remaining usb ram with OUT packets,
-                 * but we won't process them until the application is ready.
-                 * it will NAK in the case the usb ram fills up.
-                 */
-                OTG.global.GINTMSK &= ~RXFLVL;
-                numBufferedBytes = bcnt;
-                UsbHardware::epReadFifo(packetBuf, sizeof packetBuf);
-            }
-        }
+    if (status & RXFLVL) {  // this bit is read-only
+        UsbHardware::rxflvlISR();
     }
 
-    /*
-     * In ep activity - IEPINT indicates global out endpoint activity, must
-     * read DAINT to see which endpoints activity actually occurred on.
-     */
-    const uint32_t IEPINT = 1 << 18;    // this bit is read-only
-    if (status & IEPINT) {
-
-        uint16_t inEpInts = OTG.device.DAINT & 0xffff;
-        for (unsigned i = 0; inEpInts != 0; ++i, inEpInts >>= 1) {
-
-            uint32_t inEpInt = OTG.device.inEps[i].DIEPINT;
-            OTG.device.inEps[i].DIEPINT = 0xff;
-
-            /*
-             * TXFE: transmit FIFO has room to write a packet.
-             */
-            if (inEpInt & (1 << 7)) {
-
-                InEndpointState &eps = inEndpointStates[i];
-                const uint32_t* buf32 = reinterpret_cast<const uint32_t*>(eps.buf);
-                volatile uint32_t* fifo = OTG.epFifos[i];
-                for (int b = eps.len; b > 0; b -= 4)
-                    *fifo = *buf32++;
-
-                eps.len = 0;
-                OTG.device.DIEPEMPMSK &= ~(1 << i);
-            }
-
-            /*
-             * XFRC: transmission complete
-             */
-            if (inEpInt & 0x1) {
-                if (i == 0)
-                    UsbControl::controlRequest(0, TransactionIn);
-                else
-                    UsbDevice::inEndpointCallback(i);
-            }
-        }
+    if (status & IEPINT) {  // this bit is read-only
+        UsbHardware::inEpISR();
     }
 
-    /*
-     *  OUT ep activity - handles both SETUP and OUT events.
-     */
-    const uint32_t OEPINT = 1 << 19;    // this bit is read-only
-    if (status & OEPINT) {
-        uint16_t outEpInts = (OTG.device.DAINT >> 16) & 0xffff;
-        for (unsigned i = 0; outEpInts != 0; ++i, outEpInts >>= 1) {
-
-            uint32_t outEpInt = OTG.device.outEps[i].DOEPINT;
-            OTG.device.outEps[i].DOEPINT = 0xff;
-
-            if (outEpInt & (1 << 3)) {      // setup complete
-                UsbControl::controlRequest(0, TransactionSetup);
-            }
-
-            if (outEpInt & 0x1) {           // OUT transfer complete
-                // TODO: update UsbControl handler to determine in/out stage
-                // based on previous state
-                if (i == 0)
-                    UsbControl::controlRequest(0, TransactionIn);
-                else
-                    UsbDevice::outEndpointCallback(i);
-            }
-        }
+    if (status & OEPINT) {  // this bit is read-only
+        UsbHardware::outEpISR();
     }
 
-    const uint32_t usbsusp = 1 << 11;
-    if (status & usbsusp) {
+    if (status & USBSUSP) {
         UsbDevice::handleSuspend();
-        OTG.global.GINTSTS = usbsusp;
+        OTG.global.GINTSTS = USBSUSP;
     }
 
-    const uint32_t wkupint = 1 << 31;
-    if (status & wkupint) {
+    if (status & WKUPINT) {
         UsbDevice::handleResume();
-        OTG.global.GINTSTS = wkupint;
+        OTG.global.GINTSTS = WKUPINT;
     }
 
-    const uint32_t sof = 1 << 3;
-    if (status & sof) {
+    if (status & SOF) {
         UsbDevice::handleStartOfFrame();
-        OTG.global.GINTSTS = sof;
+        OTG.global.GINTSTS = SOF;
     }
 }

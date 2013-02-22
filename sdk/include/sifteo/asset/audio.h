@@ -21,6 +21,11 @@ namespace Sifteo {
 
 /**
  * @brief An audio asset, using any supported compression codec.
+ *
+ * `stir` generates an AssetAudio for each `sound` element in your assets.lua
+ * configuration file, most often from a WAV source file.
+ *
+ * See the @ref audio and @ref asset_workflow guides for details.
  */
 
 struct AssetAudio {
@@ -31,7 +36,7 @@ struct AssetAudio {
      *
      * This can be used to calculate a new speed for AudioChannel::setSpeed().
      */
-    unsigned speed() {
+    unsigned speed() const {
         return sys.sampleRate;
     }
 
@@ -71,10 +76,47 @@ struct AssetAudio {
 
 /**
  * @brief A Tracker module, converted from XM format by `stir`
+ *
+ * Tracker modules are great for supporting longer musical cues with
+ * minimal storage requirements - it's efficient to have tracker modules
+ * with several minutes of music, while several minutes of sample data
+ * would be prohibitively large in many circumstances.
+ *
+ * To play an AssetTracker, see the AudioTracker.
+ *
+ * If you're looking for straight sample playback, often used for
+ * sound effects, see AssetAudio.
+ *
+ * See the @ref audio and @ref asset_workflow guides for details.
  */
 
 struct AssetTracker {
     _SYSXMSong song;
+
+    /// The number of channels used by this tracker module.
+    unsigned numChannels() const {
+        return song.nChannels;
+    }
+
+    /// The number of patterns in this tracker module.
+    unsigned numPatterns() const {
+        return song.nPatterns;
+    }
+
+    /// The number of instruments in this tracker module.
+    unsigned numInstruments() const {
+        return song.nInstruments;
+    }
+
+    /// This tracker module's default tempo (ticks)
+    unsigned tempo() const {
+        return song.tempo;
+    }
+
+    /// This tracker module's default beats per minute (notes)
+    unsigned bpm() const {
+        return song.bpm;
+    }
 };
 
 /**

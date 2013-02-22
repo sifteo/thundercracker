@@ -1,0 +1,30 @@
+
+h1 {
+	color: #354C7B;
+	font-weight: normal;
+	padding-bottom: 4px;
+	border-bottom: 1px solid #879ECB;
+	margin-top: 1.5em;
+}
+
+h2 {
+	color: #555;
+}
+
+div.contents {
+	margin-left: auto;
+	margin-right: auto;
+	width: 720px;
+}
+
+#projectname {
+	color: #00aedb;
+}
+
+dl.note {
+	border-color: #879ECB;
+}
+
+div.footer p {
+	color: #444;
+}

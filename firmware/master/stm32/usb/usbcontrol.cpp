@@ -11,13 +11,13 @@ UsbControl::ControlState UsbControl::controlState;
 
 void UsbControl::sendChunk()
 {
-    const DeviceDescriptor *dd = UsbCore::devDescriptor();
-    if (dd->bMaxPacketSize0 < controlState.len) {
+    unsigned maxPacketSize0 = UsbCore::devDescriptor()->bMaxPacketSize0;
+    if (maxPacketSize0 < controlState.len) {
         // Data stage, normal transmission
-        UsbHardware::epWritePacket(0, controlState.pdata, dd->bMaxPacketSize0);
+        UsbHardware::epWritePacket(0, controlState.pdata, maxPacketSize0);
         controlState.status = DataIn;
-        controlState.pdata += dd->bMaxPacketSize0;
-        controlState.len -= dd->bMaxPacketSize0;
+        controlState.pdata += maxPacketSize0;
+        controlState.len -= maxPacketSize0;
     }
     else {
         // Data stage, end of transmission

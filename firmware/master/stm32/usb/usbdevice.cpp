@@ -110,33 +110,33 @@ static const char *descriptorStrings[] = {
 #endif
 };
 
-int UsbDevice::writeStringDescriptor(unsigned idx, uint16_t *dst, unsigned maxLenBytes)
+int UsbDevice::writeStringDescriptor(unsigned idx, uint16_t *dst)
 {
     /*
      * Render a unicode version of the requested string descriptor.
      * Special case serial number, and hex-ify our UniqueId.
-     * Returns length in bytes.
+     *
+     * Returns length of the string in bytes - this is not constrained
+     * to the number of bytes to actually return, since we want to report
+     * the total length even if only a subset is requested.
      */
 
     if (idx == 1 || idx == 2) {
         // string indexes are 1-based, since 0 means "doesn't exist"
         const char *str = descriptorStrings[idx - 1];
-        unsigned len = MIN(maxLenBytes / sizeof(uint16_t), strlen(str));
-        return UsbCore::writeAsciiDescriptor(dst, str, len);
+        return UsbCore::writeAsciiDescriptor(dst, str, strlen(str));
     }
 
     if (idx == 3) {
         static const char digits[] = "0123456789abcdef";
 
-        unsigned len = MIN(maxLenBytes / sizeof(uint16_t), SysInfo::UniqueIdNumBytes);
         const uint8_t *id = static_cast<const uint8_t*>(SysInfo::UniqueId);
-
-        for (unsigned i = 0; i < len; ++i) {
+        for (unsigned i = 0; i < SysInfo::UniqueIdNumBytes; ++i) {
             uint8_t b = id[i];
             *dst++ = digits[b >> 4];
             *dst++ = digits[b & 0xf];
         }
-        return ((len * 2) * sizeof(uint16_t)) + sizeof(uint16_t);
+        return ((SysInfo::UniqueIdNumBytes * 2) * sizeof(uint16_t)) + sizeof(uint16_t);
     }
 
     return 0;
@@ -171,6 +171,7 @@ static const struct {
 
 bool UsbDevice::configured;
 volatile bool UsbDevice::txInProgress;
+SysTime::Ticks UsbDevice::timestampINActivity;
 uint8_t UsbDevice::epINBuf[UsbHardware::MAX_PACKET];
 
 /*
@@ -195,7 +196,11 @@ void UsbDevice::handleOUTData()
 void UsbDevice::init() {
     configured = false;
     txInProgress = false;
-    UsbCore::init(&dev, (Usb::ConfigDescriptor*)&configurationBlock, descriptorStrings);
+
+    const UsbCore::Config cfg = {
+        false,  // enableSOF
+    };
+    UsbCore::init(&dev, (Usb::ConfigDescriptor*)&configurationBlock, cfg);
 }
 
 void UsbDevice::deinit()
@@ -235,22 +240,42 @@ void UsbDevice::handleStartOfFrame()
 
 }
 
-/*
- * Called in ISR context - not taking action on this at the moment.
- */
+
 void UsbDevice::inEndpointCallback(uint8_t ep)
 {
+    /*
+     * Called in ISR context when an IN transfer has completed.
+     *
+     * Update our IN activity timestamp since this means the host is listening to us.
+     */
+
     txInProgress = false;
+    timestampINActivity = SysTime::ticks();
 }
 
-/*
- * Called in ISR context. Flag the out task so that we can process the data
- * on the 'main' thread since we'll likely want to be doing some long
- * running things as a result - fetching from flash, etc.
- */
+
 void UsbDevice::outEndpointCallback(uint8_t ep)
 {
+    /*
+     * Called in ISR context when an OUT transfer has arrived.
+     *
+     * Trigger a task to handle this since we'll likely want to be doing some long
+     * running things as a result - fetching from flash, etc.
+     */
+
     Tasks::trigger(Tasks::UsbOUT);
+}
+
+void UsbDevice::onINToken(uint8_t ep)
+{
+    /*
+     * Called in ISR context when an IN token has been received but there
+     * was nothing in the TX fifo to respond with.
+     *
+     * This can give us a sense of whether the host is currently waiting on us for data.
+     */
+
+    timestampINActivity = SysTime::ticks();
 }
 
 /*
@@ -271,24 +296,18 @@ int UsbDevice::controlRequest(Usb::SetupData *req, uint8_t **buf, uint16_t *len)
 /*
  * Block until any writes in progress have completed.
  * Also, break if we've gotten disconnected while waiting.
- *
- * XXX: hard coded timeout for testjig just to be conservative until we have
- *      a more universal notion of when we're connected to a host.
  */
-bool UsbDevice::waitForPreviousWrite()
+bool UsbDevice::waitForPreviousWrite(unsigned timeoutMillis)
 {
-    #if (BOARD == BOARD_TEST_JIG)
-    SysTime::Ticks deadline = SysTime::ticks() + SysTime::msTicks(1000);
-    #endif
+    SysTime::Ticks deadline = SysTime::ticks() + SysTime::msTicks(timeoutMillis);
 
     while (configured && txInProgress) {
         Tasks::waitForInterrupt();
-
-        #if (BOARD == BOARD_TEST_JIG)
-        if (SysTime::ticks() > deadline)
+        if (SysTime::ticks() > deadline) {
             return false;
-        #endif
+        }
     }
+
     return configured;
 }
 
@@ -297,10 +316,11 @@ bool UsbDevice::waitForPreviousWrite()
  * len can be greater than max packet size, but must be less than the available
  * space in the TX FIFO.
  */
-int UsbDevice::write(const uint8_t *buf, unsigned len)
+int UsbDevice::write(const uint8_t *buf, unsigned len, unsigned timeoutMillis)
 {
-    if (!waitForPreviousWrite())
+    if (!waitForPreviousWrite(timeoutMillis)) {
         return 0;
+    }
 
     memcpy(epINBuf, buf, len);
     txInProgress = true;

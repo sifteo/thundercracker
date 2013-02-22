@@ -72,6 +72,7 @@ static void usage()
             "  --waveout FILE.wav    Log all audio output to LOG.wav\n"
             "  --white-bg            Force the UI to use a plain white background\n"
             "  --window WxH          Initial window size (default 800x600)\n"
+            "  --flush-logs          fflush stdout individual game logs to use them like a tail\n"
             "\n"
             "Games:\n"
             "  Any games specified on the command line will be installed to\n"
@@ -189,7 +190,7 @@ static int runScript(System &sys, const char *file)
 
 int main(int argc, char **argv)
 {
-    static System sys;
+    System& sys = System::getInstance();
     const char *scriptFile = NULL;
 
     // Attach an existing console, if it's already handy
@@ -300,6 +301,11 @@ int main(int argc, char **argv)
             continue;
         }
 
+        if (!strcmp(arg, "--flush-logs")) {
+            sys.opt_flushLogs = true;
+            continue;
+        }
+
         if (!strcmp(arg, "--waveout") && argv[c+1]) {
             sys.opt_waveoutFilename = argv[c+1];
             c++;
@@ -351,7 +357,7 @@ int main(int argc, char **argv)
             c++;
             continue;
         }
-        
+
         if (!strncmp(arg, "-psn_", 5)) {
             // Used by Mac OS app bundles; ignore it.
             continue;

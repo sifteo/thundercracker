@@ -6,7 +6,8 @@
 #include <string.h>
 #include "macros.h"
 #include "mc_logdecoder.h"
-
+#include <cstdio>
+#include "system.h"
 
 void LogDecoder::init()
 {
@@ -247,6 +248,9 @@ void LogDecoder::writeLog(const char *str)
 {
     if (scriptType == _SYS_SCRIPT_NONE) {
         LOG(("%s", str));
+        if (System::getInstance().opt_flushLogs) {
+            fflush(stdout);
+        }
     } else {
         scriptBuffer += str;
     }

@@ -27,7 +27,9 @@ OBJS := \
     src/metadata.o      \
     src/savedata.o      \
     src/basedevice.o    \
-    src/lfsvolume.o
+    src/lfsvolume.o     \
+    src/listen.o        \
+    src/logdecoder.o
 
 # include directories
 INCLUDES := \
@@ -42,7 +44,7 @@ INCLUDES := \
 VERSION := $(shell git describe --tags)
 
 # C++ compiler flags (-g -O2 -Wall)
-CCFLAGS = -g -O2
+CCFLAGS = -g -O2 -Werror
 # we currently define SIFTEO_SIMULATOR so we can use macros.h - revisit whether
 # this deserves any reorg
 CCFLAGS += -DSDK_VERSION=$(VERSION) -DSIFTEO_SIMULATOR -D__STDC_FORMAT_MACROS -DNOT_USERSPACE

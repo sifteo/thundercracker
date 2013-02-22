@@ -170,6 +170,19 @@ void XmTrackerPlayer::setPatternBreak(uint16_t phrase, uint16_t row)
     processPatternBreak(phrase, row);
 }
 
+bool XmTrackerPlayer::isUsingChannel(unsigned ch) const
+{
+    /*
+     * Used for diagnosing channel allocation errors in simulation.
+     */
+
+    if (hasSong) {
+        return ch >= (_SYS_AUDIO_MAX_CHANNELS - song.nChannels);
+    }
+
+    return false;
+}
+
 inline void XmTrackerPlayer::loadNextNotes()
 {
     if (ticks) {

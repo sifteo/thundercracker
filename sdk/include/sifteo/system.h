@@ -243,10 +243,46 @@ class System {
     static void setCubeRange(unsigned count) {
         _SYS_setCubeRange(count, count);
     }
+
+    /**
+     * @brief Returns the system's operating system version.
+     *
+     * The version is a numeric value of the form 0xMMNNPP (MM = major, NN = minor, PP = patch).
+     *
+     * For example, if your application is running on a system at version @b 1.5.10,
+     * the value from osVersion() will be @b 0x010510.
+     *
+     * @note early OS versions do not support the _SYS_version() syscall -
+     * _SYS_OS_VERSION_NONE is returned in this case.
+     */
+    static uint32_t osVersion() {
+
+        if ((_SYS_getFeatures() & _SYS_FEATURE_SYS_VERSION) != 0) {
+            return _SYS_version() & _SYS_OS_VERSION_MASK;
+        }
+
+        return _SYS_OS_VERSION_NONE;
+    }
+
+    /**
+     * @brief Returns the hardware revision for the Sifteo base
+     * this application is running on.
+     *
+     * @note early OS versions do not support the _SYS_version() syscall -
+     * _SYS_HW_VERSION_NONE is returned in this case.
+     */
+    static uint8_t hardwareVersion() {
+
+        if ((_SYS_getFeatures() & _SYS_FEATURE_SYS_VERSION) != 0) {
+            return _SYS_version() >> _SYS_HW_VERSION_SHIFT;
+        }
+
+        return _SYS_HW_VERSION_NONE;
+    }
 };
 
 /**
  * @} end defgroup system
  */
 
-};  // namespace Sifteo
+}   // namespace Sifteo

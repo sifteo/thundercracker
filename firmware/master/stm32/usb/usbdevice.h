@@ -10,6 +10,7 @@
 #include "usb/usbdefs.h"
 #include "usb/usbhardware.h"
 #include "board.h"
+#include "systime.h"
 
 class UsbDevice
 {
@@ -34,7 +35,7 @@ public:
     static void init();
     static void deinit();
 
-    static int writeStringDescriptor(unsigned idx, uint16_t *dst, unsigned maxLenBytes);
+    static int writeStringDescriptor(unsigned idx, uint16_t *dst);
 
     static void handleReset();
     static void handleSuspend();
@@ -47,20 +48,29 @@ public:
     static void inEndpointCallback(uint8_t ep);
     static void outEndpointCallback(uint8_t ep);
 
+    static void onINToken(uint8_t ep);
+    static ALWAYS_INLINE SysTime::Ticks lastINActivity() {
+        return timestampINActivity;
+    }
+
     static void handleOUTData();
 
     static int read(uint8_t *buf, unsigned len);
-    static int write(const uint8_t *buf, unsigned len);
+    // default timeout is LOOOONG to maintain same behavior as
+    // before the timeout was introduced into this API. Could look into
+    // changing this in the future.
+    static int write(const uint8_t *buf, unsigned len, unsigned timeoutMillis = 0xffffffff);
 
     static bool isConfigured() {
         return configured;
     }
 
 private:
-    static bool waitForPreviousWrite();
+    static bool waitForPreviousWrite(unsigned timeoutMillis);
 
     static bool configured;
     static volatile bool txInProgress;
+    static SysTime::Ticks timestampINActivity;
 
     /*
      * For now, the STM32 hardware layer driver requires this to be static

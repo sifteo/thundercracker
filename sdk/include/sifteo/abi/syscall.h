@@ -179,6 +179,9 @@ uint32_t _SYS_getConnectedCubes() _SC(16);
 void _SYS_setCubeRange(uint32_t minimum, uint32_t maximum) _SC(125);
 void _SYS_unpair(_SYSCubeID cid) _SC(126);
 
+// Version
+uint32_t _SYS_version(void) _SC(186);
+
 // Audio
 uint32_t _SYS_audio_play(const struct _SYSAudioModule *mod, _SYSAudioChannelID ch, enum _SYSAudioLoopType loop) _SC(35);
 uint32_t _SYS_audio_isPlaying(_SYSAudioChannelID ch) _SC(131);

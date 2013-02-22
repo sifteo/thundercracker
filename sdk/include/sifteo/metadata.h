@@ -163,10 +163,31 @@ public:
      *
      * The game will be prevented from running or paused until at least the
      * specific count of cubes are connected to the system.
+     *
+     * @see System::setCubeRange()
      */
     Metadata &cubeRange(unsigned count)
     {
         return cubeRange(count, count);
+    }
+
+    /**
+     * @brief Specify the minimum OS version required to run your application.
+     *
+     * If the version installed on a user's base is earlier than this version,
+     * the user will be prompted to update their unit's firmware
+     * before the application can be installed.
+     *
+     * @see System::osVersion()
+     */
+    Metadata &minimumOSVersion(uint32_t version)
+    {
+        _SYS_lti_abort((version & 0xff000000) != 0,
+            "Metadata::minimumOSVersion(): invalid version. Must be of the form "
+            "0xMMNNPP (MM = major, NN = minor, PP = patch).");
+
+        _SYS_lti_metadata(_SYS_METADATA_MIN_OS_VERSION, "I", version);
+        return *this;
     }
 };
 
