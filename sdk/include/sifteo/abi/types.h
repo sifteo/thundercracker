@@ -246,6 +246,40 @@ struct _SYSBluetoothCounters {
 };
 
 /*
+ * USB
+ */
+
+#define _SYS_USB_PACKET_BYTES            60
+#define _SYS_USB_MAX_QUEUED_PACKETS      256
+
+struct _SYSUsbPacket {
+    uint8_t length;             /// Length of in-use portion of bytes[]
+    uint8_t type;               /// Packet type flag (used by some APIs)
+    uint8_t bytes[_SYS_USB_PACKET_BYTES];
+};
+
+struct _SYSUsbQueueHeader {
+    uint8_t head;               /// Index of the first full slot to read from
+    uint8_t tail;               /// Index of the next empty slot to write into
+    uint8_t last;               /// Index of last buffer slot. If head/tail > last, wraps to 0
+    uint8_t reserved;           /// Initialize to zero
+    // Followed by variable-size array of _SYSBluetoothPacket
+};
+
+struct _SYSUsbQueue {
+    struct _SYSUsbQueueHeader header;
+    struct _SYSUsbPacket packets[_SYS_USB_MAX_QUEUED_PACKETS];
+};
+
+struct _SYSUsbCounters {
+    uint32_t rxPackets;
+    uint32_t txPackets;
+    uint32_t rxBytes;
+    uint32_t txBytes;
+    uint32_t rxUserDropped;
+};
+
+/*
  * RFC4122 compatible UUIDs.
  *
  * These are used in game metadata, to uniquely identify a particular

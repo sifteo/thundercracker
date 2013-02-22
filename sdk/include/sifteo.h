@@ -26,4 +26,5 @@
 #include <sifteo/string.h>
 #include <sifteo/system.h>
 #include <sifteo/time.h>
+#include <sifteo/usb.h>
 #include <sifteo/video.h>

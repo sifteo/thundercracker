@@ -506,6 +506,22 @@ namespace Events {
 
     /// Buffer space just became available for writing to the current BluetoothPipe.
     const NullaryEventVector<_SYS_BASE_BT_WRITE_AVAILABLE>  bluetoothWriteAvailable;
+    
+    /*
+     * USB events
+     */
+
+    /// The Sifteo Base has established a connection with the host's USB.
+    const NullaryEventVector<_SYS_BASE_USB_CONNECT>  usbConnect;
+
+    /// The Sifteo Base has been disconnected from the host's USB.
+    const NullaryEventVector<_SYS_BASE_USB_DISCONNECT>  usbDisconnect;
+
+    /// Packets are available for reading on the UsbPipe.
+    const NullaryEventVector<_SYS_BASE_USB_READ_AVAILABLE>  usbReadAvailable;
+
+    /// Buffer space just became available for writing to the UsbPipe.
+    const NullaryEventVector<_SYS_BASE_USB_WRITE_AVAILABLE>  usbWriteAvailable;
 
 };  // namespace Events
 
