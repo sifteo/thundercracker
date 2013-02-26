@@ -7,8 +7,8 @@
 using namespace Sifteo;
 
 static Metadata M = Metadata()
-    .title("TinyWave")
-    .package("com.sifteo.sdk.wave", "1.0")
+    .title("Monotone")
+    .package("com.sifteo.sdk.monotone", "1.0")
     .icon(Icon)
     .cubeRange(1);
 
@@ -29,7 +29,6 @@ void synthInit()
 void synthesize(float hz)
 {
     LOG("hz=%f\n", hz);
-    //sine1Channel.setVolume(0);
     sine1Channel.setVolume(sine1Channel.MAX_VOLUME);
     sine1Channel.setSpeed(hz * arraysize(sineWave));
 }

@@ -1,4 +1,4 @@
-APP = wave
+APP = monotone
 
 include $(SDK_DIR)/Makefile.defs
 

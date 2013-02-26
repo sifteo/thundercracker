@@ -9,7 +9,6 @@ SUBDIRS = \
 	stampy \
 	stars \
 	synth \
-	wave \
 	text
 
 .PHONY: clean subdirs $(SUBDIRS)
