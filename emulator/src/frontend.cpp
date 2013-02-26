@@ -529,7 +529,7 @@ void Frontend::postBatteryMessage(unsigned cubeNum)
     if (cubeNum == BatteryLevel::BASE)  // is it the master cube ?
         s << "Base";
     else
-        s << "Cube #" << cubeNum + 1;   // more convivial to start from 1 than 0
+        s << "Cube #" << cubeNum;
 
     s << " battery level: " << BatteryLevel::getPercentage(cubeNum) << "%";
     overlay.postMessage(s.str());
