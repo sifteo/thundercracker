@@ -8,17 +8,17 @@ namespace BatteryLevel {
 static uint8_t percentage[_SYS_NUM_CUBE_SLOTS+1] = {0}; // will be 100% in init()
 
 
-void updatePercentage(int delta, unsigned cubeNum)
+void updatePercentage(int8_t delta, uint8_t cubeNum)
 {
     percentage[cubeNum] = clamp(percentage[cubeNum] + delta, 0, 100);
 }
 
-unsigned getPercentage(unsigned cubeNum)
+uint8_t getPercentage(uint8_t cubeNum)
 {
     return percentage[cubeNum];
 }
 
-unsigned scaled(unsigned cubeNum) // base by default
+unsigned scaled(uint8_t cubeNum) // base by default
 {
     return percentage[cubeNum] * _SYS_BATTERY_MAX / 100;
 }
@@ -26,7 +26,7 @@ unsigned scaled(unsigned cubeNum) // base by default
 void heartbeat()
 {
     // simulate the regular capture made in real hardware
-    static unsigned beatDivider = 0;
+    static uint8_t beatDivider = 0;
 
     if (++beatDivider == 10) {  // check every second (called @ 10Hz)
         beatDivider = 0;

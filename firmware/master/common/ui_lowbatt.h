@@ -15,7 +15,7 @@ public:
 
     UILowBatt(UICoordinator &uic);
 
-    void init(unsigned _cubeNum = BatteryLevel::BASE);
+    void init(uint8_t _cubeNum = BatteryLevel::BASE);
     bool quitWasSelected() const;
 
     ALWAYS_INLINE void animate() {
@@ -35,7 +35,7 @@ public:
 private:
     UIMenu baseMenu;
     UIMenu cubeMenu;
-    unsigned cubeNum;
+    uint8_t cubeNum;
 
     static const UIMenu::Item baseItems[NUM_ITEMS];
     static const UIMenu::Item cubeItems[NUM_ITEMS];

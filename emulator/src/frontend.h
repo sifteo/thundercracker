@@ -121,7 +121,7 @@ class Frontend {
 
     void toggleRotationLock();
     void postVolumeMessage();
-    void postBatteryMessage(unsigned cubeNum);
+    void postBatteryMessage(uint8_t cubeNum);
 
     System *sys;
     unsigned frameCount;

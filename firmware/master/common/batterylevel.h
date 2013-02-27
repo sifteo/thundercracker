@@ -7,23 +7,23 @@
 
 namespace BatteryLevel
 {
-    static const unsigned BASE = _SYS_NUM_CUBE_SLOTS;
-    static const unsigned NONE = _SYS_NUM_CUBE_SLOTS+1;
+    static const uint8_t BASE = _SYS_NUM_CUBE_SLOTS;
+    static const uint8_t NONE = _SYS_NUM_CUBE_SLOTS+1;
 
     void init();
     unsigned raw();
     unsigned vsys();
-    unsigned scaled(unsigned cubeNum = BASE); // master by default
+    unsigned scaled(uint8_t cubeNum = BASE); // master by default
     void beginCapture();
     void captureIsr();
     void process(unsigned);
     void heartbeat();
-    unsigned getLowBatDevice();
+    uint8_t getLowBatDevice();
     bool needWarning();
-    void setWarningDone(unsigned cubeNum);
+    void setWarningDone(uint8_t cubeNum);
     void onCapture();
-    void updatePercentage(int delta, unsigned cubeNum);
-    unsigned getPercentage(unsigned cubeNum);
+    void updatePercentage(int8_t delta, uint8_t cubeNum);
+    uint8_t getPercentage(uint8_t cubeNum);
 
     // In the following arrays, the last element refers to the master cube:
     static uint8_t lowBatDevice = NONE;

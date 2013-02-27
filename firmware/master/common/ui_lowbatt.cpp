@@ -23,7 +23,7 @@ UILowBatt::UILowBatt(UICoordinator &uic) :
 {
 }
 
-void UILowBatt::init(unsigned _cubeNum)
+void UILowBatt::init(uint8_t _cubeNum)
 {
     cubeNum = _cubeNum;
     if (cubeNum == BatteryLevel::BASE)

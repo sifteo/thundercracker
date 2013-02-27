@@ -10,7 +10,7 @@ bool needWarning()
     return (lowBatDevice != NONE); // was there a device with a low battery level ?
 }
 
-void setWarningDone(unsigned cubeNum)
+void setWarningDone(uint8_t cubeNum)
 {
     warningDone.atomicMark(cubeNum);
     lowBatDevice = NONE; // useful if call needWarning() before update
@@ -36,7 +36,7 @@ void onCapture() // update lowBatDevice and trigger a warning (once) if 90% disc
     }
 }
 
-unsigned getLowBatDevice()
+uint8_t getLowBatDevice()
 {
     return lowBatDevice;
 }

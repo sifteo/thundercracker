@@ -237,7 +237,7 @@ bool Pause::cubeRangeModeHandler(UICoordinator &uic, UICubeRange &uicr, Mode &mo
 bool Pause::lowBatteryModeHandler(UICoordinator &uic, UILowBatt &uilb, Mode &mode, bool modeChanged)
 {
     static bool inProgress = false;
-    static unsigned cid = 0;
+    static uint8_t cid = 0;
 
     if (!inProgress) {
         cid = BatteryLevel::getLowBatDevice(); // the base is a cube too !
