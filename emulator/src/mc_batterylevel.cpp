@@ -39,8 +39,9 @@ void init()
 {
     needWarningVect.clear();
     // Initialize default values of simulated battery levels
-    for (int i = 0; i <= _SYS_NUM_CUBE_SLOTS; i++)
+    for (int i = 0; i <= _SYS_NUM_CUBE_SLOTS; i++) {
         percentage[i] = 100;
+    }
 }
 
 } // namespace BatteryLevel

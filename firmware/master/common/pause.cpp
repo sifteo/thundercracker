@@ -255,9 +255,9 @@ bool Pause::lowBatteryModeHandler(UICoordinator &uic, UILowBatt &uilb, Mode &mod
         BatteryLevel::setWarningDone(cid);
         cleanup(uic);
 
-        if (uilb.quitWasSelected())
+        if (uilb.quitWasSelected()) {
             SvmLoader::exit();
-
+        }
         inProgress = false;
         return true;
     }

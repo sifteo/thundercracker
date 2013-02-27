@@ -459,8 +459,9 @@ void GLFWCALL Frontend::onKey(int key, int state)
 
         case 'D': { // turn Down the battery level
             unsigned cubeNum = BatteryLevel::BASE;
-            if (instance->mousePicker.mCube)
+            if (instance->mousePicker.mCube) {
                 cubeNum = instance->mousePicker.mCube->getId();
+            }
             BatteryLevel::updatePercentage(-10, cubeNum);
             instance->postBatteryMessage(cubeNum);
             break;
@@ -468,8 +469,9 @@ void GLFWCALL Frontend::onKey(int key, int state)
 
         case 'U': { // turn Up the battery level
             unsigned cubeNum = BatteryLevel::BASE;
-            if (instance->mousePicker.mCube)
+            if (instance->mousePicker.mCube) {
                 cubeNum = instance->mousePicker.mCube->getId();
+            }
             BatteryLevel::updatePercentage(+10, cubeNum);
             instance->postBatteryMessage(cubeNum);
             break;
@@ -526,11 +528,11 @@ void Frontend::postVolumeMessage()
 void Frontend::postBatteryMessage(unsigned cubeNum)
 {
     std::stringstream s;
-    if (cubeNum == BatteryLevel::BASE)  // is it the master cube ?
+    if (cubeNum == BatteryLevel::BASE) { // is it the master cube ?
         s << "Base";
-    else
+    } else {
         s << "Cube #" << cubeNum;
-
+    }
     s << " battery level: " << BatteryLevel::getPercentage(cubeNum) << "%";
     overlay.postMessage(s.str());
 }

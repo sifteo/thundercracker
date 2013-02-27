@@ -219,10 +219,11 @@ bool UICoordinator::pollForAttach(_SYSCubeID id)
     }
 
     if (!isAttached() && uiConnected) {
-        if (int(id) < _SYS_NUM_CUBE_SLOTS)
+        if (id < _SYS_NUM_CUBE_SLOTS) {
             attachToCube(id);                          // Attach to the asked cube
-        else
+        } else {
             attachToCube(Intrinsic::CLZ(uiConnected)); // Grab any connected cube
+        }
         return true;
     }
 
