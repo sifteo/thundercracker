@@ -38,6 +38,7 @@ void onCapture() // update lowBatDevice and trigger a warning (once) if 90% disc
 
 uint8_t getLowBatDevice()
 {
+    ASSERT(lowBatDevice != NONE); // needWarning() should be called before
     return lowBatDevice;
 }
 
