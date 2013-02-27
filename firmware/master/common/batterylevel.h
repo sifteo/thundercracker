@@ -8,6 +8,7 @@
 namespace BatteryLevel
 {
     static const unsigned BASE = _SYS_NUM_CUBE_SLOTS;
+    static const unsigned NONE = _SYS_NUM_CUBE_SLOTS+1;
 
     void init();
     unsigned raw();
@@ -17,7 +18,7 @@ namespace BatteryLevel
     void captureIsr();
     void process(unsigned);
     void heartbeat();
-    unsigned getWeakCube();
+    unsigned getLowBatDevice();
     bool needWarning();
     void setWarningDone(unsigned cubeNum);
     void onCapture();
@@ -25,8 +26,8 @@ namespace BatteryLevel
     unsigned getPercentage(unsigned cubeNum);
 
     // In the following arrays, the last element refers to the master cube:
-    static bool warningDone[_SYS_NUM_CUBE_SLOTS+1] = {0};
-    static BitVector<_SYS_NUM_CUBE_SLOTS+1> needWarningVect;
+    static uint8_t lowBatDevice = NONE;
+    static BitVector<_SYS_NUM_CUBE_SLOTS+1> warningDone;
 
     /*
      * Sentinel value to help determine whether a sample has successfully

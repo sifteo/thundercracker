@@ -240,7 +240,7 @@ bool Pause::lowBatteryModeHandler(UICoordinator &uic, UILowBatt &uilb, Mode &mod
     static unsigned cid = 0;
 
     if (!inProgress) {
-        cid = BatteryLevel::getWeakCube(); // the base is a cube too !
+        cid = BatteryLevel::getLowBatDevice(); // the base is a cube too !
         if (uic.pollForAttach(cid) || modeChanged) {
             inProgress = true;
             uilb.init(cid);

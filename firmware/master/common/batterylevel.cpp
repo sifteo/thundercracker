@@ -7,36 +7,38 @@ namespace BatteryLevel {
 
 bool needWarning()
 {
-    return !needWarningVect.empty(); // is there a flag set ?
+    return (lowBatDevice != NONE); // was there a device with a low battery level ?
 }
 
 void setWarningDone(unsigned cubeNum)
 {
-    warningDone[cubeNum] = true;
-    needWarningVect.clear(cubeNum);
+    warningDone.atomicMark(cubeNum);
+    lowBatDevice = NONE; // useful if call needWarning() before update
 }
 
-void onCapture() // warn the user (once) when reach 90% discharge
+void onCapture() // update lowBatDevice and trigger a warning (once) if 90% discharge
 {
-    if (!warningDone[BASE] && _SYS_sysBatteryLevel() <= _SYS_BATTERY_MAX/10) {
-        needWarningVect.atomicMark(BASE);
-    }
-    for (_SYSCubeID i = 0; i < CubeSlots::maxUserCubes; i++) {
-        if (!warningDone[i] && _SYS_cubeBatteryLevel(i) <= _SYS_BATTERY_MAX/10) {
-            needWarningVect.atomicMark(i);
+    lowBatDevice = NONE;
+
+    if (!warningDone.test(BASE) && _SYS_sysBatteryLevel() <= _SYS_BATTERY_MAX/10) {
+        lowBatDevice = BASE;
+    } else {
+        for (_SYSCubeID i = 0; i < CubeSlots::maxUserCubes; i++) {
+            if (!warningDone.test(i) && _SYS_cubeBatteryLevel(i) <= _SYS_BATTERY_MAX/10) {
+                lowBatDevice = i;
+                break;
+            }
         }
     }
-    if (!needWarningVect.empty()) {
+    if (lowBatDevice != NONE) {
         Pause::taskWork.atomicMark(Pause::LowBattery);
         Tasks::trigger(Tasks::Pause);
     }
 }
 
-unsigned getWeakCube()
+unsigned getLowBatDevice()
 {
-    unsigned cubeNum;
-    needWarningVect.findFirst(cubeNum); // update the cubeNum index by reference
-    return cubeNum;
+    return lowBatDevice;
 }
 
 } // namespace BatteryLevel
