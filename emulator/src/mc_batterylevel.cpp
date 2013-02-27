@@ -4,6 +4,10 @@
 
 namespace BatteryLevel {
 
+// In the following array, the last element refers to the master cube:
+static uint8_t percentage[_SYS_NUM_CUBE_SLOTS+1] = {0}; // will be 100% in init()
+
+
 void updatePercentage(int delta, unsigned cubeNum)
 {
     percentage[cubeNum] = clamp(percentage[cubeNum] + delta, 0, 100);

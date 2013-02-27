@@ -25,7 +25,6 @@ namespace BatteryLevel
     unsigned getPercentage(unsigned cubeNum);
 
     // In the following arrays, the last element refers to the master cube:
-    static uint8_t percentage[_SYS_NUM_CUBE_SLOTS+1] = {0}; // will be 100% in init()
     static bool warningDone[_SYS_NUM_CUBE_SLOTS+1] = {0};
     static BitVector<_SYS_NUM_CUBE_SLOTS+1> needWarningVect;
 
