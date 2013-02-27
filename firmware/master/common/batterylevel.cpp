@@ -23,10 +23,12 @@ void onCapture() // update lowBatDevice and trigger a warning (once) if 90% disc
     if (!warningDone.test(BASE) && _SYS_sysBatteryLevel() <= _SYS_BATTERY_MAX/10) {
         lowBatDevice = BASE;
     } else {
-        for (_SYSCubeID i = 0; i < CubeSlots::maxUserCubes; i++) {
+        _SYSCubeIDVector connectedCubes = CubeSlots::userConnected;
+        while (connectedCubes && lowBatDevice == NONE) {
+            uint8_t i = Intrinsic::CLZ(connectedCubes); // get first connected cube number
+            connectedCubes ^= Intrinsic::LZ(i);         // mark it as read
             if (!warningDone.test(i) && _SYS_cubeBatteryLevel(i) <= _SYS_BATTERY_MAX/10) {
                 lowBatDevice = i;
-                break;
             }
         }
     }

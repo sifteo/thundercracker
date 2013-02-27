@@ -17,11 +17,13 @@ namespace BatteryLevel
     void beginCapture();
     void captureIsr();
     void process(unsigned);
-    void heartbeat();
     uint8_t getLowBatDevice();
     bool needWarning();
     void setWarningDone(uint8_t cubeNum);
     void onCapture();
+
+    // simulated only :
+    void heartbeat();
     void updatePercentage(int8_t delta, uint8_t cubeNum);
     uint8_t getPercentage(uint8_t cubeNum);
 
