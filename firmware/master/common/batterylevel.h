@@ -20,7 +20,7 @@ namespace BatteryLevel
     uint8_t getLowBatDevice();
     bool needWarning();
     void setWarningDone(uint8_t cubeNum);
-    void onCapture();
+    void onCapture(uint32_t batLevel, uint8_t cubeNum);
 
     // simulated only :
     void heartbeat();

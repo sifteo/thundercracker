@@ -1,7 +1,6 @@
 #include "batterylevel.h"
 #include "pause.h"
 #include "tasks.h"
-#include "cubeslots.h"
 
 namespace BatteryLevel {
 
@@ -16,23 +15,16 @@ void setWarningDone(uint8_t cubeNum)
     lowBatDevice = NONE; // useful if call needWarning() before update
 }
 
-void onCapture() // update lowBatDevice and trigger a warning (once) if 90% discharge
+void onCapture(uint32_t batLevel, uint8_t cubeNum)
 {
+    // update the lowBatDevice number and trigger a warning (once) if 90% discharge
+    if (lowBatDevice != NONE) { // do we already have a warning to display ?
+        return;
+    }
     lowBatDevice = NONE;
 
-    if (!warningDone.test(BASE) && _SYS_sysBatteryLevel() <= _SYS_BATTERY_MAX/10) {
-        lowBatDevice = BASE;
-    } else {
-        _SYSCubeIDVector connectedCubes = CubeSlots::userConnected;
-        while (connectedCubes && lowBatDevice == NONE) {
-            uint8_t i = Intrinsic::CLZ(connectedCubes); // get first connected cube number
-            connectedCubes ^= Intrinsic::LZ(i);         // mark it as read
-            if (!warningDone.test(i) && _SYS_cubeBatteryLevel(i) <= _SYS_BATTERY_MAX/10) {
-                lowBatDevice = i;
-            }
-        }
-    }
-    if (lowBatDevice != NONE) {
+    if (!warningDone.test(cubeNum) && batLevel <= _SYS_BATTERY_MAX/10) {
+        lowBatDevice = cubeNum;
         Pause::taskWork.atomicMark(Pause::LowBattery);
         Tasks::trigger(Tasks::Pause);
     }

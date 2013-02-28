@@ -21,6 +21,7 @@
 #include "idletimeout.h"
 #include "prng.h"
 #include "radioaddrfactory.h"
+#include "batterylevel.h"
 
 
 void CubeSlot::connect(SysLFS::Key cubeRecord, const RadioAddress &addr, const RF_ACKType &fullACK)
@@ -406,8 +407,10 @@ void CubeSlot::radioAcknowledge(const PacketBuffer &packet)
     if (packet.len >= offsetof(RF_ACKType, battery_v) + sizeof ack->battery_v) {
         // Packet has a valid battery voltage. Dispatch an event, if it's changed.
 
-        if (lastACK.battery_v != ack->battery_v)
+        if (lastACK.battery_v != ack->battery_v) {
             Event::setCubePending(Event::PID_CUBE_BATTERY, id());
+            BatteryLevel::onCapture(_SYS_cubeBatteryLevel(id()), id());
+        }
     }
 
     if (packet.len >= offsetof(RF_ACKType, hwid) + sizeof ack->hwid) {

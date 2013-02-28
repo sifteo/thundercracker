@@ -1,6 +1,7 @@
 #include <sifteo/abi.h>
 #include "batterylevel.h"
 #include "macros.h"
+#include "cubeslots.h"
 
 namespace BatteryLevel {
 
@@ -30,7 +31,15 @@ void heartbeat()
 
     if (++beatDivider == 10) {  // check every second (called @ 10Hz)
         beatDivider = 0;
-        onCapture();            // trigger the warning flags if needed
+        // trigger the warning flags if needed, for the base...
+        onCapture(_SYS_sysBatteryLevel(), BatteryLevel::BASE);
+        // ...and for the cubes:
+        _SYSCubeIDVector connectedCubes = CubeSlots::userConnected;
+        while (lowBatDevice == NONE && connectedCubes) {
+            uint8_t cid = Intrinsic::CLZ(connectedCubes); // get first connected cube number
+            connectedCubes ^= Intrinsic::LZ(cid);         // mark it as read
+            onCapture(_SYS_cubeBatteryLevel(cid), cid);
+        }
     }
 }
 
