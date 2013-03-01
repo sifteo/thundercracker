@@ -22,6 +22,8 @@
 #include "hwtimer.h"
 #include "prng.h"
 
+#if BOARD == BOARD_TC_MASTER_REV2
+
 namespace PwmAudioOut {
 
     /*
@@ -56,8 +58,6 @@ namespace PwmAudioOut {
     static const GPIOPin outA(&AUDIO_PWMA_PORT, AUDIO_PWMA_PIN);
     static const GPIOPin outB(&AUDIO_PWMB_PORT, AUDIO_PWMB_PIN);
 }
-
-#if BOARD == BOARD_TC_MASTER_REV2
 
 void AudioOutDevice::init()
 {
