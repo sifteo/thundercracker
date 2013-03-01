@@ -95,7 +95,7 @@
 // D A C
 #define AUDIO_DAC_CHAN      1
 #define AUDIO_DAC_PIN       GPIOPin(&GPIOA, 4)
-#define AUDIO_DAC_EN_GPIO   GPIOPin(&GPIOA, 0);
+#define AUDIO_AMP_EN_GPIO   GPIOPin(&GPIOA, 0);
 
 //A D C
 #define PWR_MEASURE_ADC     ADC1

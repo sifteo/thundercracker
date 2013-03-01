@@ -29,7 +29,7 @@ namespace DacAudioOut {
     static const uint16_t maxDacSample = 0xfff;
     static const uint16_t maxRawSample = 0xffff;
 
-    static GPIOPin ampEn = AUDIO_DAC_EN_GPIO;
+    static GPIOPin ampEn = AUDIO_AMP_EN_GPIO;
 }
 
 #if BOARD == BOARD_TC_MASTER_REV3
