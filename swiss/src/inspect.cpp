@@ -1,6 +1,7 @@
 #include "inspect.h"
 #include "sifteo/abi/elf.h"
 
+#include <errno.h>
 #include <string>
 #include <iomanip>
 using namespace std;
