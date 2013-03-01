@@ -16,3 +16,7 @@
 ifeq ($(BUILD_PLATFORM), windows32)
     FLAGS += -march=i686 -mtune=core2
 endif
+
+ifeq ($(BUILD_PLATFORM), Linux)
+    FLAGS += -DSWISS_LINUX
+endif

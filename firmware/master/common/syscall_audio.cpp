@@ -28,6 +28,15 @@ uint32_t _SYS_audio_play(const struct _SYSAudioModule *mod, _SYSAudioChannelID c
         return false;
     }
 
+    #ifdef SIFTEO_SIMULATOR
+        if (XmTrackerPlayer::instance.isUsingChannel(ch)) {
+            LOG(("MIXER: warning! audio channel %d is being used by the tracker\n", ch));
+            // XXX: upgrade this to an assert
+            // leaving as a warning for now to give people a chance to fix their business
+//            ASSERT(false && "MIXER: audio channel is being used by the tracker");
+        }
+    #endif
+
     return AudioMixer::instance.play(&modCopy, ch, loop);
 }
 

@@ -239,7 +239,7 @@ bool SaveData::restoreRecords(unsigned vol, const Records &records)
     }
 
     while (dev.numPendingOUTPackets())
-        dev.processEvents();
+        dev.processEvents(1);
 
     return true;
 }
@@ -271,7 +271,7 @@ bool SaveData::restoreItem(unsigned parentVol, const Record & record)
 
         dev.writePacket(m.bytes, m.len);
         while (dev.numPendingOUTPackets() > IODevice::MAX_OUTSTANDING_OUT_TRANSFERS)
-            dev.processEvents();
+            dev.processEvents(1);
     }
 
     return true;
@@ -555,7 +555,7 @@ bool SaveData::writeVolumes(UsbVolumeManager::LFSDetailReply *reply, FILE *f, bo
         }
 
         while (replyProgress < BLOCK_SIZE) {
-            dev.processEvents();
+            dev.processEvents(1);
 
             while (dev.numPendingINPackets() != 0) {
                 if (!writeReply(f, replyProgress)) {

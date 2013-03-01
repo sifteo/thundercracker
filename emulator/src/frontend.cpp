@@ -12,12 +12,13 @@
 #include "mc_neighbor.h"
 #include "mc_volume.h"
 #include <time.h>
+#include "batterylevel.h"
 
 Frontend *Frontend::instance = NULL;
 tthread::mutex Frontend::instanceLock;
 
 
-Frontend::Frontend() 
+Frontend::Frontend()
   : frameCount(0),
     idleFrames(0),
     normalViewExtent(0.0f),
@@ -189,7 +190,7 @@ void Frontend::moveWalls(bool immediate)
         pushBodyTowards(walls[3], b2Vec2( 0, -y), g);
     }
 }
-             
+
 void Frontend::pushBodyTowards(b2Body *b, b2Vec2 target, float gain)
 {
     b->SetLinearVelocity(gain * (target - b->GetPosition()));
@@ -299,7 +300,7 @@ bool Frontend::openWindow(int width, int height, bool fullscreen)
 
     isFullscreen = fullscreen;
     mouseWheelPos = 0;
-        
+
     glfwSwapInterval(1);
     glfwEnable(GLFW_MOUSE_CURSOR);
     glfwSetWindowTitle(APP_TITLE);
@@ -307,9 +308,9 @@ bool Frontend::openWindow(int width, int height, bool fullscreen)
     int w, h;
     glfwGetWindowSize(&w, &h);
     onResize(w, h);
-    
+
     moveWalls(true);
-    
+
     glfwSetWindowSizeCallback(onResize);
     glfwSetKeyCallback(onKey);
     glfwSetMousePosCallback(onMouseMove);
@@ -323,8 +324,8 @@ bool Frontend::openWindow(int width, int height, bool fullscreen)
 void GLFWCALL Frontend::onResize(int width, int height)
 {
     instance->idleFrames = 0;
-    
-    if (width && height) {    
+
+    if (width && height) {
         if (!instance->isFullscreen) {
             // Save this width/height, for restoring windowed mode after fullscreen
             instance->lastWindowW = width;
@@ -418,7 +419,7 @@ void GLFWCALL Frontend::onKey(int key, int state)
             if (instance->sys->isTraceAllowed())
                 instance->sys->tracer.setEnabled(!instance->sys->tracer.isEnabled());
             break;
-        
+
         case GLFW_KEY_SPACE:
             if (instance->mouseIsPulling && instance->mousePicker.mCube)
                 instance->hoverOrRotate();
@@ -454,6 +455,16 @@ void GLFWCALL Frontend::onKey(int key, int state)
             instance->postVolumeMessage();
             break;
 
+        case 'D': // turn Down the battery level
+            BatteryLevel::updatePercentage(-10); // percentage
+            instance->postBatteryMessage();
+            break;
+
+        case 'U': // turn Up the battery level
+            BatteryLevel::updatePercentage(+10); // percentage
+            instance->postBatteryMessage();
+            break;
+
         default:
             return;
 
@@ -478,7 +489,7 @@ void Frontend::toggleFullscreen()
     if (isFullscreen) {
         // Restore last windowed mode
         // Restore last windowed mode
-        glfwCloseWindow();            
+        glfwCloseWindow();
         openWindow(lastWindowW, lastWindowH, false);
     } else {
         // Full-screen, using the desktop's native video mode
@@ -502,13 +513,20 @@ void Frontend::postVolumeMessage()
     overlay.postMessage(s.str());
 }
 
+void Frontend::postBatteryMessage()
+{
+    std::stringstream s;
+    s << "Base battery level: " << BatteryLevel::getPercentage() << "%";
+    overlay.postMessage(s.str());
+}
+
 void GLFWCALL Frontend::onMouseMove(int x, int y)
 {
     instance->mouseX = x;
     instance->mouseY = y;
-    
+
     if (instance->toggleZoom)
-        instance->idleFrames = 0;    
+        instance->idleFrames = 0;
 }
 
 void GLFWCALL Frontend::onMouseButton(int button, int state)
@@ -526,12 +544,12 @@ void GLFWCALL Frontend::onMouseWheel(int pos)
     float scale;
     int delta = pos - instance->mouseWheelPos;
     instance->mouseWheelPos = pos;
-    
+
     if (delta > 0)
         scale = powf(0.9f, delta);
     else
         scale = powf(1.1f, -delta);
-        
+
     instance->scaleViewExtent(scale);
     instance->idleFrames = 0;
 }
@@ -539,10 +557,10 @@ void GLFWCALL Frontend::onMouseWheel(int pos)
 void Frontend::onMouseDown(int button)
 {
     idleFrames = 0;
-    
+
     if (button == GLFW_MOUSE_BUTTON_RIGHT && mouseIsPulling && mousePicker.mCube)
         hoverOrRotate();
-    
+
     if (!mouseBody) {
         mousePicker.test(world, mouseVec(normalViewExtent));
 
@@ -581,14 +599,14 @@ void Frontend::onMouseDown(int button)
 
             bool shift = glfwGetKey(GLFW_KEY_LSHIFT) || glfwGetKey(GLFW_KEY_RSHIFT);
             bool ctrl = glfwGetKey(GLFW_KEY_LCTRL) || glfwGetKey(GLFW_KEY_RCTRL);
-            
+
             if (button == GLFW_MOUSE_BUTTON_RIGHT || shift) {
                 /*
                  * If this was a right-click or shift-click, go into tilting mode
                  */
-                
+
                 mouseIsTilting = true;
-                
+
             } else if (button == GLFW_MOUSE_BUTTON_MIDDLE || ctrl) {
                 /*
                  * Ctrl-click or middle-click taps the cube's touch sensor
@@ -614,7 +632,7 @@ void Frontend::onMouseDown(int button)
                  * turn on a servo that tries to orient the cube to a
                  * multiple of 90 degrees.
                  */
-                
+
                 b2Vec2 anchor = mousePicker.mPoint;
                 b2Vec2 center = mousePicker.mCube->getBody()->GetWorldCenter();
                 float centerDist = b2Distance(anchor, center);
@@ -667,16 +685,16 @@ void Frontend::onMouseUp(int button)
 {
     bool eitherButton = glfwGetMouseButton(GLFW_MOUSE_BUTTON_LEFT) ||
                         glfwGetMouseButton(GLFW_MOUSE_BUTTON_RIGHT);
-        
+
     idleFrames = 0;
-                        
+
     if (mouseBody && !eitherButton) {
         // All buttons released
-    
+
         if (mousePicker.mCube) {
             mousePicker.mCube->setTiltTarget(b2Vec2(0.0f, 0.0f));
             mousePicker.mCube->setTouch(false);
-            mousePicker.mCube->setHoverTarget(CubeConstants::HOVER_NONE);                
+            mousePicker.mCube->setHoverTarget(CubeConstants::HOVER_NONE);
         }
 
         if (mousePicker.mMC) {
@@ -717,11 +735,11 @@ void Frontend::animate()
         /*
          * Spinning and aligning cubes. Both are implemented using a joint motor.
          */
-        
+
         const float gain = 20.0f;
         float cubeAngle = mouseJoint->GetBodyA()->GetAngle();
         float error;
-        
+
         if (mouseIsSpinning) {
             /*
              * Rotate the cube toward 'spinTarget'. When we get there, we disable spin mode.
@@ -729,8 +747,8 @@ void Frontend::animate()
             error = cubeAngle - spinTarget;
             idleFrames = 0;
             if (fabs(error) < 0.001f)
-                mouseIsSpinning = false; 
-        
+                mouseIsSpinning = false;
+
         } else if (mouseIsAligning) {
             /*
              * Continuously apply a force toward the nearest 90-degree multiple.
@@ -739,7 +757,7 @@ void Frontend::animate()
             if (fractional < 0) fractional += M_PI/2;
             error = fractional - M_PI/4;
         }
-        
+
         mouseJoint->EnableMotor(true);
         mouseJoint->SetMotorSpeed(gain * error);
     } else if (mouseJoint) {
@@ -755,9 +773,9 @@ void Frontend::animate()
         if (mousePicker.mCube) {
             const float maxTilt = 80.0f;
             b2Vec2 mouseDiff = mouseVec(normalViewExtent) - mouseBody->GetWorldCenter();
-            b2Vec2 tiltTarget = (maxTilt / CubeConstants::SIZE) * mouseDiff; 
+            b2Vec2 tiltTarget = (maxTilt / CubeConstants::SIZE) * mouseDiff;
             tiltTarget.x = b2Clamp(tiltTarget.x, -maxTilt, maxTilt);
-            tiltTarget.y = b2Clamp(tiltTarget.y, -maxTilt, maxTilt);        
+            tiltTarget.y = b2Clamp(tiltTarget.y, -maxTilt, maxTilt);
 
             // Rotate it into the cube's coordinates
             b2Vec2 local = b2Mul(b2Rot(-mousePicker.mCube->getBody()->GetAngle()), tiltTarget);
@@ -785,7 +803,7 @@ void Frontend::animate()
     {
         const float gain = 0.1;
         int pzoom = pixelZoomMode();
-        
+
         // Pull toward a pixel-accurate zoom, if we're close
         if (pzoom)
             normalViewExtent += gain * (pixelViewExtent() / pzoom - normalViewExtent);
@@ -809,7 +827,7 @@ void Frontend::animate()
             Volume::setSystemVolume(Volume::systemVolume() - step);
             instance->postVolumeMessage();
             idleFrames = 0;
-        } 
+        }
     }
 
     world.Step(timeStep, velocityIterations, positionIterations);
@@ -831,11 +849,11 @@ unsigned Frontend::pixelZoomMode()
      * both the viewport and the cubes themselves should attempt to align themselves
      * to pixel boundaries.
      */
-    
+
     const float threshold = 0.2f;
     const unsigned maxMultiplier = 4;
     float extent1to1 = pixelViewExtent();
-       
+
     // Perform a relative distance test on several integer multiples
     for (unsigned multiplier = 1; multiplier <= maxMultiplier; multiplier++) {
         float extent = extent1to1 / multiplier;
@@ -845,7 +863,7 @@ unsigned Frontend::pixelZoomMode()
         if (relDist < threshold)
             return multiplier;
     }
-    
+
     return 0;
 }
 
@@ -865,7 +883,7 @@ void Frontend::draw()
 {
     // Pixel zoom mode, with respect to current view rather than target view.
     int effectivePixelZoomMode = fabs(viewExtent - normalViewExtent) < 1e-3 ? pixelZoomMode() : 0;
-    
+
     renderer.beginFrame(viewExtent, viewCenter, effectivePixelZoomMode);
 
     float ratio = std::max(1.0f, renderer.getHeight() / (float)renderer.getWidth());
@@ -889,10 +907,10 @@ void Frontend::draw()
 
     // Per-cube status overlays
     for (unsigned i = 0; i < cubeCount; i++) {
-        FrontendCube &c = cubes[i]; 
+        FrontendCube &c = cubes[i];
 
         // Overlays are positioned relative to the cube's AABB.
-        b2AABB aabb;    
+        b2AABB aabb;
         c.computeAABB(aabb);
         const float distance = 1.1f;
         b2Vec2 extents = aabb.GetExtents();
@@ -916,7 +934,7 @@ void Frontend::draw()
 
     // Fixed portion of the overlay, should be topmost.
     overlay.draw();
-        
+
     /*
      * If we haven't had any interesting input (user interaction, cube rendering) in a while,
      * assume we're idle and throttle the frame rate way down. Otherwise, render at a zippy but
@@ -933,7 +951,7 @@ void Frontend::draw()
 b2Vec2 Frontend::worldToScreen(b2Vec2 world)
 {
     // Convert world coordinates to screen coordinates
-    
+
     world -= viewCenter;
     return b2Vec2(renderer.getWidth() / 2, renderer.getHeight() / 2)
                   + renderer.getWidth() * ((0.5f / viewExtent) * world);
@@ -942,7 +960,7 @@ b2Vec2 Frontend::worldToScreen(b2Vec2 world)
 float Frontend::worldToScreen(float world)
 {
     // Convert a scalar distance from world to screen coordinates
-    
+
     return renderer.getWidth() * ((0.5f / viewExtent) * world);
 }
 
@@ -956,7 +974,7 @@ float Frontend::zoomedViewExtent()
 
     float scale = (renderer.getHeight() < renderer.getWidth())
         ? renderer.getWidth() / (float) renderer.getHeight() : 1.0f;
-        
+
     if (cubeCount > 1) {
         // Zoom in one one cube
         return scale * CubeConstants::SIZE * 1.1;
@@ -969,7 +987,7 @@ float Frontend::zoomedViewExtent()
 float Frontend::targetViewExtent()
 {
     return toggleZoom ? zoomedViewExtent() : normalViewExtent;
-}    
+}
 
 b2Vec2 Frontend::targetViewCenter()
 {
@@ -1039,7 +1057,7 @@ bool Frontend::MousePicker::ReportFixture(b2Fixture *fixture)
 
     return true;
 }
-        
+
 void Frontend::ContactListener::BeginContact(b2Contact *contact)
 {
     updateSensors(contact, true);
@@ -1084,7 +1102,7 @@ void Frontend::ContactListener::updateSensors(b2Contact *contact, bool touching)
 
 FrameRateController::FrameRateController()
     : lastTimestamp(0), accumulator(0) {}
-    
+
 double FrameRateController::getEndFrameSleepTime()
 {
     /*
@@ -1101,7 +1119,7 @@ double FrameRateController::getEndFrameSleepTime()
      * before we start inserting delays
      */
     const double slack = 0.25;
-    
+
     /*
      * How far ahead or behind are we allowed to get?
      */
@@ -1111,9 +1129,9 @@ double FrameRateController::getEndFrameSleepTime()
     const double minPeriod = 1.0 / targetFPS;
     double thisPeriod = now - lastTimestamp;
     lastTimestamp = now;
-    
+
     accumulator += minPeriod - thisPeriod;
-    
+
     if (accumulator < -limit)
         accumulator = -limit;
     else if (accumulator > slack) {

@@ -28,6 +28,7 @@
 
 class System {
  public:
+
     VirtualTime time;
 
     static const unsigned DEFAULT_CUBES = 3;
@@ -57,6 +58,7 @@ class System {
     bool opt_radioTrace;
     bool opt_traceEnabledAtStartup;
     bool opt_noCubeReconnect;
+    bool opt_flushLogs;
 
     // Master firmware debug options
     bool opt_paintTrace;
@@ -74,8 +76,6 @@ class System {
     // Other options
     bool opt_mute;
     double opt_radioNoise;
-
-    System();
 
     bool init();
     void start();
@@ -99,11 +99,22 @@ class System {
     }
 
  private:
+    System();
+    
     bool mIsInitialized;
     bool mIsStarted;
 
     SystemCubes sc;
     SystemMC smc;
+
+public:
+
+    inline static System& getInstance() {
+        static System sys;
+        return sys;
+    }
+
+
 };
 
 #endif

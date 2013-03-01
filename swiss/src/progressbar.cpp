@@ -10,7 +10,7 @@ void ProgressBar::begin()
 
 void ProgressBar::end()
 {
-    fprintf(stderr, "\n");
+    fprintf(stdout, "\n");
 }
 
 void ProgressBar::update(unsigned amount)
@@ -24,10 +24,11 @@ void ProgressBar::update(unsigned amount)
 
 void ProgressBar::redraw()
 {
-    fprintf(stderr, "\r[");
+    fprintf(stdout, "\r[");
 
     for (unsigned i = 0; i < width; ++i)
-        fprintf(stderr, "%c", " #"[i < quantized]);
+        fprintf(stdout, "%c", " #"[i < quantized]);
 
-    fprintf(stderr, "]");
+    fprintf(stdout, "]");
+    fflush(stdout);
 }

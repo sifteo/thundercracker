@@ -54,6 +54,7 @@ private:
     int itemIndexCurrent;
     int itemIndexChoice;
     int numGames;
+    bool isBootstrapping;   // we've started bootstrapping a game's assets
 
     static const Sifteo::MenuAssets menuAssets;
 

@@ -1,5 +1,7 @@
 #include "basedevice.h"
 
+#include <stddef.h>
+
 /*
  * iodevice is assumed to already be open/configured.
  */
@@ -60,8 +62,16 @@ const UsbVolumeManager::SysInfoReply *BaseDevice::getBaseSysInfo(USBProtocolMsg 
         return 0;
     }
 
-    if (msg.payloadLen() >= sizeof(UsbVolumeManager::SysInfoReply)) {
-        return msg.castPayload<UsbVolumeManager::SysInfoReply>();
+    UsbVolumeManager::SysInfoReply *r = msg.castPayload<UsbVolumeManager::SysInfoReply>();
+
+    // handle responses from earlier bases that don't include anything beyond baseHwRevision
+    if (msg.payloadLen() == offsetof(UsbVolumeManager::SysInfoReply, baseHwRevision) + 1) {
+        r->sysVersion = 0;
+        return r;
+    }
+
+    if (msg.payloadLen() >= sizeof(*r)) {
+        return r;
     }
 
     return 0;
@@ -194,23 +204,30 @@ bool BaseDevice::getMetadata(USBProtocolMsg &msg, unsigned volBlockCode, unsigne
 }
 
 
-bool BaseDevice::waitForReply(uint32_t header, USBProtocolMsg &msg)
+bool BaseDevice::waitForReply(uint32_t header, USBProtocolMsg &msg, unsigned tries)
 {
-    while (dev.numPendingINPackets() == 0) {
-        dev.processEvents();
+    /*
+     * Wait for a reply with the given header.
+     * Discard up to 'tries' non-matching packets while waiting.
+     */
+
+    while (tries--) {
+        while (dev.numPendingINPackets() == 0) {
+            dev.processEvents(1);
+        }
+
+        dev.readPacket(msg.bytes, msg.MAX_LEN, msg.len);
+        if (msg.header == header) {
+            return true;
+        }
     }
 
-    msg.len = dev.readPacket(msg.bytes, msg.MAX_LEN);
-    if (msg.header != header) {
-        fprintf(stderr, "unexpected response. expecting 0x%x, got 0x%x\n", header, msg.header);
-        return false;
-    }
-
-    return true;
+    fprintf(stderr, "unexpected response.\n");
+    return false;
 }
 
 
-bool BaseDevice::writeAndWaitForReply(USBProtocolMsg &msg)
+bool BaseDevice::writeAndWaitForReply(USBProtocolMsg &msg, unsigned tries)
 {
     /*
      * Common helper.
@@ -223,5 +240,5 @@ bool BaseDevice::writeAndWaitForReply(USBProtocolMsg &msg)
         return false;
     }
 
-    return waitForReply(headerToMatch, msg);
+    return waitForReply(headerToMatch, msg, tries);
 }

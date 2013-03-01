@@ -37,7 +37,6 @@ v01_IconResume = image{ "01-icon-resume.png", flat=1 }
 --- UIShutdown
 
 v01_ShutdownBackground = image{ "01-shutdown-background.png", flat=1 }
-v01_BigDigits = image{ "01-big-digits.png", flat=1, width=32, height=40 }
 
 -----------------------------------------------------------------------
 --------------------- Version 02 Tile ROM -----------------------------
@@ -65,3 +64,8 @@ v02_IconResume = image{ "02-icon-resume.png", flat=1 }
 --- UIShutdown
 
 v02_BigDigits = image{ "01-big-digits.png", flat=1, width=32, height=40 }
+
+--- UILowBatt
+
+v02_LowBattBase = image{ "02-low-battery-base.png", flat=1 }
+--v02_LowBattCube = image{ "02-low-battery-cube.png", flat=1 }

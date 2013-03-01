@@ -50,15 +50,15 @@ int main()
     NVIC.irqEnable(IVT.RF_EXTI_VEC);                // Radio interrupt
     NVIC.irqPrioritize(IVT.RF_EXTI_VEC, 0x80);      //  Reduced priority
 
-    NVIC.irqEnable(IVT.DMA2_Channel1);              // Radio SPI DMA2 channels 1 & 2
-    NVIC.irqPrioritize(IVT.DMA1_Channel1, 0x75);    //  higher than radio
-    NVIC.irqEnable(IVT.DMA2_Channel2);
-    NVIC.irqPrioritize(IVT.DMA1_Channel2, 0x75);
+    NVIC.irqEnable(IVT.RF_DMA_CHAN_RX);              // Radio SPI, DMA2 channels 1 & 2
+    NVIC.irqPrioritize(IVT.RF_DMA_CHAN_RX, 0x75);
+    NVIC.irqEnable(IVT.RF_DMA_CHAN_TX);
+    NVIC.irqPrioritize(IVT.RF_DMA_CHAN_TX, 0x75);
 
     NVIC.irqEnable(IVT.FLASH_DMA_CHAN_RX);          // Flash SPI DMA channels
-    NVIC.irqPrioritize(IVT.FLASH_DMA_CHAN_RX, 0x75);//  higher than radio
+    NVIC.irqPrioritize(IVT.FLASH_DMA_CHAN_RX, 0x74);//  higher than radio, since flash is higher bandwidth
     NVIC.irqEnable(IVT.FLASH_DMA_CHAN_TX);
-    NVIC.irqPrioritize(IVT.FLASH_DMA_CHAN_TX, 0x75);
+    NVIC.irqPrioritize(IVT.FLASH_DMA_CHAN_TX, 0x74);
 
     NVIC.irqEnable(IVT.UsbOtg_FS);
     NVIC.irqPrioritize(IVT.UsbOtg_FS, 0x70);        //  A little higher than radio
@@ -69,7 +69,7 @@ int main()
     NVIC.irqPrioritize(IVT.AUDIO_SAMPLE_TIM, 0x50); //  pretty high priority! (would cause audio jitter)
 
     NVIC.irqEnable(IVT.LED_SEQUENCER_TIM);          // LED sequencer timer
-    NVIC.irqPrioritize(IVT.LED_SEQUENCER_TIM, 0x75);
+    NVIC.irqPrioritize(IVT.LED_SEQUENCER_TIM, 0x85);
 
     NVIC.irqEnable(IVT.USART3);                     // factory test uart
     NVIC.irqPrioritize(IVT.USART3, 0x52);           //  high enough to avoid overruns
@@ -83,7 +83,7 @@ int main()
     NVIC.irqPrioritize(IVT.PROFILER_TIM, 0x0);      //  highest possible priority
 
     NVIC.irqEnable(IVT.NBR_TX_TIM);                 // Neighbor transmit
-    NVIC.irqPrioritize(IVT.NBR_TX_TIM, 0x60);       //  just below sample rate timer
+    NVIC.irqPrioritize(IVT.NBR_TX_TIM, 0x60);       //  just below volume timer
 
     NVIC.irqEnable(IVT.ADC1_2);                     // adc sample
     NVIC.irqPrioritize(IVT.ADC1_2,0x80);            // low priority. only used for battery/fader measurement

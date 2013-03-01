@@ -108,6 +108,9 @@ Each @b sound element specifies that a Sifteo::AssetAudio object should be gener
 * data format for samples is __signed 16-bit__
 * sample rate is no higher than the system max of __16kHz__
 
+If you need to force a custom sample rate you can do so with the `sample_rate` option, like so: @code Bleep = sound{ "bleep.raw", sample_rate=8000 }
+@endcode
+
 ### Sample Rate
 
 `stir` will detect the sample rate of your WAV files, and configure your AudioAsset to play at its native sample rate by default. You can also manipulate the rate of playback at runtime using Sifteo::AudioChannel::setSpeed().

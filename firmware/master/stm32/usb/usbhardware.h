@@ -1,6 +1,8 @@
 #ifndef USB_HARDWARE_H
 #define USB_HARDWARE_H
 
+#include "usb/usbcore.h"
+
 #include <stdint.h>
 
 /*
@@ -10,7 +12,7 @@ namespace UsbHardware
 {
     static const unsigned MAX_PACKET = 64;
 
-    void init();
+    void init(const UsbCore::Config &cfg);
     void deinit();
     void reset();
 

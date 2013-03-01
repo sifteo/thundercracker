@@ -30,6 +30,7 @@ struct UIAssets {
             const uint16_t *iconQuit;
             const uint16_t *iconBack;
             const uint16_t *iconResume;
+            const uint16_t *iconLowBattBase;
             const uint16_t *shutdownBackground;
             const uint16_t *bigDigits;
             const uint16_t *faultMessage;

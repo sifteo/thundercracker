@@ -104,10 +104,11 @@ bool FwLoader::bootloaderVersionIsCompatible()
     dev.writePacket(versionRequest, sizeof versionRequest);
 
     while (!dev.numPendingINPackets())
-        dev.processEvents();
+        dev.processEvents(1);
 
     uint8_t usbBuf[IODevice::MAX_EP_SIZE];
-    unsigned numBytes = dev.readPacket(usbBuf, sizeof usbBuf);
+    unsigned numBytes;
+    dev.readPacket(usbBuf, sizeof usbBuf, numBytes);
     if (numBytes < 2 || usbBuf[0] != Bootloader::CmdGetVersion)
         return false;
 
@@ -121,7 +122,7 @@ void FwLoader::resetBootloader()
     dev.writePacket(ptrRequest, sizeof ptrRequest);
 
     while (dev.numPendingOUTPackets())
-        dev.processEvents();
+        dev.processEvents(1);
 }
 
 /*
@@ -193,12 +194,17 @@ bool FwLoader::sendFirmwareFile(FILE *f, uint32_t crc, uint32_t size)
         const unsigned payload = MIN(dev.maxOUTPacketSize() - 1, initialBytesToSend);
         const unsigned chunk = (payload / AES128::BLOCK_SIZE) * AES128::BLOCK_SIZE;
         const int numBytes = fread(usbBuf + 1, 1, chunk, f);
-        if (numBytes != chunk)
+        if (numBytes != chunk) {
             return false;
+        }
 
-        dev.writePacket(usbBuf, numBytes + 1);
-        while (dev.numPendingOUTPackets() > IODevice::MAX_OUTSTANDING_OUT_TRANSFERS)
-            dev.processEvents();
+        if (dev.writePacket(usbBuf, numBytes + 1) < 0) {
+            return false;
+        }
+
+        while (dev.numPendingOUTPackets() > IODevice::MAX_OUTSTANDING_OUT_TRANSFERS) {
+            dev.processEvents(1);
+        }
 
         progress += numBytes;
         initialBytesToSend -= numBytes;
@@ -233,9 +239,12 @@ bool FwLoader::sendFirmwareFile(FILE *f, uint32_t crc, uint32_t size)
     memcpy(p, &size, sizeof(size));
     p += sizeof(size);
 
-    dev.writePacket(finalBuf, p - finalBuf);
+    if (dev.writePacket(finalBuf, p - finalBuf) < 0) {
+        return false;
+    }
+
     while (dev.numPendingOUTPackets())
-        dev.processEvents();
+        dev.processEvents(1);
 
     return true;
 }

@@ -21,6 +21,7 @@
 #   include "mc_timing.h"
 #   include "system_mc.h"
 #   include "system.h"
+#   include "batterylevel.h"
 #else
 #   include "usb/usbdevice.h"
 #   include "sampleprofiler.h"
@@ -87,6 +88,10 @@ void Tasks::heartbeatTask()
 
     Radio::heartbeat();
     AssetLoader::heartbeat();
+
+#ifdef SIFTEO_SIMULATOR
+    BatteryLevel::heartbeat();
+#endif
 }
 
 

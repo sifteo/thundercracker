@@ -10,20 +10,18 @@ using namespace Usb;
 
 const DeviceDescriptor *UsbCore::_dev;
 const ConfigDescriptor *UsbCore::_conf;
-const char **UsbCore::_strings;
 
 uint16_t UsbCore::address;
 uint16_t UsbCore::_config;
 
 void UsbCore::init(const DeviceDescriptor *dev,
-                const ConfigDescriptor *conf,
-                const char **strings)
+                   const ConfigDescriptor *conf,
+                   const Config & cfg)
 {
     _dev = dev;
     _conf = conf;
-    _strings = strings;
 
-    UsbHardware::init();
+    UsbHardware::init(cfg);
 }
 
 void UsbCore::reset()
@@ -33,6 +31,21 @@ void UsbCore::reset()
     UsbHardware::setAddress(0);
 
     UsbDevice::handleReset();
+}
+
+int UsbCore::writeAsciiDescriptor(uint16_t *dst, const char *src, unsigned srclen)
+{
+    /*
+     * Utility to write a unicode string descriptor, given an ASCII string.
+     * We don't verify that src is actually ascii.
+     */
+
+    for (unsigned i = 0; i < srclen; i++) {
+        dst[i] = src[i];
+    }
+
+    // Return the size of the unicode string in bytes, plus a null terminator
+    return (srclen * sizeof(uint16_t)) + sizeof(uint16_t);
 }
 
 int UsbCore::getDescriptor(SetupData *req, uint8_t **buf, uint16_t *len)
@@ -52,9 +65,6 @@ int UsbCore::getDescriptor(SetupData *req, uint8_t **buf, uint16_t *len)
     }
 
     case DescriptorString: {
-        if (!UsbCore::stringSupport())
-            return 0;
-
         StringDescriptor *sd = reinterpret_cast<StringDescriptor*>(*buf);
         uint8_t strIdx = req->wValue & 0xff;
 
@@ -66,7 +76,9 @@ int UsbCore::getDescriptor(SetupData *req, uint8_t **buf, uint16_t *len)
          *
          * See http://sourceforge.net/apps/mediawiki/libwdi/index.php?title=WCID_devices
          */
-        if (strIdx == 0xee) {
+
+        switch (strIdx) {
+        case 0xee:
             sd->bLength = 18;
             sd->wstring[0] = 0x004d;    // M
             sd->wstring[1] = 0x0053;    // S
@@ -77,28 +89,21 @@ int UsbCore::getDescriptor(SetupData *req, uint8_t **buf, uint16_t *len)
             sd->wstring[6] = 0x0030;    // 0
 
             sd->wstring[7] = UsbDevice::WINUSB_COMPATIBLE_ID;   // Vendor Code & padding
-            *len = MIN(*len, sd->bLength);
-            return 1;
-        }
+            break;
 
-        // check for bogus string
-        for (unsigned i = 0; i <= strIdx; i++) {
-            if (UsbCore::string(i) == NULL)
-                return 0;
-        }
+        case 0:
+            // string index 0 returns a list of languages
+            sd->wstring[0] = 0x409; // US / English
+            sd->bLength = 4;
+            break;
 
-        sd->bLength = strlen(UsbCore::string(strIdx)) * 2 + 2;
+        default:
+            sd->bLength = UsbDevice::writeStringDescriptor(strIdx, sd->wstring);
+            break;
+        }
 
         *buf = (uint8_t*)sd;
         *len = MIN(*len, sd->bLength);
-
-        for (int i = 0; i < (*len / 2) - 1; i++) {
-            sd->wstring[i] = UsbCore::string(strIdx)[i];
-        }
-
-        // string index 0 returns a list of languages
-        if (strIdx == 0)
-            sd->wstring[0] = 0x409; // US / English
 
         return 1;
     }

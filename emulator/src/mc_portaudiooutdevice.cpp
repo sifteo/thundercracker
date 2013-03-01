@@ -12,7 +12,7 @@
 
 
 PortAudioOutDevice::PortAudioOutDevice() :
-    outStream(0), upsampleCounter(0) {}
+    outStream(0), upsampleCounter(0), endOfStream(false) {}
 
 void PortAudioOutDevice::pullFromMixer()
 {
@@ -85,14 +85,28 @@ int PortAudioOutDevice::portAudioCallback(const void *inputBuffer, void *outputB
                      * An underrun happened, oh noes. To make sure
                      * we can recover from this, give the ring buffer
                      * time to completely fill before we start pulling
-                     * from it again, and increase our adaptive buffer
-                     * fill threshold.
+                     * from it again
+                     *
+                     * If this was not flagged as the end of the stream
+                     * by the mixer, we need to increase our adaptive
+                     * buffer fill threshold.
                      */
+
                     self->bufferFilling = true;
-                    self->bufferThreshold = MIN(ring.capacity(), self->bufferThreshold << 1);
+                    if (!self->endOfStream) {
+                        self->bufferThreshold = MIN(ring.capacity(), self->bufferThreshold << 1);
+                    }
                     break;
                 }
-                lastSample = ring.dequeue();
+
+                int sample = ring.dequeue();
+                if ((sample & 0xffff) == AudioOutDevice::END_OF_STREAM) {
+                    self->endOfStream = true;
+                    break;
+                }
+
+                self->endOfStream = false;
+                lastSample = sample;
                 upsampleCounter = kUpsampleFactor;
             }
             upsampleCounter--;

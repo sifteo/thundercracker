@@ -6,8 +6,13 @@
 #include "svm.h"
 #include "svmdebugpipe.h"
 #include "svmruntime.h"
+#include "powermanager.h"
+#include "usbprotocol.h"
+#include "usb/usbdevice.h"
+
 using namespace Svm;
 
+static USBProtocolMsg logMsg;
 
 void SvmDebugPipe::init()
 {
@@ -27,14 +32,40 @@ bool SvmDebugPipe::fault(FaultCode code)
 
 uint32_t *SvmDebugPipe::logReserve(SvmLogTag tag)
 {
-    // XXX: Stub
-    static uint32_t buffer[LOG_BUFFER_WORDS];
-    return buffer;
+    /*
+     * Ensure we're ready to write a USB packet,
+     * and provide the caller with a pointer to our
+     * protocol msg payload to begin populating.
+     */
+
+    logMsg.init(USBProtocol::Logger);
+    return reinterpret_cast<uint32_t*>(&logMsg.payload[0]);
 }
 
 void SvmDebugPipe::logCommit(SvmLogTag tag, uint32_t *buffer, uint32_t bytes)
 {
-    // XXX: Stub
+    /*
+     * Time to write out a log message.
+     * If we're not connected via USB, or the host hasn't been
+     * listening to us for a while, don't bother.
+     */
+
+    if (PowerManager::state() != PowerManager::UsbPwr) {
+        return;
+    }
+
+    // ensure our check below is meaningful
+    if (SysTime::ticks() < SysTime::msTicks(500)) {
+        return;
+    }
+
+    if (SysTime::ticks() - UsbDevice::lastINActivity() > SysTime::msTicks(250)) {
+        return;
+    }
+
+    logMsg.header |= tag.getValue();
+    logMsg.len += (LOG_BUFFER_WORDS + bytes);
+    UsbDevice::write(logMsg.bytes, logMsg.len, 100);
 }
 
 bool SvmDebugPipe::debuggerMsgAccept(DebuggerMsg &msg)
