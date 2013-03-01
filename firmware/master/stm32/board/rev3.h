@@ -22,7 +22,7 @@
 #define USB_DP_GPIO         GPIOPin(&GPIOA, 12)
 #define USB_VBUS_GPIO       GPIOPin(&GPIOA, 9)
 
-// R A D I O
+/// R A D I O
 #define RF_SPI              SPI3
 #define RF_CE_GPIO          GPIOPin(&GPIOC, 7)
 #define RF_IRQ_GPIO         GPIOPin(&GPIOC, 8)
@@ -31,6 +31,9 @@
 #define RF_SPI_MISO_GPIO    GPIOPin(&GPIOC, 11)
 #define RF_SPI_MOSI_GPIO    GPIOPin(&GPIOC, 12)
 #define RF_EXTI_VEC         EXTI9_5
+
+#define RF_DMA_CHAN_RX      DMA2_Channel1
+#define RF_DMA_CHAN_TX      DMA2_Channel2
 
 // F L A S H
 #ifdef REV2_GDB_REWORK
@@ -87,12 +90,6 @@
 #define VCC33_ENABLE_GPIO   GPIOPin(&GPIOC, 1)
 
 // A U D I O
-#define AUDIO_PWMA_PORT     GPIOA
-#define AUDIO_PWMA_PIN      7
-#define AUDIO_PWMB_PORT     GPIOA
-#define AUDIO_PWMB_PIN      8
-#define AUDIO_PWM_CHAN      1
-#define AUDIO_PWM_TIM       TIM1
 #define AUDIO_SAMPLE_TIM    TIM7
 
 // D A C
