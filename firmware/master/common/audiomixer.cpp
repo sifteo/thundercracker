@@ -96,6 +96,12 @@ ALWAYS_INLINE bool AudioMixer::mixAudio(int *buffer, uint32_t numFrames)
     return result;
 }
 
+ALWAYS_INLINE int16_t AudioMixer::softLimiter(int sample)
+{
+    // XXX implement me
+    return Intrinsic::SSAT(sample, 16);
+}
+
 /*
  * Called from within Tasks::work to mix audio on the main thread, to be
  * consumed by the audio out device.
@@ -280,8 +286,15 @@ void AudioMixer::pullAudio()
 
         int *ptr = blockBuffer;
         do {
-            int sample = (*(ptr++) * (mixerVolume >> 1)) >> (Volume::MAX_VOLUME_LOG2 - 1);
-            int16_t sample16 = Intrinsic::SSAT(sample, 16);
+            /*
+             * In one step, this does a fixed-point multiply with the mixer volume and by
+             * the overall mixer gain constant. The result is a 32-bit signed value.
+             */
+            int sample = (*(ptr++) * (mixerVolume >> 1))
+                >> (Volume::MAX_VOLUME_LOG2 - 1 - Volume::MIXER_GAIN_LOG2);
+
+            // Use the soft limiter to convert back to 16-bit samples.
+            int16_t sample16 = softLimiter(sample);
 
             #ifdef SIFTEO_SIMULATOR
                 // Log audio for --waveout

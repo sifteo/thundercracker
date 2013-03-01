@@ -72,6 +72,7 @@ private:
     AudioChannelSlot channelSlots[_SYS_AUDIO_MAX_CHANNELS];
 
     bool mixAudio(int *buffer, uint32_t numFrames);
+    static int16_t softLimiter(int sample);
 };
 
 #endif /* AUDIOMIXER_H_ */
