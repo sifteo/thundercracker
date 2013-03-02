@@ -69,10 +69,14 @@ private:
 
     uint32_t playingChannelMask;    // channels that are actively playing
 
+    // Limiter state
+    int32_t limiterPeak;
+
     AudioChannelSlot channelSlots[_SYS_AUDIO_MAX_CHANNELS];
 
     bool mixAudio(int *buffer, uint32_t numFrames);
-    static int16_t softLimiter(int sample);
+
+    static int16_t softLimiter(int32_t sample, int32_t &peak);
 };
 
 #endif /* AUDIOMIXER_H_ */
