@@ -26,8 +26,17 @@ namespace {
     static const float kAccelScale = -8.0f;
 }
 
+void UIMenu::init(unsigned defaultItem, const UIMenu::Item *i)
+{
+    items = i;
+    init(defaultItem);
+}
+
 void UIMenu::init(unsigned defaultItem)
 {
+    // this init function should not be called after using the wrong constructor
+    ASSERT(items != NULL);
+
     if (!uic.isAttached())
         return;
 

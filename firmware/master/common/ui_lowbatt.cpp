@@ -17,26 +17,19 @@ const UIMenu::Item UILowBatt::cubeItems[NUM_ITEMS] = {
 };
 
 UILowBatt::UILowBatt(UICoordinator &uic) :
-    baseMenu(uic, baseItems, NUM_ITEMS),
-    cubeMenu(uic, cubeItems, NUM_ITEMS),
-    cubeNum(BatteryLevel::BASE)
+    menu(uic, NULL, NUM_ITEMS)
 {
 }
 
-void UILowBatt::init(uint8_t _cubeNum)
+void UILowBatt::init(uint8_t cid)
 {
-    cubeNum = _cubeNum;
-    if (cubeNum == BatteryLevel::BASE)
-        baseMenu.init(WARNING);
-    else
-        cubeMenu.init(WARNING);
+    ASSERT(cid <= BatteryLevel::BASE);
+    const UIMenu::Item *i = (cid == BatteryLevel::BASE) ? baseItems : cubeItems;
+    menu.init(WARNING, i);
 }
 
 bool UILowBatt::quitWasSelected() const
 {
-    if (cubeNum == BatteryLevel::BASE)
-        return (static_cast<UILowBatt::Action>(baseMenu.getChosenItem()) == QUIT);
-    else
-        return (static_cast<UILowBatt::Action>(cubeMenu.getChosenItem()) == QUIT);
+    return (static_cast<UILowBatt::Action>(menu.getChosenItem()) == QUIT);
 }
 

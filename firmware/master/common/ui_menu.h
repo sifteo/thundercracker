@@ -35,6 +35,7 @@ public:
         : uic(uic), items(items), numItems(numItems) {}
 
     void init(unsigned defaultItem);
+    void init(unsigned defaultItem, const UIMenu::Item *items);
     void animate();
 
     ALWAYS_INLINE bool isDone() const {
@@ -63,7 +64,7 @@ private:
     SysTime::Ticks lastTime;    // Timestamp for the last call to animate()
     float position;             // Panning offset in pixels
     uint16_t activeItem;        // If < numItems, this menu item is selected
-    uint16_t labelWidth;        // Size of label associated with 
+    uint16_t labelWidth;        // Size of label associated with
     int16_t prevTilePosition;   // X tile offset of last draw
     uint8_t state;              // State enum
     uint8_t hopFrame;           // For Hop animation in S_FINISHING

@@ -15,27 +15,19 @@ public:
 
     UILowBatt(UICoordinator &uic);
 
-    void init(uint8_t _cubeNum = BatteryLevel::BASE);
+    void init(uint8_t cid = BatteryLevel::BASE);
     bool quitWasSelected() const;
 
     ALWAYS_INLINE void animate() {
-        if (cubeNum == BatteryLevel::BASE)
-            return baseMenu.animate();
-        else
-            return cubeMenu.animate();
+        return menu.animate();
     }
 
     ALWAYS_INLINE bool isDone() const {
-        if (cubeNum == BatteryLevel::BASE)
-            return baseMenu.isDone();
-        else
-            return cubeMenu.isDone();
+        return menu.isDone();
     }
 
 private:
-    UIMenu baseMenu;
-    UIMenu cubeMenu;
-    uint8_t cubeNum;
+    UIMenu menu;
 
     static const UIMenu::Item baseItems[NUM_ITEMS];
     static const UIMenu::Item cubeItems[NUM_ITEMS];
