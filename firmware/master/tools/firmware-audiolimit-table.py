@@ -86,7 +86,7 @@ assert abs(soften(peakForStep(STEPS-1), lambda x: 1.0) - 1.0) < 1e-6
 header = open("../common/audiolimit-table.def", "w")
 csv = open("../common/audiolimit-table.csv", "w")
 
-header.write("static const int AudioLimitSteps = %d;\n" % STEPS);
+header.write("static const unsigned AudioLimitSteps = %d;\n" % STEPS);
 header.write("static const int AudioLimitMaxPeak = %d;\n" % MAX_PEAK);
 
 header.write("static const uint16_t AudioLimitTable[] = {\n")

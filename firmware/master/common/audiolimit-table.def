@@ -1,4 +1,4 @@
-static const int AudioLimitSteps = 256;
+static const unsigned AudioLimitSteps = 256;
 static const int AudioLimitMaxPeak = 8;
 static const uint16_t AudioLimitTable[] = {
     /* Step 0x0000, peak = 0.0000, limit = 1.0000 */ 65535,
