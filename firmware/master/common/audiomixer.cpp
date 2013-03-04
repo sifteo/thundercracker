@@ -11,6 +11,7 @@
 #include <limits.h>
 #include "xmtrackerplayer.h"
 #include "volume.h"
+#include "machine.h"
 
 #ifdef SIFTEO_SIMULATOR
 #   include "system.h"
@@ -37,7 +38,6 @@ AudioMixer::AudioMixer() :
 void AudioMixer::init()
 {
     output.init();
-    limiterPeak = 0;
 
     uint32_t mask = playingChannelMask;
     while (mask) {
@@ -100,76 +100,49 @@ ALWAYS_INLINE bool AudioMixer::mixAudio(int *buffer, uint32_t numFrames)
     return result;
 }
 
-ALWAYS_INLINE int16_t AudioMixer::softLimiter(int32_t sample, int32_t &peak)
+ALWAYS_INLINE int AudioMixer::softLimiter(int32_t sample)
 {
     /*
-     * This is a stateful soft limiter.
+     * This is a stateless soft limiter, which cuts a few corners to achieve
+     * the lowest CPU load we can get.
      *
-     * We use 'peak' as a leaky peak tracker, to keep track of the actual maximum
-     * volume level we've seen. This has an infinitely sharp attack as new peaks occur,
-     * and a slower decay as the audio power decreases.
+     * We don't perform any feedback or feed-forward, we just map 'sample'
+     * from 32-bit to 16-bit using a nonlinear transfer function that has been
+     * precalculated and stored as a lookup table.
      *
-     * This peak value controls the gain of a variable attenuator. Normally the gain
-     * is 1, meaning that we pass the signal through unmodified. If the peak crosses
-     * a threshold, we start to ease the gain downward according to a nonlinear curve.
+     * This lookup table gives us a fixed-point gain value. To save time, we
+     * don't interpolate these gain values. These quantized gains are multiplied
+     * by the full-resolution input sample to yield our actual output sample.
      *
-     * This curve is calculated ahead-of-time by tools/firmware-audiolimit-table.py
+     * The gain curve is calculated ahead-of-time by tools/firmware-audiolimit-table.py
+     *
+     * Performance notes:
+     *   - Int return value is faster than int16, since we avoid unnecessary sign-extend
+     *   - The original implementation used a peak tracker and linear interpolation.
+     *     This didn't signiciantly improve the output, and the cycles-per-sample cost
+     *     was too high.
+     *   - Currently this compiles to 9 instructions. Keep an eye on the disassembly!
      */
 
-    // Decay rate for the peak tracker. 0x10000 is infinite sustain, 0x0000 is immediate decay.
-    const int decay = 0xfd00;
-
-    // Peak tracker
-    int absSample = sample < 0 ? -sample : sample;
-    peak = (decay * peak) >> 16;
-    if (absSample > peak) {
-        peak = absSample;
-    }
+    // Instantaneous peak power
+    uint32_t peak = Intrinsic::abs(sample);
 
     /*
-     * Convert peak to a 24:8 fixed-point value representing an index in our lookup table.
-     * We want to scale peak from the range [0, 0x8000 * AudioLimitMaxPeak] to the range
-     * [0, AudioLimitSteps * 256]. We need to be careful about overflow, and we can take
-     * advantage of the fact that all of these values are powers of two. This will optimize
-     * down to a single right shift.
+     * Calculate a table index for the limiter. These values are power-of-two,
+     * so it should boil down to a single bit shift. Our table should have plenty
+     * of dynamic range, so we don't need to worry about behaving correctly if the
+     * input exceeds it.
      */
-    const int scaleNumerator = AudioLimitSteps * 256;
-    const int scaleDenominator = 0x8000 * AudioLimitMaxPeak;
-    STATIC_ASSERT(scaleNumerator > 0);
-    STATIC_ASSERT(scaleDenominator >= scaleNumerator);
-    STATIC_ASSERT((scaleNumerator & (scaleNumerator - 1)) == 0);
-    STATIC_ASSERT((scaleDenominator & (scaleDenominator - 1)) == 0);
-    int fpIndex = peak / (scaleDenominator / scaleNumerator);
-    int index = fpIndex >> 8;
+    const unsigned divisor = 0x8000 * AudioLimitMaxPeak / AudioLimitSteps;
+    STATIC_ASSERT(divisor > 0);
+    STATIC_ASSERT((divisor & (divisor - 1)) == 0);  // Power of two
+    STATIC_ASSERT(AudioLimitSteps == arraysize(AudioLimitTable));
+    STATIC_ASSERT((AudioLimitSteps & (AudioLimitSteps - 1)) == 0);
+    unsigned index = (peak / divisor) & (AudioLimitSteps - 1);
+    ASSERT(index < AudioLimitSteps);
 
-    STATIC_ASSERT(arraysize(AudioLimitTable) == AudioLimitSteps);
-    int gain;
-
-    if (LIKELY(index < (AudioLimitSteps - 1))) {
-        // Fully inside our table; linear interpolate
-
-        int fraction = fpIndex & 0xFF;
-        int y1 = AudioLimitTable[index];
-        int y2 = AudioLimitTable[index + 1];
-
-        // Early out for unity gain
-        if (LIKELY(y2 == 0xFFFF)) {
-            return sample;
-        }
-
-        gain = (y1 * (0x100 - fraction) + y2 * fraction) >> 8;
-
-    } else {
-        // Past the end of our table; extrapolate using the last two samples
-
-        int fraction = fpIndex - ((AudioLimitSteps - 2) * 256);
-        int y1 = AudioLimitTable[AudioLimitSteps - 2];
-        int y2 = AudioLimitTable[AudioLimitSteps - 1];
-
-        gain = ((y2 - y1) * fraction) >> 8;
-    }
-
-    ASSERT(gain >= 0);
+    // Look up gain for this power value
+    int gain = AudioLimitTable[index];
     int attenuated = (sample * gain) >> 16;
 
     ASSERT(attenuated >= -0x8000);
@@ -294,9 +267,6 @@ void AudioMixer::pullAudio()
         bool endOfStreamSet = false;
     #endif
 
-    // Local buffer for limiter state, for more efficient inlining.
-    int32_t localLimiterPeak = AudioMixer::instance.limiterPeak;
-
     do {
         bool mixed;
         uint32_t blockSize = MIN(arraysize(blockBuffer), samplesLeft);
@@ -371,7 +341,7 @@ void AudioMixer::pullAudio()
                 >> (Volume::MAX_VOLUME_LOG2 - 1 - Volume::MIXER_GAIN_LOG2);
 
             // Use the soft limiter to convert back to 16-bit samples.
-            int16_t sample16 = softLimiter(sample, localLimiterPeak);
+            int16_t sample16 = softLimiter(sample);
 
             #ifdef SIFTEO_SIMULATOR
                 // Log audio for --waveout
@@ -395,9 +365,6 @@ void AudioMixer::pullAudio()
         // Write back local copy of Countdown, only if it's real.
         AudioMixer::instance.trackerCallbackCountdown = trackerCountdown;
     }
-
-    // Write back locally cached state
-    AudioMixer::instance.limiterPeak = localLimiterPeak;
 
     // Give the output a chance to dequeue data immediately (Only used on Siftulator)
     if (!headless)
