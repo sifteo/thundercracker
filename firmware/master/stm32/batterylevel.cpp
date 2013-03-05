@@ -97,7 +97,7 @@ unsigned vsys()
     return lastVsysReading;
 }
 
-unsigned scaled()
+unsigned scaled(uint8_t unused)
 {
     /*
      * We assume a linear profile
