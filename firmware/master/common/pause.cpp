@@ -267,9 +267,13 @@ bool Pause::lowBatteryModeHandler(UICoordinator &uic, UILowBatt &uilb, Mode &mod
         return false;
     }
 
-    // If a cuberange warning happens it will go to pause too.
+    // Pause if required, except if in launcher.
     if (HomeButton::isPressed()) {
         BatteryLevel::setWarningDone(cid);
+        if (SvmLoader::getRunLevel() == SvmLoader::RUNLEVEL_LAUNCHER) {
+            cleanup(uic);
+            return true;
+        }
         mode = ModePause;
         return false;
     }
