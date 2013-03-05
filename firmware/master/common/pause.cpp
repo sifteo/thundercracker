@@ -165,7 +165,7 @@ void Pause::mainLoop(Mode mode)
             break;
 
         case ModeLowBattery:
-            finished = lowBatteryModeHandler(uic, uiLowBatt, mode);
+            finished = lowBatteryModeHandler(uic, uiLowBatt, mode, modeChanged);
             break;
         }
 
@@ -242,15 +242,13 @@ bool Pause::cubeRangeModeHandler(UICoordinator &uic, UICubeRange &uicr, Mode &mo
 
 bool Pause::lowBatteryModeHandler(UICoordinator &uic, UILowBatt &uilb, Mode &mode, bool modeChanged)
 {
-    static uint8_t cid = 0;
-    uint8_t lowBatDevice = BatteryLevel::getLowBatDevice();
+    static uint8_t cubeSelected = BatteryLevel::BASE + 1;
+    uint8_t cid = BatteryLevel::getLowBatDevice();
 
     // Attach to the right cube if it's not the case.
-    if (lowBatDevice != uic.avb.cube) {
-        cid = lowBatDevice;
-        if (uic.pollForAttach(cid)) {
-            uilb.init(cid);
-        }
+    if (uic.pollForAttach(cid) || modeChanged) {
+        uilb.init(cid);
+        cubeSelected = cid;
     }
 
     uilb.animate();
@@ -258,7 +256,7 @@ bool Pause::lowBatteryModeHandler(UICoordinator &uic, UILowBatt &uilb, Mode &mod
 
     // has menu finished ?
     if (uilb.isDone()) {
-        BatteryLevel::setWarningDone(cid);
+        BatteryLevel::setWarningDone(cubeSelected);
         cleanup(uic);
 
         if (uilb.quitWasSelected()) {
@@ -275,7 +273,7 @@ bool Pause::lowBatteryModeHandler(UICoordinator &uic, UILowBatt &uilb, Mode &mod
 
     // Pause if required, except if in launcher.
     if (HomeButton::isPressed()) {
-        BatteryLevel::setWarningDone(cid);
+        BatteryLevel::setWarningDone(cubeSelected);
         if (SvmLoader::getRunLevel() == SvmLoader::RUNLEVEL_LAUNCHER) {
             cleanup(uic);
             return true;

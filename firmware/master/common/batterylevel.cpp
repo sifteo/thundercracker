@@ -11,6 +11,7 @@ bool needWarning()
 
 void setWarningDone(uint8_t cubeNum)
 {
+    ASSERT(cubeNum <= BASE);
     warningDone.atomicMark(cubeNum);
     lowBatDevices.atomicClear(cubeNum);
 }
