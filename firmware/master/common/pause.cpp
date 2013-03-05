@@ -228,7 +228,13 @@ bool Pause::cubeRangeModeHandler(UICoordinator &uic, UICubeRange &uicr, Mode &mo
             return true;
         }
 
-        mode = ModePause;
+        // No need to Pause after if we display a battery warning.
+        if (BatteryLevel::needWarning()) {
+            mode = ModeLowBattery;
+        } else {
+            mode = ModePause;
+        }
+
     }
 
     return false;
