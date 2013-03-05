@@ -165,7 +165,7 @@ void Pause::mainLoop(Mode mode)
             break;
 
         case ModeLowBattery:
-            finished = lowBatteryModeHandler(uic, uiLowBatt, mode, modeChanged);
+            finished = lowBatteryModeHandler(uic, uiLowBatt, mode);
             break;
         }
 
@@ -234,15 +234,15 @@ bool Pause::cubeRangeModeHandler(UICoordinator &uic, UICubeRange &uicr, Mode &mo
     return false;
 }
 
-bool Pause::lowBatteryModeHandler(UICoordinator &uic, UILowBatt &uilb, Mode &mode, bool modeChanged)
+bool Pause::lowBatteryModeHandler(UICoordinator &uic, UILowBatt &uilb, Mode &mode)
 {
-    static bool inProgress = false;
     static uint8_t cid = 0;
+    uint8_t lowBatDevice = BatteryLevel::getLowBatDevice();
 
-    if (!inProgress && BatteryLevel::needWarning()) {
-        cid = BatteryLevel::getLowBatDevice(); // the base is a cube too !
-        if (uic.pollForAttach(cid) || modeChanged) {
-            inProgress = true;
+    // Attach to the right cube if it's not the case.
+    if (lowBatDevice != uic.avb.cube) {
+        cid = lowBatDevice;
+        if (uic.pollForAttach(cid)) {
             uilb.init(cid);
         }
     }
@@ -258,7 +258,6 @@ bool Pause::lowBatteryModeHandler(UICoordinator &uic, UILowBatt &uilb, Mode &mod
         if (uilb.quitWasSelected()) {
             SvmLoader::exit();
         }
-        inProgress = false;
         return true;
     }
 
