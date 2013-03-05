@@ -35,7 +35,7 @@ void heartbeat()
         onCapture(_SYS_sysBatteryLevel(), BatteryLevel::BASE);
         // ...and for the cubes:
         _SYSCubeIDVector connectedCubes = CubeSlots::userConnected;
-        while (lowBatDevice == NONE && connectedCubes) {
+        while (connectedCubes) {
             uint8_t cid = Intrinsic::CLZ(connectedCubes); // get first connected cube number
             connectedCubes ^= Intrinsic::LZ(cid);         // mark it as read
             onCapture(_SYS_cubeBatteryLevel(cid), cid);
@@ -46,6 +46,7 @@ void heartbeat()
 void init()
 {
     warningDone.clear();
+    lowBatDevices.clear();
     // Initialize default values of simulated battery levels
     for (int i = 0; i <= _SYS_NUM_CUBE_SLOTS; i++) {
         percentage[i] = 100;

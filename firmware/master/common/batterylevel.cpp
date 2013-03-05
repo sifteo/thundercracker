@@ -6,25 +6,20 @@ namespace BatteryLevel {
 
 bool needWarning()
 {
-    return (lowBatDevice != NONE); // was there a device with a low battery level ?
+    return !lowBatDevices.empty(); // was there a device with a low battery level ?
 }
 
 void setWarningDone(uint8_t cubeNum)
 {
     warningDone.atomicMark(cubeNum);
-    lowBatDevice = NONE; // useful if call needWarning() before update
+    lowBatDevices.atomicClear(cubeNum);
 }
 
 void onCapture(uint32_t batLevel, uint8_t cubeNum)
 {
-    // update the lowBatDevice number and trigger a warning (once) if 90% discharge
-    if (lowBatDevice != NONE) { // do we already have a warning to display ?
-        return;
-    }
-    lowBatDevice = NONE;
-
+    // update the lowBatDevices, trigger a warning (once) if 90% discharged
     if (!warningDone.test(cubeNum) && batLevel <= _SYS_BATTERY_MAX/10) {
-        lowBatDevice = cubeNum;
+        lowBatDevices.atomicMark(cubeNum);
         Pause::taskWork.atomicMark(Pause::LowBattery);
         Tasks::trigger(Tasks::Pause);
     }
@@ -32,8 +27,10 @@ void onCapture(uint32_t batLevel, uint8_t cubeNum)
 
 uint8_t getLowBatDevice()
 {
-    ASSERT(lowBatDevice != NONE); // needWarning() should be called before
-    return lowBatDevice;
+    unsigned index = 0;
+    bool needWarning = lowBatDevices.findFirst(index);
+    ASSERT(needWarning); // needWarning() should be called before
+    return uint8_t(index);
 }
 
 } // namespace BatteryLevel

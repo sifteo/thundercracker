@@ -240,7 +240,7 @@ bool Pause::cubeRangeModeHandler(UICoordinator &uic, UICubeRange &uicr, Mode &mo
     return false;
 }
 
-bool Pause::lowBatteryModeHandler(UICoordinator &uic, UILowBatt &uilb, Mode &mode)
+bool Pause::lowBatteryModeHandler(UICoordinator &uic, UILowBatt &uilb, Mode &mode, bool modeChanged)
 {
     static uint8_t cid = 0;
     uint8_t lowBatDevice = BatteryLevel::getLowBatDevice();

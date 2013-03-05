@@ -78,10 +78,13 @@ void init()
     timer.enableChannel(BATT_LVL_CHAN);
 
     /*
-     * This bit vector tells which cube already displayed a warning
+     * These bit vectors tell which devices:
+     *   - already displayed a warning
+     *   - need to display a warning
      */
 
     warningDone.clear();
+    lowBatDevices.clear();
 }
 
 unsigned raw()

@@ -8,7 +8,6 @@
 namespace BatteryLevel
 {
     static const uint8_t BASE = _SYS_NUM_CUBE_SLOTS;
-    static const uint8_t NONE = _SYS_NUM_CUBE_SLOTS+1;
 
     void init();
     unsigned raw();
@@ -28,7 +27,7 @@ namespace BatteryLevel
     uint8_t getPercentage(uint8_t cubeNum);
 
     // In the following arrays, the last element refers to the master cube:
-    static uint8_t lowBatDevice = NONE;
+    static BitVector<_SYS_NUM_CUBE_SLOTS+1> lowBatDevices;
     static BitVector<_SYS_NUM_CUBE_SLOTS+1> warningDone;
 
     /*

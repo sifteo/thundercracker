@@ -35,7 +35,7 @@ private:
 
     static bool pauseModeHandler(UICoordinator &uic, UIPause &uip, Mode &mode);
     static bool cubeRangeModeHandler(UICoordinator &uic, UICubeRange &uicr, Mode &mode);
-    static bool lowBatteryModeHandler(UICoordinator &uic, UILowBatt &uilb, Mode &mode);
+    static bool lowBatteryModeHandler(UICoordinator &uic, UILowBatt &uilb, Mode &mode, bool modeChanged);
     static void cleanup(UICoordinator &uic);
 };
 
