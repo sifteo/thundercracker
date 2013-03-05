@@ -12,6 +12,14 @@ namespace BatteryLevel
     void beginCapture();
     void captureIsr();
     void process(unsigned);
+    void heartbeat();
+    bool needWarning();
+    void setWarningDone();
+    void onCapture();
+    void updatePercentage(int delta);
+    unsigned getPercentage();
+    static unsigned percentage = 100;
+    static bool neverWarned = true;
 
     /*
      * Sentinel value to help determine whether a sample has successfully

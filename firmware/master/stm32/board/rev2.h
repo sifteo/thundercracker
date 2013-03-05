@@ -32,6 +32,9 @@
 #define RF_SPI_MOSI_GPIO    GPIOPin(&GPIOC, 12)
 #define RF_EXTI_VEC         EXTI9_5
 
+#define RF_DMA_CHAN_RX      DMA2_Channel1
+#define RF_DMA_CHAN_TX      DMA2_Channel2
+
 // F L A S H
 #ifdef REV2_GDB_REWORK
 

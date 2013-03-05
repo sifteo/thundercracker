@@ -152,6 +152,24 @@ struct _SYSPseudoRandomState {
 };
 
 /*
+ * Versioning.
+ *
+ * SYS_FEATUREs is a mask of features supported by the current version of the OS.
+ *
+ * NB: be sure to add any new features to _SYS_FEATURE_ALL.
+ */
+
+#define _SYS_OS_VERSION_MASK        0xffffff
+#define _SYS_HW_VERSION_SHIFT       24
+
+// defaults for earlier OS versions that don't support _SYS_version()
+#define _SYS_OS_VERSION_NONE        0x00
+#define _SYS_HW_VERSION_NONE        0x00
+
+#define _SYS_FEATURE_SYS_VERSION    (1 << 0)
+#define _SYS_FEATURE_ALL            (_SYS_FEATURE_SYS_VERSION)
+
+/*
  * Hardware IDs are 64-bit numbers that uniquely identify a
  * particular cube. A valid HWIDs never contains 0xFF bytes.
  */

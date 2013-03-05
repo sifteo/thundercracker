@@ -13,11 +13,22 @@
 namespace Usb {
 
     static int init() {
-        return libusb_init(0);
+        return libusb_init(NULL);
     }
 
     static void deinit() {
-        libusb_exit(0);
+        libusb_exit(NULL);
+    }
+
+    static void setDebug(unsigned level) {
+
+        // older versions of libusb.h don't define LIBUSB_LOG_LEVEL_DEBUG
+        // so do it here to work around
+        static const unsigned LOG_LEVEL_DEBUG = 4;
+        if (level > LOG_LEVEL_DEBUG) {
+            level = LOG_LEVEL_DEBUG;
+        }
+        libusb_set_debug(NULL, level);
     }
 
 } // namespace Usb
@@ -27,12 +38,12 @@ class UsbDevice : public IODevice {
 public:
     UsbDevice();
 
-    void processEvents() {
+    int processEvents(unsigned timeoutMillis = 0) {
         struct timeval tv = {
-            0,  // tv_sec
-            0   // tv_usec
+            0,                      // tv_sec
+            timeoutMillis * 1000    // tv_usec
         };
-        libusb_handle_events_timeout_completed(0, &tv, 0);
+        return libusb_handle_events_timeout_completed(0, &tv, 0);
     }
 
     bool open(uint16_t vendorId, uint16_t productId, uint8_t interface = 0);
@@ -50,7 +61,7 @@ public:
     int numPendingINPackets() const {
         return mBufferedINPackets.size();
     }
-    int readPacket(uint8_t *buf, unsigned maxlen);
+    int readPacket(uint8_t *buf, unsigned maxlen, unsigned &rxlen);
     int readPacketSync(uint8_t *buf, int maxlen, int *transferred, unsigned timeout = -1);
 
     int numPendingOUTPackets() const {
@@ -81,21 +92,25 @@ private:
     Endpoint mOutEndpoint;
 
     void removeTransfer(Endpoint &ep, libusb_transfer *t);
-    void cancelTransfers(Endpoint &ep);
+    void releaseTransfers(Endpoint &ep);
 
+    int mInterface;
     libusb_device_handle *mHandle;
 
-    struct Packet {
+    struct RxPacket {
         uint8_t *buf;
-        uint8_t len;
+        unsigned len;
+        int status;
 
-        Packet(libusb_transfer *t) {
-            len = t->actual_length;
-            buf = (uint8_t*)malloc(len);
-            memcpy(buf, t->buffer, len);
+        RxPacket(libusb_transfer *t) :
+            buf((uint8_t*)malloc(t->actual_length)),
+            len(t->actual_length),
+            status(t->status)
+        {
+            memcpy(buf, t->buffer, t->actual_length);
         }
     };
-    std::list<Packet> mBufferedINPackets;
+    std::list<RxPacket> mBufferedINPackets;
 };
 
 #endif // _USB_DEVICE_H_

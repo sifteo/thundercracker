@@ -11,6 +11,7 @@
 
 
 UsbDevice::UsbDevice() :
+    mInterface(-1),
     mHandle(0)
 {
 }
@@ -85,6 +86,8 @@ bool UsbDevice::open(uint16_t vendorId, uint16_t productId, uint8_t interface)
         fprintf(stderr, "error claiming exclusive access to device: %s\n", libusb_error_name(r));
         return false;
     }
+
+    mInterface = interface;
 
     /*
      * Open a number of IN transfers.
@@ -168,31 +171,27 @@ void UsbDevice::close()
     if (!isOpen())
         return;
 
-    /*
-     * Cancel transfers and wait for them to complete.
-     * on OS X, libusb_close() appears to hang if we call it directly
-     * from within the completion handlers.
-     */
-    cancelTransfers(mInEndpoint);
-    cancelTransfers(mOutEndpoint);
-
-    while (!(mOutEndpoint.pendingTransfers.empty() && mInEndpoint.pendingTransfers.empty()))
-        processEvents();
+    int r = libusb_release_interface(mHandle, mInterface);
+    if (r < 0) {
+        fprintf(stderr, "libusb_release_interface error: %s\n", libusb_error_name(r));
+    }
 
     libusb_close(mHandle);
     mHandle = 0;
+
+    releaseTransfers(mInEndpoint);
+    releaseTransfers(mOutEndpoint);
 }
 
-void UsbDevice::cancelTransfers(Endpoint &ep)
+void UsbDevice::releaseTransfers(Endpoint &ep)
 {
     for (std::list<libusb_transfer*>::iterator i = ep.pendingTransfers.begin();
-         i != ep.pendingTransfers.end(); ++i)
+         i != ep.pendingTransfers.end();)
     {
-        int r = libusb_cancel_transfer(*i);
-
-        // Complain if this isn't an expected error.
-        if (r < 0 && r != LIBUSB_ERROR_OTHER && r != LIBUSB_ERROR_NOT_FOUND && r != LIBUSB_ERROR_NO_DEVICE)
-            fprintf(stderr, "failed to cancel transfer: %s\n", libusb_error_name(r));
+        libusb_transfer *t = *i;
+        free(t->buffer);
+        libusb_free_transfer(t);
+        i = ep.pendingTransfers.erase(i);
     }
 }
 
@@ -201,21 +200,25 @@ bool UsbDevice::isOpen() const
     return mHandle != 0;
 }
 
-int UsbDevice::readPacket(uint8_t *buf, unsigned maxlen)
+int UsbDevice::readPacket(uint8_t *buf, unsigned maxlen, unsigned & rxlen)
 {
+    /*
+     * Dequeue a packet that has already been received.
+     */
+
     assert(!mBufferedINPackets.empty());
 
-    Packet pkt = mBufferedINPackets.front();
-    uint8_t len = maxlen < pkt.len ? maxlen : pkt.len;
-    memcpy(buf, pkt.buf, len);
+    RxPacket pkt = mBufferedINPackets.front();
+    rxlen = MIN(maxlen, pkt.len);
+    memcpy(buf, pkt.buf, rxlen);
 
     delete pkt.buf;
     mBufferedINPackets.pop_front();
 
     USB_TRACE(("USB: Read %d bytes, %02x%02x%02x%02x %02x%02x%02x%02x ...\n",
-        len, buf[0], buf[1], buf[2], buf[3], buf[4], buf[5], buf[6], buf[7]));
+        rxlen, buf[0], buf[1], buf[2], buf[3], buf[4], buf[5], buf[6], buf[7]));
 
-    return len;
+    return pkt.status;
 }
 
 int UsbDevice::readPacketSync(uint8_t *buf, int maxlen, int *transferred, unsigned timeout)
@@ -244,7 +247,7 @@ int UsbDevice::writePacket(const uint8_t *buf, unsigned len)
 
     int r = libusb_submit_transfer(txfer);
     if (r < 0) {
-        return -1;
+        return r;
     }
 
     mOutEndpoint.pendingTransfers.push_back(txfer);
@@ -266,17 +269,12 @@ void UsbDevice::handleRx(libusb_transfer *t)
 {
     USB_TRACE(("USB: RX status %d\n", t->status));
 
-    if (t->status == LIBUSB_TRANSFER_COMPLETED) {
-        mBufferedINPackets.push_back(Packet(t));
+    mBufferedINPackets.push_back(RxPacket(t));
 
-        // re-submit
-        int r = libusb_submit_transfer(t);
-        if (r < 0) {
-            fprintf(stderr, "failed to re-submit: %s\n", libusb_error_name(r));
-            removeTransfer(mInEndpoint, t);
-        }
-
-    } else {
+    // re-submit
+    int r = libusb_submit_transfer(t);
+    if (r < 0) {
+        fprintf(stderr, "failed to re-submit: %s\n", libusb_error_name(r));
         removeTransfer(mInEndpoint, t);
     }
 }

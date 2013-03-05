@@ -23,6 +23,7 @@ OBJS_COMMON = \
     $(MASTER_DIR)/common/assetloader.o \
     $(MASTER_DIR)/common/assetloader_fsm.o \
     $(MASTER_DIR)/common/assetutil.o \
+    $(MASTER_DIR)/common/batterylevel.o \
     $(MASTER_DIR)/common/cubeslots.o \
     $(MASTER_DIR)/common/cube.o \
     $(MASTER_DIR)/common/cubeconnector.o \
@@ -60,6 +61,7 @@ OBJS_COMMON = \
     $(MASTER_DIR)/common/ui_menu.o \
     $(MASTER_DIR)/common/ui_shutdown.o \
     $(MASTER_DIR)/common/ui_fault.o \
+	$(MASTER_DIR)/common/ui_lowbatt.o \
     $(MASTER_DIR)/common/pause.o \
     $(MASTER_DIR)/common/ui_pause.o \
     $(MASTER_DIR)/common/ui_cuberange.o \

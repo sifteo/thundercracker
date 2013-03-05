@@ -107,7 +107,7 @@ uint32_t *SvmDebugPipe::logReserve(SvmLogTag tag)
     // On simulation, we can just stow the parameters in a temporary global
     // buffer, and decode them to stdout immediately.
 
-    static uint32_t buffer[7];
+    static uint32_t buffer[LOG_BUFFER_WORDS];
     return buffer;
 }
 

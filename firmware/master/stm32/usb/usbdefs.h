@@ -2,18 +2,31 @@
 #define USB_DEFS_H
 
 #include <stdint.h>
+#include "macros.h"
 
 namespace Usb {
 
-static inline uint8_t lowByte(uint16_t x) {
+static ALWAYS_INLINE uint8_t lowByte(uint16_t x) {
     return x & 0xff;
 }
 
-static inline uint8_t highByte(uint16_t  x) {
+static ALWAYS_INLINE uint8_t highByte(uint16_t x) {
     return (x >> 8) & 0xff;
 }
 
-static inline bool isInEp(uint8_t addr) {
+static const unsigned REQ_DIR_MASK  = (1 << 7); // Bit 7=1: Direction bit
+static const unsigned REQ_DIR_IN    = (1 << 7); // Bit 7=1: Device-to-host
+static const unsigned REQ_DIR_OUT   = (0 << 7); // Bit 7=0: Host-to-device
+
+static ALWAYS_INLINE bool reqIsIN(uint8_t type) {
+    return (type & REQ_DIR_MASK) != 0;
+}
+
+static ALWAYS_INLINE bool reqIsOUT(uint8_t type) {
+    return (type & REQ_DIR_MASK) == 0;
+}
+
+static ALWAYS_INLINE bool isInEp(uint8_t addr) {
     return (addr & 0x80) != 0;
 }
 

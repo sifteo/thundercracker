@@ -16,6 +16,9 @@ FLAGS += -DNOT_USERSPACE -DSIFTEO_SIMULATOR -D__STDC_FORMAT_MACROS
 # Versioning
 FLAGS += -DSDK_VERSION=$(shell git describe --tags)
 
+OSVERSION := $(shell python $(TC_DIR)/tools/osversion.py)
+FLAGS += -DOS_VERSION=$(OSVERSION)
+
 # Disable unwanted warnings, but be generally pretty pedantic
 WARNFLAGS += -Wall -Werror -Wno-unused -Wno-strict-aliasing -Wno-uninitialized
 

@@ -398,6 +398,7 @@ void UsbVolumeManager::baseSysInfo(const USBProtocolMsg &m, USBProtocolMsg &repl
     SysInfoReply *r = reply.zeroCopyAppend<SysInfoReply>();
     memcpy(r->baseUniqueID, SysInfo::UniqueId, SysInfo::UniqueIdNumBytes);
     r->baseHwRevision = SysInfo::HardwareRev;
+    r->sysVersion = OS_VERSION;
 }
 
 void UsbVolumeManager::beginLFSObjectWrite(const USBProtocolMsg &m, USBProtocolMsg &reply)

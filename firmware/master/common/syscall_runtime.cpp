@@ -24,13 +24,13 @@
 #include "ui_pause.h"
 #include "ui_coordinator.h"
 #include "ui_shutdown.h"
+#include "sysinfo.h"
 
 extern "C" {
 
 uint32_t _SYS_getFeatures()
 {
-    // Reserved for future use. There are no feature bits yet.
-    return 0;
+    return _SYS_FEATURE_ALL;
 }
 
 void _SYS_abort()
@@ -152,7 +152,7 @@ void _SYS_log(uint32_t t, uintptr_t v1, uintptr_t v2, uintptr_t v3,
         // Stow all arguments, plus the log tag. The post-processor
         // will do some printf()-like formatting on the stored arguments.
         case _SYS_LOGTYPE_FMT: {
-            uint32_t *buffer = SvmDebugPipe::logReserve(tag);        
+            uint32_t *buffer = SvmDebugPipe::logReserve(tag);
             switch (arity) {
                 case 7: buffer[6] = v7;
                 case 6: buffer[5] = v6;
@@ -225,6 +225,21 @@ void _SYS_log(uint32_t t, uintptr_t v1, uintptr_t v2, uintptr_t v3,
             ASSERT(0 && "Unknown _SYS_log() tag type");
             return;
     }
+}
+
+uint32_t _SYS_version()
+{
+    /*
+     * Return a numeric value that specifies both OS version and hardware version.
+     *
+     * HW version is encoded in the high byte, and the OS version is encoded
+     * in the lower 3 bytes.
+     *
+     * NOTE: OS_VERSION is currently derived from the git version, and defined
+     *       at compile time - see Makefile.defs.
+     */
+
+    return (SysInfo::HardwareRev << _SYS_HW_VERSION_SHIFT) | (OS_VERSION & _SYS_OS_VERSION_MASK);
 }
 
 }  // extern "C"

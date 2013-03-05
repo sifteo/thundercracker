@@ -29,6 +29,8 @@ static GPIOPin vbattEnable = VBATT_EN_GPIO;
 static Adc adc(&PWR_MEASURE_ADC);
 static GPIOPin usbCurrentSign = USB_CURRENT_DIR_GPIO;
 static GPIOPin v3CurrentSign = V3_CURRENT_DIR_GPIO;
+static GPIOPin dip1 = DIP_SWITCH1_GPIO;
+static GPIOPin dip2 = DIP_SWITCH2_GPIO;
 
 static PulseRX PulseRX2v0Rail(NBR_IN4_GPIO);
 static PulseRX PulseRX3v3Rail(NBR_IN3_GPIO);
@@ -89,7 +91,19 @@ void TestJig::init()
     Dac::init();
     Dac::configureChannel(BATTERY_SIM_DAC_CH);
     Dac::enableChannel(BATTERY_SIM_DAC_CH);
-    Dac::write(BATTERY_SIM_DAC_CH, DAC_1V2); // default to off
+    Dac::write(BATTERY_SIM_DAC_CH, DAC_1V2); // default to 1v2
+
+    dip1.setControl(GPIOPin::IN_PULL);
+    dip2.setControl(GPIOPin::IN_PULL);
+
+    dip1.pullup();
+    dip2.pullup();
+
+    if(dip1.isLow()){
+        Dac::write(BATTERY_SIM_DAC_CH, DAC_1V2);
+    }else if(dip2.isLow()) {
+        Dac::write(BATTERY_SIM_DAC_CH, DAC_2V8);
+    }
 
     GPIOPin v3CurrentPin = V3_CURRENT_GPIO;
     v3CurrentPin.setControl(GPIOPin::IN_ANALOG);
@@ -323,10 +337,15 @@ void TestJig::setVBattEnabledHandler(uint8_t argc, uint8_t *args)
  */
 void TestJig::setSimulatedBatteryVoltageHandler(uint8_t argc, uint8_t *args)
 {
-    uint16_t val = (args[1] | args[2] << 8);
-    
-    Dac::write(BATTERY_SIM_DAC_CH, val);
-
+    //if dip switches are active disregard voltage handler
+    if(dip1.isLow()) {
+        Dac::write(BATTERY_SIM_DAC_CH, DAC_1V2);
+    }else if(dip2.isLow()) {
+        Dac::write(BATTERY_SIM_DAC_CH, DAC_2V8);
+    } else {
+        uint16_t val = (args[1] | args[2] << 8);
+        Dac::write(BATTERY_SIM_DAC_CH, val);
+    }
     // no response data - just indicate that we're done
     const uint8_t response[] = { args[0] };
     UsbDevice::write(response, sizeof response);
