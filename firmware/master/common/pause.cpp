@@ -165,7 +165,14 @@ void Pause::mainLoop(Mode mode)
             break;
 
         case ModeLowBattery:
-            finished = lowBatteryModeHandler(uic, uiLowBatt, mode, modeChanged);
+            if (modeChanged && BatteryLevel::needWarning()) {
+                uint8_t cid = BatteryLevel::getLowBatDevice();
+                if (uic.isAttached() || uic.pollForAttach(cid)) {
+                    uiLowBatt.init(cid);
+                    BatteryLevel::setSelectedCube(cid);
+                }
+            }
+            finished = lowBatteryModeHandler(uic, uiLowBatt, mode);
             break;
         }
 
@@ -223,40 +230,32 @@ bool Pause::cubeRangeModeHandler(UICoordinator &uic, UICubeRange &uicr, Mode &mo
          * Otherwise, transition to pause mode to give the user a chance
          * to gather their thoughts before resuming their game.
          */
-        if (SvmLoader::getRunLevel() == SvmLoader::RUNLEVEL_LAUNCHER) {
+        if ( SvmLoader::getRunLevel() == SvmLoader::RUNLEVEL_LAUNCHER) {
             cleanup(uic);
             return true;
         }
 
-        // No need to Pause after if we display a battery warning.
         if (BatteryLevel::needWarning()) {
-            mode = ModeLowBattery;
-        } else {
-            mode = ModePause;
+            BatteryLevel::setWasInterrupted();
+            cleanup(uic);
+            return true;
         }
 
+        mode = ModePause;
     }
 
     return false;
 }
 
-bool Pause::lowBatteryModeHandler(UICoordinator &uic, UILowBatt &uilb, Mode &mode, bool modeChanged)
+bool Pause::lowBatteryModeHandler(UICoordinator &uic, UILowBatt &uilb, Mode &mode)
 {
-    static uint8_t cubeSelected = BatteryLevel::BASE + 1;
-    uint8_t cid = BatteryLevel::getLowBatDevice();
-
-    // Attach to the right cube if it's not the case.
-    if (uic.pollForAttach(cid) || modeChanged) {
-        uilb.init(cid);
-        cubeSelected = cid;
-    }
-
     uilb.animate();
     uic.paint();
 
     // has menu finished ?
     if (uilb.isDone()) {
-        BatteryLevel::setWarningDone(cubeSelected);
+
+        BatteryLevel::setWarningDone();
         cleanup(uic);
 
         if (uilb.quitWasSelected()) {
@@ -273,7 +272,7 @@ bool Pause::lowBatteryModeHandler(UICoordinator &uic, UILowBatt &uilb, Mode &mod
 
     // Pause if required, except if in launcher.
     if (HomeButton::isPressed()) {
-        BatteryLevel::setWarningDone(cubeSelected);
+        BatteryLevel::setWarningDone();
         if (SvmLoader::getRunLevel() == SvmLoader::RUNLEVEL_LAUNCHER) {
             cleanup(uic);
             return true;

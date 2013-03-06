@@ -8,6 +8,7 @@
 namespace BatteryLevel
 {
     static const uint8_t BASE = _SYS_NUM_CUBE_SLOTS;
+    static const uint8_t NONE = _SYS_NUM_CUBE_SLOTS + 1;
 
     void init();
     unsigned raw();
@@ -18,8 +19,9 @@ namespace BatteryLevel
     void process(unsigned);
     uint8_t getLowBatDevice();
     bool needWarning();
-    void setWarningDone(uint8_t cubeNum);
+    void setWarningDone();
     void onCapture(uint32_t batLevel, uint8_t cubeNum);
+    void setSelectedCube(uint8_t cubeNum);
 
     // simulated only :
     void heartbeat();
@@ -29,6 +31,12 @@ namespace BatteryLevel
     // In the following arrays, the last element refers to the master cube:
     static BitVector<_SYS_NUM_CUBE_SLOTS+1> lowBatDevices;
     static BitVector<_SYS_NUM_CUBE_SLOTS+1> warningDone;
+    static uint8_t selectedCube = NONE; // garbage by default
+
+    // TMP:
+    static int wasInterrupted = 0; // TODO find why bool don't work !
+    void setWasInterrupted();
+    int getWasInterrupted(); // TODO find why bool don't work !
 
     /*
      * Sentinel value to help determine whether a sample has successfully
