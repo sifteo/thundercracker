@@ -95,7 +95,7 @@
 #define BATT_MEAS_GND_GPIO  GPIOPin(&GPIOA,10)
 
 // M I S C
-#define BTN_HOME_GPIO       GPIOPin(&GPIOA, 0)
+#define BTN_HOME_GPIO       GPIOPin(&GPIOC, 15)
 #define BTN_HOME_EXTI_VEC   EXTI2
 
 #define PROFILER_TIM        TIM2

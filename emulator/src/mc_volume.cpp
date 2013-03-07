@@ -11,7 +11,11 @@
 
 namespace Volume {
 
-static const int kDefault = MAX_VOLUME;
+/*
+ * Default volume should be unity gain, both to keep the unit tests
+ * happy and because this is really a sensible default for game development.
+ */
+static const int kDefault = MAX_VOLUME >> MIXER_GAIN_LOG2;
 
 static int currentVolume = 0;
 static int unmuteVolume = 0;
