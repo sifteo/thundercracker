@@ -18,6 +18,7 @@ public:
 
 private:
     IODevice &dev;
+    bool getVolumeCode(const char *s, unsigned &volumeCode);
 };
 
 #endif // INSTALLER_H
