@@ -165,8 +165,8 @@ void Pause::mainLoop(Mode mode)
             break;
 
         case ModeLowBattery:
-            if (modeChanged && BatteryLevel::needWarning()) {
-                uint8_t cid = BatteryLevel::getLowBatDevice();
+            uint8_t cid = BatteryLevel::getLowBatDevice();
+            if (modeChanged && cid != BatteryLevel::NONE) {
                 if (uic.isAttached() || uic.pollForAttach(cid)) {
                     uiLowBatt.init(cid);
                     BatteryLevel::setSelectedCube(cid);
@@ -223,6 +223,12 @@ bool Pause::cubeRangeModeHandler(UICoordinator &uic, UICubeRange &uicr, Mode &mo
     }
 
     if (!CubeSlots::belowCubeRange()) {
+
+        if (BatteryLevel::needWarning()) {
+            mode = ModeLowBattery;
+            return false;
+        }
+
         /*
          * CubeRange is now fulfilled.
          *
@@ -231,12 +237,6 @@ bool Pause::cubeRangeModeHandler(UICoordinator &uic, UICubeRange &uicr, Mode &mo
          * to gather their thoughts before resuming their game.
          */
         if ( SvmLoader::getRunLevel() == SvmLoader::RUNLEVEL_LAUNCHER) {
-            cleanup(uic);
-            return true;
-        }
-
-        if (BatteryLevel::needWarning()) {
-            BatteryLevel::setWasInterrupted();
             cleanup(uic);
             return true;
         }

@@ -23,7 +23,7 @@ namespace BatteryLevel
     void onCapture(uint32_t batLevel, uint8_t cubeNum);
     void setSelectedCube(uint8_t cubeNum);
 
-    // simulated only :
+    // simulated only:
     void heartbeat();
     void updatePercentage(int8_t delta, uint8_t cubeNum);
     uint8_t getPercentage(uint8_t cubeNum);
@@ -31,12 +31,7 @@ namespace BatteryLevel
     // In the following arrays, the last element refers to the master cube:
     static BitVector<_SYS_NUM_CUBE_SLOTS+1> lowBatDevices;
     static BitVector<_SYS_NUM_CUBE_SLOTS+1> warningDone;
-    static uint8_t selectedCube = NONE; // garbage by default
-
-    // TMP:
-    static int wasInterrupted = 0; // TODO find why bool don't work !
-    void setWasInterrupted();
-    int getWasInterrupted(); // TODO find why bool don't work !
+    static uint8_t selectedCube = NONE;
 
     /*
      * Sentinel value to help determine whether a sample has successfully
