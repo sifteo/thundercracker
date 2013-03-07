@@ -16,6 +16,9 @@ void setWarningDone()
 
 void onCapture(uint32_t batLevel, uint8_t cubeNum)
 {
+    if (Pause::busy)
+        return;
+
     // trigger a warning (once) if 90% discharged
     ASSERT(cubeNum <= BASE);
     if (!warningDone.test(cubeNum) && batLevel <= _SYS_BATTERY_MAX/10) {
@@ -31,7 +34,7 @@ void onCapture(uint32_t batLevel, uint8_t cubeNum)
 
 uint8_t getLowBatDevice()
 {
-    if (selectedCube != NONE) {
+    if (selectedCube != NONE || Pause::busy) {
         return selectedCube;
     }
 
@@ -47,6 +50,9 @@ uint8_t getLowBatDevice()
 
 void setSelectedCube(uint8_t cubeNum)
 {
+    if (Pause::busy)
+        return;
+
     ASSERT(cubeNum <= BASE);
     selectedCube = cubeNum;
     warningDone.atomicMark(cubeNum);

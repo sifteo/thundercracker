@@ -16,6 +16,8 @@
 #include "batterylevel.h"
 
 BitVector<Pause::NUM_WORK_ITEMS> Pause::taskWork;
+bool Pause::busy = false;
+
 
 void Pause::task()
 {
@@ -153,15 +155,19 @@ void Pause::mainLoop(Mode mode)
         switch (mode) {
 
         case ModePause:
+            busy = true;
             if (modeChanged && uic.isAttached())
                 uiPause.init();
             finished = pauseModeHandler(uic, uiPause, mode);
+            busy = !finished;
             break;
 
         case ModeCubeRange:
+            busy = true;
             if (modeChanged && uic.isAttached())
                 uiCubeRange.init();
             finished = cubeRangeModeHandler(uic, uiCubeRange, mode);
+            busy = !finished;
             break;
 
         case ModeLowBattery:
