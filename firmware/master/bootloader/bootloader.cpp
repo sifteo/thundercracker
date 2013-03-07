@@ -307,7 +307,7 @@ void Bootloader::cleanup()
       GPIOPin led3 = LED_GREEN1_GPIO;
       GPIOPin led4 = LED_GREEN2_GPIO;
 
-      led1.setControl(GPIOPin::IN_FLOAT;
+      led1.setControl(GPIOPin::IN_FLOAT);
       led2.setControl(GPIOPin::IN_FLOAT);
       led3.setControl(GPIOPin::IN_FLOAT);
       led4.setControl(GPIOPin::IN_FLOAT);
