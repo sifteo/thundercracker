@@ -60,15 +60,23 @@ bool Bootloader::manualUpdateRequested()
     #ifdef BOARD_TEST_JIG
       homeButton.setControl(GPIOPin::IN_PULL);
       homeButton.pullup();
+
+      while (SysTime::ticks() < SysTime::sTicks(1)) {
+          // active high - bail if released
+          if (homeButton.isHigh()){
+              return false;
+          }
+      }
     #else
       homeButton.setControl(GPIOPin::IN_FLOAT);
-    #endif
 
-    while (SysTime::ticks() < SysTime::sTicks(1)) {
-        // active high - bail if released
-        if (homeButton.isLow())
-            return false;
-    }
+      while (SysTime::ticks() < SysTime::sTicks(1)) {
+          // active high - bail if released
+          if (homeButton.isLow()){
+              return false;
+          }
+      }
+    #endif
 
     return true;
 }
