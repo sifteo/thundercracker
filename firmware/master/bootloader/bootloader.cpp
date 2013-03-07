@@ -56,7 +56,7 @@ bool Bootloader::manualUpdateRequested()
         return false;
 
     GPIOPin homeButton = BTN_HOME_GPIO;
-    
+
     #ifdef BOARD_TEST_JIG
       homeButton.setControl(GPIOPin::IN_PULL);
       homeButton.pullup();
