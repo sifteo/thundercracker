@@ -26,7 +26,7 @@
 #   include "powermanager.h"
 #   include "factorytest.h"
 #   if (BOARD == BOARD_TEST_JIG)
-#       include "testjig.h"
+#       include "../testjig/testjig.h"
 #   endif
 #endif
 
