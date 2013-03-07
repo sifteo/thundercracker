@@ -2,6 +2,7 @@
 #include "command.h"
 #include "profiler.h"
 #include "fwloader.h"
+#include "inspect.h"
 #include "installer.h"
 #include "manifest.h"
 #include "delete.h"
@@ -30,6 +31,12 @@ static const Command commands[] = {
         "delete data from the Sifteo Base",
         "delete (--all | --sys | --reformat | <volumeID>)",
         Delete::run
+    },
+    {
+        "inspect",
+        "inspect an app's metadata",
+        "inspect <app.elf>",
+        Inspect::run
     },
     {
         "install",

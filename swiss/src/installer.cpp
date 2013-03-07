@@ -1,5 +1,6 @@
 #include "installer.h"
 #include "usbprotocol.h"
+#include "usbvolumemanager.h"
 #include "elfdebuginfo.h"
 #include "progressbar.h"
 #include "util.h"
@@ -181,8 +182,16 @@ bool Installer::sendHeader(uint32_t filesz)
         return false;
     }
 
-    BaseDevice baseDev(dev);
-    return baseDev.waitForReply(UsbVolumeManager::WroteHeaderOK, m);
+    bool success = BaseDevice(dev).waitForReply(UsbVolumeManager::WroteHeaderOK, m);
+    if (!success) {
+        if (m.header == UsbVolumeManager::WroteHeaderFail) {
+            fprintf(stderr, "error: not enough room for this app\n");
+        } else {
+            fprintf(stderr, "error: unexpected response (0x%x)\n", m.header);
+        }
+    }
+
+    return success;
 }
 
 /*

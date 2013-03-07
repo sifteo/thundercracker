@@ -1,4 +1,5 @@
 #include "basedevice.h"
+#include "usbprotocol.h"
 
 #include <stddef.h>
 
@@ -204,30 +205,34 @@ bool BaseDevice::getMetadata(USBProtocolMsg &msg, unsigned volBlockCode, unsigne
 }
 
 
-bool BaseDevice::waitForReply(uint32_t header, USBProtocolMsg &msg, unsigned tries)
+bool BaseDevice::waitForReply(uint32_t header, USBProtocolMsg &msg)
 {
     /*
      * Wait for a reply with the given header.
-     * Discard up to 'tries' non-matching packets while waiting.
+     * Filter out replies from any other subsystems.
      */
 
-    while (tries--) {
-        while (dev.numPendingINPackets() == 0) {
+    for (;;) {
+        if (dev.numPendingINPackets() == 0) {
             dev.processEvents(1);
+            continue;
         }
 
-        dev.readPacket(msg.bytes, msg.MAX_LEN, msg.len);
-        if (msg.header == header) {
-            return true;
+        if (dev.readPacket(msg.bytes, msg.MAX_LEN, msg.len) < 0) {
+            return false;
+        }
+
+        // if we got a message from the correct subsystem, we're good
+        if (msg.subsystem() == USBProtocol::Installer) {
+            break;
         }
     }
 
-    fprintf(stderr, "unexpected response.\n");
-    return false;
+    return (msg.header == header);
 }
 
 
-bool BaseDevice::writeAndWaitForReply(USBProtocolMsg &msg, unsigned tries)
+bool BaseDevice::writeAndWaitForReply(USBProtocolMsg &msg)
 {
     /*
      * Common helper.
@@ -240,5 +245,5 @@ bool BaseDevice::writeAndWaitForReply(USBProtocolMsg &msg, unsigned tries)
         return false;
     }
 
-    return waitForReply(headerToMatch, msg, tries);
+    return waitForReply(headerToMatch, msg);
 }

@@ -162,6 +162,13 @@ namespace Intrinsic {
         #endif
     }
 
+    // Fast 32-bit absolute value operation with no branching
+    static ALWAYS_INLINE int32_t abs(int32_t x) {
+        // http://graphics.stanford.edu/~seander/bithacks.html#IntegerAbs
+        int32_t mask = x >> 31;
+        return (x + mask) ^ mask;
+    }
+
 } // namespace Intrinsic
 
 

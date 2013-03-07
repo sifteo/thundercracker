@@ -7,6 +7,7 @@
 #define BOARD_H
 
 // available boards to choose from
+#define BOARD_NONE              0   // corresponds to _SYS_HW_VERSION_NONE (see abi/types.h)
 #define BOARD_TC_MASTER_REV1    1
 #define BOARD_TC_MASTER_REV2    2
 #define BOARD_TEST_JIG          3
