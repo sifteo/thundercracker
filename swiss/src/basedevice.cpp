@@ -1,5 +1,7 @@
 #include "basedevice.h"
 #include "usbprotocol.h"
+#include "savedata.h"
+#include "metadata.h"
 
 #include <stddef.h>
 
@@ -117,6 +119,36 @@ UsbVolumeManager::VolumeDetailReply *BaseDevice::getVolumeDetail(USBProtocolMsg 
     }
 
     return 0;
+}
+
+
+bool BaseDevice::volumeCodeForPackage(const std::string & pkg, unsigned &volBlockCode)
+{
+    /*
+     * Search the installed volumes for the given package string, and retrieve
+     * its current volume code if it exists.
+     */
+
+    if (pkg == SaveData::SYSLFS_PACKAGE_STR) {
+        volBlockCode = SaveData::SYSLFS_VOLUME_BLOCK_CODE;
+        return true;
+    }
+
+    Metadata metadata(dev);
+
+    USBProtocolMsg m;
+    UsbVolumeManager::VolumeOverviewReply *overview = getVolumeOverview(m);
+    if (!overview) {
+        return false;
+    }
+
+    while (overview->bits.clearFirst(volBlockCode)) {
+        if (pkg == metadata.getString(volBlockCode, _SYS_METADATA_PACKAGE_STR)) {
+            return true;
+        }
+    }
+
+    return false;
 }
 
 
