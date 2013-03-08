@@ -24,7 +24,7 @@ int FwLoader::run(int argc, char **argv, IODevice &_dev)
     
     for (unsigned i = 1; i < argc; i++) {
         if (!strcmp(argv[i], "--pid") && i+1 < argc) {
-            pid = strtoul(argv[i+1], NULL, 16);
+            pid = strtoul(argv[i+1], NULL, 0);
             i++;
         } else if (!strcmp(argv[i], "--init")) {
             init = true;
