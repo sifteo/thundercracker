@@ -14,7 +14,7 @@
 
 // default board
 #ifndef BOARD
-#define BOARD   BOARD_TEST_JIG
+#define BOARD   BOARD_TC_MASTER_REV2
 #endif
 
 #if BOARD == BOARD_TEST_JIG
