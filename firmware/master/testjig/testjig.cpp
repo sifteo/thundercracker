@@ -57,6 +57,7 @@ TestJig::TestHandler const TestJig::handlers[] = {
     beginNoiseCheckHandler,                 // 10
     stopNoiseCheckHandler,                  // 11
     setVBattEnabledHandler,                 // 12
+    getFirmwareVersion,                     // 13
 };
 
 void TestJig::init()
@@ -296,6 +297,27 @@ void TestJig::task()
 /*******************************************
  * T E S T  H A N D L E R S
  ******************************************/
+
+/*
+ *  no args
+ */
+void TestJig::getFirmwareVersion(uint8_t argc, uint8_t *args)
+{
+
+    const uint8_t *version = (uint8_t*)TOSTRING(SDK_VERSION);
+
+    uint8_t response[sizeof version + 1];
+
+    response[0] = args[0] ;
+
+    for(uint8_t i = 0; i < sizeof version; i++) {
+        response[i+1] = version[i];
+    }
+
+    UART((const char*)response);
+
+    UsbDevice::write(response, sizeof response);
+}
 
 /*
  * args[1] == non-zero for enable, 0 for disable
