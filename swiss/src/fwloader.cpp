@@ -20,9 +20,13 @@ int FwLoader::run(int argc, char **argv, IODevice &_dev)
     bool init = false;
     bool rpc = false;
     const char *path = NULL;
+    unsigned int pid = IODevice::BASE_PID;
     
     for (unsigned i = 1; i < argc; i++) {
-        if (!strcmp(argv[i], "--init")) {
+        if (!strcmp(argv[i], "--pid") && i+1 < argc) {
+            pid = strtoul(argv[i+1], NULL, 16);
+            i++;
+        } else if (!strcmp(argv[i], "--init")) {
             init = true;
         } else if (!strcmp(argv[i], "--rpc")) {
             rpc = true;
@@ -33,13 +37,13 @@ int FwLoader::run(int argc, char **argv, IODevice &_dev)
             return 1;
         }
     }
-    
+
     FwLoader loader(_dev, rpc);
 
     if (init) {
-        success = loader.requestBootloaderUpdate();
+        success = loader.requestBootloaderUpdate(pid);
     } else {
-        success = loader.load(path);
+        success = loader.load(path,pid);
     }
 
     return success ? 0 : 1;
@@ -50,9 +54,9 @@ FwLoader::FwLoader(IODevice &_dev, bool rpc) :
 {
 }
 
-bool FwLoader::requestBootloaderUpdate()
+bool FwLoader::requestBootloaderUpdate(unsigned int pid)
 {
-    if (!dev.open(IODevice::SIFTEO_VID, IODevice::BASE_PID)) {
+    if (!dev.open(IODevice::SIFTEO_VID, pid)) {
         fprintf(stderr, "Note: If the red LED is illuminated, `swiss update --init` is not required.\n");
         return false;
     }
@@ -63,9 +67,9 @@ bool FwLoader::requestBootloaderUpdate()
     return true;
 }
 
-bool FwLoader::load(const char *path)
+bool FwLoader::load(const char *path, unsigned int pid)
 {
-    if (!dev.open(IODevice::SIFTEO_VID, IODevice::BOOTLOADER_PID)) {
+    if (!dev.open(IODevice::SIFTEO_VID, pid)) {
         fprintf(stderr, "Note: Please ensure your device is in update mode, with the red LED illuminated\n");
         return false;
     }
