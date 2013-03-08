@@ -18,6 +18,9 @@
 #include "macros.h"
 #include "dac.h"
 #include "adc.h"
+#include "bootloader.h"
+
+extern unsigned     __data_start;
 
 static I2CSlave i2c(&I2C1);
 
@@ -58,6 +61,7 @@ TestJig::TestHandler const TestJig::handlers[] = {
     stopNoiseCheckHandler,                  // 11
     setVBattEnabledHandler,                 // 12
     getFirmwareVersion,                     // 13
+    bootloadRequestHandler,                 // 14
 };
 
 void TestJig::init()
@@ -297,6 +301,20 @@ void TestJig::task()
 /*******************************************
  * T E S T  H A N D L E R S
  ******************************************/
+
+/*
+ *  no args
+ */
+ void TestJig::bootloadRequestHandler(uint8_t argc, uint8_t *args)
+ {
+     UART("bootloadRequest!");
+
+ #ifdef BOOTLOADABLE
+     __data_start = Bootloader::UPDATE_REQUEST_KEY;
+     NVIC.deinit();
+     NVIC.systemReset();
+ #endif
+ }
 
 /*
  *  no args
