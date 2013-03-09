@@ -307,7 +307,10 @@ void TestJig::task()
  */
  void TestJig::bootloadRequestHandler(uint8_t argc, uint8_t *args)
  {
-     UART("bootloadRequest!");
+     const uint8_t response[] = { args[0] };
+     UsbDevice::write(response, sizeof response);
+
+     while(UsbDevice::write(response, sizeof response) == 0);
 
  #ifdef BOOTLOADABLE
      __data_start = Bootloader::UPDATE_REQUEST_KEY;
@@ -321,18 +324,10 @@ void TestJig::task()
  */
 void TestJig::getFirmwareVersion(uint8_t argc, uint8_t *args)
 {
-
-    const uint8_t *version = (uint8_t*)TOSTRING(SDK_VERSION);
-
-    uint8_t response[sizeof version + 1];
-
-    response[0] = args[0] ;
-
-    for(uint8_t i = 0; i < sizeof version; i++) {
-        response[i+1] = version[i];
-    }
-
-    UART((const char*)response);
+    const uint8_t MAX_SIZE = 32;
+    const uint8_t sz = MIN( MAX_SIZE, sizeof(TOSTRING(SDK_VERSION)));
+    uint8_t response[sz+1] = { args[0] };
+    memcpy(&response[1], TOSTRING(SDK_VERSION), sz);
 
     UsbDevice::write(response, sizeof response);
 }
