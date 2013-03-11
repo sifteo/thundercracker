@@ -20,11 +20,13 @@ int FwLoader::run(int argc, char **argv, IODevice &_dev)
     bool init = false;
     bool rpc = false;
     const char *path = NULL;
-    unsigned int pid = IODevice::BASE_PID;
+    unsigned int device_pid = IODevice::BASE_PID;
+    unsigned int bootloader_pid = IODevice::BOOTLOADER_PID;
     
     for (unsigned i = 1; i < argc; i++) {
         if (!strcmp(argv[i], "--pid") && i+1 < argc) {
-            pid = strtoul(argv[i+1], NULL, 0);
+            device_pid = strtoul(argv[i+1], NULL, 0);
+            bootloader_pid = device_pid;
             i++;
         } else if (!strcmp(argv[i], "--init")) {
             init = true;
@@ -41,9 +43,9 @@ int FwLoader::run(int argc, char **argv, IODevice &_dev)
     FwLoader loader(_dev, rpc);
 
     if (init) {
-        success = loader.requestBootloaderUpdate(pid);
+        success = loader.requestBootloaderUpdate(device_pid);
     } else {
-        success = loader.load(path,pid);
+        success = loader.load(path,bootloader_pid);
     }
 
     return success ? 0 : 1;
