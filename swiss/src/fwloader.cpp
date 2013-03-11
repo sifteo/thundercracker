@@ -9,6 +9,7 @@
 #include <stdio.h>
 #include <errno.h>
 #include <string.h>
+#include <stdlib.h>
 
 
 int FwLoader::run(int argc, char **argv, IODevice &_dev)
