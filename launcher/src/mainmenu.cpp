@@ -490,6 +490,7 @@ void MainMenu::updateConnecting()
             // If a game was waiting on a cube to launch, try again.
             if (cubeRangeSavedIcon && areEnoughCubesConnected(itemIndexCurrent)) {
                 itemIndexChoice = itemIndexCurrent;
+                toggleCubeRangeAlert(); // remove the warning asking for more cubes
             }
         }
 
