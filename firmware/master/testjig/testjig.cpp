@@ -307,11 +307,6 @@ void TestJig::task()
  */
  void TestJig::bootloadRequestHandler(uint8_t argc, uint8_t *args)
  {
-     const uint8_t response[] = { args[0] };
-     UsbDevice::write(response, sizeof response);
-
-     while(UsbDevice::write(response, sizeof response) == 0);
-
  #ifdef BOOTLOADABLE
      __data_start = Bootloader::UPDATE_REQUEST_KEY;
      NVIC.deinit();
