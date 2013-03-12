@@ -26,7 +26,7 @@
 #   include "powermanager.h"
 #   include "factorytest.h"
 #   if (BOARD == BOARD_TEST_JIG)
-#       include "../testjig/testjig.h"
+#       include "testjig.h"
 #   endif
 #endif
 
@@ -43,7 +43,7 @@ ALWAYS_INLINE void Tasks::taskInvoke(unsigned id)
         case Tasks::PowerManager:   return PowerManager::vbusDebounce();
         case Tasks::UsbOUT:         return UsbDevice::handleOUTData();
 
-        #if (BOARD == BOARD_TEST_JIG)
+        #if (BOARD == BOARD_TEST_JIG && !defined(BOOTLOADER))
         case Tasks::TestJig:        return TestJig::task();
         #endif
     #endif
