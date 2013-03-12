@@ -83,7 +83,7 @@ static const Command commands[] = {
     {
         "update",
         "update the firmware on your Sifteo Base",
-        "update (--init | <firmware.sft>)",
+        "update (--init | --pid <pid> | <firmware.sft>)",
         FwLoader::run
     },
 };

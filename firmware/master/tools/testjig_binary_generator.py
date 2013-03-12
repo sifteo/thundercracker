@@ -44,14 +44,15 @@ def run(secondary_path):
 
     # Set dem environment variables
     myenv = dict(os.environ)
+    myenv["BOOTLOADABLE"] = "1"
 
     # Compile!
     cores = "-j%d" % multiprocessing.cpu_count()
-    subprocess.call(["make", cores], env=myenv)
+    subprocess.call(["make","encrypted",cores], env=myenv)
 
     # Do a little renaming
-    filename = "testjig_%s.hex" % (githash)
-    shutil.copy("testjig.hex", os.path.join(destination, filename))
+    filename = "testjig_%s.sft" % (githash)
+    shutil.copy("testjig.sft", os.path.join(destination, filename))
     print "#### Moving %s to %s" % (filename, destination)
     os.symlink( destination, "latest" )
     print "#### Making symlink to %s" % ( "latest" )

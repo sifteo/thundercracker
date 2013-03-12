@@ -52,6 +52,8 @@ private:
     static void stopNeighborTxHandler(uint8_t argc, uint8_t *args);
     static void beginNoiseCheckHandler(uint8_t argc, uint8_t *args);
     static void stopNoiseCheckHandler(uint8_t argc, uint8_t *args);
+    static void getFirmwareVersion(uint8_t argc, uint8_t *args);
+    static void bootloadRequestHandler(uint8_t argc, uint8_t *args);
 
     struct AckPacket {
         RF_ACKType payload;
