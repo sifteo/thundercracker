@@ -4,6 +4,8 @@
 #include "iodevice.h"
 #include "usbvolumemanager.h"
 
+#include <string>
+
 /*
  * Represents the Sifteo Base.
  * Handles requests/responses from the base over the wire.
@@ -22,6 +24,7 @@ public:
 
     UsbVolumeManager::VolumeOverviewReply *getVolumeOverview(USBProtocolMsg &msg);
     UsbVolumeManager::VolumeDetailReply *getVolumeDetail(USBProtocolMsg &msg, unsigned volBlockCode);
+    bool volumeCodeForPackage(const std::string & pkg, unsigned &volBlockCode);
     UsbVolumeManager::LFSDetailReply *getLFSDetail(USBProtocolMsg &buffer, unsigned volBlockCode);
 
     bool pairCube(USBProtocolMsg &msg, uint64_t hwid, unsigned slot);

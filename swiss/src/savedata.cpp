@@ -81,14 +81,16 @@ bool SaveData::extract(const char *pkgStr, const char *filepath, bool raw, bool 
      * We don't do any parsing of the data at this point.
      */
 
+    BaseDevice base(dev);
+
     unsigned volume;
-    if (!volumeCodeForPackage(std::string(pkgStr), volume)) {
+    if (!base.volumeCodeForPackage(std::string(pkgStr), volume)) {
         fprintf(stderr, "can't extract data from %s: not installed\n", pkgStr);
         return false;
     }
 
     USBProtocolMsg buf;
-    BaseDevice base(dev);
+
     UsbVolumeManager::LFSDetailReply *reply = base.getLFSDetail(buf, volume);
     if (!reply) {
         return false;
@@ -162,8 +164,9 @@ bool SaveData::restore(const char *filepath)
         return false;
     }
 
+    BaseDevice base(dev);
     unsigned volBlockCode;
-    if (!volumeCodeForPackage(hdr.packageStr, volBlockCode)) {
+    if (!base.volumeCodeForPackage(hdr.packageStr, volBlockCode)) {
         fprintf(stderr, "can't restore: %s in not installed\n", hdr.packageStr.c_str());
         return false;
     }
@@ -316,38 +319,6 @@ bool SaveData::getValidFileVersion(FILE *f, int &version)
         fprintf(stderr, "unsupported savedata file version: 0x%x\n", minihdr.version);
         return false;
     }
-}
-
-
-bool SaveData::volumeCodeForPackage(const std::string & pkg, unsigned &volBlockCode)
-{
-    /*
-     * Search the installed volumes for the given package string, and retrieve
-     * its current volume code if it exists.
-     */
-
-    if (pkg == SYSLFS_PACKAGE_STR) {
-        volBlockCode = 0;
-        return true;
-    }
-
-    BaseDevice base(dev);
-    Metadata metadata(dev);
-
-    USBProtocolMsg m;
-
-    UsbVolumeManager::VolumeOverviewReply *overview = base.getVolumeOverview(m);
-    if (!overview) {
-        return false;
-    }
-
-    while (overview->bits.clearFirst(volBlockCode)) {
-        if (pkg == metadata.getString(volBlockCode, _SYS_METADATA_PACKAGE_STR)) {
-            return true;
-        }
-    }
-
-    return false;
 }
 
 

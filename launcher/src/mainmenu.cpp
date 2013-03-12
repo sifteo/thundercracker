@@ -104,7 +104,7 @@ void MainMenu::run()
     for (CubeID cube : CubeSet::connected())
         cubeConnect(cube);
 
-    // Find a default item, based on whatever volume was running last    
+    // Find a default item, based on whatever volume was running last
     if (Volume::previous() != Volume(0)) {
         for (unsigned i = 0, e = items.count(); i != e; ++i) {
             ASSERT(items[i] != NULL);
@@ -233,7 +233,7 @@ void MainMenu::handleEvent(MenuEvent &e)
             if (itemIndexCurrent >= 0) {
                 // Detect if the applet uses the default cube responder.
                 DefaultCubeResponder::resetCallCount();
-                
+
                 paint(itemIndexCurrent);
 
                 // If unused, reset the responder.
@@ -490,6 +490,7 @@ void MainMenu::updateConnecting()
             // If a game was waiting on a cube to launch, try again.
             if (cubeRangeSavedIcon && areEnoughCubesConnected(itemIndexCurrent)) {
                 itemIndexChoice = itemIndexCurrent;
+                toggleCubeRangeAlert(); // remove the warning asking for more cubes
             }
         }
 
@@ -505,7 +506,7 @@ void MainMenu::updateSound()
         return;
 
     Sifteo::TimeDelta dt = Sifteo::SystemTime::now() - time;
-    
+
     if (menu.getState() == MENU_STATE_TILTING) {
         unsigned threshold = abs(Shared::video[mainCube].virtualAccel().x) > kFastClickAccelThreshold ? kClickSpeedNormal : kClickSpeedFast;
         if (dt.milliseconds() >= threshold) {
@@ -568,10 +569,10 @@ void MainMenu::updateCubeRangeAlert()
         cubeRangeAlertIcon,
         buffer.c_str(),
         vec(item->getCubeRange().sys.minCubes < 10 ? 3 : 2, 3));
-    
+
     unsigned numCubes = CubeSet::connected().count();
     unsigned numIcons = 12;
-    
+
     if (item->getCubeRange().sys.maxCubes <= numIcons) {
         for (int i = 0; i < numIcons; ++i) {
             Int2 pos = vec((i % 4) * 2 + 2, (i / 4) * 2 + 6);
@@ -586,7 +587,7 @@ void MainMenu::updateCubeRangeAlert()
             }
         }
     }
-    
+
     menu.replaceIcon(itemIndexCurrent, cubeRangeAlertIcon);
 }
 
