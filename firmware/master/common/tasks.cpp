@@ -43,7 +43,7 @@ ALWAYS_INLINE void Tasks::taskInvoke(unsigned id)
         case Tasks::PowerManager:   return PowerManager::vbusDebounce();
         case Tasks::UsbOUT:         return UsbDevice::handleOUTData();
 
-        #if (BOARD == BOARD_TEST_JIG && !defined(BOOTLOADER))
+        #if (BOARD == BOARD_TEST_JIG)
         case Tasks::TestJig:        return TestJig::task();
         #endif
     #endif
