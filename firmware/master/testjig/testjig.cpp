@@ -320,8 +320,8 @@ void TestJig::task()
 void TestJig::getFirmwareVersion(uint8_t argc, uint8_t *args)
 {
     const uint8_t MAX_SIZE = 32;
-    const uint8_t sz = MIN( MAX_SIZE, sizeof(TOSTRING(SDK_VERSION)));
-    uint8_t response[sz+1] = { args[0] };
+    const uint8_t sz = MIN( MAX_SIZE, strlen(TOSTRING(SDK_VERSION)));
+    uint8_t response[MAX_SIZE] = { args[0] };
     memcpy(&response[1], TOSTRING(SDK_VERSION), sz);
 
     UsbDevice::write(response, sizeof response);
