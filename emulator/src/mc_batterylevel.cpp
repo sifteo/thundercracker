@@ -36,8 +36,10 @@ void heartbeat()
 
     if (++beatDivider == 10) {  // check every second (called @ 10Hz)
         beatDivider = 0;
+
         // trigger the warning flags if needed, for the base...
-        onCapture(_SYS_sysBatteryLevel(), BatteryLevel::BASE);
+        onCapture(scaled(), BatteryLevel::BASE);
+
         // ...and for the cubes:
         _SYSCubeIDVector connectedCubes = CubeSlots::userConnected;
         while (connectedCubes) {

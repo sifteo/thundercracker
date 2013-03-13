@@ -215,7 +215,7 @@ void process(unsigned capture)
          */
         if (PowerManager::state() == PowerManager::BatteryPwr) {
             PowerManager::shutdownIfVBattIsCritical(lastReading, lastVsysReading);
-            BatteryLevel::onCapture(_SYS_sysBatteryLevel(), BatteryLevel::BASE);
+            BatteryLevel::onCapture(scaled(), BatteryLevel::BASE);
         }
 
         currentState = VBattCapture;

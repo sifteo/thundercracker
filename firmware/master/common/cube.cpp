@@ -408,8 +408,9 @@ void CubeSlot::radioAcknowledge(const PacketBuffer &packet)
         // Packet has a valid battery voltage. Dispatch an event, if it's changed.
 
         if (lastACK.battery_v != ack->battery_v) {
-            Event::setCubePending(Event::PID_CUBE_BATTERY, id());
-            BatteryLevel::onCapture(_SYS_cubeBatteryLevel(id()), id());
+            const _SYSCubeID cid = id();
+            Event::setCubePending(Event::PID_CUBE_BATTERY, cid);
+            BatteryLevel::onCapture(BatteryLevel::scaled(cid), cid);
         }
     }
 
