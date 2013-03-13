@@ -17,9 +17,9 @@ namespace BatteryLevel
     void beginCapture();
     void captureIsr();
     void process(unsigned);
-    uint8_t getLowBatDevice();
-    bool needWarning();
-    void setWarningDone();
+    uint8_t getNextLowBatDevice();
+    bool aDeviceIsLow();
+    void setWarningCompleted();
     void onCapture(uint32_t batLevel, uint8_t cid);
     void setSelectedCube(uint8_t cid);
 
@@ -30,7 +30,7 @@ namespace BatteryLevel
 
     // In the following arrays, the last element refers to the master cube:
     static BitVector<_SYS_NUM_CUBE_SLOTS+1> lowBatDevices;
-    static BitVector<_SYS_NUM_CUBE_SLOTS+1> warningDone;
+    static BitVector<_SYS_NUM_CUBE_SLOTS+1> canWarn;
     static uint8_t selectedCube = NONE;
 
     /*

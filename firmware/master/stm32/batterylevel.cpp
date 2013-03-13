@@ -83,7 +83,7 @@ void init()
      *   - need to display a warning
      */
 
-    warningDone.clear();
+    canWarn.clear();
     lowBatDevices.clear();
 }
 

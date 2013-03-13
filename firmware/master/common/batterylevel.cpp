@@ -4,12 +4,13 @@
 
 namespace BatteryLevel {
 
-bool needWarning()
+bool aDeviceIsLow()
 {
-    return getLowBatDevice() != NONE; // was there a device with a low battery level ?
+	// was there a device with a low battery level ?
+    return getNextLowBatDevice() != NONE;
 }
 
-void setWarningDone()
+void setWarningCompleted()
 {
     selectedCube = NONE;
 }
@@ -21,7 +22,7 @@ void onCapture(uint32_t batLevel, uint8_t cid)
 
     // trigger a warning (once) if 90% discharged
     ASSERT(cid <= BASE);
-    if (!warningDone.test(cid) && batLevel <= _SYS_BATTERY_MAX/10) {
+    if (!canWarn.test(cid) && batLevel <= _SYS_BATTERY_MAX/10) {
         if (selectedCube == NONE) {
             setSelectedCube(cid);
             Pause::taskWork.atomicMark(Pause::LowBattery);
@@ -32,7 +33,7 @@ void onCapture(uint32_t batLevel, uint8_t cid)
     }
 }
 
-uint8_t getLowBatDevice()
+uint8_t getNextLowBatDevice()
 {
     if (selectedCube != NONE || Pause::busy) {
         return selectedCube;
@@ -55,7 +56,7 @@ void setSelectedCube(uint8_t cid)
 
     ASSERT(cid <= BASE);
     selectedCube = cid;
-    warningDone.atomicMark(cid);
+    canWarn.atomicMark(cid);
 }
 
 } // namespace BatteryLevel
