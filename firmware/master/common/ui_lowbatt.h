@@ -15,7 +15,7 @@ public:
 
     UILowBatt(UICoordinator &uic);
 
-    void init(uint8_t cid = BatteryLevel::BASE);
+    void init(uint8_t cid);
     bool quitWasSelected() const;
 
     ALWAYS_INLINE void animate() {
