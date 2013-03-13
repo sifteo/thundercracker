@@ -6,24 +6,26 @@
 namespace BatteryLevel {
 
 // In the following array, the last element refers to the master cube:
-static uint8_t percentage[_SYS_NUM_CUBE_SLOTS+1] = {0}; // will be 100% in init()
+static uint8_t percentage[_SYS_NUM_CUBE_SLOTS+1];
 
-
-void updatePercentage(int8_t delta, uint8_t cid)
+void updatePercentage(int8_t delta, _SYSCubeID cid)
 {
     ASSERT(cid <= BASE);
+
     percentage[cid] = clamp(percentage[cid] + delta, 0, 100);
 }
 
-uint8_t getPercentage(uint8_t cid)
+uint8_t getPercentage(_SYSCubeID cid)
 {
     ASSERT(cid <= BASE);
+
     return percentage[cid];
 }
 
-unsigned scaled(uint8_t cid) // base by default
+unsigned scaled(_SYSCubeID cid) // base by default
 {
     ASSERT(cid <= BASE);
+
     return percentage[cid] * _SYS_BATTERY_MAX / 100;
 }
 

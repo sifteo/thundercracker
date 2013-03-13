@@ -15,7 +15,7 @@ void setWarningCompleted()
     selectedCube = NONE;
 }
 
-void onCapture(uint32_t batLevel, uint8_t cid)
+void onCapture(uint32_t batLevel, _SYSCubeID cid)
 {
     if (Pause::busy)
         return;
@@ -33,7 +33,7 @@ void onCapture(uint32_t batLevel, uint8_t cid)
     }
 }
 
-uint8_t getNextLowBatDevice()
+_SYSCubeID getNextLowBatDevice()
 {
     if (selectedCube != NONE || Pause::busy) {
         return selectedCube;

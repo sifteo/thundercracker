@@ -7,31 +7,32 @@
 
 namespace BatteryLevel
 {
-    static const uint8_t BASE = _SYS_NUM_CUBE_SLOTS;
-    static const uint8_t NONE = _SYS_NUM_CUBE_SLOTS + 1;
+    static const _SYSCubeID BASE = _SYS_NUM_CUBE_SLOTS;
+    static const _SYSCubeID NONE = _SYS_NUM_CUBE_SLOTS + 1;
 
     void init();
     unsigned raw();
     unsigned vsys();
-    unsigned scaled(uint8_t cid = BASE); // master by default
+    unsigned scaled(_SYSCubeID cid = BASE); // master by default
     void beginCapture();
     void captureIsr();
     void process(unsigned);
-    uint8_t getNextLowBatDevice();
+    _SYSCubeID getNextLowBatDevice();
     bool aDeviceIsLow();
     void setWarningCompleted();
-    void onCapture(uint32_t batLevel, uint8_t cid);
+    void onCapture(uint32_t batLevel, _SYSCubeID cid);
     void setSelectedCube(uint8_t cid);
 
-    // simulated only:
+#ifdef SIFTEO_SIMULATOR
     void heartbeat();
-    void updatePercentage(int8_t delta, uint8_t cid);
-    uint8_t getPercentage(uint8_t cid);
+    void updatePercentage(int8_t delta, _SYSCubeID cid);
+    uint8_t getPercentage(_SYSCubeID cid);
+#endif
 
     // In the following arrays, the last element refers to the master cube:
     static BitVector<_SYS_NUM_CUBE_SLOTS+1> lowBatDevices;
     static BitVector<_SYS_NUM_CUBE_SLOTS+1> canWarn;
-    static uint8_t selectedCube = NONE;
+    static _SYSCubeID selectedCube = NONE;
 
     /*
      * Sentinel value to help determine whether a sample has successfully

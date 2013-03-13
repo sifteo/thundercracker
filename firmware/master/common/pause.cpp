@@ -171,7 +171,7 @@ void Pause::mainLoop(Mode mode)
             break;
 
         case ModeLowBattery:
-            uint8_t cid = BatteryLevel::getNextLowBatDevice();
+            _SYSCubeID cid = BatteryLevel::getNextLowBatDevice();
             if (modeChanged && cid != BatteryLevel::NONE) {
                 if (uic.isAttached() || uic.pollForAttach(cid)) {
                     uiLowBatt.init(cid);
