@@ -9,22 +9,22 @@ namespace BatteryLevel {
 static uint8_t percentage[_SYS_NUM_CUBE_SLOTS+1] = {0}; // will be 100% in init()
 
 
-void updatePercentage(int8_t delta, uint8_t cubeNum)
+void updatePercentage(int8_t delta, uint8_t cid)
 {
-    ASSERT(cubeNum <= BASE);
-    percentage[cubeNum] = clamp(percentage[cubeNum] + delta, 0, 100);
+    ASSERT(cid <= BASE);
+    percentage[cid] = clamp(percentage[cid] + delta, 0, 100);
 }
 
-uint8_t getPercentage(uint8_t cubeNum)
+uint8_t getPercentage(uint8_t cid)
 {
-    ASSERT(cubeNum <= BASE);
-    return percentage[cubeNum];
+    ASSERT(cid <= BASE);
+    return percentage[cid];
 }
 
-unsigned scaled(uint8_t cubeNum) // base by default
+unsigned scaled(uint8_t cid) // base by default
 {
-    ASSERT(cubeNum <= BASE);
-    return percentage[cubeNum] * _SYS_BATTERY_MAX / 100;
+    ASSERT(cid <= BASE);
+    return percentage[cid] * _SYS_BATTERY_MAX / 100;
 }
 
 void heartbeat()

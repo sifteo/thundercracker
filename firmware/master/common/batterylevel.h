@@ -13,20 +13,20 @@ namespace BatteryLevel
     void init();
     unsigned raw();
     unsigned vsys();
-    unsigned scaled(uint8_t cubeNum = BASE); // master by default
+    unsigned scaled(uint8_t cid = BASE); // master by default
     void beginCapture();
     void captureIsr();
     void process(unsigned);
     uint8_t getLowBatDevice();
     bool needWarning();
     void setWarningDone();
-    void onCapture(uint32_t batLevel, uint8_t cubeNum);
-    void setSelectedCube(uint8_t cubeNum);
+    void onCapture(uint32_t batLevel, uint8_t cid);
+    void setSelectedCube(uint8_t cid);
 
     // simulated only:
     void heartbeat();
-    void updatePercentage(int8_t delta, uint8_t cubeNum);
-    uint8_t getPercentage(uint8_t cubeNum);
+    void updatePercentage(int8_t delta, uint8_t cid);
+    uint8_t getPercentage(uint8_t cid);
 
     // In the following arrays, the last element refers to the master cube:
     static BitVector<_SYS_NUM_CUBE_SLOTS+1> lowBatDevices;
