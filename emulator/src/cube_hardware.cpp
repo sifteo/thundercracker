@@ -50,7 +50,7 @@ bool Hardware::init(VirtualTime *masterTimer, const char *firmwareFile,
     neighbors.init();
 
     setTouch(false);
-    setBattery(0x8760); // arbitrary default battery level for now
+    setBattery(42 * _SYS_BATTERY_MAX / 100); // 42 is THE answer
 
     return true;
 }
@@ -278,6 +278,11 @@ void Hardware::setTouch(bool touching)
 void Hardware::setBattery(uint16_t lvl)
 {
     i2c.accel.setADC1(lvl);
+}
+
+uint16_t Hardware::getBattery()
+{
+    return i2c.accel.getADC1();
 }
 
 bool Hardware::isDebugging()

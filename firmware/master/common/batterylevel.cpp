@@ -50,7 +50,7 @@ _SYSCubeID getNextLowBatDevice()
     return NONE;
 }
 
-void setSelectedCube(uint8_t cid)
+void setSelectedCube(_SYSCubeID cid)
 {
     ASSERT(cid <= BASE);
 

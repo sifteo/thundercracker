@@ -48,6 +48,9 @@ class Frontend {
     static void exit();
 
     static void postMessage(std::string msg);
+    static FrontendCube& getCube(_SYSCubeID cid) {
+        return instance->cubes[cid];
+    }
 
  private:
     /*
@@ -121,7 +124,7 @@ class Frontend {
 
     void toggleRotationLock();
     void postVolumeMessage();
-    void postBatteryMessage(uint8_t cid);
+    void postBatteryMessage(FrontendCube *mCube);
 
     System *sys;
     unsigned frameCount;

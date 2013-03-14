@@ -2,31 +2,33 @@
 #include "batterylevel.h"
 #include "macros.h"
 #include "cubeslots.h"
+#include "frontend.h"
 
 namespace BatteryLevel {
 
-// In the following array, the last element refers to the master cube:
-static uint8_t percentage[_SYS_NUM_CUBE_SLOTS+1];
+// Base battery level
+static uint8_t percentage = 42; // because it's THE answer
 
-void updatePercentage(int8_t delta, _SYSCubeID cid)
+void updatePercentage(int8_t delta)
 {
-    ASSERT(cid <= BASE);
-
-    percentage[cid] = clamp(percentage[cid] + delta, 0, 100);
+    percentage = clamp(percentage + delta, 0, 100);
 }
 
-uint8_t getPercentage(_SYSCubeID cid)
+uint8_t getPercentage()
 {
-    ASSERT(cid <= BASE);
-
-    return percentage[cid];
+    return percentage;
 }
 
 unsigned scaled(_SYSCubeID cid) // base by default
 {
     ASSERT(cid <= BASE);
 
-    return percentage[cid] * _SYS_BATTERY_MAX / 100;
+    if (cid == BASE) {
+        return percentage * _SYS_BATTERY_MAX / 100;
+    } else {
+        FrontendCube& cube = Frontend::getCube(cid);
+        return cube.getBattery();
+    }
 }
 
 void heartbeat()
@@ -43,9 +45,10 @@ void heartbeat()
         // ...and for the cubes:
         _SYSCubeIDVector connectedCubes = CubeSlots::userConnected;
         while (connectedCubes) {
-            uint8_t cid = Intrinsic::CLZ(connectedCubes); // get first connected cube number
-            connectedCubes ^= Intrinsic::LZ(cid);         // mark it as read
-            onCapture(_SYS_cubeBatteryLevel(cid), cid);
+            // get first connected cube number and mark it as read
+            _SYSCubeID cid = Intrinsic::CLZ(connectedCubes);
+            connectedCubes ^= Intrinsic::LZ(cid);
+            onCapture(scaled(cid), cid);
         }
     }
 }
@@ -54,10 +57,6 @@ void init()
 {
     canWarn.clear();
     lowBatDevices.clear();
-    // Initialize default values of simulated battery levels
-    for (int i = 0; i <= _SYS_NUM_CUBE_SLOTS; i++) {
-        percentage[i] = 100;
-    }
 }
 
 } // namespace BatteryLevel

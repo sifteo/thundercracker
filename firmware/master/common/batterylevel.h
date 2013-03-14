@@ -21,12 +21,12 @@ namespace BatteryLevel
     bool aDeviceIsLow();
     void setWarningCompleted();
     void onCapture(uint32_t batLevel, _SYSCubeID cid);
-    void setSelectedCube(uint8_t cid);
+    void setSelectedCube(_SYSCubeID cid);
 
 #ifdef SIFTEO_SIMULATOR
     void heartbeat();
-    void updatePercentage(int8_t delta, _SYSCubeID cid);
-    uint8_t getPercentage(_SYSCubeID cid);
+    void updatePercentage(int8_t delta);
+    uint8_t getPercentage();
 #endif
 
     // In the following arrays, the last element refers to the master cube:

@@ -103,6 +103,7 @@ class FrontendCube {
     void setHoverTarget(float h);
     void setRotationLock(bool isRotationFixed);
     void toggleFlip();
+    void updateBattery(int8_t deltaPercent);
 
     void setTouch(float amount) {
         hw->setTouch(amount);
@@ -110,6 +111,10 @@ class FrontendCube {
 
     void setBattery(uint16_t lvl) {
         hw->setBattery(lvl);
+    }
+
+    uint16_t getBattery() {
+        return hw->getBattery();
     }
 
     bool isHovering() {

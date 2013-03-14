@@ -458,22 +458,24 @@ void GLFWCALL Frontend::onKey(int key, int state)
             break;
 
         case 'D': { // turn Down the battery level
-            uint8_t cid = BatteryLevel::BASE;
-            if (instance->mousePicker.mCube) {
-                cid = instance->mousePicker.mCube->getId();
+            FrontendCube *mCube = instance->mousePicker.mCube;
+            if (mCube) {
+                mCube->updateBattery(-10);
+            } else {
+                BatteryLevel::updatePercentage(-10);
             }
-            BatteryLevel::updatePercentage(-10, cid);
-            instance->postBatteryMessage(cid);
+            instance->postBatteryMessage(mCube);
             break;
         }
 
         case 'U': { // turn Up the battery level
-            uint8_t cid = BatteryLevel::BASE;
-            if (instance->mousePicker.mCube) {
-                cid = instance->mousePicker.mCube->getId();
+            FrontendCube *mCube = instance->mousePicker.mCube;
+            if (mCube) {
+                mCube->updateBattery(+10);
+            } else {
+                BatteryLevel::updatePercentage(+10);
             }
-            BatteryLevel::updatePercentage(+10, cid);
-            instance->postBatteryMessage(cid);
+            instance->postBatteryMessage(mCube);
             break;
         }
 
@@ -525,15 +527,16 @@ void Frontend::postVolumeMessage()
     overlay.postMessage(s.str());
 }
 
-void Frontend::postBatteryMessage(uint8_t cid)
+void Frontend::postBatteryMessage(FrontendCube *mCube)
 {
     std::stringstream s;
-    if (cid == BatteryLevel::BASE) { // is it the master cube ?
-        s << "Base";
+    if (mCube) {
+        s << "Cube #" << mCube->getId() << " battery level: "
+          << mCube->getBattery() * 100 / _SYS_BATTERY_MAX << "%";
     } else {
-        s << "Cube #" << int(cid);
+        s << "Base" << " battery level: "
+          << int(BatteryLevel::getPercentage()) << "%";
     }
-    s << " battery level: " << int(BatteryLevel::getPercentage(cid)) << "%";
     overlay.postMessage(s.str());
 }
 

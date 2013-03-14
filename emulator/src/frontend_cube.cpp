@@ -245,3 +245,13 @@ void FrontendCube::setRotationLock(bool isRotationFixed)
         b->SetAngularVelocity(0.f);
     }
 }
+
+void FrontendCube::updateBattery(int8_t deltaPercent)
+{
+    // Add a signed percentage to the current battery level (and clamp it).
+    ASSERT(deltaPercent <= +100 && deltaPercent >= -100);
+
+    int delta = deltaPercent * _SYS_BATTERY_MAX / 100;
+    hw->setBattery(clamp(hw->getBattery() + delta, 0, _SYS_BATTERY_MAX-1));
+}
+
