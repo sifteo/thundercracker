@@ -19,7 +19,7 @@ public:
     };
 
     static BitVector<NUM_WORK_ITEMS> taskWork;
-    static bool busy;
+    static bool finished;
 
     enum Mode {
         ModePause,

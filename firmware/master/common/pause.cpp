@@ -16,7 +16,7 @@
 #include "batterylevel.h"
 
 BitVector<Pause::NUM_WORK_ITEMS> Pause::taskWork;
-bool Pause::busy = false;
+bool Pause::finished = true;
 
 
 void Pause::task()
@@ -25,10 +25,8 @@ void Pause::task()
      * The system is paused for
      */
 
-    BitVector<NUM_WORK_ITEMS> pending = taskWork;
-    unsigned index;
-
-    while (pending.clearFirst(index)) {
+     unsigned index;
+     while (taskWork.findFirst(index)) {
         taskWork.atomicClear(index);
         switch (index) {
 
@@ -138,7 +136,7 @@ void Pause::mainLoop(Mode mode)
 
     LED::set(LEDPatterns::paused, true);
 
-    bool finished = false;
+    finished = false;
     Mode lastMode = static_cast<Mode>(0xff);  // garbage value forces an init
 
     /*
@@ -155,19 +153,15 @@ void Pause::mainLoop(Mode mode)
         switch (mode) {
 
         case ModePause:
-            busy = true;
             if (modeChanged && uic.isAttached())
                 uiPause.init();
             finished = pauseModeHandler(uic, uiPause, mode);
-            busy = !finished;
             break;
 
         case ModeCubeRange:
-            busy = true;
             if (modeChanged && uic.isAttached())
                 uiCubeRange.init();
             finished = cubeRangeModeHandler(uic, uiCubeRange, mode);
-            busy = !finished;
             break;
 
         case ModeLowBattery:
@@ -242,7 +236,7 @@ bool Pause::cubeRangeModeHandler(UICoordinator &uic, UICubeRange &uicr, Mode &mo
          * Otherwise, transition to pause mode to give the user a chance
          * to gather their thoughts before resuming their game.
          */
-        if ( SvmLoader::getRunLevel() == SvmLoader::RUNLEVEL_LAUNCHER) {
+        if (SvmLoader::getRunLevel() == SvmLoader::RUNLEVEL_LAUNCHER) {
             cleanup(uic);
             return true;
         }
