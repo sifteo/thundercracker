@@ -107,6 +107,10 @@ class FrontendCube {
     void setTouch(float amount) {
         hw->setTouch(amount);
     }
+
+    void setBattery(uint16_t lvl) {
+        hw->setBattery(lvl);
+    }
     
     bool isHovering() {
         return hoverTarget > CubeConstants::HEIGHT;

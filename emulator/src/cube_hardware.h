@@ -129,6 +129,7 @@ class Hardware {
 
     void setAcceleration(float xG, float yG, float zG);
     void setTouch(bool touching);
+    void setBattery(uint16_t lvl);
 
     bool isDebugging();
     void initVCD(VCDWriter &vcd);

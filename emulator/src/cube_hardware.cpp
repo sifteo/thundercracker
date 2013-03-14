@@ -50,9 +50,7 @@ bool Hardware::init(VirtualTime *masterTimer, const char *firmwareFile,
     neighbors.init();
     
     setTouch(false);
-    
-    // XXX: Simulated battery level
-    i2c.accel.setADC1(0x8760);
+    setBattery(0x8760); // arbitrary default battery level for now
     
     return true;
 }
@@ -275,6 +273,11 @@ void Hardware::setTouch(bool touching)
         cpu.mSFR[MISC_PORT] |= MISC_TOUCH;
     else
         cpu.mSFR[MISC_PORT] &= ~MISC_TOUCH;
+}
+
+void Hardware::setBattery(uint16_t lvl)
+{
+    i2c.accel.setADC1(lvl);
 }
 
 bool Hardware::isDebugging()
