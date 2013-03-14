@@ -105,7 +105,7 @@ class Hardware {
          * Assume at compile-time that we're in SBT mode, and no debug features are active.
          * Also try to aggressively skip ticks when possible. The fastest code is code that never runs.
          * Returns the number of ticks that may be safely batched next time.
-         * 
+         *
          * Also note that we calculate our remaining clock cycles using 32-bit math, and we blindly
          * truncate the output of remaining(). This is intentional; normally remaining() will fit in
          * 32 bits, but even if it does cause overflow the worst case is that we'll end up skipping
@@ -114,10 +114,10 @@ class Hardware {
          *
          * Assumes the caller has already checked isSleeping().
          */
-        
+
         CPU::em8051_tick(&cpu, tickBatch, true, false, false, false, NULL);
         hardwareTick();
-                    
+
         return std::min(std::min(cpu.mTickDelay, (unsigned)cpu.prescaler12),
                         (unsigned)hwDeadline.remaining());
     }
@@ -139,7 +139,7 @@ class Hardware {
     int sfrRead(int reg);
     void debugByte();
     void graphicsTick();
-    
+
     ALWAYS_INLINE void setRadioClockEnable(bool e) {
         rfcken = e;
     }
@@ -159,7 +159,7 @@ class Hardware {
             cpu.mSFR[BUS_PORT] = flash.dataOut();
         return cpu.mSFR[BUS_PORT];
     }
-    
+
  private:
 
     ALWAYS_INLINE void hardwareTick()
@@ -195,7 +195,7 @@ class Hardware {
     uint8_t prev_ctrl_port;
     uint8_t flash_drv;
     uint8_t rfcken;
-    
+
     uint32_t exceptionCount;
 };
 

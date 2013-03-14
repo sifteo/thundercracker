@@ -30,7 +30,7 @@ void FrontendCube::init(unsigned _id, Cube::Hardware *_hw, b2World &world, float
     tiltVector.Set(0,0);
 
     setHoverTarget(CubeConstants::HOVER_NONE);
-    hover = hoverTarget;    
+    hover = hoverTarget;
 }
 
 void FrontendCube::exit()
@@ -50,7 +50,7 @@ void FrontendCube::initBody(b2World &world, float x, float y)
      * corner-drag to actually rotate the cubes effortlessly. This
      * means relatively high linear damping, and perhaps lower angular
      * damping.
-     */ 
+     */
 
     b2BodyDef bodyDef;
     bodyDef.type = b2_dynamicBody;
@@ -62,7 +62,7 @@ void FrontendCube::initBody(b2World &world, float x, float y)
     b2PolygonShape box;
     const float boxSize = CubeConstants::SIZE * 0.96;   // Compensate for polygon 'skin'
     box.SetAsBox(boxSize, boxSize);
-    
+
     bodyFixtureData.type = FixtureData::T_CUBE;
     bodyFixtureData.ptr.cube = this;
 
@@ -114,11 +114,11 @@ bool FrontendCube::draw(GLRenderer &r)
      * Returns true if and only if the display has changed. Always draws the
      * cube.
      */
-     
+
     uint32_t cookie = hw->lcd.isVisible() ? (hw->lcd.getPixelCount() & 0x7FFFFFFF) : ((uint32_t)-1);
     bool framebufferChanged = cookie != lastLcdCookie;
     lastLcdCookie = cookie;
-    
+
     static const uint16_t blackness[128 * 128] = { 0 };
     const uint16_t *framebuffer = hw->lcd.isVisible() ? hw->lcd.fb_mem : blackness;
 
@@ -149,8 +149,8 @@ void FrontendCube::setHoverTarget(float h)
      * it won't collide with them. This goes for all fixtures- the
      * cube body, plus the neighbor sensors.
      */
-     
-    b2Filter filter;    
+
+    b2Filter filter;
     filter.categoryBits = 1 << isHovering();
     filter.maskBits = filter.categoryBits;
 
@@ -183,7 +183,7 @@ void FrontendCube::animate()
     /* Animated hover */
     const float hoverGain = 0.5f;
     hover += hoverGain * (hoverTarget - hover);
-    
+
     /*
      * Make a 3-dimensional acceleration vector which also accounts
      * for gravity. We're now measuring it in G's, so we apply an

@@ -103,7 +103,7 @@ class FrontendCube {
     void setHoverTarget(float h);
     void setRotationLock(bool isRotationFixed);
     void toggleFlip();
-    
+
     void setTouch(float amount) {
         hw->setTouch(amount);
     }
@@ -111,7 +111,7 @@ class FrontendCube {
     void setBattery(uint16_t lvl) {
         hw->setBattery(lvl);
     }
-    
+
     bool isHovering() {
         return hoverTarget > CubeConstants::HEIGHT;
     }
@@ -119,11 +119,11 @@ class FrontendCube {
     bool isFlipped() const {
         return flipped;
     }
-    
+
     unsigned getId() const {
         return id;
     }
-    
+
     bool isInitialized() const {
         return body != 0;
     }
@@ -153,7 +153,7 @@ public:
 
     unsigned id;
     Cube::Hardware *hw;
-    
+
     uint32_t lastLcdCookie;
 };
 

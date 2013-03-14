@@ -23,11 +23,11 @@ bool Hardware::init(VirtualTime *masterTimer, const char *firmwareFile,
     bus = 0;
     prev_ctrl_port = 0;
     exceptionCount = 0;
-    
+
     memset(&cpu, 0, sizeof cpu);
     cpu.callbackData = this;
     cpu.vtime = masterTimer;
-    
+
     CPU::em8051_reset(&cpu, true);
 
     if (firmwareFile) {
@@ -48,10 +48,10 @@ bool Hardware::init(VirtualTime *masterTimer, const char *firmwareFile,
     lcd.init();
     rng.init();
     neighbors.init();
-    
+
     setTouch(false);
     setBattery(0x8760); // arbitrary default battery level for now
-    
+
     return true;
 }
 
@@ -86,7 +86,7 @@ void CPU::except(CPU::em8051 *cpu, int exc)
 {
     Hardware *self = (Hardware*) cpu->callbackData;
     const char *name = CPU::em8051_exc_name(exc);
-    
+
     self->incExceptionCount();
 
     Tracer::log(cpu, "@%04x EXCEPTION: %s", cpu->mPC, name);
@@ -111,7 +111,7 @@ int CPU::NVM::write(CPU::em8051 *cpu, uint16_t addr, uint8_t data)
     // Program flash bits (1 -> 0)
     ASSERT(addr < sizeof self->flash.getStorage()->nvm);
     self->flash.getStorage()->nvm[addr] &= data;
-    
+
     // Self-timed write cycles
     return 12800;
 }
@@ -146,7 +146,7 @@ void Hardware::graphicsTick()
      * Update the graphics (LCD and Flash) bus. Only happens in
      * response to relevant I/O port changes, not on every clock tick.
      */
-    
+
     // Port output values, pull-up when floating
     uint8_t bus_port = cpu.mSFR[BUS_PORT] | cpu.mSFR[BUS_PORT_DIR];
     uint8_t addr_port = cpu.mSFR[ADDR_PORT] | cpu.mSFR[ADDR_PORT_DIR];
@@ -199,7 +199,7 @@ void Hardware::graphicsTick()
      * shared bus.  We update the bus once now, but flash memory may
      * additionally update more often (every tick).
      */
-    
+
     switch ((mcu_data_drv << 1) | flashp.data_drv) {
     case 0:     /* Floating... */ break;
     case 1:     bus = flash.dataOut(); break;
@@ -208,8 +208,8 @@ void Hardware::graphicsTick()
         /* Bus contention! */
         CPU::except(&cpu, CPU::EXCEPTION_BUS_CONTENTION);
     }
-    
-    flash_drv = flashp.data_drv;  
+
+    flash_drv = flashp.data_drv;
     cpu.mSFR[BUS_PORT] = bus;
 }
 
@@ -248,13 +248,13 @@ int16_t Hardware::scaleAccelAxis(float g)
 
     if (scaled != truncated)
         truncated = scaled > 0 ? range - 1 : -range;
-        
+
     return truncated;
 }
 
 
 
-NEVER_INLINE void Hardware::hwDeadlineWork() 
+NEVER_INLINE void Hardware::hwDeadlineWork()
 {
     cpu.needHardwareTick = false;
     hwDeadline.reset();
@@ -420,15 +420,15 @@ void Hardware::initVCD(VCDWriter &vcd)
      * is enabled) and the results are written to an industry
      * standard VCD file.
      */
-     
+
     vcd.enterScope("gpio"); {
-    
+
         // Parallel busses
-        vcd.define("addr", &cpu.mSFR[ADDR_PORT], 8); 
-        vcd.define("addr_dir", &cpu.mSFR[ADDR_PORT_DIR], 8); 
-        vcd.define("bus", &cpu.mSFR[BUS_PORT], 8); 
-        vcd.define("bus_dir", &cpu.mSFR[BUS_PORT_DIR], 8); 
-    
+        vcd.define("addr", &cpu.mSFR[ADDR_PORT], 8);
+        vcd.define("addr_dir", &cpu.mSFR[ADDR_PORT_DIR], 8);
+        vcd.define("bus", &cpu.mSFR[BUS_PORT], 8);
+        vcd.define("bus_dir", &cpu.mSFR[BUS_PORT_DIR], 8);
+
         // Ctrl port, broken out
         vcd.define("lcd_dcx", &cpu.mSFR[CTRL_PORT], 1, 0);
         vcd.define("flash_lat1", &cpu.mSFR[CTRL_PORT], 1, 1);
@@ -437,7 +437,7 @@ void Hardware::initVCD(VCDWriter &vcd)
         vcd.define("ds_en", &cpu.mSFR[CTRL_PORT], 1, 4);
         vcd.define("flash_we", &cpu.mSFR[CTRL_PORT], 1, 5);
         vcd.define("flash_oe", &cpu.mSFR[CTRL_PORT], 1, 6);
-        vcd.define("ctrl_dir", &cpu.mSFR[CTRL_PORT_DIR], 8); 
+        vcd.define("ctrl_dir", &cpu.mSFR[CTRL_PORT_DIR], 8);
 
         // Misc port, broken out
         vcd.define("nb_top", &cpu.mSFR[MISC_PORT], 1, Neighbors::PIN_0_TOP_IDX);
@@ -448,7 +448,7 @@ void Hardware::initVCD(VCDWriter &vcd)
         vcd.define("nb_bottom_dir", &cpu.mSFR[MISC_PORT_DIR], 1, Neighbors::PIN_2_BOTTOM_IDX);
         vcd.define("nb_right", &cpu.mSFR[MISC_PORT], 1, Neighbors::PIN_3_RIGHT_IDX);
         vcd.define("nb_right_dir", &cpu.mSFR[MISC_PORT_DIR], 1, Neighbors::PIN_3_RIGHT_IDX);
-        
+
         /*
          * Neighbor IN is sampled from t012 instead of MISC_PORT,
          * since the corresponding bit in MISC_PORT is cleared by
@@ -458,28 +458,28 @@ void Hardware::initVCD(VCDWriter &vcd)
         vcd.define("nb_in_dir", &cpu.mSFR[MISC_PORT_DIR], 1, 6);
 
     } vcd.leaveScope();
-    
+
     vcd.enterScope("cpu"); {
         // Internal state
         vcd.define("irq_count", &cpu.irq_count, 3);
         vcd.define("PC", &cpu.mPC, 16);
 
         // Important registers
-        vcd.define("TL0", &cpu.mSFR[REG_TL0], 8); 
-        vcd.define("TH0", &cpu.mSFR[REG_TH0], 8); 
-        vcd.define("TL1", &cpu.mSFR[REG_TL1], 8); 
-        vcd.define("TH1", &cpu.mSFR[REG_TH1], 8); 
-        vcd.define("TL2", &cpu.mSFR[REG_TL2], 8); 
-        vcd.define("TH2", &cpu.mSFR[REG_TH2], 8); 
-        vcd.define("TCON", &cpu.mSFR[REG_TCON], 8); 
-        vcd.define("IRCON", &cpu.mSFR[REG_IRCON], 8); 
-        vcd.define("SP", &cpu.mSFR[REG_SP], 8); 
-        vcd.define("DEBUG", &cpu.mSFR[REG_DEBUG], 8); 
+        vcd.define("TL0", &cpu.mSFR[REG_TL0], 8);
+        vcd.define("TH0", &cpu.mSFR[REG_TH0], 8);
+        vcd.define("TL1", &cpu.mSFR[REG_TL1], 8);
+        vcd.define("TH1", &cpu.mSFR[REG_TH1], 8);
+        vcd.define("TL2", &cpu.mSFR[REG_TL2], 8);
+        vcd.define("TH2", &cpu.mSFR[REG_TH2], 8);
+        vcd.define("TCON", &cpu.mSFR[REG_TCON], 8);
+        vcd.define("IRCON", &cpu.mSFR[REG_IRCON], 8);
+        vcd.define("SP", &cpu.mSFR[REG_SP], 8);
+        vcd.define("DEBUG", &cpu.mSFR[REG_DEBUG], 8);
     } vcd.leaveScope();
-    
+
     vcd.enterScope("radio"); {
         spi.radio.initVCD(vcd);
-    } vcd.leaveScope();        
+    } vcd.leaveScope();
 }
 
 

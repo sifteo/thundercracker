@@ -55,12 +55,12 @@ class I2CAccelerometer {
         // Test against high/low interrupt thresholds, create a 6-bit source mask
         int16_t ths = int(regs.int1_ths) << 8;
         uint8_t src = 0;
-        if (x < -ths) src |= 0x01; 
-        if (x >  ths) src |= 0x02; 
-        if (y < -ths) src |= 0x04; 
-        if (y >  ths) src |= 0x08; 
-        if (z < -ths) src |= 0x10; 
-        if (z >  ths) src |= 0x20; 
+        if (x < -ths) src |= 0x01;
+        if (x >  ths) src |= 0x02;
+        if (y < -ths) src |= 0x04;
+        if (y >  ths) src |= 0x08;
+        if (z < -ths) src |= 0x10;
+        if (z >  ths) src |= 0x20;
 
         // Test the bit mask against INT1_CFG, to check our interrupt state.
         uint8_t cfg = regs.int1_cfg;
@@ -101,7 +101,7 @@ class I2CAccelerometer {
     void i2cStart() {
         state = S_I2C_ADDRESS;
     }
-    
+
     void i2cStop() {
         state = S_IDLE;
     }
@@ -123,7 +123,7 @@ class I2CAccelerometer {
                 state = S_IDLE;
             }
             break;
-            
+
         case S_REG_ADDRESS:
             // XXX: MSB enables/disables auto-increment.
             regAddress = byte & 0x7F;
@@ -154,9 +154,9 @@ class I2CAccelerometer {
 
         default:
             break;
-            
+
         }
-        
+
         return result;
     }
 
@@ -166,7 +166,7 @@ class I2CAccelerometer {
         ASSERT(index == 1);
         uint8_t reg6 = regs.ctrl_reg[5];
         bool source = ((reg6 & regs.int1_src) >> 6) & 1;
-        
+
         // Both interrupts share the same active-high/active-low control pin
         return source ^ ((reg6 >> 1) & 1);
     }
