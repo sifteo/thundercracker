@@ -39,17 +39,8 @@ void heartbeat()
     if (++beatDivider == 10) {  // check every second (called @ 10Hz)
         beatDivider = 0;
 
-        // trigger the warning flags if needed, for the base...
+        // trigger the warning flags if needed (for the base)
         BatteryMonitor::onCapture(scaled(), BatteryMonitor::BASE);
-
-        // ...and for the cubes:
-        _SYSCubeIDVector connectedCubes = CubeSlots::userConnected;
-        while (connectedCubes) {
-            // get first connected cube number and mark it as read
-            _SYSCubeID cid = Intrinsic::CLZ(connectedCubes);
-            connectedCubes ^= Intrinsic::LZ(cid);
-            BatteryMonitor::onCapture(scaled(cid), cid);
-        }
     }
 }
 
