@@ -3,7 +3,6 @@
 
 #include <sifteo/abi.h>
 #include <stdint.h>
-#include "bits.h"
 #include "batterymonitor.h"
 
 namespace BatteryLevel
@@ -11,7 +10,7 @@ namespace BatteryLevel
     void init();
     unsigned raw();
     unsigned vsys();
-    unsigned scaled(_SYSCubeID cid = BatteryMonitor::BASE);
+    unsigned scaled(_SYSDeviceID id = BatteryMonitor::BASE);
     void beginCapture();
     void captureIsr();
     void process(unsigned);

@@ -16,21 +16,21 @@ void init()
     lowBatDevices.clear();
 }
 
-void onCapture(uint32_t batLevel, _SYSCubeID cid)
+void onCapture(uint32_t batLevel, _SYSDeviceID id)
 {
-    ASSERT(cid <= BASE);
+    ASSERT(id <= BASE);
 
     if (!Pause::finished)
         return;
 
     // trigger a warning (once) if 90% discharged
-    if (canWarn.test(cid) && batLevel <= _SYS_BATTERY_MAX/10) {
-        if (selectedCube == NONE) {
-            setSelectedCube(cid);
+    if (canWarn.test(id) && batLevel <= _SYS_BATTERY_MAX/10) {
+        if (selectedDevice == NONE) {
+            setSelectedDevice(id);
             Pause::taskWork.atomicMark(Pause::LowBattery);
             Tasks::trigger(Tasks::Pause);
         } else {
-            lowBatDevices.atomicMark(cid);
+            lowBatDevices.atomicMark(id);
         }
     }
 }
@@ -41,33 +41,33 @@ bool aDeviceIsLow()
     return getNextLowBatDevice() != NONE;
 }
 
-_SYSCubeID getNextLowBatDevice()
+_SYSDeviceID getNextLowBatDevice()
 {
-    if (selectedCube != NONE) {
-        return selectedCube;
+    if (selectedDevice != NONE) {
+        return selectedDevice;
     }
 
     unsigned index;
     if (lowBatDevices.findFirst(index)) {
-        setSelectedCube(index);
+        setSelectedDevice(index);
         lowBatDevices.atomicClear(index);
-        return uint8_t(selectedCube);
+        return uint8_t(selectedDevice);
     }
 
     return NONE;
 }
 
-void setSelectedCube(_SYSCubeID cid)
+void setSelectedDevice(_SYSDeviceID id)
 {
-    ASSERT(cid <= BASE);
+    ASSERT(id <= BASE);
 
-    selectedCube = cid;
-    canWarn.atomicClear(cid);
+    selectedDevice = id;
+    canWarn.atomicClear(id);
 }
 
 void setWarningCompleted()
 {
-    selectedCube = NONE;
+    selectedDevice = NONE;
 }
 
 } // namespace BatteryLevel

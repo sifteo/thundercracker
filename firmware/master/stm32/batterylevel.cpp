@@ -90,7 +90,7 @@ unsigned vsys()
     return lastVsysReading;
 }
 
-unsigned scaled(_SYSCubeID unused)
+unsigned scaled(_SYSDeviceID unused)
 {
     /*
      * We assume a linear profile

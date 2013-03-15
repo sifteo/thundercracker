@@ -51,6 +51,7 @@ extern "C" {
 
 typedef uint8_t _SYSCubeID;             // Cube slot index
 typedef uint8_t _SYSNeighborID;         // Neighbored object ID (superset of _SYSCubeID)
+typedef uint8_t _SYSDeviceID;           // ID of a cube or the base (superset of _SYSCubeID)
 typedef int8_t _SYSSideID;              // Cube side index
 typedef uint32_t _SYSCubeIDVector;      // One bit for each cube slot, MSB-first
 typedef uint8_t _SYSAssetSlot;          // Ordinal for one of the game's asset slots
@@ -189,7 +190,7 @@ struct _SYSPseudoRandomState {
 #define _SYS_FS_MAX_OBJECT_SIZE     4080
 
 // Opaque nonzero ID for a filesystem volume
-typedef uint32_t _SYSVolumeHandle;      
+typedef uint32_t _SYSVolumeHandle;
 
 // Application-defined ID for a key in our key/value object store
 typedef uint8_t _SYSObjectKey;

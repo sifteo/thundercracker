@@ -165,11 +165,11 @@ void Pause::mainLoop(Mode mode)
             break;
 
         case ModeLowBattery:
-            _SYSCubeID cid = BatteryMonitor::getNextLowBatDevice();
-            if (modeChanged && cid != BatteryMonitor::NONE) {
-                if (uic.isAttached() || uic.pollForAttach(cid)) {
-                    uiLowBatt.init(cid);
-                    BatteryMonitor::setSelectedCube(cid);
+            _SYSDeviceID id = BatteryMonitor::getNextLowBatDevice();
+            if (modeChanged && id != BatteryMonitor::NONE) {
+                if (uic.isAttached() || uic.pollForAttach(id)) {
+                    uiLowBatt.init(id);
+                    BatteryMonitor::setSelectedDevice(id);
                 }
             }
             finished = lowBatteryModeHandler(uic, uiLowBatt, mode);

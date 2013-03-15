@@ -15,7 +15,7 @@ public:
 
     UILowBatt(UICoordinator &uic);
 
-    void init(uint8_t cid);
+    void init(_SYSDeviceID id);
     bool quitWasSelected() const;
 
     ALWAYS_INLINE void animate() {

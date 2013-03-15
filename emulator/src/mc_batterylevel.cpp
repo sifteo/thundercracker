@@ -19,14 +19,14 @@ uint8_t getPercentage()
     return percentage;
 }
 
-unsigned scaled(_SYSCubeID cid) // base by default
+unsigned scaled(_SYSDeviceID id) // base by default
 {
-    ASSERT(cid <= BatteryMonitor::BASE);
+    ASSERT(id <= BatteryMonitor::BASE);
 
-    if (cid == BatteryMonitor::BASE) {
+    if (id == BatteryMonitor::BASE) {
         return percentage * _SYS_BATTERY_MAX / 100;
     } else {
-        FrontendCube& cube = Frontend::getCube(cid);
+        FrontendCube& cube = Frontend::getCube(id);
         return cube.getBattery();
     }
 }
