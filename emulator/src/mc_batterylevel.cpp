@@ -55,7 +55,13 @@ void heartbeat()
 
 void init()
 {
-    canWarn.clear();
+    /*
+     * These bit vectors tell which devices:
+     *   - can display a warning
+     *   - need to display a warning
+     */
+
+    canWarn.mark();
     lowBatDevices.clear();
 }
 

@@ -79,11 +79,11 @@ void init()
 
     /*
      * These bit vectors tell which devices:
-     *   - already displayed a warning
+     *   - can display a warning
      *   - need to display a warning
      */
 
-    canWarn.clear();
+    canWarn.mark();
     lowBatDevices.clear();
 }
 

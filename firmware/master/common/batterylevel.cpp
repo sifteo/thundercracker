@@ -23,7 +23,7 @@ void onCapture(uint32_t batLevel, _SYSCubeID cid)
         return;
 
     // trigger a warning (once) if 90% discharged
-    if (!canWarn.test(cid) && batLevel <= _SYS_BATTERY_MAX/10) {
+    if (canWarn.test(cid) && batLevel <= _SYS_BATTERY_MAX/10) {
         if (selectedCube == NONE) {
             setSelectedCube(cid);
             Pause::taskWork.atomicMark(Pause::LowBattery);
@@ -55,7 +55,7 @@ void setSelectedCube(_SYSCubeID cid)
     ASSERT(cid <= BASE);
 
     selectedCube = cid;
-    canWarn.atomicMark(cid);
+    canWarn.atomicClear(cid);
 }
 
 } // namespace BatteryLevel
