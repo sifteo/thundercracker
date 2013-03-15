@@ -10,8 +10,8 @@ public:
     FwLoader(IODevice &_dev, bool rpc=false);
 
     static int run(int argc, char **argv, IODevice &dev);
-    bool requestBootloaderUpdate();
-    bool load(const char* path);
+    bool requestBootloaderUpdate(unsigned int pid);
+    bool load(const char* path, unsigned int pid);
 
 private:
 
