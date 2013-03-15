@@ -77,14 +77,7 @@ void init()
     timer.configureChannelAsInput(BATT_LVL_CHAN, HwTimer::FallingEdge);
     timer.enableChannel(BATT_LVL_CHAN);
 
-    /*
-     * These bit vectors tell which devices:
-     *   - can display a warning
-     *   - need to display a warning
-     */
-
-    canWarn.mark();
-    lowBatDevices.clear();
+    BatteryMonitor::init();
 }
 
 unsigned raw()
@@ -215,7 +208,6 @@ void process(unsigned capture)
          */
         if (PowerManager::state() == PowerManager::BatteryPwr) {
             PowerManager::shutdownIfVBattIsCritical(lastReading, lastVsysReading);
-            BatteryLevel::onCapture(scaled(), BatteryLevel::BASE);
         }
 
         currentState = VBattCapture;

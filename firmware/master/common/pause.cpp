@@ -165,11 +165,11 @@ void Pause::mainLoop(Mode mode)
             break;
 
         case ModeLowBattery:
-            _SYSCubeID cid = BatteryLevel::getNextLowBatDevice();
-            if (modeChanged && cid != BatteryLevel::NONE) {
+            _SYSCubeID cid = BatteryMonitor::getNextLowBatDevice();
+            if (modeChanged && cid != BatteryMonitor::NONE) {
                 if (uic.isAttached() || uic.pollForAttach(cid)) {
                     uiLowBatt.init(cid);
-                    BatteryLevel::setSelectedCube(cid);
+                    BatteryMonitor::setSelectedCube(cid);
                 }
             }
             finished = lowBatteryModeHandler(uic, uiLowBatt, mode);
@@ -224,7 +224,7 @@ bool Pause::cubeRangeModeHandler(UICoordinator &uic, UICubeRange &uicr, Mode &mo
 
     if (!CubeSlots::belowCubeRange()) {
 
-        if (BatteryLevel::aDeviceIsLow()) {
+        if (BatteryMonitor::aDeviceIsLow()) {
             mode = ModeLowBattery;
             return false;
         }
@@ -255,7 +255,7 @@ bool Pause::lowBatteryModeHandler(UICoordinator &uic, UILowBatt &uilb, Mode &mod
     // has menu finished ?
     if (uilb.isDone()) {
 
-        BatteryLevel::setWarningCompleted();
+        BatteryMonitor::setWarningCompleted();
         cleanup(uic);
 
         if (uilb.quitWasSelected()) {
@@ -272,7 +272,7 @@ bool Pause::lowBatteryModeHandler(UICoordinator &uic, UILowBatt &uilb, Mode &mod
 
     // Pause if required, except if in launcher.
     if (HomeButton::isPressed()) {
-        BatteryLevel::setWarningCompleted();
+        BatteryMonitor::setWarningCompleted();
         if (SvmLoader::getRunLevel() == SvmLoader::RUNLEVEL_LAUNCHER) {
             cleanup(uic);
             return true;

@@ -1,18 +1,19 @@
-#include "batterylevel.h"
+#include "batterymonitor.h"
 #include "pause.h"
 #include "tasks.h"
 
-namespace BatteryLevel {
+namespace BatteryMonitor {
 
-bool aDeviceIsLow()
+void init()
 {
-	// was there a device with a low battery level ?
-    return getNextLowBatDevice() != NONE;
-}
+    /*
+     * These bit vectors tell which devices:
+     *   - can display a warning
+     *   - need to display a warning
+     */
 
-void setWarningCompleted()
-{
-    selectedCube = NONE;
+    canWarn.mark();
+    lowBatDevices.clear();
 }
 
 void onCapture(uint32_t batLevel, _SYSCubeID cid)
@@ -32,6 +33,12 @@ void onCapture(uint32_t batLevel, _SYSCubeID cid)
             lowBatDevices.atomicMark(cid);
         }
     }
+}
+
+bool aDeviceIsLow()
+{
+	// was there a device with a low battery level ?
+    return getNextLowBatDevice() != NONE;
 }
 
 _SYSCubeID getNextLowBatDevice()
@@ -56,6 +63,11 @@ void setSelectedCube(_SYSCubeID cid)
 
     selectedCube = cid;
     canWarn.atomicClear(cid);
+}
+
+void setWarningCompleted()
+{
+    selectedCube = NONE;
 }
 
 } // namespace BatteryLevel

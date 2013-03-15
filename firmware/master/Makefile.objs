@@ -23,7 +23,7 @@ OBJS_COMMON = \
     $(MASTER_DIR)/common/assetloader.o \
     $(MASTER_DIR)/common/assetloader_fsm.o \
     $(MASTER_DIR)/common/assetutil.o \
-    $(MASTER_DIR)/common/batterylevel.o \
+    $(MASTER_DIR)/common/batterymonitor.o \
     $(MASTER_DIR)/common/cubeslots.o \
     $(MASTER_DIR)/common/cube.o \
     $(MASTER_DIR)/common/cubeconnector.o \

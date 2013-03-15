@@ -75,7 +75,7 @@ bool Frontend::init(System *_sys)
 
     overlay.init(&renderer, sys);
 
-    BatteryLevel::init();
+    BatteryMonitor::init();
 
     return true;
 }

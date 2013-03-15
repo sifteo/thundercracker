@@ -21,9 +21,9 @@ uint8_t getPercentage()
 
 unsigned scaled(_SYSCubeID cid) // base by default
 {
-    ASSERT(cid <= BASE);
+    ASSERT(cid <= BatteryMonitor::BASE);
 
-    if (cid == BASE) {
+    if (cid == BatteryMonitor::BASE) {
         return percentage * _SYS_BATTERY_MAX / 100;
     } else {
         FrontendCube& cube = Frontend::getCube(cid);
@@ -40,7 +40,7 @@ void heartbeat()
         beatDivider = 0;
 
         // trigger the warning flags if needed, for the base...
-        onCapture(scaled(), BatteryLevel::BASE);
+        BatteryMonitor::onCapture(scaled(), BatteryMonitor::BASE);
 
         // ...and for the cubes:
         _SYSCubeIDVector connectedCubes = CubeSlots::userConnected;
@@ -48,21 +48,9 @@ void heartbeat()
             // get first connected cube number and mark it as read
             _SYSCubeID cid = Intrinsic::CLZ(connectedCubes);
             connectedCubes ^= Intrinsic::LZ(cid);
-            onCapture(scaled(cid), cid);
+            BatteryMonitor::onCapture(scaled(cid), cid);
         }
     }
-}
-
-void init()
-{
-    /*
-     * These bit vectors tell which devices:
-     *   - can display a warning
-     *   - need to display a warning
-     */
-
-    canWarn.mark();
-    lowBatDevices.clear();
 }
 
 } // namespace BatteryLevel

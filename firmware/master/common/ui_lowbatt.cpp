@@ -23,8 +23,8 @@ UILowBatt::UILowBatt(UICoordinator &uic) :
 
 void UILowBatt::init(uint8_t cid)
 {
-    ASSERT(cid <= BatteryLevel::BASE);
-    const UIMenu::Item *i = (cid == BatteryLevel::BASE) ? baseItems : cubeItems;
+    ASSERT(cid <= BatteryMonitor::BASE);
+    const UIMenu::Item *i = (cid == BatteryMonitor::BASE) ? baseItems : cubeItems;
     menu.init(WARNING, i);
 }
 

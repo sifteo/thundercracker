@@ -410,7 +410,7 @@ void CubeSlot::radioAcknowledge(const PacketBuffer &packet)
         if (lastACK.battery_v != ack->battery_v) {
             const _SYSCubeID cid = id();
             Event::setCubePending(Event::PID_CUBE_BATTERY, cid);
-            BatteryLevel::onCapture(BatteryLevel::scaled(cid), cid);
+            BatteryMonitor::onCapture(BatteryLevel::scaled(cid), cid);
         }
     }
 
