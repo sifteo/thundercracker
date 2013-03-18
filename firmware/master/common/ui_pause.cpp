@@ -25,6 +25,7 @@ UIPause::UIPause(UICoordinator &uic)
 
 void UIPause::init()
 {
+    ASSERT(SvmLoader::getRunLevel() != SvmLoader::RUNLEVEL_LAUNCHER);
     menu.init(ITEM_CONTINUE - getFirstItem());
 }
 
