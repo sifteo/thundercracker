@@ -9,6 +9,7 @@
 #include "prng.h"
 #include "cube.h"
 #include "cubeslots.h"
+#include "cubeconnector.h"
 #include "svmloader.h"
 
 
@@ -704,6 +705,8 @@ void SysLFS::deleteAll()
         if (vol.getType() == FlashVolume::T_LFS && !vol.getParent().block.isValid())
             vol.deleteSingle();
     }
+
+    invalidateClients();
 }
 
 void SysLFS::deleteCube(unsigned index)
@@ -719,6 +722,19 @@ void SysLFS::deleteCube(unsigned index)
 
     for (unsigned i = 0; i < ASSET_SLOTS_PER_CUBE; ++i)
         write(AssetSlotRecord::makeKey(cubeKey, i), 0, 0);
+}
+
+void SysLFS::invalidateClients()
+{
+    /*
+     * To be called after SysLFS has been erased,
+     * either directly (SysLFS::deleteAll()) or indirectly (FlashStack::deleteEverything()).
+     *
+     * These changes aren't necessarily visible to SysLFS clients,
+     * so update their state accordingly.
+     */
+
+    CubeConnector::refreshSysLFSData();
 }
 
 void SysLFS::cleanupDeletedVolumes()

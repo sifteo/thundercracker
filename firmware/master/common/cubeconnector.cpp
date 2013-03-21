@@ -52,13 +52,18 @@ void CubeConnector::init()
     nextNeighborKey();
     ASSERT(neighborKey < Neighbor::NUM_MASTER_ID);
 
-    // Load saved pairing HWIDs from SysLFS
-    savedPairingID.load();
-    savedPairingMRU.load();
+    refreshSysLFSData();
 
     // State machine init
     enableReconnect();
     txState = PairingFirstContact;
+}
+
+void CubeConnector::refreshSysLFSData()
+{
+    // Load saved pairing HWIDs from SysLFS
+    savedPairingID.load();
+    savedPairingMRU.load();
 }
 
 void CubeConnector::unpair(_SYSCubeID cid)
