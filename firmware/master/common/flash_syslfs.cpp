@@ -734,7 +734,7 @@ void SysLFS::invalidateClients()
      * so update their state accordingly.
      */
 
-    CubeConnector::refreshSysLFSData();
+    CubeConnector::onSysLFSInvalidated();
 }
 
 void SysLFS::cleanupDeletedVolumes()

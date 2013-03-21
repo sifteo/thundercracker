@@ -52,18 +52,25 @@ void CubeConnector::init()
     nextNeighborKey();
     ASSERT(neighborKey < Neighbor::NUM_MASTER_ID);
 
-    refreshSysLFSData();
+    // Load saved pairing HWIDs from SysLFS
+    savedPairingID.load();
+    savedPairingMRU.load();
 
     // State machine init
     enableReconnect();
     txState = PairingFirstContact;
 }
 
-void CubeConnector::refreshSysLFSData()
+void CubeConnector::onSysLFSInvalidated()
 {
-    // Load saved pairing HWIDs from SysLFS
+    // re-load saved pairing HWIDs from SysLFS,
+    // these should now be full of invalid entries.
     savedPairingID.load();
     savedPairingMRU.load();
+
+    // we can't assume any pairing data is still valid,
+    // so we disconnect all connected ubes since they're no longer paired.
+    CubeSlots::disconnectCubes(CubeSlots::sysConnected);
 }
 
 void CubeConnector::unpair(_SYSCubeID cid)
