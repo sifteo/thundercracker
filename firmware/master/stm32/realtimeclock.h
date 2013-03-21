@@ -6,14 +6,14 @@
 class RealTimeClock
 {
 public:
-    static void initFromOff();
+    static void init();
 
-    static uint32_t count() {
-        return ((RTC.CNTH << 16) | RTC.CNTL);
-    }
+    static uint32_t count();
+    static void setCount(uint32_t v);
 
 private:
-    static void calibrate();
+    static void beginConfig();
+    static void endConfig();
 };
 
 #endif // REALTIMECLOCK_H
