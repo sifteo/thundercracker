@@ -27,6 +27,7 @@
 #include "led.h"
 #include "batterylevel.h"
 #include "adc.h"
+#include "nrf51822.h"
 
 /*
  * Application specific entry point.
@@ -65,6 +66,9 @@ int main()
     NVIC.irqPrioritize(IVT.UsbOtg_FS, 0x70);        //  A little higher than radio
 
     NVIC.irqEnable(IVT.BTN_HOME_EXTI_VEC);          //  home button
+
+    NVIC.irqEnable(IVT.BTLE_SWD_TIM_INT);           // swd timer
+    NVIC.irqPrioritize(IVT.BTLE_SWD_TIM_INT, 0x80); //
 
 #ifdef USE_AUDIO_DAC
     NVIC.irqEnable(IVT.AUDIO_DAC_DMA_IRQ);          // DAC DMA channel
@@ -150,6 +154,7 @@ int main()
     FlashStack::init();
     HomeButton::init();
     NeighborTX::init();
+    nrf51822::test();
 
     /*
      * NOTE: NeighborTX & BatteryLevel share a timer - Battery level expects
