@@ -51,7 +51,7 @@ bool Hardware::init(VirtualTime *masterTimer, const char *firmwareFile,
     neighbors.init();
 
     setTouch(false);
-    setBattery(42 * _SYS_BATTERY_MAX / 100); // 42 is THE answer
+    setBattery(_SYS_BATTERY_MAX-1);
 
     return true;
 }
@@ -278,17 +278,16 @@ void Hardware::setTouch(bool touching)
 
 void Hardware::setBattery(uint16_t lvl)
 {
-    // emulate the measure made in the ADC of the accelerometer
-    // reversed polarity, but only the most significant nibble is used
-    LOG(("cube setBattery: %x\n", lvl));
-    i2c.accel.setADC1( 0x7F00 - (lvl & 0xFF00) );
+    // emulate the measure made in the ADC of the accelerometer, its polarity
+    // is reversed, but only the most significant nibble is used
+    LOG(("cube setBattery: 0x%x, we should receive approx. 0x%x\n", lvl, lvl>>8));
+    i2c.accel.setADC1(0x7F00 - (lvl & 0xFF00));
 }
 
 uint16_t Hardware::getBattery()
 {
-    // emulate the measure made in the ADC of the accelerometer
-    // reversed polarity, but only the most significant nibble is used
-    LOG(("cube getBattery: %x\n", 0x7F00 - i2c.accel.getADC1()));
+    // emulate the measure made in the ADC of the accelerometer, its polarity
+    // is reversed, but only the most significant nibble is used
     return 0x7F00 - i2c.accel.getADC1();
 }
 

@@ -532,12 +532,8 @@ void Frontend::postBatteryMessage(FrontendCube *mCube)
 {
     std::stringstream s;
     if (mCube) {
-        unsigned id = mCube->getId();
-        // if we use the following function, we receive the information
-        // a second after the display (so we display an old value)
-//        unsigned lvl = CubeSlot::getInstance(id).getScaledBatteryV();
         unsigned percentage= mCube->getBattery() * 100 / _SYS_BATTERY_MAX;
-        s << "Cube #" << id << " battery level: " << percentage << "%";
+        s << "Cube #" << mCube->getId() << " battery level: " << percentage << "%";
     } else {
         s << "Base battery level: " << int(BatteryLevel::getPercentage()) << "%";
     }
