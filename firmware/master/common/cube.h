@@ -162,6 +162,18 @@ class CubeSlot {
         return lastACK.battery_v;
     }
 
+    unsigned ALWAYS_INLINE getScaledBatteryV() const {
+
+        /*
+         * XXX: We should be doing our best to convert the raw reading to a linear
+         *      "fuel gauge" representation. We don't have the best hardware for this,
+         *      but we can make an attempt to track battery replacements and guess
+         *      battery chemistry.
+         */
+
+        return getRawBatteryV() * _SYS_BATTERY_MAX / 255;
+    }
+
     uint8_t ALWAYS_INLINE getLastFrameACK() const {
         return lastACK.frame_count;
     }

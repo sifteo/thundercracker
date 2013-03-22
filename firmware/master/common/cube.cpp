@@ -410,7 +410,12 @@ void CubeSlot::radioAcknowledge(const PacketBuffer &packet)
         if (lastACK.battery_v != ack->battery_v) {
             const _SYSCubeID cid = id();
             Event::setCubePending(Event::PID_CUBE_BATTERY, cid);
-            BatteryMonitor::onCapture(_SYS_cubeBatteryLevel(cid), cid);
+
+            // normally, lastACK only gets udpated below but we need the new value now
+            // in order to update BatteryMonitor
+            lastACK.battery_v = ack->battery_v;
+            LOG(("new cube battery level %d, id %d\n", lastACK.battery_v, cid));
+            BatteryMonitor::onCapture(getScaledBatteryV(), cid);
         }
     }
 

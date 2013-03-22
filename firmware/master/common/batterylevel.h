@@ -10,7 +10,7 @@ namespace BatteryLevel
     void init();
     unsigned raw();
     unsigned vsys();
-    unsigned scaled(_SYSDeviceID id = BatteryMonitor::BASE);
+    unsigned scaled();
     void beginCapture();
     void captureIsr();
     void process(unsigned);

@@ -7,6 +7,7 @@
  */
 
 #include "frontend.h"
+#include "cube.h"
 
 FrontendCube::FrontendCube()
     : body(0) {}
@@ -251,7 +252,10 @@ void FrontendCube::updateBattery(int8_t deltaPercent)
     // Add a signed percentage to the current battery level (and clamp it).
     ASSERT(deltaPercent <= +100 && deltaPercent >= -100);
 
-    int delta = deltaPercent * _SYS_BATTERY_MAX / 100;
-    hw->setBattery(clamp(hw->getBattery() + delta, 0, _SYS_BATTERY_MAX-1));
+    // if we use the following function, we receive the information
+    // almost 2 seconds after the display (so we display an old value)
+//    int lvl = CubeSlot::getInstance(id).getScaledBatteryV();
+    int lvl = getBattery();
+    int newLvl = lvl + deltaPercent * _SYS_BATTERY_MAX / 100;
+    setBattery(clamp(newLvl, 0, _SYS_BATTERY_MAX-1));
 }
-

@@ -13,6 +13,7 @@
 #include "mc_volume.h"
 #include <time.h>
 #include "batterylevel.h"
+#include "cube.h"
 
 Frontend *Frontend::instance = NULL;
 tthread::mutex Frontend::instanceLock;
@@ -531,11 +532,14 @@ void Frontend::postBatteryMessage(FrontendCube *mCube)
 {
     std::stringstream s;
     if (mCube) {
-        s << "Cube #" << mCube->getId() << " battery level: "
-          << mCube->getBattery() * 100 / _SYS_BATTERY_MAX << "%";
+        unsigned id = mCube->getId();
+        // if we use the following function, we receive the information
+        // a second after the display (so we display an old value)
+//        unsigned lvl = CubeSlot::getInstance(id).getScaledBatteryV();
+        unsigned percentage= mCube->getBattery() * 100 / _SYS_BATTERY_MAX;
+        s << "Cube #" << id << " battery level: " << percentage << "%";
     } else {
-        s << "Base" << " battery level: "
-          << int(BatteryLevel::getPercentage()) << "%";
+        s << "Base battery level: " << int(BatteryLevel::getPercentage()) << "%";
     }
     overlay.postMessage(s.str());
 }

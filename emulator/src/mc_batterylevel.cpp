@@ -1,8 +1,6 @@
 #include <sifteo/abi.h>
 #include "batterylevel.h"
 #include "macros.h"
-#include "cubeslots.h"
-#include "frontend.h"
 
 namespace BatteryLevel {
 
@@ -19,16 +17,9 @@ uint8_t getPercentage()
     return percentage;
 }
 
-unsigned scaled(_SYSDeviceID id) // base by default
+unsigned scaled()
 {
-    ASSERT(id <= BatteryMonitor::BASE);
-
-    if (id == BatteryMonitor::BASE) {
-        return percentage * _SYS_BATTERY_MAX / 100;
-    } else {
-        FrontendCube& cube = Frontend::getCube(id);
-        return cube.getBattery();
-    }
+    return percentage * _SYS_BATTERY_MAX / 100;
 }
 
 void heartbeat()

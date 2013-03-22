@@ -9,6 +9,7 @@
 #include "cube_hardware.h"
 #include "cube_debug.h"
 #include "cube_cpu_callbacks.h"
+#include "macros.h"
 
 namespace Cube {
 
@@ -277,12 +278,18 @@ void Hardware::setTouch(bool touching)
 
 void Hardware::setBattery(uint16_t lvl)
 {
-    i2c.accel.setADC1(lvl);
+    // emulate the measure made in the ADC of the accelerometer
+    // reversed polarity, but only the most significant nibble is used
+    LOG(("cube setBattery: %x\n", lvl));
+    i2c.accel.setADC1( 0x7F00 - (lvl & 0xFF00) );
 }
 
 uint16_t Hardware::getBattery()
 {
-    return i2c.accel.getADC1();
+    // emulate the measure made in the ADC of the accelerometer
+    // reversed polarity, but only the most significant nibble is used
+    LOG(("cube getBattery: %x\n", 0x7F00 - i2c.accel.getADC1()));
+    return 0x7F00 - i2c.accel.getADC1();
 }
 
 bool Hardware::isDebugging()

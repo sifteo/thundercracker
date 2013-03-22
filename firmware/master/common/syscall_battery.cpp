@@ -27,20 +27,7 @@ uint32_t _SYS_cubeBatteryLevel(_SYSCubeID cid)
         return 0;
     }
 
-    unsigned raw = CubeSlots::instances[cid].getRawBatteryV();
-
-    /*
-     * XXX: We should be doing our best to convert the raw reading to a linear
-     *      "fuel gauge" representation. We don't have the best hardware for this,
-     *      but we can make an attempt to track battery replacements and guess
-     *      battery chemistry.
-     */
-
-#ifdef SIFTEO_SIMULATOR
-    return BatteryLevel::scaled(cid);
-#else
-    return raw * _SYS_BATTERY_MAX / 255;
-#endif
+    return CubeSlots::instances[cid].getScaledBatteryV();
 }
 
 uint32_t _SYS_sysBatteryLevel()
