@@ -53,6 +53,12 @@ public:
         TriggerEvent    = 1 << 6
     };
 
+    enum MasterModeSelect {
+        ResetTrigger    = 0 << 4,
+        EnableTrigger   = 1 << 4,
+        UpdateTrigger   = 2 << 4,
+    };
+
     ALWAYS_INLINE HwTimer(volatile TIM_t *_hw) :
         tim(_hw) {}
 
@@ -68,6 +74,10 @@ public:
 
     void configureChannelAsOutput(int ch, Polarity p, TimerMode timmode, OutputMode outmode = SingleOutput, DmaMode dmamode = DmaDisabled) const;
     void configureChannelAsInput(int ch, InputCaptureEdge edge, uint8_t filterFreq = 0, uint8_t prescaler = 0) const;
+
+    void ALWAYS_INLINE configureTriggerOutput(MasterModeSelect mms = UpdateTrigger) const {
+        tim->CR2 = mms;
+    }
 
     void ALWAYS_INLINE enableChannel(int ch) const {
         tim->SR &= ~(1 << ch);  // CCxIF bits start at 1, so no need to subtract from 1-based channel num
