@@ -33,6 +33,7 @@ namespace DacAudioOut {
         // Half-complete or complete. Poke the mixer, asynchronously ask it to fill the buffer some more.
         Tasks::trigger(Tasks::AudioPull);
 
+        // XXX debug: Make it audible if a DMA ever completes...
         for (int i = 0; i < 10000; ++i) {
             Dac::write(AUDIO_DAC_CHAN, i << 8, Dac::LeftAlign12Bit);
         }
@@ -88,6 +89,11 @@ void AudioOutDevice::start()
     Dac::enableChannel(AUDIO_DAC_CHAN);
     Dac::enableDMA(AUDIO_DAC_CHAN);
     DacAudioOut::ampEn.setHigh();
+
+    // XXX debug: Show proper operation of timer trigger output
+    for (int i = 0; i < 100000; ++i) {
+        Dac::write(AUDIO_DAC_CHAN, i << 8, Dac::LeftAlign12Bit);
+    }
 }
 
 
