@@ -13,6 +13,7 @@ Changelog      {#changelog}
 * added Sifteo::System::osVersion() and Sifteo::System::hardwareVersion() to check the version of the OS and hardware build of the unit your app is running on.
 * added Sifteo::Metadata::minimumOSVersion() - advertise that your app relies on a minimum OS version.
 * added attribute getters for Sifteo::AssetTracker - bpm(), numChannels(), numIntruments(), numPatterns(), and tempo()
+* `swiss delete` can now delete a game by its package string. Deletion by volume code is still supported - see @ref device_mgmt for details.
 
 ### Fixes
 * neighboring a cube to the base works again, see Sifteo::NeighborID::isBase() can return true.

@@ -218,6 +218,8 @@ void FlashVolume::deleteEverything()
     vi.begin();
     while (vi.next(vol))
         vol.deleteSingle();
+
+    SysLFS::invalidateClients();
 }
 
 bool FlashVolumeIter::next(FlashVolume &vol)

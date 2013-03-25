@@ -18,6 +18,9 @@
 #include "macros.h"
 #include "dac.h"
 #include "adc.h"
+#include "bootloader.h"
+
+extern unsigned     __data_start;
 
 static I2CSlave i2c(&I2C1);
 
@@ -57,6 +60,8 @@ TestJig::TestHandler const TestJig::handlers[] = {
     beginNoiseCheckHandler,                 // 10
     stopNoiseCheckHandler,                  // 11
     setVBattEnabledHandler,                 // 12
+    getFirmwareVersion,                     // 13
+    bootloadRequestHandler,                 // 14
 };
 
 void TestJig::init()
@@ -296,6 +301,31 @@ void TestJig::task()
 /*******************************************
  * T E S T  H A N D L E R S
  ******************************************/
+
+/*
+ *  no args
+ */
+ void TestJig::bootloadRequestHandler(uint8_t argc, uint8_t *args)
+ {
+ #ifdef BOOTLOADABLE
+     __data_start = Bootloader::UPDATE_REQUEST_KEY;
+     NVIC.deinit();
+     NVIC.systemReset();
+ #endif
+ }
+
+/*
+ *  no args
+ */
+void TestJig::getFirmwareVersion(uint8_t argc, uint8_t *args)
+{
+    const uint8_t MAX_SIZE = 32;
+    const uint8_t sz = MIN( MAX_SIZE, strlen(TOSTRING(SDK_VERSION)));
+    uint8_t response[MAX_SIZE] = { args[0] };
+    memcpy(&response[1], TOSTRING(SDK_VERSION), sz);
+
+    UsbDevice::write(response, sz+1);
+}
 
 /*
  * args[1] == non-zero for enable, 0 for disable

@@ -56,19 +56,27 @@ bool Bootloader::manualUpdateRequested()
         return false;
 
     GPIOPin homeButton = BTN_HOME_GPIO;
-    
+
     #ifdef BOARD_TEST_JIG
       homeButton.setControl(GPIOPin::IN_PULL);
-      homeButton.pulldown();
+      homeButton.pullup();
+
+      while (SysTime::ticks() < SysTime::sTicks(1)) {
+          // active high - bail if released
+          if (homeButton.isHigh()){
+              return false;
+          }
+      }
     #else
       homeButton.setControl(GPIOPin::IN_FLOAT);
-    #endif
 
-    while (SysTime::ticks() < SysTime::sTicks(1)) {
-        // active high - bail if released
-        if (homeButton.isLow())
-            return false;
-    }
+      while (SysTime::ticks() < SysTime::sTicks(1)) {
+          // active high - bail if released
+          if (homeButton.isLow()){
+              return false;
+          }
+      }
+    #endif
 
     return true;
 }
@@ -90,9 +98,20 @@ void Bootloader::load()
 
         // Indicate we're loading
         #if BOARD == BOARD_TEST_JIG
-          GPIOPin red = LED_RED1_GPIO;
-          red.setControl(GPIOPin::OUT_2MHZ);
-          red.setHigh();
+          GPIOPin led1 = LED_RED1_GPIO;
+          GPIOPin led2 = LED_RED2_GPIO;
+          GPIOPin led3 = LED_GREEN1_GPIO;
+          GPIOPin led4 = LED_GREEN2_GPIO;
+
+          led1.setControl(GPIOPin::OUT_2MHZ);
+          led2.setControl(GPIOPin::OUT_2MHZ);
+          led3.setControl(GPIOPin::OUT_2MHZ);
+          led4.setControl(GPIOPin::OUT_2MHZ);
+
+          led1.setHigh();
+          led2.setHigh();
+          led3.setHigh();
+          led4.setHigh();
         #else
           GPIOPin red = LED_RED_GPIO;
           red.setControl(GPIOPin::OUT_2MHZ);
@@ -291,11 +310,19 @@ void Bootloader::cleanup()
 {
     // ensure LED is off
     #if BOARD == BOARD_TEST_JIG
-      GPIOPin red = LED_RED1_GPIO;
+      GPIOPin led1 = LED_RED1_GPIO;
+      GPIOPin led2 = LED_RED2_GPIO;
+      GPIOPin led3 = LED_GREEN1_GPIO;
+      GPIOPin led4 = LED_GREEN2_GPIO;
+
+      led1.setControl(GPIOPin::IN_FLOAT);
+      led2.setControl(GPIOPin::IN_FLOAT);
+      led3.setControl(GPIOPin::IN_FLOAT);
+      led4.setControl(GPIOPin::IN_FLOAT);
     #else
       GPIOPin red = LED_RED_GPIO;
+      red.setControl(GPIOPin::IN_FLOAT);
     #endif
-    red.setControl(GPIOPin::IN_FLOAT);
 
     UsbDevice::deinit();
     NVIC.deinit();

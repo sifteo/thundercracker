@@ -7,6 +7,7 @@
 #include "flash_stack.h"
 #include "flash_blockcache.h"
 #include "flash_lfs.h"
+#include "flash_syslfs.h"
 #include "flash_eraselog.h"
 #include "flash_recycler.h"
 #include "svmloader.h"
@@ -81,4 +82,6 @@ void FlashStack::reformatDevice()
         log.commit(rec);
         Tasks::resetWatchdog();
     }
+
+    SysLFS::invalidateClients();
 }

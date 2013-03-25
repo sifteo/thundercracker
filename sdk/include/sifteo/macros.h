@@ -151,6 +151,10 @@ do { \
      * - Hex-dump of fixed width buffers: `%(width in bytes)h`
      * - Pointer, printed as a resolved symbol when possible: `%%P`
      *
+     * @note In the siftulator, LOG() will write to your console or terminal.
+     * In order to access LOG() output on hardware, see the @b Logging section
+     * in the @ref device_mgmt guide.
+     *
      * @hideinitializer
      */
 #   define LOG(...) \

@@ -10,7 +10,8 @@ SUBDIRS = \
 	tinytracker \
 	lfsmunch \
 	numbers \
-	drumkit
+	drumkit \
+	monotone
 
 .PHONY: clean subdirs $(SUBDIRS)
 
