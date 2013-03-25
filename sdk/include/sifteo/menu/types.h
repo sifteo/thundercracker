@@ -117,7 +117,10 @@ class Menu {
     void setPeekTiles(uint8_t numTiles);
     void anchor(uint8_t item, bool hopUp = false, int8_t panTarget=-1);
     MenuState getState();
-    
+    bool isTilted();
+    bool isAtEdge();
+    bool isTiltingAtEdge();
+
     VideoBuffer *videoBuffer() const;
     CubeID cube() const;
 

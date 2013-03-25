@@ -545,14 +545,32 @@ void MainMenu::updateSound()
         return;
 
     Sifteo::TimeDelta dt = Sifteo::SystemTime::now() - time;
+    static bool playedOnce = false;
 
-    if (menu.getState() == MENU_STATE_TILTING) {
+    MenuState state = menu.getState();
+
+    if (state == MENU_STATE_TILTING) {
         unsigned threshold = abs(Shared::video[mainCube].virtualAccel().x) > kFastClickAccelThreshold ? kClickSpeedNormal : kClickSpeedFast;
         if (dt.milliseconds() >= threshold) {
             time += dt;
             AudioChannel(kUIResponseSoundChannel).play(Sound_TiltClick);
         }
+    } else if (state == MENU_STATE_INERTIA) {
+        if (!playedOnce && menu.isAtEdge()) {
+            AudioChannel(kUIResponseSoundChannel).play(Sound_NonPossibleAction);
+            playedOnce = true;
+        }
+    } else if (state == MENU_STATE_STATIC) {
+        if (menu.isTilted() && menu.isTiltingAtEdge()) {
+            if (!playedOnce) {
+                AudioChannel(kUIResponseSoundChannel).play(Sound_NonPossibleAction);
+                playedOnce = true;
+            }
+        } else {
+            playedOnce = false; // reset when cube is static and horizontal
+        }
     }
+
 }
 
 void MainMenu::updateMusic()

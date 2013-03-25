@@ -299,6 +299,33 @@ inline MenuState Menu::getState()
     return currentState;
 }
 
+inline bool Menu::isTilted()
+{
+    const float robustThreshold = kAccelThresholdOn * 1.65;
+    return (abs(accel.x) >= robustThreshold); // avoids accel. noise
+}
+
+inline bool Menu::isAtEdge()
+{
+    uint8_t item = computeSelected();
+    return (item == 0 || item == numItems - 1);
+}
+
+inline bool Menu::isTiltingAtEdge()
+{
+    /*
+     * if we're tilting up against either the beginning or the end of the menu,
+     * there are no more items to navigate to.
+     */
+    uint8_t item = computeSelected();
+    int8_t direction = accel.x > 0 ? 1 : -1;
+    if ((item == 0 && direction < 0) ||
+        (item == numItems - 1 && direction > 0))
+        return true;
+
+    return false;
+}
+
 /**
  * @} end addtogroup menu
  */
