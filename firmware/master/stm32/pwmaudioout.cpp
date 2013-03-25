@@ -170,4 +170,9 @@ IRQ_HANDLER ISR_FN(AUDIO_SAMPLE_TIM)()
     Tasks::trigger(Tasks::AudioPull);
 }
 
+int AudioOutDevice::getSampleBias()
+{
+    return 0;
+}
+
 #endif
