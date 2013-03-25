@@ -12,11 +12,16 @@
 class SWDMaster {
 public:
     void init();
-    void start();
-    void stop();
+
+    bool enableRequest();
+    bool readRequest(uint8_t);
+    bool writeRequest(uint8_t, uint32_t);
 
     void isr();
-    void controller();
+
+    uint8_t header;
+    uint32_t payloadIn;
+    uint32_t payloadOut;
 
     SWDMaster(volatile TIM_t *_tim,
               GPIOPin _swdclk,
@@ -27,17 +32,46 @@ private:
     GPIOPin swdclk;
     GPIOPin swdio;
 
-    enum swdState {
-        rtz = 0,
-        idle,
-        wkp,
-        req,
-        ack,
-        dat
-    };
-    swdState state;
+    bool busyFlag;
 
-    void ALWAYS_INLINE clk_toggle();
+    bool ALWAYS_INLINE isDAPRead() {
+        return (header & (1<<7));
+    }
+
+    void ALWAYS_INLINE sendbit(uint32_t& b) {
+        if ((b & (1<<31))) {
+            swdio.setHigh();
+        } else {
+            swdio.setLow();
+        }
+        b <<= 1;
+    }
+
+    void ALWAYS_INLINE receivebit(uint32_t& b) {
+        b <<= 1;
+        b | swdio.isHigh();
+    }
+
+    bool ALWAYS_INLINE isRisingEdge() {
+        if (swdclk.isLow()) {
+            swdclk.setHigh();
+            return true;
+        }
+        return false;
+    }
+
+    void ALWAYS_INLINE fallingEdge() {
+        swdclk.setLow();
+    }
+
+    void startTimer();
+    void stopTimer();
+
+    typedef void (SWDMaster::*ControllerCallback)();
+
+    ControllerCallback controllerCB;
+    void txnControllerCB();
+    void wkpControllerCB();
 };
 
 #endif // _STM32_SWD_H
