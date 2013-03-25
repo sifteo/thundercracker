@@ -57,6 +57,8 @@ namespace PwmAudioOut {
     static const GPIOPin outB(&AUDIO_PWMB_PORT, AUDIO_PWMB_PIN);
 }
 
+#if BOARD == BOARD_TC_MASTER_REV2
+
 void AudioOutDevice::init()
 {
     // TIM1 partial remap for complementary channels
@@ -167,3 +169,5 @@ IRQ_HANDLER ISR_FN(AUDIO_SAMPLE_TIM)()
     // Ask for more audio data
     Tasks::trigger(Tasks::AudioPull);
 }
+
+#endif
