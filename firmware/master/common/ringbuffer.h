@@ -37,14 +37,6 @@ public:
         return tSize - 1;
     }
 
-    unsigned ALWAYS_INLINE bufferSize() const {
-        return tSize;
-    }
-
-    tItemType ALWAYS_INLINE *bufferData() {
-        return &mBuf[0];
-    }
-
     void ALWAYS_INLINE enqueue(tItemType c)
     {
         ASSERT(!full());
@@ -60,6 +52,24 @@ public:
         tItemType c = mBuf[head];
         mHead = capacity() & (head + 1);
         return c;
+    }
+
+    /*
+     * DMA support
+     */
+
+    unsigned ALWAYS_INLINE getDMACount() const {
+        return tSize;
+    }
+
+    uintptr_t ALWAYS_INLINE getDMABuffer() const {
+        return (uintptr_t) &mBuf[0];
+    }
+
+    void ALWAYS_INLINE dequeueWithDMACount(unsigned count) {
+        // Update the 'head' pointer, given an updated DMA count.
+        ASSERT(count < getDMACount());
+        mHead = capacity() & (tSize - count);
     }
 
     /*

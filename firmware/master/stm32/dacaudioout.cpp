@@ -23,6 +23,8 @@
 #include "dac.h"
 #include "dma.h"
 
+#ifdef USE_AUDIO_DAC
+
 namespace DacAudioOut {
     static const HwTimer sampleTimer(&AUDIO_SAMPLE_TIM);
     static GPIOPin ampEn = AUDIO_DAC_EN_GPIO;
@@ -30,17 +32,16 @@ namespace DacAudioOut {
 
     static void dmaCallback(void *p, uint8_t flags)
     {
-        // Half-complete or complete. Poke the mixer, asynchronously ask it to fill the buffer some more.
-        Tasks::trigger(Tasks::AudioPull);
+        /*
+         * DMA half-complete or complete IRQ.
+         * Poke the mixer, asynchronously ask it to fill the buffer some more.
+         * Update our ring buffer's pointers.
+         */
 
-        // XXX debug: Make it audible if a DMA ever completes...
-        for (int i = 0; i < 10000; ++i) {
-            Dac::write(AUDIO_DAC_CHAN, i << 8, Dac::LeftAlign12Bit);
-        }
+        AudioMixer::output.dequeueWithDMACount(dmaChannel->CNDTR);
+        Tasks::trigger(Tasks::AudioPull);
     }
 }
-
-#if BOARD == BOARD_TC_MASTER_REV3
 
 void AudioOutDevice::init()
 {
@@ -58,18 +59,18 @@ void AudioOutDevice::init()
 
     // Set up DMA to pull directly from the circular mixing buffer
     Dma::initChannel(&AUDIO_DAC_DMA, AUDIO_DAC_DMA_CHAN-1, DacAudioOut::dmaCallback, 0);
-    DacAudioOut::dmaChannel->CNDTR = AudioMixer::output.bufferSize();
-    DacAudioOut::dmaChannel->CMAR = (uint32_t) AudioMixer::output.bufferData();
-    DacAudioOut::dmaChannel->CPAR = (uint32_t) Dac::address(AUDIO_DAC_CHAN, Dac::LeftAlign12Bit);
-    DacAudioOut::dmaChannel->CCR =  Dma::HighPrio |
+    DacAudioOut::dmaChannel->CNDTR = AudioMixer::output.getDMACount();
+    DacAudioOut::dmaChannel->CMAR = AudioMixer::output.getDMABuffer();
+    DacAudioOut::dmaChannel->CPAR = Dac::address(AUDIO_DAC_CHAN, Dac::LeftAlign12Bit);
+    DacAudioOut::dmaChannel->CCR =  Dma::VeryHighPrio |
                                     (1 << 10) | // MSIZE - 16-bit memory data word size
                                     (2 << 8) |  // PSIZE - 32-bit peripheral register size
                                     (1 << 7) |  // MINC - memory pointer increment
                                     (1 << 5) |  // CIRC - circular mode enabled
                                     (1 << 4) |  // DIR - direction, 1 == memory -> peripheral
                                     (0 << 3) |  // TEIE - transfer error ISR enable
-                                    (0 << 2) |  // HTIE - half complete ISR enable
-                                    (1 << 1);   // TCIE - transfer complete ISR enable
+                                    (1 << 2) |  // HTIE - half complete ISR enable
+                                    (1 << 1) ;  // TCIE - transfer complete ISR enable
 
     // Leave the DMA engine enabled. We only trigger it when the DAC's DMA is enabled and
     // the sample timer's trigger fires. If we turn off DMA, we'll lose our place in the ring buffer.
@@ -89,11 +90,6 @@ void AudioOutDevice::start()
     Dac::enableChannel(AUDIO_DAC_CHAN);
     Dac::enableDMA(AUDIO_DAC_CHAN);
     DacAudioOut::ampEn.setHigh();
-
-    // XXX debug: Show proper operation of timer trigger output
-    for (int i = 0; i < 100000; ++i) {
-        Dac::write(AUDIO_DAC_CHAN, i << 8, Dac::LeftAlign12Bit);
-    }
 }
 
 
@@ -109,6 +105,5 @@ int AudioOutDevice::getSampleBias()
     // Convert signed to unsigned samples, with 1/2 full-scale bias.
     return 0x8000;
 }
-
 
 #endif

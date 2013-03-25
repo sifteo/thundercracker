@@ -40,15 +40,16 @@ void Dac::disableDMA(int ch)
     DAC.CR &= ~(0x1000 << ((ch - 1) * 16));
 }    
 
-volatile uint32_t *Dac::address(int ch, DataFormat format)
+uintptr_t Dac::address(int ch, DataFormat format)
 {
     volatile DACChannel_t &dc = DAC.channels[ch - 1];
-    return &dc.DHR[format];
+    return (uintptr_t) &dc.DHR[format];
 }
 
 void Dac::write(int ch, uint16_t data, DataFormat format)
 {
-    *address(ch, format) = data;
+    volatile DACChannel_t &dc = DAC.channels[ch - 1];
+    dc.DHR[format] = data;
 }
 
 // TODO - this is only 8-bit dual, support other formats/alignments as needed

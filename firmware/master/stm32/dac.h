@@ -52,7 +52,7 @@ public:
 
     static void writeDual(uint16_t data);
     static void write(int ch, uint16_t data, DataFormat format = RightAlign12Bit);
-    static volatile uint32_t *address(int ch, DataFormat format = RightAlign12Bit);
+    static uintptr_t address(int ch, DataFormat format = RightAlign12Bit);
 };
 
 #endif // DAC_H_

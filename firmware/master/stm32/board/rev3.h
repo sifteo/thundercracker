@@ -90,24 +90,21 @@
 #define VCC33_ENABLE_GPIO   GPIOPin(&GPIOC, 1)
 
 // A U D I O
-#define AUDIO_PWMA_PORT     GPIOA
-#define AUDIO_PWMA_PIN      7
-#define AUDIO_PWMB_PORT     GPIOA
-#define AUDIO_PWMB_PIN      8
-#define AUDIO_PWM_CHAN      1
-#define AUDIO_PWM_TIM       TIM1
 #define AUDIO_SAMPLE_TIM    TIM7
 
 #define VOLUME_TIM          TIM5
 #define VOLUME_CHAN         2
 #define VOLUME_GPIO         GPIOPin(&GPIOA, 1)
 
-// D A C
+#define USE_AUDIO_DAC       // Use DAC instead of PWM for audio
+
 #define AUDIO_DAC_CHAN      1
 #define AUDIO_DAC_PIN       GPIOPin(&GPIOA, 4)
 #define AUDIO_DAC_EN_GPIO   GPIOPin(&GPIOA, 0);
+
 #define AUDIO_DAC_DMA       DMA2
 #define AUDIO_DAC_DMA_CHAN  3
+#define AUDIO_DAC_DMA_IRQ   DMA2_Channel3
 
 // B A T T E R Y
 #define BATT_LVL_TIM        TIM4                    // NOTE! same as NBR_TX_TIM
