@@ -37,6 +37,14 @@ public:
         return tSize - 1;
     }
 
+    unsigned ALWAYS_INLINE bufferSize() const {
+        return tSize;
+    }
+
+    tItemType ALWAYS_INLINE *bufferData() {
+        return &mBuf[0];
+    }
+
     void ALWAYS_INLINE enqueue(tItemType c)
     {
         ASSERT(!full());
