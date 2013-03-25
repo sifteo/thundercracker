@@ -106,6 +106,8 @@
 #define AUDIO_DAC_CHAN      1
 #define AUDIO_DAC_PIN       GPIOPin(&GPIOA, 4)
 #define AUDIO_DAC_EN_GPIO   GPIOPin(&GPIOA, 0);
+#define AUDIO_DAC_DMA       DMA2
+#define AUDIO_DAC_DMA_CHAN  3
 
 // B A T T E R Y
 #define BATT_LVL_TIM        TIM4                    // NOTE! same as NBR_TX_TIM
