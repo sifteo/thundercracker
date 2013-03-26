@@ -11,7 +11,7 @@ void Dac::init()
 }
 
 // channels: 1 or 2
-void Dac::configureChannel(int ch, Waveform waveform, uint8_t mask_amp, Trigger trig, BufferMode buffmode)
+void Dac::configureChannel(int ch, Trigger trig, Waveform waveform, uint8_t mask_amp, BufferMode buffmode)
 {
     uint16_t reg =  (mask_amp << 8) |
                     (waveform << 6) |
@@ -28,6 +28,22 @@ void Dac::enableChannel(int ch)
 void Dac::disableChannel(int ch)
 {
     DAC.CR &= ~(1 << ((ch - 1) * 16));
+}
+
+void Dac::enableDMA(int ch)
+{
+    DAC.CR |= (0x1000 << ((ch - 1) * 16));
+}
+
+void Dac::disableDMA(int ch)
+{
+    DAC.CR &= ~(0x1000 << ((ch - 1) * 16));
+}    
+
+uintptr_t Dac::address(int ch, DataFormat format)
+{
+    volatile DACChannel_t &dc = DAC.channels[ch - 1];
+    return (uintptr_t) &dc.DHR[format];
 }
 
 void Dac::write(int ch, uint16_t data, DataFormat format)

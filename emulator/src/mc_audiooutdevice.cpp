@@ -35,3 +35,8 @@ void AudioOutDevice::pullFromMixer()
 {
 	gPortAudio.pullFromMixer();
 }
+
+int AudioOutDevice::getSampleBias()
+{
+    return 0;
+}

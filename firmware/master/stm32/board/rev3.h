@@ -22,7 +22,7 @@
 #define USB_DP_GPIO         GPIOPin(&GPIOA, 12)
 #define USB_VBUS_GPIO       GPIOPin(&GPIOA, 9)
 
-/// R A D I O
+// R A D I O
 #define RF_SPI              SPI3
 #define RF_CE_GPIO          GPIOPin(&GPIOC, 7)
 #define RF_IRQ_GPIO         GPIOPin(&GPIOC, 8)
@@ -92,11 +92,6 @@
 // A U D I O
 #define AUDIO_SAMPLE_TIM    TIM7
 
-// D A C
-#define AUDIO_DAC_CHAN      1
-#define AUDIO_DAC_PIN       GPIOPin(&GPIOA, 4)
-#define AUDIO_AMP_EN_GPIO   GPIOPin(&GPIOA, 0);
-
 //A D C
 #define PWR_MEASURE_ADC     ADC1
 
@@ -107,6 +102,17 @@
 // B A T T E R Y
 #define VBATT_MEAS_GPIO     GPIOPin(&GPIOA, 5)
 #define VBATT_ADC_CHAN      5
+
+// D A C
+#define USE_AUDIO_DAC       // Use DAC instead of PWM for audio
+
+#define AUDIO_DAC_CHAN      1
+#define AUDIO_DAC_PIN       GPIOPin(&GPIOA, 4)
+#define AUDIO_DAC_EN_GPIO   GPIOPin(&GPIOA, 0);
+
+#define AUDIO_DAC_DMA       DMA2
+#define AUDIO_DAC_DMA_CHAN  3
+#define AUDIO_DAC_DMA_IRQ   DMA2_Channel3
 
 // M I S C
 #define BTN_HOME_GPIO       GPIOPin(&GPIOD, 2)

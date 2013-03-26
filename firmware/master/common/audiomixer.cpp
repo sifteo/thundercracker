@@ -267,6 +267,9 @@ void AudioMixer::pullAudio()
         bool endOfStreamSet = false;
     #endif
 
+    // Some devices are signed, some are unsigned. The bias value lets us cover both cases.
+    int sampleBias = AudioOutDevice::getSampleBias();
+
     do {
         bool mixed;
         uint32_t blockSize = MIN(arraysize(blockBuffer), samplesLeft);
@@ -349,7 +352,7 @@ void AudioMixer::pullAudio()
             #endif
 
             if (!headless) {
-                output.enqueue(sample16);
+                output.enqueue(sample16 + sampleBias);
             }
         } while (--blockSize);
 

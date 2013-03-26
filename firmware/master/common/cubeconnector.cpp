@@ -61,6 +61,18 @@ void CubeConnector::init()
     txState = PairingFirstContact;
 }
 
+void CubeConnector::onSysLFSInvalidated()
+{
+    // re-load saved pairing HWIDs from SysLFS,
+    // these should now be full of invalid entries.
+    savedPairingID.load();
+    savedPairingMRU.load();
+
+    // we can't assume any pairing data is still valid,
+    // so we disconnect all connected ubes since they're no longer paired.
+    CubeSlots::disconnectCubes(CubeSlots::sysConnected);
+}
+
 void CubeConnector::unpair(_SYSCubeID cid)
 {
     /*

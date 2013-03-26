@@ -20,33 +20,65 @@
 #include "board.h"
 #include "gpio.h"
 #include "hwtimer.h"
-#include "prng.h"
 #include "dac.h"
+#include "dma.h"
+
+#ifdef USE_AUDIO_DAC
 
 namespace DacAudioOut {
     static const HwTimer sampleTimer(&AUDIO_SAMPLE_TIM);
+    static GPIOPin ampEn = AUDIO_DAC_EN_GPIO;
+    static volatile DMAChannel_t *dmaChannel = &AUDIO_DAC_DMA.channels[AUDIO_DAC_DMA_CHAN-1];
 
-    static const uint16_t maxDacSample = 0xfff;
-    static const uint16_t maxRawSample = 0xffff;
+    static void dmaCallback(void *p, uint8_t flags)
+    {
+        /*
+         * DMA half-complete or complete IRQ.
+         * Poke the mixer, asynchronously ask it to fill the buffer some more.
+         * Update our ring buffer's pointers.
+         */
 
-    static GPIOPin ampEn = AUDIO_AMP_EN_GPIO;
+        AudioMixer::output.dequeueWithDMACount(dmaChannel->CNDTR);
+        Tasks::trigger(Tasks::AudioPull);
+    }
 }
-
-#if BOARD == BOARD_TC_MASTER_REV3
 
 void AudioOutDevice::init()
 {
+    // Sample rate timer, connected to DAC trigger input.
     DacAudioOut::sampleTimer.init(72000000 / AudioMixer::SAMPLE_HZ, 0);
+    DacAudioOut::sampleTimer.configureTriggerOutput();
 
+    // DAC output must be configired as an Analog IN, as far as the GPIO controller is concerned.
     GPIOPin dacOut = AUDIO_DAC_PIN;
     dacOut.setControl(GPIOPin::IN_ANALOG);
 
+    // Amplifier power switch
     DacAudioOut::ampEn.setControl(GPIOPin::OUT_2MHZ);
     DacAudioOut::ampEn.setLow();
 
+    // Set up DMA to pull directly from the circular mixing buffer
+    Dma::initChannel(&AUDIO_DAC_DMA, AUDIO_DAC_DMA_CHAN-1, DacAudioOut::dmaCallback, 0);
+    DacAudioOut::dmaChannel->CNDTR = AudioMixer::output.getDMACount();
+    DacAudioOut::dmaChannel->CMAR = AudioMixer::output.getDMABuffer();
+    DacAudioOut::dmaChannel->CPAR = Dac::address(AUDIO_DAC_CHAN, Dac::LeftAlign12Bit);
+    DacAudioOut::dmaChannel->CCR =  Dma::VeryHighPrio |
+                                    (1 << 10) | // MSIZE - 16-bit memory data word size
+                                    (2 << 8) |  // PSIZE - 32-bit peripheral register size
+                                    (1 << 7) |  // MINC - memory pointer increment
+                                    (1 << 5) |  // CIRC - circular mode enabled
+                                    (1 << 4) |  // DIR - direction, 1 == memory -> peripheral
+                                    (0 << 3) |  // TEIE - transfer error ISR enable
+                                    (1 << 2) |  // HTIE - half complete ISR enable
+                                    (1 << 1) ;  // TCIE - transfer complete ISR enable
+
+    // Leave the DMA engine enabled. We only trigger it when the DAC's DMA is enabled and
+    // the sample timer's trigger fires. If we turn off DMA, we'll lose our place in the ring buffer.
+    DacAudioOut::dmaChannel->CCR |= 1;
+
+    // Set up the DAC to trigger on the sample timer, and prepare the DMA channel.
     Dac::init();
-    Dac::configureChannel(AUDIO_DAC_CHAN);
-    Dac::enableChannel(AUDIO_DAC_CHAN);
+    Dac::configureChannel(AUDIO_DAC_CHAN, Dac::AUDIO_SAMPLE_TIM);
 
     // Must set up default I/O state
     stop();
@@ -54,52 +86,24 @@ void AudioOutDevice::init()
 
 void AudioOutDevice::start()
 {
-    // Start clocking out samples
+    // Start clocking out samples from a new audio block.
+    Dac::enableChannel(AUDIO_DAC_CHAN);
+    Dac::enableDMA(AUDIO_DAC_CHAN);
     DacAudioOut::ampEn.setHigh();
-    DacAudioOut::sampleTimer.enableUpdateIsr();
 }
 
 
 void AudioOutDevice::stop()
 {
-    // No more sample data
     DacAudioOut::ampEn.setLow();
-    DacAudioOut::sampleTimer.disableUpdateIsr();
+    Dac::disableDMA(AUDIO_DAC_CHAN);
+    Dac::disableChannel(AUDIO_DAC_CHAN);
 }
 
-
-IRQ_HANDLER ISR_FN(AUDIO_SAMPLE_TIM)()
+int AudioOutDevice::getSampleBias()
 {
-    /*
-     * This is the sampleTimer (TIM4) ISR, called regularly at our
-     * audio sample rate. We're a really high priority ISR at a
-     * really high frequency, so this needs to be quick!
-     *
-     * If you modify this function, please inspect the disassembly to
-     * make sure it's still tiny and fast :)
-     *
-     * Note: We don't bother updating the SampleProfiler subsystsem
-     *       here. This should be a really brief IRQ, so the time
-     *       needed to simply switch subsystems is comparable to
-     *       the duration of the ISR itself. Luckily, everything
-     *       here should be inlined, so the sampling bucket for
-     *       ISR_TIM4() itself is fully representative of the time
-     *       spent in the PWM audio device.
-     */
-
-    // Acknowledge IRQ by clearing timer status
-    AUDIO_SAMPLE_TIM.SR = 0;
-
-    while (!AudioMixer::output.empty()) {
-
-        uint16_t duty = AudioMixer::output.dequeue() + 0x8000;
-        duty = duty * DacAudioOut::maxDacSample / DacAudioOut::maxRawSample; // scale to 12bit DAC output
-        Dac::write(AUDIO_DAC_CHAN, duty, Dac::RightAlign12Bit);
-
-        break;
-    }
-    // Ask for more audio data
-    Tasks::trigger(Tasks::AudioPull);
+    // Convert signed to unsigned samples, with 1/2 full-scale bias.
+    return 0x8000;
 }
 
 #endif

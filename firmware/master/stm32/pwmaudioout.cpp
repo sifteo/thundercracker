@@ -22,7 +22,9 @@
 #include "hwtimer.h"
 #include "prng.h"
 
-#if BOARD == BOARD_TC_MASTER_REV2
+#ifndef USE_AUDIO_DAC
+
+#warning "Using pwm audio."
 
 namespace PwmAudioOut {
 
@@ -168,6 +170,11 @@ IRQ_HANDLER ISR_FN(AUDIO_SAMPLE_TIM)()
 
     // Ask for more audio data
     Tasks::trigger(Tasks::AudioPull);
+}
+
+int AudioOutDevice::getSampleBias()
+{
+    return 0;
 }
 
 #endif

@@ -513,12 +513,6 @@ void MainMenu::updateSound()
             time += dt;
             AudioChannel(kUIResponseSoundChannel).play(Sound_TiltClick);
         }
-    } else if (menu.getState() == MENU_STATE_INERTIA) {
-        unsigned threshold = 400;
-        if (dt.milliseconds() >= threshold) {
-            time += dt;
-            AudioChannel(kUIResponseSoundChannel).play(Sound_TiltClick);
-        }
     }
 }
 

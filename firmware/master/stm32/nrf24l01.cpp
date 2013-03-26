@@ -28,6 +28,7 @@ void NRF24L01::init()
 
     /*
      * Common hardware initialization, regardless of radio usage mode.
+     * We share a DMA channel with Audio, which is highest priority.
      */
 
     const SPIMaster::Config cfg = {

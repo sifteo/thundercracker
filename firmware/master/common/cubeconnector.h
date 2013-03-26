@@ -35,6 +35,7 @@ public:
     static const unsigned MIN_RECONNECT_BATTERY_LEVEL = 0x50;
 
     static void init();
+    static void onSysLFSInvalidated();
 
     static ALWAYS_INLINE void enableReconnect() {
         reconnectEnabled = true;
