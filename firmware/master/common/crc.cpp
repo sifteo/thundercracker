@@ -16,7 +16,7 @@ uint32_t Crc32::block(const uint32_t *words, uint32_t count)
     reset();
 
     while (count) {
-        add(*words);
+        addInline(*words);
         words++;
         count--;
     }
@@ -38,7 +38,7 @@ void CrcStream::addBytes(const uint8_t *bytes, uint32_t count)
 
         while (words) {
             words--;
-            Crc32::add(*(const uint32_t*)bytes);
+            Crc32::addInline(*(const uint32_t*)bytes);
             bytes += 4;
         }
     }
@@ -55,7 +55,7 @@ void CrcStream::addBytes(const uint8_t *bytes, uint32_t count)
 
         if ((byteTotal & 3) == 0) {
             // Just completed a word
-            Crc32::add(buffer.word);
+            Crc32::addInline(buffer.word);
         }
     }
 }
@@ -75,7 +75,7 @@ void CrcStream::padToAlignment(unsigned alignment, uint8_t padByte)
         byteTotal++;
         if ((byteTotal & 3) == 0) {
             // Just completed a word
-            Crc32::add(buffer.word);
+            Crc32::addInline(buffer.word);
         }
     }
 
