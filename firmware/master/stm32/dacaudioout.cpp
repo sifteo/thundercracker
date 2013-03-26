@@ -23,7 +23,7 @@
 #include "dac.h"
 #include "dma.h"
 
-#ifdef USE_AUDIO_DAC
+#if BOARD == BOARD_TC_MASTER_REV3
 
 namespace DacAudioOut {
     static const HwTimer sampleTimer(&AUDIO_SAMPLE_TIM);

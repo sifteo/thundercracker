@@ -65,8 +65,13 @@ int main()
 
     NVIC.irqEnable(IVT.BTN_HOME_EXTI_VEC);          //  home button
 
+#if BOARD_TC_MASTER_REV3
+    NVIC.irqEnable(IVT.AUDIO_DAC_DMA_IRQ);          // DAC DMA channel
+    NVIC.irqPrioritize(IVT.AUDIO_DAC_DMA_IRQ, 0x50);
+#elif BOARD_TC_MASTER_REV2
     NVIC.irqEnable(IVT.AUDIO_SAMPLE_TIM);           // sample rate timer
     NVIC.irqPrioritize(IVT.AUDIO_SAMPLE_TIM, 0x50); //  pretty high priority! (would cause audio jitter)
+#endif
 
     NVIC.irqEnable(IVT.LED_SEQUENCER_TIM);          // LED sequencer timer
     NVIC.irqPrioritize(IVT.LED_SEQUENCER_TIM, 0x85);
