@@ -99,10 +99,23 @@ already have one it will be skipped)::
                           uuid-dev libusb-1.0-0-dev mesa-common-dev \
                           libglu1-mesa-dev libasound2-dev ia32-libs
 
-Most of these dependencies are very easy to come by, and your favorite
-Linux distro or Mac OS package manager has them already. The ARM cross
-compiler is usually more annoying to obtain. On Linux and Windows, the
-CodeSourcery C++ distribution is preferred. On Mac OS, the following
-script will automatically build a compatible toolchain for your machine:
+ARM toolchain
+-------------
+
+Unfortunately, we appear to currently have some firmware code somewhere that
+relies on the behavior of a specific version of the arm-eabi-none tools.
+
+The following version is known to work:
+
+  gcc version 4.5.2 (Sourcery G++ Lite 2011.03-42)
+
+More recent versions expose an issue that is yet to be characterized, but
+results in what can appear as a never-ending asset bootstrapping process.
+If you're seeing this, it's possible you've built the firmware with
+a more recent version of the ARM GCC toolchain.
+
+On Linux and Windows, the CodeSourcery C++ distribution is preferred.
+On Mac OS, the following script will automatically build a compatible
+toolchain for your machine:
 
    https://github.com/jsnyder/arm-eabi-toolchain

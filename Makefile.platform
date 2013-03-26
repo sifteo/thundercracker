@@ -34,6 +34,12 @@ endif
 
 ifeq ($(BUILD_PLATFORM), Darwin)
 	DEPS_DIR := $(TC_DIR)/deps/osx/$(BUILD_ARCH)
+    # a little sad, but recent Xcode distributions only ship
+    # with support to target 10.7 as the minimum version.
+    #
+    # make that explicit, such that even if we upgrade the build
+    # machine to 10.8 we can still support 10.7 peeps.
+	FLAGS += -mmacosx-version-min=10.7
 endif
 
 ifeq ($(BUILD_PLATFORM), Linux)

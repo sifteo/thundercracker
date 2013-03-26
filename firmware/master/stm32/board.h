@@ -13,15 +13,15 @@
 #define BOARD_TEST_JIG          3
 #define BOARD_TC_MASTER_REV3    4
 
+// default board
+#ifndef BOARD
+#define BOARD   BOARD_TC_MASTER_REV3
+#endif
+
 #if BOARD == BOARD_TEST_JIG
 #ifndef TEST_JIG_REV
 #define TEST_JIG_REV    2
 #endif
-#endif
-
-// default board
-#ifndef BOARD
-#define BOARD   BOARD_TC_MASTER_REV3
 #endif
 
 #include "hardware.h"
