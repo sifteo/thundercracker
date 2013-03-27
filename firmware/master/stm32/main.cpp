@@ -79,10 +79,10 @@ int main()
     NVIC.irqEnable(IVT.USART3);                     // factory test uart
     NVIC.irqPrioritize(IVT.USART3, 0x52);           //  high enough to avoid overruns
 
-    #if BOARD == BOARD_TC_MASTER_REV2
+#ifndef USE_ADC_FADER_MEAS
     NVIC.irqEnable(IVT.VOLUME_TIM);                 // volume timer
     NVIC.irqPrioritize(IVT.VOLUME_TIM, 0x55);       //  just below sample rate timer
-    #endif
+#endif
 
     NVIC.irqEnable(IVT.PROFILER_TIM);               // sample profiler timer
     NVIC.irqPrioritize(IVT.PROFILER_TIM, 0x0);      //  highest possible priority
