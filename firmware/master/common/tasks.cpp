@@ -75,10 +75,14 @@ ALWAYS_INLINE void Tasks::taskInvoke(unsigned id)
 
 void Tasks::heartbeatTask()
 {
-    #if BOARD == BOARD_TC_MASTER_REV3
+	
+#ifdef USE_ADC_BATTERY_MEAS
     BatteryLevel::beginCapture();
+#endif
+
+#ifdef USE_ADC_FADER_MEAS
     Volume::beginCapture();
-    #endif
+#endif
 
 #if (BOARD != BOARD_TEST_JIG)
     #ifndef DISABLE_IDLETIMEOUT
