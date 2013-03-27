@@ -129,8 +129,6 @@ int calibrate(CalibrationState state)
 
     return currentRawValue;
 }
-#else
-#error #error Invalid board type. See Volume.cpp.
 #endif
 
 } // namespace Volume
