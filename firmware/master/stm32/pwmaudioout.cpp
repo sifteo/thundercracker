@@ -24,8 +24,6 @@
 
 #ifndef USE_AUDIO_DAC
 
-#warning "Using pwm audio."
-
 namespace PwmAudioOut {
 
     /*
