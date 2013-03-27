@@ -12,7 +12,7 @@ namespace BatteryLevel {
 
 static unsigned lastReading;
 
-#if BOARD == BOARD_TC_MASTER_REV3
+#ifdef USE_ADC_BATT_MEAS
 
 static const unsigned maxIn = 0xfff;                //Max ADC value possible
 static const unsigned minIn = 0x7c1;                //1.6V shutdown voltage
@@ -54,7 +54,7 @@ void adcCallback(uint16_t sample) {
     lastReading = sample;
 }
 
-#elif BOARD == BOARD_TC_MASTER_REV2
+#else
 enum State {
     VBattCapture,
     VSysCapture,
