@@ -260,8 +260,6 @@ void process(unsigned capture)
 
     NeighborTX::resume();
 }
-#else
-#error Invalid board type. See BatteryLevel.cpp.
 #endif
 
 } // namespace BatteryLevel
