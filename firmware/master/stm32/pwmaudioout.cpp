@@ -22,7 +22,9 @@
 #include "hwtimer.h"
 #include "prng.h"
 
-#if BOARD == BOARD_TC_MASTER_REV2
+#ifndef USE_AUDIO_DAC
+
+#warning "Using pwm audio."
 
 namespace PwmAudioOut {
 
