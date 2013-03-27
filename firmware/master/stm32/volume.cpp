@@ -6,7 +6,7 @@
 #include "adc.h"
 #include <sifteo/abi/audio.h>
 
-#if BOARD == BOARD_TC_MASTER_REV2
+#ifndef USE_ADC_FADER_MEAS
 static RCTimer gVolumeTimer(HwTimer(&VOLUME_TIM), VOLUME_CHAN, VOLUME_GPIO);
 #endif
 
@@ -16,7 +16,7 @@ static uint64_t calibratedScale;
 
 namespace Volume {
 
-#if BOARD == BOARD_TC_MASTER_REV3
+#ifdef USE_ADC_FADER_MEAS
 
 static unsigned lastReading;
 
@@ -62,7 +62,7 @@ void adcCallback(uint16_t sample) {
     lastReading = sample;
 }
 
-#elif BOARD == BOARD_TC_MASTER_REV2
+#else
 void init()
 {
     /*
@@ -135,7 +135,7 @@ int calibrate(CalibrationState state)
 
 } // namespace Volume
 
-#if (BOARD == BOARD_TC_MASTER_REV2)
+#ifndef USE_ADC_FADER_MEAS
 IRQ_HANDLER ISR_TIM5()
 {
     gVolumeTimer.isr();    // must clear the TIM IRQ internally
