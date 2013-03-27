@@ -52,14 +52,17 @@ void PowerManager::batteryPowerOff()
  */
 void PowerManager::init()
 {
+
+#ifndef HAS_SINGLE_RAIL
     GPIOPin flashRegEnable = FLASH_REG_EN_GPIO;
     flashRegEnable.setControl(GPIOPin::OUT_2MHZ);
     flashRegEnable.setHigh();
 
-    vbus.setControl(GPIOPin::IN_FLOAT);
-
     GPIOPin vcc3v3 = VCC33_ENABLE_GPIO;
     vcc3v3.setControl(GPIOPin::OUT_2MHZ);
+#endif
+
+    vbus.setControl(GPIOPin::IN_FLOAT);
 
     /*
      * Set initial state.
