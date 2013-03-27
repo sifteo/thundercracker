@@ -546,6 +546,7 @@ void MainMenu::updateSound()
 
     Sifteo::TimeDelta dt = Sifteo::SystemTime::now() - time;
     static bool playedOnce = false;
+    const unsigned kGlitchThreshold = 500; // empirical
 
     MenuState state = menu.getState();
 
@@ -556,13 +557,15 @@ void MainMenu::updateSound()
             AudioChannel(kUIResponseSoundChannel).play(Sound_TiltClick);
         }
     } else if (state == MENU_STATE_INERTIA) {
-        if (!playedOnce && menu.isAtEdge()) {
+        if (!playedOnce && menu.isAtEdge() && dt.milliseconds() >= kGlitchThreshold) {
+            time += dt; // avoid glitches
             AudioChannel(kUIResponseSoundChannel).play(Sound_NonPossibleAction);
             playedOnce = true;
         }
     } else if (state == MENU_STATE_STATIC) {
         if (menu.isTilted() && menu.isTiltingAtEdge()) {
-            if (!playedOnce) {
+            if (!playedOnce && dt.milliseconds() >= kGlitchThreshold) {
+                time += dt; // avoid glitches
                 AudioChannel(kUIResponseSoundChannel).play(Sound_NonPossibleAction);
                 playedOnce = true;
             }
