@@ -159,7 +159,6 @@ void PowerManager::setState(State s)
     lastState = s;
 }
 
-#if BOARD == BOARD_TC_MASTER_REV3
 void PowerManager::shutdownIfVBattIsCritical(unsigned vbatt, unsigned limit)
 {
     /*
@@ -170,34 +169,12 @@ void PowerManager::shutdownIfVBattIsCritical(unsigned vbatt, unsigned limit)
      * If not, shut ourselves down, and hope our batteries get replaced soon.
      */
 
-    if (vbatt<=limit && state()==BatteryPwr) {
-
-        batteryPowerOff();
-        /*
-         * wait to for power to drain. if somebody keeps their finger
-         * on the homebutton, we may be here a little while, so don't
-         * get zapped by the watchdog on our way out
-         */
-        for (;;) {
-            Atomic::Barrier();
-            Tasks::resetWatchdog();
-        }
-    }
-}
-#elif BOARD == BOARD_TC_MASTER_REV2
-void PowerManager::shutdownIfVBattIsCritical(unsigned vbatt, unsigned vsys)
-{
-    /*
-     * To be a bit conservative, we assume that any sample we take is skewed by
-     * our MAX_JITTER in the positive direction. Correct for this, and see if
-     * we're still above the required thresh to continue powering on.
-     *
-     * If not, shut ourselves down, and hope our batteries get replaced soon.
-     */
-
-    if (vbatt - BatteryLevel::MAX_JITTER < vsys) {
-
-        batteryPowerOff();
+#ifdef HAS_SINGLE_RAIL
+	if (vbatt<=limit && state()==BatteryPwr) {
+#else
+    if (vbatt - BatteryLevel::MAX_JITTER < limit) {
+#endif
+		batteryPowerOff();
         /*
          * wait to for power to drain. if somebody keeps their finger
          * on the homebutton, we may be here a little while, so don't
