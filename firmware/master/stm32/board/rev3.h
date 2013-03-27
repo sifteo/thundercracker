@@ -73,7 +73,7 @@
 
 // U A R T
 #define UART_DBG            USART1					// Uses alternate configuration
-#define UART_RX_GPIO        GPIOPin(&GPIOB, 5)
+#define UART_RX_GPIO        GPIOPin(&GPIOB, 7)
 #define UART_TX_GPIO        GPIOPin(&GPIOB, 6)
 
 // L E D
