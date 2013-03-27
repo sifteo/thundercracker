@@ -5,7 +5,7 @@
 
 #include "swd.h"
 
-#define SWD_WKP_CYCLES 150
+#define SWD_RST_CYCLES 50
 #define SWD_REQ_CYCLES 8
 #define SWD_ACK_CYCLES 3
 #define SWD_DAT_CYCLES 32
@@ -38,30 +38,29 @@ void SWDMaster::stopTimer()
 
 /*
  *  Leaves finally in the following state
- *  SWDCLK  = high
+ *  SWDCLK  = low
  *  SWDIO   = unchanged (but stays high throughout)
  *  timer   = stopped
  */
 void SWDMaster::wkpControllerCB()
 {
-    static uint32_t cycles = SWD_WKP_CYCLES;
+    static uint32_t cycles = SWD_RST_CYCLES;
 
     if (isRisingEdge()) {
         return;
     }
 
-    if(--cycles) {
-        fallingEdge();
-    } else {
-        cycles = SWD_WKP_CYCLES;
+    fallingEdge();
+    if(--cycles == 0) {
+        cycles = SWD_RST_CYCLES;
         stopTimer();
     }
 }
 
 /*
  *  Leaves finally in the following state
- *  SWDCLK  = high (TODO: set to low when exiting debug mode)
- *  SWDIO   = done-care (TODO: set to high when exiting debug mode)
+ *  SWDCLK  = low
+ *  SWDIO   = high
  *  timer   = stopped
  */
 void SWDMaster::txnControllerCB()
@@ -75,6 +74,7 @@ void SWDMaster::txnControllerCB()
         _data,
         _parity,
         _turn3,
+        _reset,
         _done
     };
     static uint32_t buffer = 0;
@@ -82,18 +82,15 @@ void SWDMaster::txnControllerCB()
     static uint8_t cycles = SWD_REQ_CYCLES;
 
     if(isRisingEdge()) {
-        if (state == _done) {
-            state = _idle;
-            stopTimer();
-        }
         return;
     }
 
     switch(state) {
     case _idle:
         // fall through to header state;
-        buffer = header<<24;
-        cycles = SWD_REQ_CYCLES;
+        // start bit has been Xmitted before we enter FSM
+        buffer = header<<(24+1);
+        cycles = SWD_REQ_CYCLES-1;
         state = _header;
     case _header:
         sendbit(buffer);
@@ -103,9 +100,10 @@ void SWDMaster::txnControllerCB()
         }
         break;
     case _turn1:
-        swdio.setControl(GPIOPin::IN_FLOAT);
+        swdio.setLow();
         cycles = SWD_ACK_CYCLES;
         state = _ack;
+        swdio.setControl(GPIOPin::IN_FLOAT);
         break;
     case _ack:
         receivebit(buffer);
@@ -121,16 +119,18 @@ void SWDMaster::txnControllerCB()
                 // wait additional clock cycle for DAP write
                 swdio.setControl(GPIOPin::OUT_2MHZ);
                 buffer = payloadOut;
-                break;
+            } else {
+                buffer = 0;
             }
         } else {
             // TODO handle wait/error case differently
+            swdio.setHigh();
             swdio.setControl(GPIOPin::OUT_2MHZ);
-            swdio.setLow();
-            state = _done;
+            cycles = SWD_RST_CYCLES-1;
+            state = _reset;
+            break;
         }
         //fall through to data for DAP read
-        buffer = 0;
     case _data:
         if (isDAPRead()) {
             receivebit(buffer);
@@ -145,11 +145,12 @@ void SWDMaster::txnControllerCB()
         // TODO implement parity check
         if (isDAPRead()) {
             //read and compare parity
-            state = _turn3;
+            //readbit(buffer)
         } else {
             //compute and write parity
-            state = _done;
+            //sendbit(buffer);
         }
+        state = _turn3;
         break;
     case _turn3:
         swdio.setHigh();
@@ -157,7 +158,15 @@ void SWDMaster::txnControllerCB()
         state = _done;
         break;
     case _done:
-
+        stopTimer();
+        state = _idle;
+        break;
+    case _reset:
+        if (--cycles == 0) {
+            //buffer should be clear here
+            state = _done;
+        }
+        break;
     default:
         //shouldnt come here
         //TODO assert

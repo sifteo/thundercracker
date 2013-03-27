@@ -48,8 +48,9 @@ private:
     }
 
     void ALWAYS_INLINE receivebit(uint32_t& b) {
-        b <<= 1;
-        b | swdio.isHigh();
+        // LSB first
+        b >>= 1;
+        b | (swdio.isHigh()<<31);
     }
 
     bool ALWAYS_INLINE isRisingEdge() {
