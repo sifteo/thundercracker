@@ -19,17 +19,29 @@ void PowerManager::batteryPowerOn()
      * user releases our home button, if we're on battery power,
      * so this runs during very early init.
      */
-    GPIOPin vcc20 = VCC20_ENABLE_GPIO;
-    vcc20.setControl(GPIOPin::OUT_2MHZ);
-    vcc20.setHigh();
+
+#ifdef HAS_SINGLE_RAIL
+	GPIOPin powerEnable = VCC30_ENABLE_GPIO;
+#else
+	GPIOPin powerEnable = VCC20_ENABLE_GPIO;
+#endif
+
+    powerEnable.setControl(GPIOPin::OUT_2MHZ);
+    powerEnable.setHigh();
 }
 
 void PowerManager::batteryPowerOff()
 {
     // release the power supply enable
-    GPIOPin vcc20 = VCC20_ENABLE_GPIO;
-    vcc20.setControl(GPIOPin::OUT_2MHZ);
-    vcc20.setLow();
+
+#ifdef HAS_SINGLE_RAIL
+	GPIOPin powerEnable = VCC30_ENABLE_GPIO;
+#else
+	GPIOPin powerEnable = VCC20_ENABLE_GPIO;
+#endif
+
+    powerEnable.setControl(GPIOPin::OUT_2MHZ);
+    powerEnable.setLow();
 }
 
 /*
