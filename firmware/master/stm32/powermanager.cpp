@@ -127,37 +127,33 @@ void PowerManager::vbusDebounce()
 
 void PowerManager::setState(State s)
 {
-#if (BOARD >= BOARD_TC_MASTER_REV2)
+#if (BOARD >= BOARD_TC_MASTER_REV2) && (!defined HAS_SINGLE_RAIL)
     GPIOPin vcc3v3 = VCC33_ENABLE_GPIO;
 
     switch (s) {
-    case BatteryPwr:
-        /*
-         * Currently does not recover well when USB is unplugged
-         * becuase the boost is not enabled during this period and takes ~100 us
-         * to power on. We may need to employ the use of a load switch to keep the
-         * boost running in all situations
-         */
+	    case BatteryPwr:
+	        batteryPowerOn();
+	        UsbDevice::deinit();
+	        vcc3v3.setLow();
+	        break;
 
-        #if BOARD==BOARD_TC_MASTER_REV3
-        batteryPowerOn();
-        #endif
-
-        UsbDevice::deinit();
-        vcc3v3.setLow();
-        break;
-
-    case UsbPwr:
-        vcc3v3.setHigh();
-        UsbDevice::init();
-
-        //Disable boost on USB power
-        #if BOARD==BOARD_TC_MASTER_REV3
-        batteryPowerOff();
-        #endif
-
-        break;
+	    case UsbPwr:
+	        vcc3v3.setHigh();
+	        UsbDevice::init();
+	        batteryPowerOff();
+	        break;
     }
+#elif defined HAS_SINGLE_RAIL
+
+	switch(s) {
+		case BatteryPwr:
+			UsbDevice::deinit();
+		break;
+
+		case UsbPwr:
+			UsbDevice::init();
+		break;
+	}
 #endif
 
     lastState = s;
