@@ -96,10 +96,14 @@
 #define PWR_MEASURE_ADC     ADC1
 
 // V O L U M E  F A D E R
+#define USE_ADC_FADER_MEAS	// Use ADC measurement instead of RC circuit
+
 #define FADER_MEAS_GPIO     GPIOPin(&GPIOA, 1)
 #define FADER_ADC_CHAN      1
 
 // B A T T E R Y
+#define USE_ADC_BATT_MEAS	// Use ADC measurement for battery instead of RC
+
 #define VBATT_MEAS_GPIO     GPIOPin(&GPIOA, 5)
 #define VBATT_ADC_CHAN      5
 
