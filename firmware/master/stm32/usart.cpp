@@ -28,8 +28,14 @@ void Usart::init(GPIOPin rx, GPIOPin tx, int rate, StopBits bits)
         RCC.APB1ENR |= (1 << 20);
     }
 
+#if BOARD == BOARD_TC_MASTER_REV3
+	UART_RX_GPIO.setControl(GPIOPin::OUT_ALT_OPEN_50MHZ);
+	UART_TX_GPIO.setControl(GPIOPin::OUT_ALT_OPEN_50MHZ);
+	AFIO.MAPR |= (1 << 2);     // remap UART1 to PB6-7
+#else
     rx.setControl(GPIOPin::IN_FLOAT);
     tx.setControl(GPIOPin::OUT_ALT_50MHZ);
+#endif
 
     // NOTE - these divisors must reflect the startup values configured in setup.cpp
     const unsigned APB2RATE = (72000000 / 1);
