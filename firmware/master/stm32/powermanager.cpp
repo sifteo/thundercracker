@@ -198,6 +198,3 @@ void PowerManager::shutdownIfVBattIsCritical(unsigned vbatt, unsigned vsys)
         }
     }
 }
-#else
-#error Error in Power Manger. See PowerManager.cpp
-#endif
