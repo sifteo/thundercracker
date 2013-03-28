@@ -120,10 +120,11 @@ class Menu {
     bool isTilted();
     bool isAtEdge();
     bool isTiltingAtEdge();
-    bool canBeSelected();
     void setCurrentTip(int ct);
     int getCurrentTip();
-    uint8_t getNumTips();
+    uint8_t getNumItems();
+    uint8_t computeSelected();
+    void drawFooter(bool force = false);
 
     VideoBuffer *videoBuffer() const;
     CubeID cube() const;
@@ -234,10 +235,8 @@ class Menu {
 
     // util.h
     void detectNeighbors();
-    uint8_t computeSelected();
     void checkForPress();
     void drawColumn(int);
-    void drawFooter(bool force = false);
     int stoppingPositionFor(int);
     float velocityMultiplier();
     float maxVelocity();

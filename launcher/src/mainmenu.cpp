@@ -578,9 +578,20 @@ void MainMenu::updateSound()
 
 void MainMenu::updateFooter()
 {
-    // hide the "press to select" footer tip when it's not possible
-    if (!menu.canBeSelected() && menu.getCurrentTip() == menu.getNumTips() - 1) {
-        menu.setCurrentTip(0); // to hide the item we simply skip it (re-loop)
+    /*
+     * Hide the "press to select" footer tip when an item is not a game
+     * because it can't be selected.
+     */
+
+    // the 2 last items are not games (sifteo.com ad and battery menu):
+    bool itemCanBeSelected = (menu.computeSelected() < menu.getNumItems() - 2);
+
+    // the tip to skip is the last one, but the counter resets to 0 as soon as it's reached
+    bool tipToSkipWasReached = (menu.getCurrentTip() == 0);
+
+    if (!itemCanBeSelected && tipToSkipWasReached) {
+        // refresh the footer to skip the unwanted tip
+        menu.drawFooter(true);
     }
 }
 
