@@ -116,7 +116,7 @@
 #define JIG_SCL_GPIO        GPIOPin(&GPIOB, 6)
 #define JIG_SDA_GPIO        GPIOPin(&GPIOB, 7)
 
-#define PWR_MEASURE_ADC     ADC1
+#define PWR_MEASURE_ADC     Adc::Adc1
 #define USB_PWR_GPIO        GPIOPin(&GPIOB, 15)
 #define VBATT_EN_GPIO       GPIOPin(&GPIOA, 8)
 

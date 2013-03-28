@@ -29,7 +29,6 @@ static GPIOPin testUsbEnable = USB_PWR_GPIO;
 static GPIOPin vbattEnable = VBATT_EN_GPIO;
 
 
-static Adc adc(&PWR_MEASURE_ADC);
 static GPIOPin usbCurrentSign = USB_CURRENT_DIR_GPIO;
 static GPIOPin v3CurrentSign = V3_CURRENT_DIR_GPIO;
 static GPIOPin dip1 = DIP_SWITCH1_GPIO;
@@ -116,9 +115,9 @@ void TestJig::init()
     GPIOPin usbCurrentPin = USB_CURRENT_GPIO;
     usbCurrentPin.setControl(GPIOPin::IN_ANALOG);
 
-    adc.init();
-    adc.setSampleRate(USB_CURRENT_ADC_CH, Adc::SampleRate_55_5);
-    adc.setSampleRate(V3_CURRENT_ADC_CH, Adc::SampleRate_55_5);
+    PWR_MEASURE_ADC.init();
+    PWR_MEASURE_ADC.setSampleRate(USB_CURRENT_ADC_CH, Adc::SampleRate_55_5);
+    PWR_MEASURE_ADC.setSampleRate(V3_CURRENT_ADC_CH, Adc::SampleRate_55_5);
 
     testUsbEnable.setControl(GPIOPin::OUT_2MHZ);
     testUsbEnable.setHigh();    // default to enabled
@@ -389,7 +388,7 @@ void TestJig::getBatterySupplyCurrentHandler(uint8_t argc, uint8_t *args)
     uint32_t sampleSum = 0;
 
     for (unsigned i = 0; i < NUM_CURRENT_SAMPLES; i++) {
-        sampleSum += adc.sample(V3_CURRENT_ADC_CH);
+        sampleSum += PWR_MEASURE_ADC.sampleSync(V3_CURRENT_ADC_CH);
     }
     
     uint16_t sampleAvg = sampleSum / NUM_CURRENT_SAMPLES;
@@ -406,7 +405,7 @@ void TestJig::getUsbCurrentHandler(uint8_t argc, uint8_t *args)
     uint32_t sampleSum = 0;
 
     for (unsigned i = 0; i < NUM_CURRENT_SAMPLES; i++) {
-        sampleSum += adc.sample(USB_CURRENT_ADC_CH);
+        sampleSum += PWR_MEASURE_ADC.sampleSync(USB_CURRENT_ADC_CH);
     }
 
     uint16_t sampleAvg = sampleSum / NUM_CURRENT_SAMPLES;
