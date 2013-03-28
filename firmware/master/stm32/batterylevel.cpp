@@ -27,9 +27,8 @@ void init() {
     GPIOPin vbattMeas = VBATT_MEAS_GPIO;
     vbattMeas.setControl(GPIOPin::IN_ANALOG);
 
-    Adc::init();
-    Adc::setCallback(VBATT_ADC_CHAN,BatteryLevel::adcCallback);
-    Adc::setSampleRate(VBATT_ADC_CHAN,Adc::SampleRate_55_5);
+    VBATT_ADC.setCallback(VBATT_ADC_CHAN,BatteryLevel::adcCallback);
+    VBATT_ADC.setSampleRate(VBATT_ADC_CHAN,Adc::SampleRate_55_5);
 }
 
 unsigned raw() {
@@ -45,7 +44,7 @@ unsigned scaled() {
 }
 
 void beginCapture() {
-    Adc::sample(VBATT_ADC_CHAN);
+    VBATT_ADC.sample(VBATT_ADC_CHAN);
 
     PowerManager::shutdownIfVBattIsCritical(lastReading, minIn);
 }

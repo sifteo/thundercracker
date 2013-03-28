@@ -98,6 +98,9 @@
 #define AUDIO_PWM_TIM       TIM1
 #define AUDIO_SAMPLE_TIM    TIM7
 
+// V O L U M E
+//#define USE_ADC_FADER_MEAS
+
 #define VOLUME_TIM          TIM5
 #define VOLUME_CHAN         2
 #define VOLUME_GPIO         GPIOPin(&GPIOA, 1)

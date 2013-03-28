@@ -7,6 +7,7 @@
 #define ADC_H
 
 #include "hardware.h"
+#include "macros.h"
 
 class Adc
 {
@@ -24,17 +25,25 @@ public:
         SampleRate_239_5    // 239.5 ADC cycles
     };
 
-    static void init();
-    static void setCallback(uint8_t ch, AdcIsr_t funct);
-    static void setSampleRate(uint8_t ch, SampleRate rate);
-    static bool sample(uint8_t ch);
+    Adc(volatile ADC_t *adc) :
+        hw(adc)
+    {}
+
+    void init();
+    void setCallback(uint8_t ch, AdcIsr_t funct);
+    void setSampleRate(uint8_t ch, SampleRate rate);
+    bool sample(uint8_t ch);
+
+    static Adc Adc1;    // shared instance
 
 private:
-    static bool isBusy();
+    volatile ADC_t *hw;
 
-    static void serveIsr(AdcIsr_t &handler);
-
-    static AdcIsr_t ADCHandlers[16];
+    ALWAYS_INLINE bool isBusy() const {
+        return hw->SR & (1 << 1);
+    }
+    void serveIsr();
+    AdcIsr_t handlers[16];
 
     friend void ISR_ADC1_2();
 };

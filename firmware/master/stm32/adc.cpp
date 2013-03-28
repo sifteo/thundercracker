@@ -5,52 +5,59 @@
 
 #include "adc.h"
 
-Adc::AdcIsr_t Adc::ADCHandlers[16];
+Adc Adc::Adc1(&ADC1);
 
 void Adc::init()
 {
-
     // enable peripheral clock
-    RCC.APB2ENR |= (1 << 9); //ADC1
+    if (hw == &ADC1) {
+        RCC.APB2ENR |= (1 << 9);
+    }
+    else if (hw == &ADC2) {
+        RCC.APB2ENR |= (1 << 10);
+    }
+    else if (hw == &ADC3) {
+        RCC.APB2ENR |= (1 << 15);
+    }
 
     /*
      * Enable SWSTART as our external event selection, default channel selection
      * to none, and enable the periph.
      */
-    ADC1.CR1 = 1 << 5;       // enable EOCIE
-    ADC1.CR2 = 7 << 17;
-    ADC1.SQR1 = 0;
-    ADC1.SQR2 = 0;
-    ADC1.SQR3 = 0;
-    ADC1.SMPR1 = 0;
-    ADC1.SMPR2 = 0;
-    ADC1.CR2 |= 0x1;
+    hw->CR1 = 1 << 5;       // enable EOCIE
+    hw->CR2 = 7 << 17;
+    hw->SQR1 = 0;
+    hw->SQR2 = 0;
+    hw->SQR3 = 0;
+    hw->SMPR1 = 0;
+    hw->SMPR2 = 0;
+    hw->CR2 |= 0x1;
 
     // reset calibration & wait for it to complete
     const uint32_t resetCalibration = (1 << 3);
-    ADC1.CR2 |= resetCalibration;
-    while (ADC1.CR2 & resetCalibration)
+    hw->CR2 |= resetCalibration;
+    while (hw->CR2 & resetCalibration)
         ;
 
     // perform calibration & wait for it to complete
     const uint32_t calibrate = (1 << 2);
-    ADC1.CR2 |= calibrate;
-    while (ADC1.CR2 & calibrate)
+    hw->CR2 |= calibrate;
+    while (hw->CR2 & calibrate)
         ;
 }
 
 void Adc::setSampleRate(uint8_t channel, SampleRate rate)
 {
     if (channel < 10) {
-        ADC1.SMPR2 |= rate << (channel * 3);
+        hw->SMPR2 |= rate << (channel * 3);
     } else {
-        ADC1.SMPR1 |= rate << ((channel - 10) * 3);
+        hw->SMPR1 |= rate << ((channel - 10) * 3);
     }
 }
 
 void Adc::setCallback(uint8_t channel, AdcIsr_t funct)
 {
-    ADCHandlers[channel] = funct;
+    handlers[channel] = funct;
 }
 
 /*
@@ -59,42 +66,28 @@ void Adc::setCallback(uint8_t channel, AdcIsr_t funct)
 bool Adc::sample(uint8_t channel)
 {
     if(!isBusy()){
-        ADC1.SQR3 = channel;
-        ADC1.CR2 |= ((1 << 22) | (1 << 20));     // SWSTART the conversion
+        hw->SQR3 = channel;
+        hw->CR2 |= ((1 << 22) | (1 << 20));     // SWSTART the conversion
         return true;
     }else{
         return false;                           //returns false if the ADC is busy
     }
 }
 
-/*
- * Returns if ADC peripheral is busy
- */
-bool Adc::isBusy()
-{
-    return ADC1.SR & (1 << 1);
-}
-
-/*
- * IRQ Handler
- */
 IRQ_HANDLER ISR_ADC1_2()
 {
-    //Check which handler this IRQ belongs to.
-    //Fire the required callback depending on which one it is.
-    unsigned channel = ADC1.SQR3;
-
-    Adc::serveIsr(Adc::ADCHandlers[channel]);
+    Adc::Adc1.serveIsr();
 }
 
-/*
- * ADC Isr Handler
- */
-void Adc::serveIsr(AdcIsr_t & handler)
+void Adc::serveIsr()
 {
-    uint16_t sample = ADC1.DR;
+    if (hw->SR & (1 << 1)) {    // check for EOC
 
-    if(handler) {
-        handler(sample);
+        unsigned channel = hw->SQR3;
+        AdcIsr_t &callback = handlers[channel];
+
+        if (callback) {
+            callback(hw->DR);
+        }
     }
 }

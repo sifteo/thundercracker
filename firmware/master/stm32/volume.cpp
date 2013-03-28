@@ -29,8 +29,8 @@ void init()
     GPIOPin faderMeas = FADER_MEAS_GPIO;
     faderMeas.setControl(GPIOPin::IN_ANALOG);
 
-    Adc::setCallback(FADER_ADC_CHAN, Volume::adcCallback);
-    Adc::setSampleRate(FADER_ADC_CHAN, Adc::SampleRate_55_5);
+    FADER_ADC.setCallback(FADER_ADC_CHAN, Volume::adcCallback);
+    FADER_ADC.setSampleRate(FADER_ADC_CHAN, Adc::SampleRate_55_5);
 
 }
 
@@ -42,7 +42,7 @@ int systemVolume()
 
 void beginCapture()
 {
-    Adc::sample(FADER_ADC_CHAN);
+    FADER_ADC.sample(FADER_ADC_CHAN);
 }
 
 int calibrate(CalibrationState state)

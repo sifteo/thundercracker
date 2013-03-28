@@ -26,6 +26,7 @@
 #include "neighbor_tx.h"
 #include "led.h"
 #include "batterylevel.h"
+#include "adc.h"
 
 /*
  * Application specific entry point.
@@ -138,6 +139,10 @@ int main()
                  (1 << 11) |        // TIM2 ""
                  (1 << 10);         // TIM1 ""
 #endif
+
+    #if (defined USE_ADC_BATT_MEAS) || (defined USE_ADC_FADER_MEAS)
+    Adc::Adc1.init();
+    #endif
 
     LED::init();
     Tasks::init();
