@@ -90,8 +90,10 @@ int main()
     NVIC.irqEnable(IVT.NBR_TX_TIM);                 // Neighbor transmit
     NVIC.irqPrioritize(IVT.NBR_TX_TIM, 0x60);       //  just below volume timer
 
+#if defined USE_ADC_BATT_MEAS ||  defined USE_ADC_FADER_MEAS
     NVIC.irqEnable(IVT.ADC1_2);                     // adc sample
     NVIC.irqPrioritize(IVT.ADC1_2,0x80);            // low priority. only used for battery/fader measurement
+#endif
 
     /*
      * For SVM to operate properly, SVC needs to have a very low priority
