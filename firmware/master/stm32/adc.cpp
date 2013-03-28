@@ -60,18 +60,30 @@ void Adc::setCallback(uint8_t channel, AdcIsr_t funct)
     handlers[channel] = funct;
 }
 
-/*
- * Super simple (and inefficient) synchronous single conversion mode for now.
-*/
-bool Adc::sample(uint8_t channel)
+void Adc::beginSample(uint8_t channel)
 {
-    if(!isBusy()){
+    /*
+     * Kick off a new sample if there's not already one in progress.
+     */
+
+    if (!isBusy()) {
         hw->SQR3 = channel;
         hw->CR2 |= ((1 << 22) | (1 << 20));     // SWSTART the conversion
-        return true;
-    }else{
-        return false;                           //returns false if the ADC is busy
     }
+}
+
+uint16_t Adc::sampleSync(uint8_t channel)
+{
+    /*
+     * Inefficient but simple synchronous sample.
+     */
+
+    hw->SQR3 = channel;
+
+    hw->CR2 |= ((1 << 22) | (1 << 20));     // SWSTART the conversion
+    while (!(hw->SR & (1 << 1)))            // wait for EOC
+        ;
+    return hw->DR;
 }
 
 IRQ_HANDLER ISR_ADC1_2()

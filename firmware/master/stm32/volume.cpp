@@ -42,7 +42,7 @@ int systemVolume()
 
 void beginCapture()
 {
-    FADER_ADC.sample(FADER_ADC_CHAN);
+    FADER_ADC.beginSample(FADER_ADC_CHAN);
 }
 
 int calibrate(CalibrationState state)

@@ -44,7 +44,7 @@ unsigned scaled() {
 }
 
 void beginCapture() {
-    VBATT_ADC.sample(VBATT_ADC_CHAN);
+    VBATT_ADC.beginSample(VBATT_ADC_CHAN);
 
     PowerManager::shutdownIfVBattIsCritical(lastReading, minIn);
 }
