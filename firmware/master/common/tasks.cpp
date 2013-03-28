@@ -50,7 +50,7 @@ ALWAYS_INLINE void Tasks::taskInvoke(unsigned id)
         #endif
     #endif
 
-    #if !defined(BOOTLOADER) && (BOARD != BOARD_TEST_JIG)
+    #if !defined(BOOTLOADER) && !BOARD_EQUALS(BOARD_TEST_JIG)
         case Tasks::AudioPull:      return AudioMixer::pullAudio();
         case Tasks::Debugger:       return SvmDebugger::messageLoop();
         case Tasks::AssetLoader:    return AssetLoader::task();
@@ -84,7 +84,8 @@ void Tasks::heartbeatTask()
     Volume::beginCapture();
 #endif
 
-#if (BOARD != BOARD_TEST_JIG)
+#if !BOARD_EQUALS(BOARD_TEST_JIG)
+
     #ifndef DISABLE_IDLETIMEOUT
     IdleTimeout::heartbeat();
     #endif
