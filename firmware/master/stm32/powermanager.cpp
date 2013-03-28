@@ -117,7 +117,7 @@ void PowerManager::vbusDebounce()
     State s = state();
     if (s != lastState) {
         setState(s);
-#if !defined(BOOTLOADER)
+#if !defined(BOOTLOADER) && (BOARD != BOARD_TEST_JIG)
         if (s == UsbPwr) {
             Radio::onTransitionToUsbPower();
         }
