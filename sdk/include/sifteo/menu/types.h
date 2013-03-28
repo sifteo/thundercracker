@@ -120,6 +120,10 @@ class Menu {
     bool isTilted();
     bool isAtEdge();
     bool isTiltingAtEdge();
+    bool canBeSelected();
+    void setCurrentTip(int ct);
+    int getCurrentTip();
+    uint8_t getNumTips();
 
     VideoBuffer *videoBuffer() const;
     CubeID cube() const;

@@ -207,6 +207,7 @@ void MainMenu::eventLoop()
         while (mainCube.isDefined() && menu.pollEvent(&e)) {
             updateConnecting();
             updateSound();
+            updateFooter();
             updateMusic();
             updateAlerts();
             handleEvent(e);
@@ -573,7 +574,14 @@ void MainMenu::updateSound()
             playedOnce = false; // reset when cube is static and horizontal
         }
     }
+}
 
+void MainMenu::updateFooter()
+{
+    // hide the "press to select" footer tip when it's not possible
+    if (!menu.canBeSelected() && menu.getCurrentTip() == menu.getNumTips() - 1) {
+        menu.setCurrentTip(0); // to hide the item we simply skip it (re-loop)
+    }
 }
 
 void MainMenu::updateMusic()

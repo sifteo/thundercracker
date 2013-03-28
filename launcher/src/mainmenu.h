@@ -88,6 +88,7 @@ private:
     void checkForFirstRun();
 
     void updateSound();
+    void updateFooter();
     void updateMusic();
     void updateConnecting();
 

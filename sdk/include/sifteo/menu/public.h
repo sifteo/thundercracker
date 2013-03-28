@@ -307,12 +307,16 @@ inline bool Menu::isTilted()
 
 inline bool Menu::isAtEdge()
 {
+    ASSERT(numItems > 1);
+
     uint8_t item = computeSelected();
     return (item == 0 || item == numItems - 1);
 }
 
 inline bool Menu::isTiltingAtEdge()
 {
+    ASSERT(numItems > 1);
+
     /*
      * if we're tilting up against either the beginning or the end of the menu,
      * there are no more items to navigate to.
@@ -324,6 +328,33 @@ inline bool Menu::isTiltingAtEdge()
         return true;
 
     return false;
+}
+
+inline bool Menu::canBeSelected()
+{
+    ASSERT(numItems > 1);
+
+    // the 2 last items are not games (sifteo.com ad and battery menu)
+    return (computeSelected() < numItems - 2);
+}
+
+inline void Menu::setCurrentTip(int ct)
+{
+    ASSERT(ct >= 0 && ct <= numTips);
+
+    currentTip = ct;
+}
+
+inline int Menu::getCurrentTip()
+{
+    ASSERT(currentTip < numTips);
+
+    return currentTip;
+}
+
+inline uint8_t Menu::getNumTips()
+{
+    return numTips;
 }
 
 /**
