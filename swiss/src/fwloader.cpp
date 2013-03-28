@@ -87,11 +87,13 @@ bool FwLoader::load(const char *path, unsigned int pid)
     if (!checkFileDetails(f, plainsz, crc))
         return false;
 
-    if (!bootloaderVersionIsCompatible())
+    unsigned swVersion, hwVersion;
+    if (!bootloaderVersionIsCompatible(swVersion, hwVersion))
         return false;
 
     resetBootloader();
 
+    // XXX: ensure we're sending an appropriate firmware for the board's hardware version
     if (!sendFirmwareFile(f, crc, plainsz)) {
         fprintf(stderr, "error sending file\n");
         return false;
@@ -105,7 +107,7 @@ bool FwLoader::load(const char *path, unsigned int pid)
 /*
  * Query the bootloader's version, and make sure we're compatible with it.
  */
-bool FwLoader::bootloaderVersionIsCompatible()
+bool FwLoader::bootloaderVersionIsCompatible(unsigned &swVersion, unsigned &hwVersion)
 {
     const uint8_t versionRequest[] = { Bootloader::CmdGetVersion };
     dev.writePacket(versionRequest, sizeof versionRequest);
@@ -119,8 +121,12 @@ bool FwLoader::bootloaderVersionIsCompatible()
     if (numBytes < 2 || usbBuf[0] != Bootloader::CmdGetVersion)
         return false;
 
-    unsigned version = usbBuf[1];
-    return ((VERSION_COMPAT_MIN <= version) && (version <= VERSION_COMPAT_MAX));
+    swVersion = usbBuf[1];
+    // older bootloaders don't send the hardware version,
+    // so check the length again to be sure
+    hwVersion = (numBytes >= 3) ? usbBuf[2] : 0;
+
+    return ((VERSION_COMPAT_MIN <= swVersion) && (swVersion <= VERSION_COMPAT_MAX));
 }
 
 void FwLoader::resetBootloader()
