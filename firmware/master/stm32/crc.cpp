@@ -14,7 +14,14 @@ void Crc32::addUniqueness()
     const unsigned numWords = SysInfo::UniqueIdNumBytes / sizeof(uint32_t);
         
     for (unsigned i = 0; i != numWords; ++i) {
-        add(*id);
+        addInline(*id);
         id++;
     }
+}
+
+NEVER_INLINE void Crc32::add(uint32_t word)
+{
+    // Function call delay enforces minimum 4 AHB clock cycle delay.
+    // This function should never be inlined!
+    addInline(word);
 }
