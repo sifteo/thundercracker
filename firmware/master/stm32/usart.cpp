@@ -29,9 +29,9 @@ void Usart::init(GPIOPin rx, GPIOPin tx, int rate, StopBits bits)
     }
 
 #if BOARD == BOARD_TC_MASTER_REV3
-	rx.setControl(GPIOPin::OUT_ALT_50MHZ);
-	tx.setControl(GPIOPin::OUT_ALT_50MHZ);
-	AFIO.MAPR |= (1 << 2);     // remap UART1 to PB6-7
+    rx.setControl(GPIOPin::OUT_ALT_50MHZ);
+    tx.setControl(GPIOPin::OUT_ALT_50MHZ);
+    AFIO.MAPR |= (1 << 2);     // remap UART1 to PB6-7
 #else
     rx.setControl(GPIOPin::IN_FLOAT);
     tx.setControl(GPIOPin::OUT_ALT_50MHZ);
