@@ -28,7 +28,7 @@
 namespace DacAudioOut {
     static const HwTimer sampleTimer(&AUDIO_SAMPLE_TIM);
     static GPIOPin ampEn = AUDIO_DAC_EN_GPIO;
-    static volatile DMAChannel_t *dmaChannel = &AUDIO_DAC_DMA.channels[AUDIO_DAC_DMA_CHAN-1];
+    static volatile DMAChannel_t *dmaChannel;
 
     static void dmaCallback(void *p, uint8_t flags)
     {
@@ -58,7 +58,7 @@ void AudioOutDevice::init()
     DacAudioOut::ampEn.setLow();
 
     // Set up DMA to pull directly from the circular mixing buffer
-    Dma::initChannel(&AUDIO_DAC_DMA, AUDIO_DAC_DMA_CHAN-1, DacAudioOut::dmaCallback, 0);
+    DacAudioOut::dmaChannel = Dma::initChannel(&AUDIO_DAC_DMA, AUDIO_DAC_DMA_CHAN-1, DacAudioOut::dmaCallback, 0);
     DacAudioOut::dmaChannel->CNDTR = AudioMixer::output.getDMACount();
     DacAudioOut::dmaChannel->CMAR = AudioMixer::output.getDMABuffer();
     DacAudioOut::dmaChannel->CPAR = Dac::address(AUDIO_DAC_CHAN, Dac::LeftAlign12Bit);
