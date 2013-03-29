@@ -120,10 +120,8 @@ class Menu {
     bool isTilted();
     bool isAtEdge();
     bool isTiltingAtEdge();
-    void setCurrentTip(int ct);
+    void setNumTips(uint8_t nt);
     int getCurrentTip();
-    uint8_t getNumItems();
-    uint8_t computeSelected();
     void drawFooter(bool force = false);
 
     VideoBuffer *videoBuffer() const;
@@ -235,6 +233,7 @@ class Menu {
 
     // util.h
     void detectNeighbors();
+    uint8_t computeSelected();
     void checkForPress();
     void drawColumn(int);
     int stoppingPositionFor(int);

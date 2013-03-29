@@ -324,11 +324,11 @@ inline bool Menu::isTiltingAtEdge()
             (direction > 0 && item == numItems - 1));
 }
 
-inline void Menu::setCurrentTip(int ct)
+inline void Menu::setNumTips(uint8_t nt)
 {
-    ASSERT(ct >= 0 && ct <= numTips);
+    ASSERT(nt >= 0);
 
-    currentTip = ct;
+    numTips = nt;
 }
 
 inline int Menu::getCurrentTip()
@@ -338,10 +338,6 @@ inline int Menu::getCurrentTip()
     return currentTip;
 }
 
-inline uint8_t Menu::getNumItems()
-{
-    return numItems;
-}
 
 /**
  * @} end addtogroup menu

@@ -207,7 +207,6 @@ void MainMenu::eventLoop()
         while (mainCube.isDefined() && menu.pollEvent(&e)) {
             updateConnecting();
             updateSound();
-            updateFooter();
             updateMusic();
             updateAlerts();
             handleEvent(e);
@@ -576,22 +575,35 @@ void MainMenu::updateSound()
     }
 }
 
-void MainMenu::updateFooter()
+void MainMenu::updateFooter(unsigned itemIndex)
 {
     /*
-     * Hide the "press to select" footer tip when an item is not a game
-     * because it can't be selected.
+     * Hide the "press to select" footer tip when an item is not a game.
+     * (because it can't be selected)
      */
 
-    // the 2 last items are not games (sifteo.com ad and battery menu):
-    bool itemCanBeSelected = (menu.computeSelected() < menu.getNumItems() - 2);
+    const unsigned normalNumTips = 3;
 
-    // the tip to skip is the last one, but the counter resets to 0 as soon as it's reached
-    bool tipToSkipWasReached = (menu.getCurrentTip() == 0);
+    // the last tip is normally followed by a NULL termination pointer
+    ASSERT(menuAssets.tips[normalNumTips] == NULL);
 
-    if (!itemCanBeSelected && tipToSkipWasReached) {
-        // refresh the footer to skip the unwanted tip
-        menu.drawFooter(true);
+    // can the current item be selected ?
+    // (the 2 last ones are not games: sifteo.com ad and battery menu)
+    if (itemIndex >= items.count() - 2) {
+
+        // did we reach the tip to skip ?
+        // (it's the last one, but the counter resets to 0 as soon as it's reached)
+        if (menu.getCurrentTip() == 0) {
+            // refresh the footer to skip it
+            menu.drawFooter(true);
+        }
+
+        // anyway we have to decrease the number of tips for the next loops
+        menu.setNumTips(normalNumTips - 1);
+
+    } else {
+        // restore the normal number of tips when we are on a selectable game
+        menu.setNumTips(normalNumTips);
     }
 }
 
@@ -717,6 +729,8 @@ void MainMenu::arriveItem(unsigned index)
     MainMenuItem *item = items[index];
     item->setMenuInfo(&menu, index);
     item->arrive();
+
+    updateFooter(index);
 }
 
 void MainMenu::departItem(unsigned index)
