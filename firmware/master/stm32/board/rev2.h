@@ -35,6 +35,8 @@
 #define RF_DMA_CHAN_RX      DMA2_Channel1
 #define RF_DMA_CHAN_TX      DMA2_Channel2
 
+#define USE_NRF24L01        // Use the nRF42L01 as our radio
+
 // F L A S H
 #ifdef REV2_GDB_REWORK
 
