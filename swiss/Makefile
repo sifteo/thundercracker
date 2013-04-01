@@ -44,8 +44,9 @@ INCLUDES := \
 
 VERSION := $(shell git describe --tags)
 
-# C++ compiler flags (-g -O2 -Wall)
-CCFLAGS = -g -O2 -Werror
+# C++ compiler flags
+CCFLAGS = -g -O2 $(WARNFLAGS)
+
 # we currently define SIFTEO_SIMULATOR so we can use macros.h - revisit whether
 # this deserves any reorg
 CCFLAGS += -DSDK_VERSION=$(VERSION) -DSIFTEO_SIMULATOR -D__STDC_FORMAT_MACROS -DNOT_USERSPACE
