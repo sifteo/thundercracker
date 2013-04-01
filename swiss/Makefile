@@ -51,7 +51,7 @@ CCFLAGS = -g -O2 -Werror
 CCFLAGS += -DSDK_VERSION=$(VERSION) -DSIFTEO_SIMULATOR -D__STDC_FORMAT_MACROS -DNOT_USERSPACE
 
 # library paths
-LDFLAGS := -L$(DEPS_DIR)/libusbx/lib -lusb-1.0
+LDFLAGS := $(FLAGS) -L$(DEPS_DIR)/libusbx/lib -lusb-1.0
 LDFLAGS += $(LIB_STDCPP)
 
 include Makefile.rules
