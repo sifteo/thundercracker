@@ -145,6 +145,9 @@ void PowerManager::setState(State s)
     }
 #elif defined HAS_SINGLE_RAIL
 
+	// unconditionally keep the power on.
+	batteryPowerOn();
+
 	switch(s) {
 		case BatteryPwr:
 			UsbDevice::deinit();
