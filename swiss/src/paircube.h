@@ -17,6 +17,8 @@ public:
 private:
     IODevice &dev;
 
+    static const uint64_t EMPTYSLOT = -1;   // all 0xff indicates an empty slot
+
     static bool getValidPairingSlot(const char *s, unsigned &pairingSlot);
     static bool getValidHWID(const char *s, uint64_t &hwid);
 };

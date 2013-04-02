@@ -90,7 +90,7 @@ int PairCube::dumpPairingData(bool rpc)
         }
 
         table.cell() << std::setiosflags(std::ios::hex) << std::setw(2) << std::setfill('0') << reply->pairingSlot;
-        if (reply->hwid == ~0) {
+        if (reply->hwid == EMPTYSLOT) {
             table.cell() << "(empty)";
         } else {
             table.cell() << std::setiosflags(std::ios::hex) << std::setw(16) << std::setfill('0') << reply->hwid;
@@ -98,7 +98,7 @@ int PairCube::dumpPairingData(bool rpc)
         table.endRow();
         
         if (rpc) {
-            if (reply->hwid == ~0) {
+            if (reply->hwid == EMPTYSLOT) {
                 fprintf(stdout, "::pairing:%u:\n", reply->pairingSlot); fflush(stdout);
             } else {
                 fprintf(stdout, "::pairing:%u:%"PRIu64"\n", reply->pairingSlot, reply->hwid); fflush(stdout);

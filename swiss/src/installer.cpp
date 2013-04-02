@@ -19,7 +19,7 @@ int Installer::run(int argc, char **argv, IODevice &_dev)
     bool rpc = false;
     const char *path = NULL;
 
-    for (unsigned i = 1; i < argc; i++) {
+    for (int i = 1; i < argc; i++) {
         if (!strcmp(argv[i], "-l")) {
             launcher = true;
         } else if (!strcmp(argv[i], "--rpc")) {

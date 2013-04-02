@@ -31,7 +31,7 @@ int SaveData::run(int argc, char **argv, IODevice &_dev)
         bool raw = false;
         bool rpc = false;
 
-        for (unsigned i = 2; i < argc; ++i) {
+        for (int i = 2; i < argc; ++i) {
             if (!strcmp(argv[i], "--rpc")) {
                 rpc = true;
             } else if (!strcmp(argv[i], "--raw")) {

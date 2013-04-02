@@ -17,7 +17,7 @@ int Manifest::run(int argc, char **argv, IODevice &_dev)
 {
     bool rpc = false;
     
-    for (unsigned i = 1; i < argc; i++) {
+    for (int i = 1; i < argc; i++) {
         if (!strcmp(argv[i], "--rpc")) {
             rpc = true;
         } else {

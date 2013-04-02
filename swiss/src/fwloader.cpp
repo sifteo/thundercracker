@@ -25,7 +25,7 @@ int FwLoader::run(int argc, char **argv, IODevice &_dev)
     unsigned int device_pid = IODevice::BASE_PID;
     unsigned int bootloader_pid = IODevice::BOOTLOADER_PID;
     
-    for (unsigned i = 1; i < argc; i++) {
+    for (int i = 1; i < argc; i++) {
         if (!strcmp(argv[i], "--pid") && i+1 < argc) {
             device_pid = strtoul(argv[i+1], NULL, 0);
             bootloader_pid = device_pid;
@@ -210,7 +210,7 @@ bool FwLoader::sendFirmwareFile(FILE *f, uint32_t crc, uint32_t size)
         uint8_t usbBuf[IODevice::MAX_EP_SIZE] = { Bootloader::CmdWriteMemory };
         const unsigned payload = MIN(dev.maxOUTPacketSize() - 1, initialBytesToSend);
         const unsigned chunk = (payload / AES128::BLOCK_SIZE) * AES128::BLOCK_SIZE;
-        const int numBytes = fread(usbBuf + 1, 1, chunk, f);
+        const unsigned numBytes = fread(usbBuf + 1, 1, chunk, f);
         if (numBytes != chunk) {
             return false;
         }
@@ -245,7 +245,7 @@ bool FwLoader::sendFirmwareFile(FILE *f, uint32_t crc, uint32_t size)
     uint8_t finalBuf[IODevice::MAX_EP_SIZE] = { Bootloader::CmdWriteFinal };
 
     uint8_t *p = finalBuf + 1;
-    int numBytes = fread(p, 1, AES128::BLOCK_SIZE, f);
+    unsigned numBytes = fread(p, 1, AES128::BLOCK_SIZE, f);
     p += AES128::BLOCK_SIZE;
     if (numBytes != AES128::BLOCK_SIZE)
         return false;
