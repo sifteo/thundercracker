@@ -28,7 +28,7 @@ void init() {
     vbattMeas.setControl(GPIOPin::IN_ANALOG);
 
     VBATT_ADC.setCallback(VBATT_ADC_CHAN,BatteryLevel::adcCallback);
-    VBATT_ADC.setSampleRate(VBATT_ADC_CHAN,Adc::SampleRate_55_5);
+    VBATT_ADC.setSampleRate(VBATT_ADC_CHAN,Adc::SampleRate_239_5);
 }
 
 unsigned raw() {
