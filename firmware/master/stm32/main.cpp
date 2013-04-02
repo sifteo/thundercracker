@@ -198,6 +198,7 @@ int main()
                BatteryLevel::raw() == BatteryLevel::UNINITIALIZED)
             ;
     }
+#endif
 
     // wait until after we know we're going to continue starting up before
     // showing signs of life :)
