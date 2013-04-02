@@ -24,7 +24,7 @@ void Adc::init()
      * Enable SWSTART as our external event selection, default channel selection
      * to none, and enable the periph.
      */
-    hw->CR1 = 1 << 5;       // enable EOCIE
+    enableInterrupt();
     hw->CR2 = 7 << 17;
     hw->SQR1 = 0;
     hw->SQR2 = 0;
@@ -44,6 +44,14 @@ void Adc::init()
     hw->CR2 |= calibrate;
     while (hw->CR2 & calibrate)
         ;
+}
+
+void Adc::enableInterrupt() {
+    hw->CR1 |= 1 << 5;       // enable EOCIE
+}
+
+void Adc::disableInterrupt() {
+    hw->CR1 &= ~(1 << 5);    // disable EOCIE
 }
 
 void Adc::setSampleRate(uint8_t channel, SampleRate rate)
