@@ -11,8 +11,8 @@ public:
 
     static int run(int argc, char **argv, IODevice &_dev);
 
-    bool pair(const char *slotStr, const char *hwidStr);
-    bool dumpPairingData(bool rpc=false);
+    int pair(const char *slotStr, const char *hwidStr);
+    int dumpPairingData(bool rpc);
 
 private:
     IODevice &dev;
