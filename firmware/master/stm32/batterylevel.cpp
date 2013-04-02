@@ -15,7 +15,7 @@ static unsigned lastReading;
 #ifdef USE_ADC_BATT_MEAS
 
 static const unsigned maxIn = 0xfff;                //Max ADC value possible
-static const unsigned minIn = 0x7c1;                //1.6V shutdown voltage
+static const unsigned minIn = 0x888;                //1.6V shutdown voltage
 static const unsigned maxOut = _SYS_BATTERY_MAX;
 static const unsigned minOut = 0x0000;
 static const unsigned rangeIn = maxIn - minIn;
@@ -45,12 +45,11 @@ unsigned scaled() {
 
 void beginCapture() {
     VBATT_ADC.beginSample(VBATT_ADC_CHAN);
-
-    PowerManager::shutdownIfVBattIsCritical(lastReading, minIn);
 }
 
 void adcCallback(uint16_t sample) {
     lastReading = sample;
+	PowerManager::shutdownIfVBattIsCritical(lastReading, minIn);
 }
 
 #else
