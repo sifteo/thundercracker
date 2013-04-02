@@ -175,7 +175,7 @@ int main()
     BatteryLevel::beginCapture();
 
     while (BatteryLevel::vsys() == BatteryLevel::UNINITIALIZED ||
-           BatteryLevel::raw() == BatteryLevel::UNINITIALIZED)
+            BatteryLevel::raw() == BatteryLevel::UNINITIALIZED)
         ;
 #else
     if (PowerManager::state() == PowerManager::BatteryPwr) {

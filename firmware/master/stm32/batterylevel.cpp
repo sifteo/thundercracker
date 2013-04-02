@@ -49,7 +49,7 @@ void beginCapture() {
 
 void adcCallback(uint16_t sample) {
     lastReading = sample;
-	PowerManager::shutdownIfVBattIsCritical(lastReading, minIn);
+    PowerManager::shutdownIfVBattIsCritical(lastReading, minIn);
 }
 
 #else
