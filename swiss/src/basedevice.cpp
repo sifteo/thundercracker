@@ -215,7 +215,7 @@ bool BaseDevice::requestReboot()
 {
     USBProtocolMsg m(USBProtocol::FactoryTest);
     m.append(12);   // reboot request command
-    if (dev.writePacket(m.bytes, m.len) != m.len) {
+    if (dev.writePacket(m.bytes, m.len) < 0) {
         return false;
     }
 
@@ -276,7 +276,7 @@ bool BaseDevice::writeAndWaitForReply(USBProtocolMsg &msg)
      */
 
     uint32_t headerToMatch = msg.header;
-    if (dev.writePacket(msg.bytes, msg.len) != msg.len) {
+    if (dev.writePacket(msg.bytes, msg.len) < 0) {
         return false;
     }
 

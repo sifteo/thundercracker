@@ -279,7 +279,7 @@ bool SaveData::restoreItem(unsigned parentVol, const Record & record)
         m.append(&record.payload[progress], chunk);
         progress += chunk;
 
-        if (dev.writePacket(m.bytes, m.len) != m.len) {
+        if (dev.writePacket(m.bytes, m.len) < 0) {
             return false;
         }
         while (dev.numPendingOUTPackets() > IODevice::MAX_OUTSTANDING_OUT_TRANSFERS)

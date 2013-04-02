@@ -65,7 +65,7 @@ int FwLoader::requestBootloaderUpdate(unsigned int pid)
 
     USBProtocolMsg m(USBProtocol::FactoryTest);
     m.append(10);   // bootload update request command
-    if (dev.writePacket(m.bytes, m.len) != m.len) {
+    if (dev.writePacket(m.bytes, m.len) < 0) {
         return EIO;
     }
 
