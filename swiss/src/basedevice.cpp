@@ -215,7 +215,10 @@ bool BaseDevice::requestReboot()
 {
     USBProtocolMsg m(USBProtocol::FactoryTest);
     m.append(12);   // reboot request command
-    dev.writePacket(m.bytes, m.len);
+    if (dev.writePacket(m.bytes, m.len) != m.len) {
+        return false;
+    }
+
     return true;
 }
 
