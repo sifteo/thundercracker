@@ -26,8 +26,6 @@ static I2CSlave i2c(&I2C1);
 
 // control for the pass-through USB of the master under test
 static GPIOPin testUsbEnable = USB_PWR_GPIO;
-static GPIOPin vbattEnable = VBATT_EN_GPIO;
-
 
 static GPIOPin usbCurrentSign = USB_CURRENT_DIR_GPIO;
 static GPIOPin v3CurrentSign = V3_CURRENT_DIR_GPIO;
@@ -58,9 +56,8 @@ TestJig::TestHandler const TestJig::handlers[] = {
     stopNeighborTxHandler,                  // 9
     beginNoiseCheckHandler,                 // 10
     stopNoiseCheckHandler,                  // 11
-    setVBattEnabledHandler,                 // 12
-    getFirmwareVersion,                     // 13
-    bootloadRequestHandler,                 // 14
+    getFirmwareVersion,                     // 12
+    bootloadRequestHandler,                 // 13
 };
 
 void TestJig::init()
@@ -121,9 +118,6 @@ void TestJig::init()
 
     testUsbEnable.setControl(GPIOPin::OUT_2MHZ);
     testUsbEnable.setHigh();    // default to enabled
-
-    vbattEnable.setControl(GPIOPin::OUT_2MHZ);
-    vbattEnable.setHigh();      // default to enabled
 
     ackPacket.enabled = false;
     ackPacket.len = 0;
@@ -336,23 +330,6 @@ void TestJig::setUsbEnabledHandler(uint8_t argc, uint8_t *args)
         testUsbEnable.setHigh();
     } else {
         testUsbEnable.setLow();
-    }
-
-    // no response data - just indicate that we're done
-    const uint8_t response[] = { args[0] };
-    UsbDevice::write(response, sizeof response);
-}
-
-/*
- * args[1] == non-zero for enable, 0 for disable
- */
-void TestJig::setVBattEnabledHandler(uint8_t argc, uint8_t *args)
-{
-    bool enable = args[1];
-    if (enable) {
-        vbattEnable.setHigh();
-    } else {
-        vbattEnable.setLow();
     }
 
     // no response data - just indicate that we're done
