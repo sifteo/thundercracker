@@ -50,21 +50,21 @@ public:
     void close();
     bool isOpen() const;
 
-    int maxINPacketSize() const {
+    unsigned maxINPacketSize() const {
         return mInEndpoint.maxPacketSize;
     }
 
-    int maxOUTPacketSize() const {
+    unsigned maxOUTPacketSize() const {
         return mOutEndpoint.maxPacketSize;
     }
 
-    int numPendingINPackets() const {
+    unsigned numPendingINPackets() const {
         return mBufferedINPackets.size();
     }
     int readPacket(uint8_t *buf, unsigned maxlen, unsigned &rxlen);
     int readPacketSync(uint8_t *buf, int maxlen, int *transferred, unsigned timeout = -1);
 
-    int numPendingOUTPackets() const {
+    unsigned numPendingOUTPackets() const {
         return mOutEndpoint.pendingTransfers.size();
     }
     int writePacket(const uint8_t *buf, unsigned len);

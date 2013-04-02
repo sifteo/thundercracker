@@ -54,9 +54,9 @@ public:
 
     static int run(int argc, char **argv, IODevice &_dev);
 
-    bool extract(const char *pkgStr, const char *filepath, bool raw, bool rpc);
-    bool restore(const char *filepath);
-    bool normalize(const char *inpath, const char *outpath);
+    int extract(const char *pkgStr, const char *filepath, bool raw, bool rpc);
+    int restore(const char *filepath);
+    int normalize(const char *inpath, const char *outpath);
 
 private:
     static const unsigned PAGE_SIZE = 256;
