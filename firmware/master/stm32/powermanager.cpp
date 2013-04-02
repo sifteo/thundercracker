@@ -173,7 +173,7 @@ void PowerManager::shutdownIfVBattIsCritical(unsigned vbatt, unsigned limit)
      */
 
 #ifdef HAS_SINGLE_RAIL
-	if (vbatt<=limit && state()==BatteryPwr) {
+	if (vbatt<=limit) {
 #else
     if (vbatt - BatteryLevel::MAX_JITTER < limit) {
 #endif
