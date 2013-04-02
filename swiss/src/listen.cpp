@@ -1,8 +1,8 @@
 #include "listen.h"
 #include "libusb.h"
+#include "swisserror.h"
 
 #include <stdio.h>
-#include <errno.h>
 
 sig_atomic_t Listen::interruptRequested;
 
@@ -10,7 +10,7 @@ int Listen::run(int argc, char **argv, IODevice &_dev)
 {
     if (argc < 2) {
         fprintf(stderr, "listen: need at least 2 args\n");
-        return 1;
+        return EINVAL;
     }
 
     if (signal(SIGINT, onSignal) == SIG_ERR) {
@@ -38,7 +38,7 @@ int Listen::run(int argc, char **argv, IODevice &_dev)
     }
 
     Listen listener(_dev);
-    return listener.listen(elfpath, outpath, flush) ? 0 : 1;
+    return listener.listen(elfpath, outpath, flush);
 }
 
 Listen::Listen(IODevice &_dev) :
@@ -70,20 +70,20 @@ bool Listen::getFileOrStdout(FILE **f, const char *path)
     return true;
 }
 
-bool Listen::listen(const char *elfpath, const char * outpath, bool flushLogs)
+int Listen::listen(const char *elfpath, const char * outpath, bool flushLogs)
 {
     if (!dev.open(IODevice::SIFTEO_VID, IODevice::BASE_PID)) {
-        return false;
+        return ENODEV;
     }
 
     if (!dbgInfo.init(elfpath)) {
         fprintf(stderr, "listen: couldn't initialize elf: %s\n", elfpath);
-        return false;
+        return ENOENT;
     }
 
     FILE *fout;
     if (!getFileOrStdout(&fout, outpath)) {
-        return false;
+        return ENOENT;
     }
 
     logDecoder.init(flushLogs);
@@ -93,7 +93,7 @@ bool Listen::listen(const char *elfpath, const char * outpath, bool flushLogs)
         if (dev.numPendingINPackets() == 0) {
             if (dev.processEvents(10) < 0) {
                 fprintf(stderr, "listen: error in processEvents()\n");
-                return false;
+                return EIO;
             }
 
             // yield so we can check again for an interrupt request
@@ -119,7 +119,7 @@ bool Listen::listen(const char *elfpath, const char * outpath, bool flushLogs)
     }
 
     fclose(fout);
-    return true;
+    return EOK;
 }
 
 bool Listen::writeRecord(FILE *f, const USBProtocolMsg & m)
