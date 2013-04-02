@@ -1,9 +1,9 @@
 #include "backup.h"
 #include "usbprotocol.h"
 #include "progressbar.h"
+#include "swisserror.h"
 
 #include <stdio.h>
-#include <errno.h>
 #include <string.h>
 
 #ifdef _WIN32
@@ -15,29 +15,28 @@
 
 int Backup::run(int argc, char **argv, IODevice &_dev)
 {
-    const char *path = NULL;
-
     if (argc != 2) {
         fprintf(stderr, "incorrect args\n");
-        return 1;
+        return EINVAL;
     }
 
     Backup m(_dev);
-    return !m.backup(argv[1]);
+    return m.backup(argv[1]);
 }
 
 Backup::Backup(IODevice &_dev) : dev(_dev) {}
 
-bool Backup::backup(const char *path)
+int Backup::backup(const char *path)
 {
     FILE *f = fopen(path, "wb");
     if (!f) {
         fprintf(stderr, "could not open %s: %s\n", path, strerror(errno));
-        return false;
+        return ENOENT;
     }
 
-    if (!dev.open(IODevice::SIFTEO_VID, IODevice::BASE_PID))
-        return false;
+    if (!dev.open(IODevice::SIFTEO_VID, IODevice::BASE_PID)) {
+        return ENODEV;
+    }
 
     requestProgress = 0;
     replyProgress = 0;
@@ -45,10 +44,12 @@ bool Backup::backup(const char *path)
     bool success = writeFileHeader(f) && writeFlashContents(f);
     fclose(f);
 
-    if (!success)
+    if (!success) {
         unlink(path);
+        return EIO;
+    }
 
-    return success;
+    return EOK;
 }
 
 bool Backup::writeFileHeader(FILE *f)
