@@ -21,9 +21,9 @@ void PowerManager::batteryPowerOn()
      */
 
 #ifdef HAS_SINGLE_RAIL
-	GPIOPin powerEnable = VCC30_ENABLE_GPIO;
+    GPIOPin powerEnable = VCC30_ENABLE_GPIO;
 #else
-	GPIOPin powerEnable = VCC20_ENABLE_GPIO;
+    GPIOPin powerEnable = VCC20_ENABLE_GPIO;
 #endif
 
     powerEnable.setControl(GPIOPin::OUT_2MHZ);
@@ -35,9 +35,9 @@ void PowerManager::batteryPowerOff()
     // release the power supply enable
 
 #ifdef HAS_SINGLE_RAIL
-	GPIOPin powerEnable = VCC30_ENABLE_GPIO;
+    GPIOPin powerEnable = VCC30_ENABLE_GPIO;
 #else
-	GPIOPin powerEnable = VCC20_ENABLE_GPIO;
+    GPIOPin powerEnable = VCC20_ENABLE_GPIO;
 #endif
 
     powerEnable.setControl(GPIOPin::OUT_2MHZ);
@@ -131,32 +131,32 @@ void PowerManager::setState(State s)
     GPIOPin vcc3v3 = VCC33_ENABLE_GPIO;
 
     switch (s) {
-	    case BatteryPwr:
-	        batteryPowerOn();
-	        UsbDevice::deinit();
-	        vcc3v3.setLow();
-	        break;
+    case BatteryPwr:
+        batteryPowerOn();
+        UsbDevice::deinit();
+        vcc3v3.setLow();
+        break;
 
-	    case UsbPwr:
-	        vcc3v3.setHigh();
-	        UsbDevice::init();
-	        batteryPowerOff();
-	        break;
+    case UsbPwr:
+        vcc3v3.setHigh();
+        UsbDevice::init();
+        batteryPowerOff();
+        break;
     }
 #elif defined HAS_SINGLE_RAIL
 
-	// unconditionally keep the power on.
-	batteryPowerOn();
+    // unconditionally keep the power on.
+    batteryPowerOn();
 
-	switch(s) {
-		case BatteryPwr:
-			UsbDevice::deinit();
-		break;
+    switch(s) {
+    case BatteryPwr:
+        UsbDevice::deinit();
+        break;
 
-		case UsbPwr:
-			UsbDevice::init();
-		break;
-	}
+    case UsbPwr:
+        UsbDevice::init();
+        break;
+    }
 #endif
 
     lastState = s;
@@ -173,11 +173,11 @@ void PowerManager::shutdownIfVBattIsCritical(unsigned vbatt, unsigned limit)
      */
 
 #ifdef HAS_SINGLE_RAIL
-	if (vbatt<=limit) {
+    if (vbatt <= limit) {
 #else
     if (vbatt - BatteryLevel::MAX_JITTER < limit) {
 #endif
-		batteryPowerOff();
+        batteryPowerOff();
         /*
          * wait to for power to drain. if somebody keeps their finger
          * on the homebutton, we may be here a little while, so don't
