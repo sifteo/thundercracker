@@ -144,7 +144,7 @@ static unsigned handleGlobalArgs(int argc, char **argv)
      */
 
     unsigned consumed = 1; // consume argv[0]
-    for (unsigned i = 1; i < argc; ++i) {
+    for (int i = 1; i < argc; ++i) {
 
         if (!strcmp(argv[i], "--libusb-debug") && i + 1 < argc) {
 

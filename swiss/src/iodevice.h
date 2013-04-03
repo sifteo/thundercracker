@@ -22,12 +22,12 @@ public:
     virtual bool isOpen() const = 0;
     virtual int  processEvents(unsigned timeoutMillis = 0) = 0;
 
-    virtual int maxINPacketSize() const = 0;
-    virtual int numPendingINPackets() const = 0;
+    virtual unsigned maxINPacketSize() const = 0;
+    virtual unsigned numPendingINPackets() const = 0;
     virtual int readPacket(uint8_t *buf, unsigned maxlen, unsigned & rxlen) = 0;
 
-    virtual int maxOUTPacketSize() const = 0;
-    virtual int numPendingOUTPackets() const = 0;
+    virtual unsigned maxOUTPacketSize() const = 0;
+    virtual unsigned numPendingOUTPackets() const = 0;
     virtual int writePacket(const uint8_t *buf, unsigned len) = 0;
 };
 
