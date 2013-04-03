@@ -34,7 +34,6 @@ void init()
 
 int systemVolume()
 {
-    //Shift current ADC reading of volume slider over to align with magnitude of MAX_VOLUME
     return (MIN(lastReading, lastReading - FADER_MIN) * (MAX_VOLUME/(FADER_MAX - FADER_MIN)));
 }
 
