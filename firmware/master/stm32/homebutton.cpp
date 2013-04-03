@@ -33,7 +33,8 @@ bool isPressed()
 #include "nrf51822.h"
 IRQ_HANDLER ISR_EXTI2()
 {
-    while(!nrf51822::btle_swd.readRequest(0xa5)); //0b10100101)
+    nrf51822::btle_swd.enableRequest();
+    //nrf51822::btle_swd.readRequest(0xa5); //0b10100101
     BTN_HOME_GPIO.irqAcknowledge();
     HomeButton::update();
     Pause::taskWork.atomicMark(Pause::ButtonPress);

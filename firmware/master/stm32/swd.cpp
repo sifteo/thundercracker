@@ -3,30 +3,35 @@
  * Copyright <c> 2012 Sifteo, Inc. All rights reserved.
  */
 
+#include "macros.h"
 #include "swd.h"
 
-#define SWD_RST_CYCLES 50
-#define SWD_REQ_CYCLES 8
-#define SWD_ACK_CYCLES 3
-#define SWD_DAT_CYCLES 32
+#define SWD_RST_CYCLES  150
+#define SWD_REQ_CYCLES  8
+#define SWD_ACK_CYCLES  3
+#define SWD_DAT_CYCLES  32
 
 #define SWD_ACK_OK      1
 #define SWD_ACK_WAIT    2
 #define SWD_ACK_ERR     4
 #define SWD_ACK_DISC    7
 
+#define SWD_ID_REQ      0xa5
+
+#define DEBUG_SWD 1
+
 void SWDMaster::init()
 {
-    swdclk.setControl(GPIOPin::OUT_2MHZ);
     swdclk.setLow();
-    swdio.setControl(GPIOPin::OUT_2MHZ);
+    swdclk.setControl(GPIOPin::OUT_2MHZ);
     swdio.setHigh();
+    swdio.setControl(GPIOPin::OUT_2MHZ);
 }
 
 void SWDMaster::startTimer()
 {
     busyFlag = true;
-    swdTimer.init(0x7fff,0x0);
+    swdTimer.init(0x7fff,0x0);  //Tclk = 2*count/72 us
     swdTimer.enableUpdateIsr();
 }
 
@@ -47,13 +52,22 @@ void SWDMaster::wkpControllerCB()
     static uint32_t cycles = SWD_RST_CYCLES;
 
     if (isRisingEdge()) {
+#ifdef DEBUG_SWD
+        if (swdio.isHigh()) {
+            UART("1 ");
+        } else {
+            UART("0 ");
+        }
+#endif
         return;
     }
 
     fallingEdge();
     if(--cycles == 0) {
         cycles = SWD_RST_CYCLES;
-        stopTimer();
+        //send an ID req immediately
+        header = SWD_ID_REQ;
+        controllerCB = &SWDMaster::txnControllerCB;
     }
 }
 
@@ -80,10 +94,33 @@ void SWDMaster::txnControllerCB()
     static uint32_t buffer = 0;
     static swdphase state = _idle;
     static uint8_t cycles = SWD_REQ_CYCLES;
+#ifdef DEBUG_SWD
+    static bool rnw = false;
+#endif
 
     if(isRisingEdge()) {
+#ifdef DEBUG_SWD
+        if (!rnw) {
+            if (swdio.isHigh()) {
+                UART("1w ");
+            } else {
+                UART("0w ");
+            }
+        }
+#endif
         return;
     }
+
+    fallingEdge();
+#ifdef DEBUG_SWD
+    if (rnw) {
+        if (swdio.isHigh()) {
+            UART("1r ");
+        } else {
+            UART("0r ");
+        }
+    }
+#endif
 
     switch(state) {
     case _idle:
@@ -104,6 +141,9 @@ void SWDMaster::txnControllerCB()
         cycles = SWD_ACK_CYCLES;
         state = _ack;
         swdio.setControl(GPIOPin::IN_FLOAT);
+#ifdef DEBUG_SWD
+        rnw = true;
+#endif
         break;
     case _ack:
         receivebit(buffer);
@@ -112,12 +152,26 @@ void SWDMaster::txnControllerCB()
         }
         break;
     case _turn2:
+#if 1
+        // DEBUG_ACK
+        swdio.setHigh();
+        swdio.setControl(GPIOPin::OUT_2MHZ);
+        stopTimer();
+#ifdef DEBUG_SWD
+        rnw = false;
+        UART("\r\n");
+#endif
+        state = _idle;
+        break;
+#else
         if (buffer == SWD_ACK_OK) {
             cycles = SWD_DAT_CYCLES;
             state = _data;
             if (!isDAPRead()) {
-                // wait additional clock cycle for DAP write
                 swdio.setControl(GPIOPin::OUT_2MHZ);
+#ifdef DEBUG_SWD
+                rnw = false;
+#endif
                 buffer = payloadOut;
             } else {
                 buffer = 0;
@@ -131,6 +185,7 @@ void SWDMaster::txnControllerCB()
             break;
         }
         //fall through to data for DAP read
+#endif
     case _data:
         if (isDAPRead()) {
             receivebit(buffer);
@@ -155,16 +210,23 @@ void SWDMaster::txnControllerCB()
     case _turn3:
         swdio.setHigh();
         swdio.setControl(GPIOPin::OUT_2MHZ);
+#ifdef DEBUG_SWD
+        rnw = false;
+#endif
         state = _done;
         break;
     case _done:
+#ifdef DEBUG_SWD
+        UART("\r\n");
+#endif
         stopTimer();
         state = _idle;
         break;
     case _reset:
         if (--cycles == 0) {
             //buffer should be clear here
-            state = _done;
+            //state = _idle;  //retry
+            state = _done;  //giveup
         }
         break;
     default:
@@ -172,8 +234,6 @@ void SWDMaster::txnControllerCB()
         //TODO assert
         break;
     }
-
-    fallingEdge();
 }
 
 bool SWDMaster::enableRequest()
