@@ -48,7 +48,7 @@ unsigned vsys() {
 }
 
 unsigned scaled() {
-    return (MIN(lastReading, lastReading - VBATT_MIN) * (_SYS_BATTERY_MAX/(VBATT_MAX-VBATT_MIN)));
+    return MIN(lastReading, lastReading - VBATT_MIN) * (_SYS_BATTERY_MAX/(VBATT_MAX-VBATT_MIN));
 }
 
 void beginCapture() {

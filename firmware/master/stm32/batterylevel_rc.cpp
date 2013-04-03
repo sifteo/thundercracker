@@ -8,7 +8,7 @@
 
 #include <sifteo/abi.h>
 
-#ifndef USE_ADC_BATT_MEAS
+#ifdef USE_RC_BATT_MEAS
 
 /*
  * BatteryLevel measurement via RC timer.
@@ -230,4 +230,4 @@ void process(unsigned capture)
 
 } // namespace BatteryLevel
 
-#endif // USE_ADC_BATT_MEAS
+#endif // USE_RC_BATT_MEAS
