@@ -46,11 +46,11 @@ void Adc::init()
         ;
 }
 
-void Adc::enableInterrupt() {
+void ALWAYS_INLINE Adc::enableInterrupt() {
     hw->CR1 |= 1 << 5;       // enable EOCIE
 }
 
-void Adc::disableInterrupt() {
+void ALWAYS_INLINE Adc::disableInterrupt() {
     hw->CR1 &= ~(1 << 5);    // disable EOCIE
 }
 
