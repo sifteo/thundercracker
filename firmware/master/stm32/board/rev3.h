@@ -112,6 +112,8 @@
 // B A T T E R Y
 #define USE_ADC_BATT_MEAS
 
+#define VBATT_MAX           0xfff
+#define VBATT_MIN           0x888
 #define VBATT_ADC           Adc::Adc1
 #define VBATT_MEAS_GPIO     GPIOPin(&GPIOA, 0)
 #define VBATT_ADC_CHAN      0
