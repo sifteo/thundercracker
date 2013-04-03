@@ -3,8 +3,8 @@
  * Copyright <c> 2012 Sifteo, Inc. All rights reserved.
  */
 
-#ifndef _BOARD_REV2_H
-#define _BOARD_REV2_H
+#ifndef _BOARD_REV3_H
+#define _BOARD_REV3_H
 
 /*
  * Some boards have been reworked to move the flash's SPI peripheral
@@ -126,4 +126,4 @@
 
 #define PROFILER_TIM        TIM2
 
-#endif // _BOARD_REV2_H
+#endif // _BOARD_REV3_H
