@@ -45,14 +45,6 @@ void Adc::init()
         ;
 }
 
-void ALWAYS_INLINE Adc::enableInterrupt() {
-    hw->CR1 |= 1 << 5;       // enable EOCIE
-}
-
-void ALWAYS_INLINE Adc::disableInterrupt() {
-    hw->CR1 &= ~(1 << 5);    // disable EOCIE
-}
-
 void Adc::setSampleRate(uint8_t channel, SampleRate rate)
 {
     if (channel < 10) {

@@ -32,8 +32,15 @@ public:
     void init();
     void setCallback(uint8_t ch, AdcIsr_t funct);
     void setSampleRate(uint8_t ch, SampleRate rate);
-    void disableInterrupt();
-    void enableInterrupt();
+
+
+    ALWAYS_INLINE void enableInterrupt() {
+        hw->CR1 |= 1 << 5;       // enable EOCIE
+    }
+
+    ALWAYS_INLINE void disableInterrupt() {
+        hw->CR1 &= ~(1 << 5);    // disable EOCIE
+    }
 
     void beginSample(uint8_t ch);
     uint16_t sampleSync(uint8_t channel);
