@@ -108,6 +108,7 @@
 #define VOLUME_GPIO         GPIOPin(&GPIOA, 1)
 
 // B A T T E R Y
+#define USE_RC_BATT_MEAS
 #define BATT_LVL_TIM        TIM4                    // NOTE! same as NBR_TX_TIM
 #define BATT_LVL_CHAN       2
 #define BATT_MEAS_GPIO      GPIOPin(&GPIOB,7)

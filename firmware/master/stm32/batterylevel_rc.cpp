@@ -5,55 +5,23 @@
 #include "neighbor_protocol.h"
 #include "powermanager.h"
 #include "macros.h"
-#include "adc.h"
+
 #include <sifteo/abi.h>
+
+#ifndef USE_ADC_BATT_MEAS
+
+/*
+ * BatteryLevel measurement via RC timer.
+ * Only used on rev2 and earlier, since we could not
+ * run the ADC at 2V.
+ *
+ * Later hardware revs make use of batterylevel_adc.cpp
+ */
 
 namespace BatteryLevel {
 
 static unsigned lastReading;
 
-#ifdef USE_ADC_BATT_MEAS
-
-#ifndef VBATT_MAX
-#define VBATT_MAX   0xfff
-#endif
-
-#ifndef VBATT_MIN
-#define VBATT_MIN   0x888
-#endif
-
-void init() {
-    lastReading = UNINITIALIZED;
-
-    GPIOPin vbattMeas = VBATT_MEAS_GPIO;
-    vbattMeas.setControl(GPIOPin::IN_ANALOG);
-
-    VBATT_ADC.setCallback(VBATT_ADC_CHAN,BatteryLevel::adcCallback);
-    VBATT_ADC.setSampleRate(VBATT_ADC_CHAN,Adc::SampleRate_239_5);
-}
-
-unsigned raw() {
-    return lastReading;
-}
-
-unsigned vsys() {
-    return _SYS_BATTERY_MAX;
-}
-
-unsigned scaled() {
-    return (MIN(lastReading, lastReading - VBATT_MIN) * (_SYS_BATTERY_MAX/(VBATT_MAX-VBATT_MIN)));
-}
-
-void beginCapture() {
-    VBATT_ADC.beginSample(VBATT_ADC_CHAN);
-}
-
-void adcCallback(uint16_t sample) {
-    lastReading = sample;
-    PowerManager::shutdownIfVBattIsCritical(lastReading, VBATT_MIN);
-}
-
-#else
 enum State {
     VBattCapture,
     VSysCapture,
@@ -259,6 +227,7 @@ void process(unsigned capture)
 
     NeighborTX::resume();
 }
-#endif
 
 } // namespace BatteryLevel
+
+#endif // USE_ADC_BATT_MEAS
