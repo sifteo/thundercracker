@@ -113,7 +113,6 @@ void TestJig::init()
     usbCurrentPin.setControl(GPIOPin::IN_ANALOG);
 
     PWR_MEASURE_ADC.init();
-    PWR_MEASURE_ADC.disableInterrupt();
     PWR_MEASURE_ADC.setSampleRate(USB_CURRENT_ADC_CH, Adc::SampleRate_55_5);
     PWR_MEASURE_ADC.setSampleRate(V3_CURRENT_ADC_CH, Adc::SampleRate_55_5);
 

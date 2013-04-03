@@ -24,7 +24,6 @@ void Adc::init()
      * Enable SWSTART as our external event selection, default channel selection
      * to none, and enable the periph.
      */
-    enableInterrupt();
     hw->CR2 = 7 << 17;
     hw->SQR1 = 0;
     hw->SQR2 = 0;
