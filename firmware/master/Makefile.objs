@@ -61,7 +61,7 @@ OBJS_COMMON = \
     $(MASTER_DIR)/common/ui_menu.o \
     $(MASTER_DIR)/common/ui_shutdown.o \
     $(MASTER_DIR)/common/ui_fault.o \
-        $(MASTER_DIR)/common/ui_lowbatt.o \
+	$(MASTER_DIR)/common/ui_lowbatt.o \
     $(MASTER_DIR)/common/pause.o \
     $(MASTER_DIR)/common/ui_pause.o \
     $(MASTER_DIR)/common/ui_cuberange.o \

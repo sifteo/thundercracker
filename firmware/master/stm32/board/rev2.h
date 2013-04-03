@@ -107,17 +107,6 @@
 #define VOLUME_CHAN         2
 #define VOLUME_GPIO         GPIOPin(&GPIOA, 1)
 
-// D A C
-#define AUDIO_DAC_CHAN      1
-#define AUDIO_DAC_PIN       GPIOPin(&GPIOA, 4)
-#define AUDIO_DAC_EN_GPIO   GPIOPin(&GPIOA, 0)
-
-// BTLE SWD
-#define BTLE_SWD_TIM        TIM1                    // TIM1 is available only is we dont do PWM Audio
-#define BTLE_SWD_TIM_INT    TIM1_UP
-#define BTLE_SWD_CLK_GPIO   GPIOPin(&GPIOC, 5)
-#define BTLE_SWD_IO_GPIO    GPIOPin(&GPIOC, 6)
-
 // B A T T E R Y
 #define BATT_LVL_TIM        TIM4                    // NOTE! same as NBR_TX_TIM
 #define BATT_LVL_CHAN       2

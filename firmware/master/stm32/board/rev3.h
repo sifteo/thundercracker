@@ -89,6 +89,12 @@
 
 #define VCC30_ENABLE_GPIO   GPIOPin(&GPIOC, 0)
 
+// BTLE SWD
+#define BTLE_SWD_TIM        TIM1                    // TIM1 is available only is we dont do PWM Audio
+#define BTLE_SWD_TIM_INT    TIM1_UP
+#define BTLE_SWD_CLK_GPIO   GPIOPin(&GPIOC, 5)
+#define BTLE_SWD_IO_GPIO    GPIOPin(&GPIOC, 6)
+
 // A U D I O
 #define USE_AUDIO_DAC       // Use DAC instead of PWM for audio
 
