@@ -105,6 +105,8 @@
 // V O L U M E
 #define USE_ADC_FADER_MEAS
 
+#define FADER_MAX           0xfe0
+#define FADER_MIN           0x020
 #define FADER_ADC           Adc::Adc1
 #define FADER_MEAS_GPIO     GPIOPin(&GPIOA, 1)
 #define FADER_ADC_CHAN      1

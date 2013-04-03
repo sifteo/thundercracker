@@ -20,8 +20,6 @@ namespace Volume {
 
 static unsigned lastReading;
 
-// static Adc adc(&PWR_MEASURE_ADC);
-
 void init()
 {
     lastReading = 0;
@@ -37,7 +35,7 @@ void init()
 int systemVolume()
 {
     //Shift current ADC reading of volume slider over to align with magnitude of MAX_VOLUME
-    return lastReading << 4;
+    return (MIN(lastReading, lastReading - FADER_MIN) * (MAX_VOLUME/(FADER_MAX - FADER_MIN)));
 }
 
 void beginCapture()
