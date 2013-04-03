@@ -223,6 +223,8 @@ static const __code uint8_t lcd_setup_table[] =
 
 #ifdef LCD_MODEL_TRULY_ST7735
 
+    LONG_DELAY,
+
     1, LCD_CMD_SWRESET,
     1, LCD_CMD_SLPOUT,
 
@@ -234,11 +236,11 @@ static const __code uint8_t lcd_setup_table[] =
 
     2, LCD_CMD_INVCTRL, 0x03,
     4, LCD_CMD_POWER_CTRL1, 0xa2, 0x02, 0x84,
-    2, LCD_CMD_POWER_CTRL2, 0x01,
+    2, LCD_CMD_POWER_CTRL2, 0x05,
     3, LCD_CMD_POWER_CTRL3, 0x0a, 0x00,
     3, LCD_CMD_POWER_CTRL4, 0x8a, 0x2a,
     3, LCD_CMD_POWER_CTRL5, 0x8a, 0xee,
-    3, LCD_CMD_VCOM_CTRL1, 0x00, 0x20,
+    2, LCD_CMD_VCOM_CTRL1, 0x0e,
     2, LCD_CMD_VCOM_OFFSET, 0x10,
     
     17, LCD_CMD_POS_GAMMA,
@@ -334,7 +336,7 @@ static const __code uint8_t lcd_setup_table[] =
 
 #ifdef LCD_MODEL_SANTEK_ST7735R
     // This delay is a MUST for proper reset sequence
-    // ~120ms suffices although santek specified ~240ms
+    // ~120ms suffices although santek specifies ~240ms
     LONG_DELAY,
     //LONG_DELAY,
 
