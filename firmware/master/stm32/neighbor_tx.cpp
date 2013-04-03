@@ -150,9 +150,13 @@ IRQ_HANDLER ISR_FN(NBR_TX_TIM)()
                 setDuty(0);
                 txPeriodTimer.setPeriod(Neighbor::BIT_PERIOD_TICKS, Neighbor::NUM_TX_WAIT_PERIODS);
                 txState = BetweenTransmissions;
-                #if BOARD != BOARD_TEST_JIG && BOARD != BOARD_MASTER_REV3
+
+                // if we're measuring battery via RC, we must share our timer.
+                // otherwise, don't bother.
+                #if defined(USE_RC_BATT_MEAS) && (BOARD != BOARD_TEST_JIG)
                 BatteryLevel::beginCapture();
                 #endif
+
             } else {
                 // send data out big endian
                 setDuty((txData & 0x8000) ? Neighbor::PULSE_LEN_TICKS : 0);

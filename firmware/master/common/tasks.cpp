@@ -78,7 +78,6 @@ ALWAYS_INLINE void Tasks::taskInvoke(unsigned id)
 
 void Tasks::heartbeatTask()
 {
-	
 #ifdef USE_ADC_BATTERY_MEAS
     BatteryLevel::beginCapture();
 #endif
