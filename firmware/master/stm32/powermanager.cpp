@@ -164,20 +164,21 @@ void PowerManager::setState(State s)
 
 void PowerManager::shutdownIfVBattIsCritical(unsigned vbatt, unsigned limit)
 {
+#ifndef USE_ADC_BATT_MEAS
     /*
-     * To be a bit conservative, we assume that any sample we take is skewed by
+     * If we're measuring via RC samples can have non-trivial jitter,
+     * so we assume that any sample we take is skewed worst case by
      * our MAX_JITTER in the positive direction. Correct for this, and see if
-     * we're still above the required thresh to continue powering on.
-     *
-     * If not, shut ourselves down, and hope our batteries get replaced soon.
+     * we're still above the required thresh to stay alive.
      */
-
-#ifdef HAS_SINGLE_RAIL
-    if (vbatt <= limit) {
-#else
-    if (vbatt - BatteryLevel::MAX_JITTER < limit) {
+    vbatt -= BatteryLevel::MAX_JITTER;
 #endif
+
+    if (vbatt < limit) {
+
+        // shut ourselves down, and hope our batteries get replaced soon.
         batteryPowerOff();
+
         /*
          * wait to for power to drain. if somebody keeps their finger
          * on the homebutton, we may be here a little while, so don't
