@@ -42,7 +42,10 @@ ALWAYS_INLINE void Tasks::taskInvoke(unsigned id)
     switch (id) {
 
     #ifndef SIFTEO_SIMULATOR
+        #if BOARD != BOARD_TEST_JIG
         case Tasks::PowerManager:   return PowerManager::vbusDebounce();
+        #endif
+
         case Tasks::UsbOUT:         return UsbDevice::handleOUTData();
 
         #if (BOARD == BOARD_TEST_JIG && !defined(BOOTLOADER))

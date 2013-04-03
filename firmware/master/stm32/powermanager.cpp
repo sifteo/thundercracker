@@ -145,6 +145,9 @@ void PowerManager::setState(State s)
     }
 #elif defined HAS_SINGLE_RAIL
 
+	// unconditionally keep the power on.
+	batteryPowerOn();
+
 	switch(s) {
 		case BatteryPwr:
 			UsbDevice::deinit();
@@ -170,7 +173,7 @@ void PowerManager::shutdownIfVBattIsCritical(unsigned vbatt, unsigned limit)
      */
 
 #ifdef HAS_SINGLE_RAIL
-	if (vbatt<=limit && state()==BatteryPwr) {
+	if (vbatt<=limit) {
 #else
     if (vbatt - BatteryLevel::MAX_JITTER < limit) {
 #endif

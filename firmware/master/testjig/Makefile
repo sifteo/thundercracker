@@ -11,7 +11,6 @@ OBJS_STM32 := \
     $(MASTER_DIR)/stm32/setup.stm32.o               \
     $(MASTER_DIR)/stm32/vectors.stm32.o             \
     $(MASTER_DIR)/stm32/gpio.stm32.o                \
-    $(MASTER_DIR)/stm32/powermanager.stm32.o        \
     $(MASTER_DIR)/stm32/systime.stm32.o             \
     $(MASTER_DIR)/stm32/usart.stm32.o               \
     $(MASTER_DIR)/common/tasks.stm32.o              \
@@ -21,6 +20,7 @@ OBJS_STM32 := \
     $(MASTER_DIR)/stm32/neighbor_tx.stm32.o         \
     $(MASTER_DIR)/stm32/neighbor_rx.stm32.o         \
     $(MASTER_DIR)/stm32/dac.stm32.o                 \
+	$(MASTER_DIR)/stm32/dma.stm32.o                 \
     $(MASTER_DIR)/stm32/hwtimer.stm32.o             \
     $(MASTER_DIR)/stm32/i2c.stm32.o                 \
     $(MASTER_DIR)/stm32/adc.stm32.o                 \

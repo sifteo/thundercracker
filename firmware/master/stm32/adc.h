@@ -32,6 +32,8 @@ public:
     void init();
     void setCallback(uint8_t ch, AdcIsr_t funct);
     void setSampleRate(uint8_t ch, SampleRate rate);
+    void disableInterrupt();
+    void enableInterrupt();
 
     void beginSample(uint8_t ch);
     uint16_t sampleSync(uint8_t channel);

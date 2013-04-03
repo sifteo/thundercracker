@@ -11,11 +11,13 @@ public:
 
     static int run(int argc, char **argv, IODevice &_dev);
 
-    bool pair(const char *slotStr, const char *hwidStr);
-    bool dumpPairingData(bool rpc=false);
+    int pair(const char *slotStr, const char *hwidStr);
+    int dumpPairingData(bool rpc);
 
 private:
     IODevice &dev;
+
+    static const uint64_t EMPTYSLOT = -1;   // all 0xff indicates an empty slot
 
     static bool getValidPairingSlot(const char *s, unsigned &pairingSlot);
     static bool getValidHWID(const char *s, uint64_t &hwid);

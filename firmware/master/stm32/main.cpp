@@ -160,6 +160,23 @@ int main()
      */
 
     BatteryLevel::init();
+
+#ifdef USE_ADC_BATT_MEAS
+
+	// Delay required to charge up the internal reference cap. It takes
+	// approximately 250 ms with R18 100k pullup.
+
+	while(SysTime::ticks() < SysTime::msTicks(300));
+
+	// Now that the whole unit runs on battery at all time this needs to be
+	// checked every time on startup.
+
+    BatteryLevel::beginCapture();
+
+    while (BatteryLevel::vsys() == BatteryLevel::UNINITIALIZED ||
+           BatteryLevel::raw() == BatteryLevel::UNINITIALIZED)
+        ;
+#else
     if (PowerManager::state() == PowerManager::BatteryPwr) {
 
         /*
@@ -180,6 +197,7 @@ int main()
                BatteryLevel::raw() == BatteryLevel::UNINITIALIZED)
             ;
     }
+#endif
 
     // wait until after we know we're going to continue starting up before
     // showing signs of life :)
