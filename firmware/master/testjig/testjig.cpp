@@ -26,10 +26,7 @@ static I2CSlave i2c(&I2C1);
 
 // control for the pass-through USB of the master under test
 static GPIOPin testUsbEnable = USB_PWR_GPIO;
-static GPIOPin vbattEnable = VBATT_EN_GPIO;
 
-
-static Adc adc(&PWR_MEASURE_ADC);
 static GPIOPin usbCurrentSign = USB_CURRENT_DIR_GPIO;
 static GPIOPin v3CurrentSign = V3_CURRENT_DIR_GPIO;
 static GPIOPin dip1 = DIP_SWITCH1_GPIO;
@@ -59,9 +56,8 @@ TestJig::TestHandler const TestJig::handlers[] = {
     stopNeighborTxHandler,                  // 9
     beginNoiseCheckHandler,                 // 10
     stopNoiseCheckHandler,                  // 11
-    setVBattEnabledHandler,                 // 12
-    getFirmwareVersion,                     // 13
-    bootloadRequestHandler,                 // 14
+    getFirmwareVersion,                     // 12
+    bootloadRequestHandler,                 // 13
 };
 
 void TestJig::init()
@@ -116,15 +112,12 @@ void TestJig::init()
     GPIOPin usbCurrentPin = USB_CURRENT_GPIO;
     usbCurrentPin.setControl(GPIOPin::IN_ANALOG);
 
-    adc.init();
-    adc.setSampleRate(USB_CURRENT_ADC_CH, Adc::SampleRate_55_5);
-    adc.setSampleRate(V3_CURRENT_ADC_CH, Adc::SampleRate_55_5);
+    PWR_MEASURE_ADC.init();
+    PWR_MEASURE_ADC.setSampleRate(USB_CURRENT_ADC_CH, Adc::SampleRate_55_5);
+    PWR_MEASURE_ADC.setSampleRate(V3_CURRENT_ADC_CH, Adc::SampleRate_55_5);
 
     testUsbEnable.setControl(GPIOPin::OUT_2MHZ);
     testUsbEnable.setHigh();    // default to enabled
-
-    vbattEnable.setControl(GPIOPin::OUT_2MHZ);
-    vbattEnable.setHigh();      // default to enabled
 
     ackPacket.enabled = false;
     ackPacket.len = 0;
@@ -345,23 +338,6 @@ void TestJig::setUsbEnabledHandler(uint8_t argc, uint8_t *args)
 }
 
 /*
- * args[1] == non-zero for enable, 0 for disable
- */
-void TestJig::setVBattEnabledHandler(uint8_t argc, uint8_t *args)
-{
-    bool enable = args[1];
-    if (enable) {
-        vbattEnable.setHigh();
-    } else {
-        vbattEnable.setLow();
-    }
-
-    // no response data - just indicate that we're done
-    const uint8_t response[] = { args[0] };
-    UsbDevice::write(response, sizeof response);
-}
-
-/*
  * args[1] == value, LSB
  * args[2] == value, MSB
  */
@@ -389,7 +365,7 @@ void TestJig::getBatterySupplyCurrentHandler(uint8_t argc, uint8_t *args)
     uint32_t sampleSum = 0;
 
     for (unsigned i = 0; i < NUM_CURRENT_SAMPLES; i++) {
-        sampleSum += adc.sample(V3_CURRENT_ADC_CH);
+        sampleSum += PWR_MEASURE_ADC.sampleSync(V3_CURRENT_ADC_CH);
     }
     
     uint16_t sampleAvg = sampleSum / NUM_CURRENT_SAMPLES;
@@ -406,7 +382,7 @@ void TestJig::getUsbCurrentHandler(uint8_t argc, uint8_t *args)
     uint32_t sampleSum = 0;
 
     for (unsigned i = 0; i < NUM_CURRENT_SAMPLES; i++) {
-        sampleSum += adc.sample(USB_CURRENT_ADC_CH);
+        sampleSum += PWR_MEASURE_ADC.sampleSync(USB_CURRENT_ADC_CH);
     }
 
     uint16_t sampleAvg = sampleSum / NUM_CURRENT_SAMPLES;

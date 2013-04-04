@@ -7,7 +7,11 @@ class MappedFile
 {
 public:
     MappedFile() :
-        filesz(0), fileHandle(0), mappingHandle(0), pData(0) {}
+        fileHandle(0),
+        mappingHandle(0),
+        pData(0),
+        filesz(0)
+    {}
 
     int map(const char *path);
     void unmap();

@@ -26,15 +26,25 @@ public:
         Stop2 = 2,
         Stop1_5 = 3
     };
-    Usart(volatile USART_t *hw) : uart(hw)
+
+    typedef void (*CompletionCallback)();
+
+    Usart(volatile USART_t *hw, CompletionCallback txCB = 0, CompletionCallback rxCB = 0)
+        : uart(hw),
+          txCompletionCB(txCB),
+          rxCompletionCB(rxCB)
     {}
-    void init(GPIOPin rx, GPIOPin tx, int rate, StopBits bits = Stop1);
+
+    void init(GPIOPin rx, GPIOPin tx, int rate, bool dma = false, StopBits bits = Stop1);
     void deinit();
 
     void write(const uint8_t* buf, int size);
     void write(const char* buf);
     void writeHex(uint32_t value);
     void read(uint8_t *buf, int size);
+
+    void writeDma(const uint8_t *buf, unsigned len);
+    void readDma(const uint8_t *buf, unsigned len);
 
     void put(char c);
     char get();
@@ -43,7 +53,14 @@ public:
 
 private:
     volatile USART_t *uart;
+    volatile DMAChannel_t *dmaRxChan;
+    volatile DMAChannel_t *dmaTxChan;
 
+    const CompletionCallback txCompletionCB;
+    const CompletionCallback rxCompletionCB;
+
+    static void dmaTXCallback(void *p, uint8_t flags);
+    static void dmaRXCallback(void *p, uint8_t flags);
 };
 
 #endif /* USART_H_ */

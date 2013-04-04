@@ -106,6 +106,10 @@
 #   define SECTION(_x)        __attribute__((section(_x)))
 #endif
 
+// allows us to conditionalize code for a specific board,
+// while still compiling that code for the simulator.
+#define BOARD_EQUALS(_x)         (defined(BOARD) && BOARD == (_x))
+
 // On hardware, mark this as dead code to be eliminated. On simulation, generate an ASSERT.
 #ifdef SIFTEO_SIMULATOR
 #   define UNREACHABLE()     assert(0)

@@ -20,6 +20,7 @@ OBJS_STM32 = \
     $(MASTER_DIR)/bootloader/bootloader.stm32.o     \
     $(MASTER_DIR)/common/aes128.stm32.o             \
     $(MASTER_DIR)/stm32/stm32flash.stm32.o          \
+    $(MASTER_DIR)/stm32/crc.stm32.o                 \
     $(MASTER_DIR)/common/tasks.stm32.o              \
     $(MASTER_DIR)/stm32/usb/usbdevice.stm32.o       \
     $(MASTER_DIR)/stm32/usb/usbcore.stm32.o         \

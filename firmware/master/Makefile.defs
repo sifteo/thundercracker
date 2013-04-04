@@ -80,10 +80,9 @@ else
     LDSCRIPT_GEN := python $(MASTER_DIR)/tools/ldscript-gen.py --bootloadable
 endif
 
-#adding a flag for the test jig
-#mostly used for compiling the bootloader for the testjig
-ifneq ($(TEST_JIG),)
-	FLAGS += -DBOARD=BOARD_TEST_JIG
+# specify which board you would like to build for
+ifneq ($(BOARD), )
+    FLAGS += -DBOARD=$(BOARD)
 endif
 
 # default linker script handling

@@ -10,8 +10,8 @@ public:
     FwLoader(IODevice &_dev, bool rpc=false);
 
     static int run(int argc, char **argv, IODevice &dev);
-    bool requestBootloaderUpdate(unsigned int pid);
-    bool load(const char* path, unsigned int pid);
+    int requestBootloaderUpdate(unsigned int pid);
+    int load(const char* path, unsigned int pid);
 
 private:
 
@@ -19,7 +19,7 @@ private:
     static const unsigned VERSION_COMPAT_MIN = 1;
     static const unsigned VERSION_COMPAT_MAX = 1;
 
-    bool bootloaderVersionIsCompatible();
+    bool bootloaderVersionIsCompatible(unsigned &swVersion, unsigned &hwVersion);
     void resetBootloader();
     bool checkFileDetails(FILE *f, uint32_t &plainsz, uint32_t &crc);
     bool sendFirmwareFile(FILE *f, uint32_t crc, uint32_t size);

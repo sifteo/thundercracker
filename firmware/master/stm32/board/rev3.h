@@ -3,8 +3,8 @@
  * Copyright <c> 2012 Sifteo, Inc. All rights reserved.
  */
 
-#ifndef _BOARD_REV2_H
-#define _BOARD_REV2_H
+#ifndef _BOARD_REV3_H
+#define _BOARD_REV3_H
 
 /*
  * Some boards have been reworked to move the flash's SPI peripheral
@@ -35,8 +35,6 @@
 #define RF_DMA_CHAN_RX      DMA2_Channel1
 #define RF_DMA_CHAN_TX      DMA2_Channel2
 
-#define USE_NRF24L01        // Use the nRF42L01 as our radio
-
 // F L A S H
 #ifdef REV2_GDB_REWORK
 
@@ -54,12 +52,11 @@
 #else
 
 #define FLASH_SPI           SPI1
-#define FLASH_CS_GPIO       GPIOPin(&GPIOA, 15)
-#define FLASH_WP_GPIO       GPIOPin(&GPIOB, 6)
+#define FLASH_CS_GPIO       GPIOPin(&GPIOC, 2)
+#define FLASH_WP_GPIO       GPIOPin(&GPIOC, 1)
 #define FLASH_SCK_GPIO      GPIOPin(&GPIOB, 3)
 #define FLASH_MISO_GPIO     GPIOPin(&GPIOB, 4)
 #define FLASH_MOSI_GPIO     GPIOPin(&GPIOB, 5)
-#define FLASH_REG_EN_GPIO   GPIOPin(&GPIOC, 4)
 
 #define FLASH_DMA_CHAN_RX   DMA1_Channel2
 #define FLASH_DMA_CHAN_TX   DMA1_Channel3
@@ -75,9 +72,9 @@
 #define NBR_TX_TIM_CH       3                       // CH3=PB8, CH4=PB9
 
 // U A R T
-#define UART_DBG            USART3
-#define UART_RX_GPIO        GPIOPin(&GPIOB, 11)
-#define UART_TX_GPIO        GPIOPin(&GPIOB, 10)
+#define UART_DBG            USART1					// Uses alternate configuration
+#define UART_RX_GPIO        GPIOPin(&GPIOB, 7)
+#define UART_TX_GPIO        GPIOPin(&GPIOB, 6)
 
 // L E D
 #define LED_GREEN_GPIO      GPIOPin(&GPIOB, 0)
@@ -88,31 +85,40 @@
 #define LED_SEQUENCER_TIM   TIM6
 
 // P O W E R
-#define VCC20_ENABLE_GPIO   GPIOPin(&GPIOC, 0)
-#define VCC33_ENABLE_GPIO   GPIOPin(&GPIOC, 1)
+#define HAS_SINGLE_RAIL		// Manages changes in powermanager
+
+#define VCC30_ENABLE_GPIO   GPIOPin(&GPIOC, 0)
 
 // A U D I O
-#define AUDIO_PWMA_PORT     GPIOA
-#define AUDIO_PWMA_PIN      7
-#define AUDIO_PWMB_PORT     GPIOA
-#define AUDIO_PWMB_PIN      8
-#define AUDIO_PWM_CHAN      1
-#define AUDIO_PWM_TIM       TIM1
+#define USE_AUDIO_DAC       // Use DAC instead of PWM for audio
+
+#define AUDIO_DAC_CHAN      1
+#define AUDIO_DAC_PIN       GPIOPin(&GPIOA, 4)
+#define AUDIO_DAC_EN_GPIO   GPIOPin(&GPIOA, 6);
+
+#define AUDIO_DAC_DMA       DMA2
+#define AUDIO_DAC_DMA_CHAN  3
+#define AUDIO_DAC_DMA_IRQ   DMA2_Channel3
+
 #define AUDIO_SAMPLE_TIM    TIM7
 
 // V O L U M E
-//#define USE_ADC_FADER_MEAS
+#define USE_ADC_FADER_MEAS
 
-#define VOLUME_TIM          TIM5
-#define VOLUME_CHAN         2
-#define VOLUME_GPIO         GPIOPin(&GPIOA, 1)
+#define FADER_MAX           0xfe0
+#define FADER_MIN           0x020
+#define FADER_ADC           Adc::Adc1
+#define FADER_MEAS_GPIO     GPIOPin(&GPIOA, 1)
+#define FADER_ADC_CHAN      1
 
 // B A T T E R Y
-#define USE_RC_BATT_MEAS
-#define BATT_LVL_TIM        TIM4                    // NOTE! same as NBR_TX_TIM
-#define BATT_LVL_CHAN       2
-#define BATT_MEAS_GPIO      GPIOPin(&GPIOB,7)
-#define BATT_MEAS_GND_GPIO  GPIOPin(&GPIOA,10)
+#define USE_ADC_BATT_MEAS
+
+#define VBATT_MAX           0xfff
+#define VBATT_MIN           0x888
+#define VBATT_ADC           Adc::Adc1
+#define VBATT_MEAS_GPIO     GPIOPin(&GPIOA, 0)
+#define VBATT_ADC_CHAN      0
 
 // M I S C
 #define BTN_HOME_GPIO       GPIOPin(&GPIOD, 2)
@@ -120,4 +126,4 @@
 
 #define PROFILER_TIM        TIM2
 
-#endif // _BOARD_REV2_H
+#endif // _BOARD_REV3_H

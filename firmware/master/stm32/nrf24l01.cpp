@@ -12,6 +12,8 @@
 #include "board.h"
 #include "sampleprofiler.h"
 
+#ifdef USE_NRF24L01
+
 NRF24L01 NRF24L01::instance(RF_CE_GPIO,
                             RF_IRQ_GPIO,
                             SPIMaster(&RF_SPI,              // SPI:
@@ -28,13 +30,22 @@ void NRF24L01::init()
 
     /*
      * Common hardware initialization, regardless of radio usage mode.
+     * We share a DMA channel with Audio, which is highest priority.
      */
 
     const SPIMaster::Config cfg = {
         Dma::MediumPrio,
         SPIMaster::fPCLK_4
     };
-    spi.init(cfg);
+
+    /*
+     * init() can be called multiple times to handle the case in which we
+     * lose power briefly on a change between USB and battery power,
+     * but we only need to re-init the nRF24L01, not our SPI peripheral.
+     */
+    if (!spi.isInitialized()) {
+        spi.init(cfg);
+    }
 
     ce.setLow();
     ce.setControl(GPIOPin::OUT_10MHZ);
@@ -486,3 +497,5 @@ void NRF24L01::onSpiComplete()
 
     SampleProfiler::setSubsystem(s);
 }
+
+#endif // USE_NRF24L01

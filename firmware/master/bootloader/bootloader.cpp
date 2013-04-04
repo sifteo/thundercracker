@@ -57,7 +57,7 @@ bool Bootloader::manualUpdateRequested()
 
     GPIOPin homeButton = BTN_HOME_GPIO;
 
-    #ifdef BOARD_TEST_JIG
+    #if BOARD == BOARD_TEST_JIG
       homeButton.setControl(GPIOPin::IN_PULL);
       homeButton.pullup();
 
@@ -148,7 +148,9 @@ void Bootloader::onUsbData(const uint8_t *buf, unsigned numBytes)
 {
     switch (buf[0]) {
     case CmdGetVersion: {
-        const uint8_t response[] = { buf[0], VERSION };
+        // NOTE: earlier versions of the bootloader did not send the HW version.
+        // we expect all versions of swiss to be flexible enough to ignore the extra data.
+        const uint8_t response[] = { buf[0], VERSION, BOARD };
         UsbDevice::write(response, sizeof response);
         break;
     }

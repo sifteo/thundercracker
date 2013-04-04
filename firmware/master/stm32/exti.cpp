@@ -17,10 +17,12 @@
 
 IRQ_HANDLER ISR_EXTI9_5()
 {
-#if (BOARD >= BOARD_TC_MASTER_REV1)
-
+#ifdef USE_NRF24L01
     if (NRF24L01::instance.irq.irqPending())
         NRF24L01::instance.isr();
+#endif
+
+#if (BOARD >= BOARD_TC_MASTER_REV1)
 
     if (PowerManager::vbus.irqPending()) {
         PowerManager::vbus.irqAcknowledge();

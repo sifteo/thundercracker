@@ -43,7 +43,9 @@ void Radio::init()
     radioWatchdog = 0;
     reinitPowerOnDelay = 0;
 
+#ifdef USE_NRF24L01
     NRF24L01::instance.init();
+#endif
     RadioManager::enableRadio();
 }
 
@@ -79,7 +81,9 @@ void Radio::reinit()
     radioStartup = 1;
 
     RadioManager::timeout();
+#ifdef USE_NRF24L01
     NRF24L01::instance.init();
+#endif
 }
 
 void Radio::heartbeat()
@@ -111,7 +115,12 @@ void Radio::heartbeat()
      * If no IRQs have happened since the last heartbeat, something
      * is wrong. Get exclusive access to the radio by disabling its
      * IRQ temporarily, and start a transmission.
+     *
+     * XXX: possibly reorganize this as support for the 51822
+     *      radio continues to take shape.
      */
+
+#ifdef USE_NRF24L01
 
     if (radioWatchdog == NRF24L01::instance.irqCount) {
         NVIC.irqDisable(IVT.RF_EXTI_VEC);
@@ -127,4 +136,6 @@ void Radio::heartbeat()
     }
 
     radioWatchdog = NRF24L01::instance.irqCount;
+
+#endif
 }

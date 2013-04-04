@@ -44,6 +44,9 @@ class SPIMaster {
           completionCB(cb) {}
 
     void init(const Config & config);
+    ALWAYS_INLINE bool isInitialized() const {
+        return (hw->CR1 & (1 << 6));
+    }
 
     ALWAYS_INLINE void begin() {
         csn.setLow();

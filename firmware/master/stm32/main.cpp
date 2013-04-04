@@ -26,6 +26,7 @@
 #include "neighbor_tx.h"
 #include "led.h"
 #include "batterylevel.h"
+#include "adc.h"
 
 /*
  * Application specific entry point.
@@ -65,8 +66,13 @@ int main()
 
     NVIC.irqEnable(IVT.BTN_HOME_EXTI_VEC);          //  home button
 
+#ifdef USE_AUDIO_DAC
+    NVIC.irqEnable(IVT.AUDIO_DAC_DMA_IRQ);          // DAC DMA channel
+    NVIC.irqPrioritize(IVT.AUDIO_DAC_DMA_IRQ, 0x50);
+#else
     NVIC.irqEnable(IVT.AUDIO_SAMPLE_TIM);           // sample rate timer
     NVIC.irqPrioritize(IVT.AUDIO_SAMPLE_TIM, 0x50); //  pretty high priority! (would cause audio jitter)
+#endif
 
     NVIC.irqEnable(IVT.LED_SEQUENCER_TIM);          // LED sequencer timer
     NVIC.irqPrioritize(IVT.LED_SEQUENCER_TIM, 0x85);
@@ -74,14 +80,21 @@ int main()
     NVIC.irqEnable(IVT.USART3);                     // factory test uart
     NVIC.irqPrioritize(IVT.USART3, 0x52);           //  high enough to avoid overruns
 
+#ifndef USE_ADC_FADER_MEAS
     NVIC.irqEnable(IVT.VOLUME_TIM);                 // volume timer
     NVIC.irqPrioritize(IVT.VOLUME_TIM, 0x55);       //  just below sample rate timer
+#endif
 
     NVIC.irqEnable(IVT.PROFILER_TIM);               // sample profiler timer
     NVIC.irqPrioritize(IVT.PROFILER_TIM, 0x0);      //  highest possible priority
 
     NVIC.irqEnable(IVT.NBR_TX_TIM);                 // Neighbor transmit
     NVIC.irqPrioritize(IVT.NBR_TX_TIM, 0x60);       //  just below volume timer
+
+#if defined USE_ADC_BATT_MEAS ||  defined USE_ADC_FADER_MEAS
+    NVIC.irqEnable(IVT.ADC1_2);                     // adc sample
+    NVIC.irqPrioritize(IVT.ADC1_2,0x80);            // low priority. only used for battery/fader measurement
+#endif
 
     /*
      * For SVM to operate properly, SVC needs to have a very low priority
@@ -127,6 +140,11 @@ int main()
                  (1 << 10);         // TIM1 ""
 #endif
 
+    #if (defined USE_ADC_BATT_MEAS) || (defined USE_ADC_FADER_MEAS)
+    Adc::Adc1.init();
+    Adc::Adc1.enableInterrupt();
+    #endif
+
     LED::init();
     Tasks::init();
     FlashStack::init();
@@ -143,7 +161,18 @@ int main()
      */
 
     BatteryLevel::init();
+
+#ifdef USE_ADC_BATT_MEAS
+    // Delay required to charge up the internal reference cap.
+    // It takes approximately 250 ms with R18 100k pullup.
+    while (SysTime::ticks() < SysTime::msTicks(300)) {
+        ;
+    }
+#endif
+
+#ifndef HAS_SINGLE_RAIL
     if (PowerManager::state() == PowerManager::BatteryPwr) {
+#endif
 
         /*
          * Ensure we have enough juise to make it worth starting up!
@@ -162,7 +191,10 @@ int main()
         while (BatteryLevel::vsys() == BatteryLevel::UNINITIALIZED ||
                BatteryLevel::raw() == BatteryLevel::UNINITIALIZED)
             ;
+
+#ifndef HAS_SINGLE_RAIL
     }
+#endif
 
     // wait until after we know we're going to continue starting up before
     // showing signs of life :)

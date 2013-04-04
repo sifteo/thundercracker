@@ -6,14 +6,27 @@
 #include "powermanager.h"
 #include "macros.h"
 
+#include <sifteo/abi.h>
+
+#ifdef USE_RC_BATT_MEAS
+
+/*
+ * BatteryLevel measurement via RC timer.
+ * Only used on rev2 and earlier, since we could not
+ * run the ADC at 2V.
+ *
+ * Later hardware revs make use of batterylevel_adc.cpp
+ */
+
 namespace BatteryLevel {
+
+static unsigned lastReading;
 
 enum State {
     VBattCapture,
     VSysCapture,
 };
 
-static unsigned lastReading;
 static unsigned lastVsysReading;
 static State currentState;
 
@@ -216,3 +229,5 @@ void process(unsigned capture)
 }
 
 } // namespace BatteryLevel
+
+#endif // USE_RC_BATT_MEAS

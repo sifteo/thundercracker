@@ -3,7 +3,7 @@ Changelog      {#changelog}
 
 @brief A summary of the relevant changes in each SDK release.
 
-# v1.0.0 (date TBD)
+# v1.0.0 (March 27, 2013)
 
 ### New
 * LOG() now works on hardware as well as the siftulator. Use `swiss listen` to access the log output - see @ref device_mgmt for details.
