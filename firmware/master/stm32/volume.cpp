@@ -34,7 +34,7 @@ void init()
 
 int systemVolume()
 {
-    return (MIN(lastReading, lastReading - FADER_MIN) * (MAX_VOLUME/(FADER_MAX - FADER_MIN)));
+    return clamp((int)MIN(lastReading,(lastReading - FADER_MIN)) * MAX_VOLUME/(FADER_MAX - FADER_MIN), 0, MAX_VOLUME);
 }
 
 void beginCapture()

@@ -105,8 +105,13 @@
 // V O L U M E
 #define USE_ADC_FADER_MEAS
 
-#define FADER_MAX           0xfe0
-#define FADER_MIN           0x020
+// The FADER_MAX and FADER_MIN values are assigned for the tolerance of the slider travel.
+// The slider travel is 20mm +/- 2.5%. Which could eat into the possible maximum and minimum
+// resistance seen by the slider. Consider these values conservative to ensure all the way left
+// is 0 and all the way right is VOLUME::MAX_VOLUME
+
+#define FADER_MAX           0xf98
+#define FADER_MIN           0x066
 #define FADER_ADC           Adc::Adc1
 #define FADER_MEAS_GPIO     GPIOPin(&GPIOA, 1)
 #define FADER_ADC_CHAN      1
