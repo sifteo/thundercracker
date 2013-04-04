@@ -169,28 +169,36 @@ void _SYS_log(uint32_t t, uintptr_t v1, uintptr_t v2, uintptr_t v3,
         }
 
         // String messages: Only v1 is used (as a pointer), and we emit
-        // zero or more log records until we hit the NUL terminator.
+        // zero or more log records until we hit the NUL terminator or the
+        // end of our mapped memory.
         case _SYS_LOGTYPE_STRING: {
-            const unsigned chunkSize = SvmDebugPipe::LOG_BUFFER_BYTES;
             FlashBlockRef ref;
-            for (;;) {
+            bool finished = false;
+            do {
                 uint32_t *buffer = SvmDebugPipe::logReserve(tag);
-                if (!SvmMemory::copyROData(ref, (SvmMemory::PhysAddr)buffer,
-                                    (SvmMemory::VirtAddr)v1, chunkSize)) {
-                    SvmRuntime::fault(F_LOG_FETCH);
-                    return;
-                }
+                uint8_t *byteBuffer = reinterpret_cast<uint8_t*>(buffer);
+                uint32_t chunkSize = 0;
 
-                // strnlen is not easily available on mingw...
-                const char *str = reinterpret_cast<const char*>(buffer);
-                const char *end = static_cast<const char*>(memchr(str, '\0', chunkSize));
-                uint32_t bytes = end ? (size_t) (end - str) : chunkSize;
+                do {
+                    uint8_t *p = SvmMemory::peek<uint8_t>(ref, v1++);
+                    if (p) {
+                        uint8_t byte = *p;
+                        if (byte) {
+                            byteBuffer[chunkSize++] = byte;
+                        } else {
+                            finished = true;
+                            break;
+                        }
+                    } else {
+                        SvmRuntime::fault(F_LOG_FETCH);
+                        return;
+                    }
+                } while (chunkSize < SvmDebugPipe::LOG_BUFFER_BYTES);
 
-                SvmDebugPipe::logCommit(SvmLogTag(tag, bytes), buffer, bytes);
-                if (bytes < chunkSize)
-                    return;
-                v1 += bytes;
-            }
+                SvmDebugPipe::logCommit(SvmLogTag(tag, chunkSize), buffer, chunkSize);
+
+            } while (!finished);
+            return;
         }
 
         // Hex dumps: Like strings, v1 is used as a pointer. The inline
