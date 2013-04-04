@@ -6,6 +6,8 @@
  */
 
 #include "SVMSymbolDecoration.h"
+#include "Support/ErrorReporter.h"
+#include "llvm/Support/ErrorHandling.h"
 #include "llvm/ADT/StringRef.h"
 #include "llvm/Module.h"
 #include "llvm/Constant.h"
@@ -114,11 +116,21 @@ bool SVMDecorations::testAndStripNumberedPrefix(StringRef &Name,
 
     num = 0;
     if (testAndStripPrefix(Name, Prefix)) {
+
+        // Someone's mangling special characters and converting "-" to "_2D_". Fix that up.
+        bool signFixup = testAndStripPrefix(Name, "_2D_");
+
         size_t len = Name.find(SEPARATOR[0]);
-        if (len != Name.npos && !Name.substr(0, len).getAsInteger(0, num)) {
-            Name = Name.substr(len+1);
-            return true;
+        if (len == Name.npos || Name.substr(0, len).getAsInteger(0, num)) {
+            report_fatal_error("Unparseable number in decorated symbol: " + Twine(Name));
         }
+
+        if (signFixup) {
+            num = -num;
+        }
+
+        Name = Name.substr(len+1);
+        return true;
     }
     
     return false;
