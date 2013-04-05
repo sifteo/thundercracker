@@ -8,6 +8,7 @@
 #include "SVMSymbolDecoration.h"
 #include "Support/ErrorReporter.h"
 #include "llvm/Support/ErrorHandling.h"
+#include "llvm/Support/DataTypes.h"
 #include "llvm/ADT/StringRef.h"
 #include "llvm/Module.h"
 #include "llvm/Constant.h"
@@ -132,9 +133,9 @@ bool SVMDecorations::testAndStripNumberedPrefix(StringRef &Name,
             longNum = -longNum;
         }
 
-        num = longNum;
-        if (0 == ((num ^ longNum) & 0xFFFFFFFFULL)) {
-            // Not truncated (sign-agnostic test)
+        if (longNum >= INT32_MIN && longNum <= UINT32_MAX) {
+            // Fits in a signed or unsigned 32-bit int
+            num = longNum;
             return true;
         }
     }
