@@ -64,6 +64,6 @@ void adcCallback(uint16_t sample) {
     lastReading = sample;
 }
 
-#endif // USE_ADC_FADER_MEAS
-
 } // namespace Volume
+
+#endif // USE_ADC_FADER_MEAS
