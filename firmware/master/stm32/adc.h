@@ -34,12 +34,12 @@ public:
     void setSampleRate(uint8_t ch, SampleRate rate);
 
 
-    ALWAYS_INLINE void enableInterrupt() {
-        hw->CR1 |= 1 << 5;       // enable EOCIE
+    ALWAYS_INLINE void enableEocInterrupt() {
+        hw->CR1 |= (1 << 5);
     }
 
-    ALWAYS_INLINE void disableInterrupt() {
-        hw->CR1 &= ~(1 << 5);    // disable EOCIE
+    ALWAYS_INLINE void disableEocInterrupt() {
+        hw->CR1 &= ~(1 << 5);
     }
 
     void beginSample(uint8_t ch);

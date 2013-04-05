@@ -142,7 +142,7 @@ int main()
 
     #if (defined USE_ADC_BATT_MEAS) || (defined USE_ADC_FADER_MEAS)
     Adc::Adc1.init();
-    Adc::Adc1.enableInterrupt();
+    Adc::Adc1.enableEocInterrupt();
     #endif
 
     LED::init();
