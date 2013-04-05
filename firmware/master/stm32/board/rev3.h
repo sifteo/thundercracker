@@ -72,7 +72,7 @@
 #define NBR_TX_TIM_CH       3                       // CH3=PB8, CH4=PB9
 
 // U A R T
-#define UART_DBG            USART1					// Uses alternate configuration
+#define UART_DBG            USART1                  // Uses alternate configuration
 #define UART_RX_GPIO        GPIOPin(&GPIOB, 7)
 #define UART_TX_GPIO        GPIOPin(&GPIOB, 6)
 
@@ -85,7 +85,7 @@
 #define LED_SEQUENCER_TIM   TIM6
 
 // P O W E R
-#define HAS_SINGLE_RAIL		// Manages changes in powermanager
+#define HAS_SINGLE_RAIL     // Manages changes in powermanager
 
 #define VCC30_ENABLE_GPIO   GPIOPin(&GPIOC, 0)
 
