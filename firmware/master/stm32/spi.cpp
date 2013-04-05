@@ -23,8 +23,11 @@ void SPIMaster::init(const Config &config)
         RCC.APB2RSTR &= ~(1 << 12);
         RCC.APB2ENR |= (1 << 12);
 
-        dmaRxChan = Dma::initChannel(&DMA1, 1, dmaCallback, this);  // DMA1, channel 2
-        dmaTxChan = Dma::initChannel(&DMA1, 2, dmaCallback, this);  // DMA1, channel 3
+        dmaRxChan = &DMA1.channels[1];  // DMA1, channel 2
+        Dma::initChannel(&DMA1, 1, dmaCallback, this);
+
+        dmaTxChan = &DMA1.channels[2];  // DMA1, channel 3
+        Dma::initChannel(&DMA1, 2, dmaCallback, this);
 
     } else if (hw == &SPI2) {
 
@@ -32,8 +35,11 @@ void SPIMaster::init(const Config &config)
         RCC.APB1RSTR &= ~(1 << 14);
         RCC.APB1ENR |= (1 << 14);
 
-        dmaRxChan = Dma::initChannel(&DMA1, 3, dmaCallback, this);  // DMA1, channel 4
-        dmaTxChan = Dma::initChannel(&DMA1, 4, dmaCallback, this);  // DMA1, channel 5
+        dmaRxChan = &DMA1.channels[3];  // DMA1, channel 4
+        Dma::initChannel(&DMA1, 3, dmaCallback, this);
+
+        dmaTxChan = &DMA1.channels[4];  // DMA1, channel 5
+        Dma::initChannel(&DMA1, 4, dmaCallback, this);
 
     } else if (hw == &SPI3) {
 
@@ -41,8 +47,11 @@ void SPIMaster::init(const Config &config)
         RCC.APB1RSTR &= ~(1 << 15);
         RCC.APB1ENR |= (1 << 15);
 
-        dmaRxChan = Dma::initChannel(&DMA2, 0, dmaCallback, this);  // DMA2, channel 1
-        dmaTxChan = Dma::initChannel(&DMA2, 1, dmaCallback, this);  // DMA2, channel 2
+        dmaRxChan = &DMA2.channels[0];  // DMA2, channel 1
+        Dma::initChannel(&DMA2, 0, dmaCallback, this);
+
+        dmaTxChan = &DMA2.channels[1];  // DMA2, channel 2
+        Dma::initChannel(&DMA2, 1, dmaCallback, this);
     }
 
     dmaRxPriorityBits = config.dmaRxPrio;
