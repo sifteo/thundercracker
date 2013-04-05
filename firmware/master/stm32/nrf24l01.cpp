@@ -37,15 +37,7 @@ void NRF24L01::init()
         Dma::MediumPrio,
         SPIMaster::fPCLK_4
     };
-
-    /*
-     * init() can be called multiple times to handle the case in which we
-     * lose power briefly on a change between USB and battery power,
-     * but we only need to re-init the nRF24L01, not our SPI peripheral.
-     */
-    if (!spi.isInitialized()) {
-        spi.init(cfg);
-    }
+    spi.init(cfg);
 
     ce.setLow();
     ce.setControl(GPIOPin::OUT_10MHZ);
