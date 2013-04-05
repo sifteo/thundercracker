@@ -359,7 +359,16 @@ union DACChannel_t {
     struct {
         uint32_t DHR12R;
         uint32_t DHR12L;
-        uint32_t DHR8R1;
+        uint32_t DHR8R;
+    };
+};
+
+union DACDualChannel_t {
+    uint32_t DHR[3];
+    struct {
+        uint32_t DHR12RD;
+        uint32_t DHR12LD;
+        uint32_t DHR8RD;
     };
 };
 
@@ -367,10 +376,7 @@ struct DAC_t {
     uint32_t CR;
     uint32_t SWTRIG;
     DACChannel_t channels[2];
-    uint32_t DHR8R2;
-    uint32_t DHR12R;
-    uint32_t DHR12L;
-    uint32_t DHR8RD;
+    DACDualChannel_t dualChannel;
     uint32_t DOR1;
     uint32_t DOR2;
 };
