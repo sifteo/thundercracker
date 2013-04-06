@@ -50,8 +50,12 @@ public:
     static void enableDMA(int ch);
     static void disableDMA(int ch);
 
-    static void writeDual(uint16_t data);
+    static void triggerEnable(int c);
+    static void triggerDisable(int c);
+
+    static void writeDual(uint16_t data, DataFormat format = RightAlign12Bit);
     static void write(int ch, uint16_t data, DataFormat format = RightAlign12Bit);
+    static uintptr_t dualAddress(DataFormat format = RightAlign12Bit);
     static uintptr_t address(int ch, DataFormat format = RightAlign12Bit);
 };
 

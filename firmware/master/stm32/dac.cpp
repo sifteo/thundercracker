@@ -15,7 +15,7 @@ void Dac::configureChannel(int ch, Trigger trig, Waveform waveform, uint8_t mask
 {
     uint16_t reg =  (mask_amp << 8) |
                     (waveform << 6) |
-                    (trig == TrigNone ? 0 : (trig << 3) | (1 << 2)) | // if not none, both enable the trigger and configure it
+                    (trig == TrigNone ? 0 : (trig << 3)) | // if not none, both enable the trigger and configure it
                     (buffmode << 1);
     DAC.CR |= (reg << ((ch - 1) * 16));
 }
@@ -40,6 +40,14 @@ void Dac::disableDMA(int ch)
     DAC.CR &= ~(0x1000 << ((ch - 1) * 16));
 }    
 
+void Dac::triggerEnable(int ch) {
+    DAC.CR |= ((1 << 2) << ((ch - 1) * 16));
+}
+
+void Dac::triggerDisable(int ch) {
+    DAC.CR &= ~((1 << 2) << ((ch - 1) * 16));
+}
+
 uintptr_t Dac::address(int ch, DataFormat format)
 {
     volatile DACChannel_t &dc = DAC.channels[ch - 1];
@@ -52,9 +60,14 @@ void Dac::write(int ch, uint16_t data, DataFormat format)
     dc.DHR[format] = data;
 }
 
-// TODO - this is only 8-bit dual, support other formats/alignments as needed
-void Dac::writeDual(uint16_t data)
+uintptr_t Dac::dualAddress(DataFormat format) {
+    volatile DACDualChannel_t &dc = DAC.dualChannel;
+    return (uintptr_t) &dc.DHR[format];
+}
+
+void Dac::writeDual(uint16_t data, DataFormat format)
 {
-    DAC.DHR8RD = data;
+    volatile DACDualChannel_t &dc = DAC.dualChannel;
+    dc.DHR[format] = data;
 }
 
