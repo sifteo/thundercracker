@@ -90,10 +90,18 @@
 #define VCC30_ENABLE_GPIO   GPIOPin(&GPIOC, 0)
 
 // A U D I O
-#define USE_AUDIO_DAC       // Use DAC instead of PWM for audio
+#define USE_AUDIO_DAC           // Use DAC instead of PWM for audio
+#define HAS_DIFFERENTIAL_AUDIO  // Enables the use of differential audio
 
-#define AUDIO_DAC_CHAN      1
-#define AUDIO_DAC_PIN       GPIOPin(&GPIOA, 4)
+#define AUDIO_DAC_NEG_CHAN      1
+#define AUDIO_DAC_NEG_PIN       GPIOPin(&GPIOA, 4)
+
+#define AUDIO_DAC_POS_CHAN      2
+#define AUDIO_DAC_POS_PIN       GPIOPin(&GPIOA, 5)
+
+// #define AUDIO_DAC_CHAN      1
+// #define AUDIO_DAC_PIN       GPIOPin(&GPIOA, 4)
+
 #define AUDIO_DAC_EN_GPIO   GPIOPin(&GPIOA, 6);
 
 #define AUDIO_DAC_DMA       DMA2
