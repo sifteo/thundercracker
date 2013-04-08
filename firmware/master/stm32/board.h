@@ -11,6 +11,12 @@
 #define BOARD_TC_MASTER_REV1    1
 #define BOARD_TC_MASTER_REV2    2
 #define BOARD_TEST_JIG          3
+#define BOARD_TC_MASTER_REV3    4
+
+// default board
+#ifndef BOARD
+#define BOARD   BOARD_TC_MASTER_REV2
+#endif
 
 #if BOARD == BOARD_TEST_JIG
 #ifndef TEST_JIG_REV
@@ -18,14 +24,11 @@
 #endif
 #endif
 
-// default board
-#ifndef BOARD
-#define BOARD   BOARD_TC_MASTER_REV2
-#endif
-
 #include "hardware.h"
 
-#if BOARD == BOARD_TC_MASTER_REV2
+#if BOARD == BOARD_TC_MASTER_REV3
+#include "board/rev3.h"
+#elif BOARD == BOARD_TC_MASTER_REV2
 #include "board/rev2.h"
 #elif BOARD == BOARD_TC_MASTER_REV1
 #include "board/rev1.h"

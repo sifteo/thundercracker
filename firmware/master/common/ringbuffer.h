@@ -55,6 +55,24 @@ public:
     }
 
     /*
+     * DMA support
+     */
+
+    unsigned ALWAYS_INLINE getDMACount() const {
+        return tSize;
+    }
+
+    uintptr_t ALWAYS_INLINE getDMABuffer() const {
+        return (uintptr_t) &mBuf[0];
+    }
+
+    void ALWAYS_INLINE dequeueWithDMACount(unsigned count) {
+        // Update the 'head' pointer, given an updated DMA count.
+        ASSERT(count < getDMACount());
+        mHead = capacity() & (tSize - count);
+    }
+
+    /*
      * Copy from 'src' to 'this' until the source is empty or destination
      * has >= fillThreshold items in the queue.
      */

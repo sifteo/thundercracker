@@ -151,6 +151,8 @@ void FactoryTest::produce(PacketTransmission &tx)
  */
 void FactoryTest::nrfCommsHandler(uint8_t argc, const uint8_t *args)
 {
+#ifdef USE_NRF24L01
+
     RadioManager::disableRadio();
 
     while (NRF24L01::instance.state() != NRF24L01::Idle) {
@@ -164,6 +166,7 @@ void FactoryTest::nrfCommsHandler(uint8_t argc, const uint8_t *args)
     RadioManager::enableRadio();
 
     Usart::Dbg.write(response, sizeof response);
+#endif
 }
 
 /*

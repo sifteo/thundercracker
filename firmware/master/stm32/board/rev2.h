@@ -35,6 +35,8 @@
 #define RF_DMA_CHAN_RX      DMA2_Channel1
 #define RF_DMA_CHAN_TX      DMA2_Channel2
 
+#define USE_NRF24L01        // Use the nRF42L01 as our radio
+
 // F L A S H
 #ifdef REV2_GDB_REWORK
 
@@ -98,11 +100,15 @@
 #define AUDIO_PWM_TIM       TIM1
 #define AUDIO_SAMPLE_TIM    TIM7
 
+// V O L U M E
+#define USE_RC_FADER_MEAS
+
 #define VOLUME_TIM          TIM5
 #define VOLUME_CHAN         2
 #define VOLUME_GPIO         GPIOPin(&GPIOA, 1)
 
 // B A T T E R Y
+#define USE_RC_BATT_MEAS
 #define BATT_LVL_TIM        TIM4                    // NOTE! same as NBR_TX_TIM
 #define BATT_LVL_CHAN       2
 #define BATT_MEAS_GPIO      GPIOPin(&GPIOB,7)

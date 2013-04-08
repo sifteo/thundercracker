@@ -16,9 +16,9 @@ public:
     static int run(int argc, char **argv, IODevice &_dev);
 
 private:
-    bool dumpBaseSysInfo();
-    bool dumpOverview();
-    bool dumpVolumes();
+    int dumpBaseSysInfo();
+    int dumpOverview();
+    void dumpVolumes();
 
     const char *getVolumeTypeString(unsigned type);
 

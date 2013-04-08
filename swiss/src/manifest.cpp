@@ -3,12 +3,12 @@
 #include "elfdebuginfo.h"
 #include "tabularlist.h"
 #include "metadata.h"
+#include "swisserror.h"
 
 #include <sifteo/abi/elf.h>
 #include <sifteo/abi/types.h>
 
 #include <stdio.h>
-#include <errno.h>
 #include <string.h>
 #include <iomanip>
 
@@ -17,22 +17,33 @@ int Manifest::run(int argc, char **argv, IODevice &_dev)
 {
     bool rpc = false;
     
-    for (unsigned i = 1; i < argc; i++) {
+    for (int i = 1; i < argc; i++) {
         if (!strcmp(argv[i], "--rpc")) {
             rpc = true;
         } else {
             fprintf(stderr, "incorrect args\n");
-            return 1;
+            return EINVAL;
         }
     }
 
-    if (!_dev.open(IODevice::SIFTEO_VID, IODevice::BASE_PID))
-        return 1;
+    if (!_dev.open(IODevice::SIFTEO_VID, IODevice::BASE_PID)) {
+        return ENODEV;
+    }
 
     Manifest m(_dev, rpc);
-    bool success = m.dumpBaseSysInfo() && m.dumpOverview() && m.dumpVolumes();
 
-    return success ? 0 : 1;
+    int rv = m.dumpBaseSysInfo();
+    if (rv != EOK) {
+        return rv;
+    }
+
+    rv = m.dumpOverview();
+    if (rv != EOK) {
+        return rv;
+    }
+
+    m.dumpVolumes();
+    return EOK;
 }
 
 Manifest::Manifest(IODevice &_dev, bool rpc) :
@@ -54,12 +65,12 @@ const char *Manifest::getVolumeTypeString(unsigned type)
 }
 
 
-bool Manifest::dumpBaseSysInfo()
+int Manifest::dumpBaseSysInfo()
 {
     USBProtocolMsg buffer;
     const UsbVolumeManager::SysInfoReply *sysInfo = base.getBaseSysInfo(buffer);
     if (!sysInfo) {
-        return false;
+        return EIO;
     }
 
     printf("Hardware ID: ");
@@ -101,18 +112,18 @@ bool Manifest::dumpBaseSysInfo()
         }
     }
 
-    return true;
+    return EOK;
 }
 
 
-bool Manifest::dumpOverview()
+int Manifest::dumpOverview()
 {
     USBProtocolMsg buffer;
 
     if (UsbVolumeManager::VolumeOverviewReply *o = base.getVolumeOverview(buffer)) {
         overview = *o;
     } else {
-        return false;
+        return EIO;
     }
 
     printf("System: %d kB  Free: %d kB  Firmware: %s\n",
@@ -124,10 +135,10 @@ bool Manifest::dumpOverview()
         fprintf(stdout, "::storage:%u:%u\n", overview.systemBytes, overview.freeBytes); fflush(stdout);
     }
 
-    return true;
+    return EOK;
 }
 
-bool Manifest::dumpVolumes()
+void Manifest::dumpVolumes()
 {
     unsigned volBlockCode;
     TabularList table;
@@ -188,6 +199,4 @@ bool Manifest::dumpVolumes()
     }
 
     table.end();
-
-    return true;
 }

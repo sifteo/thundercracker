@@ -8,6 +8,9 @@
 
 #include "macros.h"
 
+class CrcStream;
+
+
 /**
  * This is a thin wrapper around the STM32's hardware CRC engine.
  * It uses the standard CRC-32 polynomial, and always operates on
@@ -52,6 +55,21 @@ public:
         ASSERT((reinterpret_cast<uintptr_t>(&o) & 3) == 0);
         return block(reinterpret_cast<const uint32_t*>(&o), sizeof(o) / 4);
     }
+
+private:
+    /**
+     * This is an internal version of add() which allows inlining.
+     *
+     * Normally we do *not* inline add(), since we use the function calling
+     * delay to enforce the required delay of 4 AHB clock cycles per word
+     * in our CRC hardware. The inlined version does not include this delay,
+     * so using it directly without care can cause incorrect CRC results.
+     * However, we want this fast version available for internal use in
+     * block() and CrcStream.
+     */
+    static void addInline(uint32_t word);
+
+    friend class CrcStream;
 };
 
 
@@ -113,8 +131,14 @@ ALWAYS_INLINE uint32_t Crc32::get()
     return CRC.DR;
 }
 
-ALWAYS_INLINE void Crc32::add(uint32_t word)
+ALWAYS_INLINE void Crc32::addInline(uint32_t word)
 {
+    /*
+     * This is only called directly by block operations
+     * in Crc32 and CrcStream which take care to ensure that
+     * at least the minimum delay of 4 AHB clock cycles has
+     * elapsed between words.
+     */
     CRC.DR = word;
 }
 

@@ -308,10 +308,10 @@ namespace SysLFS {
 
     void deleteAll();
     void deleteCube(unsigned index);
+    void invalidateClients();
 
     void cleanupDeletedVolumes();
 
 } // end namespace SysLFS
-
 
 #endif

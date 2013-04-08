@@ -12,6 +12,8 @@
 #include "board.h"
 #include "sampleprofiler.h"
 
+#ifdef USE_NRF24L01
+
 NRF24L01 NRF24L01::instance(RF_CE_GPIO,
                             RF_IRQ_GPIO,
                             SPIMaster(&RF_SPI,              // SPI:
@@ -28,6 +30,7 @@ void NRF24L01::init()
 
     /*
      * Common hardware initialization, regardless of radio usage mode.
+     * We share a DMA channel with Audio, which is highest priority.
      */
 
     const SPIMaster::Config cfg = {
@@ -486,3 +489,5 @@ void NRF24L01::onSpiComplete()
 
     SampleProfiler::setSubsystem(s);
 }
+
+#endif // USE_NRF24L01

@@ -64,8 +64,6 @@ def copy_to_dir(raw_filename,versioned_filename,target_path):
 def run(secondary_path, build_launcher):
     print "\n#### Master Binary Generator\n"
 
-    ensureRunningFromSDKShell()
-
     #grab githash
     githash = subprocess.check_output(["git", "describe", "--tags"]).strip()
 
@@ -128,6 +126,9 @@ def run(secondary_path, build_launcher):
      ############################
 
     if build_launcher:
+
+        ensureRunningFromSDKShell()
+
         ### Changing directories!!!
         os.chdir( launcher_dir )
 

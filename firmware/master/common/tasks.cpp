@@ -14,6 +14,8 @@
 #include "shutdown.h"
 #include "idletimeout.h"
 #include "faultlogger.h"
+#include "batterylevel.h"
+#include "volume.h"
 
 #ifdef SIFTEO_SIMULATOR
 #   include "mc_timing.h"
@@ -40,15 +42,18 @@ ALWAYS_INLINE void Tasks::taskInvoke(unsigned id)
     switch (id) {
 
     #ifndef SIFTEO_SIMULATOR
+        #if BOARD != BOARD_TEST_JIG
         case Tasks::PowerManager:   return PowerManager::vbusDebounce();
+        #endif
+
         case Tasks::UsbOUT:         return UsbDevice::handleOUTData();
 
-        #if (BOARD == BOARD_TEST_JIG)
+        #if (BOARD == BOARD_TEST_JIG && !defined(BOOTLOADER))
         case Tasks::TestJig:        return TestJig::task();
         #endif
     #endif
 
-    #ifndef BOOTLOADER
+    #if !defined(BOOTLOADER) && !BOARD_EQUALS(BOARD_TEST_JIG)
         case Tasks::AudioPull:      return AudioMixer::pullAudio();
         case Tasks::Debugger:       return SvmDebugger::messageLoop();
         case Tasks::AssetLoader:    return AssetLoader::task();
@@ -58,7 +63,7 @@ ALWAYS_INLINE void Tasks::taskInvoke(unsigned id)
         case Tasks::FaultLogger:    return FaultLogger::task();
     #endif
 
-    #if !defined(SIFTEO_SIMULATOR) && !defined(BOOTLOADER)
+    #if !defined(SIFTEO_SIMULATOR) && !defined(BOOTLOADER) && (BOARD != BOARD_TEST_JIG)
         case Tasks::Profiler:       return SampleProfiler::task();
         case Tasks::FactoryTest:    return FactoryTest::task();
     #endif
@@ -73,14 +78,24 @@ ALWAYS_INLINE void Tasks::taskInvoke(unsigned id)
 
 void Tasks::heartbeatTask()
 {
-#if (BOARD != BOARD_TEST_JIG)
+#ifdef USE_ADC_BATTERY_MEAS
+    BatteryLevel::beginCapture();
+#endif
+
+#ifdef USE_ADC_FADER_MEAS
+    Volume::beginCapture();
+#endif
+
+#if !BOARD_EQUALS(BOARD_TEST_JIG)
+
     #ifndef DISABLE_IDLETIMEOUT
     IdleTimeout::heartbeat();
     #endif
-#endif
 
     Radio::heartbeat();
     AssetLoader::heartbeat();
+
+#endif
 
 #ifdef SIFTEO_SIMULATOR
     BatteryLevel::heartbeat();
@@ -187,22 +202,23 @@ void Tasks::heartbeatISR()
         /*
          * Help diagnose the hang for internal firmware debugging
          */
-        #if !defined(SIFTEO_SIMULATOR) && !defined(BOOTLOADER)
-        SampleProfiler::reportHang();
-        #endif
+        #if !defined(BOOTLOADER) && (BOARD != BOARD_TEST_JIG)
 
-        /*
-         * XXX: It's unlikely that we can recover from this fault currently.
-         *      If it's a system hang, we're hosed anyway. If it's a userspace
-         *      hang, we can log this message to the UART, but PanicMessenger
-         *      isn't going to work correctly inside the systick ISR, and we
-         *      can't yet regain control over the CPU from a runaway userspace
-         *      loop within one block. If this is a userspace hang, we should be
-         *      replacing all cached code pages with fields of BKPT instructions
-         *      or something equally heavyhanded.
-         */
-        #ifndef BOOTLOADER
-        SvmRuntime::fault(Svm::F_NOT_RESPONDING);
+            #if !defined(SIFTEO_SIMULATOR)
+            SampleProfiler::reportHang();
+            #endif
+
+            /*
+             * XXX: It's unlikely that we can recover from this fault currently.
+             *      If it's a system hang, we're hosed anyway. If it's a userspace
+             *      hang, we can log this message to the UART, but PanicMessenger
+             *      isn't going to work correctly inside the systick ISR, and we
+             *      can't yet regain control over the CPU from a runaway userspace
+             *      loop within one block. If this is a userspace hang, we should be
+             *      replacing all cached code pages with fields of BKPT instructions
+             *      or something equally heavyhanded.
+             */
+            SvmRuntime::fault(Svm::F_NOT_RESPONDING);
         #endif
     }
     #endif // DISABLE_WATCHDOG

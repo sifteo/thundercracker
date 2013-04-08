@@ -5,24 +5,32 @@
 #include "usbprotocol.h"
 #include "deployer.h"
 #include "progressbar.h"
+#include "swisserror.h"
 
 #include <stdio.h>
 #include <errno.h>
 #include <string.h>
+#include <stdlib.h>
 
 
 int FwLoader::run(int argc, char **argv, IODevice &_dev)
 {
-    if (argc < 2)
-        return 1;
+    if (argc < 2) {
+        return EINVAL;
+    }
 
-    bool success;
     bool init = false;
     bool rpc = false;
     const char *path = NULL;
+    unsigned int device_pid = IODevice::BASE_PID;
+    unsigned int bootloader_pid = IODevice::BOOTLOADER_PID;
     
-    for (unsigned i = 1; i < argc; i++) {
-        if (!strcmp(argv[i], "--init")) {
+    for (int i = 1; i < argc; i++) {
+        if (!strcmp(argv[i], "--pid") && i+1 < argc) {
+            device_pid = strtoul(argv[i+1], NULL, 0);
+            bootloader_pid = device_pid;
+            i++;
+        } else if (!strcmp(argv[i], "--init")) {
             init = true;
         } else if (!strcmp(argv[i], "--rpc")) {
             rpc = true;
@@ -30,19 +38,17 @@ int FwLoader::run(int argc, char **argv, IODevice &_dev)
             path = argv[i];
         } else {
             fprintf(stderr, "incorrect args\n");
-            return 1;
+            return EINVAL;
         }
     }
-    
+
     FwLoader loader(_dev, rpc);
 
     if (init) {
-        success = loader.requestBootloaderUpdate();
-    } else {
-        success = loader.load(path);
+        return loader.requestBootloaderUpdate(device_pid);
     }
 
-    return success ? 0 : 1;
+    return loader.load(path,bootloader_pid);
 }
 
 FwLoader::FwLoader(IODevice &_dev, bool rpc) :
@@ -50,55 +56,62 @@ FwLoader::FwLoader(IODevice &_dev, bool rpc) :
 {
 }
 
-bool FwLoader::requestBootloaderUpdate()
+int FwLoader::requestBootloaderUpdate(unsigned int pid)
 {
-    if (!dev.open(IODevice::SIFTEO_VID, IODevice::BASE_PID)) {
+    if (!dev.open(IODevice::SIFTEO_VID, pid)) {
         fprintf(stderr, "Note: If the red LED is illuminated, `swiss update --init` is not required.\n");
-        return false;
+        return ENODEV;
     }
 
     USBProtocolMsg m(USBProtocol::FactoryTest);
     m.append(10);   // bootload update request command
-    dev.writePacket(m.bytes, m.len);
-    return true;
+    if (dev.writePacket(m.bytes, m.len) < 0) {
+        return EIO;
+    }
+
+    return EOK;
 }
 
-bool FwLoader::load(const char *path)
+int FwLoader::load(const char *path, unsigned int pid)
 {
-    if (!dev.open(IODevice::SIFTEO_VID, IODevice::BOOTLOADER_PID)) {
+    if (!dev.open(IODevice::SIFTEO_VID, pid)) {
         fprintf(stderr, "Note: Please ensure your device is in update mode, with the red LED illuminated\n");
-        return false;
+        return ENODEV;
     }
 
     FILE *f = fopen(path, "rb");
     if (!f) {
         fprintf(stderr, "could not open %s: %s\n", path, strerror(errno));
-        return false;
+        return ENOENT;
     }
 
     uint32_t plainsz, crc;
-    if (!checkFileDetails(f, plainsz, crc))
-        return false;
+    if (!checkFileDetails(f, plainsz, crc)) {
+        return EINVAL;
+    }
 
-    if (!bootloaderVersionIsCompatible())
-        return false;
+    unsigned swVersion, hwVersion;
+    if (!bootloaderVersionIsCompatible(swVersion, hwVersion)) {
+        return EIO;
+    }
 
     resetBootloader();
 
+    // XXX: ensure we're sending an appropriate firmware for the board's hardware version
     if (!sendFirmwareFile(f, crc, plainsz)) {
         fprintf(stderr, "error sending file\n");
-        return false;
+        return EIO;
     }
 
     fclose(f);
 
-    return true;
+    return EOK;
 }
 
 /*
  * Query the bootloader's version, and make sure we're compatible with it.
  */
-bool FwLoader::bootloaderVersionIsCompatible()
+bool FwLoader::bootloaderVersionIsCompatible(unsigned &swVersion, unsigned &hwVersion)
 {
     const uint8_t versionRequest[] = { Bootloader::CmdGetVersion };
     dev.writePacket(versionRequest, sizeof versionRequest);
@@ -112,8 +125,12 @@ bool FwLoader::bootloaderVersionIsCompatible()
     if (numBytes < 2 || usbBuf[0] != Bootloader::CmdGetVersion)
         return false;
 
-    unsigned version = usbBuf[1];
-    return ((VERSION_COMPAT_MIN <= version) && (version <= VERSION_COMPAT_MAX));
+    swVersion = usbBuf[1];
+    // older bootloaders don't send the hardware version,
+    // so check the length again to be sure
+    hwVersion = (numBytes >= 3) ? usbBuf[2] : 0;
+
+    return ((VERSION_COMPAT_MIN <= swVersion) && (swVersion <= VERSION_COMPAT_MAX));
 }
 
 void FwLoader::resetBootloader()
@@ -193,7 +210,7 @@ bool FwLoader::sendFirmwareFile(FILE *f, uint32_t crc, uint32_t size)
         uint8_t usbBuf[IODevice::MAX_EP_SIZE] = { Bootloader::CmdWriteMemory };
         const unsigned payload = MIN(dev.maxOUTPacketSize() - 1, initialBytesToSend);
         const unsigned chunk = (payload / AES128::BLOCK_SIZE) * AES128::BLOCK_SIZE;
-        const int numBytes = fread(usbBuf + 1, 1, chunk, f);
+        const unsigned numBytes = fread(usbBuf + 1, 1, chunk, f);
         if (numBytes != chunk) {
             return false;
         }
@@ -228,7 +245,7 @@ bool FwLoader::sendFirmwareFile(FILE *f, uint32_t crc, uint32_t size)
     uint8_t finalBuf[IODevice::MAX_EP_SIZE] = { Bootloader::CmdWriteFinal };
 
     uint8_t *p = finalBuf + 1;
-    int numBytes = fread(p, 1, AES128::BLOCK_SIZE, f);
+    unsigned numBytes = fread(p, 1, AES128::BLOCK_SIZE, f);
     p += AES128::BLOCK_SIZE;
     if (numBytes != AES128::BLOCK_SIZE)
         return false;

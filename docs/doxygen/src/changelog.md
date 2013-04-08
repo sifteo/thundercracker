@@ -3,7 +3,7 @@ Changelog      {#changelog}
 
 @brief A summary of the relevant changes in each SDK release.
 
-# v1.0.0 (date TBD)
+# v1.0.0 (March 27, 2013)
 
 ### New
 * LOG() now works on hardware as well as the siftulator. Use `swiss listen` to access the log output - see @ref device_mgmt for details.
@@ -13,6 +13,7 @@ Changelog      {#changelog}
 * added Sifteo::System::osVersion() and Sifteo::System::hardwareVersion() to check the version of the OS and hardware build of the unit your app is running on.
 * added Sifteo::Metadata::minimumOSVersion() - advertise that your app relies on a minimum OS version.
 * added attribute getters for Sifteo::AssetTracker - bpm(), numChannels(), numIntruments(), numPatterns(), and tempo()
+* `swiss delete` can now delete a game by its package string. Deletion by volume code is still supported - see @ref device_mgmt for details.
 
 ### Fixes
 * neighboring a cube to the base works again, see Sifteo::NeighborID::isBase() can return true.
