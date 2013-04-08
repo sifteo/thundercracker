@@ -6,7 +6,7 @@
 #include "macros.h"
 #include "swd.h"
 
-#define SWD_RST_CYCLES  150
+#define SWD_RST_CYCLES  200//6
 #define SWD_REQ_CYCLES  8
 #define SWD_ACK_CYCLES  3
 #define SWD_DAT_CYCLES  32
@@ -16,9 +16,12 @@
 #define SWD_ACK_ERR     4
 #define SWD_ACK_DISC    7
 
+#define SWD_JTAG2SWD    0x79e7
+#define SWD_MAGIC1      0x6db7
+#define SWD_MAGIC2      0x0
 #define SWD_ID_REQ      0xa5
 
-#define DEBUG_SWD 1
+//#define DEBUG_SWD 1
 
 void SWDMaster::init()
 {
@@ -31,7 +34,11 @@ void SWDMaster::init()
 void SWDMaster::startTimer()
 {
     busyFlag = true;
-    swdTimer.init(0x7fff,0x0);  //Tclk = 2*count/72 us
+    //Tclk = 2*count/72 us
+    //swdTimer.init(0x8ca0,0x0);  //1ms
+    //swdTimer.init(0xE10,0x0);   //100us
+    //swdTimer.init(0x2d0,0x0);   //20us
+    swdTimer.init(0xb4,0x0);   //5us
     swdTimer.enableUpdateIsr();
 }
 
@@ -49,7 +56,42 @@ void SWDMaster::stopTimer()
  */
 void SWDMaster::wkpControllerCB()
 {
-    static uint32_t cycles = SWD_RST_CYCLES;
+    enum initphase {
+        _reset0,
+        _idle,
+        _reset1,
+        _j2s,
+        _reset2,
+        _magic1,
+        _reset3,
+        _magic2,
+        _done
+    };
+
+    static initphase state = _idle;//_reset0;
+    static const uint32_t factor = 1;
+    static uint32_t cycles = 100*factor;
+    static uint32_t buffer = 0;
+
+#if 0
+    if (state == _reset0) {
+        cycles--;
+        if (cycles > 80*factor) {
+            swdio.setLow();
+            swdclk.setLow();
+            return;
+        } else if(cycles > 20*factor) {
+            swdclk.setHigh();
+            return;
+        } else if(cycles > 0) {
+            swdclk.setLow();
+            swdio.setHigh();
+            return;
+        } else {
+            state = _idle;
+        }
+    }
+#endif
 
     if (isRisingEdge()) {
 #ifdef DEBUG_SWD
@@ -62,13 +104,79 @@ void SWDMaster::wkpControllerCB()
         return;
     }
 
-    fallingEdge();
-    if(--cycles == 0) {
-        cycles = SWD_RST_CYCLES;
+#if 1
+    switch(state) {
+    case _idle:
+        cycles = SWD_RST_CYCLES;  //done with one pulse already
+        state = _reset1;
+        //fall through
+    case _reset1:
+        if (--cycles == 0) {
+            buffer = SWD_JTAG2SWD<<16;
+            cycles = 16;
+            //state = _j2s;
+                state=_done;
+                swdio.setLow();
+        }
+        break;
+    case _j2s:
+        sendbit(buffer);
+        if (--cycles == 0) {
+            cycles = SWD_RST_CYCLES;
+            state = _reset2;
+        }
+        break;
+    case _reset2:
+        if (--cycles == 0) {
+            buffer = SWD_MAGIC1<<16;
+            cycles = 16;
+            state = _magic1;
+        }
+        break;
+    case _magic1:
+        sendbit(buffer);
+        if (--cycles == 0) {
+            cycles = SWD_RST_CYCLES;
+            state = _reset3;
+        }
+        break;
+    case _reset3:
+        if (--cycles == 0) {
+            buffer = SWD_MAGIC2<<16;
+            cycles = 16;
+            state = _magic2;
+        }
+        break;
+    case _magic2:
+        sendbit(buffer);
+        if (--cycles == 0) {
+            state = _done;
+        }
+        break;
+    case _done:
+        state = _idle;
+        //send an ID req immediately
+        swdio.setHigh();
+        header = SWD_ID_REQ;
+        controllerCB = &SWDMaster::txnControllerCB;
+        break;
+    default:
+        break;
+    }
+
+#else
+    cycles--;
+
+    if(cycles == 0) {
+        //cycles = SWD_RST_CYCLES;
+        cycles = SWD_RST_CYCLES+16+SWD_RST_CYCLES;
         //send an ID req immediately
         header = SWD_ID_REQ;
         controllerCB = &SWDMaster::txnControllerCB;
     }
+#endif
+
+    fallingEdge();
 }
 
 /*
@@ -111,7 +219,6 @@ void SWDMaster::txnControllerCB()
         return;
     }
 
-    fallingEdge();
 #ifdef DEBUG_SWD
     if (rnw) {
         if (swdio.isHigh()) {
@@ -137,7 +244,6 @@ void SWDMaster::txnControllerCB()
         }
         break;
     case _turn1:
-        swdio.setLow();
         cycles = SWD_ACK_CYCLES;
         state = _ack;
         swdio.setControl(GPIOPin::IN_FLOAT);
@@ -234,6 +340,8 @@ void SWDMaster::txnControllerCB()
         //TODO assert
         break;
     }
+
+    fallingEdge();
 }
 
 bool SWDMaster::enableRequest()

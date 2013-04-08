@@ -15,7 +15,7 @@ void nrf51822::test()
 {
     btle_swd.init();
     //btle_swd.enableRequest();
-    //while(!btle_swd.readRequest(0xa5)); //0b10100101)
+    //btle_swd.readRequest(0xa5); //0b10100101)
 }
 
 IRQ_HANDLER ISR_FN(BTLE_SWD_TIM_INT)()

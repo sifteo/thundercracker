@@ -68,7 +68,7 @@ int main()
     NVIC.irqEnable(IVT.BTN_HOME_EXTI_VEC);          //  home button
 
     NVIC.irqEnable(IVT.BTLE_SWD_TIM_INT);           // swd timer
-    NVIC.irqPrioritize(IVT.BTLE_SWD_TIM_INT, 0x80); //
+    NVIC.irqPrioritize(IVT.BTLE_SWD_TIM_INT, 0x0);  //
 
 #ifdef USE_AUDIO_DAC
     NVIC.irqEnable(IVT.AUDIO_DAC_DMA_IRQ);          // DAC DMA channel
