@@ -18,8 +18,6 @@
 
 #define SWD_ID_REQ      0xa5
 
-//#define DEBUG_SWD 1
-
 void SWDMaster::init()
 {
     swdclk.setLow();
@@ -63,13 +61,6 @@ void SWDMaster::wkpControllerCB()
     static uint32_t cycles = 0;
 
     if (isRisingEdge()) {
-#ifdef DEBUG_SWD
-        if (swdio.isHigh()) {
-            UART("1 ");
-        } else {
-            UART("0 ");
-        }
-#endif
         return;
     }
 
@@ -83,8 +74,8 @@ void SWDMaster::wkpControllerCB()
     case _reset:
         if (--cycles == 0) {
             state=_done;
-            swdio.setLow(); // Need to send 0 before start bit
-        }
+            swdio.setLow(); // Must send 0 before start bit
+            swdio.setControl(GPIOPin::OUT_2MHZ);        }
         break;
     case _done:
         state = _idle;
@@ -121,40 +112,24 @@ void SWDMaster::txnControllerCB()
     static uint32_t buffer = 0;
     static swdphase state = _idle;
     static uint8_t cycles = SWD_REQ_CYCLES;
-#ifdef DEBUG_SWD
-    static bool rnw = false;
-#endif
+    static bool parity = false;
 
     if(isRisingEdge()) {
-#ifdef DEBUG_SWD
-        if (!rnw) {
-            if (swdio.isHigh()) {
-                UART("1w ");
-            } else {
-                UART("0w ");
-            }
-        }
-#endif
         return;
     }
 
-#ifdef DEBUG_SWD
-    if (rnw) {
-        if (swdio.isHigh()) {
-            UART("1r ");
-        } else {
-            UART("0r ");
-        }
-    }
-#endif
+    fallingEdge();
 
     switch(state) {
+
     case _idle:
         // fall through to header state;
         // start bit has been Xmitted before we enter FSM
+        error = OK;
         buffer = header<<(24+1);
         cycles = SWD_REQ_CYCLES-1;
         state = _header;
+
     case _header:
         sendbit(buffer);
         if (--cycles == 0) {
@@ -162,105 +137,119 @@ void SWDMaster::txnControllerCB()
             state = _turn1;
         }
         break;
+
     case _turn1:
         cycles = SWD_ACK_CYCLES;
         state = _ack;
         swdio.setControl(GPIOPin::IN_FLOAT);
-#ifdef DEBUG_SWD
-        rnw = true;
-#endif
         break;
+
     case _ack:
         receivebit(buffer);
         if (--cycles == 0) {
             state = _turn2;
         }
         break;
+
     case _turn2:
-#if 1
-        // DEBUG_ACK
-        swdio.setHigh();
-        swdio.setControl(GPIOPin::OUT_2MHZ);
-        stopTimer();
-#ifdef DEBUG_SWD
-        rnw = false;
-        UART("\r\n");
-#endif
-        state = _idle;
-        break;
-#else
-        if (buffer == SWD_ACK_OK) {
+        buffer >>= (32-SWD_ACK_CYCLES);  //Right-aligned
+        switch (buffer) {
+        case SWD_ACK_OK:
             cycles = SWD_DAT_CYCLES;
             state = _data;
-            if (!isDAPRead()) {
-                swdio.setControl(GPIOPin::OUT_2MHZ);
-#ifdef DEBUG_SWD
-                rnw = false;
-#endif
-                buffer = payloadOut;
-            } else {
+            if (isDAPRead()) {
                 buffer = 0;
+            } else {
+                swdio.setControl(GPIOPin::OUT_2MHZ);
+                buffer = payloadOut;
             }
-        } else {
-            // TODO handle wait/error case differently
+            break;
+        case SWD_ACK_WAIT:
+            //end sequence and send next start bit
             swdio.setHigh();
             swdio.setControl(GPIOPin::OUT_2MHZ);
+            error = ACKWAIT;
+            state = _done;
+            break;
+        default:
+            swdio.setHigh();
+            swdio.setControl(GPIOPin::OUT_2MHZ);
+            error = ACKERROR;
             cycles = SWD_RST_CYCLES-1;
             state = _reset;
             break;
         }
-        //fall through to data for DAP read
-#endif
+        //fall through if no error
+        if (error == OK) {
+            parity = false; //reset parity
+        } else {
+            break;
+        }
+
     case _data:
         if (isDAPRead()) {
             receivebit(buffer);
         } else {
             sendbit(buffer);
         }
+        parity ^= swdio.isHigh();
         if (--cycles == 0) {
             state = _parity;
         }
         break;
+
     case _parity:
         // TODO implement parity check
         if (isDAPRead()) {
-            //read and compare parity
-            //readbit(buffer)
+            //check parity
+            if (swdio.isHigh() ^ parity) {
+                //parity fail
+                payloadIn = 0;
+                error = PARITY;
+                cycles = SWD_RST_CYCLES;
+                state = _reset;
+                break;
+            } else {
+                payloadIn = buffer;
+            }
         } else {
-            //compute and write parity
-            //sendbit(buffer);
+            //write parity
+            if (parity) {
+                swdio.setHigh();
+            } else {
+                swdio.setLow();
+            }
         }
         state = _turn3;
         break;
+
     case _turn3:
+        //The next start bit
         swdio.setHigh();
         swdio.setControl(GPIOPin::OUT_2MHZ);
-#ifdef DEBUG_SWD
-        rnw = false;
-#endif
         state = _done;
         break;
+
     case _done:
-#ifdef DEBUG_SWD
-        UART("\r\n");
-#endif
         stopTimer();
         state = _idle;
         break;
+
     case _reset:
         if (--cycles == 0) {
-            //buffer should be clear here
-            //state = _idle;  //retry
-            state = _done;  //giveup
+            //Must send a 0 after reset sequence
+            swdio.setLow();
+            swdio.setControl(GPIOPin::OUT_2MHZ);
+            state = _turn3;
         }
         break;
+
     default:
         //shouldnt come here
         //TODO assert
         break;
     }
 
-    fallingEdge();
 }
 
 bool SWDMaster::enableRequest()
