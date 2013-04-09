@@ -21,10 +21,9 @@ using namespace llvm;
 
 namespace {
     class SVMDAGToDAGISel : public SelectionDAGISel {
-        SVMTargetMachine& TM;
     public:
         explicit SVMDAGToDAGISel(SVMTargetMachine &tm)
-            : SelectionDAGISel(tm), TM(tm), M(0) {}
+            : SelectionDAGISel(tm), M(0) {}
 
         SDNode *Select(SDNode *N);
 
