@@ -57,6 +57,7 @@ public:
     int extract(const char *pkgStr, const char *filepath, bool raw, bool rpc);
     int restore(const char *filepath);
     int normalize(const char *inpath, const char *outpath);
+    int del(const char *pkgStr);
 
 private:
     static const unsigned PAGE_SIZE = 256;
