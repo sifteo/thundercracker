@@ -115,6 +115,11 @@ inline void Menu::stateStart()
 inline void Menu::transFromStart()
 {
     if (stateFinished) {
+
+        // garbage inexplicable appears here, often :P
+        vid->touch();
+        System::finish();
+        
         hasBeenStarted = true;
         
         position = stoppingPositionFor(startingItem);
@@ -464,7 +469,7 @@ inline void Menu::statePanTarget()
         panDelay -= frameclock.delta().milliseconds();
     } else {
         position += 0.05f * (stopping_position - position);
-        if (abs(position - stopping_position) < 1.f) {
+        if (abs(position - stopping_position) < 1.1f) {
             position = stopping_position;
         }
         stateFinished = position == stopping_position;

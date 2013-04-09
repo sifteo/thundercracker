@@ -291,8 +291,6 @@ inline void Menu::anchor(uint8_t item, bool hopUp, int8_t panTarget)
         updateBG0();
         
         changeState(MENU_STATE_HOP_UP);
-    } else if (targetItem >= 0 && targetItem != startingItem) {
-        changeState(MENU_STATE_PAN_TARGET);
     }
 }
 
