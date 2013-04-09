@@ -33,7 +33,7 @@ public:
     }
 
     virtual bool isFirstRun() const {
-        return isFirstRunExperience;
+        return firstRun == this;
     }
 
     /// Look for all games on the system, and add them to the MainMenu.
@@ -61,6 +61,8 @@ private:
     /// Period (in ms) for loading sound while bootstrapping a game.
     static const unsigned LOADING_SOUND_PERIOD = 333;
 
+    static ELFMainMenuItem *firstRun;
+
     struct SlotInfo {
         unsigned totalBytes;
         unsigned totalTiles;
@@ -71,7 +73,6 @@ private:
     CubeRange cubeRange;
     uint8_t numAssetSlots;
     bool hasValidIcon;
-    bool isFirstRunExperience;
     Sifteo::MappedVolume::UUID uuid;
     Sifteo::Volume volume;
 
@@ -93,12 +94,14 @@ private:
      * an ELFMainMenuItem for the volume, or 'false' if it should not appear
      * on the main menu.
      */
-    bool init(Sifteo::Volume volume);
+    bool init(Sifteo::Volume volume, bool *outFirstRun=0);
 
     /**
      * Validate volume metadata that will be required later by getAssets()
      */
     bool checkIcon(Sifteo::MappedVolume &map);
+
+
 
     /**
      * Average bytes of asset loading progress across multiple cubes

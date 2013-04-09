@@ -15,7 +15,7 @@
 using namespace Sifteo;
 
 ELFMainMenuItem ELFMainMenuItem::instances[MAX_INSTANCES];
-
+ELFMainMenuItem *ELFMainMenuItem::firstRun = 0;
 
 void ELFMainMenuItem::autoexec()
 {
@@ -73,13 +73,13 @@ void ELFMainMenuItem::findGames(Array<MainMenuItem*, Shared::MAX_ITEMS> &items)
     unsigned volI = 0, itemI = 0;
     unsigned volE = volumes.count();
 
-    ELFMainMenuItem *firstRun = 0;
+    firstRun = 0;
     while (volI != volE) {
         ELFMainMenuItem *inst = &instances[itemI];
         Volume vol = volumes[volI];
-
-        if (inst->init(vol)) {
-            if (!firstRun && inst->isFirstRunExperience) {
+        bool isFirstRunExperience;
+        if (inst->init(vol, &isFirstRunExperience)) {
+            if (!firstRun && isFirstRunExperience) {
                 firstRun = inst;
             } else {
                 items.append(inst);
@@ -93,7 +93,7 @@ void ELFMainMenuItem::findGames(Array<MainMenuItem*, Shared::MAX_ITEMS> &items)
     }
 }
 
-bool ELFMainMenuItem::init(Volume volume)
+bool ELFMainMenuItem::init(Volume volume, bool* outFirstRun)
 {
     /*
      * Load critical metadata from this volume into RAM, and check whether
@@ -111,13 +111,15 @@ bool ELFMainMenuItem::init(Volume volume)
      * Check if this is the first run experience.
      * Kind of a hack - would prefer to have a first-class metadata.
      */
-    const char *package = map.package();
-    const char *firstRunPackage = "com.sifteo.facetime";
-    while(*package && *firstRunPackage && (*package == *firstRunPackage)) {
-        package++;
-        firstRunPackage++;
+     if (outFirstRun) {
+        const char *package = map.package();
+        const char *firstRunPackage = "com.sifteo.facetime";
+        while(*package && *firstRunPackage && (*package == *firstRunPackage)) {
+            package++;
+            firstRunPackage++;
+        }
+        *outFirstRun = (*package == *firstRunPackage);
     }
-    isFirstRunExperience = (*package == *firstRunPackage);
 
 
     LOG("LAUNCHER: Found Volume<%02x> %s, version %s \"%s\"\n",
