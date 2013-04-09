@@ -129,10 +129,17 @@ void MainMenu::checkForFirstRun() {
     // Should we short-circuit to the first run?
     for(auto& item : items) {
         if (item->isFirstRun()) {
-            MappedVolume map(item->getVolume());
-            StoredObject breadcrumb(0xbc);
-            int x = 0;
-            if (breadcrumb.readObject(x, item->getVolume()) < 0 || x == 0) {
+            bool shouldExec;
+            {
+                // need this block to unmap the volume before entering the paint
+                // loop and potentially double-mapping in the volumeChanged()
+                // event :P
+                MappedVolume map(item->getVolume());
+                StoredObject breadcrumb(0xbc);
+                int x = 0;
+                shouldExec = breadcrumb.readObject(x, item->getVolume()) < 0 || x == 0;
+            }
+            if (shouldExec) {
                 while(!AudioTracker::isStopped()) {
                     System::paint();
                 }

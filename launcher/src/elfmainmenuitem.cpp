@@ -114,7 +114,7 @@ bool ELFMainMenuItem::init(Volume volume, bool* outFirstRun)
      if (outFirstRun) {
         const char *package = map.package();
         const char *firstRunPackage = "com.sifteo.facetime";
-        while(*package && *firstRunPackage && (*package == *firstRunPackage)) {
+        while(*package && (*package == *firstRunPackage)) {
             package++;
             firstRunPackage++;
         }
