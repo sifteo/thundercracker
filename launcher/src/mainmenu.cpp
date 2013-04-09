@@ -101,11 +101,17 @@ void MainMenu::run()
     prepareAssets();
 
     // Connect initial cubes
-    for (CubeID cube : CubeSet::connected())
+    for (CubeID cube : CubeSet::connected()) {
         cubeConnect(cube);
+    }
 
-    // Find a default item, based on whatever volume was running last
+    checkForFirstRun();
+
+    // Start with the menu on no cube. We'll update this during the main loop.
+    mainCube = CubeID();
+    
     if (Volume::previous() != Volume(0)) {
+        // Find a default item, based on whatever volume was running last
         for (unsigned i = 0, e = items.count(); i != e; ++i) {
             ASSERT(items[i] != NULL);
             if (items[i]->getVolume() == Volume::previous()) {
@@ -113,12 +119,30 @@ void MainMenu::run()
                 break;
             }
         }
+
     }
 
-    // Start with the menu on no cube. We'll update this during the main loop.
-    mainCube = CubeID();
-
     eventLoop();
+}
+
+void MainMenu::checkForFirstRun() {
+    // Should we short-circuit to the first run?
+    bool audioStopped = 0;
+    for(auto& item : items) {
+        if (item->isFirstRun()) {
+            MappedVolume map(item->getVolume());
+            StoredObject breadcrumb(0xbc);
+            int x = 0;
+            if (breadcrumb.readObject(x, item->getVolume()) < 0 || x == 0) {
+                while(!AudioTracker::isStopped()) {
+                    System::paint();
+                }
+                item->exec();
+            }
+        }
+    }
+
+
 }
 
 void MainMenu::eventLoop()

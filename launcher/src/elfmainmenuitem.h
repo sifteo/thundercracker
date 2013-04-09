@@ -32,6 +32,10 @@ public:
         return cubeRange;
     }
 
+    virtual bool isFirstRun() const {
+        return isFirstRunExperience;
+    }
+
     /// Look for all games on the system, and add them to the MainMenu.
     static void findGames(Sifteo::Array<MainMenuItem*, Shared::MAX_ITEMS> &items);
 
@@ -67,6 +71,7 @@ private:
     CubeRange cubeRange;
     uint8_t numAssetSlots;
     bool hasValidIcon;
+    bool isFirstRunExperience;
     Sifteo::MappedVolume::UUID uuid;
     Sifteo::Volume volume;
 

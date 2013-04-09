@@ -85,6 +85,7 @@ private:
     void onBatteryLevelChange(unsigned cid);
 
     void waitForACube();
+    void checkForFirstRun();
 
     void updateSound();
     void updateMusic();
