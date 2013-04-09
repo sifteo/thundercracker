@@ -32,7 +32,8 @@ public:
         LFSDetail,
         WriteLFSObjectHeader,
         WriteLFSObjectHeaderFail,
-        WriteLFSObjectPayload
+        WriteLFSObjectPayload,
+        DeleteLFSChildren
     };
 
     struct VolumeOverviewReply {
