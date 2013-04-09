@@ -29,7 +29,7 @@
 
 #include <sys/param.h>
 
-#include <internal.h>
+#include "internal.h"
 
 @interface GLFWThread : NSThread
 @end
@@ -145,14 +145,8 @@ int _glfwPlatformInit( void )
 
     _glfwPlatformGetDesktopMode( &_glfwLibrary.desktopMode );
 
-    /*
-     * SIFTEO: Fuck this atexit() handler. It will segfault trying to clean
-     *         up the autorelease pool if we exit() from the MC thread.
-     */
-#if 0
     // Install atexit routine
     atexit( glfw_atexit );
-#endif
 
     initThreads();
 
@@ -181,7 +175,10 @@ int _glfwPlatformInit( void )
 
 int _glfwPlatformTerminate( void )
 {
-    // TODO: Fail unless this is the main thread
+    if( pthread_self() != _glfwThrd.First.PosixID )
+    {
+        return GL_FALSE;
+    }
 
     glfwCloseWindow();
 

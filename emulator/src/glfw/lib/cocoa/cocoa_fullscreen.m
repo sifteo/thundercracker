@@ -27,7 +27,7 @@
 //
 //========================================================================
 
-#include <internal.h>
+#include "internal.h"
 
 //========================================================================
 // Check whether the display mode should be included in enumeration
