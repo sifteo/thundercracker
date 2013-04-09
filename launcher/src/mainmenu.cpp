@@ -204,7 +204,6 @@ void MainMenu::eventLoop()
         itemIndexChoice = -1;
 
         // Keep running until a choice is made or the menu cube disconnects
-        MenuState prevStatus = menu.getState();
         while (mainCube.isDefined() && menu.pollEvent(&e)) {
             updateConnecting();
             updateSound();
