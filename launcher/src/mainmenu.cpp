@@ -127,7 +127,6 @@ void MainMenu::run()
 
 void MainMenu::checkForFirstRun() {
     // Should we short-circuit to the first run?
-    bool audioStopped = 0;
     for(auto& item : items) {
         if (item->isFirstRun()) {
             MappedVolume map(item->getVolume());
