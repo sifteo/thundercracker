@@ -11,7 +11,7 @@
 
 class SWDMaster {
 public:
-    enum swdError {
+    enum swdStatus {
         OK,
         ACKWAIT,
         ACKERROR,
@@ -24,8 +24,12 @@ public:
     bool readRequest(uint8_t);
     bool writeRequest(uint8_t, uint32_t);
 
-    swdError ALWAYS_INLINE status() {
-        return error;
+    bool ALWAYS_INLINE isBusy() {
+        return busyFlag;
+    }
+
+    swdStatus ALWAYS_INLINE status() {
+        return controllerStatus;
     }
 
     void isr();
@@ -44,7 +48,7 @@ private:
     GPIOPin swdio;
 
     bool busyFlag;
-    swdError error;
+    swdStatus controllerStatus;
 
     bool ALWAYS_INLINE isDAPRead() {
         return (header & (1<<7));

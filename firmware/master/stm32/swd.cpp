@@ -24,6 +24,7 @@ void SWDMaster::init()
     swdclk.setControl(GPIOPin::OUT_2MHZ);
     swdio.setHigh();
     swdio.setControl(GPIOPin::OUT_2MHZ);
+    busyFlag = false;
 }
 
 void SWDMaster::startTimer()
@@ -125,7 +126,7 @@ void SWDMaster::txnControllerCB()
     case _idle:
         // fall through to header state;
         // start bit has been Xmitted before we enter FSM
-        error = OK;
+        controllerStatus = OK;
         buffer = header<<(24+1);
         cycles = SWD_REQ_CYCLES-1;
         state = _header;
@@ -168,19 +169,19 @@ void SWDMaster::txnControllerCB()
             //end sequence and send next start bit
             swdio.setHigh();
             swdio.setControl(GPIOPin::OUT_2MHZ);
-            error = ACKWAIT;
+            controllerStatus = ACKWAIT;
             state = _done;
             break;
         default:
             swdio.setHigh();
             swdio.setControl(GPIOPin::OUT_2MHZ);
-            error = ACKERROR;
+            controllerStatus = ACKERROR;
             cycles = SWD_RST_CYCLES-1;
             state = _reset;
             break;
         }
         //fall through if no error
-        if (error == OK) {
+        if (controllerStatus == OK) {
             parity = false; //reset parity
         } else {
             break;
@@ -205,7 +206,7 @@ void SWDMaster::txnControllerCB()
             if (swdio.isHigh() ^ parity) {
                 //parity fail
                 payloadIn = 0;
-                error = PARITY;
+                controllerStatus = PARITY;
                 cycles = SWD_RST_CYCLES;
                 state = _reset;
                 break;
