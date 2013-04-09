@@ -92,7 +92,8 @@ typedef enum {
     MENU_STATE_TILTING,
     MENU_STATE_INERTIA,
     MENU_STATE_FINISH,
-    MENU_STATE_HOP_UP
+    MENU_STATE_HOP_UP,
+    MENU_STATE_PAN_TARGET
 } MenuState;
 
 
@@ -114,7 +115,7 @@ class Menu {
     bool itemVisible(uint8_t item);
     void setIconYOffset(uint8_t px);
     void setPeekTiles(uint8_t numTiles);
-    void anchor(uint8_t item, bool hopUp = false);
+    void anchor(uint8_t item, bool hopUp = false, int8_t panTarget=-1);
     MenuState getState();
     
     VideoBuffer *videoBuffer() const;
@@ -157,6 +158,7 @@ class Menu {
     struct MenuItem *items;         // items in the strip
     uint8_t numItems;               // number of items in the strip
     uint8_t startingItem;           // centered item in strip on first draw
+    int8_t targetItem;              // item to immediately pan to after first draw
     // event breadcrumb
     struct MenuEvent currentEvent;
     // state tracking
@@ -170,6 +172,7 @@ class Menu {
     bool prevTouch;
     // inertial state: where to stop
     int stopping_position;
+    int panDelay;
     int tiltDirection;
     // scrolling states (Inertia and Tilt): physics
     float position;         // current x position
@@ -203,6 +206,10 @@ class Menu {
     void transToHopUp();
     void stateHopUp();
     void transFromHopUp();
+
+    void transToPanTarget();
+    void statePanTarget();
+    void transFromPanTarget();
 
     // events.h
     bool dispatchEvent(struct MenuEvent *ev);

@@ -32,6 +32,10 @@ public:
         return cubeRange;
     }
 
+    static bool firstRunPresent() {
+        return firstRun != 0;
+    }
+
     virtual bool isFirstRun() const {
         return firstRun == this;
     }

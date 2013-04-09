@@ -80,14 +80,14 @@ void MainMenu::init()
     _SYS_asset_bindSlots(Volume::running(), Shared::NUM_SLOTS);
 }
 
-void MainMenu::initMenu(unsigned initialIndex, bool popUp)
+void MainMenu::initMenu(unsigned initialIndex, bool popUp, int panTarget)
 {
     ASSERT(items.count() > 0);
 
     // (Re)initialize the menu
     menu.init(Shared::video[mainCube], &menuAssets, menuItems);
     menu.setIconYOffset(8);
-    menu.anchor(initialIndex, popUp);
+    menu.anchor(initialIndex, popUp, panTarget);
     itemIndexCurrent = -1;
 }
 
@@ -154,6 +154,7 @@ void MainMenu::checkForFirstRun() {
 void MainMenu::eventLoop()
 {
     while (1) {
+
         // Need to bind the menu to a new cube?
         if (!mainCube.isDefined()) {
 
@@ -169,6 +170,7 @@ void MainMenu::eventLoop()
             /*
              * Wait until we have a cube that's usable for our menu
              */
+
             while (1) {
                 CubeSet usable = CubeSet::connected() & ~connectingCubes;
 
@@ -184,8 +186,15 @@ void MainMenu::eventLoop()
                 }
             }
 
+            // try and avoid some of the garbage we often see :P
+            System::finish();
+
             if (itemIndexCurrent >= 0) {
-                initMenu(itemIndexCurrent, true);
+                if (itemIndexCurrent > 0 && items[itemIndexCurrent]->isFirstRun()) {
+                    initMenu(itemIndexCurrent, true, 0);
+                } else {
+                    initMenu(itemIndexCurrent, true);
+                }
             } else {
                 initMenu(0, false);
             }
@@ -195,6 +204,7 @@ void MainMenu::eventLoop()
         itemIndexChoice = -1;
 
         // Keep running until a choice is made or the menu cube disconnects
+        MenuState prevStatus = menu.getState();
         while (mainCube.isDefined() && menu.pollEvent(&e)) {
             updateConnecting();
             updateSound();

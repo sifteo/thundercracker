@@ -60,6 +60,10 @@ inline void Menu::changeState(MenuState newstate)
             MENU_LOG("hop up\n");
             transToHopUp();
             break;
+        case MENU_STATE_PAN_TARGET:
+            MENU_LOG("pan target\n");
+            transToPanTarget();
+            break;
     }
 }
 
@@ -123,7 +127,12 @@ inline void Menu::transFromStart()
             neighbors[i].masterSide = NO_SIDE;
         }
 
-        changeState(MENU_STATE_STATIC);
+        changeState(
+            targetItem != -1 && startingItem != targetItem ? 
+                MENU_STATE_PAN_TARGET : 
+                MENU_STATE_STATIC
+        );
+
     }
 }
 
@@ -431,6 +440,58 @@ inline void Menu::transFromHopUp()
          * so when we return from this function the currentEvent will be
          * propagated back to pollEvent's parameter.
          */
+    }
+}
+
+
+/**
+ * Finish state: MENU_STATE_PAN_TARGET
+ *
+ * This state pans from the starting item to a target item on menu
+ * initialization.  If HOP_UP is also specified it will occur after
+ * that state otherwise it will begin immediately.
+ * none.
+ */
+inline void Menu::transToPanTarget()
+{
+    stopping_position = stoppingPositionFor(targetItem);
+    panDelay = 500;
+}
+
+inline void Menu::statePanTarget()
+{
+    if (panDelay > 0) {
+        panDelay -= frameclock.delta().milliseconds();
+    } else {
+        position += 0.05f * (stopping_position - position);
+        if (abs(position - stopping_position) < 1.f) {
+            position = stopping_position;
+        }
+        stateFinished = position == stopping_position;
+        updateBG0();
+    }
+
+    // if (position > stopping_position) {
+    //     position -= frameclock.delta() * 128.f;
+    //     if (position < stopping_position) {
+    //         position = stopping_position;
+    //         stateFinished = true;
+    //     }
+    // } else {
+    //     position += frameclock.delta() * 128.f;
+    //     if (position > stopping_position) {
+    //         position = stopping_position;
+    //         stateFinished = true;
+    //     }
+    // }
+
+}
+
+inline void Menu::transFromPanTarget()
+{
+    if (stateFinished) {
+        // We're done with the animation, so jump right into the menu as normal.
+        changeState(MENU_STATE_STATIC);
     }
 }
 
