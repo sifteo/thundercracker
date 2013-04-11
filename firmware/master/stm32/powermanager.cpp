@@ -131,7 +131,7 @@ void PowerManager::vbusDebounce()
 
 void PowerManager::setState(State s)
 {
-#if (BOARD >= BOARD_TC_MASTER_REV2) && (!defined HAS_SINGLE_RAIL)
+#if (BOARD >= BOARD_TC_MASTER_REV2) && (!defined(HAS_SINGLE_RAIL)) && (BOARD != BOARD_TEST_JIG)
     GPIOPin vcc3v3 = VCC33_ENABLE_GPIO;
 
     switch (s) {
