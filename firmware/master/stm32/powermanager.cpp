@@ -57,8 +57,7 @@ void PowerManager::batteryPowerOff()
  */
 void PowerManager::init()
 {
-
-#ifndef HAS_SINGLE_RAIL
+#if BOARD != BOARD_TEST_JIG && !defined(HAS_SINGLE_RAIL)
     GPIOPin flashRegEnable = FLASH_REG_EN_GPIO;
     flashRegEnable.setControl(GPIOPin::OUT_2MHZ);
     flashRegEnable.setHigh();
