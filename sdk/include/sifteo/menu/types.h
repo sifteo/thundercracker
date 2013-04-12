@@ -135,7 +135,8 @@ class Menu {
     static const uint8_t kDefaultIconYOffset = 16;
     static const uint8_t kDefaultPeekTiles = 1;
     static const float kPanEasingRate = 0.05f;
-    static const unsigned kPanDelayMilliseconds = 500;
+    //static const float kPanMaxSpeed = 7.5f; // moved due to weird linker error
+    static const unsigned kPanDelayMilliseconds = 800;
 
     // instance-constants
     uint8_t kHeaderHeight;

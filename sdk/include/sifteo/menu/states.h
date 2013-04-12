@@ -468,7 +468,9 @@ inline void Menu::statePanTarget()
     if (panDelay > 0) {
         panDelay -= frameclock.delta().milliseconds();
     } else {
-        position += kPanEasingRate * (stopping_position - position);
+        float delta = kPanEasingRate * (stopping_position - position);
+        float kPanMaxSpeed = 7.5f; // moved here due to weird linker error
+        position += clamp(delta, -kPanMaxSpeed, kPanMaxSpeed);
         if (abs(position - stopping_position) < 1.1f) {
             position = stopping_position;
         }
