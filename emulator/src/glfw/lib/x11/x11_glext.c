@@ -28,7 +28,7 @@
 //
 //========================================================================
 
-#include <internal.h>
+#include "internal.h"
 
 
 void (*glXGetProcAddress(const GLubyte *procName))();

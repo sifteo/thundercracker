@@ -37,9 +37,13 @@ void init()
 
 }
 
+/*
+ *  Scale values in [FADER_MIN, FADER_MAX] to [0, MAX_VOLUME]
+ *  Any values beyond FADER_MIN/MAX get clamped
+ */
 int systemVolume()
 {
-    return clamp((int)MIN(lastReading,(lastReading - FADER_MIN)) * MAX_VOLUME/(FADER_MAX - FADER_MIN), 0, MAX_VOLUME);
+    return clamp((int)(lastReading * MAX_VOLUME/(FADER_MAX - FADER_MIN)), 0, MAX_VOLUME);
 }
 
 void beginCapture()

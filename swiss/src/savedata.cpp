@@ -62,6 +62,11 @@ int SaveData::run(int argc, char **argv, IODevice &_dev)
         return saveData.normalize(inpath, outpath);
     }
 
+    if (argc >= 3 && !strcmp(argv[1], "delete")) {
+        const char *pkgStr = argv[2];
+        return saveData.del(pkgStr);
+    }
+
     fprintf(stderr, "incorrect args\n");
     return EINVAL;
 }
@@ -216,6 +221,32 @@ int SaveData::normalize(const char *inpath, const char *outpath)
     }
 
     if (!writeNormalizedRecords(records, hdr, fout)) {
+        return EIO;
+    }
+
+    return EOK;
+}
+
+
+int SaveData::del(const char *pkgStr)
+{
+    /*
+     * Delete any save data belonging to the specified package.
+     */
+
+    BaseDevice base(dev);
+
+    unsigned volume;
+    if (!base.volumeCodeForPackage(std::string(pkgStr), volume)) {
+        fprintf(stderr, "can't extract data from %s: not installed\n", pkgStr);
+        return EINVAL;
+    }
+
+    USBProtocolMsg m(USBProtocol::Installer);
+    m.header |= UsbVolumeManager::DeleteLFSChildren;
+    m.append((uint8_t*) &volume, sizeof volume);
+
+    if (!base.writeAndWaitForReply(m)) {
         return EIO;
     }
 

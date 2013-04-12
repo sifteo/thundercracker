@@ -3,6 +3,11 @@ Changelog      {#changelog}
 
 @brief A summary of the relevant changes in each SDK release.
 
+# vNext (Date TBD)
+
+### New
+* `swiss savedata delete` can be used to remove just the save data for a particular game. See @ref device_mgmt for details.
+
 # v1.0.0 (March 27, 2013)
 
 ### New
