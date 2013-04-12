@@ -134,6 +134,8 @@ class Menu {
     static const float kAccelThresholdStep = 9.5f;
     static const uint8_t kDefaultIconYOffset = 16;
     static const uint8_t kDefaultPeekTiles = 1;
+    static const float kPanEasingRate = 0.05f;
+    static const unsigned kPanDelayMilliseconds = 500;
 
     // instance-constants
     uint8_t kHeaderHeight;

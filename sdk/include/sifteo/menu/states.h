@@ -460,7 +460,7 @@ inline void Menu::transFromHopUp()
 inline void Menu::transToPanTarget()
 {
     stopping_position = stoppingPositionFor(targetItem);
-    panDelay = 500;
+    panDelay = kPanDelayMilliseconds;
 }
 
 inline void Menu::statePanTarget()
@@ -468,7 +468,7 @@ inline void Menu::statePanTarget()
     if (panDelay > 0) {
         panDelay -= frameclock.delta().milliseconds();
     } else {
-        position += 0.05f * (stopping_position - position);
+        position += kPanEasingRate * (stopping_position - position);
         if (abs(position - stopping_position) < 1.1f) {
             position = stopping_position;
         }
