@@ -31,7 +31,8 @@ OBJS := \
     src/lfsvolume.o     \
     src/listen.o        \
     src/logdecoder.o    \
-    src/inspect.o
+    src/inspect.o       \
+    src/options.o
 
 # include directories
 INCLUDES := \

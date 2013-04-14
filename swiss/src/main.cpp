@@ -8,11 +8,13 @@
 #include "delete.h"
 #include "paircube.h"
 #include "usbdevice.h"
+#include "netdevice.h"
 #include "reboot.h"
 #include "macros.h"
 #include "backup.h"
 #include "savedata.h"
 #include "listen.h"
+#include "options.h"
 
 #include <stdio.h>
 #include <string.h>
@@ -116,7 +118,7 @@ static void version()
 #endif
 }
 
-static int run(int argc, char **argv, UsbDevice &usbdev)
+static int run(int argc, char **argv, IODevice &iodev)
 {
     const unsigned numCommands = sizeof(commands) / sizeof(commands[0]);
 
@@ -125,7 +127,7 @@ static int run(int argc, char **argv, UsbDevice &usbdev)
 
     for (unsigned i = 0; i < numCommands; ++i) {
         if (!strcmp(commandName, commands[i].name))
-            return commands[i].run(argc, argv, usbdev);
+            return commands[i].run(argc, argv, iodev);
     }
 
     fprintf(stderr, "no command named %s\n", commandName);
@@ -134,31 +136,32 @@ static int run(int argc, char **argv, UsbDevice &usbdev)
     return 1;
 }
 
-static unsigned handleGlobalArgs(int argc, char **argv)
+static int runNet(int argc, char **argv)
 {
-    /*
-     * Handle global args, not specific to any command.
-     *
-     * Return the number of args consumed - this will always include argv[0],
-     * such that we're pointing to the first command by the time we're done.
-     */
+    NetDevice netdev;
+    int rv = run(argc, argv, netdev);
+    netdev.close();
 
-    unsigned consumed = 1; // consume argv[0]
-    for (int i = 1; i < argc; ++i) {
+    return rv;
+}
 
-        if (!strcmp(argv[i], "--libusb-debug") && i + 1 < argc) {
+static int runUsb(int argc, char **argv)
+{
+    Usb::init();
+    UsbDevice usbdev;
 
-            unsigned long level = strtoul(argv[i + 1], NULL, 0);
-            Usb::setDebug(level);
+    int rv = run(argc, argv, usbdev);
 
-            consumed += 2;
-            i++;
-            continue;
+    if (usbdev.isOpen()) {
+        usbdev.close();
+        while (usbdev.isOpen()) {
+            usbdev.processEvents(1);
         }
-
     }
 
-    return consumed;
+    Usb::deinit();
+
+    return rv;
 }
 
 int main(int argc, char **argv)
@@ -173,12 +176,7 @@ int main(int argc, char **argv)
         return 0;
     }
 
-    /*
-     * TODO: add support for specifying a TCP connection to siftulator.
-     */
-    Usb::init();
-
-    unsigned consumed = handleGlobalArgs(argc, argv);
+    unsigned consumed = Options::processGlobalArgs(argc, argv);
     argc -= consumed;
     argv += consumed;
 
@@ -187,17 +185,10 @@ int main(int argc, char **argv)
         return 1;
     }
 
-    UsbDevice usbdev;
-    int rv = run(argc, argv, usbdev);
-
-    if (usbdev.isOpen()) {
-        usbdev.close();
-        while (usbdev.isOpen()) {
-            usbdev.processEvents(1);
-        }
+    if (Options::useNetDevice()) {
+        return runNet(argc, argv);
     }
 
-    Usb::deinit();
-    return rv;
+    return runUsb(argc, argv);
 }
 
