@@ -59,6 +59,7 @@ bool SystemMC::init(System *sys)
     FlashStack::init();
     SysInfo::init();
     Crc32::init();
+    UsbHardwareMC::instance().init();
 
     if (instance->sys->opt_headless) {
         Tasks::trigger(Tasks::AudioPull);
@@ -174,6 +175,7 @@ void SystemMC::threadFn(void *param)
     // Start the master at some point shortly after the cubes come up
     instance->ticks = instance->sys->time.clocks + MCTiming::STARTUP_DELAY;
     instance->radioPacketDeadline = instance->ticks + MCTiming::TICKS_PER_PACKET;
+    instance->usbPacketDeadline = instance->ticks + MCTiming::TICKS_PER_USB_FRAME;
     instance->heartbeatDeadline = instance->ticks;
 
     instance->sys->getCubeSync().beginEventAt(instance->ticks, instance->mThreadRunning);
@@ -275,6 +277,18 @@ void SystemMC::elapseTicks(unsigned n)
     // Asynchronous radio packets
     while (self->ticks >= self->radioPacketDeadline)
         self->doRadioPacket();
+
+    // Asynchronous USB pipe simulation
+    if (self->ticks >= self->usbPacketDeadline) {
+        UsbHardwareMC::instance().work();
+
+        // don't spam connection attempts too hard
+        if (UsbHardwareMC::instance().isConnected()) {
+            self->usbPacketDeadline += MCTiming::TICKS_PER_USB_FRAME;
+        } else {
+            self->usbPacketDeadline += MCTiming::TICK_HZ / 4;
+        }
+    }
 
     // Asynchronous task heartbeat
     while (self->ticks >= self->heartbeatDeadline) {

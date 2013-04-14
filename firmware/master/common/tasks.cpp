@@ -18,6 +18,7 @@
 #include "volume.h"
 
 #ifdef SIFTEO_SIMULATOR
+#   include "mc_usbdevice.h"
 #   include "mc_timing.h"
 #   include "system_mc.h"
 #   include "system.h"
@@ -46,14 +47,13 @@ ALWAYS_INLINE void Tasks::taskInvoke(unsigned id)
         case Tasks::PowerManager:   return PowerManager::vbusDebounce();
         #endif
 
-        case Tasks::UsbOUT:         return UsbDevice::handleOUTData();
-
         #if (BOARD == BOARD_TEST_JIG && !defined(BOOTLOADER))
         case Tasks::TestJig:        return TestJig::task();
         #endif
     #endif
 
     #if !defined(BOOTLOADER) && !BOARD_EQUALS(BOARD_TEST_JIG)
+        case Tasks::UsbOUT:         return UsbDevice::handleOUTData();
         case Tasks::AudioPull:      return AudioMixer::pullAudio();
         case Tasks::Debugger:       return SvmDebugger::messageLoop();
         case Tasks::AssetLoader:    return AssetLoader::task();

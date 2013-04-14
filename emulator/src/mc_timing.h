@@ -23,6 +23,9 @@ struct MCTiming {
     // 450us, minimum packet period (Measured on real hardware)
     static const unsigned TICKS_PER_PACKET = 7200;
 
+    // 1ms, minimum packet period
+    static const unsigned TICKS_PER_USB_FRAME = TICK_HZ / 1000;
+
     // XXX: Arbitrary unverified time for SVC execution, in ticks
     // (This is especially arbitrary... I guessed ~200 CPU cycles)
     static const unsigned TICKS_PER_SVC = 50;

@@ -6,7 +6,9 @@
 #include "flash_syslfs.h"
 #include "flash_stack.h"
 
-#ifndef SIFTEO_SIMULATOR
+#ifdef SIFTEO_SIMULATOR
+#include "mc_usbdevice.h"
+#else
 #include "usb/usbdevice.h"
 #endif
 
@@ -177,9 +179,7 @@ void UsbVolumeManager::onUsbData(const USBProtocolMsg &m)
         return;
     }
 
-#ifndef SIFTEO_SIMULATOR
     UsbDevice::write(reply.bytes, reply.len);
-#endif
 }
 
 void UsbVolumeManager::volumeOverview(USBProtocolMsg &reply)

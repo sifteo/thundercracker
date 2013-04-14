@@ -13,6 +13,7 @@
 #include <vector>
 #include "tinythread.h"
 #include "wavefile.h"
+#include "mc_usbhardware.h"
 
 class System;
 class Radio;
@@ -87,6 +88,7 @@ class SystemMC {
 
     uint64_t ticks;
     uint64_t radioPacketDeadline;
+    uint64_t usbPacketDeadline;
     uint64_t heartbeatDeadline;
 
     System *sys;
