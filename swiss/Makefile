@@ -13,6 +13,7 @@ OBJS := \
     src/progressbar.o   \
     src/tabularlist.o   \
     src/usbdevice.o     \
+    src/netdevice.o     \
     src/fwloader.o      \
     src/profiler.o      \
     src/elfdebuginfo.o  \
