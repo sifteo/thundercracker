@@ -151,10 +151,7 @@ void UsbHardwareMC::processRxData()
 
     rxed = ::recv(fd, &pkt[0], pkt.size(), 0);
     if (rxed > 0) {
-
         bufferedOUTPackets.push(pkt);
-        Tasks::trigger(Tasks::UsbOUT);  // indicate that we have pending data
-
     } else if (errno != EAGAIN) {
         disconnect();
     }
@@ -237,6 +234,15 @@ void UsbHardwareMC::work()
     // more data to process?
     if (connected && FD_ISSET(fd, &rfds)) {
         processRxData();
+    }
+
+    /*
+     * Because we don't process simulated USB data in interrupt context,
+     * we might miss an edge. To keep it simple, just make sure that
+     * the UsbOUT task runs as long as we have data for it.
+     */
+    if (!bufferedOUTPackets.empty()) {
+        Tasks::trigger(Tasks::UsbOUT);
     }
 
     // XXX: track write completion events?
