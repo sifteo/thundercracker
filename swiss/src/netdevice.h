@@ -40,6 +40,8 @@ public:
     int writePacket(const uint8_t *buf, unsigned len);
 
 private:
+    static const unsigned USB_HW_HDR_LEN = 1;   // 1 byte of length
+
     struct addrinfo *addr;
     struct sockaddr_storage clientaddr;
 

@@ -28,7 +28,7 @@ public:
     uint16_t epWritePacket(uint8_t addr, const void *buf, uint16_t len);
 
 private:
-    static const unsigned USB_HW_HDR_LEN = 1;
+    static const unsigned USB_HW_HDR_LEN = 1;   // 1 byte of length
 
     UsbHardwareMC();
     static UsbHardwareMC _instance;
@@ -37,6 +37,17 @@ private:
     fd_set rfds, wfds, efds;
     int fd;
 
+    struct IOBuffer {
+        uint16_t head;
+        uint16_t tail;   // head <= tail
+        uint8_t bytes[1024];
+
+        IOBuffer() :
+            head(0), tail(0)
+        {}
+    };
+
+    IOBuffer rxbuf;
     bool connected;
 
     typedef std::vector<uint8_t> RxPacket;

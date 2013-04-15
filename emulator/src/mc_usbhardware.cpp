@@ -81,9 +81,10 @@ void UsbHardwareMC::tryConnect()
         }
     }
 
-    if (::connect(fd, addr->ai_addr, addr->ai_addrlen)) {
+    int err = ::connect(fd, addr->ai_addr, addr->ai_addrlen);
+    if (err) {
         if (errno != ECONNREFUSED) {
-            printf("connect: %s (%d)\n", strerror(errno), errno);
+            perror("connect");
         }
         disconnect();
         return;
@@ -132,28 +133,51 @@ void UsbHardwareMC::disconnect()
 
 void UsbHardwareMC::processRxData()
 {
-    /*
-     * Process received packets.
-     * Complete packets are added to mBufferedINPackets.
-     *
-     * XXX: this does not currently handle incomplete packets.
-     */
-
-    uint8_t packetlen;
-    int rxed = ::recv(fd, &packetlen, sizeof packetlen, 0);
-    if (rxed <= 0) {
+    // Pull new data out of the socket into our buffer.
+    int rxed = ::recv(fd, rxbuf.bytes + rxbuf.tail, sizeof rxbuf.bytes - rxbuf.tail, 0);
+    if (rxed > 0) {
+        rxbuf.tail += rxed;
+    } else if (errno != EAGAIN) {
+        perror("recv");
         disconnect();
         return;
     }
 
-    RxPacket pkt;
-    pkt.resize(packetlen - 1);
+    /*
+     * Process received data.
+     * Complete packets are added to mBufferedINPackets.
+     */
 
-    rxed = ::recv(fd, &pkt[0], pkt.size(), 0);
-    if (rxed > 0) {
+    for (;;) {
+        unsigned bufferLen = rxbuf.tail - rxbuf.head;
+        if (bufferLen < USB_HW_HDR_LEN) {
+            break;
+        }
+
+        uint8_t *packet = &rxbuf.bytes[rxbuf.head];
+        unsigned packetLen = packet[0] + USB_HW_HDR_LEN;
+        if (packetLen > bufferLen) {
+            break;
+        }
+
+        RxPacket pkt(packetLen - USB_HW_HDR_LEN, 0);
+        memcpy(&pkt[0], &packet[1], pkt.size());
         bufferedOUTPackets.push(pkt);
-    } else if (errno != EAGAIN) {
-        disconnect();
+
+        rxbuf.head += packetLen;
+    }
+
+    /*
+     * Reclaim buffer space. Typically we'll be receiving whole
+     * packets, so this isn't expected to be a frequent operation.
+     */
+
+    if (rxbuf.head == rxbuf.tail) {
+        rxbuf.head = rxbuf.tail = 0;
+    } else if (rxbuf.head > sizeof rxbuf.bytes / 2) {
+        rxbuf.tail -= rxbuf.head;
+        memmove(rxbuf.bytes, rxbuf.bytes + rxbuf.head, rxbuf.tail);
+        rxbuf.head = 0;
     }
 }
 

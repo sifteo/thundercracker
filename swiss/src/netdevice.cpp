@@ -231,10 +231,10 @@ int NetDevice::writePacket(const uint8_t *buf, unsigned len)
         uint8_t payload[1];
     } *packet = (MsgPacket *) pktbuf;
 
-    packet->len = len + 1;
+    packet->len = len;
     memcpy(packet->payload, buf, len);
 
-    int sent = ::send(clientfd, pktbuf, packet->len, 0);
+    int sent = ::send(clientfd, pktbuf, packet->len + USB_HW_HDR_LEN, 0);
     if (sent < 0) {
         fprintf(stderr, "send1 err: %s (%d)\n", strerror(errno), errno);
     }
