@@ -1,6 +1,7 @@
 #include "netdevice.h"
 #include "macros.h"
 #include "libusb.h"
+#include "options.h"
 
 #ifdef _WIN32
 #   define WIN32_LEAN_AND_MEAN
@@ -30,8 +31,7 @@ NetDevice::NetDevice() :
 
 bool NetDevice::open(uint16_t vendorId, uint16_t productId, uint8_t interface)
 {
-    // XXX: provide option to set port
-    static const char *port = "2405";
+    const char *port = Options::netDevicePort();
 
     unsigned long arg;
 

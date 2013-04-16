@@ -4,7 +4,10 @@
 #include <stdio.h>
 #include <string.h>
 
+using namespace std;
+
 bool Options::useNetDev = false;
+string Options::port = "2405";
 
 unsigned Options::processGlobalArgs(int argc, char **argv)
 {
@@ -31,6 +34,12 @@ unsigned Options::processGlobalArgs(int argc, char **argv)
         if (!strcmp(argv[i], "--net")) {
             useNetDev = true;
             consumed++;
+            continue;
+        }
+
+        if (!strcmp(argv[i], "--port") && argc >= i+1) {
+            port = argv[i+1];
+            consumed += 2;
             i++;
             continue;
         }
