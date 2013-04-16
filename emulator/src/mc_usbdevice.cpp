@@ -9,9 +9,14 @@ void UsbDevice::handleOUTData()
      * main thread.
      */
 
-    USBProtocolMsg m;
-    m.len = UsbHardwareMC::instance().epReadPacket(0, m.bytes, m.bytesFree());
-    if (m.len > 0) {
+    for (;;) {
+        USBProtocolMsg m;
+        m.len = UsbHardwareMC::instance().epReadPacket(0, m.bytes, m.bytesFree());
+
+        if (m.len == 0) {
+            break;
+        }
+
         USBProtocol::dispatch(m);
     }
 }
