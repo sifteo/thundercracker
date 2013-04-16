@@ -33,11 +33,22 @@ void UsbVolumeManager::onUsbData(const USBProtocolMsg &m)
         if (!memchr(packageStr, 0, m.payloadLen() - 4))
             break;
 
+#ifdef SIFTEO_SIMULATOR
+        // we may need to erase blocks to make room for this installation.
+        // allow faster erases in simulation in this case.
+        FlashDevice::setStealthIO(1);
+#endif
+
         if (writer.beginGame(numBytes, packageStr)) {
             reply.header |= WroteHeaderOK;
         } else {
             reply.header |= WroteHeaderFail;
         }
+
+#ifdef SIFTEO_SIMULATOR
+        FlashDevice::setStealthIO(-1);
+#endif
+
         break;
     }
 
