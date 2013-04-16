@@ -249,7 +249,9 @@ bool BaseDevice::waitForReply(uint32_t header, USBProtocolMsg &msg)
 
     for (;;) {
         if (dev.numPendingINPackets() == 0) {
-            dev.processEvents(1);
+            if (dev.processEvents(1) < 0) {
+                return false;
+            }
             continue;
         }
 
