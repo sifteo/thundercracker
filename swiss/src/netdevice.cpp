@@ -173,7 +173,10 @@ void NetDevice::consume()
     if (rxed > 0) {
         rxbuf.tail += rxed;
     } else if (errno != EAGAIN) {
-        perror("recv");
+        // if rxed == 0, assume client has disconnected
+        if (rxed < 0) {
+            perror("recv");
+        }
         close();
         return;
     }
