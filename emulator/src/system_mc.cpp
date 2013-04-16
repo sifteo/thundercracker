@@ -279,7 +279,7 @@ void SystemMC::elapseTicks(unsigned n)
         self->doRadioPacket();
 
     // Asynchronous USB pipe simulation
-    if (self->ticks >= self->usbPacketDeadline) {
+    while (self->ticks >= self->usbPacketDeadline) {
         UsbHardwareMC::instance().work();
 
         // don't spam connection attempts too hard
