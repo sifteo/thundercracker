@@ -23,7 +23,8 @@ using namespace std;
 
 NetDevice::NetDevice() :
     listenfd(-1),
-    clientfd(-1)
+    clientfd(-1),
+    txPending(0)
 {
 }
 
@@ -130,14 +131,13 @@ bool NetDevice::isOpen() const
 
 int NetDevice::processEvents(unsigned timeoutMillis)
 {
+    if (!isOpen()) {
+        return -1;
+    }
+
     FD_SET(clientfd, &rfds);
     FD_SET(clientfd, &efds);
-
-    if (false) { // txPending) {
-        FD_SET(clientfd, &wfds);
-    } else {
-        FD_CLR(clientfd, &wfds);
-    }
+    FD_SET(clientfd, &wfds);
 
     struct timeval tv = {
         0,                      // tv_sec
@@ -155,45 +155,64 @@ int NetDevice::processEvents(unsigned timeoutMillis)
     }
 
     // enough room to receive more data?
-    if (FD_ISSET(clientfd, &rfds)) {
+    if (isOpen() && FD_ISSET(clientfd, &rfds)) {
         consume();
     }
 
-#if 0
-    // XXX: handle data written events?
-    // data finished writing?
-    if (FD_ISSET(clientfd, &wfds)) {
-        // ?
+    if (isOpen() && (txbuf.tail > txbuf.head) && FD_ISSET(clientfd, &wfds)) {
+        send();
     }
-#endif
 
     return 0;
 }
 
 void NetDevice::consume()
 {
-    /*
-     * Process received packets.
-     * Complete packets are added to mBufferedINPackets.
-     *
-     * XXX: this does not currently handle incomplete packets.
-     */
-
-    uint8_t packetlen;
-    int rxed = ::recv(clientfd, &packetlen, sizeof packetlen, 0);
-    if (rxed <= 0) {
+    // Pull new data out of the socket into our buffer.
+    int rxed = ::recv(clientfd, rxbuf.bytes + rxbuf.tail, sizeof rxbuf.bytes - rxbuf.tail, 0);
+    if (rxed > 0) {
+        rxbuf.tail += rxed;
+    } else if (errno != EAGAIN) {
+        perror("recv");
         close();
         return;
     }
 
-    RxPacket pkt;
-    pkt.resize(packetlen - 1);
+    /*
+     * Process received data.
+     * Complete packets are added to mBufferedINPackets.
+     */
 
-    rxed = ::recv(clientfd, &pkt[0], pkt.size(), 0);
-    if (rxed > 0) {
+    for (;;) {
+        unsigned bufferLen = rxbuf.tail - rxbuf.head;
+        if (bufferLen < USB_HW_HDR_LEN) {
+            break;
+        }
+
+        uint8_t *packet = &rxbuf.bytes[rxbuf.head];
+        unsigned packetLen = packet[0] + USB_HW_HDR_LEN;
+        if (packetLen > bufferLen) {
+            break;
+        }
+
+        RxPacket pkt(packetLen - USB_HW_HDR_LEN, 0);
+        memcpy(&pkt[0], &packet[1], pkt.size());
         mBufferedINPackets.push(pkt);
-    } else if (errno != EAGAIN) {
-        close();
+
+        rxbuf.head += packetLen;
+    }
+
+    /*
+     * Reclaim buffer space. Typically we'll be receiving whole
+     * packets, so this isn't expected to be a frequent operation.
+     */
+
+    if (rxbuf.head == rxbuf.tail) {
+        rxbuf.head = rxbuf.tail = 0;
+    } else if (rxbuf.head > sizeof rxbuf.bytes / 2) {
+        rxbuf.tail -= rxbuf.head;
+        memmove(rxbuf.bytes, rxbuf.bytes + rxbuf.head, rxbuf.tail);
+        rxbuf.head = 0;
     }
 }
 
@@ -217,27 +236,34 @@ int NetDevice::readPacket(uint8_t *buf, unsigned maxlen, unsigned & rxlen)
 int NetDevice::writePacket(const uint8_t *buf, unsigned len)
 {
     /*
-     * Write a packet directly to our socket.
-     *
-     * We copy the payload such that it's contiguous with our
-     * small header so we can write it in a single send().
+     * Buffer a packet to be written to our socket.
      */
-
-    uint8_t pktbuf[MAX_EP_SIZE + 1];
-    ASSERT(len <= MAX_EP_SIZE);
 
     struct MsgPacket {
         uint8_t len;
         uint8_t payload[1];
-    } *packet = (MsgPacket *) pktbuf;
+    } *packet = (MsgPacket *) &txbuf.bytes[txbuf.tail];
 
     packet->len = len;
     memcpy(packet->payload, buf, len);
-
-    int sent = ::send(clientfd, pktbuf, packet->len + USB_HW_HDR_LEN, 0);
-    if (sent < 0) {
-        fprintf(stderr, "send1 err: %s (%d)\n", strerror(errno), errno);
-    }
+    txbuf.tail += len + USB_HW_HDR_LEN;
+    txPending += len + USB_HW_HDR_LEN;
 
     return len;
+}
+
+void NetDevice::send()
+{
+    int written = ::send(clientfd, txbuf.bytes + txbuf.head, txbuf.tail - txbuf.head, 0);
+    if (written > 0) {
+        txbuf.head += written;
+        txPending -= written;
+    } else if (errno != EAGAIN) {
+        perror("send");
+        close();
+    }
+
+    if (txbuf.head == txbuf.tail) {
+        txbuf.head = txbuf.tail = 0;
+    }
 }

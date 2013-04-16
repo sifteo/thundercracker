@@ -217,10 +217,10 @@ uint16_t UsbHardwareMC::epWritePacket(uint8_t addr, const void *buf, uint16_t le
         uint8_t payload[1];
     } *packet = (MsgPacket *) pktbuf;
 
-    packet->len = len + USB_HW_HDR_LEN;
+    packet->len = len;
     memcpy(packet->payload, buf, len);
 
-    int sent = ::send(fd, pktbuf, packet->len, 0);
+    int sent = ::send(fd, pktbuf, packet->len + USB_HW_HDR_LEN, 0);
     if (sent < 0) {
         fprintf(stderr, "send1 err: %s (%d)\n", strerror(errno), errno);
     }

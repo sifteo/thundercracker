@@ -35,7 +35,9 @@ public:
         return MAX_EP_SIZE;
     }
     unsigned numPendingOUTPackets() const {
-        return 0; // we don't buffer outgoing traffic
+        // we only track number of outstanding bytes,
+        // so this will only be an approximation.
+        return txPending / MAX_EP_SIZE;
     }
     int writePacket(const uint8_t *buf, unsigned len);
 
@@ -49,8 +51,23 @@ private:
     int clientfd;
     fd_set rfds, wfds, efds;
 
+    struct IOBuffer {
+        uint16_t head;
+        uint16_t tail;   // head <= tail
+        uint8_t bytes[MAX_EP_SIZE * MAX_OUTSTANDING_OUT_TRANSFERS * 2];
+
+        IOBuffer() :
+            head(0), tail(0)
+        {}
+    };
+
+    IOBuffer txbuf;
+    IOBuffer rxbuf;
+    unsigned txPending;
+
     void closefd(int &fd);
     void consume();
+    void send();
 
     typedef std::vector<uint8_t> RxPacket;
     std::queue<RxPacket> mBufferedINPackets;
