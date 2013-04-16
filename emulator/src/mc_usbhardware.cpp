@@ -256,7 +256,7 @@ void UsbHardwareMC::work()
     }
 
     // more data to process?
-    if (connected && FD_ISSET(fd, &rfds)) {
+    if (connected && FD_ISSET(fd, &rfds) && bufferedOUTPackets.size() < 10) {
         processRxData();
     }
 
