@@ -43,6 +43,10 @@
 #define UART_RX_GPIO        GPIOPin(&GPIOB, 11)
 #define UART_TX_GPIO        GPIOPin(&GPIOB, 10)
 
+#define UART_TEST           UART4
+#define UART_TEST_RX_GPIO   GPIOPin(&GPIOC, 11)
+#define UART_TEST_TX_GPIO   GPIOPin(&GPIOC, 10)
+
 // L E D
 #define LED_GREEN1_GPIO     GPIOPin(&GPIOC,2)
 #define LED_GREEN2_GPIO     GPIOPin(&GPIOC,3)
