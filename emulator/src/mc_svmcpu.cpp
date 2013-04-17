@@ -107,7 +107,7 @@ static inline reg_t opLSL(reg_t a, reg_t b) {
 static inline reg_t opLSR(reg_t a, reg_t b) {
     // Note: Intentionally truncates to 32-bit
     setCarry(b ? ((1 << (b - 1)) & a) != 0 : 0);
-    uint32_t result = b < 32 ? a >> b : 0;
+    uint32_t result = (b < 32) ? (a >> b) : 0;
     setNZ(result);
     return result;
 }
@@ -115,7 +115,7 @@ static inline reg_t opLSR(reg_t a, reg_t b) {
 static inline reg_t opASR(reg_t a, reg_t b) {
     // Note: Intentionally truncates to 32-bit
     setCarry(b ? ((1 << (b - 1)) & a) != 0 : 0);
-    uint32_t result = b < 32 ? (int32_t)a >> b : 0;
+    uint32_t result = (b < 32) ? ((int32_t)a >> b) : 0;
     setNZ(result);
     return result;
 }
