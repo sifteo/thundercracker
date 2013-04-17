@@ -210,8 +210,7 @@ struct GameMenuEventVector {
      * The character set is that of the font in BG0_ROM. It is a superset of
      * ASCII, with nearly all ISO Latin-1 characters.
      */
-    void setLabel(const char *label)
-    {
+    void setLabel(const char *label) const {
         ASSERT(label && label[0]);
         _SYS_setGameMenuLabel(label);
     }
