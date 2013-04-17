@@ -32,8 +32,12 @@ AudioMixer::OutputBuffer AudioMixer::output;
 AudioMixer::AudioMixer() :
     trackerCallbackInterval(0),
     trackerCallbackCountdown(0),
-    playingChannelMask(0)
-{}
+    playingChannelMask(0),
+    numSilentSamples(output.capacity() + 1)
+{
+    // Fill the buffer with silence
+    output.fill(AudioOutDevice::getSampleBias());
+}
 
 void AudioMixer::init()
 {
@@ -300,14 +304,21 @@ void AudioMixer::pullAudio()
             mixed = false;
         }
 
-        /*
-         * The mixer had nothing for us? Normally this means
-         * we can early-out and let the device's buffer drain,
-         * but if we're running the tracker, we need to keep
-         * samples flowing in order to keep its clock advancing.
-         * Generate silence.
-         */
-        if (!mixed) {
+        if (mixed) {
+            // Output buffer no longer silent
+            AudioMixer::instance.numSilentSamples = 0;
+        } else {
+            /*
+             * The mixer had nothing for us? Normally this means
+             * we can early-out and let the device's buffer drain,
+             * but if we're running the tracker, we need to keep
+             * samples flowing in order to keep its clock advancing.
+             *
+             * Generate silence, and remember that we've done so. If we
+             * fill the buffer with silence, we can do an early-out next time.
+             */
+
+            AudioMixer::instance.numSilentSamples += blockSize;
 
             #ifdef SIFTEO_SIMULATOR
             if (!headless) {
@@ -318,8 +329,10 @@ void AudioMixer::pullAudio()
             }
             #endif
 
-            if (trackerInterval == 0)
+            if (trackerInterval == 0 && AudioMixer::instance.outputBufferIsSilent()) {
+                // No need to store these zero samples.
                 break;
+            }
         }
 
         trackerCountdown -= blockSize;
@@ -354,6 +367,7 @@ void AudioMixer::pullAudio()
             if (!headless) {
                 output.enqueue(sample16 + sampleBias);
             }
+
         } while (--blockSize);
 
         if (!trackerCountdown) {
