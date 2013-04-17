@@ -19,10 +19,12 @@
 #include "dac.h"
 #include "adc.h"
 #include "bootloader.h"
+#include "usart.h"
 
 extern unsigned     __data_start;
 
 static I2CSlave i2c(&I2C1);
+static Usart    usart_test(&UART_TEST);
 
 // control for the pass-through USB of the master under test
 static GPIOPin testUsbEnable = USB_PWR_GPIO;
@@ -58,6 +60,14 @@ TestJig::TestHandler const TestJig::handlers[] = {
     stopNoiseCheckHandler,                  // 11
     getFirmwareVersion,                     // 12
     bootloadRequestHandler,                 // 13
+
+    // Prevous UART commands now handled
+    // by the testjig
+    nrfCommsOp,                             // 14
+    externalFlashCommsOp,                   // 15
+    externalFlashReadWriteOp,               // 16
+    ledOp,                                  // 17
+    uniqueIdOp,                             // 18
 };
 
 void TestJig::init()
@@ -128,6 +138,10 @@ void TestJig::init()
 
     NeighborRX::init();
     NeighborTX::init();
+
+    // Setup test UART with DMA
+    usart_test.init(UART_TEST_RX_GPIO, UART_TEST_TX_GPIO, 115200, true);
+
 }
 
 /*
