@@ -28,7 +28,7 @@
 //
 //========================================================================
 
-#include <internal.h>
+#include "internal.h"
 
 
 
@@ -380,6 +380,11 @@ static GLboolean createContext( HDC dc, const _GLFWwndconfig* wndconfig, int pix
         {
             return GL_FALSE;
         }
+
+        // Copy the debug context hint as there's no way of verifying it
+        // This is the only code path capable of creating a debug context,
+        // so leave it as false (from the earlier memset) otherwise
+        _glfwWin.glDebug = wndconfig->glDebug;
     }
     else
     {
@@ -1001,23 +1006,20 @@ static void getFullWindowSize( int clientWidth, int clientHeight,
 
 //========================================================================
 // Initialize WGL-specific extensions
-// This function is called once before initial context creation, i.e. before
-// any WGL extensions could be present.  This is done in order to have both
-// extension variable clearing and loading in the same place, hopefully
-// decreasing the possibility of forgetting to add one without the other.
 //========================================================================
 
 static void initWGLExtensions( void )
 {
-    // This needs to include every function pointer loaded below
+    // This needs to include every function pointer loaded below, because
+    // context re-creation means we cannot assume the struct has been cleared
     _glfwWin.SwapIntervalEXT = NULL;
     _glfwWin.GetPixelFormatAttribivARB = NULL;
     _glfwWin.GetExtensionsStringARB = NULL;
     _glfwWin.GetExtensionsStringEXT = NULL;
     _glfwWin.CreateContextAttribsARB = NULL;
 
-    // This needs to include every extension used below except for
-    // WGL_ARB_extensions_string and WGL_EXT_extensions_string
+    // This needs to include every extension boolean used below, because context
+    // re-creation means we cannot assume the struct has been cleared
     _glfwWin.has_WGL_EXT_swap_control = GL_FALSE;
     _glfwWin.has_WGL_ARB_pixel_format = GL_FALSE;
     _glfwWin.has_WGL_ARB_multisample = GL_FALSE;
@@ -1153,7 +1155,7 @@ static int createWindow( const _GLFWwndconfig *wndconfig,
     _glfwWin.window = NULL;
 
     // Set common window styles
-    dwStyle   = WS_CLIPSIBLINGS | WS_CLIPCHILDREN | WS_VISIBLE;
+    dwStyle   = WS_CLIPSIBLINGS | WS_CLIPCHILDREN;
     dwExStyle = WS_EX_APPWINDOW;
 
     // Set window style, depending on fullscreen mode
@@ -1326,8 +1328,6 @@ int _glfwPlatformOpenWindow( int width, int height,
                            wndconfig->refreshRate );
     }
 
-    initWGLExtensions();
-
     if( !createWindow( wndconfig, fbconfig ) )
     {
         fprintf( stderr, "Failed to create GLFW window\n" );
@@ -1344,6 +1344,17 @@ int _glfwPlatformOpenWindow( int width, int height,
         if( _glfwWin.has_WGL_ARB_multisample && _glfwWin.has_WGL_ARB_pixel_format )
         {
             // We appear to have both the FSAA extension and the means to ask for it
+            recreateContext = GL_TRUE;
+        }
+    }
+
+    if( wndconfig->glDebug )
+    {
+        // Debug contexts are not a hard constraint, so we don't fail here if
+        // the extension isn't available
+
+        if( _glfwWin.has_WGL_ARB_create_context )
+        {
             recreateContext = GL_TRUE;
         }
     }
@@ -1420,6 +1431,7 @@ int _glfwPlatformOpenWindow( int width, int height,
                       SWP_NOMOVE | SWP_NOSIZE );
     }
 
+    ShowWindow( _glfwWin.window, SW_SHOWNORMAL );
     setForegroundWindow( _glfwWin.window );
     SetFocus( _glfwWin.window );
 

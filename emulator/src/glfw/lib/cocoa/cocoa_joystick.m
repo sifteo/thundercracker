@@ -27,7 +27,7 @@
 //
 //========================================================================
 
-#include <internal.h>
+#include "internal.h"
 
 #include <unistd.h>
 #include <ctype.h>

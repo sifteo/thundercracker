@@ -142,7 +142,7 @@ int main()
 
     #if (defined USE_ADC_BATT_MEAS) || (defined USE_ADC_FADER_MEAS)
     Adc::Adc1.init();
-    Adc::Adc1.enableInterrupt();
+    Adc::Adc1.enableEocInterrupt();
     #endif
 
     LED::init();
@@ -161,14 +161,6 @@ int main()
      */
 
     BatteryLevel::init();
-
-#ifdef USE_ADC_BATT_MEAS
-    // Delay required to charge up the internal reference cap.
-    // It takes approximately 250 ms with R18 100k pullup.
-    while (SysTime::ticks() < SysTime::msTicks(300)) {
-        ;
-    }
-#endif
 
 #ifndef HAS_SINGLE_RAIL
     if (PowerManager::state() == PowerManager::BatteryPwr) {

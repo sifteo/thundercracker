@@ -3,6 +3,7 @@
 #include "gpio.h"
 #include "adc.h"
 #include "powermanager.h"
+#include "systime.h"
 #include "macros.h"
 
 #include <sifteo/abi.h>
@@ -37,6 +38,15 @@ void init() {
 
     VBATT_ADC.setCallback(VBATT_ADC_CHAN,BatteryLevel::adcCallback);
     VBATT_ADC.setSampleRate(VBATT_ADC_CHAN,Adc::SampleRate_239_5);
+
+    /*
+     * Delay required to charge up the internal reference cap.
+     * It takes approximately 250 ms with R18 100k pullup.
+     */
+
+    while (SysTime::ticks() < SysTime::msTicks(300)) {
+        ;
+    }
 }
 
 unsigned raw() {
@@ -60,6 +70,6 @@ void adcCallback(uint16_t sample) {
     PowerManager::shutdownIfVBattIsCritical(lastReading, VBATT_MIN);
 }
 
-}
+} // namespace BatteryLevel
 
 #endif // USE_ADC_BATT_MEAS

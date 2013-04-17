@@ -19,6 +19,7 @@ void PowerManager::batteryPowerOn()
      * user releases our home button, if we're on battery power,
      * so this runs during very early init.
      */
+#if BOARD != BOARD_TEST_JIG
 
 #ifdef HAS_SINGLE_RAIL
     GPIOPin powerEnable = VCC30_ENABLE_GPIO;
@@ -28,11 +29,14 @@ void PowerManager::batteryPowerOn()
 
     powerEnable.setControl(GPIOPin::OUT_2MHZ);
     powerEnable.setHigh();
+#endif
 }
 
 void PowerManager::batteryPowerOff()
 {
     // release the power supply enable
+
+#if BOARD != BOARD_TEST_JIG
 
 #ifdef HAS_SINGLE_RAIL
     GPIOPin powerEnable = VCC30_ENABLE_GPIO;
@@ -42,6 +46,7 @@ void PowerManager::batteryPowerOff()
 
     powerEnable.setControl(GPIOPin::OUT_2MHZ);
     powerEnable.setLow();
+#endif
 }
 
 /*
@@ -52,8 +57,7 @@ void PowerManager::batteryPowerOff()
  */
 void PowerManager::init()
 {
-
-#ifndef HAS_SINGLE_RAIL
+#if BOARD != BOARD_TEST_JIG && !defined(HAS_SINGLE_RAIL)
     GPIOPin flashRegEnable = FLASH_REG_EN_GPIO;
     flashRegEnable.setControl(GPIOPin::OUT_2MHZ);
     flashRegEnable.setHigh();
@@ -127,7 +131,7 @@ void PowerManager::vbusDebounce()
 
 void PowerManager::setState(State s)
 {
-#if (BOARD >= BOARD_TC_MASTER_REV2) && (!defined HAS_SINGLE_RAIL)
+#if (BOARD >= BOARD_TC_MASTER_REV2) && (!defined(HAS_SINGLE_RAIL)) && (BOARD != BOARD_TEST_JIG)
     GPIOPin vcc3v3 = VCC33_ENABLE_GPIO;
 
     switch (s) {

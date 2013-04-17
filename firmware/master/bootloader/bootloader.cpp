@@ -52,22 +52,24 @@ void Bootloader::exec(bool userRequestedUpdate)
  */
 bool Bootloader::manualUpdateRequested()
 {
-    if (PowerManager::state() != PowerManager::UsbPwr)
-        return false;
-
-    GPIOPin homeButton = BTN_HOME_GPIO;
 
     #if BOARD == BOARD_TEST_JIG
-      homeButton.setControl(GPIOPin::IN_PULL);
-      homeButton.pullup();
+      GPIOPin bootloadEnable = DIP_SWITCH4_GPIO;
+      bootloadEnable.setControl(GPIOPin::IN_PULL);
+      bootloadEnable.pullup();
 
       while (SysTime::ticks() < SysTime::sTicks(1)) {
           // active high - bail if released
-          if (homeButton.isHigh()){
+          if (bootloadEnable.isHigh()){
               return false;
           }
       }
     #else
+
+      if (PowerManager::state() != PowerManager::UsbPwr)
+          return false;
+
+      GPIOPin homeButton = BTN_HOME_GPIO;
       homeButton.setControl(GPIOPin::IN_FLOAT);
 
       while (SysTime::ticks() < SysTime::sTicks(1)) {
