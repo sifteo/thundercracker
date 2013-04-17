@@ -10,6 +10,7 @@
 #include "event.h"
 
 char UIPause::gameMenuLabel[MAX_LABEL_CHARS + 1];
+bool UIPause::resume;
 
 const UIMenu::Item UIPause::items[NUM_ITEMS] = {
     // Note: labels with an even number of characters will center perfectly
