@@ -50,6 +50,7 @@ int main()
 
     uint8_t sweep_ch=0, d1=0;
     bool sweep_mode = 0;
+    SysTime::Ticks t = 0;
 
     for (;;) {
 
@@ -87,6 +88,8 @@ int main()
            } else {
                d1 = 0;
                NRF24L01::instance.setConstantCarrier(true, sweep_ch++);
+               t = SysTime::ticks() + SysTime::msTicks(100);
+               while (SysTime::ticks() < t);
                if (sweep_ch > 83)
                    sweep_ch = 0;
            }
