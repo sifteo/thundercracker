@@ -188,7 +188,7 @@ bool FwLoader::sendFirmwareFile(FILE *f, uint32_t crc, uint32_t size)
      * initialBytes is the entire encrypted file, minus the the final block,
      * which is sent separately.
      */
-    int initialBytesToSend = filesz - AES128::BLOCK_SIZE;
+    unsigned initialBytesToSend = filesz - AES128::BLOCK_SIZE;
 
     // must be aes block aligned
     if (initialBytesToSend & 0xf) {
