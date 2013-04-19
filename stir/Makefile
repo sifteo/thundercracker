@@ -53,6 +53,8 @@ FLAGS += -O3 -g
 FLAGS += -DSDK_VERSION=$(shell git describe --tags)
 
 CFLAGS += $(FLAGS) -ffast-math -Werror -Wall $(INCLUDES) -I$(FIRMWARE_INC) -I$(SYS_INC) -MMD
+# XXX: should fix these warnings, but disabling narrowing for now to build with GCC 4.7
+CFLAGS += -Wno-narrowing
 LDFLAGS += $(FLAGS) -lm -lstdc++
 CCFLAGS := $(CFLAGS)
 
