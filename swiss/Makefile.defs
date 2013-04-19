@@ -22,3 +22,5 @@ ifeq ($(BUILD_PLATFORM), Linux)
 endif
 
 WARNFLAGS += -Wall -Werror -Wno-unused
+# XXX: should fix these warnings, but disabling narrowing for now to build with GCC 4.7
+WARNFLAGS += -Wno-narrowing
