@@ -95,7 +95,13 @@ void Bootloader::load()
 
         Tasks::init();
         NVIC.irqEnable(IVT.UsbOtg_FS);
-        PowerManager::beginVbusMonitor();
+
+        #if BOARD == BOARD_TEST_JIG
+            UsbDevice::init();
+        #else
+            PowerManager::beginVbusMonitor();
+        #endif
+
         Stm32Flash::unlock();
 
         // Indicate we're loading
