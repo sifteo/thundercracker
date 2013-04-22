@@ -14,3 +14,10 @@ docs/doxygen/html
 /.project
 /.settings/org.eclipse.cdt.core.prefs
 /.pydevproject
+
+# Qt Creator bits and pieces
+*.files
+*.includes
+*.creator
+*.creator.user
+*.config
