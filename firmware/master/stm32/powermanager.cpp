@@ -49,6 +49,46 @@ void PowerManager::batteryPowerOff()
 #endif
 }
 
+void PowerManager::standby()
+{
+    /*
+     * Enter system standby state.
+     *
+     * Once the system wakes from standby, execution
+     * restarts in the same way as after a reset.
+     */
+
+
+    NVIC.sysControl |= (1 << 2);    // SCB_SCR_SLEEPDEEP
+
+    RCC.APB1ENR |= (1 << 28);       // enable PWR
+    PWR.CR |= (1 << 2) |            // CWUF - Clear wake up flag
+              (1 << 1);             // PDDS - Power down deepsleep
+
+    Tasks::waitForInterrupt();
+}
+
+void PowerManager::stop()
+{
+    /*
+     * Enter system stop state.
+     *
+     * I/O pins retain the same state as in Run mode.
+     */
+
+    NVIC.sysControl |= (1 << 2);    // SLEEPDEEP
+
+    RCC.APB1ENR |= (1 << 28);       // enable PWR
+    PWR.CR |= (1 << 2) |            // CWUF - Clear wake up flag
+              (1 << 0);             // LPDS - Low power deepsleep
+
+    // can wait for either interrupt or event - TBD
+//    Tasks::waitForInterrupt();
+    __asm__ __volatile__ ("wfe");
+
+    NVIC.sysControl &= ~(1 << 2);   // SLEEPDEEP
+}
+
 /*
  * Other initializations that can happen after global ctors have run.
  *
