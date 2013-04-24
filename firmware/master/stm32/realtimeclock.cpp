@@ -1,8 +1,15 @@
 #include "realtimeclock.h"
+#include "tasks.h"
 #include "macros.h"
 
-void RealTimeClock::init()
+void RealTimeClock::beginInit()
 {
+    /*
+     * Because it can take up to a second or more if we're
+     * waking up after a battery insertion, split the init
+     * process in 2.
+     */
+
     // Enable power and backup interface clocks
     // and access to RTC and Backup registers
     RCC.APB1ENR |= (1 << 27) | (1 << 28);
@@ -11,16 +18,33 @@ void RealTimeClock::init()
     // assume LSE as the clock source
     // support others eventually if we need them...
 
-    // are we waking up from standby or power down?
+    // are we waking up from a battery removal?
     if ((RCC.BDCR & (1 << 15)) == 0) {
 
         RCC.BDCR |= (1 << 16);  // BDRST - backup domain reset
         RCC.BDCR &= ~(1 << 16);
 
-        // turn on LSE on and wait while it stabilises.
-        RCC.BDCR |= (1 << 0);                   // LSEON
+        // turn on LSE on and wait while it stabilizes
+        RCC.BDCR |= (1 << 0);   // LSEON
+    }
+}
+
+void RealTimeClock::finishInit()
+{
+    /*
+     * Ensure our init process has completed.
+     *
+     * XXX: this can take a long time - consider a better way
+     *      to avoid waiting for this on start up after
+     *      battery insert.
+     */
+
+    if ((RCC.BDCR & (1 << 15)) == 0) {
+
+        // are we waking up from a battery removal?
+        // we set LSEON above...hopefully it made some progress in the meantime
         while ((RCC.BDCR & (1 << 1)) == 0) {    // LSERDY
-            ;
+            Tasks::work();
         }
 
         // select LSE as the source
@@ -33,18 +57,9 @@ void RealTimeClock::init()
 
     // wait for Registers Synchronized Flag
     RTC.CRL &= ~(1 << 3);
-    while (!(RTC.CRL & (1 << 3)))
+    while (!(RTC.CRL & (1 << 3))) {
         ;
-}
-
-ALWAYS_INLINE uint32_t RealTimeClock::count()
-{
-    /*
-     * We don't make any claims as to the semantics of this value,
-     * we just treat it as a count of seconds.
-     */
-
-    return ((RTC.CNTH << 16) | RTC.CNTL);
+    }
 }
 
 void RealTimeClock::setCount(uint32_t v)
@@ -55,19 +70,4 @@ void RealTimeClock::setCount(uint32_t v)
     RTC.CNTL = v & 0x0000ffff;         // CNT[15:0]
 
     endConfig();
-}
-
-ALWAYS_INLINE void RealTimeClock::beginConfig()
-{
-    // ensure any previous writes have completed
-    while ((RTC.CRL & (1 << 5)) == 0) {
-        ;
-    }
-
-    RTC.CRL |= (1 << 4);    // CNF: enter configuration mode
-}
-
-ALWAYS_INLINE void RealTimeClock::endConfig()
-{
-    RTC.CRL &= ~(1 << 4);   // Exit configuration mode
 }
