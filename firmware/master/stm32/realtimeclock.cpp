@@ -6,7 +6,7 @@ void RealTimeClock::init()
     // Enable power and backup interface clocks
     // and access to RTC and Backup registers
     RCC.APB1ENR |= (1 << 27) | (1 << 28);
-    PWR.CR | (1 << 8);
+    PWR.CR |= (1 << 8); // DBP: Disable backup domain write protection
 
     // assume LSE as the clock source
     // support others eventually if we need them...
@@ -14,10 +14,14 @@ void RealTimeClock::init()
     // are we waking up from standby or power down?
     if ((RCC.BDCR & (1 << 15)) == 0) {
 
+        RCC.BDCR |= (1 << 16);  // BDRST - backup domain reset
+        RCC.BDCR &= ~(1 << 16);
+
         // turn on LSE on and wait while it stabilises.
-        RCC.BDCR |= 0x1;                // LSEON
-        while (!(RCC.BDCR & (1 << 1)))  // LSERDY
+        RCC.BDCR |= (1 << 0);                   // LSEON
+        while ((RCC.BDCR & (1 << 1)) == 0) {    // LSERDY
             ;
+        }
 
         // select LSE as the source
         RCC.BDCR &= ~((1 << 8) | (1 << 9));
