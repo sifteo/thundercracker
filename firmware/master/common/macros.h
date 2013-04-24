@@ -112,7 +112,7 @@
 
 // On hardware, mark this as dead code to be eliminated. On simulation, generate an ASSERT.
 #ifdef SIFTEO_SIMULATOR
-#   define UNREACHABLE()     assert(0)
+#   define UNREACHABLE()     do { printf("unreachable\n"); abort(); } while(0)
 #else
 #   define UNREACHABLE()     __builtin_unreachable()
 #endif

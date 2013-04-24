@@ -7,8 +7,8 @@
 
 extern "C" {
     #ifdef WIN32
-    #   include <Rpc.h>
     #   include <Winsock2.h>
+    #   include <Rpc.h>
     #else
     #   include <uuid/uuid.h>
     #endif

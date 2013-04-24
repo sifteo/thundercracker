@@ -24,6 +24,9 @@ public:
     static void batteryPowerOn();
     static void batteryPowerOff();
 
+    static void standby();
+    static void stop();
+
     static void shutdownIfVBattIsCritical(unsigned vbatt, unsigned vsys);
 
     // only exposed for use via exti

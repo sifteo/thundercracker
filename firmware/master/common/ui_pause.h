@@ -28,6 +28,9 @@ public:
 
     static bool setGameMenuLabel(SvmMemory::VirtAddr label);
     static void disableGameMenu();
+    static void setResumeEnabled(bool enabled) {
+        resume = enabled;
+    }
 
     ALWAYS_INLINE void animate() {
         return menu.animate();
@@ -41,6 +44,10 @@ public:
         return gameMenuLabel[0] != 0;
     }
 
+    static ALWAYS_INLINE bool resumeEnabled() {
+        return resume;
+    }
+
 private:
     UIMenu menu;
 
@@ -52,10 +59,29 @@ private:
     };
 
     static ALWAYS_INLINE unsigned getFirstItem() {
-        return hasGameMenu() ? ITEM_GAME_MENU : ITEM_CONTINUE;
+
+        /*
+         * XXX: This is slightly half-baked, but if a game menu is requested
+         *      and resume is disabled, resume will still be rendered.
+         *
+         *      This is OK for now, since the only real requirement for
+         *      suppressing 'resume' is the first run app, which does not
+         *      require a game menu.
+         */
+
+        if (hasGameMenu()) {
+            return ITEM_GAME_MENU;
+        }
+
+        if (resumeEnabled()) {
+            return ITEM_CONTINUE;
+        }
+
+        return ITEM_QUIT;
     }
 
     static char gameMenuLabel[MAX_LABEL_CHARS + 1];
+    static bool resume;
     static const UIMenu::Item items[NUM_ITEMS];
 };
 

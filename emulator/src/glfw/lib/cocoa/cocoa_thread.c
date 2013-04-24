@@ -27,7 +27,7 @@
 //
 //========================================================================
 
-#include <internal.h>
+#include "internal.h"
 
 #include <sys/time.h>
 #include <sys/sysctl.h>

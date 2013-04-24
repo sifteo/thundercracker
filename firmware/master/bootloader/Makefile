@@ -6,7 +6,7 @@ LDSCRIPT := bootloader-target.ld
 include $(TC_DIR)/firmware/master/Makefile.defs
 
 # bootloader specific flags
-CCFLAGS += -I. -DBOOTLOADER
+CCFLAGS += -I. -I../testjig -DBOOTLOADER
 
 # Sources specific to bootloader firmware
 OBJS_STM32 = \

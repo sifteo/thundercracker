@@ -92,7 +92,6 @@ void TestJig::init()
     Dac::init();
     Dac::configureChannel(BATTERY_SIM_DAC_CH);
     Dac::enableChannel(BATTERY_SIM_DAC_CH);
-    Dac::write(BATTERY_SIM_DAC_CH, DAC_1V2); // default to 1v2
 
     dip1.setControl(GPIOPin::IN_PULL);
     dip2.setControl(GPIOPin::IN_PULL);
@@ -100,10 +99,10 @@ void TestJig::init()
     dip1.pullup();
     dip2.pullup();
 
-    if(dip1.isLow()){
-        Dac::write(BATTERY_SIM_DAC_CH, DAC_1V2);
-    }else if(dip2.isLow()) {
+    if(dip2.isLow()) {
         Dac::write(BATTERY_SIM_DAC_CH, DAC_2V8);
+    } else {
+        Dac::write(BATTERY_SIM_DAC_CH, DAC_1V2); // default to 1v2
     }
 
     GPIOPin v3CurrentPin = V3_CURRENT_GPIO;
