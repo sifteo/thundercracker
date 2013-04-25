@@ -398,9 +398,10 @@ void FlashLFSVolumeVector::debugChecks()
 
     for (unsigned i = 0; i < numSlotsInUse; ++i) {
         ASSERT(!slots[i].block.isValid() || slots[i].isValid());
-        for (unsigned j = 0; j < i; ++j)
+        for (unsigned j = 0; j < i; ++j) {
             ASSERT(slots[i].block.isValid() == false ||
                 slots[i].block.code != slots[j].block.code);
+        }
     }
 }
 #endif
