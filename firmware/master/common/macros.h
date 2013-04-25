@@ -13,8 +13,8 @@
 #include <inttypes.h>
 
 #define APP_TITLE               "Sifteo Cubes"
-#define APP_COPYRIGHT_ASCII     "Copyright <c> 2011-2012 Sifteo, Inc. All rights reserved."
-#define APP_COPYRIGHT_LATIN1    "Copyright \xa9 2011-2012 Sifteo, Inc. All rights reserved."
+#define APP_COPYRIGHT_ASCII     "Copyright <c> 2011-2013 Sifteo, Inc. All rights reserved."
+#define APP_COPYRIGHT_LATIN1    "Copyright \xa9 2011-2013 Sifteo, Inc. All rights reserved."
 
 #define STRINGIFY(_x)   #_x
 #define TOSTRING(_x)    STRINGIFY(_x)
