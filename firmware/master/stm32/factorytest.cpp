@@ -399,7 +399,7 @@ void FactoryTest::rfPacketTestHandler(uint8_t argc, const uint8_t *args)
     rfSuccessCount = 0;
 }
 
-IRQ_HANDLER ISR_USART3()
+IRQ_HANDLER ISR_FN(UART_DBG)()
 {
     FactoryTest::onUartIsr();
 }

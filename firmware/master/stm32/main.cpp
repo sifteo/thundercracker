@@ -78,8 +78,8 @@ int main()
     NVIC.irqEnable(IVT.LED_SEQUENCER_TIM);          // LED sequencer timer
     NVIC.irqPrioritize(IVT.LED_SEQUENCER_TIM, 0x85);
 
-    NVIC.irqEnable(IVT.USART3);                     // factory test uart
-    NVIC.irqPrioritize(IVT.USART3, 0x52);           //  high enough to avoid overruns
+    NVIC.irqEnable(IVT.UART_DBG);                     // factory test uart
+    NVIC.irqPrioritize(IVT.UART_DBG, 0x52);           //  high enough to avoid overruns
 
 #ifndef USE_ADC_FADER_MEAS
     NVIC.irqEnable(IVT.VOLUME_TIM);                 // volume timer
