@@ -86,11 +86,18 @@
 #ifdef SIFTEO_SIMULATOR
 #   ifdef DEBUG
 #      define DEBUG_LOG(_x)   printf _x
+#      if defined(_WIN32)
+#       include <windows.h>   // for DebugBreak()
+#       define ASSERT(_x)     if (!(_x)) { DebugBreak(); assert(0); }
+#      else
+#       define ASSERT(_x)     assert(_x)
+#      endif
 #   else
 #      define DEBUG_LOG(_x)
+#      define ASSERT(_x)      assert(_x)
 #   endif
 #   define LOG(_x)            printf _x
-#   define ASSERT(_x)         assert(_x)
+#
 #   define DEBUG_ONLY(x)      x
 #   define UART(_x)
 #   define UART_HEX(_x)
