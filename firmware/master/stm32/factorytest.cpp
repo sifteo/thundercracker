@@ -20,6 +20,7 @@
 #include "tasks.h"
 #include "radioaddrfactory.h"
 #include "nrf24l01.h"
+#include "realtimeclock.h"
 
 extern unsigned     __data_start;
 
@@ -45,6 +46,7 @@ FactoryTest::TestHandler const FactoryTest::handlers[] = {
     bootloadRequestHandler,     // 10
     rfPacketTestHandler,        // 11
     rebootRequestHandler,       // 12
+    rtcTestHandler,             // 13
 };
 
 void FactoryTest::init()
@@ -398,6 +400,27 @@ void FactoryTest::rfPacketTestHandler(uint8_t argc, const uint8_t *args)
     UsbDevice::write(report, sizeof report);
     rfSuccessCount = 0;
 }
+
+/*
+ *
+ */
+void FactoryTest::rtcTestHandler(uint8_t argc, const uint8_t *args)
+{
+    uint32_t count = RealTimeClock::count();
+    uint32_t current_ticks = SysTicks::ticks();
+
+    while(SysTicks::ticks() <= current_ticks + SysTicks::msTicks(100));
+
+    if(RealTimeClock::count() > count) {
+        const uint8_t report[] = {args[0], args[1], 1};
+    } else {
+        const uint8_t report[] = {args[0], args[1], 0};
+    }
+
+    UsbDevice::write(report, sizeof report);
+}
+
+
 
 IRQ_HANDLER ISR_USART3()
 {
