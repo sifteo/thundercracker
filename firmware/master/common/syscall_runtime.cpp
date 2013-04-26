@@ -109,6 +109,11 @@ void _SYS_setGameMenuLabel(const char *label)
     }
 }
 
+void _SYS_setPauseMenuResumeEnabled(bool enabled)
+{
+    UIPause::setResumeEnabled(enabled);
+}
+
 void _SYS_shutdown(uint32_t flags)
 {
     const uint32_t excludedTasks =

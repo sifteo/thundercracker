@@ -48,8 +48,20 @@ public:
 
     void setLoop(_SYSAudioChannelID ch, _SYSAudioLoopType loopMode);
 
+    ALWAYS_INLINE bool outputBufferIsSilent() const {
+        return numSilentSamples > output.capacity();
+    }
+
     ALWAYS_INLINE bool active() const {
-        return playingChannelMask != 0;
+        /*
+         * We like to pause the mixer when no sound is playing, to conserve CPU and power.
+         *
+         * We can only pause the mixer when the output buffer is filled with
+         * silence. Any time the mixer wakes up, we need to re-zero the buffer
+         * before it goes back to sleep. This is to support output devices which
+         * do a looping DMA transfer from the buffer.
+         */
+        return playingChannelMask != 0 || !outputBufferIsSilent();
     }
 
     static void pullAudio();
@@ -68,6 +80,7 @@ private:
     uint32_t trackerCallbackCountdown;
 
     uint32_t playingChannelMask;    // channels that are actively playing
+    uint32_t numSilentSamples;      // Number of samples in 'output' guaranteed to be silent
 
     AudioChannelSlot channelSlots[_SYS_AUDIO_MAX_CHANNELS];
 

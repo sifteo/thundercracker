@@ -61,8 +61,9 @@ def copy_to_dir(raw_filename,versioned_filename,target_path):
 ##############################
 ## Our main execution function
 ##############################
-def run(secondary_path, build_launcher):
+def run(secondary_path, build_launcher, gen):
     print "\n#### Master Binary Generator\n"
+    print "\n#### Generating Gen %d Files\n" % gen
 
     #grab githash
     githash = subprocess.check_output(["git", "describe", "--tags"]).strip()
@@ -82,7 +83,7 @@ def run(secondary_path, build_launcher):
       remote_latest_dir = None
 
     #master firmware filename
-    master_filename = "master_%s.sft" % (githash)
+    master_filename = "master_%s_gen%d.sft" % (githash,gen)
 
     #launcher filename
     launcher_filename = "launcher_%s.elf" % (githash)
@@ -104,6 +105,11 @@ def run(secondary_path, build_launcher):
     # Set dem environment variables
     myenv = dict(os.environ)
     myenv["BOOTLOADABLE"] = "1"
+
+    if gen == 3:
+        myenv["BOARD"] = "BOARD_TC_MASTER_REV3"
+    else:
+        myenv["BOARD"] = "BOARD_TC_MASTER_REV2"
 
     # Compile!
     cores = "-j%d" % multiprocessing.cpu_count()
@@ -151,17 +157,20 @@ def run(secondary_path, build_launcher):
     
 if __name__ == '__main__':
 
-    if len(sys.argv) > 2:
-        print >> sys.stderr, "usage: python master_binary_generator.py <secondary_path>"
+    if len(sys.argv) > 3:
+        print >> sys.stderr, "usage: python master_binary_generator.py --secondary-path <secondary path> --gen <gen #>"
         sys.exit(1)
 
     secondary_path = False
     build_launcher = True
+    gen = 2
 
-    for arg in sys.argv[1:]:
+    for idx,arg in enumerate(sys.argv):
         if arg == "--no-launcher":
             build_launcher = False
-        elif secondary_path == False:
-            secondary_path = arg
+        elif arg == "--secondary-path":
+            secondary_path = sys.argv[idx+1]
+        elif arg == "--gen":
+            gen = int(sys.argv[idx+1])
 
-    run(secondary_path, build_launcher)
+    run(secondary_path, build_launcher, gen)

@@ -210,10 +210,18 @@ struct GameMenuEventVector {
      * The character set is that of the font in BG0_ROM. It is a superset of
      * ASCII, with nearly all ISO Latin-1 characters.
      */
-    void setLabel(const char *label)
-    {
+    void setLabel(const char *label) const {
         ASSERT(label && label[0]);
         _SYS_setGameMenuLabel(label);
+    }
+
+    /**
+     * @brief Specify whether the 'Resume' option should be included in the menu.
+     *
+     * @warning Currently, if you have set a game label, this will have no effect.
+     */
+    void setResumeEnabled(bool enabled) const {
+        _SYS_setPauseMenuResumeEnabled(enabled);
     }
 };
 

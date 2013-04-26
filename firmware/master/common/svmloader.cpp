@@ -101,6 +101,7 @@ bool SvmLoader::prepareToExec(const Elf::Program &program, SvmRuntime::StackInfo
     // Reset all event vectors
     Event::clearVectors();
     UIPause::disableGameMenu();
+    UIPause::setResumeEnabled(true);
 
     // Cancel and detach the AssetLoader if necessary
     AssetLoader::init();

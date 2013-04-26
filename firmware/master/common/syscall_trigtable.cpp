@@ -11,6 +11,7 @@
  */
 
 #include <sifteo/abi.h>
+#include <stdlib.h>
 #include "macros.h"
 
 extern "C" {
