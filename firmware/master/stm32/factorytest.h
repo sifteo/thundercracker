@@ -98,6 +98,7 @@ private:
     static void bootloadRequestHandler(uint8_t argc, const uint8_t *args);
     static void rfPacketTestHandler(uint8_t argc, const uint8_t *args);
     static void rebootRequestHandler(uint8_t argc, const uint8_t *args);
+    static void rtcTestHandler(uint8_t argc, const uint8_t *args);
 };
 
 #endif // FACTORYTEST_H
