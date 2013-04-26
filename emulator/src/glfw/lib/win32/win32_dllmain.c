@@ -28,7 +28,7 @@
 //
 //========================================================================
 
-#include <internal.h>
+#include "internal.h"
 
 
 #if defined(GLFW_BUILD_DLL)

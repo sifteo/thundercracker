@@ -28,7 +28,7 @@
 //
 //========================================================================
 
-#include <internal.h>
+#include "internal.h"
 
 #include <limits.h>
 

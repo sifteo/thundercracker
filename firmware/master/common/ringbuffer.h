@@ -58,6 +58,12 @@ public:
      * DMA support
      */
 
+    void fill(tItemType c)
+    {
+        for (tIndexType t = 0; t < tSize; ++t)
+            mBuf[t] = c;
+    }
+
     unsigned ALWAYS_INLINE getDMACount() const {
         return tSize;
     }

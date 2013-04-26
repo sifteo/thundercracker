@@ -27,6 +27,7 @@
 #include "led.h"
 #include "batterylevel.h"
 #include "adc.h"
+#include "realtimeclock.h"
 
 /*
  * Application specific entry point.
@@ -140,6 +141,10 @@ int main()
                  (1 << 10);         // TIM1 ""
 #endif
 
+    #if BOARD >= BOARD_TC_MASTER_REV3
+    RealTimeClock::beginInit();
+    #endif
+
     #if (defined USE_ADC_BATT_MEAS) || (defined USE_ADC_FADER_MEAS)
     Adc::Adc1.init();
     Adc::Adc1.enableEocInterrupt();
@@ -167,7 +172,7 @@ int main()
 #endif
 
         /*
-         * Ensure we have enough juise to make it worth starting up!
+         * Ensure we have enough juice to make it worth starting up!
          *
          * Kick off our first sample and wait for it to complete.
          * Once our first vsys and vbatt samples have been taken, the
@@ -201,8 +206,14 @@ int main()
     PowerManager::beginVbusMonitor();
     SampleProfiler::init();
 
-    // Includes radio power-on delay. Initialize this last.
+    // Includes radio power-on delay.
     Radio::init();
+
+    #if BOARD >= BOARD_TC_MASTER_REV3
+    // this waits for the external oscillator to stabilize, which can
+    // take even longer than the radio - do this last.
+    RealTimeClock::finishInit();
+    #endif
 
     /*
      * Start the game runtime, and execute the Launcher app.

@@ -396,6 +396,21 @@ void AssetLoader::prepareCubeForLoading(_SYSCubeID id)
     }
 
     /*
+     * XXX: the above can be slow on hardware in some cases.
+     *      VirtAssetSlots::locateGroup() appears to be the bottleneck.
+     *
+     *      Example: when 15 configurations are found to contain a group,
+     *      I have observed this loop taking as long as 730ms (!).
+     *      With enough cubes connected, the entire task() invocation
+     *      exceeds the Tasks watchdog period,
+     *      and an F_NOT_RESPONDING fault is generated.
+     *
+     *      Reset the watchdog for now, until we can do some
+     *      more fine grained profiling to improve this.
+     */
+    Tasks::resetWatchdog();
+
+    /*
      * Now iterate over slots, erasing if necessary. Calculate the 
      * total amount of data to send.
      */
