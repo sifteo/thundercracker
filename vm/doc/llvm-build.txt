@@ -1,6 +1,18 @@
+
+Note - it's recommended to build out of tree. For LLVM, for example:
+ * unzip llvm-3.0-src
+ * mkdir llvm-3.0-build at a sibling level to llvm-3.0-src
+ * cd into llvm-3.0-build
+ * ../llvm-3.0-src/configure <flags as per below>
+ * make -j4
+
 Build-time configuration for Clang and LLVM in deps:
 
 --enable-targets=arm --target=arm --enable-optimized --enable-static --disable-jit --disable-docs --disable-threads --disable-pthreads --disable-pic --disable-libffi
+
+Debug build config:
+
+--enable-targets=arm --target=arm --disable-optimized --enable-static --enable-assertions --disable-jit --disable-docs --disable-threads --disable-pthreads --disable-pic --disable-libffi
 
 XXX: on Windows, append LDFLAGS=-static to the configure line to avoid a very slow clang: http://lists.cs.uiuc.edu/pipermail/cfe-dev/2012-April/020558.html
 
