@@ -66,6 +66,14 @@ void beginCapture() {
 }
 
 void adcCallback(uint16_t sample) {
+#if 0
+    //battery profiling
+    static SysTime::Ticks timestamp = 0;
+    if (SysTime::ticks() > SysTime::sTicks(timestamp+1)) {
+        timestamp = SysTime::ticks()/SysTime::sTicks(1);
+        UART("Battery level "); UART_HEX(timestamp); UART(" "); UART_HEX(sample); UART("\r\n");
+    }
+#endif
     lastReading = sample;
     PowerManager::shutdownIfVBattIsCritical(lastReading, VBATT_MIN);
 }

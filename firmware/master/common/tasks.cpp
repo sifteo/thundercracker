@@ -75,16 +75,21 @@ ALWAYS_INLINE void Tasks::taskInvoke(unsigned id)
 /*
  * Table of heartbeat actions
  */
-
 void Tasks::heartbeatTask()
 {
-#ifdef USE_ADC_BATTERY_MEAS
-    BatteryLevel::beginCapture();
-#endif
-
+    //TODO: May want to change this to scan mode with DMA
+    static bool adcFlag = false;
+    if (adcFlag) {
 #ifdef USE_ADC_FADER_MEAS
-    Volume::beginCapture();
+        Volume::beginCapture();
 #endif
+        adcFlag = false;
+    } else {
+#ifdef USE_ADC_BATT_MEAS
+        BatteryLevel::beginCapture();
+#endif
+        adcFlag = true;
+    }
 
 #if !BOARD_EQUALS(BOARD_TEST_JIG)
 
