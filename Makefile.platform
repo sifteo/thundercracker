@@ -10,7 +10,7 @@ ifeq ($(BUILD_PLATFORM), windows32)
 	# Windows-isms
 	LIB_STDCPP := -static -lstdc++
 	BIN_EXT := .exe
-	CC := mingw32-gcc
+	CC := gcc
 else
 	# Note: Must use "uname -m" instead of arch. Arch lies on 64-bit Mac OS.
 	LIB_STDCPP := -lstdc++
