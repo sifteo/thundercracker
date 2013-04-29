@@ -24,6 +24,11 @@ FLAGS += -DSDK_VERSION=$(shell git describe --tags)
 FLAGS += -D__STDC_LIMIT_MACROS -D__STDC_CONSTANT_MACROS
 CCFLAGS += -fno-rtti
 INCLUDES += -I$(LLVM_INC)
+
+ifneq ($(LLVM_LIB_PATH),)
+    LLVM_LIB := $(LLVM_LIB_PATH)
+endif
+
 LIBS += \
 	$(LLVM_LIB)/libLLVMInstCombine.a \
 	$(LLVM_LIB)/libLLVMipo.a \
