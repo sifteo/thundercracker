@@ -45,6 +45,13 @@ public:
     }
 
     /**
+     * Is this the first-run experience?
+     */
+    virtual bool isFirstRun() const {
+        return false;
+    }
+
+    /**
      * Bootstrap the assets necessary to launch this main menu.
      *
      * Uses the supplied ProgressDelegate to report progress during the load,

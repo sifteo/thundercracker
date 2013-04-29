@@ -311,10 +311,17 @@ FlashLFSIndexRecord *FlashLFSIndexBlockIter::beginAppend(FlashBlockWriter &write
     }
 
     // Skip any invalid records until we get to the first empty one.
-    do {
+    // NB: ensure it's still valid after operations above before dereferencing
+    for (;;) {
         if (ptr > LFS::lastRecord(&*blockRef))
             return 0;
-    } while (!ptr->isEmpty());
+
+        if (ptr->isEmpty()) {
+            break;
+        }
+
+        ptr++;
+    }
 
     // Write here.
     writer.beginBlock(&*blockRef);
