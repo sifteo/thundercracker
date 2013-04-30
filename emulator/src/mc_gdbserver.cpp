@@ -169,8 +169,16 @@ void GDBServer::handleClient()
 
         FD_ZERO(&efds);
         FD_ZERO(&rfds);
+#ifdef _WIN32
+        // MinGW-64 implements FD_SET such that it compares clientFD
+        // directly to the unsigned fd_set mask.
+        // fix this comparison warning.
+        FD_SET((SOCKET)clientFD, &rfds);
+        FD_SET((SOCKET)clientFD, &efds);
+#else
         FD_SET(clientFD, &rfds);
         FD_SET(clientFD, &efds);
+#endif
 
         int sel = select(clientFD + 1, &rfds, NULL, &efds, &pollInterval);
         pollForStop();
