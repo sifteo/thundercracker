@@ -182,10 +182,10 @@ void FactoryTest::flashCommsHandler(uint8_t argc, const uint8_t *args)
 
 #ifdef USE_W25Q256
     result = (id.manufacturerID == FlashDevice::WINBOND_MFGR_ID) ? 1 : 0;
-#elif USE_MX25L128
+#elif defined(USE_MX25L128)
     result = (id.manufacturerID == FlashDevice::MACRONIX_MFGR_ID) ? 1 : 0;
 #else
-    "ERROR flash device part not specified"
+#error "flash device part not specified"
 #endif
 
     const uint8_t response[] = { 3, args[0], result };
