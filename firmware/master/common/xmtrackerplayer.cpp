@@ -177,7 +177,7 @@ bool XmTrackerPlayer::isUsingChannel(unsigned ch) const
      */
 
     if (hasSong) {
-        return ch >= (_SYS_AUDIO_MAX_CHANNELS - song.nChannels);
+        return ch >= ((unsigned)_SYS_AUDIO_MAX_CHANNELS - song.nChannels);
     }
 
     return false;
