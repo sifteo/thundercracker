@@ -21,6 +21,7 @@ public:
     static const unsigned CAPACITY = 1024 * 1024 * 16;      // total storage capacity
 
     static const uint8_t MACRONIX_MFGR_ID = 0xC2;
+    static const uint8_t WINBOND_MFGR_ID = 0xEF;
 
     static void init();
 

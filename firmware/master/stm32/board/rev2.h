@@ -38,6 +38,8 @@
 #define USE_NRF24L01        // Use the nRF42L01 as our radio
 
 // F L A S H
+#define USE_MX25L128        // Use the Macronix 128Mb flash part
+
 #ifdef REV2_GDB_REWORK
 
 #define FLASH_SPI           SPI2
