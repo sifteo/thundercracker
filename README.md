@@ -7,50 +7,61 @@ This is the software toolchain for Sifteo's 2nd generation product.
 Parts
 -----
 
-deps
-  Outside dependencies, included for convenience.
+#### deps
 
-docs
-  Build files for the SDK documentation, as well as other miscellaneous
-  platform documentation.
+Outside dependencies, included for convenience.
 
-emulator
-  The Thundercracker hardware emulator. Includes an accurate
-  hardware simulation of the cubes, and the necessary glue to
-  execute "sim" builds of master firmware in lockstep with this
-  hardware simulation. Also includes a unit testing framework.
+#### docs
 
-extras
-  Various userspace programs which are neither full games nor included in
-  the SDK as "example" code. This directory can be used for internal tools
-  and toys which aren't quite up to our standards for inclusion in the SDK.
+Build files for the SDK documentation, as well as other miscellaneous
+platform documentation.
 
-firmware
-  Firmware source for cubes and master.
+#### emulator
 
-launcher
-  Source for the "launcher" app, the shell which contains the game selector
-  menu and other non-game functionality that's packaged with the system.
-  This is compiled with the SDK as an ELF binary.
+The Thundercracker hardware emulator. Includes an accurate
+hardware simulation of the cubes, and the necessary glue to
+execute "sim" builds of master firmware in lockstep with this
+hardware simulation. Also includes a unit testing framework.
 
-sdk
-  Development kit for game software, running on the master.
-  This directory is intended to contain only redistributable components.
-  During build, pre-packaged binaries, built binaries, and built docs
-  are copied here.
+#### extras
 
-stir
-  Our asset preparation tool, the Sifteo Tiled Image Reducer.
+Various userspace programs which are neither full games nor included in
+the SDK as "example" code. This directory can be used for internal tools
+and toys which aren't quite up to our standards for inclusion in the SDK.
 
-test
-  Unit tests for firmware, SDK, and simulator.
+#### firmware
 
-tools
-  Internal tools for SDK packaging, factory tests, etc.
+Firmware source for cubes and master.
 
-vm
-  Tools and documentation for the virtual machine sandbox that games execute
-  in. Includes "slinky", the Sifteo linker and code generator for LLVM.
+#### launcher
+
+Source for the "launcher" app, the shell which contains the game selector
+menu and other non-game functionality that's packaged with the system.
+This is compiled with the SDK as an ELF binary.
+
+#### sdk
+
+Development kit for game software, running on the master.
+This directory is intended to contain only redistributable components.
+During build, pre-packaged binaries, built binaries, and built docs
+are copied here.
+
+#### stir
+
+Our asset preparation tool, the Sifteo Tiled Image Reducer.
+
+#### test
+
+Unit tests for firmware, SDK, and simulator.
+
+#### tools
+
+Internal tools for SDK packaging, factory tests, etc.
+
+#### vm
+
+Tools and documentation for the virtual machine sandbox that games execute
+in. Includes `slinky`, the Sifteo linker and code generator for LLVM.
 
 
 Operating System
@@ -64,8 +75,8 @@ with some flavor of GCC.
 ### Windows
 
 Because MinGW remains a volatile project, we need to use the same version
-to ensure happiness. We're currently using the version from the MiGW-64
-project at http://sourceforge.net/projects/mingwbuilds/files/host-windows/releases/4.7.2/32-bit/threads-posix/sjlj/x32-4.7.2-release-posix-sjlj-rev8.7z
+to ensure happiness. We're currently using the version from the MinGW-64
+project at <http://sourceforge.net/projects/mingwbuilds/files/host-windows/releases/4.7.2/32-bit/threads-posix/sjlj/x32-4.7.2-release-posix-sjlj-rev8.7z>
 
 Fingers crossed that this will improve soon, and we won't have such a
 tight coupling to a specific MinGW version.
@@ -73,7 +84,7 @@ tight coupling to a specific MinGW version.
 Build
 -----
 
-Running "make" in this top-level directory will by default build all
+Running `make` in this top-level directory will by default build all
 firmware as well as the SDK.
 
 Various dependencies are required:
@@ -103,7 +114,7 @@ On most debian-like distros, you still need the arm toolchain (see below)
 but the following command should install all of the useful deps (if you
 already have one it will be skipped)::
 
-  sudo apt-get install -y g++ doxygen upx-ucl python-imaging openocd \
+    sudo apt-get install -y g++ doxygen upx-ucl python-imaging openocd \
                           uuid-dev libusb-1.0-0-dev mesa-common-dev \
                           libglu1-mesa-dev libasound2-dev ia32-libs
 
@@ -112,6 +123,4 @@ ARM toolchain
 
 On Linux and Windows, the CodeSourcery C++ distribution is preferred.
 On Mac OS, the following script will automatically build a compatible
-toolchain for your machine:
-
-   https://github.com/jsnyder/arm-eabi-toolchain
+toolchain for your machine: <https://github.com/jsnyder/arm-eabi-toolchain>
