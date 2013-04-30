@@ -57,10 +57,10 @@
 #define BATTERY_SIM_DAC_CH  2
 
 // T E S T  J I G
-#define DIP_SWITCH1_GPIO    GPIOPin(&GPIOC,12)
-#define DIP_SWITCH2_GPIO    GPIOPin(&GPIOC,13)
-#define DIP_SWITCH3_GPIO    GPIOPin(&GPIOC,14)
-#define DIP_SWITCH4_GPIO    GPIOPin(&GPIOC,15)
+#define DIP_SWITCH4_GPIO    GPIOPin(&GPIOC,12)
+#define DIP_SWITCH3_GPIO    GPIOPin(&GPIOC,13)
+#define DIP_SWITCH2_GPIO    GPIOPin(&GPIOC,14)
+#define DIP_SWITCH1_GPIO    GPIOPin(&GPIOC,15)
 
 #define JIG_I2C             I2C1
 #define JIG_SCL_GPIO        GPIOPin(&GPIOB, 6)
