@@ -61,6 +61,14 @@ the Linux port is infrequently maintained, but in theory it should
 still work. In all cases, the build is Makefile based, and we compile
 with some flavor of GCC.
 
+### Windows
+
+Because MinGW remains a volatile project, we need to use the same version
+to ensure happiness. We're currently using the version from the MiGW-64
+project at http://sourceforge.net/projects/mingwbuilds/files/host-windows/releases/4.7.2/32-bit/threads-posix/sjlj/x32-4.7.2-release-posix-sjlj-rev8.7z
+
+Fingers crossed that this will improve soon, and we won't have such a
+tight coupling to a specific MinGW version.
 
 Build
 -----
