@@ -56,6 +56,11 @@ FLAGS += \
 	-DNOT_USERSPACE \
 	-D__STDC_FORMAT_MACROS
 
+# ensure MinGW-64 defines PRIu64 as "I64u", like we want, rather than "llu"
+ifeq ($(BUILD_PLATFORM), windows32)
+    FLAGS += -D__USE_MINGW_ANSI_STDIO=1
+endif
+
 # Disable unwanted warnings, but be generally pretty pedantic
 FLAGS += -Wall -Werror -Wno-unused -Wno-strict-aliasing
 

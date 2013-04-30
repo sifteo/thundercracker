@@ -13,6 +13,11 @@ FIRMWARE_RST := ../firmware/cube/src/*.rst
 # Non-userspace simulator build
 FLAGS += -DNOT_USERSPACE -DSIFTEO_SIMULATOR -D__STDC_FORMAT_MACROS
 
+# ensure MinGW-64 defines PRIu64 as "I64u", like we want, rather than "llu"
+ifeq ($(BUILD_PLATFORM), windows32)
+    FLAGS += -D__USE_MINGW_ANSI_STDIO=1
+endif
+
 # Versioning
 FLAGS += -DSDK_VERSION=$(shell git describe --tags)
 
@@ -21,6 +26,9 @@ FLAGS += -DOS_VERSION=$(OSVERSION)
 
 # Disable unwanted warnings, but be generally pretty pedantic
 WARNFLAGS += -Wall -Werror -Wno-unused -Wno-strict-aliasing -Wno-uninitialized
+
+# XXX: should fix these warnings, but disabling narrowing for now to build with GCC 4.7
+WARNFLAGS += -Wno-narrowing
 
 # Resources
 ifeq ($(BUILD_PLATFORM), windows32)
