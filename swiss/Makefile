@@ -51,6 +51,11 @@ CCFLAGS = -g -O2 $(WARNFLAGS)
 # this deserves any reorg
 CCFLAGS += -DSDK_VERSION=$(VERSION) -DSIFTEO_SIMULATOR -D__STDC_FORMAT_MACROS -DNOT_USERSPACE
 
+# ensure MinGW-64 defines PRIu64 as "I64u", like we want, rather than "llu"
+ifeq ($(BUILD_PLATFORM), windows32)
+    CCFLAGS += -D__USE_MINGW_ANSI_STDIO=1
+endif
+
 # library paths
 LDFLAGS := $(FLAGS) -L$(DEPS_DIR)/libusbx/lib -lusb-1.0
 LDFLAGS += $(LIB_STDCPP)
