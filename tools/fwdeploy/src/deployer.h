@@ -63,7 +63,7 @@ public:
         }
     };
 
-    bool deploy(const char *inPath, const char *outPath);
+    bool deploy(ContainerDetails &container);
 
 private:
 

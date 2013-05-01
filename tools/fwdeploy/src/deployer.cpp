@@ -7,6 +7,8 @@
 #include <string.h>
 #include <errno.h>
 
+using namespace std;
+
 // in sync with firmware/master/stm32/board.h
 const unsigned Deployer::VALID_HW_REVS[] = {
     2,  // BOARD_TC_MASTER_REV2
@@ -30,17 +32,11 @@ Deployer::Deployer()
  * - uint32_t crc of the plaintext
  * - uint32_t size of the plaintext
  */
-bool Deployer::deploy(const char *inPath, const char *outPath)
+bool Deployer::deploy(ContainerDetails &container)
 {
-    FILE *fin = fopen(inPath, "rb");
-    if (!fin) {
-        fprintf(stderr, "error: can't open %s (%s)\n", inPath, strerror(errno));
-        return false;
-    }
-
-    FILE *fout = fopen(outPath, "wb");
+    FILE *fout = fopen(container.outPath.c_str(), "wb");
     if (!fout) {
-        fprintf(stderr, "error: can't open %s (%s)\n", outPath, strerror(errno));
+        fprintf(stderr, "error: can't open %s (%s)\n", container.outPath.c_str(), strerror(errno));
         return false;
     }
 
@@ -51,28 +47,43 @@ bool Deployer::deploy(const char *inPath, const char *outPath)
         return false;
     }
 
-    uint32_t plainsz, calculatedCrc;
-    if (!detailsForFile(fin, plainsz, calculatedCrc))
-        return false;
+    for (vector<FwDetails*>::iterator it = container.firmwares.begin();
+         it != container.firmwares.end(); ++it)
+    {
+        FwDetails *fw = *it;
 
-    // prepend magic number
-    const uint64_t magic = MAGIC;
-    if (fwrite(&magic, 1, sizeof(uint64_t), fout) != sizeof(magic))
-        return false;
+        FILE *fin = fopen(fw->path.c_str(), "rb");
+        if (!fin) {
+            fprintf(stderr, "error: can't open %s (%s)\n", fw->path.c_str(), strerror(errno));
+            return false;
+        }
 
-    if (!encryptFWBinary(fin, fout))
-        return false;
+        uint32_t plainsz, calculatedCrc;
+        if (!detailsForFile(fin, plainsz, calculatedCrc))
+            return false;
 
-    // append the CRC
-    if (fwrite(&calculatedCrc, 1, sizeof(uint32_t), fout) != sizeof(uint32_t))
-        return false;
+        // prepend magic number
+        const uint64_t magic = MAGIC;
+        if (fwrite(&magic, 1, sizeof(uint64_t), fout) != sizeof(magic))
+            return false;
 
-    // append the plaintext size
-    if (fwrite(&plainsz, 1, sizeof(uint32_t), fout) != sizeof(uint32_t))
-        return false;
+        if (!encryptFWBinary(fin, fout))
+            return false;
 
-    fclose(fin);
+        // append the CRC
+        if (fwrite(&calculatedCrc, 1, sizeof(uint32_t), fout) != sizeof(uint32_t))
+            return false;
+
+        // append the plaintext size
+        if (fwrite(&plainsz, 1, sizeof(uint32_t), fout) != sizeof(uint32_t))
+            return false;
+
+        fclose(fin);
+    }
+
     fclose(fout);
+
+    printStatus(container);
 
     return true;
 }

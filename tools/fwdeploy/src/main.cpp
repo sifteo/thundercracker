@@ -45,10 +45,10 @@ int main(int argc, char **argv)
         return 1;
     }
 
-    return 0;   // TEMP
+    Deployer deployer;
+    bool success = deployer.deploy(details);
 
-//    Deployer deployer;
-//    return deployer.deploy(inPath, outPath) ? 0 : 1;
+    return success ? 0 : 1;
 }
 
 bool collectDetails(int argc, char **argv, Deployer::ContainerDetails &details)
