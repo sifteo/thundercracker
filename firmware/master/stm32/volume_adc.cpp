@@ -61,7 +61,7 @@ int calibrate(CalibrationState state)
         break;
     }
 
-    return 0;
+    return lastReading;
 }
 
 void adcCallback(uint16_t sample) {
