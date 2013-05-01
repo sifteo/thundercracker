@@ -73,6 +73,8 @@ private:
     bool encryptFWBinary(FILE *fin, FILE *fout);
     void patchBlock(unsigned address, uint8_t *block, unsigned len);
 
+    static void printStatus(ContainerDetails &container);
+
     static const unsigned SALT_OFFSET = 7*4;
     static const unsigned SALT_LEN = 4*4;
 

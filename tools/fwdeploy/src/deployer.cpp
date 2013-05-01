@@ -88,6 +88,17 @@ bool Deployer::deploy(ContainerDetails &container)
     return true;
 }
 
+void Deployer::printStatus(ContainerDetails &container)
+{
+    printf("Deploying %s (%s)\n", container.outPath.c_str(), container.fwVersion.c_str());
+    for (vector<FwDetails*>::iterator it = container.firmwares.begin();
+         it != container.firmwares.end(); ++it)
+    {
+        FwDetails *fw = *it;
+        printf("  fw: %s, hw rev %d\n", fw->path.c_str(), fw->hwRev);
+    }
+}
+
 /*
  * Calculate the CRC for the input file.
  * This is read-only
