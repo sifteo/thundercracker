@@ -31,6 +31,8 @@ static GPIOPin usbCurrentSign = USB_CURRENT_DIR_GPIO;
 static GPIOPin v3CurrentSign = V3_CURRENT_DIR_GPIO;
 static GPIOPin dip1 = DIP_SWITCH1_GPIO;
 static GPIOPin dip2 = DIP_SWITCH2_GPIO;
+static GPIOPin dip3 = DIP_SWITCH3_GPIO;
+static GPIOPin dip4 = DIP_SWITCH4_GPIO;
 
 static PulseRX PulseRX2v0Rail(NBR_IN4_GPIO);
 static PulseRX PulseRX3v3Rail(NBR_IN3_GPIO);
@@ -93,15 +95,20 @@ void TestJig::init()
     Dac::configureChannel(BATTERY_SIM_DAC_CH);
     Dac::enableChannel(BATTERY_SIM_DAC_CH);
 
-    dip1.setControl(GPIOPin::IN_PULL);
+    dip1.setControl(GPIOPin::IN_PULL);          // dip1 is used for the bootloader. we shouldn't use this for anything else
     dip2.setControl(GPIOPin::IN_PULL);
+    dip3.setControl(GPIOPin::IN_PULL);
+    dip4.setControl(GPIOPin::IN_PULL);
 
     dip1.pullup();
     dip2.pullup();
+    dip3.pullup();
+    dip4.pullup();
+
     //Pullups need some time to charge the line up
     SysTime::Ticks pullupTime = SysTime::ticks();
     while(SysTime::ticks() < pullupTime+SysTime::usTicks(10));
-    if(dip2.isLow()) {
+    if(dip3.isLow()) {
         Dac::write(BATTERY_SIM_DAC_CH, DAC_2V8);
     } else {
         Dac::write(BATTERY_SIM_DAC_CH, DAC_1V2); // default to 1v2
@@ -345,9 +352,9 @@ void TestJig::setUsbEnabledHandler(uint8_t argc, uint8_t *args)
 void TestJig::setSimulatedBatteryVoltageHandler(uint8_t argc, uint8_t *args)
 {
     //if dip switches are active disregard voltage handler
-    if(dip1.isLow()) {
+    if(dip4.isLow()) {
         Dac::write(BATTERY_SIM_DAC_CH, DAC_1V2);
-    }else if(dip2.isLow()) {
+    }else if(dip3.isLow()) {
         Dac::write(BATTERY_SIM_DAC_CH, DAC_2V8);
     } else {
         uint16_t val = (args[1] | args[2] << 8);
