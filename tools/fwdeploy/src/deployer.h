@@ -68,6 +68,7 @@ public:
 private:
 
     static const unsigned VALID_HW_REVS[];
+    static bool hwRevIsValid(unsigned rev);
 
     bool detailsForFile(FILE *f, uint32_t &sz, uint32_t &crc);
     bool encryptFWBinary(FILE *fin, FILE *fout);

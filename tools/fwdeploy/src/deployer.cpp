@@ -16,6 +16,16 @@ const unsigned Deployer::VALID_HW_REVS[] = {
     4,  // BOARD_TC_MASTER_REV3
 };
 
+bool Deployer::hwRevIsValid(unsigned rev) {
+    for (unsigned i = 0; i < arraysize(VALID_HW_REVS); ++i) {
+        if (rev == VALID_HW_REVS[i]) {
+            return true;
+        }
+    }
+
+    return false;
+}
+
 Deployer::Deployer()
 {
 }
@@ -51,6 +61,11 @@ bool Deployer::deploy(ContainerDetails &container)
          it != container.firmwares.end(); ++it)
     {
         FwDetails *fw = *it;
+
+        if (!hwRevIsValid(fw->hwRev)) {
+            fprintf(stderr, "unsupported hw rev specified: %d\n", fw->hwRev);
+            return false;
+        }
 
         FILE *fin = fopen(fw->path.c_str(), "rb");
         if (!fin) {
