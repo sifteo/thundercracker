@@ -4,6 +4,7 @@
 #include "gpio.h"
 #include "macros.h"
 #include "adc.h"
+#include "batterylevel.h"
 #include <sifteo/abi/audio.h>
 
 #ifdef USE_ADC_FADER_MEAS
@@ -66,6 +67,10 @@ int calibrate(CalibrationState state)
 
 void adcCallback(uint16_t sample) {
     lastReading = sample;
+
+#ifdef USE_ADC_BATT_MEAS
+    BatteryLevel::beginCapture();
+#endif
 }
 
 } // namespace Volume

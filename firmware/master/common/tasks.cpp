@@ -77,19 +77,16 @@ ALWAYS_INLINE void Tasks::taskInvoke(unsigned id)
  */
 void Tasks::heartbeatTask()
 {
-    //TODO: May want to change this to scan mode with DMA
-    static bool adcFlag = false;
-    if (adcFlag) {
+    /*
+     * If both volume and battery sampling are done via ADC,
+     * they need to take turns. Battery sample is kicked off
+     * in the Volume completion ISR.
+     */
 #ifdef USE_ADC_FADER_MEAS
-        Volume::beginCapture();
+    Volume::beginCapture();
+#elif defined(USE_ADC_BATT_MEAS)
+    BatteryLevel::beginCapture();
 #endif
-        adcFlag = false;
-    } else {
-#ifdef USE_ADC_BATT_MEAS
-        BatteryLevel::beginCapture();
-#endif
-        adcFlag = true;
-    }
 
 #if !BOARD_EQUALS(BOARD_TEST_JIG)
 
