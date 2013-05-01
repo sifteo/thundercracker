@@ -17,7 +17,7 @@ static void version()
     fprintf(stderr, "fwdeploy " TOSTRING(SDK_VERSION) "\n");
 }
 
-bool collectDetails(int argc, char **argv, Deployer::ContainerDetails &details);
+bool collectDetails(int argc, char **argv, Deployer::ContainerDetails &container);
 
 int main(int argc, char **argv)
 {
@@ -37,26 +37,28 @@ int main(int argc, char **argv)
     }
 
     // collect HW rev/FW bin pairs
-    Deployer::ContainerDetails details;
-    details.outPath = argv[1];
+    Deployer::ContainerDetails container;
+    container.outPath = argv[1];
 
-    if (!collectDetails(argc, argv, details)) {
+    if (!collectDetails(argc, argv, container)) {
         usage();
         return 1;
     }
 
     Deployer deployer;
-    bool success = deployer.deploy(details);
+    bool success = deployer.deploy(container);
+
+    printf("fwdeploy: %d\n", success);
 
     return success ? 0 : 1;
 }
 
-bool collectDetails(int argc, char **argv, Deployer::ContainerDetails &details)
+bool collectDetails(int argc, char **argv, Deployer::ContainerDetails &container)
 {
     for (int i = 2; i < argc; i++) {
 
         if (!strcmp("--fw-version", argv[i]) && (i + 1 < argc)) {
-            details.fwVersion = argv[i + 1];
+            container.fwVersion = argv[i + 1];
             i++;
             continue;
         }
@@ -70,12 +72,12 @@ bool collectDetails(int argc, char **argv, Deployer::ContainerDetails &details)
             }
 
             const char *fwPath = argv[i + 2];
-            details.firmwares.push_back(new Deployer::FwDetails(hwRevNum, fwPath));
+            container.firmwares.push_back(new Deployer::FwDetails(hwRevNum, fwPath));
 
             i += 2;
             continue;
         }
     }
 
-    return details.isValid();
+    return container.isValid();
 }
