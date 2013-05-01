@@ -7,6 +7,13 @@
 #include <string.h>
 #include <errno.h>
 
+// in sync with firmware/master/stm32/board.h
+const unsigned Deployer::VALID_HW_REVS[] = {
+    2,  // BOARD_TC_MASTER_REV2
+    3,  // BOARD_TEST_JIG
+    4,  // BOARD_TC_MASTER_REV3
+};
+
 Deployer::Deployer()
 {
 }
