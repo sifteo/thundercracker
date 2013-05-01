@@ -94,6 +94,9 @@ void Adc::serveIsr()
 {
     if (hw->SR & (1 << 1)) {    // check for EOC
 
+        // clear STRT - does not auto-clear
+        hw->SR &= ~(1 << 4);
+
         unsigned channel = hw->SQR3;
         AdcIsr_t &callback = handlers[channel];
 

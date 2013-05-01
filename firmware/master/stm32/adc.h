@@ -51,7 +51,11 @@ private:
     volatile ADC_t *hw;
 
     ALWAYS_INLINE bool isBusy() const {
-        return hw->SR & (1 << 1);
+        /*
+         * We clear STRT in the EOC handler, so we can
+         * effectively use it as a busy flag
+         */
+        return hw->SR & (1 << 4);
     }
     void serveIsr();
     AdcIsr_t handlers[16];
