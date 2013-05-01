@@ -45,6 +45,7 @@ FactoryTest::TestHandler const FactoryTest::handlers[] = {
     bootloadRequestHandler,     // 10
     rfPacketTestHandler,        // 11
     rebootRequestHandler,       // 12
+    getFirmwareVersion,         // 13
 };
 
 void FactoryTest::init()
@@ -405,6 +406,19 @@ void FactoryTest::rfPacketTestHandler(uint8_t argc, const uint8_t *args)
     UART("\r\n");
     UsbDevice::write(report, sizeof report);
     rfSuccessCount = 0;
+}
+
+/*
+ *  no args
+ */
+void FactoryTest::getFirmwareVersion(uint8_t argc, const uint8_t *args)
+{
+    const uint8_t MAX_SIZE = 32;
+    const uint8_t sz = MIN( MAX_SIZE, strlen(TOSTRING(SDK_VERSION)));
+    uint8_t response[MAX_SIZE] = { args[0] };
+    memcpy(&response[1], TOSTRING(SDK_VERSION), sz);
+
+    UsbDevice::write(response, sz+1);
 }
 
 IRQ_HANDLER ISR_FN(UART_DBG)()
