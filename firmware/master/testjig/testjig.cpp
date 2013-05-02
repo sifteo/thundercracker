@@ -95,7 +95,7 @@ void TestJig::init()
     Dac::configureChannel(BATTERY_SIM_DAC_CH);
     Dac::enableChannel(BATTERY_SIM_DAC_CH);
 
-    dip1.setControl(GPIOPin::IN_PULL);
+    dip1.setControl(GPIOPin::IN_PULL);          // dip1 is used to make the default 2.8V for master stations
     dip2.setControl(GPIOPin::IN_PULL);
     dip3.setControl(GPIOPin::IN_PULL);
     dip4.setControl(GPIOPin::IN_PULL);          // dip4 is used for the bootloader. we shouldn't use this for anything else
@@ -108,7 +108,7 @@ void TestJig::init()
     //Pullups need some time to charge the line up
     SysTime::Ticks pullupTime = SysTime::ticks();
     while(SysTime::ticks() < pullupTime+SysTime::usTicks(10));
-    if(dip2.isLow()) {
+    if(dip1.isLow()) {
         Dac::write(BATTERY_SIM_DAC_CH, DAC_2V8);
     } else {
         Dac::write(BATTERY_SIM_DAC_CH, DAC_1V2); // default to 1v2
