@@ -49,7 +49,9 @@ public:
     void setLoop(_SYSAudioChannelID ch, _SYSAudioLoopType loopMode);
 
     ALWAYS_INLINE bool outputBufferIsSilent() const {
-        return numSilentSamples > output.capacity();
+        // + 1 to account for the fact that the physical size of the
+        // ring buffer is 1 greater than its capacity().
+        return numSilentSamples > output.capacity() + 1;
     }
 
     ALWAYS_INLINE bool active() const {
