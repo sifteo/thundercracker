@@ -162,11 +162,13 @@ void FactoryTest::nrfCommsHandler(uint8_t argc, const uint8_t *args)
 
     uint8_t chan = args[1];
     NRF24L01::instance.setChannel(chan);
-    const uint8_t response[] = { 3, args[0], NRF24L01::instance.channel() };
+    //const uint8_t response[] = { 3, args[0], NRF24L01::instance.channel() };
+    const uint8_t response[] = { args[0], NRF24L01::instance.channel() };
 
     RadioManager::enableRadio();
 
-    Usart::Dbg.write(response, sizeof response);
+    //Usart::Dbg.write(response, sizeof response);
+    UsbDevice::write(response, sizeof response);
 #endif
 }
 
@@ -189,8 +191,10 @@ void FactoryTest::flashCommsHandler(uint8_t argc, const uint8_t *args)
 #error "flash device part not specified"
 #endif
 
-    const uint8_t response[] = { 3, args[0], result };
-    Usart::Dbg.write(response, sizeof response);
+    //const uint8_t response[] = { 3, args[0], result };
+    //Usart::Dbg.write(response, sizeof response);
+    const uint8_t response[] = { args[0], result };
+    UsbDevice::write(response, sizeof response);
 }
 
 /*
@@ -213,8 +217,10 @@ void FactoryTest::flashReadWriteHandler(uint8_t argc, const uint8_t *args)
 
     uint8_t result = (memcmp(txbuf, rxbuf, sizeof txbuf) == 0) ? 1 : 0;
 
-    const uint8_t response[] = { 3, args[0], result };
-    Usart::Dbg.write(response, sizeof response);
+    //const uint8_t response[] = { 3, args[0], result };
+    //Usart::Dbg.write(response, sizeof response);
+    const uint8_t response[] = { args[0], result };
+    UsbDevice::write(response, sizeof response);
 }
 
 /*
@@ -241,8 +247,10 @@ void FactoryTest::ledHandler(uint8_t argc, const uint8_t *args)
         red.setHigh();
 
     // no result - just respond to indicate that we're done
-    const uint8_t response[] = { 2, args[0] };
-    Usart::Dbg.write(response, sizeof response);
+    //const uint8_t response[] = { 2, args[0] };
+    //Usart::Dbg.write(response, sizeof response);
+    const uint8_t response[] = { args[0] };
+    UsbDevice::write(response, sizeof response);
 }
 
 /*
@@ -276,7 +284,8 @@ void FactoryTest::volumeCalibrationHandler(uint8_t argc, const uint8_t *args)
 }
 
 /*
- *
+ * Special case: pass an extra argument to specify that the response should
+ *               be sent via USB.
  */
 void FactoryTest::batteryCalibrationHandler(uint8_t argc, const uint8_t *args)
 {
@@ -289,7 +298,10 @@ void FactoryTest::batteryCalibrationHandler(uint8_t argc, const uint8_t *args)
             vraw & 0xff, (vraw >> 8) & 0xff, (vraw >> 16) & 0xff, (vraw >> 24) & 0xff, \
             vscl & 0xff, (vscl >> 8) & 0xff, (vscl >> 16) & 0xff, (vscl >> 24) & 0xff, \
         };
-    Usart::Dbg.write(response, sizeof response);
+    if (argc >= 2)
+        UsbDevice::write(&response[1], sizeof response - 1);
+    else
+        Usart::Dbg.write(response, sizeof response);
 }
 
 /*
