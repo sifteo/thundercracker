@@ -351,15 +351,9 @@ void TestJig::setUsbEnabledHandler(uint8_t argc, uint8_t *args)
  */
 void TestJig::setSimulatedBatteryVoltageHandler(uint8_t argc, uint8_t *args)
 {
-    //if dip switches are active disregard voltage handler
-    if(dip1.isLow()) {
-        Dac::write(BATTERY_SIM_DAC_CH, DAC_1V2);
-    }else if(dip2.isLow()) {
-        Dac::write(BATTERY_SIM_DAC_CH, DAC_2V8);
-    } else {
-        uint16_t val = (args[1] | args[2] << 8);
-        Dac::write(BATTERY_SIM_DAC_CH, val);
-    }
+    uint16_t val = (args[1] | args[2] << 8);
+    Dac::write(BATTERY_SIM_DAC_CH, val);
+
     // no response data - just indicate that we're done
     const uint8_t response[] = { args[0] };
     UsbDevice::write(response, sizeof response);
