@@ -76,8 +76,4 @@
 #define V3_CURRENT_DIR_GPIO GPIOPin(&GPIOB, 2)
 #define V3_CURRENT_ADC_CH   14
 
-// O T H E R
-
-#define PROFILER_TIM        TIM2
-
 #endif // _BOARD_TESTJIG_H
