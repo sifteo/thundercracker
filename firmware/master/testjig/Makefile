@@ -25,6 +25,7 @@ OBJS_STM32 := \
     $(MASTER_DIR)/stm32/i2c.stm32.o                 \
     $(MASTER_DIR)/stm32/adc.stm32.o                 \
     $(MASTER_DIR)/stm32/sysinfo.stm32.o             \
+    $(MASTER_DIR)/stm32/sampleprofiler.stm32.o      \
     $(MASTER_DIR)/stm32/usb/usbdevice.stm32.o       \
     $(MASTER_DIR)/stm32/usb/usbcore.stm32.o         \
     $(MASTER_DIR)/stm32/usb/usbcontrol.stm32.o      \

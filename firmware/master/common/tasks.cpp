@@ -63,8 +63,11 @@ ALWAYS_INLINE void Tasks::taskInvoke(unsigned id)
         case Tasks::FaultLogger:    return FaultLogger::task();
     #endif
 
+    #if !defined(SIFTEO_SIMULATOR) && !defined(BOOTLOADER)
+          case Tasks::Profiler:       return SampleProfiler::task();
+    #endif
+
     #if !defined(SIFTEO_SIMULATOR) && !defined(BOOTLOADER) && (BOARD != BOARD_TEST_JIG)
-        case Tasks::Profiler:       return SampleProfiler::task();
         case Tasks::FactoryTest:    return FactoryTest::task();
     #endif
 
