@@ -35,6 +35,18 @@ Deployer::Deployer()
 
 bool Deployer::deploy(Container &container)
 {
+    /*
+     * File format:
+     *  uint64_t magic number
+     *  uint32_t file format version
+     *
+     *  (
+     *    uint32_t header key
+     *    uint32_t header size
+     *    uint8_t[header size] value
+     *  )
+     */
+
     ofstream fout(container.outPath.c_str(), ofstream::binary);
     if (!fout.is_open()) {
         fprintf(stderr, "error: can't open %s (%s)\n", container.outPath.c_str(), strerror(errno));
@@ -44,6 +56,12 @@ bool Deployer::deploy(Container &container)
     // magic number is first
     const uint64_t magic = MAGIC_CONTAINER;
     if (fout.write((const char*)&magic, sizeof magic).fail()) {
+        return false;
+    }
+
+    // file format version
+    const uint32_t fileVersion = FILE_VERSION;
+    if (fout.write((const char*)&fileVersion, sizeof fileVersion).fail()) {
         return false;
     }
 

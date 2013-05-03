@@ -14,6 +14,8 @@ public:
     static const uint64_t MAGIC = 0x5857465874666953ULL;            // original version
     static const uint64_t MAGIC_CONTAINER = 0x5A57465874666953ULL;  // archive version
 
+    static const uint32_t FILE_VERSION = 1;
+
     Deployer();
 
     // metadata for the entire archive

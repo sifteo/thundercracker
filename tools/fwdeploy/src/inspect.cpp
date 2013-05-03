@@ -38,6 +38,12 @@ void Inspect::dumpSections(const char *path)
         return;
     }
 
+    uint32_t fileFormatVersion;
+    if (fin.read((char*)&fileFormatVersion, sizeof fileFormatVersion).fail()) {
+        return;
+    }
+    cout << "File Format Version: " << fileFormatVersion << endl;
+
     dumpContainer(fin);
 }
 
@@ -60,7 +66,7 @@ void Inspect::dumpContainer(std::istream &is)
             if (is.read(&version[0], hdr.size).fail()) {
                 return;
             }
-            cout << "version: " << version << endl;
+            cout << "Firmware Version: " << version << endl;
             break;
         }
 
