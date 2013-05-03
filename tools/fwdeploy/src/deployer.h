@@ -34,19 +34,19 @@ public:
     };
 
     // details for each embedded firmware version
-    struct FwDetails {
+    struct Firmware {
         uint32_t hwRev;
         std::string path;
 
-        FwDetails(unsigned r, const std::string &p) :
+        Firmware(unsigned r, const std::string &p) :
             hwRev(r), path(p)
         {}
     };
 
-    struct ContainerDetails {
+    struct Container {
         std::string outPath;
         std::string fwVersion;
-        std::vector<Deployer::FwDetails*> firmwares;
+        std::vector<Deployer::Firmware*> firmwares;
 
         bool isValid() const {
 
@@ -64,16 +64,16 @@ public:
         }
     };
 
-    bool deploy(ContainerDetails &container);
+    bool deploy(Container &container);
 
     static bool writeSection(uint32_t key, uint32_t size, const void *bytes, std::ostream &os);
 
 private:
     static const unsigned VALID_HW_REVS[];
     static bool hwRevIsValid(unsigned rev);
-    static void printStatus(ContainerDetails &container);
+    static void printStatus(Container &container);
 
-    bool encryptFirmwares(ContainerDetails &container, std::ostream &os);
+    bool encryptFirmwares(Container &container, std::ostream &os);
 };
 
 #endif // DEPLOYER_H

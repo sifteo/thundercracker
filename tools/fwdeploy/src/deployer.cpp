@@ -33,7 +33,7 @@ Deployer::Deployer()
 }
 
 
-bool Deployer::deploy(ContainerDetails &container)
+bool Deployer::deploy(Container &container)
 {
     ofstream fout(container.outPath.c_str(), ofstream::binary);
     if (!fout.is_open()) {
@@ -68,17 +68,17 @@ bool Deployer::deploy(ContainerDetails &container)
     return true;
 }
 
-bool Deployer::encryptFirmwares(ContainerDetails &container, ostream &os)
+bool Deployer::encryptFirmwares(Container &container, ostream &os)
 {
     /*
      * For each firmware enclosed in the container,
      * write both the hardware rev and the firmware blob itself.
      */
 
-    for (vector<FwDetails*>::iterator it = container.firmwares.begin();
+    for (vector<Firmware*>::iterator it = container.firmwares.begin();
          it != container.firmwares.end(); ++it)
     {
-        FwDetails *fw = *it;
+        Firmware *fw = *it;
 
         // write hardware rev
         if (!hwRevIsValid(fw->hwRev)) {
@@ -125,13 +125,13 @@ bool Deployer::writeSection(uint32_t key, uint32_t size, const void *bytes, ostr
     return true;
 }
 
-void Deployer::printStatus(ContainerDetails &container)
+void Deployer::printStatus(Container &container)
 {
     printf("Deploying %s (%s)\n", container.outPath.c_str(), container.fwVersion.c_str());
-    for (vector<FwDetails*>::iterator it = container.firmwares.begin();
+    for (vector<Firmware*>::iterator it = container.firmwares.begin();
          it != container.firmwares.end(); ++it)
     {
-        FwDetails *fw = *it;
+        Firmware *fw = *it;
         printf("  fw: %s, hw rev %d\n", fw->path.c_str(), fw->hwRev);
     }
 }

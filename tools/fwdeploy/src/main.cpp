@@ -17,7 +17,7 @@ static void version()
     fprintf(stderr, "fwdeploy " TOSTRING(SDK_VERSION) "\n");
 }
 
-bool collectDetails(int argc, char **argv, Deployer::ContainerDetails &container);
+bool collectDetails(int argc, char **argv, Deployer::Container &container);
 
 int main(int argc, char **argv)
 {
@@ -37,7 +37,7 @@ int main(int argc, char **argv)
     }
 
     // collect HW rev/FW bin pairs
-    Deployer::ContainerDetails container;
+    Deployer::Container container;
     container.outPath = argv[1];
 
     if (!collectDetails(argc, argv, container)) {
@@ -53,7 +53,7 @@ int main(int argc, char **argv)
     return success ? 0 : 1;
 }
 
-bool collectDetails(int argc, char **argv, Deployer::ContainerDetails &container)
+bool collectDetails(int argc, char **argv, Deployer::Container &container)
 {
     for (int i = 2; i < argc; i++) {
 
@@ -65,14 +65,16 @@ bool collectDetails(int argc, char **argv, Deployer::ContainerDetails &container
 
         if (!strcmp("--fw", argv[i]) && (i + 2 < argc)) {
 
-            unsigned long hwRevNum = strtoul(argv[i + 1], NULL, 0);
+            const char *hwRev = argv[i + 1];
+            const char *fwPath = argv[i + 2];
+
+            unsigned long hwRevNum = strtoul(hwRev, NULL, 0);
             if (hwRevNum == 0 || hwRevNum == ULONG_MAX) {
-                fprintf(stderr, "%s could not be converted to a hardware revision\n", argv[i + 1]);
+                fprintf(stderr, "%s could not be converted to a hardware revision\n", hwRev);
                 return 1;
             }
 
-            const char *fwPath = argv[i + 2];
-            container.firmwares.push_back(new Deployer::FwDetails(hwRevNum, fwPath));
+            container.firmwares.push_back(new Deployer::Firmware(hwRevNum, fwPath));
 
             i += 2;
             continue;
