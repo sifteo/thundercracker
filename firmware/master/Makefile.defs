@@ -111,3 +111,10 @@ ifneq ($(RFTEST_GOLD_MASTER),)
     FLAGS += -DDISABLE_IDLETIMEOUT -DDISABLE_WATCHDOG
     FLAGS += -DRFTEST_GOLD_MASTER 
 endif
+
+# testjig bootloader update
+ifeq ($(BIN),testjig)
+    UPDATE_ARGS := --pid 0x0120
+else
+    UPDATE_ARGS :=
+endif

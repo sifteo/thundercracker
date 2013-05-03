@@ -71,7 +71,7 @@ program: $(BIN).elf
 		-c exit
 
 update: encrypted
-	$(SDK_DIR)/bin/swiss update --init || true
+	$(SDK_DIR)/bin/swiss update --init $(UPDATE_ARGS) || true
 	sleep 1
 	$(SDK_DIR)/bin/swiss update $(BIN).sft
 
