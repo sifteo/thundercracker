@@ -7,6 +7,7 @@
 #include <errno.h>
 
 #include <fstream>
+#include <sstream>
 
 using namespace std;
 
@@ -57,25 +58,61 @@ bool Deployer::deploy(ContainerDetails &container)
         return false;
     }
 
-    for (vector<FwDetails*>::iterator it = container.firmwares.begin();
-         it != container.firmwares.end(); ++it)
-    {
-        FwDetails *fw = *it;
+    if (!writeSection(FirmwareRev, container.fwVersion.length(), container.fwVersion.c_str(), fout)) {
+        return false;
+    }
 
-        if (!hwRevIsValid(fw->hwRev)) {
-            fprintf(stderr, "unsupported hw rev specified: %d\n", fw->hwRev);
-            return false;
-        }
+    stringstream ss;
+    if (!encryptFirmwares(container, ss)) {
+        return false;
+    }
 
-        Encrypter enc;
-        if (!enc.encryptFile(fw->path.c_str(), fout)) {
-            return false;
-        }
+    long pos = ss.tellp();
+    if (!writeSection(FirmwareBinaries, pos, ss.str().c_str(), fout)) {
+        return false;
     }
 
     fout.close();
 
     printStatus(container);
+
+    return true;
+}
+
+bool Deployer::encryptFirmwares(ContainerDetails &container, ostream &os)
+{
+    /*
+     * For each firmware enclosed in the container,
+     * write both the hardware rev and the firmware blob itself.
+     */
+
+    for (vector<FwDetails*>::iterator it = container.firmwares.begin();
+         it != container.firmwares.end(); ++it)
+    {
+        FwDetails *fw = *it;
+
+        // write hardware rev
+        if (!hwRevIsValid(fw->hwRev)) {
+            fprintf(stderr, "unsupported hw rev specified: %d\n", fw->hwRev);
+            return false;
+        }
+
+        if (!writeSection(HardwareRev, sizeof fw->hwRev, &fw->hwRev, os)) {
+            return false;
+        }
+
+        // write firmware blob itself
+        Encrypter enc;
+        stringstream ss;
+        if (!enc.encryptFile(fw->path.c_str(), ss)) {
+            return false;
+        }
+
+        long pos = ss.tellp();
+        if (!writeSection(FirmwareBlob, pos, ss.str().c_str(), os)) {
+            return false;
+        }
+    }
 
     return true;
 }
