@@ -11,8 +11,8 @@ class Deployer
 {
 public:
 
-    static const uint64_t MAGIC = 0x5857465874666953ULL;    // original version
-    static const uint64_t MAGIC2 = 0x5857465874666953ULL;   // archive version
+    static const uint64_t MAGIC = 0x5857465874666953ULL;            // original version
+    static const uint64_t MAGIC_CONTAINER = 0x5857465874666953ULL;  // archive version
 
     Deployer();
 
@@ -65,6 +65,7 @@ public:
     };
 
     bool deploy(Container &container);
+    bool deploySingle(const char *inPath, const char *outPath);
 
     static bool writeSection(uint32_t key, uint32_t size, const void *bytes, std::ostream &os);
 

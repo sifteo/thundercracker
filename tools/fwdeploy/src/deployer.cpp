@@ -42,8 +42,8 @@ bool Deployer::deploy(Container &container)
     }
 
     // magic number is first
-    const uint64_t magic = MAGIC;
-    if (fout.write((const char*)&magic, sizeof(magic)).fail()) {
+    const uint64_t magic = MAGIC_CONTAINER;
+    if (fout.write((const char*)&magic, sizeof magic).fail()) {
         return false;
     }
 
@@ -64,6 +64,34 @@ bool Deployer::deploy(Container &container)
     fout.close();
 
     printStatus(container);
+
+    return true;
+}
+
+bool Deployer::deploySingle(const char *inPath, const char *outPath)
+{
+    /*
+     * Earlier versions of fwdeploy packaged only a single firmware.
+     * Retain compatibility in case we need to generate those at some point.
+     */
+
+    ofstream fout(outPath, ofstream::binary);
+    if (!fout.is_open()) {
+        fprintf(stderr, "error: can't open %s (%s)\n", outPath, strerror(errno));
+        return false;
+    }
+
+    const uint64_t magic = MAGIC;
+    if (fout.write((const char*)&magic, sizeof magic).fail()) {
+        return false;
+    }
+
+    Encrypter enc;
+    if (!enc.encryptFile(inPath, fout)) {
+        return false;
+    }
+
+    fout.close();
 
     return true;
 }
