@@ -18,7 +18,8 @@ public:
 
     // metadata for the entire archive
     enum ContainerMetadata {
-        FirmwareRev
+        FirmwareRev,
+        FirmwareBinaries
     };
 
     // metadata for each enclosed firmware

@@ -7,11 +7,13 @@
 #include <string.h>
 #include <errno.h>
 
+using namespace std;
+
 Encrypter::Encrypter()
 {
 }
 
-bool Encrypter::encryptFile(const char *inPath, FILE *fout)
+bool Encrypter::encryptFile(const char *inPath, ostream& os)
 {
     FILE *fin = fopen(inPath, "rb");
     if (!fin) {
@@ -30,20 +32,15 @@ bool Encrypter::encryptFile(const char *inPath, FILE *fout)
     if (!detailsForFile(fin, plainsz, calculatedCrc))
         return false;
 
-    // prepend magic number
-    const uint64_t magic = Deployer::MAGIC;
-    if (fwrite(&magic, 1, sizeof(uint64_t), fout) != sizeof(magic))
-        return false;
-
-    if (!encryptFWBinary(fin, fout))
+    if (!encryptFWBinary(fin, os))
         return false;
 
     // append the CRC
-    if (fwrite(&calculatedCrc, 1, sizeof(uint32_t), fout) != sizeof(uint32_t))
+    if (os.write((const char*)&calculatedCrc, sizeof(uint32_t)).fail())
         return false;
 
     // append the plaintext size
-    if (fwrite(&plainsz, 1, sizeof(uint32_t), fout) != sizeof(uint32_t))
+    if (os.write((const char*)&plainsz, sizeof(uint32_t)).fail())
         return false;
 
     fclose(fin);
@@ -104,7 +101,7 @@ bool Encrypter::detailsForFile(FILE *f, uint32_t &sz, uint32_t &crc)
                     0x0c, 0x0d, 0x0e, 0x0f }
 #define AES_KEY { 0x2b7e1516, 0x28aed2a6, 0xabf71588, 0x09cf4f3c }
 
-bool Encrypter::encryptFWBinary(FILE *fin, FILE *fout)
+bool Encrypter::encryptFWBinary(FILE *fin, ostream &os)
 {
     uint32_t expkey[44];
     const uint32_t key[4] = AES_KEY;
@@ -134,8 +131,7 @@ bool Encrypter::encryptFWBinary(FILE *fin, FILE *fout)
 
         AES128::xorBlock(cipherBuf, plainBuf);
 
-        numBytes = fwrite(cipherBuf, 1, AES128::BLOCK_SIZE, fout);
-        if (numBytes != AES128::BLOCK_SIZE) {
+        if (os.write((const char*)cipherBuf, AES128::BLOCK_SIZE).fail()) {
             fprintf(stderr, "error writing to encrypted file: %s\n", strerror(errno));
             return false;
         }
@@ -160,7 +156,7 @@ bool Encrypter::encryptFWBinary(FILE *fin, FILE *fout)
     // last block
     AES128::encryptBlock(cipherBuf, cipherBuf, expkey);
     AES128::xorBlock(cipherBuf, plainBuf);
-    if (fwrite(cipherBuf, 1, AES128::BLOCK_SIZE, fout) != AES128::BLOCK_SIZE) {
+    if (os.write((const char*)cipherBuf, AES128::BLOCK_SIZE).fail()) {
         fprintf(stderr, "error writing to output file: %s\n", strerror(errno));
         return false;
     }

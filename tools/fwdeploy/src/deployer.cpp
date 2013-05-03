@@ -6,6 +6,8 @@
 #include <string.h>
 #include <errno.h>
 
+#include <fstream>
+
 using namespace std;
 
 // in sync with firmware/master/stm32/board.h
@@ -43,9 +45,15 @@ Deployer::Deployer()
  */
 bool Deployer::deploy(ContainerDetails &container)
 {
-    FILE *fout = fopen(container.outPath.c_str(), "wb");
-    if (!fout) {
+    ofstream fout(container.outPath.c_str(), ofstream::binary);
+    if (!fout.is_open()) {
         fprintf(stderr, "error: can't open %s (%s)\n", container.outPath.c_str(), strerror(errno));
+        return false;
+    }
+
+    // magic number is first
+    const uint64_t magic = MAGIC;
+    if (fout.write((const char*)&magic, sizeof(magic)).fail()) {
         return false;
     }
 
@@ -65,7 +73,7 @@ bool Deployer::deploy(ContainerDetails &container)
         }
     }
 
-    fclose(fout);
+    fout.close();
 
     printStatus(container);
 
