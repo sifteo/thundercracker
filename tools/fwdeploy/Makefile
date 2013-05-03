@@ -10,6 +10,7 @@ OBJS := \
     src/main.o                          \
     src/deployer.o                      \
     src/encrypter.o                     \
+    src/inspect.o                       \
     src/crc.o                           \
     src/securerandom.o                  \
     $(MASTER_DIR)/common/aes128.o

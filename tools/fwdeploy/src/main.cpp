@@ -3,6 +3,7 @@
 #include <string.h>
 
 #include "deployer.h"
+#include "inspect.h"
 #include "macros.h"
 
 using namespace std;
@@ -36,6 +37,17 @@ int main(int argc, char **argv)
         return 0;
     }
 
+    if (!strcmp("--inspect", argv[1])) {
+        if (argc < 3) {
+            fprintf(stderr, "need more args\n");
+            return 1;
+        }
+
+        Inspect inspct;
+        inspct.dumpSections(argv[2]);
+        return 0;
+    }
+
     // collect HW rev/FW bin pairs
     Deployer::Container container;
     container.outPath = argv[1];
@@ -47,9 +59,6 @@ int main(int argc, char **argv)
 
     Deployer deployer;
     bool success = deployer.deploy(container);
-
-    printf("fwdeploy: %d\n", success);
-
     return success ? 0 : 1;
 }
 
