@@ -13,6 +13,17 @@ Encrypter::Encrypter()
 {
 }
 
+/*
+ * To deploy a firmware image, we need to:
+ * - calculate the CRC of the decrypted firmware image
+ * - encrypt the firmware image
+ * - ideally, ensure that the firmware image has been built in BOOTLOADABLE mode.
+ *
+ * Format looks like:
+ * - ... encrypted data ...
+ * - uint32_t crc of the plaintext
+ * - uint32_t size of the plaintext
+ */
 bool Encrypter::encryptFile(const char *inPath, ostream& os)
 {
     FILE *fin = fopen(inPath, "rb");
@@ -95,10 +106,12 @@ bool Encrypter::detailsForFile(FILE *f, uint32_t &sz, uint32_t &crc)
     return true;
 }
 
-#define AES_IV  {  0x00, 0x01, 0x02, 0x03, \
-                    0x04, 0x05, 0x06, 0x07, \
-                    0x08, 0x09, 0x0a, 0x0b, \
-                    0x0c, 0x0d, 0x0e, 0x0f }
+#define AES_IV  {               \
+    0x00, 0x01, 0x02, 0x03,     \
+    0x04, 0x05, 0x06, 0x07,     \
+    0x08, 0x09, 0x0a, 0x0b,     \
+    0x0c, 0x0d, 0x0e, 0x0f }    \
+
 #define AES_KEY { 0x2b7e1516, 0x28aed2a6, 0xabf71588, 0x09cf4f3c }
 
 bool Encrypter::encryptFWBinary(FILE *fin, ostream &os)

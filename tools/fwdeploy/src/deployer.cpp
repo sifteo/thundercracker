@@ -32,18 +32,7 @@ Deployer::Deployer()
 {
 }
 
-/*
- * To deploy a firmware image, we need to:
- * - calculate the CRC of the decrypted firmware image
- * - encrypt the firmware image
- * - ideally, ensure that the firmware image has been built in BOOTLOADABLE mode.
- *
- * File format looks like:
- * - uint64_t magic number
- * - ... encrypted data ...
- * - uint32_t crc of the plaintext
- * - uint32_t size of the plaintext
- */
+
 bool Deployer::deploy(ContainerDetails &container)
 {
     ofstream fout(container.outPath.c_str(), ofstream::binary);
