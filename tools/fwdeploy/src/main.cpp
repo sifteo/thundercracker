@@ -48,17 +48,24 @@ int main(int argc, char **argv)
         return 0;
     }
 
+    Deployer deployer;
+    bool success = false;
+
     // collect HW rev/FW bin pairs
     Deployer::Container container;
-    container.outPath = argv[1];
+    if (collectDetails(argc, argv, container)) {
+        container.outPath = argv[1];
+        success = deployer.deploy(container);
 
-    if (!collectDetails(argc, argv, container)) {
-        usage();
-        return 1;
+    } else if (argc == 3) {
+
+        // original form was simply 2 fixed position args
+        success = deployer.deploySingle(argv[1], argv[2]);
+
+    } else {
+        fprintf(stderr, "incorrect args\n");
     }
 
-    Deployer deployer;
-    bool success = deployer.deploy(container);
     return success ? 0 : 1;
 }
 

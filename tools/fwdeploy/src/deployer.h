@@ -53,12 +53,10 @@ public:
         bool isValid() const {
 
             if (fwVersion.empty()) {
-                fprintf(stderr, "error: firmware version not specified\n");
                 return false;
             }
 
             if (firmwares.empty()) {
-                fprintf(stderr, "error: no firmwares specified\n");
                 return false;
             }
 
