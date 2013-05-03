@@ -27,13 +27,9 @@ CLEAN = True
 def check_and_mkdir(path):
     # ensure our destination exists
     try:
-        os.stat(path)
-        print "#### Removing %s" % path
-        shutil.rmtree(path)
+        os.mkdir(path)
     except:
         pass
-
-    os.mkdir(path)
 
 ####################################
 ## Check to make sure we're in the SDK shell
@@ -162,12 +158,12 @@ if __name__ == '__main__':
         sys.exit(1)
 
     secondary_path = False
-    build_launcher = True
+    build_launcher = False
     gen = 2
 
     for idx,arg in enumerate(sys.argv):
-        if arg == "--no-launcher":
-            build_launcher = False
+        if arg == "--with-launcher":
+            build_launcher = True
         elif arg == "--secondary-path":
             secondary_path = sys.argv[idx+1]
         elif arg == "--gen":
