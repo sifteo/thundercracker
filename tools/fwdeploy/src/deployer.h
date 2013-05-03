@@ -66,6 +66,8 @@ public:
 
     bool deploy(ContainerDetails &container);
 
+    static bool writeSection(uint32_t key, uint32_t size, const void *bytes, std::ostream &os);
+
 private:
 
     static const unsigned VALID_HW_REVS[];

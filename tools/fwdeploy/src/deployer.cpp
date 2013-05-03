@@ -80,6 +80,25 @@ bool Deployer::deploy(ContainerDetails &container)
     return true;
 }
 
+bool Deployer::writeSection(uint32_t key, uint32_t size, const void *bytes, ostream& os)
+{
+    // XXX: endianness
+
+    if (os.write((const char*)&key, sizeof key).fail()) {
+        return false;
+    }
+
+    if (os.write((const char*)&size, sizeof size).fail()) {
+        return false;
+    }
+
+    if (os.write((const char*)bytes, size).fail()) {
+        return false;
+    }
+
+    return true;
+}
+
 void Deployer::printStatus(ContainerDetails &container)
 {
     printf("Deploying %s (%s)\n", container.outPath.c_str(), container.fwVersion.c_str());
