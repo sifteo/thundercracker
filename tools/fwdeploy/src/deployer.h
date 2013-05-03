@@ -12,14 +12,14 @@ class Deployer
 public:
 
     static const uint64_t MAGIC = 0x5857465874666953ULL;            // original version
-    static const uint64_t MAGIC_CONTAINER = 0x5857465874666953ULL;  // archive version
+    static const uint64_t MAGIC_CONTAINER = 0x5A57465874666953ULL;  // archive version
 
     Deployer();
 
     // metadata for the entire archive
     enum ContainerMetadata {
         FirmwareRev,
-        FirmwareBinaries
+        FirmwareBinary
     };
 
     // metadata for each enclosed firmware
@@ -29,8 +29,8 @@ public:
     };
 
     struct MetadataHeader {
-        unsigned key;
-        unsigned size;
+        uint32_t key;
+        uint32_t size;
     };
 
     // details for each embedded firmware version
@@ -74,7 +74,7 @@ private:
     static bool hwRevIsValid(unsigned rev);
     static void printStatus(Container &container);
 
-    bool encryptFirmwares(Container &container, std::ostream &os);
+    bool encryptFirmware(Firmware *firmware, std::ostream &os);
 };
 
 #endif // DEPLOYER_H

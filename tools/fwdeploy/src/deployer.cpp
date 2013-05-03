@@ -51,14 +51,20 @@ bool Deployer::deploy(Container &container)
         return false;
     }
 
-    stringstream ss;
-    if (!encryptFirmwares(container, ss)) {
-        return false;
-    }
+    for (vector<Firmware*>::iterator it = container.firmwares.begin();
+         it != container.firmwares.end(); ++it)
+    {
+        stringstream ss;
+        Firmware *fw = *it;
 
-    long pos = ss.tellp();
-    if (!writeSection(FirmwareBinaries, pos, ss.str().c_str(), fout)) {
-        return false;
+        if (!encryptFirmware(fw, ss)) {
+            return false;
+        }
+
+        long pos = ss.tellp();
+        if (!writeSection(FirmwareBinary, pos, ss.str().c_str(), fout)) {
+            return false;
+        }
     }
 
     fout.close();
@@ -96,39 +102,33 @@ bool Deployer::deploySingle(const char *inPath, const char *outPath)
     return true;
 }
 
-bool Deployer::encryptFirmwares(Container &container, ostream &os)
+bool Deployer::encryptFirmware(Firmware *firmware, ostream &os)
 {
     /*
-     * For each firmware enclosed in the container,
-     * write both the hardware rev and the firmware blob itself.
+     * Encrypt a single Firmware image to the stream, preceded
+     * by its hardware rev.
      */
 
-    for (vector<Firmware*>::iterator it = container.firmwares.begin();
-         it != container.firmwares.end(); ++it)
-    {
-        Firmware *fw = *it;
+    // write hardware rev
+    if (!hwRevIsValid(firmware->hwRev)) {
+        fprintf(stderr, "unsupported hw rev specified: %d\n", firmware->hwRev);
+        return false;
+    }
 
-        // write hardware rev
-        if (!hwRevIsValid(fw->hwRev)) {
-            fprintf(stderr, "unsupported hw rev specified: %d\n", fw->hwRev);
-            return false;
-        }
+    if (!writeSection(HardwareRev, sizeof firmware->hwRev, &firmware->hwRev, os)) {
+        return false;
+    }
 
-        if (!writeSection(HardwareRev, sizeof fw->hwRev, &fw->hwRev, os)) {
-            return false;
-        }
+    // write firmware blob itself
+    Encrypter enc;
+    stringstream ss;
+    if (!enc.encryptFile(firmware->path.c_str(), ss)) {
+        return false;
+    }
 
-        // write firmware blob itself
-        Encrypter enc;
-        stringstream ss;
-        if (!enc.encryptFile(fw->path.c_str(), ss)) {
-            return false;
-        }
-
-        long pos = ss.tellp();
-        if (!writeSection(FirmwareBlob, pos, ss.str().c_str(), os)) {
-            return false;
-        }
+    long pos = ss.tellp();
+    if (!writeSection(FirmwareBlob, pos, ss.str().c_str(), os)) {
+        return false;
     }
 
     return true;
