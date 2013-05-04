@@ -22,13 +22,13 @@ int FwLoader::run(int argc, char **argv, IODevice &_dev)
     bool init = false;
     bool rpc = false;
     const char *path = NULL;
-    unsigned int device_pid = IODevice::BASE_PID;
-    unsigned int bootloader_pid = IODevice::BOOTLOADER_PID;
+    unsigned int devicePID = IODevice::BASE_PID;
+    unsigned int bootloaderPID = IODevice::BOOTLOADER_PID;
     
     for (int i = 1; i < argc; i++) {
         if (!strcmp(argv[i], "--pid") && i+1 < argc) {
-            device_pid = strtoul(argv[i+1], NULL, 0);
-            bootloader_pid = device_pid;
+            devicePID = strtoul(argv[i+1], NULL, 0);
+            bootloaderPID = devicePID;
             i++;
         } else if (!strcmp(argv[i], "--init")) {
             init = true;
@@ -45,10 +45,10 @@ int FwLoader::run(int argc, char **argv, IODevice &_dev)
     FwLoader loader(_dev, rpc);
 
     if (init) {
-        return loader.requestBootloaderUpdate(device_pid);
+        return loader.requestBootloaderUpdate(devicePID);
     }
 
-    return loader.load(path,bootloader_pid);
+    return loader.load(path, bootloaderPID);
 }
 
 FwLoader::FwLoader(IODevice &_dev, bool rpc) :
@@ -85,27 +85,174 @@ int FwLoader::load(const char *path, unsigned int pid)
         return ENOENT;
     }
 
-    uint32_t plainsz, crc;
-    if (!checkFileDetails(f, plainsz, crc)) {
-        return EINVAL;
+    uint64_t magic;
+    if (fread(&magic, sizeof(magic), 1, f) != 1) {
+        fprintf(stderr, "magic number mismatch\n");
+        return EIO;
     }
+
+    int rv;
+
+    if (magic == Deployer::MAGIC) {
+        rv = loadSingle(f);
+    } else if (magic == Deployer::MAGIC_CONTAINER) {
+        rv = loadContainer(f);
+    } else {
+        fprintf(stderr, "invalid file format\n");
+        rv = EINVAL;
+    }
+
+    fclose(f);
+
+    return rv;
+}
+
+int FwLoader::loadSingle(FILE *f)
+{
+    long pos = ftell(f);
+
+    fseek(f, 0L, SEEK_END);
+    long endpos = ftell(f);     // determine file length
+
+    fseek(f, pos, SEEK_SET);    // reset
 
     unsigned swVersion, hwVersion;
     if (!bootloaderVersionIsCompatible(swVersion, hwVersion)) {
         return EIO;
     }
 
-    resetBootloader();
+    /*
+     * This file doesn't specify which hardware version it was built for.
+     * Because we can't guarantee the version of the hardware, we decline
+     * to install on anything other than the default HW rev.
+     *
+     * This obviously doesn't address the case in which somebody builds
+     * for a new HW rev but packages it in an old deploy format,
+     * but maybe it helps prevent a few mixups.
+     */
 
-    // XXX: ensure we're sending an appropriate firmware for the board's hardware version
-    if (!sendFirmwareFile(f, crc, plainsz)) {
-        fprintf(stderr, "error sending file\n");
+    if (hwVersion != DEFAULT_HW_VERSION) {
+        fprintf(stderr, "error: attempting to install untagged firmware on non-default hardware\n");
         return EIO;
     }
 
-    fclose(f);
+    if (!installFile(f, endpos - pos)) {
+        return EIO;
+    }
 
     return EOK;
+}
+
+int FwLoader::loadContainer(FILE *f)
+{
+    unsigned swVersion, hwVersion;
+    if (!bootloaderVersionIsCompatible(swVersion, hwVersion)) {
+        return EIO;
+    }
+
+    uint32_t fileFormatVersion;
+    if (fread(&fileFormatVersion, sizeof fileFormatVersion, 1, f) != 1) {
+        return EIO;
+    }
+
+    for (;;) {
+
+        Header hdr;
+        if (fread(&hdr, sizeof hdr, 1, f) != 1) {
+            if (!feof(f)) {
+                fprintf(stderr, "fin read err\n");
+                return EIO;
+            }
+            return EOK;
+        }
+
+        // look for a firmware binary that matches this base's hwVersion
+        // and try to install it
+        switch (hdr.key) {
+
+        case Deployer::FirmwareBinary: {
+
+            uint32_t hwRev, fwSize;
+            if (!readFirmwareBinaryHeader(f, hwRev, fwSize)) {
+                return EIO;
+            }
+
+            // found a valid hardware rev?
+            if (hwRev == hwVersion) {
+                return installFile(f, fwSize) ? EOK : EIO;
+            }
+
+            fseek(f, fwSize, SEEK_CUR); // skip data we're not interested in
+            break;
+        }
+
+        default:
+            // skip past data we're not interested in
+            fseek(f, hdr.size, SEEK_CUR);
+            break;
+        }
+    }
+
+    return EINVAL;  // didn't find a file to install
+}
+
+bool FwLoader::installFile(FILE *f, unsigned fileSize)
+{
+    // store current file position while we retrieve
+    // the crc and size from the end of the file details
+    long pos = ftell(f);
+
+    uint32_t plainsz, crc;
+    if (!checkFileDetails(f, plainsz, crc, pos + fileSize)) {
+        return false;
+    }
+
+    fseek(f, pos, SEEK_SET);    // reset
+
+    resetBootloader();
+
+    unsigned bytesToSend = fileSize - (2 * sizeof(uint32_t));
+    if (!sendFirmwareFile(f, crc, plainsz, bytesToSend)) {
+        fprintf(stderr, "error sending file\n");
+        return false;
+    }
+
+    return true;
+}
+
+bool FwLoader::readFirmwareBinaryHeader(FILE *f, uint32_t &hwVersion, uint32_t &fwSize)
+{
+    /*
+     * We're at the start of a FirmwareBinary section.
+     * Capture the hw rev and the size of the firmware section,
+     * leaving the file pointer at the beginning of the FW blob.
+     */
+
+    Header hwRevHdr;
+    if (fread(&hwRevHdr, sizeof hwRevHdr, 1, f) != 1) {
+        return false;
+    }
+
+    if (hwRevHdr.key != Deployer::HardwareRev) {
+        return false;
+    }
+
+    if (fread(&hwVersion, sizeof hwVersion, 1, f) != 1) {
+        return false;
+    }
+
+    Header fwBlobHdr;
+    if (fread(&fwBlobHdr, sizeof fwBlobHdr, 1, f) != 1) {
+        return false;
+    }
+
+    if (fwBlobHdr.key != Deployer::FirmwareBlob) {
+        return false;
+    }
+
+    fwSize = fwBlobHdr.size;
+
+    return true;
 }
 
 /*
@@ -128,7 +275,7 @@ bool FwLoader::bootloaderVersionIsCompatible(unsigned &swVersion, unsigned &hwVe
     swVersion = usbBuf[1];
     // older bootloaders don't send the hardware version,
     // so check the length again to be sure
-    hwVersion = (numBytes >= 3) ? usbBuf[2] : 0;
+    hwVersion = (numBytes >= 3) ? usbBuf[2] : DEFAULT_HW_VERSION;
 
     return ((VERSION_COMPAT_MIN <= swVersion) && (swVersion <= VERSION_COMPAT_MAX));
 }
@@ -146,19 +293,10 @@ void FwLoader::resetBootloader()
  * Verify that this file at least has our Deployer's magic number,
  * and retrieve the CRC and size.
  */
-bool FwLoader::checkFileDetails(FILE *f, uint32_t &plainsz, uint32_t &crc)
+bool FwLoader::checkFileDetails(FILE *f, uint32_t &plainsz, uint32_t &crc, long fileEnd)
 {
-    // magic number is the file header
-    fseek(f, 0L, SEEK_SET);
-    uint64_t magic;
-    unsigned numBytes = fread(&magic, 1, sizeof(magic), f);
-    if (numBytes != sizeof(magic) || magic != Deployer::MAGIC) {
-        fprintf(stderr, "magic number mismatch\n");
-        return false;
-    }
-
     // last 8 bytes are CRC and plaintext size
-    fseek(f, -8L, SEEK_END);
+    fseek(f, fileEnd - (2 * sizeof(uint32_t)), SEEK_SET);
 
     if (fread(&crc, 1, sizeof(crc), f) != sizeof(crc)) {
         fprintf(stderr, "couldn't read CRC\n");
@@ -178,26 +316,19 @@ bool FwLoader::checkFileDetails(FILE *f, uint32_t &plainsz, uint32_t &crc)
  * The file should already be encrypted and in the final form that it will reside
  * in the STM32's flash.
  */
-bool FwLoader::sendFirmwareFile(FILE *f, uint32_t crc, uint32_t size)
+bool FwLoader::sendFirmwareFile(FILE *f, uint32_t crc, uint32_t plaintextSize, unsigned fileSize)
 {
-    fseek(f, 0L, SEEK_END);
-    unsigned extraBytes = sizeof(uint64_t) + (2 * sizeof(uint32_t));
-    const unsigned filesz = ftell(f) - extraBytes;
-
     /*
      * initialBytes is the entire encrypted file, minus the the final block,
      * which is sent separately.
      */
-    int initialBytesToSend = filesz - AES128::BLOCK_SIZE;
+    unsigned initialBytesToSend = fileSize - AES128::BLOCK_SIZE;
 
     // must be aes block aligned
     if (initialBytesToSend & 0xf) {
         fprintf(stderr, "incorrect input format\n");
         return false;
     }
-
-    // encrpyted data starts after the magic number
-    fseek(f, sizeof(uint64_t), SEEK_SET);
 
     unsigned progress = 0;
     ScopedProgressBar progressBar(initialBytesToSend);
@@ -228,7 +359,7 @@ bool FwLoader::sendFirmwareFile(FILE *f, uint32_t crc, uint32_t size)
 
         progressBar.update(progress);
         if (isRPC) {
-            fprintf(stdout, "::progress:%u:%u\n", progress, filesz - AES128::BLOCK_SIZE);
+            fprintf(stdout, "::progress:%u:%u\n", progress, fileSize - AES128::BLOCK_SIZE);
             fflush(stdout);
         }
     }
@@ -253,8 +384,8 @@ bool FwLoader::sendFirmwareFile(FILE *f, uint32_t crc, uint32_t size)
     memcpy(p, &crc, sizeof crc);
     p += sizeof(crc);
 
-    memcpy(p, &size, sizeof(size));
-    p += sizeof(size);
+    memcpy(p, &plaintextSize, sizeof(plaintextSize));
+    p += sizeof(plaintextSize);
 
     if (dev.writePacket(finalBuf, p - finalBuf) < 0) {
         return false;
