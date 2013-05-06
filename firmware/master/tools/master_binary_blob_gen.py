@@ -159,23 +159,24 @@ def run(secondary_path, launcher_build_status):
 
     version_hash = {}
 
+    # iterate over all the versions and build them
     for hw_version in HW_VERSIONS:
         #master firmware filename
-    
+
         print "#### Generating Firmware for Version %d" % hw_version
         version_hash[hw_version] = "master_%s_hw_ver_%d.bin" % (githash,hw_version)
         build_firmware(hw_version)
-    
+
         # Rename and keep in master directory
         copy_to_dir(MASTER_UNVERSIONED,version_hash[hw_version],fw_build_dir)
     
     deploy_firmware_blob(target_filename,version_hash,githash)
-    
+
     if secondary_path != False:
     
         check_and_mkdir(remote_latest_dir)
         check_and_mkdir(remote_target_dir)
-    
+
         copy_to_dir(target_filename,target_filename, remote_latest_dir)
         copy_to_dir(target_filename,target_filename, remote_target_dir)
 
