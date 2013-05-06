@@ -127,7 +127,9 @@ extern "C" void _start()
     /*
      * Enable VCC SYS asap.
      */
+#if BOARD != BOARD_TEST_JIG
     PowerManager::batteryPowerOn();
+#endif
 
 #endif // BOOTLOADABLE
 

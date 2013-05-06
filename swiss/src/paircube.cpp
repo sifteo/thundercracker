@@ -2,6 +2,7 @@
 #include "basedevice.h"
 #include "tabularlist.h"
 #include "macros.h"
+#include "swisserror.h"
 
 #include <sifteo/abi/types.h>
 
@@ -12,23 +13,25 @@
 int PairCube::run(int argc, char **argv, IODevice &_dev)
 {
     PairCube pc(_dev);
-    bool success = false;
 
-    if (argc == 2 && !strcmp(argv[1], "--read")) {
-        success = pc.dumpPairingData();
+    if (argc >= 2) {
 
-    } else if (argc == 3) {
-        if (!strcmp(argv[1], "--read") && !strcmp(argv[2], "--rpc")) {
-            success = pc.dumpPairingData(true);
-        } else {
-            success = pc.pair(argv[1], argv[2]);
+        if (!strcmp(argv[1], "--read")) {
+            bool rpc = false;
+            if (argc >= 3 && strcmp(argv[2], "--rpc") == 0) {
+                rpc = true;
+            }
+
+            return pc.dumpPairingData(rpc);
         }
-
-    } else {
-        fprintf(stderr, "incorrect args\n");
     }
 
-    return success ? 0 : 1;
+    if (argc == 3) {
+        return pc.pair(argv[1], argv[2]);
+    }
+
+    fprintf(stderr, "incorrect args\n");
+    return EINVAL;
 }
 
 PairCube::PairCube(IODevice &_dev) :
@@ -36,28 +39,36 @@ PairCube::PairCube(IODevice &_dev) :
 {
 }
 
-bool PairCube::pair(const char *slotStr, const char *hwidStr)
+int PairCube::pair(const char *slotStr, const char *hwidStr)
 {
-    if (!dev.open(IODevice::SIFTEO_VID, IODevice::BASE_PID))
-        return false;
+    if (!dev.open(IODevice::SIFTEO_VID, IODevice::BASE_PID)) {
+        return ENODEV;
+    }
 
     unsigned pairingSlot;
-    if (!getValidPairingSlot(slotStr, pairingSlot))
-        return false;
+    if (!getValidPairingSlot(slotStr, pairingSlot)) {
+        return EINVAL;
+    }
 
     uint64_t hwid;
-    if (!getValidHWID(hwidStr, hwid))
-        return false;
+    if (!getValidHWID(hwidStr, hwid)) {
+        return EINVAL;
+    }
 
     USBProtocolMsg m;
     BaseDevice base(dev);
-    return base.pairCube(m, hwid, pairingSlot);
+    if (!base.pairCube(m, hwid, pairingSlot)) {
+        return EIO;
+    }
+
+    return EOK;
 }
 
-bool PairCube::dumpPairingData(bool rpc)
+int PairCube::dumpPairingData(bool rpc)
 {
-    if (!dev.open(IODevice::SIFTEO_VID, IODevice::BASE_PID))
-        return false;
+    if (!dev.open(IODevice::SIFTEO_VID, IODevice::BASE_PID)) {
+        return ENODEV;
+    }
 
     TabularList table;
 
@@ -79,7 +90,7 @@ bool PairCube::dumpPairingData(bool rpc)
         }
 
         table.cell() << std::setiosflags(std::ios::hex) << std::setw(2) << std::setfill('0') << reply->pairingSlot;
-        if (reply->hwid == ~0) {
+        if (reply->hwid == EMPTYSLOT) {
             table.cell() << "(empty)";
         } else {
             table.cell() << std::setiosflags(std::ios::hex) << std::setw(16) << std::setfill('0') << reply->hwid;
@@ -87,7 +98,7 @@ bool PairCube::dumpPairingData(bool rpc)
         table.endRow();
         
         if (rpc) {
-            if (reply->hwid == ~0) {
+            if (reply->hwid == EMPTYSLOT) {
                 fprintf(stdout, "::pairing:%u:\n", reply->pairingSlot); fflush(stdout);
             } else {
                 fprintf(stdout, "::pairing:%u:%"PRIu64"\n", reply->pairingSlot, reply->hwid); fflush(stdout);
@@ -97,7 +108,7 @@ bool PairCube::dumpPairingData(bool rpc)
 
     table.end();
 
-    return true;
+    return EOK;
 }
 
 bool PairCube::getValidPairingSlot(const char *s, unsigned &pairingSlot)

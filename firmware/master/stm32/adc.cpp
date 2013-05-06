@@ -5,6 +5,8 @@
 
 #include "adc.h"
 
+Adc Adc::Adc1(&ADC1);
+
 void Adc::init()
 {
     // enable peripheral clock
@@ -52,15 +54,54 @@ void Adc::setSampleRate(uint8_t channel, SampleRate rate)
     }
 }
 
-/*
- * Super simple (and inefficient) synchronous single conversion mode for now.
-*/
-uint16_t Adc::sample(uint8_t channel)
+void Adc::setCallback(uint8_t channel, AdcIsr_t funct)
 {
+    handlers[channel] = funct;
+}
+
+void Adc::beginSample(uint8_t channel)
+{
+    /*
+     * Kick off a new sample if there's not already one in progress.
+     */
+
+    if (!isBusy()) {
+        hw->SQR3 = channel;
+        hw->CR2 |= ((1 << 22) | (1 << 20));     // SWSTART the conversion
+    }
+}
+
+uint16_t Adc::sampleSync(uint8_t channel)
+{
+    /*
+     * Inefficient but simple synchronous sample.
+     */
+
     hw->SQR3 = channel;
 
     hw->CR2 |= ((1 << 22) | (1 << 20));     // SWSTART the conversion
     while (!(hw->SR & (1 << 1)))            // wait for EOC
         ;
     return hw->DR;
+}
+
+IRQ_HANDLER ISR_ADC1_2()
+{
+    Adc::Adc1.serveIsr();
+}
+
+void Adc::serveIsr()
+{
+    if (hw->SR & (1 << 1)) {    // check for EOC
+
+        // clear STRT - does not auto-clear
+        hw->SR &= ~(1 << 4);
+
+        unsigned channel = hw->SQR3;
+        AdcIsr_t &callback = handlers[channel];
+
+        if (callback) {
+            callback(hw->DR);
+        }
+    }
 }

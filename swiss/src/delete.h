@@ -11,13 +11,14 @@ public:
 
     static int run(int argc, char **argv, IODevice &_dev);
 
-    bool deleteEverything();
-    bool deleteReformat();
-    bool deleteSysLFS();
-    bool deleteVolume(unsigned code);
+    int deleteEverything();
+    int deleteReformat();
+    int deleteSysLFS();
+    int deleteVolume(unsigned code);
 
 private:
     IODevice &dev;
+    bool getVolumeCode(const char *s, unsigned &volumeCode);
 };
 
 #endif // INSTALLER_H

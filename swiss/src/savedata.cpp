@@ -5,8 +5,8 @@
 #include "bits.h"
 #include "metadata.h"
 #include "progressbar.h"
+#include "swisserror.h"
 
-#include <errno.h>
 #include <string>
 #include <sstream>
 #include <stdio.h>
@@ -18,11 +18,11 @@ const char * SaveData::SYSLFS_PACKAGE_STR = "com.sifteo.syslfs";
 
 int SaveData::run(int argc, char **argv, IODevice &_dev)
 {
-    bool success = false;
     SaveData saveData(_dev);
 
-    if (!_dev.open(IODevice::SIFTEO_VID, IODevice::BASE_PID))
-        return 1;
+    if (!_dev.open(IODevice::SIFTEO_VID, IODevice::BASE_PID)) {
+        return ENODEV;
+    }
 
     if (argc >= 4 && !strcmp(argv[1], "extract")) {
 
@@ -31,7 +31,7 @@ int SaveData::run(int argc, char **argv, IODevice &_dev)
         bool raw = false;
         bool rpc = false;
 
-        for (unsigned i = 2; i < argc; ++i) {
+        for (int i = 2; i < argc; ++i) {
             if (!strcmp(argv[i], "--rpc")) {
                 rpc = true;
             } else if (!strcmp(argv[i], "--raw")) {
@@ -45,33 +45,37 @@ int SaveData::run(int argc, char **argv, IODevice &_dev)
 
         if (!path || !pkgStr) {
             fprintf(stderr, "incorrect args\n");
-        } else {
-            success = saveData.extract(pkgStr, path, raw, rpc);
+            return EINVAL;
         }
 
-    } else if (argc >= 3 && !strcmp(argv[1], "restore")) {
-
-        const char *path = argv[2];
-        success = saveData.restore(path);
-
-    } else if (argc >= 4 && !strcmp(argv[1], "normalize")) {
-
-        const char *inpath = argv[2];
-        const char *outpath = argv[3];
-        success = saveData.normalize(inpath, outpath);
-
-    } else {
-        fprintf(stderr, "incorrect args\n");
+        return saveData.extract(pkgStr, path, raw, rpc);
     }
 
-    return success ? 0 : 1;
+    if (argc >= 3 && !strcmp(argv[1], "restore")) {
+        const char *path = argv[2];
+        return saveData.restore(path);
+    }
+
+    if (argc >= 4 && !strcmp(argv[1], "normalize")) {
+        const char *inpath = argv[2];
+        const char *outpath = argv[3];
+        return saveData.normalize(inpath, outpath);
+    }
+
+    if (argc >= 3 && !strcmp(argv[1], "delete")) {
+        const char *pkgStr = argv[2];
+        return saveData.del(pkgStr);
+    }
+
+    fprintf(stderr, "incorrect args\n");
+    return EINVAL;
 }
 
 SaveData::SaveData(IODevice &_dev) :
     dev(_dev)
 {}
 
-bool SaveData::extract(const char *pkgStr, const char *filepath, bool raw, bool rpc)
+int SaveData::extract(const char *pkgStr, const char *filepath, bool raw, bool rpc)
 {
     /*
      * Retrieve all LFS volumes for a given parent volume.
@@ -81,22 +85,24 @@ bool SaveData::extract(const char *pkgStr, const char *filepath, bool raw, bool 
      * We don't do any parsing of the data at this point.
      */
 
+    BaseDevice base(dev);
+
     unsigned volume;
-    if (!volumeCodeForPackage(std::string(pkgStr), volume)) {
+    if (!base.volumeCodeForPackage(std::string(pkgStr), volume)) {
         fprintf(stderr, "can't extract data from %s: not installed\n", pkgStr);
-        return false;
+        return EINVAL;
     }
 
     USBProtocolMsg buf;
-    BaseDevice base(dev);
+
     UsbVolumeManager::LFSDetailReply *reply = base.getLFSDetail(buf, volume);
     if (!reply) {
-        return false;
+        return EIO;
     }
 
     if (reply->count == 0) {
         printf("no savedata found for %s\n", pkgStr);
-        return true;
+        return EOK;
     }
 
     /*
@@ -112,23 +118,23 @@ bool SaveData::extract(const char *pkgStr, const char *filepath, bool raw, bool 
     FILE *fraw = fopen(rawfilepath, "wb");
     if (!fraw) {
         fprintf(stderr, "couldn't open %s: %s\n", filepath, strerror(errno));
-        return false;
+        return ENOENT;
     }
 
     if (!writeFileHeader(fraw, volume, reply->count)) {
-        return false;
+        return EIO;
     }
 
     if (!writeVolumes(reply, fraw, rpc)) {
-        return false;
+        return EIO;
     }
 
     if (raw) {
-        return true;
+        return EOK;
     }
 
     fclose(fraw);
-    bool rv = normalize(rawfilepath, filepath);
+    int rv = normalize(rawfilepath, filepath);
     remove(rawfilepath);
 
     printf("complete - see tools/savedata.py within your SDK installation "
@@ -138,7 +144,7 @@ bool SaveData::extract(const char *pkgStr, const char *filepath, bool raw, bool 
 }
 
 
-bool SaveData::restore(const char *filepath)
+int SaveData::restore(const char *filepath)
 {
     /*
      * please implement me. thank you in advance.
@@ -147,69 +153,104 @@ bool SaveData::restore(const char *filepath)
     FILE *fin = fopen(filepath, "rb");
     if (!fin) {
         fprintf(stderr, "couldn't open %s: %s\n", filepath, strerror(errno));
-        return false;
+        return ENOENT;
     }
 
     int fileVersion;
     if (!getValidFileVersion(fin, fileVersion)) {
         fclose(fin);
-        return false;
+        return EINVAL;
     }
 
     HeaderCommon hdr;
     if (!readHeader(fileVersion, hdr, fin)) {
         fclose(fin);
-        return false;
+        return EINVAL;
     }
 
+    BaseDevice base(dev);
     unsigned volBlockCode;
-    if (!volumeCodeForPackage(hdr.packageStr, volBlockCode)) {
+    if (!base.volumeCodeForPackage(hdr.packageStr, volBlockCode)) {
         fprintf(stderr, "can't restore: %s in not installed\n", hdr.packageStr.c_str());
-        return false;
+        return ENOENT;
     }
 
     Records records;
     if (!retrieveRecords(records, hdr, fin)) {
         fclose(fin);
-        return false;
+        return EIO;
     }
 
-    return restoreRecords(volBlockCode, records);
+    if (!restoreRecords(volBlockCode, records)) {
+        return EIO;
+    }
+
+    return EOK;
 }
 
-bool SaveData::normalize(const char *inpath, const char *outpath)
+int SaveData::normalize(const char *inpath, const char *outpath)
 {
     FILE *fin = fopen(inpath, "rb");
     if (!fin) {
         fprintf(stderr, "couldn't open %s: %s\n", inpath, strerror(errno));
-        return false;
+        return ENOENT;
     }
 
     FILE *fout = fopen(outpath, "wb");
     if (!fout) {
         fprintf(stderr, "couldn't open %s: %s\n", outpath, strerror(errno));
-        return false;
+        return ENOENT;
     }
 
     int fileVersion;
     if (!getValidFileVersion(fin, fileVersion)) {
         fclose(fin);
-        return false;
+        return EINVAL;
     }
 
     HeaderCommon hdr;
     if (!readHeader(fileVersion, hdr, fin)) {
         fclose(fin);
-        return false;
+        return EINVAL;
     }
 
     Records records;
     if (!retrieveRecords(records, hdr, fin)) {
         fclose(fin);
-        return false;
+        return EINVAL;
     }
 
-    return writeNormalizedRecords(records, hdr, fout);
+    if (!writeNormalizedRecords(records, hdr, fout)) {
+        return EIO;
+    }
+
+    return EOK;
+}
+
+
+int SaveData::del(const char *pkgStr)
+{
+    /*
+     * Delete any save data belonging to the specified package.
+     */
+
+    BaseDevice base(dev);
+
+    unsigned volume;
+    if (!base.volumeCodeForPackage(std::string(pkgStr), volume)) {
+        fprintf(stderr, "can't extract data from %s: not installed\n", pkgStr);
+        return EINVAL;
+    }
+
+    USBProtocolMsg m(USBProtocol::Installer);
+    m.header |= UsbVolumeManager::DeleteLFSChildren;
+    m.append((uint8_t*) &volume, sizeof volume);
+
+    if (!base.writeAndWaitForReply(m)) {
+        return EIO;
+    }
+
+    return EOK;
 }
 
 
@@ -269,7 +310,9 @@ bool SaveData::restoreItem(unsigned parentVol, const Record & record)
         m.append(&record.payload[progress], chunk);
         progress += chunk;
 
-        dev.writePacket(m.bytes, m.len);
+        if (dev.writePacket(m.bytes, m.len) < 0) {
+            return false;
+        }
         while (dev.numPendingOUTPackets() > IODevice::MAX_OUTSTANDING_OUT_TRANSFERS)
             dev.processEvents(1);
     }
@@ -316,38 +359,6 @@ bool SaveData::getValidFileVersion(FILE *f, int &version)
         fprintf(stderr, "unsupported savedata file version: 0x%x\n", minihdr.version);
         return false;
     }
-}
-
-
-bool SaveData::volumeCodeForPackage(const std::string & pkg, unsigned &volBlockCode)
-{
-    /*
-     * Search the installed volumes for the given package string, and retrieve
-     * its current volume code if it exists.
-     */
-
-    if (pkg == SYSLFS_PACKAGE_STR) {
-        volBlockCode = 0;
-        return true;
-    }
-
-    BaseDevice base(dev);
-    Metadata metadata(dev);
-
-    USBProtocolMsg m;
-
-    UsbVolumeManager::VolumeOverviewReply *overview = base.getVolumeOverview(m);
-    if (!overview) {
-        return false;
-    }
-
-    while (overview->bits.clearFirst(volBlockCode)) {
-        if (pkg == metadata.getString(volBlockCode, _SYS_METADATA_PACKAGE_STR)) {
-            return true;
-        }
-    }
-
-    return false;
 }
 
 

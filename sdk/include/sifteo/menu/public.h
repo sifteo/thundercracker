@@ -173,6 +173,9 @@ inline bool Menu::pollEvent(struct MenuEvent *ev)
         case MENU_STATE_HOP_UP:
             transFromHopUp();
             break;
+        case MENU_STATE_PAN_TARGET:
+            transFromPanTarget();
+            break;
     }
     if (dispatchEvent(ev)) {
         return (ev->type != MENU_EXIT);
@@ -197,6 +200,9 @@ inline bool Menu::pollEvent(struct MenuEvent *ev)
             break;
         case MENU_STATE_HOP_UP:
             stateHopUp();
+            break;
+        case MENU_STATE_PAN_TARGET:
+            statePanTarget();
             break;
     }
     if (dispatchEvent(ev)) {
@@ -273,10 +279,11 @@ inline void Menu::setPeekTiles(uint8_t numTiles)
  * of the same menu since running the event pump after an item is pressed
  * restarts the menu.
  */
-inline void Menu::anchor(uint8_t item, bool hopUp)
+inline void Menu::anchor(uint8_t item, bool hopUp, int8_t panTarget)
 {
     ASSERT(item < numItems);
     startingItem = item;
+    targetItem = panTarget;
     
     if (hopUp) {
         position = stoppingPositionFor(startingItem);

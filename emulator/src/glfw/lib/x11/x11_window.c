@@ -28,7 +28,7 @@
 //
 //========================================================================
 
-#include <internal.h>
+#include "internal.h"
 
 #include <limits.h>
 
@@ -47,6 +47,17 @@
 #define _NET_WM_STATE_ADD           1
 #define _NET_WM_STATE_TOGGLE        2
 
+#ifndef GLXBadProfileARB
+ #define GLXBadProfileARB 13
+#endif
+
+
+//========================================================================
+// The X error code as provided to the X error handler
+//========================================================================
+
+static unsigned long _glfwErrorCode = Success;
+
 
 //************************************************************************
 //****                  GLFW internal functions                       ****
@@ -59,6 +70,7 @@
 
 static int errorHandler( Display *display, XErrorEvent *event )
 {
+    _glfwErrorCode = event->error_code;
     return 0;
 }
 
@@ -435,7 +447,7 @@ static _GLFWfbconfig *getFBConfigs( unsigned int *found )
 
     *found = 0;
 
-    if( _glfwLibrary.glxMajor == 1 && _glfwLibrary.glxMinor < 3 )
+    if( _glfwLibrary.GLX.versionMajor == 1 && _glfwLibrary.GLX.versionMinor < 3 )
     {
         if( !_glfwWin.has_GLX_SGIX_fbconfig )
         {
@@ -538,6 +550,31 @@ static _GLFWfbconfig *getFBConfigs( unsigned int *found )
     XFree( fbconfigs );
 
     return result;
+}
+
+
+//========================================================================
+// Create the OpenGL context using the legacy interface
+//========================================================================
+
+static GLXContext createLegacyContext( GLXFBConfig fbconfig )
+{
+    if( _glfwWin.has_GLX_SGIX_fbconfig )
+    {
+        return _glfwWin.CreateContextWithConfigSGIX( _glfwLibrary.display,
+                                                     fbconfig,
+                                                     GLX_RGBA_TYPE,
+                                                     NULL,
+                                                     True );
+    }
+    else
+    {
+        return glXCreateNewContext( _glfwLibrary.display,
+                                    fbconfig,
+                                    GLX_RGBA_TYPE,
+                                    NULL,
+                                    True );
+    }
 }
 
 
@@ -669,25 +706,28 @@ static int createContext( const _GLFWwndconfig *wndconfig, GLXFBConfigID fbconfi
 
         // We are done, so unset the error handler again (see above)
         XSetErrorHandler( NULL );
+
+        if( _glfwWin.context == NULL )
+        {
+            // HACK: This is a fallback for the broken Mesa implementation of
+            // GLX_ARB_create_context_profile, which fails default 1.0 context
+            // creation with a GLXBadProfileARB error in violation of the spec
+            if( _glfwErrorCode == _glfwLibrary.GLX.errorBase + GLXBadProfileARB &&
+                wndconfig->glProfile == 0 &&
+                wndconfig->glForward == GL_FALSE )
+            {
+                _glfwWin.context = createLegacyContext( *fbconfig );
+            }
+        }
+
+        // Copy the debug context hint as there's no way of verifying it
+        // This is the only code path capable of creating a debug context,
+        // so leave it as false (from the earlier memset) otherwise
+        _glfwWin.glDebug = wndconfig->glDebug;
     }
     else
     {
-        if( _glfwWin.has_GLX_SGIX_fbconfig )
-        {
-            _glfwWin.context = _glfwWin.CreateContextWithConfigSGIX( _glfwLibrary.display,
-                                                                     *fbconfig,
-                                                                     GLX_RGBA_TYPE,
-                                                                     NULL,
-                                                                     True );
-        }
-        else
-        {
-            _glfwWin.context = glXCreateNewContext( _glfwLibrary.display,
-                                                    *fbconfig,
-                                                    GLX_RGBA_TYPE,
-                                                    NULL,
-                                                    True );
-        }
+        _glfwWin.context = createLegacyContext( *fbconfig );
     }
 
     XFree( fbconfig );
@@ -713,6 +753,8 @@ static int createContext( const _GLFWwndconfig *wndconfig, GLXFBConfigID fbconfi
 static void initGLXExtensions( void )
 {
     // This needs to include every function pointer loaded below
+    _glfwWin.SwapIntervalEXT             = NULL;
+    _glfwWin.SwapIntervalMESA            = NULL;
     _glfwWin.SwapIntervalSGI             = NULL;
     _glfwWin.GetFBConfigAttribSGIX       = NULL;
     _glfwWin.ChooseFBConfigSGIX          = NULL;
@@ -722,10 +764,34 @@ static void initGLXExtensions( void )
 
     // This needs to include every extension used below
     _glfwWin.has_GLX_SGIX_fbconfig              = GL_FALSE;
+    _glfwWin.has_GLX_EXT_swap_control           = GL_FALSE;
+    _glfwWin.has_GLX_MESA_swap_control          = GL_FALSE;
     _glfwWin.has_GLX_SGI_swap_control           = GL_FALSE;
     _glfwWin.has_GLX_ARB_multisample            = GL_FALSE;
     _glfwWin.has_GLX_ARB_create_context         = GL_FALSE;
     _glfwWin.has_GLX_ARB_create_context_profile = GL_FALSE;
+
+    if( _glfwPlatformExtensionSupported( "GLX_EXT_swap_control" ) )
+    {
+        _glfwWin.SwapIntervalEXT = (PFNGLXSWAPINTERVALEXTPROC)
+            _glfwPlatformGetProcAddress( "glXSwapIntervalEXT" );
+
+        if( _glfwWin.SwapIntervalEXT )
+        {
+            _glfwWin.has_GLX_EXT_swap_control = GL_TRUE;
+        }
+    }
+
+    if( _glfwPlatformExtensionSupported( "GLX_MESA_swap_control" ) )
+    {
+        _glfwWin.SwapIntervalMESA = (PFNGLXSWAPINTERVALMESAPROC)
+            _glfwPlatformGetProcAddress( "glXSwapIntervalMESA" );
+
+        if( _glfwWin.SwapIntervalMESA )
+        {
+            _glfwWin.has_GLX_MESA_swap_control = GL_TRUE;
+        }
+    }
 
     if( _glfwPlatformExtensionSupported( "GLX_SGI_swap_control" ) )
     {
@@ -1558,7 +1624,6 @@ void _glfwPlatformSetWindowTitle( const char *title )
 void _glfwPlatformSetWindowSize( int width, int height )
 {
     int     mode = 0, rate, sizeChanged = GL_FALSE;
-    XSizeHints *sizehints;
 
     rate = _glfwWin.refreshRate;
 
@@ -1572,14 +1637,14 @@ void _glfwPlatformSetWindowSize( int width, int height )
     {
         // Update window size restrictions to match new window size
 
-        sizehints = XAllocSizeHints();
-        sizehints->flags = 0;
+        XSizeHints *hints = XAllocSizeHints();
 
-        sizehints->min_width  = sizehints->max_width  = width;
-        sizehints->min_height = sizehints->max_height = height;
+        hints->flags |= (PMinSize | PMaxSize);
+        hints->min_width  = hints->max_width  = width;
+        hints->min_height = hints->max_height = height;
 
-        XSetWMNormalHints( _glfwLibrary.display, _glfwWin.window, sizehints );
-        XFree( sizehints );
+        XSetWMNormalHints( _glfwLibrary.display, _glfwWin.window, hints );
+        XFree( hints );
     }
 
     // Change window size before changing fullscreen mode?
@@ -1664,9 +1729,22 @@ void _glfwPlatformSwapBuffers( void )
 
 void _glfwPlatformSwapInterval( int interval )
 {
-    if( _glfwWin.has_GLX_SGI_swap_control )
+    if( _glfwWin.has_GLX_EXT_swap_control )
     {
-        _glfwWin.SwapIntervalSGI( interval );
+        _glfwWin.SwapIntervalEXT( _glfwLibrary.display,
+                                  _glfwWin.window,
+                                  interval );
+    }
+    else if( _glfwWin.has_GLX_MESA_swap_control )
+    {
+        _glfwWin.SwapIntervalMESA( interval );
+    }
+    else if( _glfwWin.has_GLX_SGI_swap_control )
+    {
+        if( interval > 0 )
+        {
+            _glfwWin.SwapIntervalSGI( interval );
+        }
     }
 }
 

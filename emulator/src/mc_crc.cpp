@@ -133,6 +133,12 @@ uint32_t Crc32::get()
     return gCrc;
 }
 
+void Crc32::addInline(uint32_t word)
+{
+    // No difference between inlined/non-inlined versions in emulation.
+    add(word);
+}
+
 void Crc32::add(uint32_t word)
 {
     ASSERT(gCrcInit);

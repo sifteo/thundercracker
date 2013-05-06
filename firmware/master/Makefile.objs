@@ -23,6 +23,7 @@ OBJS_COMMON = \
     $(MASTER_DIR)/common/assetloader.o \
     $(MASTER_DIR)/common/assetloader_fsm.o \
     $(MASTER_DIR)/common/assetutil.o \
+    $(MASTER_DIR)/common/batterylevel.o \
     $(MASTER_DIR)/common/cubeslots.o \
     $(MASTER_DIR)/common/cube.o \
     $(MASTER_DIR)/common/cubeconnector.o \
@@ -60,6 +61,7 @@ OBJS_COMMON = \
     $(MASTER_DIR)/common/ui_menu.o \
     $(MASTER_DIR)/common/ui_shutdown.o \
     $(MASTER_DIR)/common/ui_fault.o \
+	$(MASTER_DIR)/common/ui_lowbatt.o \
     $(MASTER_DIR)/common/pause.o \
     $(MASTER_DIR)/common/ui_pause.o \
     $(MASTER_DIR)/common/ui_cuberange.o \
@@ -91,8 +93,10 @@ OBJS_STM32 = \
     $(MASTER_DIR)/stm32/usart.stm32.o \
     $(MASTER_DIR)/stm32/dma.stm32.o \
     $(MASTER_DIR)/stm32/hwtimer.stm32.o \
+    $(MASTER_DIR)/stm32/dacaudioout.stm32.o \
     $(MASTER_DIR)/stm32/pwmaudioout.stm32.o \
-    $(MASTER_DIR)/stm32/volume.stm32.o \
+    $(MASTER_DIR)/stm32/volume_adc.stm32.o \
+    $(MASTER_DIR)/stm32/volume_rc.stm32.o \
     $(MASTER_DIR)/stm32/macronixmx25.stm32.o \
     $(MASTER_DIR)/stm32/dac.stm32.o \
     $(MASTER_DIR)/stm32/crc.stm32.o \
@@ -108,7 +112,8 @@ OBJS_STM32 = \
     $(MASTER_DIR)/stm32/led.stm32.o \
     $(MASTER_DIR)/stm32/neighbor_tx.stm32.o \
     $(MASTER_DIR)/stm32/syscall_math.stm32.o \
-    $(MASTER_DIR)/stm32/batterylevel.stm32.o \
+    $(MASTER_DIR)/stm32/batterylevel_adc.stm32.o \
+    $(MASTER_DIR)/stm32/batterylevel_rc.stm32.o \
     $(MASTER_DIR)/stm32/sysinfo.stm32.o
 
 # Library code.

@@ -1,212 +1,183 @@
 #include "deployer.h"
-#include "crc.h"
-#include "aes128.h"
-#include "securerandom.h"
+#include "encrypter.h"
+#include "macros.h"
 
 #include <stdio.h>
 #include <string.h>
 #include <errno.h>
 
+#include <fstream>
+#include <sstream>
+
+using namespace std;
+
+// in sync with firmware/master/stm32/board.h
+const unsigned Deployer::VALID_HW_REVS[] = {
+    2,  // BOARD_TC_MASTER_REV2
+    3,  // BOARD_TEST_JIG
+    4,  // BOARD_TC_MASTER_REV3
+};
+
+bool Deployer::hwRevIsValid(unsigned rev) {
+    for (unsigned i = 0; i < arraysize(VALID_HW_REVS); ++i) {
+        if (rev == VALID_HW_REVS[i]) {
+            return true;
+        }
+    }
+
+    return false;
+}
+
 Deployer::Deployer()
 {
 }
 
-/*
- * To deploy a firmware image, we need to:
- * - calculate the CRC of the decrypted firmware image
- * - encrypt the firmware image
- * - ideally, ensure that the firmware image has been built in BOOTLOADABLE mode.
- *
- * File format looks like:
- * - uint64_t magic number
- * - ... encrypted data ...
- * - uint32_t crc of the plaintext
- * - uint32_t size of the plaintext
- */
-bool Deployer::deploy(const char *inPath, const char *outPath)
+
+bool Deployer::deploy(Container &container)
 {
-    FILE *fin = fopen(inPath, "rb");
-    if (!fin) {
-        fprintf(stderr, "error: can't open %s (%s)\n", inPath, strerror(errno));
+    /*
+     * File format:
+     *  uint64_t magic number
+     *  uint32_t file format version
+     *
+     *  (
+     *    uint32_t header key
+     *    uint32_t header size
+     *    uint8_t[header size] value
+     *  )
+     */
+
+    ofstream fout(container.outPath.c_str(), ofstream::binary);
+    if (!fout.is_open()) {
+        fprintf(stderr, "error: can't open %s (%s)\n", container.outPath.c_str(), strerror(errno));
         return false;
     }
 
-    FILE *fout = fopen(outPath, "wb");
-    if (!fout) {
+    // magic number is first
+    const uint64_t magic = MAGIC_CONTAINER;
+    if (fout.write((const char*)&magic, sizeof magic).fail()) {
+        return false;
+    }
+
+    // file format version
+    const uint32_t fileVersion = FILE_VERSION;
+    if (fout.write((const char*)&fileVersion, sizeof fileVersion).fail()) {
+        return false;
+    }
+
+    if (!writeSection(FirmwareRev, container.fwVersion.length(), container.fwVersion.c_str(), fout)) {
+        return false;
+    }
+
+    for (vector<Firmware*>::iterator it = container.firmwares.begin();
+         it != container.firmwares.end(); ++it)
+    {
+        stringstream ss;
+        Firmware *fw = *it;
+
+        if (!encryptFirmware(fw, ss)) {
+            return false;
+        }
+
+        long pos = ss.tellp();
+        if (!writeSection(FirmwareBinary, pos, ss.str().c_str(), fout)) {
+            return false;
+        }
+    }
+
+    fout.close();
+
+    printStatus(container);
+
+    return true;
+}
+
+bool Deployer::deploySingle(const char *inPath, const char *outPath)
+{
+    /*
+     * Earlier versions of fwdeploy packaged only a single firmware.
+     * Retain compatibility in case we need to generate those at some point.
+     */
+
+    ofstream fout(outPath, ofstream::binary);
+    if (!fout.is_open()) {
         fprintf(stderr, "error: can't open %s (%s)\n", outPath, strerror(errno));
         return false;
     }
 
-    Crc32::init();
-
-    if (!SecureRandom::generate(salt, SALT_LEN)) {
-        fprintf(stderr, "error generating random salt: %s\n", strerror(errno));
-        return false;
-    }
-
-    uint32_t plainsz, calculatedCrc;
-    if (!detailsForFile(fin, plainsz, calculatedCrc))
-        return false;
-
-    // prepend magic number
     const uint64_t magic = MAGIC;
-    if (fwrite(&magic, 1, sizeof(uint64_t), fout) != sizeof(magic))
+    if (fout.write((const char*)&magic, sizeof magic).fail()) {
         return false;
+    }
 
-    if (!encryptFWBinary(fin, fout))
+    Encrypter enc;
+    if (!enc.encryptFile(inPath, fout)) {
         return false;
+    }
 
-    // append the CRC
-    if (fwrite(&calculatedCrc, 1, sizeof(uint32_t), fout) != sizeof(uint32_t))
-        return false;
-
-    // append the plaintext size
-    if (fwrite(&plainsz, 1, sizeof(uint32_t), fout) != sizeof(uint32_t))
-        return false;
-
-    fclose(fin);
-    fclose(fout);
+    fout.close();
 
     return true;
 }
 
-/*
- * Calculate the CRC for the input file.
- * This is read-only
- */
-bool Deployer::detailsForFile(FILE *f, uint32_t &sz, uint32_t &crc)
-{
-    const char elf[] = { 0x7f, 'E', 'L', 'F' };
-    char header[sizeof elf];
-    if (fread(header, 1, sizeof elf, f) != sizeof(elf))
-        return false;
-    if (!memcmp(elf, header, sizeof elf)) {
-        fprintf(stderr, "error: looks like you're deploying a .elf, please convert it to .bin first\n");
-        return false;
-    }
-
-    rewind(f);
-    Crc32::reset();
-    unsigned fileOffset = 0;
-
-    while (!feof(f)) {
-        uint8_t crcbuffer[32];
-        const int numBytes = fread(crcbuffer, 1, sizeof crcbuffer, f);
-        if (numBytes <= 0)
-            continue;
-
-        patchBlock(fileOffset, crcbuffer, numBytes);
-        fileOffset += numBytes;
-
-        // must be word aligned
-        ASSERT((numBytes & 0x3) == 0 && "firmware binary must be word aligned");
-
-        const uint32_t *p = reinterpret_cast<const uint32_t*>(crcbuffer);
-        const uint32_t *end = reinterpret_cast<const uint32_t*>(crcbuffer + numBytes);
-        while (p < end)
-            Crc32::add(*p++);
-    }
-
-    sz = ftell(f);
-    crc = Crc32::get();
-
-    if (crc == 0 || crc == 0xffffffff) {
-        fprintf(stderr, "error: this file has a CRC of 0 or 0xffffffff, which the bootloader considers invalid\n");
-        return false;
-    }
-
-    return true;
-}
-
-#define AES_IV  {  0x00, 0x01, 0x02, 0x03, \
-                    0x04, 0x05, 0x06, 0x07, \
-                    0x08, 0x09, 0x0a, 0x0b, \
-                    0x0c, 0x0d, 0x0e, 0x0f }
-#define AES_KEY { 0x2b7e1516, 0x28aed2a6, 0xabf71588, 0x09cf4f3c }
-
-bool Deployer::encryptFWBinary(FILE *fin, FILE *fout)
-{
-    uint32_t expkey[44];
-    const uint32_t key[4] = AES_KEY;
-    AES128::expandKey(expkey, key);
-
-    fseek(fin, 0L, SEEK_END);
-    unsigned numPlainBytes = ftell(fin);
-    rewind(fin);
-    unsigned fileOffset = 0;
-
-    // cipherBuf holds the cipher in progress - starts with initialization vector
-    uint8_t cipherBuf[AES128::BLOCK_SIZE] = AES_IV;
-    uint8_t plainBuf[AES128::BLOCK_SIZE];
-
-    while (numPlainBytes >= AES128::BLOCK_SIZE) {
-        AES128::encryptBlock(cipherBuf, cipherBuf, expkey);
-
-        unsigned numBytes = fread(plainBuf, 1, sizeof plainBuf, fin);
-        if (numBytes != sizeof plainBuf) {
-            fprintf(stderr, "error reading from file to encrypt: %s\n", strerror(errno));
-            return false;
-        }
-
-        // Patch plaintext before encrypting it
-        patchBlock(fileOffset, plainBuf, sizeof plainBuf);
-        fileOffset += AES128::BLOCK_SIZE;
-
-        AES128::xorBlock(cipherBuf, plainBuf);
-
-        numBytes = fwrite(cipherBuf, 1, AES128::BLOCK_SIZE, fout);
-        if (numBytes != AES128::BLOCK_SIZE) {
-            fprintf(stderr, "error writing to encrypted file: %s\n", strerror(errno));
-            return false;
-        }
-
-        numPlainBytes -= AES128::BLOCK_SIZE;
-    }
-
-    /*
-     * Pad with the number of leftover bytes, PKCS style.
-     * Degenerate case is 16-byte aligned - have to do an entire block of nothing but pad
-     */
-
-    // assemble the final block - remaining plaintext plus padding
-    ASSERT(numPlainBytes < AES128::BLOCK_SIZE);
-    uint8_t padvalue = AES128::BLOCK_SIZE - numPlainBytes;
-    if (fread(plainBuf, 1, numPlainBytes, fin) != numPlainBytes) {
-        fprintf(stderr, "error reading from input file: %s\n", strerror(errno));
-        return false;
-    }
-    memset(plainBuf + numPlainBytes, padvalue, padvalue);
-
-    // last block
-    AES128::encryptBlock(cipherBuf, cipherBuf, expkey);
-    AES128::xorBlock(cipherBuf, plainBuf);
-    if (fwrite(cipherBuf, 1, AES128::BLOCK_SIZE, fout) != AES128::BLOCK_SIZE) {
-        fprintf(stderr, "error writing to output file: %s\n", strerror(errno));
-        return false;
-    }
-
-    return true;
-}
-
-void Deployer::patchBlock(unsigned address, uint8_t *block, unsigned len)
+bool Deployer::encryptFirmware(Firmware *firmware, ostream &os)
 {
     /*
-     * This function is called once per block of plaintext, immediately prior to
-     * encryption. Right now it just solves one problem I'm somewhat paranoid
-     * about: If we release two master firmware binaries with a predictable
-     * difference in their plaintext, that may make it significantly easier to
-     * recover key material via differential cryptanalysis.
-     *
-     * To subvert this, we place some unpredictable (cryptographically secure
-     * random) "salt" data near the beginning of the binary image. To do this
-     * unobtrusively and without forcing any contortions in the bootloader,
-     * we just splat it into a reserved portion of the IVT.
+     * Encrypt a single Firmware image to the stream, preceded
+     * by its hardware rev.
      */
 
-    for (unsigned i = 0; i < len; ++i) {
-        unsigned offset = address + i - SALT_OFFSET;
-        if (offset < SALT_LEN)
-            block[i] = salt[offset];
+    // write hardware rev
+    if (!hwRevIsValid(firmware->hwRev)) {
+        fprintf(stderr, "unsupported hw rev specified: %d\n", firmware->hwRev);
+        return false;
     }
+
+    if (!writeSection(HardwareRev, sizeof firmware->hwRev, &firmware->hwRev, os)) {
+        return false;
+    }
+
+    // write firmware blob itself
+    Encrypter enc;
+    stringstream ss;
+    if (!enc.encryptFile(firmware->path.c_str(), ss)) {
+        return false;
+    }
+
+    long pos = ss.tellp();
+    if (!writeSection(FirmwareBlob, pos, ss.str().c_str(), os)) {
+        return false;
+    }
+
+    return true;
 }
 
+bool Deployer::writeSection(uint32_t key, uint32_t size, const void *bytes, ostream& os)
+{
+    // XXX: endianness
+
+    if (os.write((const char*)&key, sizeof key).fail()) {
+        return false;
+    }
+
+    if (os.write((const char*)&size, sizeof size).fail()) {
+        return false;
+    }
+
+    if (os.write((const char*)bytes, size).fail()) {
+        return false;
+    }
+
+    return true;
+}
+
+void Deployer::printStatus(Container &container)
+{
+    printf("Deploying %s (%s)\n", container.outPath.c_str(), container.fwVersion.c_str());
+    for (vector<Firmware*>::iterator it = container.firmwares.begin();
+         it != container.firmwares.end(); ++it)
+    {
+        Firmware *fw = *it;
+        printf("  fw: %s, hw rev %d\n", fw->path.c_str(), fw->hwRev);
+    }
+}

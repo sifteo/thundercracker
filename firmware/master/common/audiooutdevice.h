@@ -19,6 +19,7 @@ public:
     static void init();
     static void start();
     static void stop();
+    static int getSampleBias();     // Device-specific bias value to be added to each sample
 
     static const unsigned END_OF_STREAM = 0x8000;
 

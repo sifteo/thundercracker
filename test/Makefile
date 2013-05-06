@@ -26,7 +26,8 @@ TESTS = \
 	sdk/assetslot \
 	sdk/fastlz \
 	sdk/motion \
-	sdk/fault
+	sdk/fault \
+	sdk/slinky-negative-sym-offset
 
 # Mac-only tests
 ifeq ($(BUILD_PLATFORM), Darwin)

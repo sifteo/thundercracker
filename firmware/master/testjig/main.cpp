@@ -47,7 +47,7 @@ int main()
      */
 
     SysTime::init();
-    PowerManager::init();   // fires up USB
+    UsbDevice::init();   // fires up USB
     Tasks::init();
 
     // This is the earliest point at which it's safe to use Usart::Dbg.

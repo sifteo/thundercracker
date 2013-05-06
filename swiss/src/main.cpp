@@ -2,6 +2,7 @@
 #include "command.h"
 #include "profiler.h"
 #include "fwloader.h"
+#include "inspect.h"
 #include "installer.h"
 #include "manifest.h"
 #include "delete.h"
@@ -30,6 +31,12 @@ static const Command commands[] = {
         "delete data from the Sifteo Base",
         "delete (--all | --sys | --reformat | <volumeID>)",
         Delete::run
+    },
+    {
+        "inspect",
+        "inspect an app's metadata",
+        "inspect <app.elf>",
+        Inspect::run
     },
     {
         "install",
@@ -76,7 +83,7 @@ static const Command commands[] = {
     {
         "update",
         "update the firmware on your Sifteo Base",
-        "update (--init | <firmware.sft>)",
+        "update (--init | --pid <pid> | <firmware.sft>)",
         FwLoader::run
     },
 };
@@ -137,7 +144,7 @@ static unsigned handleGlobalArgs(int argc, char **argv)
      */
 
     unsigned consumed = 1; // consume argv[0]
-    for (unsigned i = 1; i < argc; ++i) {
+    for (int i = 1; i < argc; ++i) {
 
         if (!strcmp(argv[i], "--libusb-debug") && i + 1 < argc) {
 

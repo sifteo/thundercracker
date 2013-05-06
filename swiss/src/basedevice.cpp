@@ -1,4 +1,7 @@
 #include "basedevice.h"
+#include "usbprotocol.h"
+#include "savedata.h"
+#include "metadata.h"
 
 #include <stddef.h>
 
@@ -119,6 +122,36 @@ UsbVolumeManager::VolumeDetailReply *BaseDevice::getVolumeDetail(USBProtocolMsg 
 }
 
 
+bool BaseDevice::volumeCodeForPackage(const std::string & pkg, unsigned &volBlockCode)
+{
+    /*
+     * Search the installed volumes for the given package string, and retrieve
+     * its current volume code if it exists.
+     */
+
+    if (pkg == SaveData::SYSLFS_PACKAGE_STR) {
+        volBlockCode = SaveData::SYSLFS_VOLUME_BLOCK_CODE;
+        return true;
+    }
+
+    Metadata metadata(dev);
+
+    USBProtocolMsg m;
+    UsbVolumeManager::VolumeOverviewReply *overview = getVolumeOverview(m);
+    if (!overview) {
+        return false;
+    }
+
+    while (overview->bits.clearFirst(volBlockCode)) {
+        if (pkg == metadata.getString(volBlockCode, _SYS_METADATA_PACKAGE_STR)) {
+            return true;
+        }
+    }
+
+    return false;
+}
+
+
 UsbVolumeManager::LFSDetailReply *BaseDevice::getLFSDetail(USBProtocolMsg &msg, unsigned volBlockCode)
 {
     msg.init(USBProtocol::Installer);
@@ -182,7 +215,10 @@ bool BaseDevice::requestReboot()
 {
     USBProtocolMsg m(USBProtocol::FactoryTest);
     m.append(12);   // reboot request command
-    dev.writePacket(m.bytes, m.len);
+    if (dev.writePacket(m.bytes, m.len) < 0) {
+        return false;
+    }
+
     return true;
 }
 
@@ -204,30 +240,34 @@ bool BaseDevice::getMetadata(USBProtocolMsg &msg, unsigned volBlockCode, unsigne
 }
 
 
-bool BaseDevice::waitForReply(uint32_t header, USBProtocolMsg &msg, unsigned tries)
+bool BaseDevice::waitForReply(uint32_t header, USBProtocolMsg &msg)
 {
     /*
      * Wait for a reply with the given header.
-     * Discard up to 'tries' non-matching packets while waiting.
+     * Filter out replies from any other subsystems.
      */
 
-    while (tries--) {
-        while (dev.numPendingINPackets() == 0) {
+    for (;;) {
+        if (dev.numPendingINPackets() == 0) {
             dev.processEvents(1);
+            continue;
         }
 
-        dev.readPacket(msg.bytes, msg.MAX_LEN, msg.len);
-        if (msg.header == header) {
-            return true;
+        if (dev.readPacket(msg.bytes, msg.MAX_LEN, msg.len) < 0) {
+            return false;
+        }
+
+        // if we got a message from the correct subsystem, we're good
+        if (msg.subsystem() == USBProtocol::Installer) {
+            break;
         }
     }
 
-    fprintf(stderr, "unexpected response.\n");
-    return false;
+    return (msg.header == header);
 }
 
 
-bool BaseDevice::writeAndWaitForReply(USBProtocolMsg &msg, unsigned tries)
+bool BaseDevice::writeAndWaitForReply(USBProtocolMsg &msg)
 {
     /*
      * Common helper.
@@ -236,9 +276,9 @@ bool BaseDevice::writeAndWaitForReply(USBProtocolMsg &msg, unsigned tries)
      */
 
     uint32_t headerToMatch = msg.header;
-    if (dev.writePacket(msg.bytes, msg.len) != msg.len) {
+    if (dev.writePacket(msg.bytes, msg.len) < 0) {
         return false;
     }
 
-    return waitForReply(headerToMatch, msg, tries);
+    return waitForReply(headerToMatch, msg);
 }

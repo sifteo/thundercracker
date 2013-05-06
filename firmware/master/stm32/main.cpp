@@ -27,6 +27,8 @@
 #include "led.h"
 #include "batterylevel.h"
 #include "nrf8001/nrf8001.h"
+#include "adc.h"
+#include "realtimeclock.h"
 
 /*
  * Application specific entry point.
@@ -66,17 +68,24 @@ int main()
 
     NVIC.irqEnable(IVT.BTN_HOME_EXTI_VEC);          //  home button
 
+#ifdef USE_AUDIO_DAC
+    NVIC.irqEnable(IVT.AUDIO_DAC_DMA_IRQ);          // DAC DMA channel
+    NVIC.irqPrioritize(IVT.AUDIO_DAC_DMA_IRQ, 0x50);
+#else
     NVIC.irqEnable(IVT.AUDIO_SAMPLE_TIM);           // sample rate timer
     NVIC.irqPrioritize(IVT.AUDIO_SAMPLE_TIM, 0x50); //  pretty high priority! (would cause audio jitter)
+#endif
 
     NVIC.irqEnable(IVT.LED_SEQUENCER_TIM);          // LED sequencer timer
     NVIC.irqPrioritize(IVT.LED_SEQUENCER_TIM, 0x85);
 
-    NVIC.irqEnable(IVT.USART3);                     // factory test uart
-    NVIC.irqPrioritize(IVT.USART3, 0x52);           //  high enough to avoid overruns
+    NVIC.irqEnable(IVT.UART_DBG);                     // factory test uart
+    NVIC.irqPrioritize(IVT.UART_DBG, 0x52);           //  high enough to avoid overruns
 
+#ifndef USE_ADC_FADER_MEAS
     NVIC.irqEnable(IVT.VOLUME_TIM);                 // volume timer
     NVIC.irqPrioritize(IVT.VOLUME_TIM, 0x55);       //  just below sample rate timer
+#endif
 
     NVIC.irqEnable(IVT.PROFILER_TIM);               // sample profiler timer
     NVIC.irqPrioritize(IVT.PROFILER_TIM, 0x0);      //  highest possible priority
@@ -92,6 +101,11 @@ int main()
     NVIC.irqPrioritize(IVT.NRF8001_DMA_CHAN_RX, 0x74);  //  same prio as flash for now
     NVIC.irqEnable(IVT.NRF8001_DMA_CHAN_TX);
     NVIC.irqPrioritize(IVT.NRF8001_DMA_CHAN_TX, 0x74);
+#endif
+
+#if defined(USE_ADC_BATT_MEAS) || defined (USE_ADC_FADER_MEAS)
+    NVIC.irqEnable(IVT.ADC1_2);                     // adc sample
+    NVIC.irqPrioritize(IVT.ADC1_2,0x80);            // low priority. only used for battery/fader measurement
 #endif
 
     /*
@@ -138,6 +152,15 @@ int main()
                  (1 << 10);         // TIM1 ""
 #endif
 
+    #if BOARD >= BOARD_TC_MASTER_REV3
+    RealTimeClock::beginInit();
+    #endif
+
+    #if (defined USE_ADC_BATT_MEAS) || (defined USE_ADC_FADER_MEAS)
+    Adc::Adc1.init();
+    Adc::Adc1.enableEocInterrupt();
+    #endif
+
     LED::init();
     Tasks::init();
     FlashStack::init();
@@ -154,10 +177,13 @@ int main()
      */
 
     BatteryLevel::init();
+
+#ifndef HAS_SINGLE_RAIL
     if (PowerManager::state() == PowerManager::BatteryPwr) {
+#endif
 
         /*
-         * Ensure we have enough juise to make it worth starting up!
+         * Ensure we have enough juice to make it worth starting up!
          *
          * Kick off our first sample and wait for it to complete.
          * Once our first vsys and vbatt samples have been taken, the
@@ -173,7 +199,10 @@ int main()
         while (BatteryLevel::vsys() == BatteryLevel::UNINITIALIZED ||
                BatteryLevel::raw() == BatteryLevel::UNINITIALIZED)
             ;
+
+#ifndef HAS_SINGLE_RAIL
     }
+#endif
 
     // wait until after we know we're going to continue starting up before
     // showing signs of life :)
@@ -193,8 +222,14 @@ int main()
     NRF8001::instance.init();
 #endif
 
-    // Includes radio power-on delay. Initialize this last.
+    // Includes radio power-on delay.
     Radio::init();
+
+    #if BOARD >= BOARD_TC_MASTER_REV3
+    // this waits for the external oscillator to stabilize, which can
+    // take even longer than the radio - do this last.
+    RealTimeClock::finishInit();
+    #endif
 
     /*
      * Start the game runtime, and execute the Launcher app.

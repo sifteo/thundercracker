@@ -45,6 +45,7 @@ FactoryTest::TestHandler const FactoryTest::handlers[] = {
     bootloadRequestHandler,     // 10
     rfPacketTestHandler,        // 11
     rebootRequestHandler,       // 12
+    getFirmwareVersion,         // 13
 };
 
 void FactoryTest::init()
@@ -151,6 +152,8 @@ void FactoryTest::produce(PacketTransmission &tx)
  */
 void FactoryTest::nrfCommsHandler(uint8_t argc, const uint8_t *args)
 {
+#ifdef USE_NRF24L01
+
     RadioManager::disableRadio();
 
     while (NRF24L01::instance.state() != NRF24L01::Idle) {
@@ -159,11 +162,12 @@ void FactoryTest::nrfCommsHandler(uint8_t argc, const uint8_t *args)
 
     uint8_t chan = args[1];
     NRF24L01::instance.setChannel(chan);
-    const uint8_t response[] = { 3, args[0], NRF24L01::instance.channel() };
+    const uint8_t response[] = { args[0], NRF24L01::instance.channel() };
 
     RadioManager::enableRadio();
 
-    Usart::Dbg.write(response, sizeof response);
+    UsbDevice::write(response, sizeof response);
+#endif
 }
 
 /*
@@ -175,10 +179,18 @@ void FactoryTest::flashCommsHandler(uint8_t argc, const uint8_t *args)
     FlashDevice::JedecID id;
     FlashDevice::readId(&id);
 
-    uint8_t result = (id.manufacturerID == FlashDevice::MACRONIX_MFGR_ID) ? 1 : 0;
+    uint8_t result = 0;
 
-    const uint8_t response[] = { 3, args[0], result };
-    Usart::Dbg.write(response, sizeof response);
+#ifdef USE_W25Q256
+    result = (id.manufacturerID == FlashDevice::WINBOND_MFGR_ID) ? 1 : 0;
+#elif defined(USE_MX25L128)
+    result = (id.manufacturerID == FlashDevice::MACRONIX_MFGR_ID) ? 1 : 0;
+#else
+#error "flash device part not specified"
+#endif
+
+    const uint8_t response[] = { args[0], result };
+    UsbDevice::write(response, sizeof response);
 }
 
 /*
@@ -201,8 +213,8 @@ void FactoryTest::flashReadWriteHandler(uint8_t argc, const uint8_t *args)
 
     uint8_t result = (memcmp(txbuf, rxbuf, sizeof txbuf) == 0) ? 1 : 0;
 
-    const uint8_t response[] = { 3, args[0], result };
-    Usart::Dbg.write(response, sizeof response);
+    const uint8_t response[] = { args[0], result };
+    UsbDevice::write(response, sizeof response);
 }
 
 /*
@@ -229,8 +241,8 @@ void FactoryTest::ledHandler(uint8_t argc, const uint8_t *args)
         red.setHigh();
 
     // no result - just respond to indicate that we're done
-    const uint8_t response[] = { 2, args[0] };
-    Usart::Dbg.write(response, sizeof response);
+    const uint8_t response[] = { args[0] };
+    UsbDevice::write(response, sizeof response);
 }
 
 /*
@@ -264,7 +276,8 @@ void FactoryTest::volumeCalibrationHandler(uint8_t argc, const uint8_t *args)
 }
 
 /*
- *
+ * Special case: pass an extra argument to specify that the response should
+ *               be sent via USB.
  */
 void FactoryTest::batteryCalibrationHandler(uint8_t argc, const uint8_t *args)
 {
@@ -277,7 +290,10 @@ void FactoryTest::batteryCalibrationHandler(uint8_t argc, const uint8_t *args)
             vraw & 0xff, (vraw >> 8) & 0xff, (vraw >> 16) & 0xff, (vraw >> 24) & 0xff, \
             vscl & 0xff, (vscl >> 8) & 0xff, (vscl >> 16) & 0xff, (vscl >> 24) & 0xff, \
         };
-    Usart::Dbg.write(response, sizeof response);
+    if (argc >= 2)
+        UsbDevice::write(&response[1], sizeof response - 1);
+    else
+        Usart::Dbg.write(response, sizeof response);
 }
 
 /*
@@ -396,7 +412,20 @@ void FactoryTest::rfPacketTestHandler(uint8_t argc, const uint8_t *args)
     rfSuccessCount = 0;
 }
 
-IRQ_HANDLER ISR_USART3()
+/*
+ *  no args
+ */
+void FactoryTest::getFirmwareVersion(uint8_t argc, const uint8_t *args)
+{
+    const uint8_t MAX_SIZE = 32;
+    const uint8_t sz = MIN( MAX_SIZE, strlen(TOSTRING(SDK_VERSION)));
+    uint8_t response[MAX_SIZE] = { args[0] };
+    memcpy(&response[1], TOSTRING(SDK_VERSION), sz);
+
+    UsbDevice::write(response, sz+1);
+}
+
+IRQ_HANDLER ISR_FN(UART_DBG)()
 {
     FactoryTest::onUartIsr();
 }

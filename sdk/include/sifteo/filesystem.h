@@ -114,7 +114,13 @@ public:
      * a specific Sifteo::Volume instance in order to read objects from
      * a different game's data store.
      *
-     * @warning TO DO: Define error codes (< 0) as necessary.
+     * @return size of the data retrieved, or < 0 on failure. The following
+     * results indicate a specific failure mode:
+     *
+     *  * _SYS_ENOENT - No such object found
+     *  * _SYS_EFAULT - Bad address
+     *  * _SYS_EINVAL - Invalid argument
+     *  * _SYS_ENOSPC - No space left on device
      */
     int read(void *buffer, unsigned bufferSize, _SYSVolumeHandle volume = 0) const {
         return _SYS_fs_objectRead(sys, (uint8_t*)buffer, bufferSize, volume);
@@ -135,7 +141,13 @@ public:
      * If power fails during a write, by design subsequent reads will
      * return the last successfully-saved version of that object.
      *
-     * @warning TO DO: Define error codes (< 0) as necessary.
+     * @return size of the data written, or < 0 on failure. The following
+     * results indicate a specific failure mode:
+     *
+     *  * _SYS_ENOENT - No such object found
+     *  * _SYS_EFAULT - Bad address
+     *  * _SYS_EINVAL - Invalid argument
+     *  * _SYS_ENOSPC - No space left on device
      */
     int write(const void *data, unsigned dataSize) const {
         return _SYS_fs_objectWrite(sys, (const uint8_t*)data, dataSize);

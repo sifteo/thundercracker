@@ -22,6 +22,8 @@
 #include "hwtimer.h"
 #include "prng.h"
 
+#ifndef USE_AUDIO_DAC
+
 namespace PwmAudioOut {
 
     /*
@@ -167,3 +169,10 @@ IRQ_HANDLER ISR_FN(AUDIO_SAMPLE_TIM)()
     // Ask for more audio data
     Tasks::trigger(Tasks::AudioPull);
 }
+
+int AudioOutDevice::getSampleBias()
+{
+    return 0;
+}
+
+#endif

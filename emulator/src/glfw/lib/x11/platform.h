@@ -129,6 +129,20 @@
 typedef intptr_t GLFWintptr;
 
 
+#ifndef GLX_EXT_swap_control
+
+typedef void (*PFNGLXSWAPINTERVALEXTPROC)(Display*,GLXDrawable,int);
+
+#endif /*GLX_MESA_swap_control*/
+
+
+#ifndef GLX_MESA_swap_control
+
+typedef int (*PFNGLXSWAPINTERVALMESAPROC)(int);
+
+#endif /*GLX_MESA_swap_control*/
+
+
 #ifndef GLX_SGI_swap_control
 
 // Function signature for GLX_SGI_swap_control
@@ -282,6 +296,8 @@ struct _GLFWwin_struct {
     Cursor        cursor;            // Invisible cursor for hidden cursor
 
     // GLX extensions
+    PFNGLXSWAPINTERVALEXTPROC             SwapIntervalEXT;
+    PFNGLXSWAPINTERVALMESAPROC            SwapIntervalMESA;
     PFNGLXSWAPINTERVALSGIPROC             SwapIntervalSGI;
     PFNGLXGETFBCONFIGATTRIBSGIXPROC       GetFBConfigAttribSGIX;
     PFNGLXCHOOSEFBCONFIGSGIXPROC          ChooseFBConfigSGIX;
@@ -289,6 +305,8 @@ struct _GLFWwin_struct {
     PFNGLXGETVISUALFROMFBCONFIGSGIXPROC   GetVisualFromFBConfigSGIX;
     PFNGLXCREATECONTEXTATTRIBSARBPROC     CreateContextAttribsARB;
     GLboolean   has_GLX_SGIX_fbconfig;
+    GLboolean   has_GLX_EXT_swap_control;
+    GLboolean   has_GLX_MESA_swap_control;
     GLboolean   has_GLX_SGI_swap_control;
     GLboolean   has_GLX_ARB_multisample;
     GLboolean   has_GLX_ARB_create_context;
@@ -375,8 +393,11 @@ GLFWGLOBAL struct {
 
     Display        *display;
 
-    // Server-side GLX version
-    int             glxMajor, glxMinor;
+    struct {
+        int         versionMajor, versionMinor;
+        int         eventBase;
+        int         errorBase;
+    } GLX;
 
     struct {
         int         available;

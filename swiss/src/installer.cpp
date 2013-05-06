@@ -1,14 +1,15 @@
 #include "installer.h"
 #include "usbprotocol.h"
+#include "usbvolumemanager.h"
 #include "elfdebuginfo.h"
 #include "progressbar.h"
 #include "util.h"
 #include "basedevice.h"
+#include "swisserror.h"
 
 #include <sifteo/abi/elf.h>
 
 #include <stdio.h>
-#include <errno.h>
 #include <string.h>
 
 int Installer::run(int argc, char **argv, IODevice &_dev)
@@ -18,7 +19,7 @@ int Installer::run(int argc, char **argv, IODevice &_dev)
     bool rpc = false;
     const char *path = NULL;
 
-    for (unsigned i = 1; i < argc; i++) {
+    for (int i = 1; i < argc; i++) {
         if (!strcmp(argv[i], "-l")) {
             launcher = true;
         } else if (!strcmp(argv[i], "--rpc")) {
@@ -29,16 +30,17 @@ int Installer::run(int argc, char **argv, IODevice &_dev)
             path = argv[i];
         } else {
             fprintf(stderr, "incorrect args\n");
-            return 1;
+            return EINVAL;
         }
     }
 
     Installer installer(_dev);
-
-    bool success = installer.install(path,
-        IODevice::SIFTEO_VID, IODevice::BASE_PID, launcher, forceLauncher, rpc);
-
-    return success ? 0 : 1;
+    return installer.install(path,
+                             IODevice::SIFTEO_VID,
+                             IODevice::BASE_PID,
+                             launcher,
+                             forceLauncher,
+                             rpc);
 }
 
 Installer::Installer(IODevice &_dev) :
@@ -54,12 +56,13 @@ Installer::Installer(IODevice &_dev) :
  * - Send the content of the application.
  * - Commit the transaction.
  */
-bool Installer::install(const char *path, int vid, int pid, bool launcher, bool forceLauncher, bool rpc)
+int Installer::install(const char *path, int vid, int pid, bool launcher, bool forceLauncher, bool rpc)
 {
     isRPC = rpc;
     isLauncher = launcher;
-    if (!launcher && !getPackageMetadata(path))
-        return false;
+    if (!launcher && !getPackageMetadata(path)) {
+        return EINVAL;
+    }
 
     if (launcher && !forceLauncher) {
         /*
@@ -71,23 +74,24 @@ bool Installer::install(const char *path, int vid, int pid, bool launcher, bool 
         const char *prefix = "launcher";
         if (strncmp(Util::filepathBase(path), prefix, strlen(prefix)) != 0) {
             puts("this doesn't look like a launcher. use the -f option to force install it.");
-            return false;
+            return EINVAL;
         }
     }
 
     FILE *f = fopen(path, "rb");
     if (!f) {
         fprintf(stderr, "could not open %s: %s\n", path, strerror(errno));
-        return false;
+        return ENOENT;
     }
 
-    if (!dev.open(vid, pid))
-        return false;
+    if (!dev.open(vid, pid)) {
+        return ENODEV;
+    }
 
     unsigned fileSize = getInstallableElfSize(f);
     if (!fileSize) {
         fprintf(stderr, "not a valid ELF file\n");
-        return false;
+        return EINVAL;
     }
 
     if (launcher)
@@ -96,12 +100,17 @@ bool Installer::install(const char *path, int vid, int pid, bool launcher, bool 
         printf("installing %s, version %s (%d bytes)\n",
             package.c_str(), version.c_str(), fileSize);
 
-    bool success =  sendHeader(fileSize) &&
-                    sendFileContents(f, fileSize) &&
-                    commit();
+    int rv = sendHeader(fileSize);
+    if (rv != 0) {
+        return rv;
+    }
 
-    fclose(f);
-    return success;
+    bool success = sendFileContents(f, fileSize) && commit();
+    if (!success) {
+        return EIO;
+    }
+
+    return EOK;
 }
 
 /*
@@ -160,7 +169,7 @@ bool Installer::getPackageMetadata(const char *path)
     return true;
 }
 
-bool Installer::sendHeader(uint32_t filesz)
+int Installer::sendHeader(uint32_t filesz)
 {
     USBProtocolMsg m(USBProtocol::Installer);
 
@@ -178,11 +187,21 @@ bool Installer::sendHeader(uint32_t filesz)
     }
 
     if (dev.writePacket(m.bytes, m.len) < 0) {
-        return false;
+        return EIO;
     }
 
-    BaseDevice baseDev(dev);
-    return baseDev.waitForReply(UsbVolumeManager::WroteHeaderOK, m);
+    bool success = BaseDevice(dev).waitForReply(UsbVolumeManager::WroteHeaderOK, m);
+    if (!success) {
+        if (m.header == UsbVolumeManager::WroteHeaderFail) {
+            fprintf(stderr, "error: not enough room for this app\n");
+            return ENOSPC;
+        } else {
+            fprintf(stderr, "error: unexpected response (0x%x)\n", m.header);
+            return EIO;
+        }
+    }
+
+    return EOK;
 }
 
 /*

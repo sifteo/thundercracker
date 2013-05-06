@@ -18,7 +18,7 @@
 struct MCTiming {
 
     // Frequency of our master simulation clock
-    static const unsigned TICK_HZ = 16000000;            
+    static const unsigned TICK_HZ = 16000000;
 
     // 450us, minimum packet period (Measured on real hardware)
     static const unsigned TICKS_PER_PACKET = 7200;
@@ -38,8 +38,8 @@ struct MCTiming {
     static const unsigned TICKS_PER_PAGE_MISS = 3000;
 
     // Typical write timing for our flash chip
-    static const unsigned TICKS_PER_PAGE_WRITE = 16512;
-    static const unsigned TICKS_PER_BLOCK_ERASE = 8000000;
+    static const unsigned TICKS_PER_PAGE_WRITE = 51200;     // min 1.4ms, max 5ms. go with ~3.2ms in the middle
+    static const unsigned TICKS_PER_BLOCK_ERASE = 21600000; // min 0.7s, max 2s.   go with ~1.35s in the middle
 
     // Delay long enough for cubes to establish a HWID, for auto-pairing.
     static const unsigned STARTUP_DELAY = 200000;

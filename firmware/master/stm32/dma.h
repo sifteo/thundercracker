@@ -27,7 +27,7 @@ public:
         Error           = (1 << 3)
     };
 
-    static void initChannel(volatile DMA_t *dma, int channel, DmaIsr_t func, void *param);
+    static volatile DMAChannel_t * initChannel(volatile DMA_t *dma, int channel, DmaIsr_t func, void *param);
     static void deinitChannel(volatile DMA_t *dma, int channel);
 
 private:

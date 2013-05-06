@@ -27,7 +27,7 @@
 //
 //========================================================================
 
-#include <internal.h>
+#include "internal.h"
 
 #include <AvailabilityMacros.h>
 
@@ -50,6 +50,26 @@ extern bool glfwSifteoOpenFile(const char *filename);
 // down the command key don't get sent to the key window.
 - (void)sendEvent:(NSEvent *)event
 {
+    if ([event type] == NSFlagsChanged ) {
+
+        /*
+         * SIFTEO
+         *
+         * Work around a specific case in which shift release
+         * events don't get dispatched by AppKit.
+         *
+         * This doesn't dispatch a shift release event, but at
+         * least allows calls to glfwGetKey() to get the right state.
+         */
+
+        NSUInteger flags = [event modifierFlags];
+
+        if ((flags & NSShiftKeyMask) == 0) {
+            _glfwInput.Key[GLFW_KEY_LSHIFT] = 0;
+            _glfwInput.Key[GLFW_KEY_RSHIFT] = 0;
+        }
+    }
+
     if( [event type] == NSKeyUp && ( [event modifierFlags] & NSCommandKeyMask ) )
     {
         [[self keyWindow] sendEvent:event];

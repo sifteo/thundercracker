@@ -15,7 +15,7 @@
 using namespace Sifteo;
 
 ELFMainMenuItem ELFMainMenuItem::instances[MAX_INSTANCES];
-
+ELFMainMenuItem *ELFMainMenuItem::firstRun = 0;
 
 void ELFMainMenuItem::autoexec()
 {
@@ -66,25 +66,34 @@ void ELFMainMenuItem::findGames(Array<MainMenuItem*, Shared::MAX_ITEMS> &items)
 
     /*
      * Create an ELFMainMenuItem for each, skipping any volumes
-     * that cause init() to return false.
+     * that cause init() to return false, and making sure the
+     * "first run" experience shows up last.    
      */
 
     unsigned volI = 0, itemI = 0;
     unsigned volE = volumes.count();
 
+    firstRun = 0;
     while (volI != volE) {
         ELFMainMenuItem *inst = &instances[itemI];
         Volume vol = volumes[volI];
-
-        if (inst->init(vol)) {
-            items.append(inst);
+        bool isFirstRunExperience;
+        if (inst->init(vol, &isFirstRunExperience)) {
+            if (!firstRun && isFirstRunExperience) {
+                firstRun = inst;
+            } else {
+                items.append(inst);
+            }
             itemI++;
         }
         volI++;
     }
+    if (firstRun) {
+        items.append(firstRun);
+    }
 }
 
-bool ELFMainMenuItem::init(Volume volume)
+bool ELFMainMenuItem::init(Volume volume, bool* outFirstRun)
 {
     /*
      * Load critical metadata from this volume into RAM, and check whether
@@ -96,6 +105,22 @@ bool ELFMainMenuItem::init(Volume volume)
 
     this->volume = volume;
     MappedVolume map(volume);
+
+
+    /*
+     * Check if this is the first run experience.
+     * Kind of a hack - would prefer to have a first-class metadata.
+     */
+     if (outFirstRun) {
+        const char *package = map.package();
+        const char *firstRunPackage = "com.sifteo.facetime";
+        while(*package && (*package == *firstRunPackage)) {
+            package++;
+            firstRunPackage++;
+        }
+        *outFirstRun = (*package == *firstRunPackage);
+    }
+
 
     LOG("LAUNCHER: Found Volume<%02x> %s, version %s \"%s\"\n",
         volume.sys & 0xFF, map.package(), map.version(), map.title());

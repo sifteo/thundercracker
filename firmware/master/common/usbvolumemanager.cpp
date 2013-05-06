@@ -93,6 +93,35 @@ void UsbVolumeManager::onUsbData(const USBProtocolMsg &m)
         break;
     }
 
+    case DeleteLFSChildren: {
+        /*
+         * Delete all LFS blocks that are children of the given volume.
+         */
+        if (m.payloadLen() < sizeof(unsigned))
+            break;
+
+        unsigned parentBlockCode = *m.castPayload<unsigned>();
+
+        if (!FlashMapBlock::fromCode(parentBlockCode).isValid()) {
+            break;
+        }
+
+        reply.header |= DeleteLFSChildren;
+
+        FlashVolume vol;
+        FlashVolumeIter vi;
+        vi.begin();
+
+        while (vi.next(vol)) {
+            if (vol.getType() == FlashVolume::T_LFS &&
+                vol.getParent().block.code == parentBlockCode)
+            {
+                vol.deleteSingle();
+            }
+        }
+        break;
+    }
+
     case DeleteSysLFS:
         SysLFS::deleteAll();
         reply.header |= DeleteSysLFS;

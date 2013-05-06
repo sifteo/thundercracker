@@ -7,10 +7,13 @@
 #define ADC_H
 
 #include "hardware.h"
+#include "macros.h"
 
 class Adc
 {
 public:
+    typedef void (*AdcIsr_t)(uint16_t sample);
+
     enum SampleRate {
         SampleRate_1_5,     // 1.5 ADC cycles
         SampleRate_7_5,     // 7.5 ADC cycles
@@ -27,12 +30,37 @@ public:
     {}
 
     void init();
+    void setCallback(uint8_t ch, AdcIsr_t funct);
+    void setSampleRate(uint8_t ch, SampleRate rate);
 
-    void setSampleRate(uint8_t channel, SampleRate rate);
-    uint16_t sample(uint8_t channel);
+
+    ALWAYS_INLINE void enableEocInterrupt() {
+        hw->CR1 |= (1 << 5);
+    }
+
+    ALWAYS_INLINE void disableEocInterrupt() {
+        hw->CR1 &= ~(1 << 5);
+    }
+
+    void beginSample(uint8_t ch);
+    uint16_t sampleSync(uint8_t channel);
+
+    static Adc Adc1;    // shared instance
 
 private:
     volatile ADC_t *hw;
+
+    ALWAYS_INLINE bool isBusy() const {
+        /*
+         * We clear STRT in the EOC handler, so we can
+         * effectively use it as a busy flag
+         */
+        return hw->SR & (1 << 4);
+    }
+    void serveIsr();
+    AdcIsr_t handlers[16];
+
+    friend void ISR_ADC1_2();
 };
 
 #endif // ADC_H

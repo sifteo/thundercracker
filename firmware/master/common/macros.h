@@ -13,8 +13,8 @@
 #include <inttypes.h>
 
 #define APP_TITLE               "Sifteo Cubes"
-#define APP_COPYRIGHT_ASCII     "Copyright <c> 2011-2012 Sifteo, Inc. All rights reserved."
-#define APP_COPYRIGHT_LATIN1    "Copyright \xa9 2011-2012 Sifteo, Inc. All rights reserved."
+#define APP_COPYRIGHT_ASCII     "Copyright <c> 2011-2013 Sifteo, Inc. All rights reserved."
+#define APP_COPYRIGHT_LATIN1    "Copyright \xa9 2011-2013 Sifteo, Inc. All rights reserved."
 
 #define STRINGIFY(_x)   #_x
 #define TOSTRING(_x)    STRINGIFY(_x)
@@ -86,11 +86,18 @@
 #ifdef SIFTEO_SIMULATOR
 #   ifdef DEBUG
 #      define DEBUG_LOG(_x)   printf _x
+#      if defined(_WIN32)
+#       include <windows.h>   // for DebugBreak()
+#       define ASSERT(_x)     if (!(_x)) { DebugBreak(); assert(0); }
+#      else
+#       define ASSERT(_x)     assert(_x)
+#      endif
 #   else
 #      define DEBUG_LOG(_x)
+#      define ASSERT(_x)      assert(_x)
 #   endif
 #   define LOG(_x)            printf _x
-#   define ASSERT(_x)         assert(_x)
+#
 #   define DEBUG_ONLY(x)      x
 #   define UART(_x)
 #   define UART_HEX(_x)
@@ -106,9 +113,13 @@
 #   define SECTION(_x)        __attribute__((section(_x)))
 #endif
 
+// allows us to conditionalize code for a specific board,
+// while still compiling that code for the simulator.
+#define BOARD_EQUALS(_x)         (defined(BOARD) && BOARD == (_x))
+
 // On hardware, mark this as dead code to be eliminated. On simulation, generate an ASSERT.
 #ifdef SIFTEO_SIMULATOR
-#   define UNREACHABLE()     assert(0)
+#   define UNREACHABLE()     do { printf("unreachable\n"); abort(); } while(0)
 #else
 #   define UNREACHABLE()     __builtin_unreachable()
 #endif

@@ -80,10 +80,9 @@ else
     LDSCRIPT_GEN := python $(MASTER_DIR)/tools/ldscript-gen.py --bootloadable
 endif
 
-#adding a flag for the test jig
-#mostly used for compiling the bootloader for the testjig
-ifneq ($(TEST_JIG),)
-	FLAGS += -DBOARD=BOARD_TEST_JIG
+# specify which board you would like to build for
+ifneq ($(BOARD), )
+    FLAGS += -DBOARD=$(BOARD)
 endif
 
 # Optional hardware features
@@ -116,4 +115,11 @@ endif
 ifneq ($(RFTEST_GOLD_MASTER),)
     FLAGS += -DDISABLE_IDLETIMEOUT -DDISABLE_WATCHDOG
     FLAGS += -DRFTEST_GOLD_MASTER 
+endif
+
+# testjig bootloader update
+ifeq ($(BIN),testjig)
+    UPDATE_ARGS := --pid 0x0120
+else
+    UPDATE_ARGS :=
 endif

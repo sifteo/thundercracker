@@ -18,19 +18,21 @@
 #include "macros.h"
 #include "dac.h"
 #include "adc.h"
+#include "bootloader.h"
+
+extern unsigned     __data_start;
 
 static I2CSlave i2c(&I2C1);
 
 // control for the pass-through USB of the master under test
 static GPIOPin testUsbEnable = USB_PWR_GPIO;
-static GPIOPin vbattEnable = VBATT_EN_GPIO;
 
-
-static Adc adc(&PWR_MEASURE_ADC);
 static GPIOPin usbCurrentSign = USB_CURRENT_DIR_GPIO;
 static GPIOPin v3CurrentSign = V3_CURRENT_DIR_GPIO;
 static GPIOPin dip1 = DIP_SWITCH1_GPIO;
 static GPIOPin dip2 = DIP_SWITCH2_GPIO;
+static GPIOPin dip3 = DIP_SWITCH3_GPIO;
+static GPIOPin dip4 = DIP_SWITCH4_GPIO;
 
 static PulseRX PulseRX2v0Rail(NBR_IN4_GPIO);
 static PulseRX PulseRX3v3Rail(NBR_IN3_GPIO);
@@ -56,7 +58,8 @@ TestJig::TestHandler const TestJig::handlers[] = {
     stopNeighborTxHandler,                  // 9
     beginNoiseCheckHandler,                 // 10
     stopNoiseCheckHandler,                  // 11
-    setVBattEnabledHandler,                 // 12
+    getFirmwareVersion,                     // 12
+    bootloadRequestHandler,                 // 13
 };
 
 void TestJig::init()
@@ -91,18 +94,24 @@ void TestJig::init()
     Dac::init();
     Dac::configureChannel(BATTERY_SIM_DAC_CH);
     Dac::enableChannel(BATTERY_SIM_DAC_CH);
-    Dac::write(BATTERY_SIM_DAC_CH, DAC_1V2); // default to 1v2
 
-    dip1.setControl(GPIOPin::IN_PULL);
+    dip1.setControl(GPIOPin::IN_PULL);          // dip1 is used to make the default 2.8V for master stations
     dip2.setControl(GPIOPin::IN_PULL);
+    dip3.setControl(GPIOPin::IN_PULL);
+    dip4.setControl(GPIOPin::IN_PULL);          // dip4 is used for the bootloader. we shouldn't use this for anything else
 
     dip1.pullup();
     dip2.pullup();
+    dip3.pullup();
+    dip4.pullup();
 
-    if(dip1.isLow()){
-        Dac::write(BATTERY_SIM_DAC_CH, DAC_1V2);
-    }else if(dip2.isLow()) {
+    //Pullups need some time to charge the line up
+    SysTime::Ticks pullupTime = SysTime::ticks();
+    while(SysTime::ticks() < pullupTime+SysTime::usTicks(10));
+    if(dip1.isLow()) {
         Dac::write(BATTERY_SIM_DAC_CH, DAC_2V8);
+    } else {
+        Dac::write(BATTERY_SIM_DAC_CH, DAC_1V2); // default to 1v2
     }
 
     GPIOPin v3CurrentPin = V3_CURRENT_GPIO;
@@ -111,15 +120,12 @@ void TestJig::init()
     GPIOPin usbCurrentPin = USB_CURRENT_GPIO;
     usbCurrentPin.setControl(GPIOPin::IN_ANALOG);
 
-    adc.init();
-    adc.setSampleRate(USB_CURRENT_ADC_CH, Adc::SampleRate_55_5);
-    adc.setSampleRate(V3_CURRENT_ADC_CH, Adc::SampleRate_55_5);
+    PWR_MEASURE_ADC.init();
+    PWR_MEASURE_ADC.setSampleRate(USB_CURRENT_ADC_CH, Adc::SampleRate_55_5);
+    PWR_MEASURE_ADC.setSampleRate(V3_CURRENT_ADC_CH, Adc::SampleRate_55_5);
 
     testUsbEnable.setControl(GPIOPin::OUT_2MHZ);
     testUsbEnable.setHigh();    // default to enabled
-
-    vbattEnable.setControl(GPIOPin::OUT_2MHZ);
-    vbattEnable.setHigh();      // default to enabled
 
     ackPacket.enabled = false;
     ackPacket.len = 0;
@@ -298,6 +304,31 @@ void TestJig::task()
  ******************************************/
 
 /*
+ *  no args
+ */
+ void TestJig::bootloadRequestHandler(uint8_t argc, uint8_t *args)
+ {
+ #ifdef BOOTLOADABLE
+     __data_start = Bootloader::UPDATE_REQUEST_KEY;
+     NVIC.deinit();
+     NVIC.systemReset();
+ #endif
+ }
+
+/*
+ *  no args
+ */
+void TestJig::getFirmwareVersion(uint8_t argc, uint8_t *args)
+{
+    const uint8_t MAX_SIZE = 32;
+    const uint8_t sz = MIN( MAX_SIZE, strlen(TOSTRING(SDK_VERSION)));
+    uint8_t response[MAX_SIZE] = { args[0] };
+    memcpy(&response[1], TOSTRING(SDK_VERSION), sz);
+
+    UsbDevice::write(response, sz+1);
+}
+
+/*
  * args[1] == non-zero for enable, 0 for disable
  */
 void TestJig::setUsbEnabledHandler(uint8_t argc, uint8_t *args)
@@ -315,37 +346,14 @@ void TestJig::setUsbEnabledHandler(uint8_t argc, uint8_t *args)
 }
 
 /*
- * args[1] == non-zero for enable, 0 for disable
- */
-void TestJig::setVBattEnabledHandler(uint8_t argc, uint8_t *args)
-{
-    bool enable = args[1];
-    if (enable) {
-        vbattEnable.setHigh();
-    } else {
-        vbattEnable.setLow();
-    }
-
-    // no response data - just indicate that we're done
-    const uint8_t response[] = { args[0] };
-    UsbDevice::write(response, sizeof response);
-}
-
-/*
  * args[1] == value, LSB
  * args[2] == value, MSB
  */
 void TestJig::setSimulatedBatteryVoltageHandler(uint8_t argc, uint8_t *args)
 {
-    //if dip switches are active disregard voltage handler
-    if(dip1.isLow()) {
-        Dac::write(BATTERY_SIM_DAC_CH, DAC_1V2);
-    }else if(dip2.isLow()) {
-        Dac::write(BATTERY_SIM_DAC_CH, DAC_2V8);
-    } else {
-        uint16_t val = (args[1] | args[2] << 8);
-        Dac::write(BATTERY_SIM_DAC_CH, val);
-    }
+    uint16_t val = (args[1] | args[2] << 8);
+    Dac::write(BATTERY_SIM_DAC_CH, val);
+
     // no response data - just indicate that we're done
     const uint8_t response[] = { args[0] };
     UsbDevice::write(response, sizeof response);
@@ -359,7 +367,7 @@ void TestJig::getBatterySupplyCurrentHandler(uint8_t argc, uint8_t *args)
     uint32_t sampleSum = 0;
 
     for (unsigned i = 0; i < NUM_CURRENT_SAMPLES; i++) {
-        sampleSum += adc.sample(V3_CURRENT_ADC_CH);
+        sampleSum += PWR_MEASURE_ADC.sampleSync(V3_CURRENT_ADC_CH);
     }
     
     uint16_t sampleAvg = sampleSum / NUM_CURRENT_SAMPLES;
@@ -376,7 +384,7 @@ void TestJig::getUsbCurrentHandler(uint8_t argc, uint8_t *args)
     uint32_t sampleSum = 0;
 
     for (unsigned i = 0; i < NUM_CURRENT_SAMPLES; i++) {
-        sampleSum += adc.sample(USB_CURRENT_ADC_CH);
+        sampleSum += PWR_MEASURE_ADC.sampleSync(USB_CURRENT_ADC_CH);
     }
 
     uint16_t sampleAvg = sampleSum / NUM_CURRENT_SAMPLES;

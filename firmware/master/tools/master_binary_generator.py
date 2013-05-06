@@ -27,13 +27,9 @@ CLEAN = True
 def check_and_mkdir(path):
     # ensure our destination exists
     try:
-        os.stat(path)
-        print "#### Removing %s" % path
-        shutil.rmtree(path)
+        os.mkdir(path)
     except:
         pass
-
-    os.mkdir(path)
 
 ####################################
 ## Check to make sure we're in the SDK shell
@@ -61,10 +57,9 @@ def copy_to_dir(raw_filename,versioned_filename,target_path):
 ##############################
 ## Our main execution function
 ##############################
-def run(secondary_path, build_launcher):
+def run(secondary_path, build_launcher, gen):
     print "\n#### Master Binary Generator\n"
-
-    ensureRunningFromSDKShell()
+    print "\n#### Generating Gen %d Files\n" % gen
 
     #grab githash
     githash = subprocess.check_output(["git", "describe", "--tags"]).strip()
@@ -84,7 +79,7 @@ def run(secondary_path, build_launcher):
       remote_latest_dir = None
 
     #master firmware filename
-    master_filename = "master_%s.sft" % (githash)
+    master_filename = "master_%s_gen%d.sft" % (githash,gen)
 
     #launcher filename
     launcher_filename = "launcher_%s.elf" % (githash)
@@ -107,6 +102,11 @@ def run(secondary_path, build_launcher):
     myenv = dict(os.environ)
     myenv["BOOTLOADABLE"] = "1"
 
+    if gen == 3:
+        myenv["BOARD"] = "BOARD_TC_MASTER_REV3"
+    else:
+        myenv["BOARD"] = "BOARD_TC_MASTER_REV2"
+
     # Compile!
     cores = "-j%d" % multiprocessing.cpu_count()
     subprocess.call(["make", cores, "encrypted"], env=myenv)
@@ -128,6 +128,9 @@ def run(secondary_path, build_launcher):
      ############################
 
     if build_launcher:
+
+        ensureRunningFromSDKShell()
+
         ### Changing directories!!!
         os.chdir( launcher_dir )
 
@@ -136,7 +139,7 @@ def run(secondary_path, build_launcher):
         if CLEAN:
           subprocess.check_call(["make", "clean"])
 
-        subprocess.check_call(["make"])
+        subprocess.check_call(["make","RELEASE=1"])
 
         copy_to_dir(LAUNCHER_UNVERSIONED,launcher_filename,latest_dir)
         copy_to_dir(LAUNCHER_UNVERSIONED,launcher_filename,build_dir)
@@ -150,17 +153,20 @@ def run(secondary_path, build_launcher):
     
 if __name__ == '__main__':
 
-    if len(sys.argv) > 2:
-        print >> sys.stderr, "usage: python master_binary_generator.py <secondary_path>"
+    if len(sys.argv) > 3:
+        print >> sys.stderr, "usage: python master_binary_generator.py --secondary-path <secondary path> --gen <gen #>"
         sys.exit(1)
 
     secondary_path = False
-    build_launcher = True
+    build_launcher = False
+    gen = 2
 
-    for arg in sys.argv[1:]:
-        if arg == "--no-launcher":
-            build_launcher = False
-        elif secondary_path == False:
-            secondary_path = arg
+    for idx,arg in enumerate(sys.argv):
+        if arg == "--with-launcher":
+            build_launcher = True
+        elif arg == "--secondary-path":
+            secondary_path = sys.argv[idx+1]
+        elif arg == "--gen":
+            gen = int(sys.argv[idx+1])
 
-    run(secondary_path, build_launcher)
+    run(secondary_path, build_launcher, gen)

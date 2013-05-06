@@ -13,7 +13,7 @@ public:
 
     static int run(int argc, char **argv, IODevice &_dev);
 
-    bool backup(const char *path);
+    int backup(const char *path);
 
 private:
     IODevice &dev;

@@ -14,7 +14,7 @@
 volatile bool MacronixMX25::dmaInProgress = false;
 
 /*
- * DMA must be very highest priority since it's our highest bandwidth device.
+ * Flash DMA is the highest priority channel on DMA1.
  * SPI1 is on APB2, clocked @ 72MHz. We'd like to run at 18MHz, so divide by 4.
  */
 static const SPIMaster::Config spicfg = {

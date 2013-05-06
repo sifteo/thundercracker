@@ -99,11 +99,12 @@ already have one it will be skipped)::
                           uuid-dev libusb-1.0-0-dev mesa-common-dev \
                           libglu1-mesa-dev libasound2-dev ia32-libs
 
-Most of these dependencies are very easy to come by, and your favorite
-Linux distro or Mac OS package manager has them already. The ARM cross
-compiler is usually more annoying to obtain. On Linux and Windows, the
-CodeSourcery C++ distribution is preferred. On Mac OS, the following
-script will automatically build a compatible toolchain for your machine:
+ARM toolchain
+-------------
+
+On Linux and Windows, the CodeSourcery C++ distribution is preferred.
+On Mac OS, the following script will automatically build a compatible
+toolchain for your machine:
 
    https://github.com/jsnyder/arm-eabi-toolchain
 

@@ -73,7 +73,7 @@ program: $(BIN).elf
 update: encrypted
 	$(SDK_DIR)/bin/swiss update --init || true
 	sleep 1
-	$(SDK_DIR)/bin/swiss update $(BIN).sft
+	$(SDK_DIR)/bin/swiss update $(BIN).sft $(UPDATE_ARGS)
 
 objdump: $(BIN).elf
 	arm-none-eabi-objdump -d $< | arm-none-eabi-c++filt -n | less

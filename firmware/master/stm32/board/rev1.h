@@ -24,6 +24,8 @@
 #define RF_SPI_MOSI_GPIO    GPIOPin(&GPIOC, 12)
 #define RF_EXTI_VEC         EXTI9_5
 
+#define USE_NRF24L01        // Use the nRF42L01 as our radio
+
 // F L A S H
 #define FLASH_SPI           SPI1
 #define FLASH_CS_GPIO       GPIOPin(&GPIOA, 15)

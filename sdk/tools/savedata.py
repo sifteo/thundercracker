@@ -45,6 +45,18 @@ Magic               = 0x4C4D524E74666953
 def int32(f):
     return struct.unpack("<I", f.read(4))[0]
 
+def terminatedStr(bytes):
+    '''
+    Extract a null terminated string from a fixed size byte array
+    '''
+    # probably a more succinct way of doing this...
+    s = ""
+    for b in bytes:
+        if ord(b) == 0:
+            break
+        s += chr(ord(b))
+    return s
+
 def getValidSectionHeader(f):
     '''
     Sections are preceded by a header formatted as:
@@ -129,12 +141,81 @@ def getFault(v):
                                 fp = int32(f),
                                 gpr = [int32(f) for i in range(8)])
     volumeInfo = FaultVolumeInfo(uuid = uuid.UUID(bytes=f.read(16)),
-                                package = str(f.read(64)),
-                                version = str(f.read(32)))
+                                package = terminatedStr(f.read(64)),
+                                version = terminatedStr(f.read(32)))
     memoryDumps = FaultMemoryDumps(stack = f.read(256), codePage = f.read(256))
 
     return FaultRecordSvm(header = header, cubes = cubeInfo, regs = registers,
                             vol = volumeInfo, mem = memoryDumps)
+
+def printFault(f):
+    print "********************************"
+    vol = f.vol
+    print "Fault Info for %s (%s)" % (vol.package, vol.version)
+    print "    uuid: %s" % vol.uuid
+
+    hdr = f.header
+    print "Header Info"
+    print "    reference: %d" % hdr.reference
+    print "    recordType: %d - %s" % (hdr.recordType, faultRecordTypeStr(hdr.recordType))
+    print "    runningVolume: 0x%x" % hdr.runningVolume
+    print "    fault code: 0x%x - %s" % (hdr.code, faultCodeStr(hdr.code))
+    print "    uptime (in sys ticks): %d" % hdr.uptime
+
+    c = f.cubes
+    print "CubeInfo"
+    print "    num connected to the system (bitmap): 0x%x" % c.sysConnected
+    print "    num visible to user space (bitmap): 0x%x" % c.userConnected
+    print "    cube range: %d - %d" % (c.minUserCubes, c.maxUserCubes)
+
+    r = f.regs
+    print "Registers"
+    print "    PC: 0x%08x" % r.pc
+    print "    SP: 0x%08x" % r.sp
+    print "    FP: 0x%08x" % r.fp
+    for i, gpr in enumerate(r.gpr):
+        print "    r%d: 0x%08x" % (i, gpr)
+
+def faultCodeStr(code):
+    return {
+        1: "Stack allocation failure",
+        2: "Validation-time stack address error",
+        3: "Branch-time code address error",
+        4: "Unsupported syscall number",
+        5: "Runtime load address error",
+        6: "Runtime store address error",
+        7: "Runtime load alignment error",
+        8: "Runtime store alignment error",
+        9: "Runtime code fetch error",
+        10: "Runtime code alignment error",
+        11: "Unhandled ARM instruction in sim",
+        12: "Reserved SVC encoding",
+        13: "Reserved ADDROP encoding",
+        14: "User call to _SYS_abort",
+        15: "Bad address in long stack LDR addrop",
+        16: "Bad address in long stack STR addrop",
+        17: "Bad address for async preload",
+        18: "Bad saved FP value detected during return",
+        19: "Memory fault while fetching _SYS_log data",
+        20: "Bad address in system call",
+        21: "Other bad parameter in system call",
+        22: "Exception during script execution",
+        23: "Bad filesystem volume handle",
+        24: "Bad ELF binary header",
+        25: "Bad AssetImage",
+        26: "Launcher program not found",
+        27: "Address in system call has insufficient alignment",
+        28: "Invalid or unbound AssetSlot",
+        29: "Failed to initialize read-write data segment",
+        30: "Main thread is not responding",
+        31: "Bad AssetConfiguration",
+        32: "Incorrect AssetLoader",
+    }.get(code, "Unknown error")    # default if code is not found
+
+def faultRecordTypeStr(t):
+    return {
+        1: "SVM Fault Record",
+    }.get(t, "Unknown fault record type")
 
 def dumpSaveData(filepath):
     '''
@@ -161,11 +242,7 @@ def dumpSaveData(filepath):
             k, v = keyVal(f)
             if isSysLFS:
                 if k >= kFaultBase and k < kPairingMRU:
-                    fault = getFault(v)
-                    print "fault record:"
-                    print "\t", fault.header
-                    print "\t", fault.vol
-                    print "\t", fault.regs
+                    printFault(getFault(v))
             else:
                 # interpret your object data as you see fit.
                 # we'll just dump the hex value for now.

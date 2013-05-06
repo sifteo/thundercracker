@@ -5,6 +5,17 @@
 #include "macros.h"
 #include <sifteo/abi/audio.h>
 
+#ifdef USE_RC_FADER_MEAS
+
+/*
+ * Volume fader measurement via RC timer.
+ *
+ * Only used on rev2 and earlier, since we could not
+ * run the ADC at 2V.
+ *
+ * Later hardware revs make use of volume_adc.cpp
+ */
+
 static RCTimer gVolumeTimer(HwTimer(&VOLUME_TIM), VOLUME_CHAN, VOLUME_GPIO);
 
 static uint32_t calibratedMin;
@@ -12,6 +23,8 @@ static uint64_t calibratedScale;
 
 
 namespace Volume {
+
+static unsigned lastReading;
 
 void init()
 {
@@ -82,9 +95,10 @@ int calibrate(CalibrationState state)
 
 } // namespace Volume
 
-#if (BOARD != BOARD_TEST_JIG)
+
 IRQ_HANDLER ISR_TIM5()
 {
     gVolumeTimer.isr();    // must clear the TIM IRQ internally
 }
-#endif
+
+#endif // USE_RC_FADER_MEAS

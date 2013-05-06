@@ -13,6 +13,9 @@ class SaveData
 public:
     static const unsigned VERSION = 2;
 
+    static const char *SYSLFS_PACKAGE_STR;
+    static const unsigned SYSLFS_VOLUME_BLOCK_CODE = 0;
+
     enum NormalizedSectionTypes {
         SectionHeader,
         SectionRecords
@@ -51,18 +54,16 @@ public:
 
     static int run(int argc, char **argv, IODevice &_dev);
 
-    bool extract(const char *pkgStr, const char *filepath, bool raw, bool rpc);
-    bool restore(const char *filepath);
-    bool normalize(const char *inpath, const char *outpath);
+    int extract(const char *pkgStr, const char *filepath, bool raw, bool rpc);
+    int restore(const char *filepath);
+    int normalize(const char *inpath, const char *outpath);
+    int del(const char *pkgStr);
 
 private:
     static const unsigned PAGE_SIZE = 256;
     static const unsigned BLOCK_SIZE = 128 * 1024;
     static const uint64_t MAGIC = 0x4556415374666953LLU;
     static const uint64_t NORMALIZED_MAGIC = 0x4C4D524E74666953LLU;
-
-    static const unsigned SYSLFS_VOLUME_BLOCK_CODE = 0;
-    static const char *SYSLFS_PACKAGE_STR;
 
     // V1 files had a fatal error in one of their size calculations.
     // we can't get anything useful from them, so treat them as unsupported.
@@ -100,8 +101,6 @@ private:
     bool writeVolumes(UsbVolumeManager::LFSDetailReply *reply, FILE *f, bool rpc=false);
     bool sendRequest(unsigned baseAddr, unsigned &progress);
     bool writeReply(FILE *f, unsigned &progress);
-
-    bool volumeCodeForPackage(const std::string & pkg, unsigned &volumeCode);
 
     bool getValidFileVersion(FILE *f, int &version);
     bool readHeader(int version, HeaderCommon &h, FILE *f);

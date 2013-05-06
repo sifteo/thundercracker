@@ -14,7 +14,7 @@ public:
 private:
     IODevice &dev;
 
-    bool requestReboot();
+    int requestReboot();
 };
 
 #endif // REBOOT_H

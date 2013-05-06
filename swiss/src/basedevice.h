@@ -4,6 +4,8 @@
 #include "iodevice.h"
 #include "usbvolumemanager.h"
 
+#include <string>
+
 /*
  * Represents the Sifteo Base.
  * Handles requests/responses from the base over the wire.
@@ -12,14 +14,6 @@
 class BaseDevice
 {
 public:
-    /*
-     * Default number of messages to discard while waiting for a response.
-     *
-     * This was chosen somewhat arbitrarily, but the main purpose is to
-     * ensure that we can accommodate some amount of log (or other) output
-     * while waiting for our response.
-     */
-    static const unsigned DEFAULT_REPLY_TRIES = 50;
 
     BaseDevice(IODevice &iodevice);
 
@@ -30,6 +24,7 @@ public:
 
     UsbVolumeManager::VolumeOverviewReply *getVolumeOverview(USBProtocolMsg &msg);
     UsbVolumeManager::VolumeDetailReply *getVolumeDetail(USBProtocolMsg &msg, unsigned volBlockCode);
+    bool volumeCodeForPackage(const std::string & pkg, unsigned &volBlockCode);
     UsbVolumeManager::LFSDetailReply *getLFSDetail(USBProtocolMsg &buffer, unsigned volBlockCode);
 
     bool pairCube(USBProtocolMsg &msg, uint64_t hwid, unsigned slot);
@@ -40,8 +35,8 @@ public:
     bool getMetadata(USBProtocolMsg &buffer, unsigned volBlockCode, unsigned key);
 
     // helpers
-    bool waitForReply(uint32_t header, USBProtocolMsg &msg, unsigned tries = DEFAULT_REPLY_TRIES);
-    bool writeAndWaitForReply(USBProtocolMsg &msg, unsigned tries = DEFAULT_REPLY_TRIES);
+    bool waitForReply(uint32_t header, USBProtocolMsg &msg);
+    bool writeAndWaitForReply(USBProtocolMsg &msg);
 
 private:
     IODevice &dev;

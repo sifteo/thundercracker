@@ -19,17 +19,74 @@ void PowerManager::batteryPowerOn()
      * user releases our home button, if we're on battery power,
      * so this runs during very early init.
      */
-    GPIOPin vcc20 = VCC20_ENABLE_GPIO;
-    vcc20.setControl(GPIOPin::OUT_2MHZ);
-    vcc20.setHigh();
+#if BOARD != BOARD_TEST_JIG
+
+#ifdef HAS_SINGLE_RAIL
+    GPIOPin powerEnable = VCC30_ENABLE_GPIO;
+#else
+    GPIOPin powerEnable = VCC20_ENABLE_GPIO;
+#endif
+
+    powerEnable.setControl(GPIOPin::OUT_2MHZ);
+    powerEnable.setHigh();
+#endif
 }
 
 void PowerManager::batteryPowerOff()
 {
     // release the power supply enable
-    GPIOPin vcc20 = VCC20_ENABLE_GPIO;
-    vcc20.setControl(GPIOPin::OUT_2MHZ);
-    vcc20.setLow();
+
+#if BOARD != BOARD_TEST_JIG
+
+#ifdef HAS_SINGLE_RAIL
+    GPIOPin powerEnable = VCC30_ENABLE_GPIO;
+#else
+    GPIOPin powerEnable = VCC20_ENABLE_GPIO;
+#endif
+
+    powerEnable.setControl(GPIOPin::OUT_2MHZ);
+    powerEnable.setLow();
+#endif
+}
+
+void PowerManager::standby()
+{
+    /*
+     * Enter system standby state.
+     *
+     * Once the system wakes from standby, execution
+     * restarts in the same way as after a reset.
+     */
+
+
+    NVIC.sysControl |= (1 << 2);    // SCB_SCR_SLEEPDEEP
+
+    RCC.APB1ENR |= (1 << 28);       // enable PWR
+    PWR.CR |= (1 << 2) |            // CWUF - Clear wake up flag
+              (1 << 1);             // PDDS - Power down deepsleep
+
+    Tasks::waitForInterrupt();
+}
+
+void PowerManager::stop()
+{
+    /*
+     * Enter system stop state.
+     *
+     * I/O pins retain the same state as in Run mode.
+     */
+
+    NVIC.sysControl |= (1 << 2);    // SLEEPDEEP
+
+    RCC.APB1ENR |= (1 << 28);       // enable PWR
+    PWR.CR |= (1 << 2) |            // CWUF - Clear wake up flag
+              (1 << 0);             // LPDS - Low power deepsleep
+
+    // can wait for either interrupt or event - TBD
+//    Tasks::waitForInterrupt();
+    __asm__ __volatile__ ("wfe");
+
+    NVIC.sysControl &= ~(1 << 2);   // SLEEPDEEP
 }
 
 /*
@@ -40,14 +97,16 @@ void PowerManager::batteryPowerOff()
  */
 void PowerManager::init()
 {
+#if BOARD != BOARD_TEST_JIG && !defined(HAS_SINGLE_RAIL)
     GPIOPin flashRegEnable = FLASH_REG_EN_GPIO;
     flashRegEnable.setControl(GPIOPin::OUT_2MHZ);
     flashRegEnable.setHigh();
 
-    vbus.setControl(GPIOPin::IN_FLOAT);
-
     GPIOPin vcc3v3 = VCC33_ENABLE_GPIO;
     vcc3v3.setControl(GPIOPin::OUT_2MHZ);
+#endif
+
+    vbus.setControl(GPIOPin::IN_FLOAT);
 
     /*
      * Set initial state.
@@ -102,7 +161,7 @@ void PowerManager::vbusDebounce()
     State s = state();
     if (s != lastState) {
         setState(s);
-#if !defined(BOOTLOADER)
+#if !defined(BOOTLOADER) && (BOARD != BOARD_TEST_JIG)
         if (s == UsbPwr) {
             Radio::onTransitionToUsbPower();
         }
@@ -112,17 +171,33 @@ void PowerManager::vbusDebounce()
 
 void PowerManager::setState(State s)
 {
-#if (BOARD >= BOARD_TC_MASTER_REV2)
+#if (BOARD >= BOARD_TC_MASTER_REV2) && (!defined(HAS_SINGLE_RAIL)) && (BOARD != BOARD_TEST_JIG)
     GPIOPin vcc3v3 = VCC33_ENABLE_GPIO;
 
     switch (s) {
     case BatteryPwr:
+        batteryPowerOn();
         UsbDevice::deinit();
         vcc3v3.setLow();
         break;
 
     case UsbPwr:
         vcc3v3.setHigh();
+        UsbDevice::init();
+        batteryPowerOff();
+        break;
+    }
+#elif defined HAS_SINGLE_RAIL
+
+    // unconditionally keep the power on.
+    batteryPowerOn();
+
+    switch(s) {
+    case BatteryPwr:
+        UsbDevice::deinit();
+        break;
+
+    case UsbPwr:
         UsbDevice::init();
         break;
     }
@@ -131,19 +206,23 @@ void PowerManager::setState(State s)
     lastState = s;
 }
 
-void PowerManager::shutdownIfVBattIsCritical(unsigned vbatt, unsigned vsys)
+void PowerManager::shutdownIfVBattIsCritical(unsigned vbatt, unsigned limit)
 {
+#ifndef USE_ADC_BATT_MEAS
     /*
-     * To be a bit conservative, we assume that any sample we take is skewed by
+     * If we're measuring via RC samples can have non-trivial jitter,
+     * so we assume that any sample we take is skewed worst case by
      * our MAX_JITTER in the positive direction. Correct for this, and see if
-     * we're still above the required thresh to continue powering on.
-     *
-     * If not, shut ourselves down, and hope our batteries get replaced soon.
+     * we're still above the required thresh to stay alive.
      */
+    vbatt -= BatteryLevel::MAX_JITTER;
+#endif
 
-    if (vbatt - BatteryLevel::MAX_JITTER < vsys) {
+    if (vbatt < limit) {
 
+        // shut ourselves down, and hope our batteries get replaced soon.
         batteryPowerOff();
+
         /*
          * wait to for power to drain. if somebody keeps their finger
          * on the homebutton, we may be here a little while, so don't

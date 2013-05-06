@@ -16,7 +16,7 @@ uint32_t Dma::Ch2Mask = 0;
 Dma::DmaHandler_t Dma::Ch1Handlers[7];
 Dma::DmaHandler_t Dma::Ch2Handlers[5];
 
-void Dma::initChannel(volatile DMA_t *dma, int channel, DmaIsr_t func, void *param)
+volatile DMAChannel_t * Dma::initChannel(volatile DMA_t *dma, int channel, DmaIsr_t func, void *param)
 {
     if (dma == &DMA1) {
 
@@ -24,7 +24,7 @@ void Dma::initChannel(volatile DMA_t *dma, int channel, DmaIsr_t func, void *par
             RCC.AHBENR |= (1 << 0);
             dma->IFCR = 0x0FFFFFFF; // clear all ISRs
         } else if (Ch1Mask & (1 << channel)) {
-            return;     // already registered :(
+            return 0;     // already registered :(
         }
 
         Ch1Mask |= (1 << channel); // mark it as enabled
@@ -37,7 +37,7 @@ void Dma::initChannel(volatile DMA_t *dma, int channel, DmaIsr_t func, void *par
             RCC.AHBENR |= (1 << 1);
             dma->IFCR = 0x0FFFFFFF; // clear all ISRs
         } else if (Ch2Mask & (1 << channel)) {
-            return;     // already registered :(
+            return 0;     // already registered :(
         }
 
         Ch2Mask |= (1 << channel); // mark it as enabled
@@ -51,9 +51,11 @@ void Dma::initChannel(volatile DMA_t *dma, int channel, DmaIsr_t func, void *par
      */
     dma->IFCR = 1 << (channel * 4);
 
-    volatile DMAChannel_t &ch = dma->channels[channel];
-    ch.CNDTR = 0;
-    ch.CCR = 0;
+    volatile DMAChannel_t *ch = &dma->channels[channel];
+    ch->CNDTR = 0;
+    ch->CCR = 0;
+
+    return ch;
 }
 
 /*
