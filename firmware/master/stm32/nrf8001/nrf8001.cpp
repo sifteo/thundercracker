@@ -189,6 +189,7 @@ void NRF8001::requestTransaction()
      * we start the transaction immediately by asserting REQN.
      */
 
+#ifdef HAVE_NRF8001
     // Critical section
     NVIC.irqDisable(IVT.NRF8001_EXTI_VEC);
     NVIC.irqDisable(IVT.NRF8001_DMA_CHAN_RX);
@@ -205,6 +206,7 @@ void NRF8001::requestTransaction()
     NVIC.irqEnable(IVT.NRF8001_EXTI_VEC);
     NVIC.irqEnable(IVT.NRF8001_DMA_CHAN_RX);
     NVIC.irqEnable(IVT.NRF8001_DMA_CHAN_TX);
+#endif //  HAVE_NRF8001
 }
 
 void BTProtocolHandler::requestProduceData()
