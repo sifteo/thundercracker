@@ -35,6 +35,16 @@ def check_and_mkdir(path):
     except:
         pass
 
+def check_remove_and_mkdir(path):
+
+    try:
+        os.stat(path)
+        shutil.rmtree(path)
+    except:
+        pass
+
+    os.mkdir(path)
+
 ####################################
 ## Check to make sure we're in the SDK shell
 ####################################
