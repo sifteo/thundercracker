@@ -154,7 +154,7 @@ def run(secondary_path, build_launcher, gen):
 if __name__ == '__main__':
 
     if len(sys.argv) > 3:
-        print >> sys.stderr, "usage: python master_binary_generator.py --secondary-path <secondary path> --gen <gen #>"
+        print >> sys.stderr, "usage: python master_binary_generator.py --secondary-path <secondary path> --gen <gen #> --with-launcher"
         sys.exit(1)
 
     secondary_path = False
