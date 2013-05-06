@@ -44,7 +44,9 @@ unsigned BTProtocolHandler::onProduceData(uint8_t *buffer)
     buffer[12] = accel.z;
 
     // We always have more data
+#ifndef SIFTEO_SIMULATOR    // BTLE not yet implemented in simulation
     requestProduceData();
+#endif
 
     return MAX_DATA_LEN;
 }
