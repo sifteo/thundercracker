@@ -69,7 +69,7 @@ def copy_to_dir(raw_filename,versioned_filename,target_path):
     print "#### Moving %s to %s" % ( versioned_filename, target_path )
 
 def change_dir(target_dir):
-    print "Changing directories to %s" % (target_dir)
+    print "#### Changing directories to %s" % (target_dir)
     os.chdir(target_dir)
 
 def build_launcher():
@@ -110,7 +110,7 @@ def deploy_firmware_blob(target_filename,build_hash,githash):
         arguements.append(build_hash[key])
 
     # print "Arguements %s" % arguements
-    
+
     subprocess.check_call(arguements)
 
 
@@ -151,7 +151,7 @@ def run(secondary_path, launcher_build_status):
 
     # Make sure our target directories are generated!
     check_and_mkdir(target_dir)
-    check_and_mkdir(latest_dir)
+    check_remove_and_mkdir(latest_dir)
 
     ############################
     #### Process base firmware
