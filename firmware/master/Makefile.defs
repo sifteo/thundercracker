@@ -85,6 +85,11 @@ ifneq ($(BOARD), )
     FLAGS += -DBOARD=$(BOARD)
 endif
 
+# Optional hardware features
+ifneq ($(HAVE_NRF8001),)
+    FLAGS += -DHAVE_NRF8001
+endif
+
 # default linker script handling
 ifeq ($(LDSCRIPT), )
 LDSCRIPT := $(MASTER_DIR)/stm32/target.ld

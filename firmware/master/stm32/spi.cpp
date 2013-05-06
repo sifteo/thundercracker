@@ -1,4 +1,4 @@
-/*
+ /*
  * Thundercracker Firmware -- Confidential, not for redistribution.
  * Copyright <c> 2012 Sifteo, Inc. All rights reserved.
  */
@@ -56,8 +56,6 @@ void SPIMaster::init(const Config &config)
 
     dmaRxPriorityBits = config.dmaRxPrio;
 
-    csn.setHigh();
-    csn.setControl(GPIOPin::OUT_10MHZ);
     sck.setControl(GPIOPin::OUT_ALT_50MHZ);
     miso.setControl(GPIOPin::IN_FLOAT);
     mosi.setControl(GPIOPin::OUT_ALT_50MHZ);
@@ -74,10 +72,8 @@ void SPIMaster::init(const Config &config)
     }
 #endif
 
-    hw->CR1 =   config.divisor |    // BR - baud rate
-                (1 << 2) |          // MSTR - master configuration
-                (0 << 1) |          // CPOL - polarity, LOW
-                (0 << 0);           // CPHA - phase, first clock is transition
+    hw->CR1 =   config.flags |      // BR, CPOL, CPHA, LSBFIRST
+                (1 << 2) ;          // MSTR - master configuration
 
     hw->CR2 =   (1 << 2) |  // SSOE
                 (1 << 1) |  // TXDMAEN
@@ -115,26 +111,6 @@ void SPIMaster::transfer(const uint8_t *txbuf, uint8_t *rxbuf, unsigned len)
 
         while (!(hw->SR & 1));      // wait for response
         *rxbuf++ = hw->DR;          // read it
-    }
-}
-
-void SPIMaster::transferTable(const uint8_t *table)
-{
-    /*
-     * Table-driven transfers: Each is prefixed by a length byte.
-     * Terminated by a zero-length transfer.
-     */
-
-    uint8_t len;
-    while ((len = *table)) {
-        table++;
-
-        begin();
-        do {
-            transfer(*table);
-            table++;
-        } while (--len);
-        end();
     }
 }
 

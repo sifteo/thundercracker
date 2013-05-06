@@ -16,8 +16,8 @@
 
 NRF24L01 NRF24L01::instance(RF_CE_GPIO,
                             RF_IRQ_GPIO,
+                            RF_SPI_CSN_GPIO,
                             SPIMaster(&RF_SPI,              // SPI:
-                                      RF_SPI_CSN_GPIO,      //   CSN
                                       RF_SPI_SCK_GPIO,      //   SCK
                                       RF_SPI_MISO_GPIO,     //   MISO
                                       RF_SPI_MOSI_GPIO,     //   MOSI
@@ -45,6 +45,9 @@ void NRF24L01::init()
     irq.setControl(GPIOPin::IN_FLOAT);
     irq.irqInit();
     irq.irqSetFallingEdge();
+
+    csn.setHigh();
+    csn.setControl(GPIOPin::OUT_10MHZ);
 
     transmitPower = PacketTransmission::dBm0;
 
@@ -78,7 +81,7 @@ void NRF24L01::init()
 
         0
     };
-    spi.transferTable(radio_setup);
+    spiTransferTable(radio_setup);
 
     /*
      * Enable the IRQ _after_ clearing the interrupt status and FIFOs
@@ -104,7 +107,7 @@ void NRF24L01::init()
 
         0
     };
-    spi.transferTable(ptx_setup);
+    spiTransferTable(ptx_setup);
 }
 
 /*
@@ -117,10 +120,10 @@ void NRF24L01::setPRXMode(bool enabled)
     if (enabled) {
         /* Radio in PRX mode with IRQs masked */
 
-        spi.begin();
+        spiBegin();
         spi.transfer(CMD_W_REGISTER | REG_CONFIG);
         spi.transfer(0x7f);
-        spi.end();
+        spiEnd();
 
         ce.setHigh();
 
@@ -140,7 +143,7 @@ void NRF24L01::setPRXMode(bool enabled)
 
             0
         };
-        spi.transferTable(ptx_setup);
+        spiTransferTable(ptx_setup);
 
         ce.setLow();
     }
@@ -165,23 +168,23 @@ void NRF24L01::setConstantCarrier(bool enabled, unsigned channel)
     if (enabled) {
         ce.setLow();
 
-        spi.begin();
+        spiBegin();
         spi.transfer(CMD_W_REGISTER | REG_RF_SETUP);
         spi.transfer(0x0e | (1 << 7) | (1 << 4));
-        spi.end();
+        spiEnd();
 
-        spi.begin();
+        spiBegin();
         spi.transfer(CMD_W_REGISTER | REG_RF_CH);
         spi.transfer(channel);
-        spi.end();
+        spiEnd();
 
         ce.setHigh();
     } else {
 
-        spi.begin();
+        spiBegin();
         spi.transfer(CMD_W_REGISTER | REG_RF_SETUP);
         spi.transfer(0x0e);
-        spi.end();
+        spiEnd();
 
         ce.setLow();
     }
@@ -189,18 +192,18 @@ void NRF24L01::setConstantCarrier(bool enabled, unsigned channel)
 
 void NRF24L01::setChannel(uint8_t ch)
 {
-    spi.begin();
+    spiBegin();
     spi.transfer(CMD_W_REGISTER | REG_RF_CH);
     spi.transfer(ch);
-    spi.end();
+    spiEnd();
 }
 
 uint8_t NRF24L01::channel()
 {
-    spi.begin();
+    spiBegin();
     spi.transfer(CMD_R_REGISTER | REG_RF_CH);
     uint8_t ch = spi.transfer(0);
-    spi.end();
+    spiEnd();
 
     return ch;
 }
@@ -221,10 +224,10 @@ void NRF24L01::isr()
      * us which IRQ(s) occurred, and acknowledges them to the nRF
      * chip.
      */
-    spi.begin();
+    spiBegin();
     uint8_t status = spi.transfer(CMD_W_REGISTER | REG_STATUS) & (MAX_RT | RX_DR | TX_DS);
     spi.transfer(status);
-    spi.end();
+    spiEnd();
 
     switch (status) {
 
@@ -281,9 +284,9 @@ void NRF24L01::handleTimeout()
          * Out of luck. Discard the packet, and pass on the error. Then transmit a new packet.
          */
 
-        spi.begin();
+        spiBegin();
         spi.transfer(CMD_FLUSH_TX);
-        spi.end();
+        spiEnd();
 
         txnState = Idle;
         timeout();
@@ -301,7 +304,7 @@ void NRF24L01::beginReceive()
      */
 
     txnState = RXStatus;
-    spi.begin();
+    spiBegin();
     // NOTE: reusing rxData for these status bytes
     rxData[0] = CMD_R_RX_PL_WID;
     spi.transferDma(rxData, rxData, 2);
@@ -340,7 +343,7 @@ void NRF24L01::beginTransmitting()
      */
 
     txnState = TXChannel;
-    spi.begin();
+    spiBegin();
     txAddressBuffer[0] = CMD_W_REGISTER | REG_RF_CH;
     txAddressBuffer[1] = txBuffer.dest->channel;
     spi.txDma(txAddressBuffer, 2);
@@ -373,6 +376,26 @@ void NRF24L01::staticSpiCompletionHandler()
     NRF24L01::instance.onSpiComplete();
 }
 
+void NRF24L01::spiTransferTable(const uint8_t *table)
+{
+    /*
+     * Table-driven transfers: Each is prefixed by a length byte.
+     * Terminated by a zero-length transfer.
+     */
+
+    uint8_t len;
+    while ((len = *table)) {
+        table++;
+
+        spiBegin();
+        do {
+            spi.transfer(*table);
+            table++;
+        } while (--len);
+        spiEnd();
+    }
+}
+
 void NRF24L01::onSpiComplete()
 {
     /*
@@ -388,7 +411,7 @@ void NRF24L01::onSpiComplete()
     SampleProfiler::SubSystem s = SampleProfiler::subsystem();
     SampleProfiler::setSubsystem(SampleProfiler::RFISR);
 
-    spi.end();
+    spiEnd();
     switch (txnState) {
 
     case RXStatus:
@@ -403,9 +426,9 @@ void NRF24L01::onSpiComplete()
              * FIFO.  We'll count this as a timeout.
              */
 
-            spi.begin();
+            spiBegin();
             spi.transfer(CMD_FLUSH_RX);
-            spi.end();
+            spiEnd();
 
             txnState = Idle;
             timeout();
@@ -415,7 +438,7 @@ void NRF24L01::onSpiComplete()
 
         txnState = RXPayload;
         rxData[0] = CMD_R_RX_PAYLOAD;
-        spi.begin();
+        spiBegin();
         spi.transferDma(rxData, rxData, rxBuffer.len + 1);
         break;
 
@@ -426,7 +449,7 @@ void NRF24L01::onSpiComplete()
 
     case TXChannel:
         txnState = TXAddressTx;
-        spi.begin();
+        spiBegin();
         txAddressBuffer[0] = CMD_W_REGISTER | REG_TX_ADDR;
         memcpy(txAddressBuffer + 1, txBuffer.dest->id, sizeof txBuffer.dest->id);
         spi.txDma(txAddressBuffer, sizeof(txBuffer.dest->id) + 1);
@@ -434,7 +457,7 @@ void NRF24L01::onSpiComplete()
 
     case TXAddressTx:
         txnState = TXAddressRx;
-        spi.begin();
+        spiBegin();
         txAddressBuffer[0] = CMD_W_REGISTER | REG_RX_ADDR_P0;
         memcpy(txAddressBuffer + 1, txBuffer.dest->id, sizeof txBuffer.dest->id);
         spi.txDma(txAddressBuffer, sizeof(txBuffer.dest->id) + 1);
@@ -444,7 +467,7 @@ void NRF24L01::onSpiComplete()
         // Set retry count if necessary, otherwise FALL THROUGH to RF_SETUP.
         if (txBuffer.numHardwareRetries != hardRetries) {
             txnState = TXRfSetup;
-            spi.begin();
+            spiBegin();
             txAddressBuffer[0] = CMD_W_REGISTER | REG_SETUP_RETR;
             txAddressBuffer[1] = AUTO_RETRY_DELAY | txBuffer.numHardwareRetries;
             spi.txDma(txAddressBuffer, 2);
@@ -455,7 +478,7 @@ void NRF24L01::onSpiComplete()
          // Set transmit power if necessary, otherwise FALL THROUGH to payload.
          if (txBuffer.txPower != transmitPower) {
              txnState = TXSetupRetr;
-             spi.begin();
+             spiBegin();
              txAddressBuffer[0] = CMD_W_REGISTER | REG_RF_SETUP;
              // enforce 2Mbit/sec transfer rate
              txAddressBuffer[1] = 0x08 | (txBuffer.txPower & 0x6);
@@ -467,7 +490,7 @@ void NRF24L01::onSpiComplete()
         hardRetries = txBuffer.numHardwareRetries;
         transmitPower = txBuffer.txPower;
         txnState = TXPayload;
-        spi.begin();
+        spiBegin();
         txData[0] = txBuffer.noAck ? CMD_W_TX_PAYLOAD_NO_ACK : CMD_W_TX_PAYLOAD;
         spi.txDma(txData, txBuffer.packet.len + 1);
         break;
