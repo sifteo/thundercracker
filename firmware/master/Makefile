@@ -1,6 +1,11 @@
 BIN = master-stm32
 TC_DIR = ../..
 
+# default to building rev2 master
+ifeq ($(BOARD),)
+    BOARD := BOARD_TC_MASTER_REV2
+endif
+
 include Makefile.objs
 include Makefile.defs
 

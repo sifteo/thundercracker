@@ -85,6 +85,13 @@ ifneq ($(BOARD), )
     FLAGS += -DBOARD=$(BOARD)
 endif
 
+# in sync with firmware/master/board.h
+HWREV_BOARD_TC_MASTER_REV2  = 2
+HWREV_BOARD_TEST_JIG        = 3
+HWREV_BOARD_TC_MASTER_REV3  = 4
+
+HWREV := $(HWREV_$(BOARD))
+
 # Optional hardware features
 ifneq ($(HAVE_NRF8001),)
     FLAGS += -DHAVE_NRF8001

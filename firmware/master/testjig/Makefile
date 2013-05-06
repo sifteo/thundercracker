@@ -1,10 +1,12 @@
 BIN = testjig
 TC_DIR = ../../..
 
+BOARD := BOARD_TEST_JIG
+
 include $(TC_DIR)/firmware/master/Makefile.defs
 
 # testjig specific flags
-FLAGS += -I. -I../bootloader -DBOARD=BOARD_TEST_JIG
+FLAGS += -I. -I../bootloader
 
 # Sources specific to testjig firmware
 OBJS_STM32 := \
