@@ -168,13 +168,19 @@ def run(secondary_path, launcher_build_status):
         build_firmware(hw_version)
 
         # Rename and keep in master directory
-        copy_to_dir(MASTER_UNVERSIONED,version_hash[hw_version],fw_build_dir)
-    
+        copy_to_dir(MASTER_UNVERSIONED,version_hash[hw_version],target_dir)
+
+    change_dir(target_dir)
+
+    # lets make a new blob
     deploy_firmware_blob(target_filename,version_hash,githash)
 
+    # copy that blob to the latest dir
+    copy_to_dir(target_filename,target_filename,latest_dir)
+
     if secondary_path != False:
-    
-        check_and_mkdir(remote_latest_dir)
+
+        check_remove_and_mkdir(remote_latest_dir)
         check_and_mkdir(remote_target_dir)
 
         copy_to_dir(target_filename,target_filename, remote_latest_dir)
