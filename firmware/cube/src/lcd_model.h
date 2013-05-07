@@ -33,7 +33,11 @@
        defined(LCD_MODEL_TIANMA_HX8353)      || \
        defined(LCD_MODEL_SANTEK_ST7735R)     )
 
-#define LCD_MODEL_TIANMA_HX8353
+    #if HWREV >= 6
+        #define LCD_MODEL_SANTEK_ST7735R
+    #else
+        #define LCD_MODEL_TIANMA_HX8353
+    #endif
 #endif
 
 /********************************************************************/
