@@ -105,9 +105,12 @@ void TestJig::init()
     dip3.pullup();
     dip4.pullup();
 
-    //Pullups need some time to charge the line up
-    SysTime::Ticks pullupTime = SysTime::ticks();
-    while(SysTime::ticks() < pullupTime+SysTime::usTicks(10));
+    // Pullups need some time to charge the line up
+    SysTime::Ticks pullupsCharged = SysTime::ticks() + SysTime::usTicks(10);
+    while (SysTime::ticks() < pullupsCharged) {
+        ;
+    }
+
     if(dip1.isLow()) {
         Dac::write(BATTERY_SIM_DAC_CH, DAC_2V8);
     } else {
