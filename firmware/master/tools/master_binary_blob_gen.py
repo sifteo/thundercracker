@@ -89,7 +89,7 @@ def build_firmware(version):
     # Set dem environment variables
     myenv = dict(os.environ)
     myenv["BOOTLOADABLE"] = "1"
-    myenv["BOARD"] = HW_VERSIONS[gen]
+    myenv["BOARD"] = HW_VERSIONS[version]
 
     # Compile!
     cores = "-j%d" % multiprocessing.cpu_count()
@@ -217,7 +217,6 @@ if __name__ == '__main__':
 
     secondary_path = False
     with_launcher = False
-    gen = 2
 
     for idx,arg in enumerate(sys.argv):
         if arg == "--with-launcher":
