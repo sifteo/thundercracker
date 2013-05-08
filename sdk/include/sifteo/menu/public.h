@@ -32,7 +32,7 @@ inline void Menu::init(VideoBuffer &vid, const MenuAssets *aAssets, MenuItem *aI
     items = aItems;
     assets = aAssets;
     changeState(MENU_STATE_START);
-    
+
     // initialize instance constants
     kHeaderHeight = 0;
     kFooterHeight = 0;
@@ -129,7 +129,7 @@ inline bool Menu::pollEvent(struct MenuEvent *ev)
     // Events not handled at this point are discarded
     ASSERT(currentEvent.type != MENU_PREPAINT);
     clearEvent();
-    
+
     /* state changes can happen in the default event handler which may dispatch
      * events (like MENU_STATE_STATIC -> MENU_STATE_FINISH dispatches a
      * MENU_PREPAINT).
@@ -233,7 +233,7 @@ inline void Menu::replaceIcon(uint8_t item, const AssetImage *icon, const AssetI
     if (label) {
         uint8_t currentItem = computeSelected();
         items[item].label = label;
-        
+
         if (kHeaderHeight && currentState == MENU_STATE_STATIC &&
             currentItem == item)
         {
@@ -284,12 +284,12 @@ inline void Menu::anchor(uint8_t item, bool hopUp, int8_t panTarget)
     ASSERT(item < numItems);
     startingItem = item;
     targetItem = panTarget;
-    
+
     if (hopUp) {
         position = stoppingPositionFor(startingItem);
         prev_ut = computeCurrentTile() + kNumTilesX;
         updateBG0();
-        
+
         changeState(MENU_STATE_HOP_UP);
     }
 }

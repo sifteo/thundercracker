@@ -109,7 +109,7 @@ void MainMenu::run()
 
     // Start with the menu on no cube. We'll update this during the main loop.
     mainCube = CubeID();
-    
+
     if (Volume::previous() != Volume(0)) {
         // Find a default item, based on whatever volume was running last
         for (unsigned i = 0, e = items.count(); i != e; ++i) {
