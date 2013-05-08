@@ -30,15 +30,18 @@ void MacronixMX25::init()
 
     spi.init(spicfg);
 
-    // prepare to write the status register
-    spi.begin();
-    spi.transfer(WriteEnable);
-    spi.end();
+    csn.setHigh();
+    csn.setControl(GPIOPin::OUT_10MHZ);
 
-    spi.begin();
+    // prepare to write the status register
+    spiBegin();
+    spi.transfer(WriteEnable);
+    spiEnd();
+
+    spiBegin();
     spi.transfer(WriteStatusConfigReg);
     spi.transfer(0);    // ensure block protection is disabled
-    spi.end();
+    spiEnd();
 
     /*
      * NOTE!
@@ -68,23 +71,23 @@ void MacronixMX25::read(uint32_t address, uint8_t *buf, unsigned len)
     // May need to retry in case of DMA failure
     while (1) {
 
-        spi.begin();
+        spiBegin();
 
         dmaInProgress = true;
         spi.txDma(cmd, sizeof(cmd));
         if (!waitForDma()) {
-            spi.end();
+            spiEnd();
             continue;
         }
 
         dmaInProgress = true;
         spi.transferDma(buf, buf, len);
         if (!waitForDma()) {
-            spi.end();
+            spiEnd();
             continue;
         }
 
-        spi.end();
+        spiEnd();
         return;
     }
 }
@@ -110,22 +113,22 @@ void MacronixMX25::write(uint32_t address, const uint8_t *buf, unsigned len)
         // May need to retry in case of DMA failure
         while (1) {
 
-            spi.begin();
+            spiBegin();
             dmaInProgress = true;
             spi.txDma(cmd, sizeof(cmd));
             if (!waitForDma()) {
-                spi.end();
+                spiEnd();
                 continue;
             }
 
             dmaInProgress = true;
             spi.txDma(buf, pagelen);
             if (!waitForDma()) {
-                spi.end();
+                spiEnd();
                 continue;
             }
 
-            spi.end();
+            spiEnd();
             break;
         }
 
@@ -145,12 +148,12 @@ void MacronixMX25::eraseBlock(uint32_t address)
     waitWhileBusy();
     ensureWriteEnabled();
 
-    spi.begin();
+    spiBegin();
     spi.transfer(BlockErase64);
     spi.transfer(address >> 16);
     spi.transfer(address >> 8);
     spi.transfer(address >> 0);
-    spi.end();
+    spiEnd();
 
     mightBeBusy = true;
 }
@@ -160,9 +163,9 @@ void MacronixMX25::chipErase()
     waitWhileBusy();
     ensureWriteEnabled();
 
-    spi.begin();
+    spiBegin();
     spi.transfer(ChipErase);
-    spi.end();
+    spiEnd();
 
     mightBeBusy = true;
 }
@@ -170,23 +173,23 @@ void MacronixMX25::chipErase()
 void MacronixMX25::ensureWriteEnabled()
 {
     do {
-        spi.begin();
+        spiBegin();
         spi.transfer(WriteEnable);
-        spi.end();
+        spiEnd();
     } while (!(readReg(ReadStatusReg) & WriteEnableLatch));
 }
 
 void MacronixMX25::readId(FlashDevice::JedecID *id)
 {
     waitWhileBusy();
-    spi.begin();
+    spiBegin();
 
     spi.transfer(ReadID);
     id->manufacturerID = spi.transfer(Nop);
     id->memoryType = spi.transfer(Nop);
     id->memoryDensity = spi.transfer(Nop);
 
-    spi.end();
+    spiEnd();
 }
 
 /*
@@ -197,23 +200,23 @@ void MacronixMX25::readId(FlashDevice::JedecID *id)
 uint8_t MacronixMX25::readReg(MacronixMX25::Command cmd)
 {
     uint8_t reg;
-    spi.begin();
+    spiBegin();
     spi.transfer(cmd);
     reg = spi.transfer(Nop);
-    spi.end();
+    spiEnd();
     return reg;
 }
 
 void MacronixMX25::deepSleep()
 {
-    spi.begin();
+    spiBegin();
     spi.transfer(DeepPowerDown);
-    spi.end();
+    spiEnd();
 }
 
 void MacronixMX25::wakeFromDeepSleep()
 {
-    spi.begin();
+    spiBegin();
     spi.transfer(ReleaseDeepPowerDown);
     // 3 dummy bytes
     spi.transfer(Nop);
@@ -221,7 +224,7 @@ void MacronixMX25::wakeFromDeepSleep()
     spi.transfer(Nop);
     // 1 byte old style electronic signature - could return this if we want to...
     spi.transfer(Nop);
-    spi.end();
+    spiEnd();
     // TODO - CSN must remain high for 30us on transition out of deep sleep
 }
 

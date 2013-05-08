@@ -233,7 +233,7 @@ struct TileBuffer {
      *
      * All coordinates must be in range. This function performs no clipping.
      */
-    uint16_t tileAddr(UInt2 pos, unsigned frame = 0) {
+    uint16_t tileAddr(UInt2 pos, unsigned frame = 0) const {
         ASSERT(sys.cube != _SYS_CUBE_ID_INVALID);
         return pos.x + (pos.y + frame * tileHeight()) * tileWidth();
     }
@@ -275,7 +275,7 @@ struct TileBuffer {
      * @brief Return the index of the tile at the specified (x, y) tile coordinates,
      * and optionally on the specified frame number.
      */
-    uint16_t tile(Int2 pos, unsigned frame = 0) const {
+    uint16_t tile(UInt2 pos, unsigned frame = 0) const {
         ASSERT(sys.cube != _SYS_CUBE_ID_INVALID);
         ASSERT(pos.x < tileWidth() && pos.y < tileHeight() && frame < numFrames());
         return tiles[tileAddr(pos, frame)];
@@ -618,7 +618,7 @@ struct RelocatableTileBuffer {
      * @brief Return the relative index of the tile at the specified (x, y) tile coordinates,
      * and optionally on the specified frame number.
      */
-    uint16_t tile(Int2 pos, unsigned frame = 0) const {
+    uint16_t tile(UInt2 pos, unsigned frame = 0) const {
         ASSERT(pos.x < tileWidth() && pos.y < tileHeight() && frame < numFrames());
         return tiles[tileAddr(pos, frame)];
     }

@@ -75,15 +75,17 @@ ALWAYS_INLINE void Tasks::taskInvoke(unsigned id)
 /*
  * Table of heartbeat actions
  */
-
 void Tasks::heartbeatTask()
 {
-#ifdef USE_ADC_BATTERY_MEAS
-    BatteryLevel::beginCapture();
-#endif
-
+    /*
+     * If both volume and battery sampling are done via ADC,
+     * they need to take turns. Battery sample is kicked off
+     * in the Volume completion ISR.
+     */
 #ifdef USE_ADC_FADER_MEAS
     Volume::beginCapture();
+#elif defined(USE_ADC_BATT_MEAS)
+    BatteryLevel::beginCapture();
 #endif
 
 #if !BOARD_EQUALS(BOARD_TEST_JIG)

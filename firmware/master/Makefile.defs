@@ -85,6 +85,18 @@ ifneq ($(BOARD), )
     FLAGS += -DBOARD=$(BOARD)
 endif
 
+# in sync with firmware/master/board.h
+HWREV_BOARD_TC_MASTER_REV2  = 2
+HWREV_BOARD_TEST_JIG        = 3
+HWREV_BOARD_TC_MASTER_REV3  = 4
+
+HWREV := $(HWREV_$(BOARD))
+
+# Optional hardware features
+ifneq ($(HAVE_NRF8001),)
+    FLAGS += -DHAVE_NRF8001
+endif
+
 # default linker script handling
 ifeq ($(LDSCRIPT), )
 LDSCRIPT := $(MASTER_DIR)/stm32/target.ld
@@ -110,4 +122,11 @@ endif
 ifneq ($(RFTEST_GOLD_MASTER),)
     FLAGS += -DDISABLE_IDLETIMEOUT -DDISABLE_WATCHDOG
     FLAGS += -DRFTEST_GOLD_MASTER 
+endif
+
+# testjig bootloader update
+ifeq ($(BIN),testjig)
+    UPDATE_ARGS := --pid 0x0120
+else
+    UPDATE_ARGS :=
 endif

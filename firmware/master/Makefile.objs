@@ -73,7 +73,8 @@ OBJS_COMMON = \
     $(MASTER_DIR)/common/motion.o   \
     $(MASTER_DIR)/common/idletimeout.o \
     $(MASTER_DIR)/common/faultlogger.o \
-    $(MASTER_DIR)/common/rfspectrum.o
+    $(MASTER_DIR)/common/rfspectrum.o \
+    $(MASTER_DIR)/common/btprotocol.o
 
 # Sources common to all stm32 builds (currently master & testjig)
 OBJS_STM32 = \
@@ -87,6 +88,7 @@ OBJS_STM32 = \
     $(MASTER_DIR)/stm32/spi.stm32.o \
     $(MASTER_DIR)/stm32/flash_device.stm32.o \
     $(MASTER_DIR)/stm32/nrf24l01.stm32.o \
+    $(MASTER_DIR)/stm32/nrf8001/nrf8001.stm32.o \
     $(MASTER_DIR)/stm32/debug.stm32.o \
     $(MASTER_DIR)/stm32/usart.stm32.o \
     $(MASTER_DIR)/stm32/dma.stm32.o \

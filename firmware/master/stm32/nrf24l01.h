@@ -19,8 +19,9 @@ class NRF24L01 {
 public:
     NRF24L01(GPIOPin _ce,
              GPIOPin _irq,
+             GPIOPin _csn,
              SPIMaster _spi)
-        : irq(_irq), ce(_ce), spi(_spi),
+        : irq(_irq), ce(_ce), csn(_csn), spi(_spi),
           txBuffer(NULL, txData + 1), rxBuffer(rxData + 1), txnState(Idle),
           softRetriesLeft(0),
           hardRetries(PacketTransmission::DEFAULT_HARDWARE_RETRIES)
@@ -113,6 +114,7 @@ public:
     };
 
     GPIOPin ce;
+    GPIOPin csn;
     SPIMaster spi;
 
     PacketTransmission txBuffer;
@@ -201,6 +203,16 @@ public:
 
     static void staticSpiCompletionHandler();
     void onSpiComplete();
+
+    ALWAYS_INLINE void spiBegin() {
+        csn.setLow();
+    }
+
+    ALWAYS_INLINE void spiEnd() {
+        csn.setHigh();
+    }
+
+    void spiTransferTable(const uint8_t *table);
 };
 
 #endif

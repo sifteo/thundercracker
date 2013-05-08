@@ -75,7 +75,7 @@ private:
 
     // Set up the Main Menu's data structures, and empty its lists of items.
     void init();
-    void initMenu(unsigned initialIndex, bool popUp);
+    void initMenu(unsigned initialIndex, bool popUp, int panTarget=-1);
 
     // event handlers
     void volumeChanged(unsigned volumeHandle);
@@ -85,6 +85,7 @@ private:
     void onBatteryLevelChange(unsigned cid);
 
     void waitForACube();
+    void checkForFirstRun();
 
     void updateSound();
     void updateMusic();

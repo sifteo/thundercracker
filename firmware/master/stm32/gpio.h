@@ -66,6 +66,14 @@ class GPIOPin {
         return (port()->IDR & bit()) == 0;
     }
 
+    ALWAYS_INLINE bool isOutputHigh() const {
+        return port()->ODR & bit();
+    }
+
+    ALWAYS_INLINE bool isOutputLow() const {
+        return (port()->ODR & bit()) == 0;
+    }
+
     void setControl(Control c) const;
     void irqInit() const;
 

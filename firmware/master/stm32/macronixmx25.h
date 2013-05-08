@@ -23,8 +23,8 @@ public:
         WriteProtected      = (1 << 7)
     };
 
-    MacronixMX25(SPIMaster _spi) :
-        spi(_spi)
+    MacronixMX25(GPIOPin _csn, SPIMaster _spi) :
+        csn(_csn), spi(_spi)
     {}
 
     void init();
@@ -92,8 +92,17 @@ private:
         ReleaseReadEnhanced         = 0xFF
     };
 
+    GPIOPin csn;
     SPIMaster spi;
     bool mightBeBusy;
+
+    ALWAYS_INLINE void spiBegin() {
+        csn.setLow();
+    }
+
+    ALWAYS_INLINE void spiEnd() {
+        csn.setHigh();
+    }
 
     void ensureWriteEnabled();
     void waitWhileBusy();

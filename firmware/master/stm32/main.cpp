@@ -26,6 +26,7 @@
 #include "neighbor_tx.h"
 #include "led.h"
 #include "batterylevel.h"
+#include "nrf8001/nrf8001.h"
 #include "adc.h"
 #include "realtimeclock.h"
 
@@ -78,8 +79,8 @@ int main()
     NVIC.irqEnable(IVT.LED_SEQUENCER_TIM);          // LED sequencer timer
     NVIC.irqPrioritize(IVT.LED_SEQUENCER_TIM, 0x85);
 
-    NVIC.irqEnable(IVT.USART3);                     // factory test uart
-    NVIC.irqPrioritize(IVT.USART3, 0x52);           //  high enough to avoid overruns
+    NVIC.irqEnable(IVT.UART_DBG);                     // factory test uart
+    NVIC.irqPrioritize(IVT.UART_DBG, 0x52);           //  high enough to avoid overruns
 
 #ifndef USE_ADC_FADER_MEAS
     NVIC.irqEnable(IVT.VOLUME_TIM);                 // volume timer
@@ -92,7 +93,17 @@ int main()
     NVIC.irqEnable(IVT.NBR_TX_TIM);                 // Neighbor transmit
     NVIC.irqPrioritize(IVT.NBR_TX_TIM, 0x60);       //  just below volume timer
 
-#if defined USE_ADC_BATT_MEAS ||  defined USE_ADC_FADER_MEAS
+#ifdef HAVE_NRF8001
+    NVIC.irqEnable(IVT.NRF8001_EXTI_VEC);             // BTLE controller IRQ
+    NVIC.irqPrioritize(IVT.NRF8001_EXTI_VEC, 0x78);   //  a little higher than radio, just below USB
+
+    NVIC.irqEnable(IVT.NRF8001_DMA_CHAN_RX);            // BTLE SPI DMA channels
+    NVIC.irqPrioritize(IVT.NRF8001_DMA_CHAN_RX, 0x74);  //  same prio as flash for now
+    NVIC.irqEnable(IVT.NRF8001_DMA_CHAN_TX);
+    NVIC.irqPrioritize(IVT.NRF8001_DMA_CHAN_TX, 0x74);
+#endif
+
+#if defined(USE_ADC_BATT_MEAS) || defined (USE_ADC_FADER_MEAS)
     NVIC.irqEnable(IVT.ADC1_2);                     // adc sample
     NVIC.irqPrioritize(IVT.ADC1_2,0x80);            // low priority. only used for battery/fader measurement
 #endif
@@ -205,6 +216,11 @@ int main()
 
     PowerManager::beginVbusMonitor();
     SampleProfiler::init();
+
+#ifdef HAVE_NRF8001
+    // Initialize Bluetooth LE radio. Includes a short power-on delay. (Shorter than Radio::init)
+    NRF8001::instance.init();
+#endif
 
     // Includes radio power-on delay.
     Radio::init();

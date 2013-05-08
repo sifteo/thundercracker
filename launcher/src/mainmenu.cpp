@@ -80,14 +80,14 @@ void MainMenu::init()
     _SYS_asset_bindSlots(Volume::running(), Shared::NUM_SLOTS);
 }
 
-void MainMenu::initMenu(unsigned initialIndex, bool popUp)
+void MainMenu::initMenu(unsigned initialIndex, bool popUp, int panTarget)
 {
     ASSERT(items.count() > 0);
 
     // (Re)initialize the menu
     menu.init(Shared::video[mainCube], &menuAssets, menuItems);
     menu.setIconYOffset(8);
-    menu.anchor(initialIndex, popUp);
+    menu.anchor(initialIndex, popUp, panTarget);
     itemIndexCurrent = -1;
 }
 
@@ -101,11 +101,17 @@ void MainMenu::run()
     prepareAssets();
 
     // Connect initial cubes
-    for (CubeID cube : CubeSet::connected())
+    for (CubeID cube : CubeSet::connected()) {
         cubeConnect(cube);
+    }
 
-    // Find a default item, based on whatever volume was running last
+    checkForFirstRun();
+
+    // Start with the menu on no cube. We'll update this during the main loop.
+    mainCube = CubeID();
+    
     if (Volume::previous() != Volume(0)) {
+        // Find a default item, based on whatever volume was running last
         for (unsigned i = 0, e = items.count(); i != e; ++i) {
             ASSERT(items[i] != NULL);
             if (items[i]->getVolume() == Volume::previous()) {
@@ -113,17 +119,42 @@ void MainMenu::run()
                 break;
             }
         }
+
     }
 
-    // Start with the menu on no cube. We'll update this during the main loop.
-    mainCube = CubeID();
-
     eventLoop();
+}
+
+void MainMenu::checkForFirstRun() {
+    // Should we short-circuit to the first run?
+    for(auto& item : items) {
+        if (item->isFirstRun()) {
+            bool shouldExec;
+            {
+                // need this block to unmap the volume before entering the paint
+                // loop and potentially double-mapping in the volumeChanged()
+                // event :P
+                MappedVolume map(item->getVolume());
+                StoredObject breadcrumb(0xbc);
+                int x = 0;
+                shouldExec = breadcrumb.readObject(x, item->getVolume()) < 0 || x == 0;
+            }
+            if (shouldExec) {
+                while(!AudioTracker::isStopped()) {
+                    System::paint();
+                }
+                item->exec();
+            }
+        }
+    }
+
+
 }
 
 void MainMenu::eventLoop()
 {
     while (1) {
+
         // Need to bind the menu to a new cube?
         if (!mainCube.isDefined()) {
 
@@ -139,6 +170,7 @@ void MainMenu::eventLoop()
             /*
              * Wait until we have a cube that's usable for our menu
              */
+
             while (1) {
                 CubeSet usable = CubeSet::connected() & ~connectingCubes;
 
@@ -154,8 +186,15 @@ void MainMenu::eventLoop()
                 }
             }
 
+            // try and avoid some of the garbage we often see :P
+            System::finish();
+
             if (itemIndexCurrent >= 0) {
-                initMenu(itemIndexCurrent, true);
+                if (itemIndexCurrent > 0 && items[itemIndexCurrent]->isFirstRun()) {
+                    initMenu(itemIndexCurrent, true, 0);
+                } else {
+                    initMenu(itemIndexCurrent, true);
+                }
             } else {
                 initMenu(0, false);
             }

@@ -8,6 +8,9 @@ Changelog      {#changelog}
 ### New
 * `swiss savedata delete` can be used to remove just the save data for a particular game. See @ref device_mgmt for details.
 
+### Changes
+* TileBuffer::tileAddr() was made const, and TileBuffer::tile() and RelocatableTileBuffer::tile() were changed to accept a UInt2 rather than an Int2 pos parameter.
+
 # v1.0.0 (March 27, 2013)
 
 ### New

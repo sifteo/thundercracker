@@ -35,9 +35,28 @@
 #define RF_DMA_CHAN_RX      DMA2_Channel1
 #define RF_DMA_CHAN_TX      DMA2_Channel2
 
+
+// B L U E T O O T H
+#ifdef HAVE_NRF8001
+
+#define NRF8001_SPI         SPI2
+#define NRF8001_SCK_GPIO    GPIOPin(&GPIOB, 13)
+#define NRF8001_MISO_GPIO   GPIOPin(&GPIOB, 14)
+#define NRF8001_MOSI_GPIO   GPIOPin(&GPIOB, 15)
+#define NRF8001_REQN_GPIO   GPIOPin(&GPIOC, 2)
+#define NRF8001_RDYN_GPIO   GPIOPin(&GPIOC, 3)
+#define NRF8001_EXTI_VEC    EXTI3
+
+#define NRF8001_DMA_CHAN_RX DMA1_Channel4
+#define NRF8001_DMA_CHAN_TX DMA1_Channel5
+
+#endif // HAVE_NRF8001
+
 #define USE_NRF24L01        // Use the nRF42L01 as our radio
 
 // F L A S H
+#define USE_MX25L128        // Use the Macronix 128Mb flash part
+
 #ifdef REV2_GDB_REWORK
 
 #define FLASH_SPI           SPI2

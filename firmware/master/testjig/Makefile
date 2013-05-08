@@ -1,10 +1,12 @@
 BIN = testjig
 TC_DIR = ../../..
 
+BOARD := BOARD_TEST_JIG
+
 include $(TC_DIR)/firmware/master/Makefile.defs
 
 # testjig specific flags
-FLAGS += -I. -I../bootloader -DBOARD=BOARD_TEST_JIG
+FLAGS += -I. -I../bootloader
 
 # Sources specific to testjig firmware
 OBJS_STM32 := \
@@ -20,10 +22,11 @@ OBJS_STM32 := \
     $(MASTER_DIR)/stm32/neighbor_tx.stm32.o         \
     $(MASTER_DIR)/stm32/neighbor_rx.stm32.o         \
     $(MASTER_DIR)/stm32/dac.stm32.o                 \
-	$(MASTER_DIR)/stm32/dma.stm32.o                 \
+    $(MASTER_DIR)/stm32/dma.stm32.o                 \
     $(MASTER_DIR)/stm32/hwtimer.stm32.o             \
     $(MASTER_DIR)/stm32/i2c.stm32.o                 \
     $(MASTER_DIR)/stm32/adc.stm32.o                 \
+    $(MASTER_DIR)/stm32/exti.stm32.o                \
     $(MASTER_DIR)/stm32/sysinfo.stm32.o             \
     $(MASTER_DIR)/stm32/usb/usbdevice.stm32.o       \
     $(MASTER_DIR)/stm32/usb/usbcore.stm32.o         \

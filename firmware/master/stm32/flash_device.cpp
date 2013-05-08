@@ -7,8 +7,8 @@
 #include "macronixmx25.h"
 #include "board.h"
 
-static MacronixMX25 flash(SPIMaster(&FLASH_SPI,
-                                    FLASH_CS_GPIO,
+static MacronixMX25 flash(FLASH_CS_GPIO,
+                          SPIMaster(&FLASH_SPI,
                                     FLASH_SCK_GPIO,
                                     FLASH_MISO_GPIO,
                                     FLASH_MOSI_GPIO,

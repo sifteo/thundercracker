@@ -36,6 +36,8 @@
 #define RF_DMA_CHAN_TX      DMA2_Channel2
 
 // F L A S H
+#define USE_W25Q256         // Use the Winbond 256Mb flash part
+
 #ifdef REV2_GDB_REWORK
 
 #define FLASH_SPI           SPI2

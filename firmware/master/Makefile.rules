@@ -17,7 +17,7 @@ $(BIN).hex: $(BIN).elf
 	arm-none-eabi-objcopy -O ihex $< $@
 
 $(BIN).sft: $(BIN).bin
-	$(TC_DIR)/tools/fwdeploy/fwdeploy $(BIN).bin $(BIN).sft
+	$(TC_DIR)/tools/fwdeploy/fwdeploy $(BIN).sft --fw-version $(VERSION) --fw $(HWREV) $(BIN).bin
 
 %.stm32.o: %.cpp $(CDEPS)
 	@echo Compiling $<
@@ -73,7 +73,7 @@ program: $(BIN).elf
 update: encrypted
 	$(SDK_DIR)/bin/swiss update --init || true
 	sleep 1
-	$(SDK_DIR)/bin/swiss update $(BIN).sft
+	$(SDK_DIR)/bin/swiss update $(BIN).sft $(UPDATE_ARGS)
 
 objdump: $(BIN).elf
 	arm-none-eabi-objdump -d $< | arm-none-eabi-c++filt -n | less

@@ -19,11 +19,16 @@
  */
 
 extern static void i2c_accel_tx(const __code uint8_t *);
-
-#if HWREV >= 4
+#if HWREV >= 6
+    //using LIS3DE
+    #define ACCEL_ADDR_TX       0x52    // 01010010 - SDO is pulled HIGH (internally)
+    #define ACCEL_ADDR_RX       0x53    // 01010011 - SDO is pulled HIGH (internally)
+#elif HWREV >= 4
+    //using LIS3DH
     #define ACCEL_ADDR_TX       0x32    // 00110010 - SDO is pulled HIGH (internally)
     #define ACCEL_ADDR_RX       0x33    // 00110011 - SDO is pulled HIGH (internally)
 #else
+    //using LIS3DH with pulldown on SDO
     #define ACCEL_ADDR_TX       0x30    // 00110000 - SDO is tied LOW
     #define ACCEL_ADDR_RX       0x31    // 00110001 - SDO is tied LOW
 #endif

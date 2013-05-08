@@ -9,6 +9,8 @@ BIN := fwdeploy$(BIN_EXT)
 OBJS := \
     src/main.o                          \
     src/deployer.o                      \
+    src/encrypter.o                     \
+    src/inspect.o                       \
     src/crc.o                           \
     src/securerandom.o                  \
     $(MASTER_DIR)/common/aes128.o
@@ -22,7 +24,7 @@ INCLUDES := \
 VERSION := $(shell git describe --tags)
 
 # C++ compiler flags (-g -O2 -Wall)
-CCFLAGS = -g -O2
+CCFLAGS = -g -O2 -Wall
 # we currently define SIFTEO_SIMULATOR so we can use macros.h - revisit whether
 # this deserves any reorg
 CCFLAGS += -DSDK_VERSION=$(VERSION) -DSIFTEO_SIMULATOR -D__STDC_FORMAT_MACROS
