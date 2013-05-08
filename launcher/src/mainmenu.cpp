@@ -570,7 +570,10 @@ void MainMenu::updateSound()
                 playedOnce = true;
             }
         } else {
-            playedOnce = false; // reset when cube is static and horizontal
+            // hysteresis that forces to go horizontal before warning again
+            if (menu.isHorizontal()) {
+                playedOnce = false; // reset when cube is static and horizontal
+            }
         }
     }
 }

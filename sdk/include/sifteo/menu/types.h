@@ -118,6 +118,7 @@ class Menu {
     void anchor(uint8_t item, bool hopUp = false, int8_t panTarget=-1);
     MenuState getState();
     bool isTilted();
+    bool isHorizontal();
     bool isAtEdge();
     bool isTiltingAtEdge();
     void setNumTips(uint8_t nt);

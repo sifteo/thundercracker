@@ -301,8 +301,14 @@ inline MenuState Menu::getState()
 
 inline bool Menu::isTilted()
 {
-    const float robustThreshold = kAccelThresholdOn * 1.65;
+    const float robustThreshold = kAccelThresholdOn * 1.3;
     return (abs(accel.x) >= robustThreshold); // avoids accel. noise
+}
+
+inline bool Menu::isHorizontal()
+{
+    const float robustThreshold = kAccelThresholdOn * 0.3;
+    return (abs(accel.x) < robustThreshold); // avoids accel. noise
 }
 
 inline bool Menu::isAtEdge()
