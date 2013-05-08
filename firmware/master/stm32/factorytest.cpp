@@ -419,17 +419,17 @@ void FactoryTest::rfPacketTestHandler(uint8_t argc, const uint8_t *args)
  */
 void FactoryTest::rtcTestHandler(uint8_t argc, const uint8_t *args)
 {
-    uint32_t start_count = RealTimeClock::count();
-    uint32_t start_ticks = SysTime::ticks();
+    uint8_t start_count = RealTimeClock::count();
+    uint64_t start_ticks = SysTime::ticks();
 
-    while(SysTime::ticks() <= start_ticks + SysTime::msTicks(100));
+    while(SysTime::ticks() < (start_ticks + SysTime::sTicks(2)));
 
-    uint32_t tick_diff = SysTime::ticks() - start_ticks;
-    uint32_t count_diff = RealTimeClock::count() -  start_count;
+    uint32_t tick_diff = SysTime::sTicks(2);
+    uint8_t count_diff = RealTimeClock::count() -  start_count;
 
-    const uint8_t report[] = {args[0], args[1], \
-        tick_diff & 0xff, (tick_diff >> 8) & 0xff, (tick_diff >> 16) & 0xff, (tick_diff >> 24) & 0xff,    \
-        count_diff & 0xff, (count_diff >> 8) & 0xff, (count_diff >> 16) & 0xff, (count_diff >> 24) & 0xff \
+    const uint8_t report[] = {args[0], \
+        tick_diff & 0xff, (tick_diff >> 8) & 0xff, (tick_diff >> 16) & 0xff, (tick_diff >> 24) & 0xff,\
+        count_diff
     };
 
     UsbDevice::write(report, sizeof report);
