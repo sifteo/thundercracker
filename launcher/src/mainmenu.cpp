@@ -551,6 +551,7 @@ void MainMenu::updateSound()
     MenuState state = menu.getState();
 
     if (state == MENU_STATE_TILTING) {
+        playedOnce = false; // reset to allow 2 consecutive edge warnings with no transition
         unsigned threshold = abs(Shared::video[mainCube].virtualAccel().x) > kFastClickAccelThreshold ? kClickSpeedNormal : kClickSpeedFast;
         if (dt.milliseconds() >= threshold) {
             time += dt;
