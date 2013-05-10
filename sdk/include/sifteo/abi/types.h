@@ -167,6 +167,7 @@ struct _SYSPseudoRandomState {
 #define _SYS_HW_VERSION_NONE        0x00
 
 #define _SYS_FEATURE_SYS_VERSION    (1 << 0)
+#define _SYS_FEATURE_BLUETOOTH      (1 << 1)
 #define _SYS_FEATURE_ALL            (_SYS_FEATURE_SYS_VERSION)
 
 /*
@@ -205,6 +206,32 @@ struct _SYSFilesystemInfo {
     uint32_t gameObjUnits;      // Used by StoredObjects owned by games
     uint32_t selfElfUnits;      // Used by the currently executing volume (may overlap with above)
     uint32_t selfObjUnits;      // StoredObjects owned by the currently executing volume (may overlap with above)
+};
+
+/*
+ * Bluetooth
+ */
+
+#define _SYS_BT_PACKET_BYTES            19
+#define _SYS_BT_MAX_QUEUED_PACKETS      256
+
+struct _SYSBluetoothPacket {
+    uint8_t length;             /// Length of in-use portion of bytes[]
+    uint8_t type;               /// Packet type flag (used by some APIs)
+    uint8_t bytes[_SYS_BT_PACKET_BYTES];
+};
+
+struct _SYSBluetoothQueueHeader {
+    uint8_t tail;               /// Index of the next empty slot to write into
+    uint8_t last;               /// Index of last buffer slot. If tail > size, tail wraps to 0
+    uint8_t rate;               /// Requested capture rate, in timestamp units per sample
+    uint8_t reserved;           /// Initialize to zero
+    // Followed by variable-size array of _SYSBluetoothPacket
+};
+
+struct _SYSBluetoothQueue {
+    struct _SYSMotionBufferHeader header;
+    struct _SYSBluetoothPacket packets[_SYS_BT_MAX_QUEUED_PACKETS];
 };
 
 /*
