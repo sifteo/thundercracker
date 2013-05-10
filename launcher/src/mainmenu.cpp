@@ -560,14 +560,14 @@ void MainMenu::updateSound()
     } else if (state == MENU_STATE_INERTIA) {
         if (!playedOnce && menu.isAtEdge() && dt.milliseconds() >= kGlitchThreshold) {
             time += dt; // avoid glitches
-            AudioChannel(kUIResponseSoundChannel).play(Sound_NonPossibleAction);
+            AudioChannel(kUIResponseSoundChannel).play(Sound_endTiltMenu);
             playedOnce = true;
         }
     } else if (state == MENU_STATE_STATIC) {
         if (menu.isTilted() && menu.isTiltingAtEdge()) {
             if (!playedOnce && dt.milliseconds() >= kGlitchThreshold) {
                 time += dt; // avoid glitches
-                AudioChannel(kUIResponseSoundChannel).play(Sound_NonPossibleAction);
+                AudioChannel(kUIResponseSoundChannel).play(Sound_endTiltMenu);
                 playedOnce = true;
             }
         } else {
