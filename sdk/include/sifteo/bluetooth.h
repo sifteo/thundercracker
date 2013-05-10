@@ -304,6 +304,18 @@ struct BluetoothQueue {
         if (head > tCapacity)
             head = 0;
         sys.header.head = head;
+
+        /*
+         * Notify the system that we have more space for reading. This may
+         * communicate additional flow control tokens to our peer if this
+         * queue is the current read pipe.
+         *
+         * This is only absolutely necessary if the queue transitioned
+         * from being totally full to being less-than-totally full, but
+         * we'd also like to give the system a chance to send flow control
+         * tokens speculatively if it wants.
+         */
+        _SYS_bt_queueReadHint();
     }
 
     /**
@@ -360,6 +372,12 @@ struct BluetoothQueue {
          * Poke the system to look at our queue, in case it's ready to
          * transmit immediately. Has no effect if this queue isn't
          * attached as the current TX pipe.
+         *
+         * This wakeup is only necessary when the queue transitions
+         * from empty to full, but we have no way of knowing for sure when
+         * this happens. If we see that the queue is non-empty when we
+         * commit(), there's no way to know that the system hasn't dequeued
+         * the packet during this function's execution.
          */
         _SYS_bt_queueWriteHint();
     }
