@@ -31,6 +31,7 @@ HW_VERSIONS = {2:"BOARD_TC_MASTER_REV2", 4:"BOARD_TC_MASTER_REV3"}
 def check_and_mkdir(path):
     # ensure our destination exists
     try:
+        print "#### Making directory: %s" % path
         os.mkdir(path)
     except:
         pass
@@ -38,6 +39,7 @@ def check_and_mkdir(path):
 def check_remove_and_mkdir(path):
 
     try:
+        print "#### Emptying directory: %s" % path
         os.stat(path)
         shutil.rmtree(path)
     except:
@@ -211,7 +213,7 @@ def run(secondary_path, launcher_build_status):
 
 if __name__ == '__main__':
 
-    if len(sys.argv) > 3:
+    if len(sys.argv) > 5 or len(sys.argv) < 2:
         print >> sys.stderr, "usage: python master_binary_blob_gen.py --secondary-path <secondary path> --with-launcher"
         sys.exit(1)
 
