@@ -411,6 +411,22 @@ namespace Events {
     /// A filesystem Volume was committed and is now available to read
     const EventVector<_SYS_BASE_VOLUME_COMMIT>  volumeCommit;
 
+    /*
+     * Bluetooth events
+     */
+
+    /// A mobile device has established a connection with the Sifteo Bluetooth API
+    const EventVector<_SYS_BT_CONNECT>  bluetoothConnect;
+
+    /// A mobile device has disconnected from the Sifteo Bluetooth API
+    const EventVector<_SYS_BT_DISCONNECT>  bluetoothDisconnect;
+
+    /// Packets are available for reading on the current BluetoothPipe.
+    const EventVector<_SYS_BT_READ_AVAILABLE>  bluetoothReadAvailable;
+
+    /// Buffer space just became available for writing to the current BluetoothPipe.
+    const EventVector<_SYS_BT_WRITE_AVAILABLE>  bluetoothWriteAvailable;
+
 };  // namespace Events
 
 /**

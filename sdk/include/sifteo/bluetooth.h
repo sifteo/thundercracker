@@ -58,8 +58,8 @@ public:
      * Returns 'true' if the Base we're running on has firmware and
      * hardware that support Bluetooth. If not, returns 'false'.
      *
-     * Other Bluetooth functions must only be called if isAvailable() 
-     * returns 'true'.
+     * @warning Other Bluetooth functions must only be called if isAvailable() 
+     * returns 'true'!
      */
 
     static bool isAvailable()
@@ -69,6 +69,24 @@ public:
         }
 
         return _SYS_bt_isAvailable();
+    }
+
+    /**
+     * @brief Is a device currently connected via the Sifteo Bluetooth API?
+     *
+     * Returns 'true' if a device is connected right now, 'false' if not.
+     *
+     * To get notified when a connection is created or destroyed, you can
+     * attach handlers to Events::bluetoothConnect and Events::bluetoothDisconnect.
+     *
+     * @note If a new connection is created immediately after an old connection
+     *       is destroyed, you're still guaranteed to receive one Disconnect
+     *       and one Connect event, in that order.
+     */
+
+    static bool isConnected()
+    {
+        return _SYS_bt_isConnected();
     }
 
     /**
@@ -93,7 +111,8 @@ public:
      * with an empty or NULL buffer.
      */
 
-    static void advertiseState(const uint8_t *bytes, unsigned length) {
+    static void advertiseState(const uint8_t *bytes, unsigned length)
+    {
         _SYS_bt_advertiseState(bytes, length);
     };
 };
@@ -165,23 +184,279 @@ struct BluetoothPacket {
  * @brief A memory buffer which holds a queue of Bluetooth packets.
  *
  * This is a FIFO buffer which holds packets that the game has created
- * but is waiting to transmit, or packets which have been received but
- * not yet processed by the game.
+ * but is waiting to transmit, or packets which have been received by the
+ * system but not yet processed by the game.
+ *
+ * This is a single-producer single-consumer lock-free queue. Typically
+ * your application is either a producer or a consumer, communicating
+ * via this queue with system software that runs in the background.
  *
  * BluetoothQueues are templatized by buffer size. The system supports
- * buffers with between 1 and 256 packets of capacity.
+ * buffers with between 1 and 255 packets of capacity. You can pick a
+ * buffer size based on how many packets you expect may arrive between
+ * each opportunity you have to check on the queue. 
  */
 
-template < unsigned tSize >
+template < unsigned tCapacity >
 struct BluetoothQueue {
     struct SysType {
         _SYSBluetoothQueueHeader header;
-        _SYSBluetoothPacket packets[tSize];
+        _SYSBluetoothPacket packets[tCapacity + 1];
     } sys;
 
     // Implicit conversions
     operator _SYSBluetoothQueue* () { return reinterpret_cast<_SYSBluetoothQueue*>(&sys); }
     operator const _SYSBluetoothQueue* () const { return reinterpret_cast<const _SYSBluetoothQueue*>(&sys); }
+
+    /// Initializes this queue's header, and marks it as empty.
+    void clear()
+    {
+        unsigned lastIndex = tCapacity;
+
+        STATIC_ASSERT(sizeof sys.header == 4);
+        STATIC_ASSERT(lastIndex >= 1);
+        STATIC_ASSERT(lastIndex <= 255);
+
+        *reinterpret_cast<uint32_t*>(&sys.header) = lastIndex << 16;
+
+        ASSERT(sys.header.head == 0);
+        ASSERT(sys.header.tail == 0);
+        ASSERT(sys.header.last == lastIndex);
+    }
+
+    /**
+     * @brief How many packets are sitting in the queue right now?
+     *
+     * Note that the system and your application may be updating the queue
+     * concurrently. This is a single-producer single-consumer lock-free FIFO.
+     * If you're writing to the queue, you can be sure that the number of
+     * packets in the queue won't increase without your knowledge. Likewise,
+     * if you're the one reading from the queue, you can be sure that the number
+     * of packets won't decrease without your knowledge.
+     */
+    unsigned count()
+    {
+        unsigned size = tCapacity + 1;
+        unsigned head = sys.header.head;
+        unsigned tail = sys.header.tail;
+        ASSERT(head < size);
+        ASSERT(tail < size);
+        return (tail - head) % size;
+    }
+
+    /// How many packets are available to read from this queue right now?
+    unsigned readAvailable()
+    {
+        return count();
+    }
+
+    /// How many free buffers are available for writing right now?
+    unsigned writeAvailable()
+    {
+        return tCapacity - count();
+    }
+
+    /**
+     * @brief Read the oldest queued packet into a provided buffer.
+     *
+     * Must only be called if readAvailable() returns a nonzero value.
+     * If no packets are available, try again later or use an Event to
+     * get notified when Bluetooth data arrives.
+     *
+     * This function copies the data. To read data without copying,
+     * use peek() and pop().
+     */
+    void read(BluetoothPacket &buffer)
+    {
+        buffer = peek();
+        pop();
+    }
+
+    /**
+     * @brief Access the oldest queued packet without copying it.
+     *
+     * Must only be called if readAvailable() returns a nonzero value.
+     * If no packets are available, try again later or use an Event to
+     * get notified when Bluetooth data arrives.
+     *
+     * This returns a reference to the oldest queued packet in the
+     * buffer. This can be used to inspect a packet before read()'ing it,
+     * or as a zero-copy alternative to read().
+     */
+    const BluetoothPacket &peek() const
+    {
+        ASSERT(readAvailable() > 0);
+        unsigned head = sys.header.head;
+        ASSERT(head <= tCapacity);
+        return *reinterpret_cast<const BluetoothPacket *>(&sys.packets[head]);
+    }
+
+    /**
+     * @brief Dequeue the oldest packet.
+     *
+     * This can be called after peek() to remove the packet from our queue.
+     * Must only be called if readAvailable() returns a nonzero value.
+     */
+    void pop()
+    {
+        ASSERT(readAvailable() > 0);
+        unsigned head = sys.header.head + 1;
+        if (head > tCapacity)
+            head = 0;
+        sys.header.head = head;
+    }
+
+    /**
+     * @brief Copy a new packet into the queue, from a provided buffer.
+     *
+     * Must only be called if writeAvailable() returns a nonzero value.
+     * If there's no space in the buffer, try again later or use an Event
+     * to get notified when more space is available.
+     *
+     * This function copies the data. To write data without copying,
+     * use reserve() and commit().
+     */
+    void write(const BluetoothPacket &buffer)
+    {
+        reserve() = buffer;
+        commit();
+    }
+
+    /**
+     * @brief Access a buffer slot where a new packet can be written.
+     *
+     * Must only be calld if writeAvailable() returns a nonzero value.
+     * If there's no space in the buffer, try again later or use an Event
+     * to get notified when more space is available.
+     *
+     * This "reserves" space for a new packet, and returns a reference
+     * to that space. This doesn't actually affect the state of the queue
+     * until commit(), at which point the written packet becomes visible
+     * to consumers.
+     */
+    BluetoothPacket &reserve()
+    {
+        ASSERT(writeAvailable() > 0);
+        unsigned tail = sys.header.tail;
+        ASSERT(tail <= tCapacity);
+        return *reinterpret_cast<BluetoothPacket *>(&sys.packets[tail]);
+    }
+
+    /**
+     * @brief Finish writing a packet that was started with reserve()
+     *
+     * When this function finishes, the new packet will be visible to
+     * consumers on this queue.
+     */
+    void commit()
+    {
+        ASSERT(writeAvailable() > 0);
+        unsigned tail = sys.header.tail + 1;
+        if (tail > tCapacity)
+            tail = 0;
+        sys.header.tail = tail;
+
+        /*
+         * Poke the system to look at our queue, in case it's ready to
+         * transmit immediately. Has no effect if this queue isn't
+         * attached as the current TX pipe.
+         */
+        _SYS_bt_queueWriteHint();
+    }
+};
+
+
+/**
+ * @brief A memory buffer for bidirectional Bluetooth communications.
+ *
+ * This is a pair of FIFO buffers which can be used for bidirectional
+ * communication over Bluetooth. When the pipe is "attached", this
+ * Base becomes available to send and receive application-specific
+ * packets over Bluetooth.
+ *
+ * When the pipe is not attached or no pipe has been allocated,
+ * the Sifteo Bluetooth API will throw an error if application-specific
+ * packets are sent. However the Bluetooth API provides generic functionality
+ * which can be used even without a BluetoothPipe.
+ *
+ * Some applications may desire lower-level access to the data queues
+ * we use. Those applications may access 'sendQueue' and 'receiveQueue'
+ * directly, and use the methods on those BluetoothQueue objects.
+ *
+ * Applications that do not need this level of control can use the
+ * read() and write() methods on this object directly.
+ */
+
+template < unsigned tSendCapacity = 4, unsigned tReceiveCapacity = 4 >
+struct BluetoothPipe {
+
+    /// Queue for packets we're waiting to send.
+    BluetoothQueue< tSendCapacity > sendQueue;
+
+    /// Queue for packets that have been received but not yet processed.
+    BluetoothQueue< tReceiveCapacity > receiveQueue;
+
+    /**
+     * @brief Attach this pipe to the system.
+     *
+     * When a pipe is "attached", the system will write incoming packets
+     * to our receiveQueue and it will be looking for transmittable packets
+     * in our sendQueue.
+     *
+     * This buffer must stay allocated as long as it's attached to the system.
+     * If you plan on recycling or freeing this memory, make sure to detach()
+     * it first.
+     *
+     * If there was already a different pipe attached, this one replaces it.
+     * The previous pipe is automatically detached.
+     */
+    void attach() {
+        _SYS_bt_setPipe(sendQueue, receiveQueue);
+    }
+
+    /**
+     * @brief Detach all pipes from the system.
+     *
+     * After this call, the Sifteo Bluetooth API will throw an error if
+     * application-specific packets are sent to us. The BluetoothPipe
+     * may be recycled or freed.
+     */
+    void detach() {
+        _SYS_bt_setPipe(0, 0);
+    }
+
+    /**
+     * @brief Write one packet to the send queue, if space is available.
+     *
+     * This copies the provided packet into our send queue and returns
+     * 'true' if space is available. If the queue is full, returns 'false'.
+     *
+     * For more detailed control over the queue, see the methods on
+     * our 'sendQueue' member.
+     */
+    bool write(const BluetoothPacket &buffer)
+    {
+        if (sendQueue.writeAvailable()) {
+            sendQueue.write(buffer);
+            return true;
+        }
+        return false;
+    }
+
+    /**
+     * @brief If a packet is available in the queue, read it.
+     *
+     * If a packet is available, copies it to 'buffer' and returns 'true'.
+     * If no packets are waiting, returns 'false'.
+     */
+    bool read(BluetoothPacket &buffer)
+    {
+        if (receiveQueue.readAvailable()) {
+            receiveQueue.read(buffer);
+            return true;
+        }
+        return false;
+    }
 };
 
 

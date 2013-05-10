@@ -222,15 +222,15 @@ struct _SYSBluetoothPacket {
 };
 
 struct _SYSBluetoothQueueHeader {
+    uint8_t head;               /// Index of the first full slot to read from
     uint8_t tail;               /// Index of the next empty slot to write into
-    uint8_t last;               /// Index of last buffer slot. If tail > size, tail wraps to 0
-    uint8_t rate;               /// Requested capture rate, in timestamp units per sample
+    uint8_t last;               /// Index of last buffer slot. If head/tail > last, wraps to 0
     uint8_t reserved;           /// Initialize to zero
     // Followed by variable-size array of _SYSBluetoothPacket
 };
 
 struct _SYSBluetoothQueue {
-    struct _SYSMotionBufferHeader header;
+    struct _SYSBluetoothQueueHeader header;
     struct _SYSBluetoothPacket packets[_SYS_BT_MAX_QUEUED_PACKETS];
 };
 
