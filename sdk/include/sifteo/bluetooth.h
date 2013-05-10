@@ -379,6 +379,10 @@ struct BluetoothQueue {
  * packets are sent. However the Bluetooth API provides generic functionality
  * which can be used even without a BluetoothPipe.
  *
+ * If the BluetoothPipe's receiveQueue is full, the Sifteo Bluetooth API will
+ * not be allowed to transmit more packets until our receiveQueue has room.
+ * Packets will not be dropped if the buffer fills up.
+ *
  * Some applications may desire lower-level access to the data queues
  * we use. Those applications may access 'sendQueue' and 'receiveQueue'
  * directly, and use the methods on those BluetoothQueue objects.
