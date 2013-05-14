@@ -194,6 +194,10 @@ SVMTargetLowering::SVMTargetLowering(SVMTargetMachine &TM)
     // Stack
     setOperationAction(ISD::DYNAMIC_STACKALLOC, MVT::i32, Custom);
 
+    // llvm.trap() is inserted by some optimization passes, like
+    // SimplifyCFGPass. We convert it to a _SYS_abort() call.
+    setOperationAction(ISD::TRAP, MVT::Other, Legal);
+
     computeRegisterProperties();
 }
 

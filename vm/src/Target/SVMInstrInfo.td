@@ -91,6 +91,9 @@ let isCall = 1, Defs = [R0, R1] in {
     }
 }
 
+// Convert llvm.trap() to a _SYS_abort()
+def : Pat<(trap), (SYS64_CALL 0)>;
+
 /****************************************************************
  * Control Flow
  */
