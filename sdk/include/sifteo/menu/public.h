@@ -32,7 +32,7 @@ inline void Menu::init(VideoBuffer &vid, const MenuAssets *aAssets, MenuItem *aI
     items = aItems;
     assets = aAssets;
     changeState(MENU_STATE_START);
-    
+
     // initialize instance constants
     kHeaderHeight = 0;
     kFooterHeight = 0;
@@ -129,7 +129,7 @@ inline bool Menu::pollEvent(struct MenuEvent *ev)
     // Events not handled at this point are discarded
     ASSERT(currentEvent.type != MENU_PREPAINT);
     clearEvent();
-    
+
     /* state changes can happen in the default event handler which may dispatch
      * events (like MENU_STATE_STATIC -> MENU_STATE_FINISH dispatches a
      * MENU_PREPAINT).
@@ -233,7 +233,7 @@ inline void Menu::replaceIcon(uint8_t item, const AssetImage *icon, const AssetI
     if (label) {
         uint8_t currentItem = computeSelected();
         items[item].label = label;
-        
+
         if (kHeaderHeight && currentState == MENU_STATE_STATIC &&
             currentItem == item)
         {
@@ -284,12 +284,12 @@ inline void Menu::anchor(uint8_t item, bool hopUp, int8_t panTarget)
     ASSERT(item < numItems);
     startingItem = item;
     targetItem = panTarget;
-    
+
     if (hopUp) {
         position = stoppingPositionFor(startingItem);
         prev_ut = computeCurrentTile() + kNumTilesX;
         updateBG0();
-        
+
         changeState(MENU_STATE_HOP_UP);
     }
 }
@@ -298,6 +298,52 @@ inline MenuState Menu::getState()
 {
     return currentState;
 }
+
+inline bool Menu::isTilted()
+{
+    const float robustThreshold = kAccelThresholdOn * 1.3;
+    return (abs(accel.x) >= robustThreshold); // avoids accel. noise
+}
+
+inline bool Menu::isHorizontal()
+{
+    const float robustThreshold = kAccelThresholdOn * 0.3;
+    return (abs(accel.x) < robustThreshold); // avoids accel. noise
+}
+
+inline bool Menu::isAtEdge()
+{
+    uint8_t item = computeSelected();
+    return (item == 0 || item == numItems - 1);
+}
+
+inline bool Menu::isTiltingAtEdge()
+{
+    /*
+     * if we're tilting up against either the beginning or the end of the menu,
+     * there are no more items to navigate to.
+     */
+    uint8_t item = computeSelected();
+    int8_t direction = accel.x > 0 ? 1 : -1;
+
+    return ((direction < 0 && item == 0) ||
+            (direction > 0 && item == numItems - 1));
+}
+
+inline void Menu::setNumTips(uint8_t nt)
+{
+    ASSERT(nt >= 0);
+
+    numTips = nt;
+}
+
+inline int Menu::getCurrentTip()
+{
+    ASSERT(currentTip < numTips);
+
+    return currentTip;
+}
+
 
 /**
  * @} end addtogroup menu

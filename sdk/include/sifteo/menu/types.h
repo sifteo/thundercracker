@@ -117,7 +117,14 @@ class Menu {
     void setPeekTiles(uint8_t numTiles);
     void anchor(uint8_t item, bool hopUp = false, int8_t panTarget=-1);
     MenuState getState();
-    
+    bool isTilted();
+    bool isHorizontal();
+    bool isAtEdge();
+    bool isTiltingAtEdge();
+    void setNumTips(uint8_t nt);
+    int getCurrentTip();
+    void drawFooter(bool force = false);
+
     VideoBuffer *videoBuffer() const;
     CubeID cube() const;
 
@@ -230,7 +237,6 @@ class Menu {
     uint8_t computeSelected();
     void checkForPress();
     void drawColumn(int);
-    void drawFooter(bool force = false);
     int stoppingPositionFor(int);
     float velocityMultiplier();
     float maxVelocity();

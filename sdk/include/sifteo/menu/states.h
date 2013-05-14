@@ -175,22 +175,14 @@ inline void Menu::stateStatic()
 
 inline void Menu::transFromStatic()
 {
-    if (abs(accel.x) < kAccelThresholdOn)
+    if (abs(accel.x) < kAccelThresholdOn || isTiltingAtEdge()) {
         return;
-
-    /*
-     * if we're tilting up against either the beginning or the end of the menu,
-     * don't generate a new event - there are no more items to navigate to.
-     */
-    int8_t direction = accel.x > 0 ? 1 : -1;
-    if ((currentEvent.item == 0 && direction < 0) ||
-        (currentEvent.item == numItems - 1 && direction > 0))
-        return;
+    }
 
     changeState(MENU_STATE_TILTING);
 
     currentEvent.type = MENU_ITEM_DEPART;
-    currentEvent.direction = direction;
+    currentEvent.direction = accel.x > 0 ? 1 : -1;
 
     // hide header
     if (kHeaderHeight) {
