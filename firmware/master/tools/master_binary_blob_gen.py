@@ -143,7 +143,7 @@ def run(secondary_path, launcher_build_status):
     launcher_filename = "launcher_%s.elf" % (githash)
 
     #set the target filename
-    target_filename = "master_%s.sft" % (githash)
+    target_filename = "master_%s.usft" % (githash)
 
     # one time operations
     date = datetime.date.today().isoformat()
