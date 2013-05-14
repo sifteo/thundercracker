@@ -109,7 +109,7 @@ void MainMenu::run()
 
     // Start with the menu on no cube. We'll update this during the main loop.
     mainCube = CubeID();
-    
+
     if (Volume::previous() != Volume(0)) {
         // Find a default item, based on whatever volume was running last
         for (unsigned i = 0, e = items.count(); i != e; ++i) {
@@ -545,13 +545,69 @@ void MainMenu::updateSound()
         return;
 
     Sifteo::TimeDelta dt = Sifteo::SystemTime::now() - time;
+    static bool playedOnce = false;
+    const unsigned kGlitchThreshold = 500; // empirical
 
-    if (menu.getState() == MENU_STATE_TILTING) {
+    MenuState state = menu.getState();
+
+    if (state == MENU_STATE_TILTING) {
+        playedOnce = false; // reset to allow 2 consecutive edge warnings with no transition
         unsigned threshold = abs(Shared::video[mainCube].virtualAccel().x) > kFastClickAccelThreshold ? kClickSpeedNormal : kClickSpeedFast;
         if (dt.milliseconds() >= threshold) {
             time += dt;
             AudioChannel(kUIResponseSoundChannel).play(Sound_TiltClick);
         }
+    } else if (state == MENU_STATE_INERTIA) {
+        if (!playedOnce && menu.isAtEdge() && dt.milliseconds() >= kGlitchThreshold) {
+            time += dt; // avoid glitches
+            AudioChannel(kUIResponseSoundChannel).play(Sound_endTiltMenu);
+            playedOnce = true;
+        }
+    } else if (state == MENU_STATE_STATIC) {
+        if (menu.isTilted() && menu.isTiltingAtEdge()) {
+            if (!playedOnce && dt.milliseconds() >= kGlitchThreshold) {
+                time += dt; // avoid glitches
+                AudioChannel(kUIResponseSoundChannel).play(Sound_endTiltMenu);
+                playedOnce = true;
+            }
+        } else {
+            // hysteresis that forces to go horizontal before warning again
+            if (menu.isHorizontal()) {
+                playedOnce = false; // reset when cube is static and horizontal
+            }
+        }
+    }
+}
+
+void MainMenu::updateFooter(unsigned itemIndex)
+{
+    /*
+     * Hide the "press to select" footer tip when an item is not a game.
+     * (because it can't be selected)
+     */
+
+    const unsigned normalNumTips = 3;
+
+    // the last tip is normally followed by a NULL termination pointer
+    ASSERT(menuAssets.tips[normalNumTips] == NULL);
+
+    // can the current item be selected ?
+    // (the 2 last ones are not games: sifteo.com ad and battery menu)
+    if (itemIndex >= items.count() - 2) {
+
+        // did we reach the tip to skip ?
+        // (it's the last one, but the counter resets to 0 as soon as it's reached)
+        if (menu.getCurrentTip() == 0) {
+            // refresh the footer to skip it
+            menu.drawFooter(true);
+        }
+
+        // anyway we have to decrease the number of tips for the next loops
+        menu.setNumTips(normalNumTips - 1);
+
+    } else {
+        // restore the normal number of tips when we are on a selectable game
+        menu.setNumTips(normalNumTips);
     }
 }
 
@@ -677,6 +733,8 @@ void MainMenu::arriveItem(unsigned index)
     MainMenuItem *item = items[index];
     item->setMenuInfo(&menu, index);
     item->arrive();
+
+    updateFooter(index);
 }
 
 void MainMenu::departItem(unsigned index)
