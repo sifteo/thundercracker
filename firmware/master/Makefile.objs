@@ -6,6 +6,7 @@ OBJS_COMMON = \
     $(MASTER_DIR)/common/syscall_asset.o \
     $(MASTER_DIR)/common/syscall_audio.o \
     $(MASTER_DIR)/common/syscall_battery.o \
+    $(MASTER_DIR)/common/syscall_bluetooth.o \
     $(MASTER_DIR)/common/syscall_cube.o \
     $(MASTER_DIR)/common/syscall_filesystem.o \
     $(MASTER_DIR)/common/syscall_prng.o \
