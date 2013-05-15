@@ -112,6 +112,86 @@ struct EventVector {
 
 
 /**
+ * @brief Implementation for an event vector that takes no parameter
+ *
+ * The typical EventVector is for unary functions (not including context
+ * pointer). This class is for nullary functions, that is functions which
+ * do not take an event parameter.
+ *
+ * Instances of this template are found in the Events namespace.
+ * Typically you should not create instances of this object elsewhere.
+ */
+
+template <_SYSVectorID tID>
+struct NullaryEventVector {
+    NullaryEventVector() {}
+
+    /**
+     * @brief Disable this event vector.
+     *
+     * This acts like a no-op handler was
+     * registered, but of course it's more efficient than setting an
+     * actual no-op handler.
+     */
+    void unset() const {
+        _SYS_setVector(tID, 0, 0);
+    }
+
+    /**
+     * @brief Set this Vector to a function with context pointer
+     *
+     * Requires a closure consisting of an arbitrary
+     * pointer-sized context value, and a function pointer of the form:
+     *
+     *   void handler(ContextType c);
+     */
+    template <typename tContext>
+    void set(void (*handler)(tContext), tContext context) const {
+        _SYS_setVector(tID, (void*) handler, reinterpret_cast<void*>(context));
+    }
+
+    /**
+     * @brief Set this Vector to a bare function
+     *
+     * Set this event vector to a bare function which requires no context.
+     *
+     *   void handler();
+     */
+    void set(void (*handler)()) const {
+        _SYS_setVector(tID, (void*) handler, 0);
+    }
+
+    /**
+     * @brief Set this event vector to an instance method, given a class method
+     * pointer and an instance of that class.
+     */
+    template <typename tClass>
+    void set(void (tClass::*handler)(), tClass *cls) const {
+        union {
+            void *pVoid;
+            void (tClass::*pMethod)();
+        } u;
+        u.pMethod = handler;
+        _SYS_setVector(tID, u.pVoid, (void*) cls);
+    }
+
+    /**
+     * @brief Return the currently set handler function, as a void pointer.
+     */
+    void *handler() const {
+        return _SYS_getVectorHandler(tID);
+    }
+
+    /**
+     * @brief Return the currently set context object, as a void pointer.
+     */
+    void *context() const {
+        return _SYS_getVectorContext(tID);
+    }
+};
+
+
+/**
  * @brief Implementation for the `gameMenu` event vector.
  *
  * An instance of this class is found in the Events namespace.
@@ -416,16 +496,16 @@ namespace Events {
      */
 
     /// A mobile device has established a connection with the Sifteo Bluetooth API
-    const EventVector<_SYS_BT_CONNECT>  bluetoothConnect;
+    const NullaryEventVector<_SYS_BT_CONNECT>  bluetoothConnect;
 
     /// A mobile device has disconnected from the Sifteo Bluetooth API
-    const EventVector<_SYS_BT_DISCONNECT>  bluetoothDisconnect;
+    const NullaryEventVector<_SYS_BT_DISCONNECT>  bluetoothDisconnect;
 
     /// Packets are available for reading on the current BluetoothPipe.
-    const EventVector<_SYS_BT_READ_AVAILABLE>  bluetoothReadAvailable;
+    const NullaryEventVector<_SYS_BT_READ_AVAILABLE>  bluetoothReadAvailable;
 
     /// Buffer space just became available for writing to the current BluetoothPipe.
-    const EventVector<_SYS_BT_WRITE_AVAILABLE>  bluetoothWriteAvailable;
+    const NullaryEventVector<_SYS_BT_WRITE_AVAILABLE>  bluetoothWriteAvailable;
 
 };  // namespace Events
 

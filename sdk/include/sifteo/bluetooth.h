@@ -115,6 +115,20 @@ public:
     {
         _SYS_bt_advertiseState(bytes, length);
     };
+
+    /**
+     * @brief Template wrapper around advertiseState()
+     *
+     * This is a convenience wrapper around advertiseState(), for passing
+     * arbitrary C++ objects. The object is copied, and it does not need
+     * to be retained in memory by the caller.
+     */
+
+    template <typename T>
+    static void advertiseState(const T &object)
+    {
+        advertiseState(reinterpret_cast<const uint8_t*>(&object), sizeof object);
+    }
 };
 
 
