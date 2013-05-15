@@ -19,16 +19,16 @@ void PowerManager::batteryPowerOn()
      * user releases our home button, if we're on battery power,
      * so this runs during very early init.
      */
-#if BOARD != BOARD_TEST_JIG
+#if (BOARD != BOARD_TEST_JIG)
 
-#ifdef HAS_SINGLE_RAIL
+#if (BOARD >= BOARD_TC_MASTER_REV3)
     GPIOPin powerEnable = VCC30_ENABLE_GPIO;
 #else
     GPIOPin powerEnable = VCC20_ENABLE_GPIO;
 #endif
-
     powerEnable.setControl(GPIOPin::OUT_2MHZ);
     powerEnable.setHigh();
+
 #endif
 }
 
@@ -36,16 +36,16 @@ void PowerManager::batteryPowerOff()
 {
     // release the power supply enable
 
-#if BOARD != BOARD_TEST_JIG
+#if (BOARD != BOARD_TEST_JIG)
 
-#ifdef HAS_SINGLE_RAIL
+#if (BOARD >= BOARD_TC_MASTER_REV3)
     GPIOPin powerEnable = VCC30_ENABLE_GPIO;
 #else
     GPIOPin powerEnable = VCC20_ENABLE_GPIO;
 #endif
-
     powerEnable.setControl(GPIOPin::OUT_2MHZ);
     powerEnable.setLow();
+
 #endif
 }
 
@@ -91,13 +91,13 @@ void PowerManager::stop()
 
 /*
  * Other initializations that can happen after global ctors have run.
- *
- * Important: the flash LDO must get enabled before the 3v3 line, or we
- * risk bashing the flash IC with too much voltage.
  */
 void PowerManager::init()
 {
-#if BOARD != BOARD_TEST_JIG && !defined(HAS_SINGLE_RAIL)
+#if (BOARD >= BOARD_TC_MASTER_REV3) || (BOARD == BOARD_TEST_JIG)
+    //nothing special
+#else
+    // Must enable Flash LDO before 3v0 rail
     GPIOPin flashRegEnable = FLASH_REG_EN_GPIO;
     flashRegEnable.setControl(GPIOPin::OUT_2MHZ);
     flashRegEnable.setHigh();
@@ -161,17 +161,30 @@ void PowerManager::vbusDebounce()
     State s = state();
     if (s != lastState) {
         setState(s);
-#if !defined(BOOTLOADER) && (BOARD != BOARD_TEST_JIG)
-        if (s == UsbPwr) {
-            Radio::onTransitionToUsbPower();
-        }
-#endif
     }
 }
 
 void PowerManager::setState(State s)
 {
-#if (BOARD >= BOARD_TC_MASTER_REV2) && (!defined(HAS_SINGLE_RAIL)) && (BOARD != BOARD_TEST_JIG)
+#if defined(BOOTLOADER) || (BOARD == BOARD_TEST_JIG)
+    // unconditionally initialize USB
+    UsbDevice::init();
+
+#elif (BOARD >= BOARD_TC_MASTER_REV3)
+    // unconditionally keep the battery power on.
+    batteryPowerOn();
+
+    switch(s) {
+    case BatteryPwr:
+        UsbDevice::deinit();
+        break;
+
+    case UsbPwr:
+        UsbDevice::init();
+        break;
+    }
+
+#elif (BOARD >= BOARD_TC_MASTER_REV2)
     GPIOPin vcc3v3 = VCC33_ENABLE_GPIO;
 
     switch (s) {
@@ -185,22 +198,9 @@ void PowerManager::setState(State s)
         vcc3v3.setHigh();
         UsbDevice::init();
         batteryPowerOff();
+        Radio::onTransitionToUsbPower();
         break;
-    }
-#elif defined HAS_SINGLE_RAIL
-
-    // unconditionally keep the power on.
-    batteryPowerOn();
-
-    switch(s) {
-    case BatteryPwr:
-        UsbDevice::deinit();
-        break;
-
-    case UsbPwr:
-        UsbDevice::init();
-        break;
-    }
+    }    
 #endif
 
     lastState = s;
