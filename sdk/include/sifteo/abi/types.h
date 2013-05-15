@@ -168,7 +168,7 @@ struct _SYSPseudoRandomState {
 
 #define _SYS_FEATURE_SYS_VERSION    (1 << 0)
 #define _SYS_FEATURE_BLUETOOTH      (1 << 1)
-#define _SYS_FEATURE_ALL            (_SYS_FEATURE_SYS_VERSION)
+#define _SYS_FEATURE_ALL            (_SYS_FEATURE_SYS_VERSION | _SYS_FEATURE_BLUETOOTH)
 
 /*
  * Hardware IDs are 64-bit numbers that uniquely identify a
