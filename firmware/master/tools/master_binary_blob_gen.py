@@ -143,7 +143,7 @@ def run(secondary_path, launcher_build_status):
     launcher_filename = "launcher_%s.elf" % (githash)
 
     #set the target filename
-    target_filename = "master_%s.sft" % (githash)
+    target_filename = "master_%s.usft" % (githash)
 
     # one time operations
     date = datetime.date.today().isoformat()
@@ -213,8 +213,10 @@ def run(secondary_path, launcher_build_status):
 
 if __name__ == '__main__':
 
+    usage = "usage: python master_binary_blob_gen.py --secondary-path <secondary path> --with-launcher --help"
+
     if len(sys.argv) > 5 or len(sys.argv) < 2:
-        print >> sys.stderr, "usage: python master_binary_blob_gen.py --secondary-path <secondary path> --with-launcher"
+        print >> sys.stderr, usage
         sys.exit(1)
 
     secondary_path = False
@@ -225,5 +227,8 @@ if __name__ == '__main__':
             with_launcher = True
         elif arg == "--secondary-path":
             secondary_path = sys.argv[idx+1]
+        elif arg == "--help":
+            print >> sys.stderr, usage
+            sys.exit(1)
 
     run(secondary_path, with_launcher)

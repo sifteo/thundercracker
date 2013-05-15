@@ -65,7 +65,7 @@ bool Inspect::inspect(const char *path)
     // Number of assets slots used
     uint32_t aslotsLen;
     uint8_t *aslots = dbgInfo.metadata(_SYS_METADATA_NUM_ASLOTS, aslotsLen);
-    unsigned numslots = (aslots && aslotsLen == 1) ? *aslots : 0;
+    unsigned numslots = (aslots && aslotsLen >= 1) ? *aslots : 0;
     table.cell() << "asset slots:";
     table.cell() << numslots;
     table.endRow();
