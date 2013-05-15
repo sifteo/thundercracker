@@ -15,6 +15,7 @@ class TestJig
 public:
 
     enum TestJigEventId {
+        I2CTimeout          = 99,
         EventAckPacket      = 100,
         EventNeighbor       = 101
     };
@@ -90,6 +91,11 @@ private:
         volatile int remaining;
         uint8_t *ptr;
         uint8_t data[64];
+
+        void ALWAYS_INLINE reset() {
+            remaining = 0;
+            ptr = data;
+        }
     };
 
     static AckPacket ackPacket;
