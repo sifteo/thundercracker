@@ -47,6 +47,10 @@ public:
         }
     }
 
+    static void onBleEcho(bool matched) {
+        bleEchoResult = matched ? 1 : 0;
+    }
+
 private:
 
     struct UartCommand {
@@ -77,6 +81,7 @@ private:
     static RadioAddress rfTestAddr;
     static uint8_t rfTestAddrPrimaryChannel;
     static uint8_t rfTestCubeVersion;
+    static volatile uint8_t bleEchoResult;
 
     static const uint8_t RF_TEST_BYTE = 0x11;
 
@@ -98,8 +103,9 @@ private:
     static void bootloadRequestHandler(uint8_t argc, const uint8_t *args);
     static void rfPacketTestHandler(uint8_t argc, const uint8_t *args);
     static void rebootRequestHandler(uint8_t argc, const uint8_t *args);
-    static void rtcTestHandler(uint8_t argc, const uint8_t *args);
     static void getFirmwareVersion(uint8_t argc, const uint8_t *args);
+    static void rtcTestHandler(uint8_t argc, const uint8_t *args);
+    static void bleCommsHandler(uint8_t argc, const uint8_t *args);
 };
 
 #endif // FACTORYTEST_H

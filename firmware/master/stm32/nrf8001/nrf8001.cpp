@@ -13,6 +13,7 @@
 #include "board.h"
 #include "sampleprofiler.h"
 #include "systime.h"
+#include "factorytest.h"
 
 /*
  * Hardware instance
@@ -47,9 +48,23 @@ namespace SysCS {
         RadioReset,
         InitSysVersion,
         ChangeTimingRequest,
+        Test,
+        Echo
     };
 }
 
+namespace Test {
+    enum TestState {
+        None,
+        Reset,
+        BeginTest
+    };
+
+    static const uint8_t echoData[] = {
+        0x01, 0x02, 0x03, 0x04, 0x05,
+        0x06, 0x07, 0x08, 0x09, 0x0a,
+    };
+}
 
 void NRF8001::init()
 {
@@ -67,6 +82,7 @@ void NRF8001::init()
     dataCredits = 0;
     sysCommandState = SysCS::RadioReset;
     sysCommandPending = false;
+    testState = Test::None;
 
     // Output pin, requesting a transaction
     reqn.setHigh();
@@ -148,6 +164,19 @@ void NRF8001::isr()
     }
 
     SampleProfiler::setSubsystem(s);
+}
+
+void NRF8001::test()
+{
+    /*
+     * A request to enter test mode.
+     *
+     * Set the command state to enter Test mode at the next opportunity.
+     * Testing continues as each step completes.
+     */
+
+    testState = Test::Reset;
+    requestTransaction();
 }
 
 void NRF8001::staticSpiCompletionHandler()
@@ -247,6 +276,10 @@ void NRF8001::produceCommand()
 
 bool NRF8001::produceSystemCommand()
 {
+    if (testState == Test::Reset) {
+        sysCommandState = SysCS::RadioReset;
+    }
+
     switch (sysCommandState) {
 
         default:
@@ -264,7 +297,12 @@ bool NRF8001::produceSystemCommand()
 
             txBuffer.length = 1;
             txBuffer.command = Op::RadioReset;
-            sysCommandState = SysCS::SetupFirst;
+            if (testState == Test::Reset) {
+                sysCommandState = SysCS::Test;
+                testState = Test::BeginTest;
+            } else {
+                sysCommandState = SysCS::SetupFirst;
+            }
             dataCredits = 0;
             return true;
         }
@@ -368,6 +406,22 @@ bool NRF8001::produceSystemCommand()
             sysCommandState = SysCS::Idle;
             return true;
         }
+
+        case SysCS::Test: {
+            txBuffer.length = 2;
+            txBuffer.command = Op::Test;
+            txBuffer.param[0] = 0x02;       // Enable DTB over ACI
+            sysCommandState = SysCS::Echo;  // send an echo as the first step of our test
+            return true;
+        }
+
+        case SysCS::Echo: {
+            txBuffer.length = 1 + sizeof(Test::echoData);
+            txBuffer.command = Op::Echo;
+            memcpy(txBuffer.param, Test::echoData, sizeof Test::echoData);
+            sysCommandState = SysCS::Idle;
+            return true;
+        }
     }
 }
 
@@ -410,8 +464,31 @@ void NRF8001::handleEvent()
             dataCredits = rxBuffer.param[2];
 
             if (mode == OperatingMode::Standby && sysCommandState == SysCS::Idle) {
-                // Start sending local data
-                sysCommandState = SysCS::InitSysVersion;
+
+                /*
+                 * We can only enter Test mode from Standby mode, but in normal
+                 * operation we transition immediately from Standby to Active mode by
+                 * sending an Op::Connect.
+                 *
+                 * To get back to Standby, we issue a RadioReset since Op::Disconnect
+                 * fails if we're not yet connected to a host. Check here to see
+                 * whether we're re-entering Standby on our way to Test mode,
+                 * or simply as part of our normal start procedure.
+                 */
+
+                if (testState == Test::BeginTest) {
+                    sysCommandState = SysCS::Test;
+                    testState = Test::None;
+                } else {
+                    // Start sending local data
+                    sysCommandState = SysCS::InitSysVersion;
+                }
+                requestTransaction();
+
+            } else if (mode == OperatingMode::Test) {
+                // Op::Test doesn't get a CommandResponseEvent,
+                // so must clear sysCommandPending explicitly
+                sysCommandPending = false;
                 requestTransaction();
             }
             return;
@@ -495,6 +572,19 @@ void NRF8001::handleEvent()
 
             dataCredits += rxBuffer.param[0];
             requestTransaction();
+            return;
+        }
+
+        case Op::EchoEvent: {
+            /*
+             * During testing, we send some echo data to verify we can communicate
+             * successfully with the 8001.
+             */
+
+            bool matched = (rxBuffer.length - 1 == sizeof(Test::echoData) &&
+                            memcmp(rxBuffer.param, Test::echoData, sizeof(Test::echoData)) == 0);
+            FactoryTest::onBleEcho(matched);
+
             return;
         }
     }

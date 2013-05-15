@@ -32,6 +32,8 @@ public:
     void init();
     void isr();
 
+    void test();
+
 private:
     struct ACICommandBuffer {
         uint8_t length;
@@ -59,6 +61,7 @@ private:
     bool requestsPending;        // Need at least one more request after the current one finishes
     uint8_t sysCommandState;     // produceSysteCommand() state machine
     uint8_t sysCommandPending;   // Are we waiting on a response to a command?
+    uint8_t testState;           // Track our progress getting into Test mode
     uint8_t dataCredits;         // Number of data packets we're allowed to send
     uint8_t openPipes;           // First 8 bits of the nRF8001's open pipes bitmap
 
