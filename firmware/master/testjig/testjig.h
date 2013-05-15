@@ -15,9 +15,9 @@ class TestJig
 public:
 
     enum TestJigEventId {
-        I2CTimeout          = 99,
         EventAckPacket      = 100,
-        EventNeighbor       = 101
+        EventNeighbor       = 101,
+        I2CTimeout          = 102
     };
 
     static void init();
