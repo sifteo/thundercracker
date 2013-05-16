@@ -204,8 +204,13 @@ void NRF8001::onSpiComplete()
     reqn.setHigh();
 
     // Handle the event we received, if any.
-    // This also may call requestTransaction() to keep the cycle going.
+    // This may specify the next sysCommandState,
+    // in which case we want to keep the cycle going.
     handleEvent();
+    if (sysCommandState != SysCS::Idle) {
+        // More work to do, ask for another transaction.
+        requestTransaction();
+    }
 
     // Start the next pending transaction, if any. (Serialized by requestTransaction)
     if (requestsPending) {
@@ -483,10 +488,6 @@ void NRF8001::handleEvent()
 
             sysCommandPending = false;
             handleCommandStatus(rxBuffer.param[0], rxBuffer.param[1]);
-            if (sysCommandState != SysCS::Idle) {
-                // More work to do, ask for another transaction.
-                requestTransaction();
-            }
             return;
         }
 
@@ -525,13 +526,9 @@ void NRF8001::handleEvent()
                 }
             }
 
-            // Op::Test doesn't get a CommandResponseEvent,
-            // so must clear sysCommandPending explicitly
+            // DeviceStartedEvent can be in response to Op::Test,
+            // so we must clear sysCommandPending explicitly
             sysCommandPending = false;
-            if (sysCommandState != SysCS::Idle) {
-                // More work to do, ask for another transaction.
-                requestTransaction();
-            }
             return;
         }
 
@@ -555,7 +552,6 @@ void NRF8001::handleEvent()
 
             sysCommandState = SysCS::BeginConnect;
             openPipes = 0;
-            requestTransaction();
             BTProtocolHandler::onDisconnect();
             return;
         }
@@ -580,7 +576,6 @@ void NRF8001::handleEvent()
              */
 
              openPipes = rxBuffer.param[0];     // Just the LSB of the 'opened' bitmap.
-             requestTransaction();
              return;
         }
 
@@ -612,7 +607,6 @@ void NRF8001::handleEvent()
              */
 
             dataCredits += rxBuffer.param[0];
-            requestTransaction();
             return;
         }
 
@@ -620,15 +614,15 @@ void NRF8001::handleEvent()
             /*
              * During testing, we send some echo data to verify we can communicate
              * successfully with the 8001.
+             *
+             * Op::Echo doesn't get a CommandResponseEvent,
+             * so must clear sysCommandPending explicitly
              */
 
             bool matched = (rxBuffer.length - 1 == sizeof(Test::echoData) &&
                             memcmp(rxBuffer.param, Test::echoData, sizeof(Test::echoData)) == 0);
             FactoryTest::onBtlePhaseComplete(ACI_STATUS_SUCCESS, matched);
-            // Op::Echo doesn't get a CommandResponseEvent,
-            // so must clear sysCommandPending explicitly
             sysCommandPending = false;
-            requestTransaction();
             return;
         }
     }
