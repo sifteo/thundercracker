@@ -248,7 +248,7 @@ struct BluetoothQueue {
      * if you're the one reading from the queue, you can be sure that the number
      * of packets won't decrease without your knowledge.
      */
-    unsigned count()
+    unsigned count() const
     {
         unsigned size = tCapacity + 1;
         unsigned head = sys.header.head;
@@ -259,13 +259,13 @@ struct BluetoothQueue {
     }
 
     /// How many packets are available to read from this queue right now?
-    unsigned readAvailable()
+    unsigned readAvailable() const
     {
         return count();
     }
 
     /// How many free buffers are available for writing right now?
-    unsigned writeAvailable()
+    unsigned writeAvailable() const
     {
         return tCapacity - count();
     }
@@ -492,6 +492,18 @@ struct BluetoothPipe {
             return true;
         }
         return false;
+    }
+
+    /// How many packets are available to read from this queue right now?
+    unsigned readAvailable() const
+    {
+        return receiveQueue.readAvailable();
+    }
+
+    /// How many free buffers are available for writing right now?
+    unsigned writeAvailable() const
+    {
+        return sendQueue.writeAvailable();
     }
 };
 
