@@ -47,8 +47,10 @@ public:
         }
     }
 
-    static void onBleEcho(bool matched) {
-        bleEchoResult = matched ? 1 : 0;
+    static void onBtlePhaseComplete(uint8_t status, uint16_t response) {
+        btleTest.status = status;
+        btleTest.result = response;
+        btleTest.inProgress = 0;
     }
 
 private:
@@ -73,15 +75,20 @@ private:
             return buf[UART_CMD_INDEX];
         }
     };
-
     static UartCommand uartCommand;
+
+    struct BtleTest {
+        volatile uint8_t inProgress;
+        uint8_t status;
+        uint16_t result;
+    };
+    static BtleTest btleTest;
 
     static volatile uint16_t rfTransmissionsRemaining;
     static uint16_t rfSuccessCount;
     static RadioAddress rfTestAddr;
     static uint8_t rfTestAddrPrimaryChannel;
     static uint8_t rfTestCubeVersion;
-    static volatile uint8_t bleEchoResult;
 
     static const uint8_t RF_TEST_BYTE = 0x11;
 

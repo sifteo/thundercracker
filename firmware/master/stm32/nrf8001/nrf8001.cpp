@@ -166,7 +166,7 @@ void NRF8001::isr()
     SampleProfiler::setSubsystem(s);
 }
 
-void NRF8001::test()
+void NRF8001::test(unsigned phase)
 {
     /*
      * A request to enter test mode.
@@ -175,7 +175,7 @@ void NRF8001::test()
      * Testing continues as each step completes.
      */
 
-    testState = Test::Reset;
+    testState = phase;
     requestTransaction();
 }
 
@@ -583,8 +583,11 @@ void NRF8001::handleEvent()
 
             bool matched = (rxBuffer.length - 1 == sizeof(Test::echoData) &&
                             memcmp(rxBuffer.param, Test::echoData, sizeof(Test::echoData)) == 0);
-            FactoryTest::onBleEcho(matched);
-
+            FactoryTest::onBtlePhaseComplete(ACI_STATUS_SUCCESS, matched);
+            // Op::Echo doesn't get a CommandResponseEvent,
+            // so must clear sysCommandPending explicitly
+            sysCommandPending = false;
+            requestTransaction();
             return;
         }
     }

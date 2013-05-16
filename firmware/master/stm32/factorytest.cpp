@@ -27,12 +27,13 @@ extern unsigned     __data_start;
 
 FactoryTest::UartCommand FactoryTest::uartCommand;
 
+FactoryTest::BtleTest FactoryTest::btleTest;
+
 uint16_t FactoryTest::rfSuccessCount;
 volatile uint16_t FactoryTest::rfTransmissionsRemaining;
 RadioAddress FactoryTest::rfTestAddr;
 uint8_t FactoryTest::rfTestAddrPrimaryChannel;
 uint8_t FactoryTest::rfTestCubeVersion;
-volatile uint8_t FactoryTest::bleEchoResult;
 
 FactoryTest::TestHandler const FactoryTest::handlers[] = {
     nrfCommsHandler,            // 0
@@ -447,19 +448,26 @@ void FactoryTest::getFirmwareVersion(uint8_t argc, const uint8_t *args)
     UsbDevice::write(response, sz+1);
 }
 
+/*
+ *  args[1] -- NRF8001::TestPhase to enter
+ */
 void FactoryTest::bleCommsHandler(uint8_t argc, const uint8_t *args)
 {
-    bleEchoResult = 0xff;
+    btleTest.inProgress = 1;
+    uint8_t phase = args[1];
 
 #ifdef HAVE_NRF8001
-    NRF8001::instance.test();
+    NRF8001::instance.test(phase);
 
-    while (bleEchoResult == 0xff) {
+    while (btleTest.inProgress) {
         Tasks::waitForInterrupt();
     }
 #endif
 
-    const uint8_t report[] = { args[0], bleEchoResult };
+    const uint8_t report[] = { args[0], phase,
+                               btleTest.status,
+                               btleTest.result & 0xff,
+                               (btleTest.result >> 8) & 0xff };
     UsbDevice::write(report, sizeof report);
 }
 
