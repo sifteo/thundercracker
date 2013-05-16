@@ -126,13 +126,10 @@ void NRF8001::isr()
 
         #ifdef TRACE
         if (txBuffer.length) {
-            UART("BT Cmd: ");
-            UART_HEX((txBuffer.command << 24) | txBuffer.length);
-            UART(" ");
-            UART_HEX(*(uint32_t*)&txBuffer.param[0]);
-            UART_HEX(*(uint32_t*)&txBuffer.param[4]);
-            UART_HEX(*(uint32_t*)&txBuffer.param[8]);
-            UART_HEX(*(uint32_t*)&txBuffer.param[12]);
+            UART("BT Cmd >");
+            Usart::Dbg.writeHex(txBuffer.command, 2);
+            Usart::Dbg.put(' ');
+            Usart::Dbg.writeHexBytes(txBuffer.param, txBuffer.length - 1);
             UART("\r\n");
         }
         #endif
@@ -160,13 +157,10 @@ void NRF8001::onSpiComplete()
 
     #ifdef TRACE
     if (rxBuffer.length) {
-        UART("BT Evt: ");
-        UART_HEX((rxBuffer.event << 24) | rxBuffer.length);
-        UART(" ");
-        UART_HEX(*(uint32_t*)&rxBuffer.param[0]);
-        UART_HEX(*(uint32_t*)&rxBuffer.param[4]);
-        UART_HEX(*(uint32_t*)&rxBuffer.param[8]);
-        UART_HEX(*(uint32_t*)&rxBuffer.param[12]);
+        UART("BT Evt <");
+        Usart::Dbg.writeHex(rxBuffer.event, 2);
+        Usart::Dbg.put(' ');
+        Usart::Dbg.writeHexBytes(rxBuffer.param, rxBuffer.length - 1);
         UART("\r\n");
     }
     #endif

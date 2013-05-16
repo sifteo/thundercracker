@@ -40,7 +40,8 @@ public:
 
     void write(const uint8_t* buf, int size);
     void write(const char* buf);
-    void writeHex(uint32_t value);
+    void writeHex(uint32_t value, unsigned numDigits = 8);
+    void writeHexBytes(const void *data, int size);
     void read(uint8_t *buf, int size);
 
     void writeDma(const uint8_t *buf, unsigned len);

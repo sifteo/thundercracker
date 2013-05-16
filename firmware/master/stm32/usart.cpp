@@ -181,14 +181,26 @@ void Usart::write(const char *buf)
         put(*buf++);
 }
 
-void Usart::writeHex(uint32_t value)
+void Usart::writeHex(uint32_t value, unsigned numDigits)
 {
-    static const char digits[] = "0123456789abcdef";
-    unsigned count = 8;
+    static const char lut[] = "0123456789abcdef";
 
-    while (count--) {
-        put(digits[value >> 28]);
+    // Left-justify
+    value <<= (8 - numDigits) << 2;
+
+    while (numDigits--) {
+        put(lut[value >> 28]);
         value <<= 4;
+    }
+}
+
+void Usart::writeHexBytes(const void *data, int size)
+{
+    const uint8_t *bytes = reinterpret_cast<const uint8_t *>(data);
+    while (size > 0) {
+        writeHex(*bytes, 2);
+        bytes++;
+        size--;
     }
 }
 
