@@ -95,6 +95,7 @@ private:
 
     // Mid-level ACI utilities
     void handleCommandStatus(unsigned command, unsigned status);
+    void handleDtmResponse(unsigned status, uint16_t response);
     bool produceSystemCommand();
 
     friend class BTProtocolHandler;
