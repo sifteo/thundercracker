@@ -125,6 +125,7 @@ void NRF8001::isr()
         produceCommand();
 
         #ifdef TRACE
+        if (txBuffer.length) {
             UART("BT Cmd: ");
             UART_HEX((txBuffer.command << 24) | txBuffer.length);
             UART(" ");
@@ -133,6 +134,7 @@ void NRF8001::isr()
             UART_HEX(*(uint32_t*)&txBuffer.param[8]);
             UART_HEX(*(uint32_t*)&txBuffer.param[12]);
             UART("\r\n");
+        }
         #endif
 
         // Fire off the asynchronous SPI transfer. We finish up in onSpiComplete().
@@ -157,14 +159,16 @@ void NRF8001::onSpiComplete()
     reqn.setHigh();
 
     #ifdef TRACE
+    if (rxBuffer.length) {
         UART("BT Evt: ");
-        UART_HEX((rxBuffer.event << 24) | txBuffer.length);
+        UART_HEX((rxBuffer.event << 24) | rxBuffer.length);
         UART(" ");
         UART_HEX(*(uint32_t*)&rxBuffer.param[0]);
         UART_HEX(*(uint32_t*)&rxBuffer.param[4]);
         UART_HEX(*(uint32_t*)&rxBuffer.param[8]);
         UART_HEX(*(uint32_t*)&rxBuffer.param[12]);
         UART("\r\n");
+    }
     #endif
 
     // Handle the event we received, if any.
@@ -508,7 +512,7 @@ void NRF8001::handleCommandStatus(unsigned command, unsigned status)
         #ifdef TRACE
             UART("BT Err: ");
             UART_HEX( (command << 24) | status );
-            UART("\r\n");
+            UART(" <---\r\n");
         #endif
 
         sysCommandState = SysCS::RadioReset;
