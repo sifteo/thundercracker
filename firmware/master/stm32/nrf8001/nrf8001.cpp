@@ -15,7 +15,7 @@
 #include "systime.h"
 
 #ifdef HAVE_NRF8001
-
+//#define TRACE
 
 /*
  * States for our produceSystemCommand() state machine.
@@ -124,6 +124,17 @@ void NRF8001::isr()
         // Populate the transmit buffer now, or set it empty if we have nothing to say.
         produceCommand();
 
+        #ifdef TRACE
+            UART("BT Cmd: ");
+            UART_HEX((txBuffer.command << 24) | txBuffer.length);
+            UART(" ");
+            UART_HEX(*(uint32_t*)&txBuffer.param[0]);
+            UART_HEX(*(uint32_t*)&txBuffer.param[4]);
+            UART_HEX(*(uint32_t*)&txBuffer.param[8]);
+            UART_HEX(*(uint32_t*)&txBuffer.param[12]);
+            UART("\r\n");
+        #endif
+
         // Fire off the asynchronous SPI transfer. We finish up in onSpiComplete().
         STATIC_ASSERT(sizeof txBuffer == sizeof rxBuffer);
         spi.transferDma((uint8_t*) &txBuffer, (uint8_t*) &rxBuffer, sizeof txBuffer);
@@ -144,6 +155,17 @@ void NRF8001::onSpiComplete()
 
     // Done with the transaction! End our SPI request.
     reqn.setHigh();
+
+    #ifdef TRACE
+        UART("BT Evt: ");
+        UART_HEX((rxBuffer.event << 24) | txBuffer.length);
+        UART(" ");
+        UART_HEX(*(uint32_t*)&rxBuffer.param[0]);
+        UART_HEX(*(uint32_t*)&rxBuffer.param[4]);
+        UART_HEX(*(uint32_t*)&rxBuffer.param[8]);
+        UART_HEX(*(uint32_t*)&rxBuffer.param[12]);
+        UART("\r\n");
+    #endif
 
     // Handle the event we received, if any.
     // This also may call requestTransaction() to keep the cycle going.
@@ -482,6 +504,13 @@ void NRF8001::handleCommandStatus(unsigned command, unsigned status)
         /*
          * An error occurred! For now, just try resetting as best we can...
          */
+
+        #ifdef TRACE
+            UART("BT Err: ");
+            UART_HEX( (command << 24) | status );
+            UART("\r\n");
+        #endif
+
         sysCommandState = SysCS::RadioReset;
     }
 }
