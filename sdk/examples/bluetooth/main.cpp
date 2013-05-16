@@ -12,8 +12,13 @@ Metadata M = Metadata()
     .icon(Icon)
     .cubeRange(1);
 
+/*
+ * When you allocate a BluetoothPipe you can optionally set the size of its transmit and receive queues.
+ * We use a minimum-size transmit queue to keep latency low, since we're transmitting continuously.
+ */
+BluetoothPipe <1,8> btPipe;
+
 VideoBuffer vid;
-BluetoothPipe<> btPipe;
 
 void onCubeTouch(void *, unsigned);
 void onConnect();
@@ -161,6 +166,7 @@ void onConnect()
 
     vid.bg0rom.text(vec(0,2), "   Connected!   ");
     vid.bg0rom.text(vec(0,3), "                ");
+    vid.bg0rom.text(vec(0,8), " Last received: ");
 
     // Start trying to write immediately
     Events::bluetoothWriteAvailable.set(onWriteAvailable);
@@ -189,17 +195,121 @@ void updatePacketCounts(int tx, int rx)
     txCount += tx;
     rxCount += rx;
 
-    String<16> str;
-    str << "TX: " << Fixed(txCount, 6) << "RX: " << Fixed(rxCount, 6);
-    vid.bg0rom.text(vec(0,5), str);
+    String<17> str;
+    str << "RX: " << rxCount;
+    vid.bg0rom.text(vec(1,6), str);
+
+    str.clear();
+    str << "TX: " << txCount;
+    vid.bg0rom.text(vec(1,5), str);
+}
+
+void packetHexDumpLine(const BluetoothPacket &packet, String<17> &str, unsigned index)
+{
+    str.clear();
+
+    // Write up to 8 characters
+    for (unsigned i = 0; i < 8; ++i, ++index) {
+        if (index < packet.size()) {
+            str << Hex(packet.bytes()[index], 2);
+        } else {
+            str << "  ";
+        }
+    }
 }
 
 void onReadAvailable()
 {
     LOG("onReadAvailable() called\n");
+
+    /*
+     * This is one way to read packets from the BluetoothPipe; using read(),
+     * and copying them into our own buffer. A faster but slightly more complex
+     * method would use peek() to access the next packet, and pop() to remove it.
+     */
+
+    BluetoothPacket packet;
+    while (btPipe.read(packet)) {
+
+        /*
+         * We received a packet over the Bluetooth link!
+         * Dump out its contents in hexadecimal, to the log and the display.
+         */
+
+        LOG("Received: %d bytes, type=%02x, data=%19h\n",
+            packet.size(), packet.type(), packet.bytes());
+
+        String<17> str;
+
+        str << "len=" << Hex(packet.size(), 2) << " type=" << Hex(packet.type(), 2);
+        vid.bg0rom.text(vec(1,10), str);
+
+        packetHexDumpLine(packet, str, 0);
+        vid.bg0rom.text(vec(0,12), str);
+
+        packetHexDumpLine(packet, str, 8);
+        vid.bg0rom.text(vec(0,13), str);
+
+        packetHexDumpLine(packet, str, 16);
+        vid.bg0rom.text(vec(0,14), str);
+
+        // Update our counters
+        updatePacketCounts(0, 1);
+    }
 }
 
 void onWriteAvailable()
 {
     LOG("onWriteAvailable() called\n");
+
+    /*
+     * This is one way to write packets to the BluetoothPipe; using reserve()
+     * and commit(). If you already have a buffer that you want to copy to the
+     * BluetoothPipe, you can use write().
+     */
+
+    while (Bluetooth::isConnected() && btPipe.writeAvailable()) {
+
+        /*
+         * Access some buffer space for writing the next packet. This
+         * is the zero-copy API for writing packets. Both reading and writing
+         * have a traditional (one copy) API and a zero-copy API.
+         */
+
+        BluetoothPacket &packet = btPipe.sendQueue.reserve();
+
+        /*
+         * Fill most of the packet with dummy data
+         */
+
+        // 7-bit type code, for our own application's use
+        packet.setType(0x5A);
+
+        packet.resize(packet.capacity());
+
+        for (unsigned i = 0; i < packet.capacity(); ++i) {
+            packet.bytes()[i] = 'a' + i;
+        }
+
+        /* 
+         * Fill the first 3 bytes with accelerometer data from Cube 0
+         */
+
+        Byte3 accel = vid.physicalAccel();
+
+        packet.bytes()[0] = accel.x;
+        packet.bytes()[1] = accel.y;
+        packet.bytes()[2] = accel.z;
+
+        /*
+         * Log the packet for debugging, and commit it to the FIFO.
+         * The system will asynchronously send it to our peer.
+         */
+
+        LOG("Sending: %d bytes, type=%02x, data=%19h\n",
+            packet.size(), packet.type(), packet.bytes());
+
+        btPipe.sendQueue.commit();
+        updatePacketCounts(1, 0);
+    }
 }
