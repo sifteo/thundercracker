@@ -74,7 +74,7 @@ private:
     void handleCommandStatus(unsigned command, unsigned status);
     bool produceSystemCommand();
 
-    friend class BTProtocolHandler;
+    friend class BTProtocolHardware;
 };
 
 #endif

@@ -14,26 +14,8 @@
 #include "sampleprofiler.h"
 #include "systime.h"
 
-/*
- * Hardware instance
- */
-
 #ifdef HAVE_NRF8001
 
-NRF8001 NRF8001::instance(NRF8001_REQN_GPIO,
-                          NRF8001_RDYN_GPIO,
-                          SPIMaster(&NRF8001_SPI,
-                                    NRF8001_SCK_GPIO,
-                                    NRF8001_MISO_GPIO,
-                                    NRF8001_MOSI_GPIO,
-                                    staticSpiCompletionHandler));
-
-IRQ_HANDLER ISR_FN(NRF8001_EXTI_VEC)()
-{
-    NRF8001::instance.isr();
-}
-
-#endif // HAVE_NRF8001
 
 /*
  * States for our produceSystemCommand() state machine.
@@ -189,7 +171,6 @@ void NRF8001::requestTransaction()
      * we start the transaction immediately by asserting REQN.
      */
 
-#ifdef HAVE_NRF8001
     // Critical section
     NVIC.irqDisable(IVT.NRF8001_EXTI_VEC);
     NVIC.irqDisable(IVT.NRF8001_DMA_CHAN_RX);
@@ -206,19 +187,6 @@ void NRF8001::requestTransaction()
     NVIC.irqEnable(IVT.NRF8001_EXTI_VEC);
     NVIC.irqEnable(IVT.NRF8001_DMA_CHAN_RX);
     NVIC.irqEnable(IVT.NRF8001_DMA_CHAN_TX);
-#endif //  HAVE_NRF8001
-}
-
-void BTProtocolHandler::requestProduceData()
-{
-    /*
-     * The BTProtocolHandler wants us to call onProduceData() at least once.
-     *
-     * If we request a transaction, this will happen. If we're currently blocked due
-     * to flow control, we'll end up requesting a transaction anyway when we get more tokens.
-     */
-
-    NRF8001::instance.requestTransaction();
 }
 
 void NRF8001::produceCommand()
@@ -229,9 +197,9 @@ void NRF8001::produceCommand()
         return;
     }
 
-    // If we can transmit, see if the BTPRotocolHandler wants to.
+    // If we can transmit, see if BTPRotocol wants to.
     if (dataCredits && (openPipes & (1 << PIPE_SIFTEO_BASE_DATA_IN_TX))) {
-        unsigned len = BTProtocolHandler::onProduceData(&txBuffer.param[1]);
+        unsigned len = BTProtocolCallbacks::onProduceData(&txBuffer.param[1]);
         if (len) {
             txBuffer.length = len + 2;
             txBuffer.command = Op::SendData;
@@ -419,14 +387,14 @@ void NRF8001::handleEvent()
 
         case Op::ConnectedEvent: {
             /*
-             * Established a connection! Notify the BTProtocolHandler.
+             * Established a connection! Notify the BTProtocol.
              *
              * Also, take this opportunity to see if we can get a faster
              * pipe by lowering the default connection interval.
              */
 
             sysCommandState = SysCS::ChangeTimingRequest;
-            BTProtocolHandler::onConnect();
+            BTProtocolCallbacks::onConnect();
             return;
         }
 
@@ -438,7 +406,7 @@ void NRF8001::handleEvent()
             sysCommandState = SysCS::BeginConnect;
             openPipes = 0;
             requestTransaction();
-            BTProtocolHandler::onDisconnect();
+            BTProtocolCallbacks::onDisconnect();
             return;
         }
 
@@ -480,7 +448,7 @@ void NRF8001::handleEvent()
             uint8_t pipe = rxBuffer.param[0];
 
             if (length > 0 && pipe == PIPE_SIFTEO_BASE_DATA_OUT_RX_ACK_AUTO) {
-                BTProtocolHandler::onReceiveData(&rxBuffer.param[1], length);
+                BTProtocolCallbacks::onReceiveData(&rxBuffer.param[1], length);
             }
             return;
         }
@@ -517,3 +485,5 @@ void NRF8001::handleCommandStatus(unsigned command, unsigned status)
         sysCommandState = SysCS::RadioReset;
     }
 }
+
+#endif //  HAVE_NRF8001
