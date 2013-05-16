@@ -29,7 +29,7 @@ static const Command commands[] = {
     {
         "delete",
         "delete data from the Sifteo Base",
-        "delete (--all | --sys | --reformat | <volumeID>)",
+        "delete (--all | --sys | --reformat | <pkg>)",
         Delete::run
     },
     {
@@ -77,7 +77,7 @@ static const Command commands[] = {
     {
         "savedata",
         "extract or restore an application's save data",
-        "savedata (extract <package> <fout> [--raw] | restore <fin>)",
+        "savedata (extract <package> <fout> [--raw] | restore <fin> | delete <pkg>)",
         SaveData::run
     },
     {

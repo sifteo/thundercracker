@@ -87,8 +87,6 @@
 #define LED_SEQUENCER_TIM   TIM6
 
 // P O W E R
-#define HAS_SINGLE_RAIL     // Manages changes in powermanager
-
 #define VCC30_ENABLE_GPIO   GPIOPin(&GPIOC, 0)
 
 // A U D I O

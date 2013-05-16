@@ -424,19 +424,19 @@ void TestJig::writeToCubeI2CHandler(uint8_t argc, uint8_t *args)
 {
     uint8_t transactionsWritten = 0;
 
-    SysTime::Ticks deadline = SysTime::ticks() + SysTime::msTicks(250);
+    SysTime::Ticks timeout = SysTime::ticks() + SysTime::msTicks(250);
+    while (cubeWrite.remaining > 0) {
+        if (SysTime::ticks() > timeout) {
 
-    while (cubeWrite.remaining > 0 && SysTime::ticks() < deadline)
-    ;
+            // Lets send an error to FAT if there is still data
+            // in the output buffer for I2C. Most likely b/c a cube
+            // is not connected!
 
-    // Lets send an error to FAT if there is still data
-    // in the output buffer for I2C. Most likely b/c a cube
-    // is not connected!
-    if(cubeWrite.remaining > 0){
-        cubeWrite.reset();
-        const uint8_t response[] = { I2CTimeout };
-        UsbDevice::write(response, sizeof response);
-        return;
+            cubeWrite.reset();
+            const uint8_t response[] = { I2CTimeout };
+            UsbDevice::write(response, sizeof response);
+            return;
+        }
     }
 
     // step past command

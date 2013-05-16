@@ -178,7 +178,7 @@ int main()
 
     BatteryLevel::init();
 
-#ifndef HAS_SINGLE_RAIL
+#if !(BOARD >= BOARD_TC_MASTER_REV3)
     if (PowerManager::state() == PowerManager::BatteryPwr) {
 #endif
 
@@ -200,7 +200,7 @@ int main()
                BatteryLevel::raw() == BatteryLevel::UNINITIALIZED)
             ;
 
-#ifndef HAS_SINGLE_RAIL
+#if !(BOARD >= BOARD_TC_MASTER_REV3)
     }
 #endif
 
