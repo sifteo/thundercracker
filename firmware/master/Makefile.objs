@@ -115,7 +115,8 @@ OBJS_STM32 = \
     $(MASTER_DIR)/stm32/syscall_math.stm32.o \
     $(MASTER_DIR)/stm32/batterylevel_adc.stm32.o \
     $(MASTER_DIR)/stm32/batterylevel_rc.stm32.o \
-    $(MASTER_DIR)/stm32/sysinfo.stm32.o
+    $(MASTER_DIR)/stm32/sysinfo.stm32.o \
+    $(MASTER_DIR)/stm32/bluetooth.stm32.o
 
 # Library code.
 #

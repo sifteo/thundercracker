@@ -20,7 +20,7 @@
  */
 
 /*
- * Any hardware-specific Bluetooth LE driver which backs the BTProtocolHandler
+ * Any hardware-specific Bluetooth LE driver which backs the BTProtocol layer
  * must implement a "Sifteo Base" GATT service with the following UUID:
  *
  * 566d0001-3c6f-8621-06d3-c14d4768bd75
@@ -38,24 +38,54 @@
  *    This equals the version returned by _SYS_version(), in little endian.
  */
 
-class BTProtocolHandler {
-public:
 
+/**
+ * Common BTProtocol object. Non-hardware-specific Bluetooth entry points,
+ * implemented by btprotocol.cpp
+ */
+
+class BTProtocol {
+public:
     static const unsigned MAX_DATA_LEN = 20;
 
-    // Event handlers. ISR context!
+    static bool isConnected() {
+        return instance.connected;
+    }
+
+private:
+    friend class BTProtocolCallbacks;
+    static BTProtocol instance;
+    bool connected;
+};
+
+
+/**
+ * Hardware-specific backend entry points. Callable on ISR or Task context.
+ */
+
+class BTProtocolHardware {
+public:
+    /// Is Bluetooth available?
+    static bool isAvailable();
+
+    /// Ask for onProduceData() to be invoked at least once.
+    static void requestProduceData();
+};
+
+
+/**
+ * BTProtocol callbacks, invoked by the hardware-specific backend.
+ * These event handlers run in ISR context.
+ */
+
+class BTProtocolCallbacks {
+public:
     static void onConnect();
     static void onDisconnect();
     static void onReceiveData(uint8_t *buffer, unsigned length);
     static unsigned onProduceData(uint8_t *buffer);
-
-    /*
-     * Implemented by hardware-specific code. May be called on ISR or Task context.
-     * This asks for onProduceData() to be invoked at least once.
-     */
-    static void requestProduceData();
-
 };
+
 
 #endif
 

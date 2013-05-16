@@ -6,47 +6,28 @@
 #include "btprotocol.h"
 #include "macros.h"
 
-// xxx testing only
-#include "homebutton.h"
-#include "cube.h"
+BTProtocol BTProtocol::instance;
 
 
-void BTProtocolHandler::onConnect()
+void BTProtocolCallbacks::onConnect()
+{
+    BTProtocol &instance = BTProtocol::instance;
+    instance.connected = true;
+}
+
+void BTProtocolCallbacks::onDisconnect()
+{
+    BTProtocol &instance = BTProtocol::instance;
+    instance.connected = false;
+}
+
+void BTProtocolCallbacks::onReceiveData(uint8_t *buffer, unsigned length)
 {
     // Implement me!
 }
 
-void BTProtocolHandler::onDisconnect()
+unsigned BTProtocolCallbacks::onProduceData(uint8_t *buffer)
 {
-    // Implement me!
-}
-
-void BTProtocolHandler::onReceiveData(uint8_t *buffer, unsigned length)
-{
-    // Implement me!
-}
-
-unsigned BTProtocolHandler::onProduceData(uint8_t *buffer)
-{
-    // XXX: For throughput testing, we always send as much data as we can.
-
-    for (unsigned i = 0; i < MAX_DATA_LEN; ++i) {
-        buffer[i] = i;
-    }
-
-    // To illustrate the latency we're getting, stuff home button status
-    // and Cube 0's accelerometer data in there too.
-
-    _SYSByte4 accel = CubeSlot::getInstance(0).getAccelState();
-    buffer[0] = HomeButton::isPressed();
-    buffer[10] = accel.x;
-    buffer[11] = accel.y;
-    buffer[12] = accel.z;
-
-    // We always have more data
-#ifndef SIFTEO_SIMULATOR    // BTLE not yet implemented in simulation
-    requestProduceData();
-#endif
-
-    return MAX_DATA_LEN;
+    // Implement me!    
+    return 0;
 }

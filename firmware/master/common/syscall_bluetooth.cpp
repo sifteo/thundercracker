@@ -8,17 +8,18 @@
  */
 
 #include <sifteo/abi.h>
+#include "btprotocol.h"
 
 extern "C" {
 
 uint32_t _SYS_bt_isAvailable()
 {
-    return true;
+    return BTProtocolHardware::isAvailable();
 }
 
 uint32_t _SYS_bt_isConnected()
 {
-    return true;
+    return BTProtocol::isConnected();
 }
 
 void _SYS_bt_advertiseState(const uint8_t *data, uint32_t length)
