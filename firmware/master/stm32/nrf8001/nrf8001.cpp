@@ -524,16 +524,23 @@ void NRF8001::handleEvent()
             return;
         }
 
-        case Op::ConnectedEvent: {
+        case Op::BondStatusEvent: {
             /*
-             * Established a connection! Notify the BTProtocol.
+             * Maybe we established a bonded connection! Notify the BTProtocol.
              *
              * Also, take this opportunity to see if we can get a faster
              * pipe by lowering the default connection interval.
+             *
+             * If the bonding failed, we'll also get a DisconnectedEvent,
+             * so we won't bother handling unsuccessful status events here.
              */
 
-            sysCommandState = SysCS::ChangeTimingRequest;
-            BTProtocolCallbacks::onConnect();
+            uint8_t status = rxBuffer.param[0];
+            if (status == 0x00) {
+                // Success
+                sysCommandState = SysCS::ChangeTimingRequest;
+                BTProtocolCallbacks::onConnect();
+            }
             return;
         }
 
