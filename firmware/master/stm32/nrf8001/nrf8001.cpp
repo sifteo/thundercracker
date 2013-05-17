@@ -16,7 +16,6 @@
 #include "factorytest.h"
 
 #ifdef HAVE_NRF8001
-#define TRACE
 
 /*
  * States for our produceSystemCommand() state machine.
