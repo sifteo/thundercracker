@@ -48,10 +48,6 @@ private:
     void resetTimestamp();
 
     static float easeInAndOut(float t);
-
-    ALWAYS_INLINE unsigned xy(unsigned x, unsigned y) {
-        return x + y * _SYS_VRAM_BG0_WIDTH;
-    }
 };
 
 
