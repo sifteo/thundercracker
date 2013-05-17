@@ -1,3 +1,8 @@
+/*
+ * Thundercracker Firmware -- Confidential, not for redistribution.
+ * Copyright <c> 2013 Sifteo, Inc. All rights reserved.
+ */
+
 #include "pause.h"
 #include "bits.h"
 #include "macros.h"
@@ -7,13 +12,11 @@
 #include "ledsequencer.h"
 #include "cube.h"
 #include "event.h"
-
 #include "svmloader.h"
 #include "svmclock.h"
-
-#include "ui_shutdown.h"
-#include "ui_lowbatt.h"
 #include "batterylevel.h"
+#include "btprotocol.h"
+#include "ui_shutdown.h"
 
 BitVector<Pause::NUM_WORK_ITEMS> Pause::taskWork;
 
@@ -36,6 +39,10 @@ void Pause::task()
 
         case ButtonHold:
             monitorButtonHold();
+            break;
+
+        case BluetoothPairing:
+            mainLoop(ModeBluetoothPairing);
             break;
 
         case LowBattery:
@@ -133,6 +140,7 @@ void Pause::mainLoop(Mode mode)
     UIPause uiPause(uic);
     UICubeRange uiCubeRange(uic);
     UILowBatt uiLowBatt(uic);
+    UIBluetoothPairing uiBluetoothPairing(uic, BTProtocol::getPairingCode());
 
     LED::set(LEDPatterns::paused, true);
 
@@ -168,6 +176,12 @@ void Pause::mainLoop(Mode mode)
             if (modeChanged && uic.isAttached())
                 uiLowBatt.init();
             finished = lowBatteryModeHandler(uic, uiLowBatt, mode);
+            break;
+
+        case ModeBluetoothPairing:
+            if (modeChanged && uic.isAttached())
+                uiBluetoothPairing.init();
+            finished = bluetoothPairingModeHandler(uic, uiBluetoothPairing, mode);
             break;
         }
 
@@ -290,4 +304,43 @@ void Pause::cleanup(UICoordinator &uic)
     Tasks::cancel(Tasks::Pause);
     if (SvmClock::isPaused())
         SvmClock::resume();
+}
+
+bool Pause::bluetoothPairingModeHandler(UICoordinator &uic, UIBluetoothPairing &uibp, Mode &mode)
+{
+    // We can stop remembering to do this mode...
+    taskWork.atomicClear(BluetoothPairing);
+
+    if (uic.pollForAttach())
+        uibp.init();
+
+    uic.paint();
+
+    // Is pairing finished?
+    if (!BTProtocol::isPairingInProgress()) {
+        cleanup(uic);
+        return true;
+    }
+
+    // Home button will dismiss the pairing UI even if it isn't done.
+    if (HomeButton::isPressed()) {
+        cleanup(uic);
+        return true;
+    }
+
+    return false;
+}
+
+void Pause::beginBluetoothPairing()
+{
+    /*
+     * The lifespan of our Bluetooth pairing UI is canonically controlled
+     * by BTProtocol::isPairingInProgress(), but this entry point gives us
+     * a way to switch modes and enter the UI.
+     *
+     * Callable from ISR or Task context.
+     */
+
+    taskWork.atomicMark(BluetoothPairing);
+    Tasks::trigger(Tasks::Pause);
 }

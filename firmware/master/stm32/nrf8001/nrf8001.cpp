@@ -620,6 +620,16 @@ void NRF8001::handleEvent()
             requestTransaction();
             return;
         }
+
+        case Op::DisplayKeyEvent: {
+            /*
+             * A 6-digit pairing code was received. Display it to the user until we either
+             * finish connecting or the pairing fails and we send a disconnect event.
+             */
+
+            BTProtocolCallbacks::onDisplayPairingCode((const char *) rxBuffer.param);
+            return;
+        }
     }
 }
 

@@ -7,6 +7,7 @@
 #define BTPROTOCOL_H
 
 #include "macros.h"
+#include "bits.h"
 #include <stdint.h>
 
 /*
@@ -47,15 +48,33 @@
 class BTProtocol {
 public:
     static const unsigned MAX_DATA_LEN = 20;
+    static const unsigned PAIRING_CODE_LEN = 6;
 
     static bool isConnected() {
-        return instance.connected;
+        return instance.flags.test(ConnectedFlag);
+    }
+
+    static bool isPairingInProgress() {
+        return instance.flags.test(PairingFlag);
+    }
+
+    static const char *getPairingCode() {
+        return instance.pairingCode;
     }
 
 private:
+    enum Flags {
+        ConnectedFlag,
+        PairingFlag,
+
+        NUM_FLAGS   // Must be last
+    };
+
     friend class BTProtocolCallbacks;
     static BTProtocol instance;
-    bool connected;
+
+    BitVector<NUM_FLAGS> flags;
+    char pairingCode[PAIRING_CODE_LEN];
 };
 
 
@@ -82,6 +101,8 @@ class BTProtocolCallbacks {
 public:
     static void onConnect();
     static void onDisconnect();
+    static void onDisplayPairingCode(const char *code);
+
     static void onReceiveData(uint8_t *buffer, unsigned length);
     static unsigned onProduceData(uint8_t *buffer);
 };
