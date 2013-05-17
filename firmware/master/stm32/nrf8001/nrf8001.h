@@ -32,6 +32,28 @@ public:
     void init();
     void isr();
 
+    /*
+     * The routines below are intended to be called only from FactoryTest.
+     *
+     * We perform testing in 2 phases, each with its own mini state machine:
+     *
+     * 1. Enter Test mode
+     *    Run an Echo test
+     *    Report Echo test results
+     *    Begin DTM RX test
+     *
+     * 2. Complete RX test
+     *    Report RX test results
+     *    Exit Test mode
+     */
+
+    enum TestPhase {
+        TestPhase1,
+        TestPhase2
+    };
+
+    void test(unsigned phase);
+
 private:
     struct ACICommandBuffer {
         uint8_t length;
@@ -59,6 +81,7 @@ private:
     bool requestsPending;        // Need at least one more request after the current one finishes
     uint8_t sysCommandState;     // produceSysteCommand() state machine
     uint8_t sysCommandPending;   // Are we waiting on a response to a command?
+    uint8_t testState;           // Requested SystemCommandState to get into Test mode
     uint8_t dataCredits;         // Number of data packets we're allowed to send
     uint8_t openPipes;           // First 8 bits of the nRF8001's open pipes bitmap
 
@@ -72,6 +95,7 @@ private:
 
     // Mid-level ACI utilities
     void handleCommandStatus(unsigned command, unsigned status);
+    void handleDtmResponse(unsigned status, uint16_t response);
     bool produceSystemCommand();
 
     friend class BTProtocolHardware;

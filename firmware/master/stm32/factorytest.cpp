@@ -20,11 +20,14 @@
 #include "tasks.h"
 #include "radioaddrfactory.h"
 #include "nrf24l01.h"
+#include "nrf8001/nrf8001.h"
 #include "realtimeclock.h"
 
 extern unsigned     __data_start;
 
 FactoryTest::UartCommand FactoryTest::uartCommand;
+
+FactoryTest::BtleTest FactoryTest::btleTest;
 
 uint16_t FactoryTest::rfSuccessCount;
 volatile uint16_t FactoryTest::rfTransmissionsRemaining;
@@ -48,6 +51,7 @@ FactoryTest::TestHandler const FactoryTest::handlers[] = {
     rebootRequestHandler,       // 12
     getFirmwareVersion,         // 13
     rtcTestHandler,             // 14
+    bleCommsHandler,            // 15
 };
 
 void FactoryTest::init()
@@ -442,6 +446,29 @@ void FactoryTest::getFirmwareVersion(uint8_t argc, const uint8_t *args)
     memcpy(&response[1], TOSTRING(SDK_VERSION), sz);
 
     UsbDevice::write(response, sz+1);
+}
+
+/*
+ *  args[1] -- NRF8001::TestPhase to enter
+ */
+void FactoryTest::bleCommsHandler(uint8_t argc, const uint8_t *args)
+{
+    btleTest.inProgress = 1;
+    uint8_t phase = args[1];
+
+#ifdef HAVE_NRF8001
+    NRF8001::instance.test(phase);
+
+    while (btleTest.inProgress) {
+        Tasks::waitForInterrupt();
+    }
+#endif
+
+    const uint8_t report[] = { args[0], phase,
+                               btleTest.status,
+                               btleTest.result & 0xff,
+                               (btleTest.result >> 8) & 0xff };
+    UsbDevice::write(report, sizeof report);
 }
 
 IRQ_HANDLER ISR_FN(UART_DBG)()
