@@ -25,7 +25,7 @@ namespace SysCS {
         SetupFirst = 0,
         SetupLast = SetupFirst + NB_SETUP_MESSAGES - 1,
         Idle,           // Must follow SetupLast
-        BeginConnect,
+        BeginBond,
         RadioReset,
         InitSysVersion,
         ChangeTimingRequest,
@@ -288,7 +288,7 @@ bool NRF8001::produceSystemCommand()
              * same version we report to userspace with _SYS_version().
              *
              * This happens after SETUP is finished and we've entered Standby mode, but
-             * before initiating a Connect.
+             * before initiating a Bond.
              */
 
             txBuffer.length = 6;
@@ -299,16 +299,17 @@ bool NRF8001::produceSystemCommand()
             memcpy(&txBuffer.param[1], &version, sizeof version);
 
             // No more local data to set after this.
-            sysCommandState = SysCS::BeginConnect;
+            sysCommandState = SysCS::BeginBond;
 
             return true;
         };
 
-        case SysCS::BeginConnect: {
+        case SysCS::BeginBond: {
             /*
-             * After all setup is complete, send a 'Connect' command. This begins the potentially
+             * After all setup is complete, send a 'Bond' command. This begins the potentially
              * long-running process of looking for a peer. This is what enables advertisement
-             * broadcasts.
+             * broadcasts. Bonding is analogous to Connecting, but with authentication and
+             * encryption.
              *
              * After this command, we'll be idle until a connection event arrives.
              *
@@ -319,8 +320,8 @@ bool NRF8001::produceSystemCommand()
              */
 
             txBuffer.length = 5;
-            txBuffer.command = Op::Connect;
-            txBuffer.param16[0] = 0x0000;       // Infinite duration
+            txBuffer.command = Op::Bond;
+            txBuffer.param16[0] = 10;           // Try again after 10 seconds
             txBuffer.param16[1] = 32;           // 20ms, in 0.625ms units
             sysCommandState = SysCS::Idle;
             return true;
@@ -423,7 +424,7 @@ void NRF8001::handleEvent()
              * One connection ended; start trying to establish another.
              */
 
-            sysCommandState = SysCS::BeginConnect;
+            sysCommandState = SysCS::BeginBond;
             openPipes = 0;
             requestTransaction();
             BTProtocolCallbacks::onDisconnect();
