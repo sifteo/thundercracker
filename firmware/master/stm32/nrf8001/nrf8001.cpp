@@ -16,7 +16,7 @@
 #include "factorytest.h"
 
 #ifdef HAVE_NRF8001
-//#define TRACE
+#define TRACE
 
 /*
  * States for our produceSystemCommand() state machine.
@@ -30,6 +30,8 @@ namespace SysCS {
         RadioReset,
         InitSysVersion,
         ChangeTimingRequest,
+        Disconnect,
+        ReadDynamicData,
         EnterTest,
         ExitTest,
         Echo,
@@ -73,6 +75,7 @@ void NRF8001::init()
     txBuffer.length = 0;
     requestsPending = 0;
     dataCredits = 0;
+    needStoreDynamicData = false;
     sysCommandState = SysCS::RadioReset;
     sysCommandPending = false;
     testState = Test::Idle;
@@ -418,6 +421,30 @@ bool NRF8001::produceSystemCommand()
             return true;
         }
 
+        case SysCS::Disconnect: {
+            /*
+             * Send an explicit disconnect. We use this when we need to back up a new
+             * link key before letting a connection start for reals.
+             */
+
+            txBuffer.length = 2;
+            txBuffer.command = Op::Disconnect;
+            txBuffer.param[0] = 0x01;       // Connection terminated by peer
+            sysCommandState = SysCS::Idle;
+            return true;
+        }
+
+        case SysCS::ReadDynamicData: {
+            /*
+             * Read the next dynamic data packet out of the nRF8001.
+             */
+
+            txBuffer.length = 1;
+            txBuffer.command = Op::ReadDynamicData;
+            sysCommandState = SysCS::Idle;
+            return true;
+        }
+
         case SysCS::EnterTest: {
             txBuffer.length = 2;
             txBuffer.command = Op::Test;
@@ -526,18 +553,43 @@ void NRF8001::handleEvent()
 
         case Op::BondStatusEvent: {
             /*
-             * Maybe we established a bonded connection! Notify the BTProtocol.
-             *
-             * Also, take this opportunity to see if we can get a faster
-             * pipe by lowering the default connection interval.
+             * Maybe we established a bonded connection!
              *
              * If the bonding failed, we'll also get a DisconnectedEvent,
              * so we won't bother handling unsuccessful status events here.
+             *
+             * If bonding succeeded, we'd like to:
+             *    - Request new timing parameters, to get more frequent connection windows
+             *    - Notify BTProtocol
+             *    - Back up the new link key we may have just generated.
+             *
+             * Unfortunately, there's no way to back up *just* the link keys.
+             * Nordic expects us to use this "read dynamic data" command which
+             * gives us a binary blob of unspecified size or format. Eww. So...
+             * we could defer saving this until "later", but that seems like a great
+             * way to have a bunch of lingering bugs where keys may not get saved
+             * in this or that situation. So, it seems best to deal with this problem
+             * sooner rather than later.
+             *
+             * If we were provided a pairing code, that might have led to generating
+             * a new link key. We can test for this state by asking BTProtocol whether
+             * we're in pairing mode. If we successfully finish a connection in this
+             * state, we'll actually immediately ask for the nRF8001 to disconnect so
+             * we can save the dynamic data. The peer will have to know to retry the
+             * connection, but the next attempt should succeed without any user
+             * interaction.
              */
 
             uint8_t status = rxBuffer.param[0];
-            if (status == 0x00) {
-                // Success
+            if (status != 0x00) {
+                // Ignore failure here, we'll get a DisconnectedEvent too.
+                return;
+            }
+
+            if (BTProtocol::isPairingInProgress()) {
+                sysCommandState = SysCS::Disconnect;
+                needStoreDynamicData = true;
+            } else {
                 sysCommandState = SysCS::ChangeTimingRequest;
                 BTProtocolCallbacks::onConnect();
             }
@@ -546,13 +598,15 @@ void NRF8001::handleEvent()
 
         case Op::DisconnectedEvent: {
             /*
-             * One connection ended; start trying to establish another.
+             * One connection ended, and now the nRF8001 is back in standby mode.
+             * Start trying to establish another connection, or back up dynamic
+             * data if that's needed.
              */
 
-            sysCommandState = SysCS::BeginBond;
             openPipes = 0;
-            requestTransaction();
+            sysCommandState = needStoreDynamicData ? SysCS::ReadDynamicData : SysCS::BeginBond;
             BTProtocolCallbacks::onDisconnect();
+            requestTransaction();
             return;
         }
 
@@ -642,18 +696,33 @@ void NRF8001::handleEvent()
 
 void NRF8001::handleCommandStatus(unsigned command, unsigned status)
 {
-    if (command == Op::RadioReset) {
-        /*
-         * RadioReset will complain if the device hasn't been setup yet.
-         * We care not, since we send the reset just-in-case. Ignore errors here.
-         */
-        return;
-    }
+    switch (command) {
 
-    if (command == Op::DtmCommand) {
-        // "Commands and Events are sent most significant octet first,
-        //  followed by the least significant octet"
-        handleDtmResponse(status, (rxBuffer.param[2] << 8) | rxBuffer.param[3]);
+        case Op::RadioReset:
+            /*
+             * RadioReset will complain if the device hasn't been setup yet.
+             * We care not, since we send the reset just-in-case. Ignore errors here.
+             */
+
+            return;
+
+        case Op::DtmCommand:
+            /*
+             * Response to a Direct Test Mode command.
+             * (DTM uses big endian values.)
+             */
+
+            handleDtmResponse(status, (rxBuffer.param[2] << 8) | rxBuffer.param[3]);
+            break;
+
+        case Op::ReadDynamicData:
+            /*
+             * Received some data to back up. Is there still more to download?
+             */
+
+            needStoreDynamicData = (status == ACI_STATUS_TRANSACTION_CONTINUE);
+            sysCommandState = needStoreDynamicData ? SysCS::ReadDynamicData : SysCS::BeginBond;
+            break;
     }
 
     if (status > ACI_STATUS_TRANSACTION_COMPLETE) {

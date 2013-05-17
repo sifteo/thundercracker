@@ -79,7 +79,8 @@ private:
     ACICommandBuffer txBuffer;
     ACIEventBuffer rxBuffer;
     bool requestsPending;        // Need at least one more request after the current one finishes
-    uint8_t sysCommandState;     // produceSysteCommand() state machine
+    bool needStoreDynamicData;   // Do we still need to back up the nRF8001's dynamic data?
+    uint8_t sysCommandState;     // produceSystemCommand() state machine
     uint8_t sysCommandPending;   // Are we waiting on a response to a command?
     uint8_t testState;           // Requested SystemCommandState to get into Test mode
     uint8_t dataCredits;         // Number of data packets we're allowed to send
