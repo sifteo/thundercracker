@@ -11,6 +11,10 @@
 
 BTProtocol BTProtocol::instance;
 
+void BTProtocol::task()
+{
+    // Implement me!
+}
 
 void BTProtocolCallbacks::onConnect()
 {

@@ -50,6 +50,9 @@ public:
     static const unsigned MAX_DATA_LEN = 20;
     static const unsigned PAIRING_CODE_LEN = 6;
 
+    // Tasks::BluetoothProtocol
+    static void task();
+
     static bool isConnected() {
         return instance.flags.test(ConnectedFlag);
     }

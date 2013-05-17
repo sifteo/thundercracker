@@ -31,6 +31,7 @@ public:
 
     void init();
     void isr();
+    void task();    // Tasks::BluetoothDriver
 
     /*
      * The routines below are intended to be called only from FactoryTest.

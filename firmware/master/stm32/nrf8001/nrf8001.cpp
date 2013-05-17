@@ -171,6 +171,11 @@ void NRF8001::isr()
     SampleProfiler::setSubsystem(s);
 }
 
+void NRF8001::task()
+{
+    // Implement me
+}
+
 void NRF8001::test(unsigned phase)
 {
     /*

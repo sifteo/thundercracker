@@ -47,6 +47,8 @@ public:
         AssetLoader,
         Pause,
         CubeConnector,
+        BluetoothDriver,
+        BluetoothProtocol,
         Heartbeat,
         Profiler,
         TestJig,
