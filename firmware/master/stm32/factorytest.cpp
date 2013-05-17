@@ -396,6 +396,7 @@ void FactoryTest::rfPacketTestHandler(uint8_t argc, const uint8_t *args)
     rfTestAddrPrimaryChannel = rfTestAddr.channel;
     rfTestCubeVersion = hwid & 0xff;
 
+#ifdef USE_NRF24L01
     NRF24L01::setRfTestEnabled(true);
 
     // multiply transmission count by 2 since we're sending
@@ -406,6 +407,7 @@ void FactoryTest::rfPacketTestHandler(uint8_t argc, const uint8_t *args)
         Tasks::waitForInterrupt();
 
     NRF24L01::setRfTestEnabled(false);
+#endif
 
     /*
      * Respond with the number of packets sent, and the number of successful transmissions
