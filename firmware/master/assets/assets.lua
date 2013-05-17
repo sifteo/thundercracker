@@ -69,3 +69,8 @@ v02_BigDigits = image{ "01-big-digits.png", flat=1, width=32, height=40 }
 
 v02_LowBattBase = image{ "02-low-battery-base.png", flat=1 }
 --v02_LowBattCube = image{ "02-low-battery-cube.png", flat=1 }
+
+--- UIBluetooth
+
+v02_BluetoothPairing = image{ "02-bluetooth-pairing.png", flat=1 }
+v02_Digits3x5 = image{ "02-digits-3x5.png", flat=1, width=24, height=40 }
