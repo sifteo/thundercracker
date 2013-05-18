@@ -923,6 +923,18 @@ void NRF8001::handleEvent()
             BTProtocolCallbacks::onDisplayPairingCode((const char *) rxBuffer.param);
             return;
         }
+
+    #ifdef TRACE
+        case Op::HardwareErrorEvent: {
+
+            uint16_t lineno = (rxBuffer.param[0] << 8) | rxBuffer.param[1];
+            const char *errstr = (const char*)&rxBuffer.param[2];
+
+            UART("BT HW err: "); Usart::Dbg.writeHex(lineno, 4);
+            UART(" - "); UART(errstr); UART(" <---\r\n");
+            return;
+        }
+    #endif
     }
 }
 
