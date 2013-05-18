@@ -14,6 +14,8 @@
 #include "sampleprofiler.h"
 #include "systime.h"
 #include "factorytest.h"
+#include "flash_syslfs.h"
+#include "tasks.h"
 
 #ifdef HAVE_NRF8001
 
@@ -22,6 +24,7 @@
  */
 namespace SysCS {
     enum SystemCommandState {
+        // Actual states
         SetupFirst = 0,
         SetupLast = SetupFirst + NB_SETUP_MESSAGES - 1,
         Idle,           // Must follow SetupLast
@@ -31,11 +34,18 @@ namespace SysCS {
         ChangeTimingRequest,
         Disconnect,
         ReadDynamicData,
+        WriteDynamicData,
         EnterTest,
         ExitTest,
         Echo,
         DtmRX,
-        DtmEnd
+        DtmEnd,
+
+        // State ordering definitions
+        AfterReadDynamicData = BeginBond,
+        AfterWriteDynamicData = InitSysVersion,
+        AfterInitSysVersion = BeginBond,
+        AfterConnect = ChangeTimingRequest,
     };
 }
 
@@ -136,6 +146,7 @@ void NRF8001::isr()
      * importantly) to avoid a race condition during the very first ISR
      * we service after initialization. See the comments in NRF8001::init().
      */
+
     if (rdyn.isLow()) {
 
         /*
@@ -173,7 +184,34 @@ void NRF8001::isr()
 
 void NRF8001::task()
 {
-    // Implement me
+    /*
+     * Our nRF8001 driver is almost entirely interrupt-driven, but we do need
+     * filesytem access in order to load and save bonding state packaged in
+     * hardware-specific "dynamic data" packets. This task handler shuttles
+     * individual dyn packets to and from SysLFS.
+     */
+
+    SysLFS::Key k = static_cast<SysLFS::Key>( SysLFS::kBluetoothBase + dyn.sequence );
+    int result;
+
+    switch (dyn.state) {
+
+        case DynStateLoadRequest:
+            if (SysLFS::read(k, dyn.record.bytes(), sizeof dyn.record) < dyn.record.calculatedLength()) {
+                // I/O error or bad length byte. Treat the record as missing.
+                dyn.record.length = 0;
+            }
+            dyn.state = DynStateLoadComplete;
+            break;
+
+        case DynStateStoreRequest:
+            SysLFS::write(k, dyn.record.bytes(), dyn.record.calculatedLength());
+            dyn.state = DynStateStoreComplete;
+            break;
+    }
+
+    // Wake up our state machine, if they were waiting on us.
+    requestTransaction();
 }
 
 void NRF8001::test(unsigned phase)
@@ -264,7 +302,7 @@ void NRF8001::produceCommand()
         return;
     }
 
-    // If we can transmit, see if BTPRotocol wants to.
+    // If we can transmit, see if BTProtocol wants to.
     if (dataCredits && (openPipes & (1 << PIPE_SIFTEO_BASE_DATA_IN_TX))) {
         unsigned len = BTProtocolCallbacks::onProduceData(&txBuffer.param[1]);
         if (len) {
@@ -282,20 +320,50 @@ void NRF8001::produceCommand()
 
 bool NRF8001::produceSystemCommand()
 {
-    // do we need to inject a test command instead of our regularly
-    // requested sys command?
+    /*
+     * Test state machine
+     * 
+     * Do we need to inject a test command instead of our regularly
+     * requested sys command?
+     */
+
     switch (testState) {
 
-    case TestPhase1:
-        sysCommandState = SysCS::RadioReset;
-        testState = Test::RadioReset;
-        break;
+        case TestPhase1:
+            sysCommandState = SysCS::RadioReset;
+            testState = Test::RadioReset;
+            break;
 
-    case TestPhase2:
-        sysCommandState = SysCS::DtmEnd;
-        testState = Test::EndRX;
-        break;
+        case TestPhase2:
+            sysCommandState = SysCS::DtmEnd;
+            testState = Test::EndRX;
+            break;
     }
+
+    /*
+     * Task state machine
+     *
+     * If a userspace task completed, take the next steps.
+     */
+
+    switch (dyn.state) {
+
+        case DynStateStoreComplete:
+            // Finished storing one dynamic data packet. Move to the next, or go back to Bonding mode.
+            sysCommandState = needStoreDynamicData ? SysCS::ReadDynamicData : SysCS::AfterReadDynamicData;
+            dyn.state = DynStateIdle;
+            break;
+
+        case DynStateLoadComplete:
+            // Finished loading one dynamic data packet. Send it maybe.
+            sysCommandState = dyn.record.length ? SysCS::WriteDynamicData : SysCS::AfterWriteDynamicData;
+            dyn.state = DynStateIdle;
+            break;
+    }
+
+    /*
+     * Main state machine
+     */
 
     switch (sysCommandState) {
 
@@ -365,9 +433,7 @@ bool NRF8001::produceSystemCommand()
             uint32_t version = _SYS_version();
             memcpy(&txBuffer.param[1], &version, sizeof version);
 
-            // No more local data to set after this.
-            sysCommandState = SysCS::BeginBond;
-
+            sysCommandState = SysCS::AfterInitSysVersion;
             return true;
         };
 
@@ -449,6 +515,34 @@ bool NRF8001::produceSystemCommand()
             return true;
         }
 
+        case SysCS::WriteDynamicData: {
+            /*
+             * Write the next dynamic data packet out of the nRF8001.
+             *
+             * If there are more packets to send after this one, we'll also request
+             * the next one from our Task handler.
+             */
+
+            txBuffer.length = 2 + dyn.record.length;
+            txBuffer.command = Op::WriteDynamicData;
+            txBuffer.param[0] = dyn.sequence + 1;
+            memcpy(&txBuffer.param[1], dyn.record.data, dyn.record.length);
+
+            if (dyn.record.continued) {
+                // Load the next packet
+                sysCommandState = SysCS::Idle;
+                dyn.sequence++;
+                dyn.state = DynStateLoadRequest;
+                Tasks::trigger(Tasks::BluetoothDriver);
+
+            } else {
+                // Move on
+                dyn.state = DynStateIdle;
+                sysCommandState = SysCS::AfterWriteDynamicData;
+            }
+            return true;
+        }
+
         case SysCS::EnterTest: {
             txBuffer.length = 2;
             txBuffer.command = Op::Test;
@@ -503,7 +597,8 @@ void NRF8001::handleEvent()
 
             sysCommandPending = false;
             handleCommandStatus(rxBuffer.param[0], rxBuffer.param[1]);
-            if (sysCommandState != SysCS::Idle) {
+
+            if (sysCommandState != SysCS::Idle || dyn.state != DynStateIdle) {
                 // More work to do, ask for another transaction.
                 requestTransaction();
             }
@@ -520,6 +615,7 @@ void NRF8001::handleEvent()
              *
              * This is also where our pool of data credits gets initialized.
              */
+
             uint8_t mode = rxBuffer.param[0];
             dataCredits = rxBuffer.param[2];
 
@@ -528,7 +624,7 @@ void NRF8001::handleEvent()
                 /*
                  * We can only enter Test mode from Standby mode, but in normal
                  * operation we transition immediately from Standby to Active mode by
-                 * sending an Op::Connect.
+                 * sending an Op::Bond.
                  *
                  * To get back to Standby, we issue a RadioReset since Op::Disconnect
                  * fails if we're not yet connected to a host. Check here to see
@@ -539,15 +635,21 @@ void NRF8001::handleEvent()
                 if (testState == Test::EnterTest) {
                     sysCommandState = SysCS::EnterTest;
                     testState = Test::Idle;
+
                 } else {
-                    // Start sending local data
-                    sysCommandState = SysCS::InitSysVersion;
+                    // Send local data, beginning with "Dynamic" data from the filesystem.
+                    // This requires fetching the first packet from SysLFS.
+
+                    dyn.sequence = 0;
+                    dyn.state = DynStateLoadRequest;
+                    Tasks::trigger(Tasks::BluetoothDriver);
                 }
             }
 
             // Op::Test doesn't get a CommandResponseEvent,
             // so must clear sysCommandPending explicitly
             sysCommandPending = false;
+
             if (sysCommandState != SysCS::Idle) {
                 // More work to do, ask for another transaction.
                 requestTransaction();
@@ -594,9 +696,21 @@ void NRF8001::handleEvent()
                 sysCommandState = SysCS::Disconnect;
                 needStoreDynamicData = true;
             } else {
-                sysCommandState = SysCS::ChangeTimingRequest;
+                sysCommandState = SysCS::AfterConnect;
                 BTProtocolCallbacks::onConnect();
             }
+            return;
+        }
+
+        case Op::ConnectedEvent: {
+            /*
+             * We reconnected to a peer that we've previously paired with.
+             * We get this instead of BondStatusEvent when we're reconnecting
+             * to a peer that we've remembered via the nRF8001's "Dynamic data".
+             */
+
+            sysCommandState = SysCS::AfterConnect;
+            BTProtocolCallbacks::onConnect();
             return;
         }
 
@@ -608,7 +722,7 @@ void NRF8001::handleEvent()
              */
 
             openPipes = 0;
-            sysCommandState = needStoreDynamicData ? SysCS::ReadDynamicData : SysCS::BeginBond;
+            sysCommandState = needStoreDynamicData ? SysCS::ReadDynamicData : SysCS::AfterReadDynamicData;
             BTProtocolCallbacks::onDisconnect();
             requestTransaction();
             return;
@@ -719,14 +833,38 @@ void NRF8001::handleCommandStatus(unsigned command, unsigned status)
             handleDtmResponse(status, (rxBuffer.param[2] << 8) | rxBuffer.param[3]);
             break;
 
-        case Op::ReadDynamicData:
+        case Op::ReadDynamicData: {
             /*
-             * Received some data to back up. Is there still more to download?
+             * Received some data to back up. Store it and wake up our task handler.
+             * Is there still more to download?
              */
 
-            needStoreDynamicData = (status == ACI_STATUS_TRANSACTION_CONTINUE);
-            sysCommandState = needStoreDynamicData ? SysCS::ReadDynamicData : SysCS::BeginBond;
+            unsigned length = rxBuffer.length - 4;
+            unsigned sequence = rxBuffer.param[2] - 1;
+
+            if (length > sizeof dyn.record.data || sequence >= SysLFS::NUM_BLUETOOTH) {
+                // Bad parameter. Give up now.
+
+                needStoreDynamicData = false;
+                sysCommandState = SysCS::RadioReset;
+
+            } else {
+                // Hand this packet off to task() for writing to SysLFS.
+                // We'll resume in produceSystemCommand with DynStateStoreComplete.
+
+                bool more = (status == ACI_STATUS_TRANSACTION_CONTINUE);
+                needStoreDynamicData = more;
+                sysCommandState = SysCS::Idle;
+
+                memcpy(dyn.record.data, &rxBuffer.param[3], length);
+                dyn.record.continued = more;
+                dyn.record.length = length;
+                dyn.sequence = sequence;
+                dyn.state = DynStateStoreRequest;
+                Tasks::trigger(Tasks::BluetoothDriver);
+            }
             break;
+        }
     }
 
     if (status > ACI_STATUS_TRANSACTION_COMPLETE) {
