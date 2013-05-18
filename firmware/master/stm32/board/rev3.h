@@ -35,6 +35,24 @@
 #define RF_DMA_CHAN_RX      DMA2_Channel1
 #define RF_DMA_CHAN_TX      DMA2_Channel2
 
+
+// B L U E T O O T H
+#ifdef HAVE_NRF8001
+
+#define NRF8001_SPI         SPI2
+#define NRF8001_SCK_GPIO    GPIOPin(&GPIOB, 13)
+#define NRF8001_MISO_GPIO   GPIOPin(&GPIOB, 14)
+#define NRF8001_MOSI_GPIO   GPIOPin(&GPIOB, 15)
+#define NRF8001_REQN_GPIO   GPIOPin(&GPIOB, 12)
+#define NRF8001_RDYN_GPIO   GPIOPin(&GPIOC, 6)
+#define NRF8001_ACTIVE      GPIOPin(&GPIOB, 11)
+#define NRF8001_EXTI_VEC    EXTI3
+
+#define NRF8001_DMA_CHAN_RX DMA1_Channel4
+#define NRF8001_DMA_CHAN_TX DMA1_Channel5
+
+#endif // HAVE_NRF8001
+
 // F L A S H
 #define USE_W25Q256         // Use the Winbond 256Mb flash part
 
