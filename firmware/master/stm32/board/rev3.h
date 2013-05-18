@@ -35,6 +35,7 @@
 #define RF_DMA_CHAN_RX      DMA2_Channel1
 #define RF_DMA_CHAN_TX      DMA2_Channel2
 
+#define USE_NRF24L01
 
 // B L U E T O O T H
 #ifdef HAVE_NRF8001
