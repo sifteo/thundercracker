@@ -40,6 +40,7 @@ namespace SysCS {
         ExitTest,
         Echo,
         DtmRX,
+        DtmTX,
         DtmEnd,
 
         // State ordering definitions
@@ -54,11 +55,9 @@ namespace SysCS {
 
 namespace Test {
     enum TestState {
-        Idle = NRF8001::TestPhase2 + 1,
+        Idle = NRF8001::ExitTestMode + 1,
         RadioReset,
         EnterTest,
-        BeginRX,
-        EndRX,
         ExitTest
     };
 
@@ -67,8 +66,10 @@ namespace Test {
         0x06, 0x07, 0x08, 0x09, 0x0a,
     };
 
+    // elements must match the order of their entries in the SysCS enum
     static const uint16_t dtmParams[] = {
         0x3040,         // Receiver Test, channel 0x10, length 0x10, PRBS9 packet
+        0x5040,         // Transmitter Test, channel 0x10, length 0x10, PRBS9 packet
         (0x3 << 6),     // Test End
     };
 }
@@ -334,14 +335,22 @@ bool NRF8001::produceSystemCommand()
 
     switch (testState) {
 
-        case TestPhase1:
+        case EnterTestMode:
             sysCommandState = SysCS::RadioReset;
             testState = Test::RadioReset;
             break;
 
-        case TestPhase2:
+        case RXTest:
+            sysCommandState = SysCS::DtmRX;
+            break;
+
+        case TXTest:
+            sysCommandState = SysCS::DtmTX;
+            break;
+
+        case ExitTestMode:
             sysCommandState = SysCS::DtmEnd;
-            testState = Test::EndRX;
+            testState = Test::ExitTest;
             break;
     }
 
@@ -591,13 +600,12 @@ bool NRF8001::produceSystemCommand()
             txBuffer.length = 1 + sizeof(Test::echoData);
             txBuffer.command = Op::Echo;
             memcpy(txBuffer.param, Test::echoData, sizeof Test::echoData);
-            sysCommandState = SysCS::DtmRX;
-            testState = Test::BeginRX;
+            sysCommandState = SysCS::Idle;
+            testState = Test::Idle;
             return true;
         }
 
-        case SysCS::DtmRX:
-        case SysCS::DtmEnd: {
+        case SysCS::DtmRX ... SysCS::DtmEnd: {
             txBuffer.length = 3;
             txBuffer.command = Op::DtmCommand;
             txBuffer.param16[0] = Test::dtmParams[sysCommandState - SysCS::DtmRX];
@@ -1052,14 +1060,7 @@ void NRF8001::handleDtmResponse(unsigned status, uint16_t response)
     // tick along our state machine as appropriate.
     switch (testState) {
 
-    case Test::BeginRX:
-        // end of Phase1
-        // we're now waiting to receive a Phase2 command to continue
-        testState = Test::Idle;
-        break;
-
-    case Test::EndRX:
-        // this is the last DTM command in Phase2
+    case Test::ExitTest:
         sysCommandState = SysCS::ExitTest;
         testState = Test::Idle;
         break;

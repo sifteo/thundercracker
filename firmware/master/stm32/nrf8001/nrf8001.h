@@ -37,21 +37,24 @@ public:
     /*
      * The routines below are intended to be called only from FactoryTest.
      *
-     * We perform testing in 2 phases, each with its own mini state machine:
+     * We perform testing in 3 phases, each with its own mini state machine.
      *
      * 1. Enter Test mode
      *    Run an Echo test
      *    Report Echo test results
-     *    Begin DTM RX test
      *
-     * 2. Complete RX test
-     *    Report RX test results
+     * 2. Begin DTM RX *or* Begin DTM TX test
+     *
+     * 3. Complete test
+     *    Report test results
      *    Exit Test mode
      */
 
     enum TestPhase {
-        TestPhase1,
-        TestPhase2
+        EnterTestMode,
+        RXTest,
+        TXTest,
+        ExitTestMode
     };
 
     void test(unsigned phase);
