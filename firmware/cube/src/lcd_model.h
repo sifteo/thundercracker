@@ -24,7 +24,7 @@
  *  -DLCD_MODEL_TIANMA_ST7715
  *  -DLCD_MODEL_TIANMA_HX8353
  *
- * ... or accept the current default.
+ * ... or accept the current default (in cube_hardware.h).
  */
 
 #if !( defined(LCD_MODEL_GIANTPLUS_ILI9163C) || \
@@ -33,11 +33,7 @@
        defined(LCD_MODEL_TIANMA_HX8353)      || \
        defined(LCD_MODEL_SANTEK_ST7735R)     )
 
-    #if HWREV >= 6
-        #define LCD_MODEL_SANTEK_ST7735R
-    #else
-        #define LCD_MODEL_TIANMA_HX8353
-    #endif
+    #error No lcd model selected
 #endif
 
 /********************************************************************/
@@ -352,8 +348,12 @@ static const __code uint8_t lcd_setup_table[] =
     4, LCD_CMD_FRCONTROL, 0x01, 0x2c, 0x2d,
     4, LCD_CMD_FRCONTROL_IDLE, 0x01, 0x2c, 0x2d,
     7, LCD_CMD_FRCONTROL_PAR, 0x01, 0x2c, 0x2d, 0x01, 0x2c, 0x2d,
+    //4, LCD_CMD_FRCONTROL, 0x01, 0x08, 0x05,
+    //4, LCD_CMD_FRCONTROL_IDLE, 0x01, 0x08, 0x05,
+    //7, LCD_CMD_FRCONTROL_PAR, 0x01, 0x08, 0x05, 0x01, 0x08, 0x05,
 
     2, LCD_CMD_INVCTRL, 0x07,
+    //2, LCD_CMD_INVCTRL, 0x00,
 
     4, LCD_CMD_POWER_CTRL1, 0xa2, 0x02, 0x84,
     2, LCD_CMD_POWER_CTRL2, 0xc5,
@@ -362,6 +362,8 @@ static const __code uint8_t lcd_setup_table[] =
     3, LCD_CMD_POWER_CTRL5, 0x8a, 0xee,
 
     2, LCD_CMD_VCOM_CTRL1, 0x0e,
+
+    //1, LCD_CMD_INVOFF,
 
     17, LCD_CMD_POS_GAMMA,
     0x0f, 0x1a, 0x0f, 0x18, 0x2f, 0x28, 0x20, 0x22,

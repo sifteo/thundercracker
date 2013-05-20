@@ -19,11 +19,20 @@
  */
 
 extern static void i2c_accel_tx(const __code uint8_t *);
-#if HWREV >= 6
+
+#if !( defined(USE_LIS3DE)  || \
+       defined(USE_LIS3DH)  )
+    #error No accelerometer selected
+#endif
+
+#if defined(USE_LIS3DE)
     //using LIS3DE
     #define ACCEL_ADDR_TX       0x52    // 01010010 - SDO is pulled HIGH (internally)
     #define ACCEL_ADDR_RX       0x53    // 01010011 - SDO is pulled HIGH (internally)
-#elif HWREV >= 4
+#endif
+
+#if defined(USE_LIS3DH)
+#if HWREV >= 4
     //using LIS3DH
     #define ACCEL_ADDR_TX       0x32    // 00110010 - SDO is pulled HIGH (internally)
     #define ACCEL_ADDR_RX       0x33    // 00110011 - SDO is pulled HIGH (internally)
@@ -31,6 +40,7 @@ extern static void i2c_accel_tx(const __code uint8_t *);
     //using LIS3DH with pulldown on SDO
     #define ACCEL_ADDR_TX       0x30    // 00110000 - SDO is tied LOW
     #define ACCEL_ADDR_RX       0x31    // 00110001 - SDO is tied LOW
+#endif
 #endif
 
 #define ACCEL_CTRL_REG1         0x20
