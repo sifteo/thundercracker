@@ -462,14 +462,21 @@ void FactoryTest::getFirmwareVersion(uint8_t argc, const uint8_t *args)
  */
 void FactoryTest::bleCommsHandler(uint8_t argc, const uint8_t *args)
 {
-    btleTest.inProgress = 1;
     uint8_t phase = args[1];
 
 #ifdef HAVE_NRF8001
+    btleTest.inProgress = 1;
     NRF8001::instance.test(phase);
+    switch (phase) {
+        case NRF8001::EnterTestMode:
+        case NRF8001::ExitTestMode:
+            while (btleTest.inProgress) {
+                Tasks::waitForInterrupt();
+            }
+            break;
 
-    while (btleTest.inProgress) {
-        Tasks::waitForInterrupt();
+        default:
+            break;
     }
 #endif
 
