@@ -1,9 +1,9 @@
 #include "vectors.h"
 
-#include "board.h"
 #include "nrf24l01.h"
 #include "nrf8001/nrf8001.h"
 #include "powermanager.h"
+#include "board.h"
 #include "neighbor_rx.h"
 
 #if (BOARD == BOARD_TEST_JIG)
