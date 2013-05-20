@@ -47,6 +47,12 @@ public:
         }
     }
 
+    static void onBtlePhaseComplete(uint8_t status, uint16_t response) {
+        btleTest.status = status;
+        btleTest.result = response;
+        btleTest.inProgress = 0;
+    }
+
 private:
 
     struct UartCommand {
@@ -69,8 +75,14 @@ private:
             return buf[UART_CMD_INDEX];
         }
     };
-
     static UartCommand uartCommand;
+
+    struct BtleTest {
+        volatile uint8_t inProgress;
+        uint8_t status;
+        uint16_t result;
+    };
+    static BtleTest btleTest;
 
     static volatile uint16_t rfTransmissionsRemaining;
     static uint16_t rfSuccessCount;
@@ -98,8 +110,9 @@ private:
     static void bootloadRequestHandler(uint8_t argc, const uint8_t *args);
     static void rfPacketTestHandler(uint8_t argc, const uint8_t *args);
     static void rebootRequestHandler(uint8_t argc, const uint8_t *args);
-    static void rtcTestHandler(uint8_t argc, const uint8_t *args);
     static void getFirmwareVersion(uint8_t argc, const uint8_t *args);
+    static void rtcTestHandler(uint8_t argc, const uint8_t *args);
+    static void bleCommsHandler(uint8_t argc, const uint8_t *args);
 };
 
 #endif // FACTORYTEST_H
