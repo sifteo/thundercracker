@@ -18,6 +18,7 @@
 #include "btprotocol.h"
 #include "spi.h"
 #include "gpio.h"
+#include "macros.h"
 
 class NRF8001 {
 public:
@@ -74,6 +75,9 @@ private:
     GPIOPin reqn;
     GPIOPin rdyn;
     SPIMaster spi;
+
+    // for access to rdyn in a shared IRQ vector - see exti.cpp
+    friend void ISR_FN(NRF8001_EXTI_VEC)();
 
     // Owned by ISR context
     ACICommandBuffer txBuffer;
