@@ -124,6 +124,12 @@ ifneq ($(RFTEST_GOLD_MASTER),)
     FLAGS += -DRFTEST_GOLD_MASTER 
 endif
 
+# BTLE master tester is the same as normal FW,
+# with a different PID to allow our test SW to differentiate it
+ifneq ($(BTLE_TESTER),)
+    FLAGS += -DBTLE_TESTER
+endif
+
 # testjig bootloader update
 ifeq ($(BIN),testjig)
     UPDATE_ARGS := --pid 0x0120
