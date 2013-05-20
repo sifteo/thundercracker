@@ -35,6 +35,20 @@
 #endif
 
 /*
+ * Hardware feature selection
+ */
+
+#if HWREV == 6
+#   define USE_LIS3DE
+#   define LCD_MODEL_SANTEK_ST7735R
+#elif (HWREV >= 0) && (HWREV <= 5)
+#   define USE_LIS3DH
+#   define LCD_MODEL_TIANMA_HX8353
+#else
+    //expects command line feature selection
+#endif
+
+/*
  * Battery thresholds
  *
  * These three thresholds are the boundaries between

@@ -38,7 +38,7 @@ void params_init()
         jnz     1$                  ; Skip if already programmed
 
         setb    _FSR_WEN
-        mov     a, #CUBE_VERSION_LATEST
+        mov     a, #HWREV
         movx    @dptr, a
         clr     _FSR_WEN
 

@@ -27,6 +27,15 @@
  *
  * This is the spot to record the minimum version number required for
  * various features.
+ *
+ * After FWREV=0x04 and HWREV=0x05, we are truly folding hardware/firmware
+ * revisions into one byte. From here on, referred to as CUBE_VERSION
+ * CUBE_VERSION_LATEST is only meant to tell the master, what is the latest
+ * CUBE_VERSION it can expect.
+ * The actual CUBE_VERSION used by the cube is specified in cube_hardware.h
+ * Note1: These changes require that we jump from CUBE_VERSION=0x04 to 0x06.
+ * Note2: Prior to CUBE_VERSION=0x06, we were only indicating fw revisions
+ *
  */
 
 #define CUBE_FEATURE_NAP                0x02
@@ -34,7 +43,7 @@
 #define CUBE_FEATURE_ASSET_CRC          0x03
 #define CUBE_FEATURE_RF_COMPLIANT       0x04
 
-#define CUBE_VERSION_LATEST             0x04
+#define CUBE_VERSION_LATEST             0x06
 
 
 /**************************************************************************
