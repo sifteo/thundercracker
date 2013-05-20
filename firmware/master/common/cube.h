@@ -110,9 +110,9 @@ class CubeSlot {
     const _SYSByte4 getVirtualAccelState() {
 
         _SYSByte4 a = getAccelState();
-        _SYSByte4 a1 = {{ -a.y,  a.x, a.z }};
-        _SYSByte4 a2 = {{ -a.x, -a.y, a.z }};
-        _SYSByte4 a3 = {{  a.y, -a.x, a.z }};
+        _SYSByte4 a1 = {{ int8_t(-a.y), int8_t( a.x), int8_t(a.z) }};
+        _SYSByte4 a2 = {{ int8_t(-a.x), int8_t(-a.y), int8_t(a.z) }};
+        _SYSByte4 a3 = {{ int8_t( a.y), int8_t(-a.x), int8_t(a.z) }};
 
         switch (rotation()) {
             default: ASSERT(0);

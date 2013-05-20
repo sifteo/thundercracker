@@ -64,7 +64,7 @@ void NRF24L01::init()
         2, CMD_W_REGISTER | REG_RX_PW_P0,       32,
         
         /* Auto retry delay, 500us, 15 retransmits */
-        2, CMD_W_REGISTER | REG_SETUP_RETR,     AUTO_RETRY_DELAY | hardRetries,
+        2, CMD_W_REGISTER | REG_SETUP_RETR,     uint8_t(AUTO_RETRY_DELAY | hardRetries),
 
         /* 5-byte address width */
         2, CMD_W_REGISTER | REG_SETUP_AW,       0x03,

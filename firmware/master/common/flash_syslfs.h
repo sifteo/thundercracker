@@ -229,7 +229,7 @@ namespace SysLFS {
             STATIC_ASSERT(_SYS_ASSET_GROUP_SIZE_UNIT == 16);
             STATIC_ASSERT(TILES_PER_ASSET_SLOT == 4096);
             ASSERT(tileCount >= 1 && tileCount <= 4096);
-            AssetGroupSize result = { (tileCount - 1) >> 4 };
+            AssetGroupSize result = { uint8_t((tileCount - 1) >> 4) };
             return result;
         }
 

@@ -277,7 +277,9 @@ void FactoryTest::volumeCalibrationHandler(uint8_t argc, const uint8_t *args)
     Volume::CalibrationState cs = args[1] ? Volume::CalibrationHigh : Volume::CalibrationLow;
     uint32_t rawValue = Volume::calibrate(cs);
 
-    const uint8_t response[] = { args[0], args[1], rawValue & 0xff, (rawValue >> 8) & 0xff, (rawValue >> 16) & 0xff, (rawValue >> 24) & 0xff };
+    const uint8_t response[] = { args[0], args[1],
+        uint8_t(rawValue), uint8_t(rawValue >> 8), uint8_t(rawValue >> 16), uint8_t(rawValue >> 24) };
+
     UsbDevice::write(response, sizeof response);
 }
 
@@ -291,11 +293,12 @@ void FactoryTest::batteryCalibrationHandler(uint8_t argc, const uint8_t *args)
     uint32_t vraw = BatteryLevel::raw();
     uint32_t vscl = BatteryLevel::scaled();
 
-    const uint8_t response[14] = { sizeof response , args[0], \
-            vsys & 0xff, (vsys >> 8) & 0xff, (vsys >> 16) & 0xff, (vsys >> 24) & 0xff, \
-            vraw & 0xff, (vraw >> 8) & 0xff, (vraw >> 16) & 0xff, (vraw >> 24) & 0xff, \
-            vscl & 0xff, (vscl >> 8) & 0xff, (vscl >> 16) & 0xff, (vscl >> 24) & 0xff, \
-        };
+    const uint8_t response[14] = { sizeof response , args[0],
+        uint8_t(vsys), uint8_t(vsys >> 8), uint8_t(vsys >> 16), uint8_t(vsys >> 24),
+        uint8_t(vraw), uint8_t(vraw >> 8), uint8_t(vraw >> 16), uint8_t(vraw >> 24),
+        uint8_t(vscl), uint8_t(vscl >> 8), uint8_t(vscl >> 16), uint8_t(vscl >> 24),
+    };
+
     if (argc >= 2)
         UsbDevice::write(&response[1], sizeof response - 1);
     else
@@ -340,7 +343,7 @@ void FactoryTest::audioTestHandler(uint8_t argc, const uint8_t *args)
          * (assuming nothing is running there)
          */
 
-        const int16_t TriangleData[] = { 0x7FFF, 0x8000 };
+        const int16_t TriangleData[] = { 0x7FFF, int16_t(0x8000) };
 
         SvmMemory::VirtAddr triangleDataVA = SvmMemory::VIRTUAL_RAM_BASE;
         SvmMemory::PhysAddr triangleDataPA;
@@ -411,7 +414,7 @@ void FactoryTest::rfPacketTestHandler(uint8_t argc, const uint8_t *args)
      * Respond with the number of packets sent, and the number of successful transmissions
      */
     const uint8_t report[] = { args[0], args[1], args[2],
-                               rfSuccessCount & 0xff, (rfSuccessCount >> 8) & 0xff };
+                               uint8_t(rfSuccessCount), uint8_t(rfSuccessCount >> 8) };
     UART_HEX(rfSuccessCount);
     UART("\r\n");
     UsbDevice::write(report, sizeof report);
@@ -466,8 +469,8 @@ void FactoryTest::bleCommsHandler(uint8_t argc, const uint8_t *args)
 
     const uint8_t report[] = { args[0], phase,
                                btleTest.status,
-                               btleTest.result & 0xff,
-                               (btleTest.result >> 8) & 0xff };
+                               uint8_t(btleTest.result),
+                               uint8_t(btleTest.result >> 8) };
     UsbDevice::write(report, sizeof report);
 }
 

@@ -197,7 +197,7 @@ public:
     {
         STATIC_ASSERT(FlashMap::NUM_CACHE_BLOCKS <= (1ULL << (sizeof(firstBlock) * 8)));
         STATIC_ASSERT(sizeof firstBlock == sizeof numBlocks);
-        FlashMapSpan result = { map, firstBlock, numBlocks };
+        FlashMapSpan result = { map, uint16_t(firstBlock), uint16_t(numBlocks) };
         ASSERT(firstBlock < FlashMap::NUM_CACHE_BLOCKS);
         ASSERT(numBlocks < FlashMap::NUM_CACHE_BLOCKS);
         ASSERT(result.firstBlock == firstBlock);
