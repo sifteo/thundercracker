@@ -23,7 +23,7 @@ IRQ_HANDLER ISR_EXTI9_5()
         NRF24L01::instance.isr();
 #endif
 
-#ifdef HAVE_NRF8001
+#if defined(HAVE_NRF8001) && (BOARD == BOARD_TC_MASTER_REV3)
     if (NRF8001::instance.rdyn.irqPending()) {
         NRF8001::instance.isr();
     }
