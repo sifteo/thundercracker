@@ -118,7 +118,6 @@ int main()
      */
 
     NVIC.sysHandlerPrioritize(IVT.SVCall, 0x96);
-    NVIC.sysHandlerPrioritize(IVT.HardFault, 0x00);
     NVIC.sysHandlerControl = 0;
 
     /*
