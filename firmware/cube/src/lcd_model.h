@@ -31,7 +31,8 @@
        defined(LCD_MODEL_TRULY_ST7735)       || \
        defined(LCD_MODEL_TIANMA_ST7715)      || \
        defined(LCD_MODEL_TIANMA_HX8353)      || \
-       defined(LCD_MODEL_SANTEK_ST7735R)     )
+       defined(LCD_MODEL_SANTEK_ST7735R)     || \
+       defined(LCD_MODEL_WnW_RM68116)           )
 
     #error No lcd model selected
 #endif
@@ -130,6 +131,10 @@
 #define LCD_MADCTR_NORMAL       (LCD_MADCTR_RGB | LCD_MADCTR_MY | LCD_MADCTR_MX)
 #endif
 
+#ifdef LCD_MODEL_WnW_RM68116
+#define LCD_MADCTR_NORMAL       (LCD_MADCTR_RGB | LCD_MADCTR_MY | LCD_MADCTR_MX)
+#endif
+
 /*
  * Some LCDs have different addressing schemes, based on how the
  * controller and the panel are wired together.
@@ -158,6 +163,11 @@
 #ifdef LCD_MODEL_SANTEK_ST7735R
 #define LCD_ROW_ADDR(x)         ((x) + 33)
 #define LCD_COL_ADDR(x)         ((x) + 2)
+#endif
+
+#ifdef LCD_MODEL_WnW_RM68116
+#define LCD_ROW_ADDR(x)         (x)
+#define LCD_COL_ADDR(x)         (x)
 #endif
 
 /*
@@ -334,6 +344,12 @@ static const __code uint8_t lcd_setup_table[] =
 
 #endif // LCD_MODEL_TIANMA_HX8353
 
+    /**************************************************************
+     * Santek display, with ST7735R Controller.
+     *
+     * Based on the sample init sequence provided by Santek.
+     */
+
 #ifdef LCD_MODEL_SANTEK_ST7735R
     // This delay is a MUST for proper reset sequence
     // ~120ms suffices although santek specifies ~240ms
@@ -378,6 +394,49 @@ static const __code uint8_t lcd_setup_table[] =
     2, 0xf6, 0x00,
 
 #endif // LCD_MODEL_SANTEK_ST7735R
+
+    /**************************************************************
+     * W&W display, with RM68116 Controller.
+     *
+     * Based on the sample init sequence provided by W&W.
+     */
+
+#ifdef LCD_MODEL_WnW_RM68116
+
+    1, LCD_CMD_SWRESET,
+    1, LCD_CMD_SLPOUT,
+
+    LONG_DELAY,
+
+    3, LCD_CMD_POWER_CTRL1, 0xd3, 0x13,
+    2, LCD_CMD_INVCTRL, 0x03,
+
+    //Mystery command
+    2, 0xf8, 0x01,
+
+    17, LCD_CMD_POS_GAMMA,
+    0x00, 0x01, 0x05, 0x29, 0x27, 0x1f, 0x07, 0x0e,
+    0x05, 0x04, 0x05, 0x08, 0x06, 0x0c, 0x04, 0x07,
+
+    17, LCD_CMD_NEG_GAMMA,
+    0x00, 0x01, 0x05, 0x29, 0x27, 0x1f, 0x07, 0x0e,
+    0x05, 0x04, 0x05, 0x08, 0x06, 0x0c, 0x04, 0x07,
+
+    //Mystery command
+    5, 0xfe, 0x09, 0xb0, 0x10, 0x48,
+
+    4, LCD_CMD_FRCONTROL, 0x0f, 0x00, 0x04,
+
+    //Mystery command
+    5, 0xfd, 0x10, 0xdf, 0x60, 0xd0,
+    3, 0xf4, 0x00, 0x0c,
+
+    3, LCD_CMD_POWER_CTRL3, 0x02, 0x84,
+
+    //Mystery command
+    2, 0xf8, 0x00,
+
+#endif // LCD_MODEL_WnW_RM68116
 
     /**************************************************************
      * Portable initialization
