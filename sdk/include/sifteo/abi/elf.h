@@ -60,6 +60,7 @@ struct _SYSMetadataKey {
 #define _SYS_METADATA_NUM_ASLOTS        0x0007  // uint8_t, count of required AssetSlots
 #define _SYS_METADATA_CUBE_RANGE        0x0008  // _SYSMetadataCubeRange
 #define _SYS_METADATA_MIN_OS_VERSION    0x0009  // uint32_t minimum OS version required
+#define _SYS_METADATA_IS_DEMO_OF_STR    0x000a  // DNS-style string of the full version of this demo app
 
 struct _SYSMetadataBootAsset {
     uint32_t        pHdr;           // Virtual address for _SYSAssetGroupHeader

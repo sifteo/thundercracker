@@ -103,6 +103,26 @@ public:
     }
 
     /**
+     * @brief Indicate that this app is a demo, providing the package ID
+     * of the "full" version of this app.
+     *
+     * This may result in the launcher or Sifteo Sync representing this app
+     * differently than a full app. They might encourage the user to upgrade
+     * to the full app, for instance.
+     *
+     * @see package() specifies the format of the string to be used.
+     */
+    Metadata &isDemoOf(const char *fullAppPkgID)
+    {
+        _SYS_lti_abort(_SYS_lti_counter("Sifteo.Metadata.IsDemoOf", 0) != 0,
+            "Duplicate Metadata::isDemoOf() instance.");
+
+        _SYS_lti_metadata(_SYS_METADATA_IS_DEMO_OF_STR, "sB", fullAppPkgID, 0);
+
+        return *this;
+    }
+
+    /**
      * @brief Add an icon image to this game's metadata.
      *
      * The image needs to be 96x96 pixels, and it should reside
