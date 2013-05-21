@@ -762,7 +762,7 @@ void NRF8001::handleEvent()
             isBonded = true;
 
             // Were we just doing passcode entry? Disconnect to save the new keys.
-            if (0 && BTProtocol::isPairingInProgress()) {
+            if (BTProtocol::isPairingInProgress()) {
                 sysCommandState = SysCS::Disconnect;
             } else {
                 sysCommandState = SysCS::AfterConnect;
