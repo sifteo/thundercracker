@@ -371,9 +371,17 @@ bool NRF8001::produceSystemCommand()
     switch (sysCommandState) {
 
         default:
-        case SysCS::DrainEventQueue:
         case SysCS::Idle:
             return false;
+
+        case SysCS::DrainEventQueue: {
+            /*
+             * Keep requesting transactions until we have no pending events.
+             */
+
+            requestTransaction();
+            return false;
+        }
 
         case SysCS::RadioReset: {
             /*
