@@ -53,6 +53,14 @@ bool Inspect::inspect(const char *path)
     dumpString(table, _SYS_METADATA_PACKAGE_STR, "package");
     dumpString(table, _SYS_METADATA_VERSION_STR, "version");
 
+    string fullApp;
+    table.cell() << "is demo of:";
+    if (dbgInfo.metadataString(_SYS_METADATA_IS_DEMO_OF_STR, fullApp)) {
+        table.cell() << fullApp;
+    } else {
+        table.cell() << "none";
+    }
+    table.endRow();
 
     // Icon - is it included?
     uint32_t iconLen;
