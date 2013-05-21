@@ -41,6 +41,10 @@ public:
     void setConstantCarrier(bool enabled, unsigned channel = 0);
     void setPRXMode(bool enabled);
 
+    static void setRfTestEnabled(bool enabled) {
+        rfTestModeEnabled = enabled;
+    }
+
     void isr();
     GPIOPin irq;
 
@@ -157,10 +161,15 @@ public:
      * Helpers to forward RF events to the appropriate destination.
      */
 
+    static bool rfTestModeEnabled;
+
     static void ALWAYS_INLINE timeout() {
 #ifdef RFTEST_GOLD_MASTER
             FactoryTest::timeout();
 #else
+        if (rfTestModeEnabled)
+            FactoryTest::timeout();
+        else
             RadioManager::timeout();
 #endif
     }
@@ -169,6 +178,9 @@ public:
 #ifdef RFTEST_GOLD_MASTER
             FactoryTest::ackEmpty(retries);
 #else
+        if (rfTestModeEnabled)
+            FactoryTest::ackEmpty(retries);
+        else
             RadioManager::ackEmpty(retries);
 #endif
     }
@@ -177,6 +189,9 @@ public:
 #ifdef RFTEST_GOLD_MASTER
             FactoryTest::ackWithPacket(packet, retries);
 #else
+        if (rfTestModeEnabled)
+            FactoryTest::ackWithPacket(packet, retries);
+        else
             RadioManager::ackWithPacket(packet, retries);
 #endif
     }
@@ -185,6 +200,9 @@ public:
 #ifdef RFTEST_GOLD_MASTER
             FactoryTest::produce(tx);
 #else
+        if (rfTestModeEnabled)
+            FactoryTest::produce(tx);
+        else
             RadioManager::produce(tx);
 #endif
     }

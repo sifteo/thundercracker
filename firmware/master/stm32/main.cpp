@@ -94,14 +94,19 @@ int main()
     NVIC.irqPrioritize(IVT.NBR_TX_TIM, 0x60);       //  just below volume timer
 
 #ifdef HAVE_NRF8001
+
+    // if 8001 and L01 are on the same vector, defer to the priority of the L01.
+    // this is the case on BOARD_TC_MASTER_REV3, at least.
+#if (NRF8001_EXTI_VEC != RF_EXTI_VEC)
     NVIC.irqEnable(IVT.NRF8001_EXTI_VEC);             // BTLE controller IRQ
     NVIC.irqPrioritize(IVT.NRF8001_EXTI_VEC, 0x78);   //  a little higher than radio, just below USB
+#endif
 
     NVIC.irqEnable(IVT.NRF8001_DMA_CHAN_RX);            // BTLE SPI DMA channels
     NVIC.irqPrioritize(IVT.NRF8001_DMA_CHAN_RX, 0x74);  //  same prio as flash for now
     NVIC.irqEnable(IVT.NRF8001_DMA_CHAN_TX);
     NVIC.irqPrioritize(IVT.NRF8001_DMA_CHAN_TX, 0x74);
-#endif
+#endif // HAVE_NRF8001
 
 #if defined(USE_ADC_BATT_MEAS) || defined (USE_ADC_FADER_MEAS)
     NVIC.irqEnable(IVT.ADC1_2);                     // adc sample

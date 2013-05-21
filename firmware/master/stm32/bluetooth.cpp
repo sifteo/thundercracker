@@ -27,10 +27,13 @@ NRF8001 NRF8001::instance(NRF8001_REQN_GPIO,
                                     NRF8001_MOSI_GPIO,
                                     staticSpiCompletionHandler));
 
+#if BOARD == BOARD_TC_MASTER_REV2
+// on rev3, this is handled in ISR_EXTI9_5 - see exti.cpp
 IRQ_HANDLER ISR_FN(NRF8001_EXTI_VEC)()
 {
     NRF8001::instance.isr();
 }
+#endif
 
 bool BTProtocolHardware::isAvailable()
 {

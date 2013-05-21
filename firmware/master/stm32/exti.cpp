@@ -1,8 +1,9 @@
 #include "vectors.h"
 
-#include "nrf24l01.h"
-#include "powermanager.h"
 #include "board.h"
+#include "nrf24l01.h"
+#include "nrf8001/nrf8001.h"
+#include "powermanager.h"
 #include "neighbor_rx.h"
 
 #if (BOARD == BOARD_TEST_JIG)
@@ -22,20 +23,22 @@ IRQ_HANDLER ISR_EXTI9_5()
         NRF24L01::instance.isr();
 #endif
 
-#if (BOARD >= BOARD_TC_MASTER_REV1 && BOARD != BOARD_TEST_JIG)
+#if defined(HAVE_NRF8001) && (BOARD == BOARD_TC_MASTER_REV3)
+    if (NRF8001::instance.rdyn.irqPending()) {
+        NRF8001::instance.isr();
+    }
+#endif
 
+#if (BOARD >= BOARD_TC_MASTER_REV1 && BOARD != BOARD_TEST_JIG)
     if (PowerManager::vbus.irqPending()) {
         PowerManager::vbus.irqAcknowledge();
         PowerManager::onVBusEdge();
     }
-
 #endif
 
 #if (BOARD == BOARD_TEST_JIG)
-
     // neighbor ins 0 and 1 are on exti lines 6 and 7 respectively
     NeighborRX::pulseISR(0);
     NeighborRX::pulseISR(1);
-
 #endif
 }
