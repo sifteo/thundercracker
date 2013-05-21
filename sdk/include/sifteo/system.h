@@ -30,6 +30,16 @@ class System {
  public:
     
     /**
+     * Valid hardware versions that can be returned from
+     * hardwareVersion().
+     */
+    enum HardwareVersion {
+        HardwareNone    = _SYS_HW_VERSION_NONE,     ///< Default response for firmware versions that do not support retrieving the HW version.
+        HardwareGen2    = _SYS_HW_VERSION_GEN_2,    ///< The original Sifteo Base
+        HardwareGen2_5  = _SYS_HW_VERSION_GEN_2_5   ///< The Sifteo Base with Bluetooth capabilities
+    };
+
+    /**
      * @brief Leave the game immediately
      *
      * Returns control back to the main menu. Equivalent to returning
@@ -269,7 +279,9 @@ class System {
      * this application is running on.
      *
      * @note early OS versions do not support the _SYS_version() syscall -
-     * _SYS_HW_VERSION_NONE is returned in this case.
+     * HardwareVersion::HardwareNone is returned in this case.
+     *
+     * @see HardwareVersion
      */
     static uint8_t hardwareVersion() {
 

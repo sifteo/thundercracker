@@ -164,7 +164,10 @@ struct _SYSPseudoRandomState {
 
 // defaults for earlier OS versions that don't support _SYS_version()
 #define _SYS_OS_VERSION_NONE        0x00
+
 #define _SYS_HW_VERSION_NONE        0x00
+#define _SYS_HW_VERSION_GEN_2       0x02
+#define _SYS_HW_VERSION_GEN_2_5     0x04
 
 #define _SYS_FEATURE_SYS_VERSION    (1 << 0)
 #define _SYS_FEATURE_ALL            (_SYS_FEATURE_SYS_VERSION)
