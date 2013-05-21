@@ -496,16 +496,16 @@ namespace Events {
      */
 
     /// A mobile device has established a connection with the Sifteo Bluetooth API
-    const NullaryEventVector<_SYS_BT_CONNECT>  bluetoothConnect;
+    const NullaryEventVector<_SYS_BASE_BT_CONNECT>  bluetoothConnect;
 
     /// A mobile device has disconnected from the Sifteo Bluetooth API
-    const NullaryEventVector<_SYS_BT_DISCONNECT>  bluetoothDisconnect;
+    const NullaryEventVector<_SYS_BASE_BT_DISCONNECT>  bluetoothDisconnect;
 
     /// Packets are available for reading on the current BluetoothPipe.
-    const NullaryEventVector<_SYS_BT_READ_AVAILABLE>  bluetoothReadAvailable;
+    const NullaryEventVector<_SYS_BASE_BT_READ_AVAILABLE>  bluetoothReadAvailable;
 
     /// Buffer space just became available for writing to the current BluetoothPipe.
-    const NullaryEventVector<_SYS_BT_WRITE_AVAILABLE>  bluetoothWriteAvailable;
+    const NullaryEventVector<_SYS_BASE_BT_WRITE_AVAILABLE>  bluetoothWriteAvailable;
 
 };  // namespace Events
 

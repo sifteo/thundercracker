@@ -39,8 +39,9 @@ void Event::dispatch()
     if (!SvmRuntime::canSendEvent())
         return;
 
-    unsigned pid;
-    while (pending.findFirst(pid)) {
+    unsigned index;
+    while (pending.findFirst(index)) {
+        PriorityID pid = PriorityID(index);
         Params &param = params[pid];
 
         switch (pid) {
@@ -49,29 +50,14 @@ void Event::dispatch()
              * Base Events
              */
 
-            case PID_BASE_TRACKER:
-                pending.clear(pid);
-                if (callBaseEvent(_SYS_BASE_TRACKER, param.generic))
-                    return;
-                break;
-
-            case PID_BASE_GAME_MENU:
-                pending.clear(pid);
-                if (callBaseEvent(_SYS_BASE_GAME_MENU, param.generic))
-                    return;
-                break;
-
-            case PID_BASE_VOLUME_DELETE:
-                pending.clear(pid);
-                if (callBaseEvent(_SYS_BASE_VOLUME_DELETE, param.generic))
-                    return;
-                break;
-
-            case PID_BASE_VOLUME_COMMIT:
-                pending.clear(pid);
-                if (callBaseEvent(_SYS_BASE_VOLUME_COMMIT, param.generic))
-                    return;
-                break;
+            case PID_BASE_TRACKER:              if (dispatchBasePID(pid, _SYS_BASE_TRACKER              )) return; else break;
+            case PID_BASE_GAME_MENU:            if (dispatchBasePID(pid, _SYS_BASE_GAME_MENU            )) return; else break;
+            case PID_BASE_VOLUME_DELETE:        if (dispatchBasePID(pid, _SYS_BASE_VOLUME_DELETE        )) return; else break;
+            case PID_BASE_VOLUME_COMMIT:        if (dispatchBasePID(pid, _SYS_BASE_VOLUME_COMMIT        )) return; else break;
+            case PID_BASE_BT_DISCONNECT:        if (dispatchBasePID(pid, _SYS_BASE_BT_DISCONNECT        )) return; else break;
+            case PID_BASE_BT_CONNECT:           if (dispatchBasePID(pid, _SYS_BASE_BT_CONNECT           )) return; else break;
+            case PID_BASE_BT_READ_AVAILABLE:    if (dispatchBasePID(pid, _SYS_BASE_BT_READ_AVAILABLE    )) return; else break;
+            case PID_BASE_BT_WRITE_AVAILABLE:   if (dispatchBasePID(pid, _SYS_BASE_BT_WRITE_AVAILABLE   )) return; else break;
 
             /*
              * Per-cube Events. Try to dispatch to any pending cube.
@@ -80,17 +66,24 @@ void Event::dispatch()
             default:
                 while (param.cubesPending) {
                     _SYSCubeID cid = (_SYSCubeID) Intrinsic::CLZ(param.cubesPending);
-                    if (dispatchCubePID(PriorityID(pid), cid))
+                    if (dispatchCubePID(pid, cid))
                         return;
                 }
                 pending.clear(pid);
 
                 // Must do this AFTER clearing the 'pending' bit. This may re-raise the event.
-                cubeEventsClear(PriorityID(pid));
+                cubeEventsClear(pid);
                 break;
 
         }
     }
+}
+
+bool Event::dispatchBasePID(PriorityID pid, _SYSVectorID vid)
+{
+    Params &param = params[pid];
+    pending.clear(pid);
+    return callBaseEvent(vid, param.generic);
 }
 
 bool Event::dispatchCubePID(PriorityID pid, _SYSCubeID cid)

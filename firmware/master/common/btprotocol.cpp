@@ -6,6 +6,7 @@
 #include "btprotocol.h"
 #include "macros.h"
 #include "pause.h"
+#include "event.h"
 #include <stdint.h>
 #include <string.h>
 
@@ -20,12 +21,14 @@ void BTProtocolCallbacks::onConnect()
 {
     BTProtocol::instance.flags.atomicClear(BTProtocol::PairingFlag);
     BTProtocol::instance.flags.atomicMark(BTProtocol::ConnectedFlag);
+    Event::setBasePending(Event::PID_BASE_BT_CONNECT);
 }
 
 void BTProtocolCallbacks::onDisconnect()
 {
     BTProtocol::instance.flags.atomicClear(BTProtocol::PairingFlag);
     BTProtocol::instance.flags.atomicClear(BTProtocol::ConnectedFlag);
+    Event::setBasePending(Event::PID_BASE_BT_DISCONNECT);
 }
 
 void BTProtocolCallbacks::onDisplayPairingCode(const char *code)
