@@ -88,6 +88,7 @@ void NRF8001::init()
     requestsPending = 0;
     dataCredits = 0;
     isBonded = false;
+    isUnbonding = false;
     isSetupFinished = false;
     sysCommandPending = false;
     testState = Test::Idle;
@@ -709,9 +710,26 @@ void NRF8001::handleEvent()
                         testState = Test::Idle;
                         requestTransaction();
 
+                    } else if (isUnbonding) {
+                        /*
+                         * We're trying to shed our existing bonding data.
+                         * Don't load it from the filesystem, even if it exists.
+                         *
+                         * This is a one-shot flag used to explicitly remove
+                         * a bond after we know it's no longer any good. Next time
+                         * we enter standby, we'll go back to our usual behavior.
+                         */
+
+                        isUnbonding = false;
+                        isBonded = false;
+                        sysCommandState = SysCS::AfterWriteDynamicData;
+                        requestTransaction();
+
                     } else {
-                        // Send local data, beginning with "Dynamic" data from the filesystem.
-                        // This requires fetching the first packet from SysLFS.
+                        /*
+                         * Send "Dynamic Data" from the filesystem, to restore a
+                         * persistent bond from earlier.
+                         */
 
                         dyn.sequence = 0;
                         dyn.state = DynStateLoadRequest;
@@ -957,9 +975,25 @@ void NRF8001::handleCommandStatus(unsigned command, unsigned status)
         }
     }
 
-    if (status > ACI_STATUS_TRANSACTION_COMPLETE) {
+    if (status == ACI_BOND_STATUS_FAILED_AUTHENTICATION_REQ) {
         /*
-         * An error occurred! For now, just try resetting as best we can...
+         * A command failed because of insufficient authentication.
+         *
+         * This will happen very soon after connect if we're connected to
+         * a device but our bonding information is out of date. We need to
+         * reset, but this time we'll ignore our existing bonding data.
+         */
+
+        #ifdef TRACE
+            UART("BT Unbonding\r\n");
+        #endif
+
+        isUnbonding = true;
+        sysCommandState = SysCS::RadioReset;
+
+    } else if (status > ACI_STATUS_TRANSACTION_COMPLETE) {
+        /*
+         * Unhandled error! For now, just try resetting as best we can...
          */
 
         #ifdef TRACE

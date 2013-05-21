@@ -122,6 +122,7 @@ private:
     bool requestsPending;        // Need at least one more request after the current one finishes
     bool isBonded;               // Have we bonded (paired) with another device?
     bool isSetupFinished;        // Did we get confirmation that SETUP completed?
+    bool isUnbonding;            // Do we want to ignore bonding data temporarily?
     uint8_t sysCommandState;     // produceSystemCommand() state machine
     uint8_t sysCommandPending;   // Are we waiting on a response to a command?
     uint8_t testState;           // Requested SystemCommandState to get into Test mode
