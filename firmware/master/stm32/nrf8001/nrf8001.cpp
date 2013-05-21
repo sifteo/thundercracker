@@ -68,8 +68,8 @@ namespace Test {
 
     // elements must match the order of their entries in the SysCS enum
     static const uint16_t dtmParams[] = {
-        0x3040,         // Receiver Test, channel 0x10, length 0x10, PRBS9 packet
-        0x5040,         // Transmitter Test, channel 0x10, length 0x10, PRBS9 packet
+        0x4150,         // Receiver Test, channel 0x10, length 0x10, 11110000 packet
+        0x4190,         // Transmitter Test, channel 0x10, length 0x10, 11110000 packet
         (0x3 << 6),     // Test End
     };
 }
@@ -1058,12 +1058,9 @@ void NRF8001::handleDtmResponse(unsigned status, uint16_t response)
     }
 
     // tick along our state machine as appropriate.
-    switch (testState) {
-
-    case Test::ExitTest:
+    if (testState == Test::ExitTest) {
         sysCommandState = SysCS::ExitTest;
         testState = Test::Idle;
-        break;
     }
 }
 
