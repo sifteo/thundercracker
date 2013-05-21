@@ -97,10 +97,10 @@ int main()
 
     // if 8001 and L01 are on the same vector, defer to the priority of the L01.
     // this is the case on BOARD_TC_MASTER_REV3, at least.
-#if (NRF8001_EXTI_VEC != RF_EXTI_VEC)
-    NVIC.irqEnable(IVT.NRF8001_EXTI_VEC);             // BTLE controller IRQ
-    NVIC.irqPrioritize(IVT.NRF8001_EXTI_VEC, 0x78);   //  a little higher than radio, just below USB
-#endif
+    if (IVT.NRF8001_EXTI_VEC != IVT.RF_EXTI_VEC) {
+        NVIC.irqEnable(IVT.NRF8001_EXTI_VEC);             // BTLE controller IRQ
+        NVIC.irqPrioritize(IVT.NRF8001_EXTI_VEC, 0x78);   //  a little higher than radio, just below USB
+    }
 
     NVIC.irqEnable(IVT.NRF8001_DMA_CHAN_RX);            // BTLE SPI DMA channels
     NVIC.irqPrioritize(IVT.NRF8001_DMA_CHAN_RX, 0x74);  //  same prio as flash for now
