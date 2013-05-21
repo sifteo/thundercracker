@@ -741,8 +741,7 @@ void NRF8001::handleEvent()
             return;
         }
 
-
-    case Op::ConnectedEvent: {
+        case Op::ConnectedEvent: {
             /*
              * Established a connection! If we're already bonded to this device
              * and this is a reconnect, we can go ahead and notify our onConnect
