@@ -27,19 +27,25 @@ namespace Sifteo {
  *
  * Metadata can be added inside a function, as follows:
  *
- *     Metadata().title("My game");
+ * \code
+ * Metadata().title("My game");
+ * \endcode
  *
  * You can chain multiple kinds of metadata into one statement:
  *
- *     Metadata()
- *      .title("My game")
- *      .icon(MyIconAsset);
+ * \code
+ * Metadata()
+ *  .title("My game")
+ *  .icon(MyIconAsset);
+ * \endcode
  *
  * You can also declare metadata as a global variable:
  *
- *     static Metadata M = Metadata()
- *      .title("My game")
- *      .icon(MyIconAsset);
+ * \code
+ * static Metadata M = Metadata()
+ *  .title("My game")
+ *  .icon(MyIconAsset);
+ * \endcode
  *
  * All metadata parameters must be known at compile-time to be constant.
  */
