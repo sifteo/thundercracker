@@ -88,6 +88,7 @@ void NRF8001::init()
     requestsPending = 0;
     dataCredits = 0;
     isBonded = false;
+    isSetupFinished = false;
     sysCommandPending = false;
     testState = Test::Idle;
     sysCommandState = SysCS::AfterInit;
@@ -397,6 +398,7 @@ bool NRF8001::produceSystemCommand()
             sysCommandState = SysCS::Idle;
             dataCredits = 0;
             isBonded = false;
+            isSetupFinished = false;
 
             if (testState == Test::RadioReset) {
                 sysCommandState = SysCS::EnterTest;
@@ -655,50 +657,68 @@ void NRF8001::handleEvent()
             uint8_t mode = rxBuffer.param[0];
             dataCredits = rxBuffer.param[2];
 
-            if (mode == OperatingMode::Setup && sysCommandState == SysCS::Idle) {
-                /*
-                 * The device has finished its own initialization, and it's waiting
-                 * for us to send our SETUP data. Start sending that, followed by
-                 * any persistent "Dynamic Data" we have.
-                 */
-
-                sysCommandState = SysCS::SetupFirst;
-            }
-
-            if (mode == OperatingMode::Standby && sysCommandState == SysCS::Idle) {
-
-                /*
-                 * We can only enter Test mode from Standby mode, but in normal
-                 * operation we transition immediately from Standby to Active mode by
-                 * sending an Op::Bond.
-                 *
-                 * To get back to Standby, we issue a RadioReset since Op::Disconnect
-                 * fails if we're not yet connected to a host. Check here to see
-                 * whether we're re-entering Standby on our way to Test mode,
-                 * or simply as part of our normal start procedure.
-                 */
-
-                if (testState == Test::EnterTest) {
-                    sysCommandState = SysCS::EnterTest;
-                    testState = Test::Idle;
-
-                } else {
-                    // Send local data, beginning with "Dynamic" data from the filesystem.
-                    // This requires fetching the first packet from SysLFS.
-
-                    dyn.sequence = 0;
-                    dyn.state = DynStateLoadRequest;
-                    Tasks::trigger(Tasks::BluetoothDriver);
-                }
-            }
-
-            // Op::Test doesn't get a CommandResponseEvent,
-            // so must clear sysCommandPending explicitly
+            /*
+             * A command is never in-progress if a DeviceStartedEvent is returned.
+             * Op::Test responds with a DeviceStartedEvent instead of a CommandResponseEvent,
+             * so it's convenient to unblock the next command here.
+             */
             sysCommandPending = false;
 
-            if (sysCommandState != SysCS::Idle) {
-                // More work to do, ask for another transaction.
-                requestTransaction();
+            switch (mode) {
+
+                case OperatingMode::Setup: {
+                    /*
+                     * The device has finished its own initialization, and it's waiting
+                     * for us to send our SETUP data. Start sending that, followed by
+                     * any persistent "Dynamic Data" we have.
+                     */
+
+                    sysCommandState = SysCS::SetupFirst;
+                    requestTransaction();
+                    break;
+                }
+
+                case OperatingMode::Standby: {
+                    /*
+                     * The nRF8001 claims it's ready to go. But maybe it actually isn't.
+                     * If we haven't received confirmation that our SETUP worked,
+                     * this packet is a lie and we'll try again.
+                     *
+                     * We can only enter Test mode from Standby mode, but in normal
+                     * operation we transition immediately from Standby to Active mode by
+                     * sending an Op::Bond.
+                     *
+                     * To get back to Standby, we issue a RadioReset since Op::Disconnect
+                     * fails if we're not yet connected to a host. Check here to see
+                     * whether we're re-entering Standby on our way to Test mode,
+                     * or simply as part of our normal start procedure.
+                     */
+
+                    if (!isSetupFinished) {
+
+                        #ifdef TRACE
+                            UART("BT Setup never finished, resetting\r\n");
+                        #endif
+
+                        sysCommandState = SysCS::RadioReset;
+                        requestTransaction();
+
+                    } else if (testState == Test::EnterTest) {
+
+                        sysCommandState = SysCS::EnterTest;
+                        testState = Test::Idle;
+                        requestTransaction();
+
+                    } else {
+                        // Send local data, beginning with "Dynamic" data from the filesystem.
+                        // This requires fetching the first packet from SysLFS.
+
+                        dyn.sequence = 0;
+                        dyn.state = DynStateLoadRequest;
+                        Tasks::trigger(Tasks::BluetoothDriver);
+                    }
+                    break;
+                }
             }
             return;
         }
@@ -742,7 +762,7 @@ void NRF8001::handleEvent()
             isBonded = true;
 
             // Were we just doing passcode entry? Disconnect to save the new keys.
-            if (BTProtocol::isPairingInProgress()) {
+            if (0 && BTProtocol::isPairingInProgress()) {
                 sysCommandState = SysCS::Disconnect;
             } else {
                 sysCommandState = SysCS::AfterConnect;
@@ -872,9 +892,16 @@ void NRF8001::handleCommandStatus(unsigned command, unsigned status)
             /*
              * RadioReset will complain if the device hasn't been setup yet.
              * We care not, since we send the reset just-in-case. Ignore errors here.
+             *
+             * If we complete a reset and the device hasn't started setup, begin that process.
+             * Usually we defer setup until the nRF8001 explicitly asks for it with a
+             * DeviceStartedEvent, but in this case we won't get an event.
              */
 
-            return;
+            if (!isSetupFinished && sysCommandState == SysCS::Idle) {
+                sysCommandState = SysCS::SetupFirst;
+            }
+            break;
 
         case Op::DtmCommand:
             /*
@@ -883,6 +910,19 @@ void NRF8001::handleCommandStatus(unsigned command, unsigned status)
              */
 
             handleDtmResponse(status, (rxBuffer.param[2] << 8) | rxBuffer.param[3]);
+            break;
+
+        case Op::Setup:
+            /*
+             * If we've completed SETUP, the nRF8001 sends us a status code indicating
+             * that no more SETUP data is necessary. If something went wrong, the nRF
+             * tends to send us a DeviceStartedEvent even though it isn't internally
+             * complete with SETUP mode. Ugh.
+             */
+
+            if (status == 0x02) {
+                isSetupFinished = true;
+            }
             break;
 
         case Op::ReadDynamicData: {
