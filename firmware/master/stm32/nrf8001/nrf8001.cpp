@@ -702,18 +702,6 @@ void NRF8001::handleEvent()
             return;
         }
 
-        case Op::ConnectedEvent: {
-            /*
-             * We reconnected to a peer that we've previously paired with.
-             * We get this instead of BondStatusEvent when we're reconnecting
-             * to a peer that we've remembered via the nRF8001's "Dynamic data".
-             */
-
-            sysCommandState = SysCS::AfterConnect;
-            BTProtocolCallbacks::onConnect();
-            return;
-        }
-
         case Op::DisconnectedEvent: {
             /*
              * One connection ended, and now the nRF8001 is back in standby mode.
