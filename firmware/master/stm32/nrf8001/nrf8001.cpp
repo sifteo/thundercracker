@@ -28,7 +28,7 @@ namespace SysCS {
         SetupFirst = 0,
         SetupLast = SetupFirst + NB_SETUP_MESSAGES - 1,
         Idle,           // Must follow SetupLast
-        BeginBond,
+        BeginConnect,
         RadioReset,
         InitSysVersion,
         ChangeTimingRequest,
@@ -42,9 +42,9 @@ namespace SysCS {
         DtmEnd,
 
         // State ordering definitions
-        AfterReadDynamicData = BeginBond,
+        AfterReadDynamicData = BeginConnect,
         AfterWriteDynamicData = InitSysVersion,
-        AfterInitSysVersion = BeginBond,
+        AfterInitSysVersion = BeginConnect,
         AfterConnect = ChangeTimingRequest,
     };
 }
@@ -84,7 +84,7 @@ void NRF8001::init()
     txBuffer.length = 0;
     requestsPending = 0;
     dataCredits = 0;
-    needStoreDynamicData = false;
+    isBonded = false;
     sysCommandState = SysCS::RadioReset;
     sysCommandPending = false;
     testState = Test::Idle;
@@ -350,7 +350,7 @@ bool NRF8001::produceSystemCommand()
 
         case DynStateStoreComplete:
             // Finished storing one dynamic data packet. Move to the next, or go back to Bonding mode.
-            sysCommandState = needStoreDynamicData ? SysCS::ReadDynamicData : SysCS::AfterReadDynamicData;
+            sysCommandState = dyn.record.continued ? SysCS::ReadDynamicData : SysCS::AfterReadDynamicData;
             dyn.state = DynStateIdle;
             break;
 
@@ -388,7 +388,9 @@ bool NRF8001::produceSystemCommand()
             } else {
                 sysCommandState = SysCS::SetupFirst;
             }
+
             dataCredits = 0;
+            isBonded = false;
             return true;
         }
 
@@ -437,12 +439,13 @@ bool NRF8001::produceSystemCommand()
             return true;
         };
 
-        case SysCS::BeginBond: {
+        case SysCS::BeginConnect: {
             /*
-             * After all setup is complete, send a 'Bond' command. This begins the potentially
-             * long-running process of looking for a peer. This is what enables advertisement
-             * broadcasts. Bonding is analogous to Connecting, but with authentication and
-             * encryption.
+             * After all setup is complete, send a 'Connect' or 'Bond' command. This begins
+             * the potentially long-running process of looking for a peer. This is what enables
+             * advertisement broadcasts. Bonding establishes a new long-term encryption key before
+             * establishing an authenticated connection. If we've already bonded, 'Connect' will
+             * reestablish the same prior authenticated session.
              *
              * After this command, we'll be idle until a connection event arrives.
              *
@@ -452,10 +455,19 @@ bool NRF8001::produceSystemCommand()
              * https://developer.apple.com/hardwaredrivers/BluetoothDesignGuidelines.pdf
              */
 
-            txBuffer.length = 5;
-            txBuffer.command = Op::Bond;
-            txBuffer.param16[0] = 10;           // Try again after 10 seconds
-            txBuffer.param16[1] = 32;           // 20ms, in 0.625ms units
+            if (isBonded) {
+                // Reconnect to existing bonded peer.
+                txBuffer.length = 5; 
+                txBuffer.command = Op::Connect;
+                txBuffer.param16[0] = 0x0000;       // Infinite duration
+                txBuffer.param16[1] = 32;           // 20ms, in 0.625ms units
+            } else {
+                // Create a new bond
+                txBuffer.length = 5; 
+                txBuffer.command = Op::Bond;
+                txBuffer.param16[0] = 10;           // Try again after 10 seconds
+                txBuffer.param16[1] = 32;           // 20ms, in 0.625ms units
+            }
             sysCommandState = SysCS::Idle;
             return true;
         }
@@ -517,7 +529,7 @@ bool NRF8001::produceSystemCommand()
 
         case SysCS::WriteDynamicData: {
             /*
-             * Write the next dynamic data packet out of the nRF8001.
+             * Write the next dynamic data packet out to the nRF8001.
              *
              * If there are more packets to send after this one, we'll also request
              * the next one from our Task handler.
@@ -538,6 +550,7 @@ bool NRF8001::produceSystemCommand()
             } else {
                 // Move on
                 dyn.state = DynStateIdle;
+                isBonded = true;
                 sysCommandState = SysCS::AfterWriteDynamicData;
             }
             return true;
@@ -692,10 +705,29 @@ void NRF8001::handleEvent()
                 return;
             }
 
+            // Bonding succeeded
+            isBonded = true;
+
+            // Were we just doing passcode entry? Disconnect to save the new keys.
             if (BTProtocol::isPairingInProgress()) {
                 sysCommandState = SysCS::Disconnect;
-                needStoreDynamicData = true;
             } else {
+                sysCommandState = SysCS::AfterConnect;
+                BTProtocolCallbacks::onConnect();
+            }
+            return;
+        }
+
+
+    case Op::ConnectedEvent: {
+            /*
+             * Established a connection! If we're already bonded to this device
+             * and this is a reconnect, we can go ahead and notify our onConnect
+             * callback. Otherwise, this waits until after BondStatusEvent and
+             * a disconnect/reconnect cycle.
+             */
+
+            if (isBonded) {
                 sysCommandState = SysCS::AfterConnect;
                 BTProtocolCallbacks::onConnect();
             }
@@ -710,7 +742,7 @@ void NRF8001::handleEvent()
              */
 
             openPipes = 0;
-            sysCommandState = needStoreDynamicData ? SysCS::ReadDynamicData : SysCS::AfterReadDynamicData;
+            sysCommandState = isBonded ? SysCS::ReadDynamicData : SysCS::AfterReadDynamicData;
             BTProtocolCallbacks::onDisconnect();
             requestTransaction();
             return;
@@ -833,23 +865,19 @@ void NRF8001::handleCommandStatus(unsigned command, unsigned status)
             if (length > sizeof dyn.record.data || sequence >= SysLFS::NUM_BLUETOOTH) {
                 // Bad parameter. Give up now.
 
-                needStoreDynamicData = false;
                 sysCommandState = SysCS::RadioReset;
 
             } else {
                 // Hand this packet off to task() for writing to SysLFS.
                 // We'll resume in produceSystemCommand with DynStateStoreComplete.
 
-                bool more = (status == ACI_STATUS_TRANSACTION_CONTINUE);
-                needStoreDynamicData = more;
-                sysCommandState = SysCS::Idle;
-
                 memcpy(dyn.record.data, &rxBuffer.param[3], length);
-                dyn.record.continued = more;
+                dyn.record.continued = (status == ACI_STATUS_TRANSACTION_CONTINUE);
                 dyn.record.length = length;
                 dyn.sequence = sequence;
                 dyn.state = DynStateStoreRequest;
                 Tasks::trigger(Tasks::BluetoothDriver);
+                sysCommandState = SysCS::Idle;
             }
             break;
         }
