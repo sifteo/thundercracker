@@ -59,7 +59,8 @@ public:
      * hardware that support Bluetooth. If not, returns 'false'.
      *
      * @warning Other Bluetooth functions must only be called if isAvailable() 
-     * returns 'true'!
+     * returns 'true'! Do not call any other methods on the Bluetooth object
+     * if this returns 'false', and do not install any Bluetooth event handlers.
      */
 
     static bool isAvailable()
@@ -421,6 +422,21 @@ struct BluetoothQueue {
  *
  * Applications that do not need this level of control can use the
  * read() and write() methods on this object directly.
+ *
+ * Bluetooth packets do not have guaranteed delivery like TCP sockets.
+ * Instead, they have low latency but it's possible for data to be lost,
+ * more like UDP sockets. To summarize the guarantees made by BluetoothPipe:
+ *
+ *
+ * 1. Does NOT guarantee that a packet is ever delivered.
+ *    Packets can always be dropped.
+ * 2. Does NOT provide end-to-end flow control. Packets received
+ *    while the receive queue is full will be dropped.
+ * 3. DOES provide data integrity, through the Bluetooth protocol's standard CRC.
+ *    If a packet arrives at all, it's very unlikely to be corrupted.
+ * 4. DOES guarantee in-order delivery, if packets are ever delivered.
+ * 5. DOES provide local transmit flow control, so it's easy to write at
+ *    the radio's max transmit rate.
  */
 
 template < unsigned tSendCapacity = 4, unsigned tReceiveCapacity = 4 >
