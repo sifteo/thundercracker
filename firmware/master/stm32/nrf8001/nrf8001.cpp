@@ -28,6 +28,7 @@ namespace SysCS {
         SetupFirst = 0,
         SetupLast = SetupFirst + NB_SETUP_MESSAGES - 1,
         Idle,           // Must follow SetupLast
+        DrainEventQueue,
         BeginConnect,
         RadioReset,
         InitSysVersion,
@@ -42,6 +43,8 @@ namespace SysCS {
         DtmEnd,
 
         // State ordering definitions
+        AfterInit = DrainEventQueue,
+        AfterDrainEventQueue = RadioReset, 
         AfterReadDynamicData = BeginConnect,
         AfterWriteDynamicData = InitSysVersion,
         AfterInitSysVersion = BeginConnect,
@@ -85,9 +88,9 @@ void NRF8001::init()
     requestsPending = 0;
     dataCredits = 0;
     isBonded = false;
-    sysCommandState = SysCS::RadioReset;
     sysCommandPending = false;
     testState = Test::Idle;
+    sysCommandState = SysCS::AfterInit;
 
     // Output pin, requesting a transaction
     reqn.setHigh();
@@ -368,6 +371,7 @@ bool NRF8001::produceSystemCommand()
     switch (sysCommandState) {
 
         default:
+        case SysCS::DrainEventQueue:
         case SysCS::Idle:
             return false;
 
@@ -596,6 +600,17 @@ void NRF8001::handleEvent()
 {
     if (rxBuffer.length == 0) {
         // No pending event.
+
+        // Were we waiting to drain the remote event queue?
+        if (sysCommandState == SysCS::DrainEventQueue) {
+            #ifdef TRACE
+                UART("BT Event queue drained\r\n");
+            #endif
+
+            sysCommandState = SysCS::AfterDrainEventQueue;
+            requestTransaction();
+        }
+
         return;
     }
 
