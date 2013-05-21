@@ -901,7 +901,9 @@ void NRF8001::handleCommandStatus(unsigned command, unsigned status)
             if (!isSetupFinished && sysCommandState == SysCS::Idle) {
                 sysCommandState = SysCS::SetupFirst;
             }
-            break;
+
+            // Ignore errors
+            return;
 
         case Op::DtmCommand:
             /*
