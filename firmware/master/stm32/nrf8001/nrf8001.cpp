@@ -389,20 +389,20 @@ bool NRF8001::produceSystemCommand()
              * but we ignore that error. If we experienced a soft reset of any kind, this
              * will ensure the nRF8001 isn't in the middle of anything.
              *
-             * After this finishes, we'll start SETUP.
+             * After this finishes, we'll wait for a DeviceStartedEvent.
              */
 
             txBuffer.length = 1;
             txBuffer.command = Op::RadioReset;
+            sysCommandState = SysCS::Idle;
+            dataCredits = 0;
+            isBonded = false;
+
             if (testState == Test::RadioReset) {
                 sysCommandState = SysCS::EnterTest;
                 testState = Test::EnterTest;
-            } else {
-                sysCommandState = SysCS::SetupFirst;
             }
 
-            dataCredits = 0;
-            isBonded = false;
             return true;
         }
 
@@ -654,6 +654,16 @@ void NRF8001::handleEvent()
 
             uint8_t mode = rxBuffer.param[0];
             dataCredits = rxBuffer.param[2];
+
+            if (mode == OperatingMode::Setup && sysCommandState == SysCS::Idle) {
+                /*
+                 * The device has finished its own initialization, and it's waiting
+                 * for us to send our SETUP data. Start sending that, followed by
+                 * any persistent "Dynamic Data" we have.
+                 */
+
+                sysCommandState = SysCS::SetupFirst;
+            }
 
             if (mode == OperatingMode::Standby && sysCommandState == SysCS::Idle) {
 
