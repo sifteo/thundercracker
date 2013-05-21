@@ -12,6 +12,9 @@
 #include "hwtimer.h"
 #include "vectors.h"
 
+#if BOARD == BOARD_TEST_JIG
+#include "testjig.h"
+#endif
 
 namespace {
 
@@ -210,8 +213,11 @@ IRQ_HANDLER ISR_FN(NBR_RX_TIM)()
              */
             bool headerOK = (rxDataBuf.bytes[1] & 0xe0) == 0xe0;
 
-            if (headerOK && checkbyte == rxDataBuf.bytes[0])
-                NeighborRX::callback(receivingSide, rxDataBuf.halfword);
+            if (headerOK && checkbyte == rxDataBuf.bytes[0]) {
+                #if BOARD == BOARD_TEST_JIG
+                TestJig::onNeighborRX(receivingSide, rxDataBuf.halfword);
+                #endif
+            }
         }
     }
 }

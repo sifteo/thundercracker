@@ -37,9 +37,12 @@ static GPIOPin dip4 = DIP_SWITCH4_GPIO;
 static PulseRX PulseRX2v0Rail(NBR_IN4_GPIO);
 static PulseRX PulseRX3v3Rail(NBR_IN3_GPIO);
 
+BitVector<TestJig::NUM_WORK_ITEMS> TestJig::taskWork;
+
 TestJig::I2CWriteTransaction TestJig::cubeWrite;
 TestJig::AckPacket TestJig::ackPacket;
 TestJig::I2CUsbPayload TestJig::i2cUsbPayload;
+TestJig::NeighborRxData TestJig::neighborRxData;
 
 /*
  * Table of test handlers.
@@ -132,7 +135,7 @@ void TestJig::init()
 
     ackPacket.enabled = false;
     ackPacket.len = 0;
-    i2cUsbPayload.usbWritePending = false;
+    taskWork.clear();
     cubeWrite.remaining = 0;
 
     i2c.init(JIG_SCL_GPIO, JIG_SDA_GPIO, I2C_SLAVE_ADDRESS);
@@ -158,11 +161,18 @@ void TestJig::onTestDataReceived(uint8_t *buf, unsigned len)
  * Called from ISR context within Neighbors once we've received a message.
  * Forward it on over USB.
  */
-void NeighborRX::callback(unsigned side, unsigned msg)
+void TestJig::onNeighborRX(int8_t side, uint16_t msg)
 {
     // NB! neighbor transmitted in its native big endian format
-    const uint8_t response[] = { TestJig::EventNeighbor, side, (msg >> 8) & 0xff, msg & 0xff };
-    UsbDevice::write(response, sizeof response);
+
+    if (taskWork.test(NeighborRXWrite))
+            return;
+
+    neighborRxData.side = side;
+    neighborRxData.msg = msg;
+
+    taskWork.atomicMark(NeighborRXWrite);
+    Tasks::trigger(Tasks::TestJig);
 }
 
 ALWAYS_INLINE static bool flagsMatch(uint32_t value, uint32_t flags) {
@@ -265,7 +275,7 @@ void TestJig::onI2cEvent()
         }
 
         if (ackPacket.full() && ackPacket.enabled) {
-            if (!i2cUsbPayload.usbWritePending) {
+            if (!taskWork.test(I2CWrite)) {
 
                 /*
                  * If our double buffer is available, stash it there until
@@ -275,7 +285,7 @@ void TestJig::onI2cEvent()
 
                 memcpy(&i2cUsbPayload.bytes[1], &ackPacket.payload, sizeof ackPacket.payload);
                 ackPacket.len = 0;
-                i2cUsbPayload.usbWritePending = true;
+                taskWork.atomicMark(I2CWrite);
                 Tasks::trigger(Tasks::TestJig);
             }
         }
@@ -294,12 +304,34 @@ void TestJig::onI2cError()
  */
 void TestJig::task()
 {
-    if (!i2cUsbPayload.usbWritePending)
-        return;
+    BitVector<NUM_WORK_ITEMS> pending = taskWork;
+    unsigned index;
 
-    i2cUsbPayload.bytes[0] = EventAckPacket;
-    UsbDevice::write(i2cUsbPayload.bytes, sizeof i2cUsbPayload.bytes);
-    i2cUsbPayload.usbWritePending = false;
+    while (pending.clearFirst(index)) {
+        taskWork.atomicClear(index);
+
+        switch (index) {
+            case I2CWrite:
+                i2cUsbPayload.bytes[0] = EventAckPacket;
+                UsbDevice::write(i2cUsbPayload.bytes, sizeof i2cUsbPayload.bytes);
+                break;
+
+            case NeighborRXWrite: {
+
+                const uint8_t response[] = {
+                    EventNeighbor,
+                    neighborRxData.side,
+                    (neighborRxData.msg >> 8) & 0xff,
+                    neighborRxData.msg & 0xff
+                };
+
+                UsbDevice::write(response, sizeof response);
+                break;
+            }
+        }
+    }
+
+
 }
 
 /*******************************************

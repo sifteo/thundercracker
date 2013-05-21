@@ -9,6 +9,7 @@
 #include <stdint.h>
 #include "protocol.h"
 #include "macros.h"
+#include "bits.h"
 
 class TestJig
 {
@@ -24,6 +25,7 @@ public:
     static void onTestDataReceived(uint8_t *buf, unsigned len);
     static void onI2cEvent();
     static void onI2cError();
+    static void onNeighborRX(int8_t side, uint16_t msg);
     static void task();
 
     enum DAC_Out {
@@ -72,7 +74,6 @@ private:
 
     // double buffered i2c payload to transmit via USB
     struct I2CUsbPayload {
-        bool usbWritePending;
         uint8_t bytes[sizeof(RF_ACKType) + 1];
     };
 
@@ -82,6 +83,19 @@ private:
         I2CFlashFifo        = 0xfd,
         I2CFlashReset       = 0xfe,
         I2CDone             = 0xff,
+    };
+
+    enum WorkItem {
+        I2CWrite,
+        NeighborRXWrite,
+        NUM_WORK_ITEMS,         // Must be last
+    };
+
+    static BitVector<NUM_WORK_ITEMS> taskWork;
+
+    struct NeighborRxData {
+        uint16_t msg;
+        uint8_t side;
     };
 
     // data that gets written to a cube
@@ -101,6 +115,7 @@ private:
     static AckPacket ackPacket;
     static I2CUsbPayload i2cUsbPayload;
     static I2CWriteTransaction cubeWrite;
+    static NeighborRxData neighborRxData;
 };
 
 #endif // _TEST_JIG_H

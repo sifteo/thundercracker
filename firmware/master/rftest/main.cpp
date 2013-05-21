@@ -9,8 +9,58 @@
 #include "systime.h"
 #include "radio.h"
 #include "nrf24l01.h"
+#include "nrf8001/nrf8001.h"
 #include "homebutton.h"
 #include "bootloader.h"
+
+namespace RfTest {
+    enum State {
+        L01TxLow,
+        L01TxMid,
+        L01TxHigh,
+        L01Rx,
+        L01TxSweep,
+        NUM_STATES  // must be last
+    };
+
+    unsigned gState;
+}
+
+class NRF24L01Test {
+public:
+    static const uint8_t channels[3];
+    static const unsigned SWEEP_CHAN_MAX = 83;
+
+    static void carrier() {
+        NRF24L01::instance.setConstantCarrier(false);
+        NRF24L01::instance.setConstantCarrier(true, channels[RfTest::gState - RfTest::L01TxLow]);
+    }
+
+    static void rx() {
+        NRF24L01::instance.setConstantCarrier(false);
+        NRF24L01::instance.setPRXMode(true);
+    }
+
+    static void txSweep() {
+        NRF24L01::instance.setPRXMode(false);
+
+        for (;;) {
+            for (unsigned i = 0; i < SWEEP_CHAN_MAX; ++i) {
+                NRF24L01::instance.setConstantCarrier(true, i);
+                SysTime::Ticks t = SysTime::ticks() + SysTime::msTicks(100);
+                while (SysTime::ticks() < t) {
+                    if (HomeButton::isPressed()) {
+                        NRF24L01::instance.setConstantCarrier(false);
+                        return;
+                    }
+                }
+            }
+        }
+    }
+};
+
+const uint8_t NRF24L01Test::channels[3] = { 4, 41, 79 };
+
 
 /*
  * RF test application specific entry point.
@@ -34,23 +84,11 @@ int main()
     Usart::Dbg.init(UART_RX_GPIO, UART_TX_GPIO, 115200);
     UART(("RF Test\r\n"));
 
-    /*
-     * Cycle through constant carrier and PRX on the given channels when
-     * we detect a button press.
-     */
-    uint8_t channelIdx = 0;
-    const uint8_t channels[5] = {4, 41, 79, 128, 129};		// channel>127 (special) 128:PRX 129:tx-sweep
-
-    NRF24L01::instance.setConstantCarrier(true, channels[channelIdx]);
     bool lastButton = HomeButton::isPressed();
 
     GPIOPin green = LED_GREEN_GPIO;
     green.setControl(GPIOPin::OUT_2MHZ);
     green.setHigh();
-
-    uint8_t sweep_ch=0, d1=0;
-    bool sweep_mode = 0;
-    SysTime::Ticks t = 0;
 
     for (;;) {
 
@@ -58,41 +96,30 @@ int main()
 
         if (lastButton != button) {
 
-            // transition on press
-            if (button == true) {
-                NRF24L01::instance.setPRXMode(false);
-                NRF24L01::instance.setConstantCarrier(false);
-                sweep_mode = 0;
-
-                green.setLow();
-                channelIdx = (channelIdx + 1) % sizeof(channels);
-                if (channels[channelIdx] < 128) {
-                    NRF24L01::instance.setConstantCarrier(true, channels[channelIdx]);
-                } else {
-                    if (channels[channelIdx] == 128) {
-                        NRF24L01::instance.setPRXMode(true);
-                    }
-                    if (channels[channelIdx] == 129) {
-                        sweep_mode = 1;
-                    }
-                }
-            } else {
-                green.setHigh();
-            }
-
             lastButton = button;
-        }
-        if (sweep_mode) {
-           if (--d1) {
-               //skip
-           } else {
-               d1 = 0;
-               NRF24L01::instance.setConstantCarrier(true, sweep_ch++);
-               t = SysTime::ticks() + SysTime::msTicks(100);
-               while (SysTime::ticks() < t);
-               if (sweep_ch > 83)
-                   sweep_ch = 0;
-           }
+            green.toggle();
+
+            // transition on release
+            if (!button) {
+                switch (RfTest::gState) {
+
+                    case RfTest::L01TxLow:
+                    case RfTest::L01TxMid:
+                    case RfTest::L01TxHigh:
+                        NRF24L01Test::carrier();
+                        break;
+
+                    case RfTest::L01Rx:
+                        NRF24L01Test::rx();
+                        break;
+
+                    case RfTest::L01TxSweep:
+                        NRF24L01Test::txSweep();
+                        break;
+                }
+
+                RfTest::gState = (RfTest::gState + 1) % RfTest::NUM_STATES;
+            }
         }
     }
 }
