@@ -24,10 +24,6 @@ uint32_t _SYS_bt_isConnected()
     return BTProtocol::isConnected();
 }
 
-void _SYS_bt_advertiseState(const uint8_t *data, uint32_t length)
-{
-}
-
 void _SYS_bt_setPipe(_SYSBluetoothQueue *send, _SYSBluetoothQueue *receive)
 {
     if (!BTProtocol::setUserQueues(reinterpret_cast<SvmMemory::VirtAddr>(send),
@@ -70,6 +66,11 @@ uint32_t _SYS_bt_counters(_SYSBluetoothCounters *buffer, uint32_t bufferSize)
     memcpy(buffer, counters, actualSize);
 
     return actualSize;
+}
+
+void _SYS_bt_advertiseState(const uint8_t *data, uint32_t length)
+{
+    // Implement me! Copy the advertised state in a system buffer owned by BTProtocol.
 }
 
 
