@@ -48,7 +48,6 @@
 
 class BTProtocol {
 public:
-    static const unsigned MAX_DATA_LEN = 20;
     static const unsigned PAIRING_CODE_LEN = 6;
     static const unsigned TYPE_MASK = 0x7F;
     static const unsigned TYPE_SYS = 0x80;
@@ -57,6 +56,7 @@ public:
     static void task();
 
     static bool setUserQueues(SvmMemory::VirtAddr send, SvmMemory::VirtAddr receive);
+    static bool setUserState(SvmMemory::VirtAddr data, unsigned length);
 
     static bool isConnected() {
         return instance.flags.test(ConnectedFlag);

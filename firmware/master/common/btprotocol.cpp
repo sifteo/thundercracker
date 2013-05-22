@@ -7,6 +7,7 @@
 #include "macros.h"
 #include "pause.h"
 #include "event.h"
+#include "svmmemory.h"
 #include <stdint.h>
 #include <string.h>
 
@@ -16,6 +17,18 @@ BTProtocol BTProtocol::instance;
 bool BTProtocol::setUserQueues(SvmMemory::VirtAddr send, SvmMemory::VirtAddr receive)
 {
     return instance.userSendQueue.attach(send) && instance.userReceiveQueue.attach(receive);
+}
+
+bool BTProtocol::setUserState(SvmMemory::VirtAddr data, unsigned length)
+{
+    FlashBlockRef ref;
+
+    ASSERT(length <= _SYS_BT_PACKET_BYTES);
+
+    // Implement me: Atomically store this userspace state in a local buffer.
+    //               This probably means double-buffering internally.
+
+    return true;
 }
 
 void BTProtocolCallbacks::onConnect()

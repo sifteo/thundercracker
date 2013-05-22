@@ -23,6 +23,7 @@
 #include "event.h"
 #include "led.h"
 #include "assetloader.h"
+#include "btprotocol.h"
 
 #ifdef SIFTEO_SIMULATOR
 #   include "system_mc.h"
@@ -111,6 +112,10 @@ bool SvmLoader::prepareToExec(const Elf::Program &program, SvmRuntime::StackInfo
         CubeSlots::instances[i].setVideoBuffer(0);
         CubeSlots::instances[i].setMotionBuffer(0);
     }
+
+    // Reset Bluetooth userspace state
+    BTProtocol::setUserQueues(0, 0);
+    BTProtocol::setUserState(0, 0);
 
     // Reset any audio left playing by the previous tenant
     AudioMixer::instance.init();
