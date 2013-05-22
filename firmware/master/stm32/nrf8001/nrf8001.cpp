@@ -884,6 +884,20 @@ void NRF8001::handleEvent()
             return;
         }
 
+        case Op::PipeErrorEvent: {
+            /*
+             * Something went wrong while transmitting a packet. This is relatively
+             * uncommon. I've observed the ACI_STATUS_ERROR_PIPE_STATE_INVALID (0x96)
+             * code when transmitting to a pipe that was just closed.
+             *
+             * For errors like this, we're fine with dropping the packet but we do need to
+             * be sure we don't permanently lose any flow control credits!
+             */
+
+            dataCredits++;
+            return;
+        }
+
         case Op::EchoEvent: {
             /*
              * During testing, we send some echo data to verify we can communicate
