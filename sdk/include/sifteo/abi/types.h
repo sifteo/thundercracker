@@ -237,6 +237,14 @@ struct _SYSBluetoothQueue {
     struct _SYSBluetoothPacket packets[_SYS_BT_MAX_QUEUED_PACKETS];
 };
 
+struct _SYSBluetoothCounters {
+    uint32_t rxPackets;
+    uint32_t txPackets;
+    uint32_t rxBytes;
+    uint32_t txBytes;
+    uint32_t rxUserDropped;
+};
+
 /*
  * RFC4122 compatible UUIDs.
  *

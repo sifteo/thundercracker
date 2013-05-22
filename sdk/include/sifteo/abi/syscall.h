@@ -263,6 +263,7 @@ void _SYS_bt_advertiseState(const uint8_t *data, uint32_t length) _SC(190);
 void _SYS_bt_setPipe(_SYSBluetoothQueue *send, _SYSBluetoothQueue *receive) _SC(191);
 void _SYS_bt_queueWriteHint() _SC(192);
 void _SYS_bt_queueReadHint() _SC(193);
+uint32_t _SYS_bt_counters(_SYSBluetoothCounters *buffer, uint32_t bufferSize) _SC(194);
 
 
 #ifdef __cplusplus

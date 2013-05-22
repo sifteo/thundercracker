@@ -525,6 +525,74 @@ struct BluetoothPipe {
 
 
 /**
+ * @brief Diagnostic counters for the Bluetooth subsystem
+ *
+ * This object is a container for counter values that are tracked
+ * by the Bluetooth subsystem.
+ *
+ * The default constructor leaves BluetoothCounters uninitialized.
+ * Call reset() once before the event you want to measure, and call
+ * capture() to grab the latest counter values. Other accessors in this
+ * structure will compare the latest counters with the reference values
+ * read by reset().
+ */
+
+struct BluetoothCounters
+{
+    _SYSBluetoothCounters current;
+    _SYSBluetoothCounters base;
+
+    /**
+     * @brief Reset all counters back to zero
+     *
+     * This captures a baseline value for all counters. This must be
+     * called once before using the counters to measure changes.
+     */
+    void reset() {
+        _SYS_bt_counters(&base, sizeof base);
+    }
+
+    /**
+     * @brief Update the state of all counters
+     */
+    void capture() {
+        _SYS_bt_counters(&current, sizeof current);
+    }
+
+    /// Total received packets
+    uint32_t receivedPackets() {
+        return current.rxPackets - base.rxPackets;
+    }
+
+    /// Total sent packets
+    uint32_t sentPackets() {
+        return current.txPackets - base.txPackets;
+    }
+
+    /// Total received bytes
+    uint32_t receivedBytes() {
+        return current.rxBytes - base.rxBytes;
+    }
+
+    /// Total sent bytes
+    uint32_t sentBytes() {
+        return current.txBytes - base.txBytes;
+    }
+
+    /**
+     * @brief Total user-defined packets dropped
+     *
+     * This measures the number of received packets that have been dropped due to
+     * either having no BluetoothPipe attached, or having a BluetoothPipe
+     * with a full receive buffer.
+     */
+    uint32_t userPacketsDropped() {
+        return current.rxUserDropped - base.rxUserDropped;
+    }
+};
+
+
+/**
  * @} endgroup bluetooth
  */
 
