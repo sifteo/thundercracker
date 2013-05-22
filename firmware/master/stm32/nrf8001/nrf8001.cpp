@@ -852,7 +852,7 @@ void NRF8001::handleEvent()
              * nRF8001's ACI interface.
              */
 
-            int length = int(rxBuffer.length) - 1;
+            int length = int(rxBuffer.length) - 2;
             uint8_t pipe = rxBuffer.param[0];
 
             if (length > 0 && pipe == PIPE_SIFTEO_BASE_DATA_OUT_RX_ACK_AUTO) {
