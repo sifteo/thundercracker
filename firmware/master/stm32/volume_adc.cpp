@@ -30,6 +30,9 @@ void init()
 {
     lastReading = 0;
 
+    GPIOPin faderEnable = FADER_MEAS_EN;
+    faderEnable.setControl(GPIOPin::IN_FLOAT);
+
     GPIOPin faderMeas = FADER_MEAS_GPIO;
     faderMeas.setControl(GPIOPin::IN_ANALOG);
 
@@ -49,6 +52,10 @@ int systemVolume()
 
 void beginCapture()
 {
+    GPIOPin faderEnable = FADER_MEAS_EN;
+    faderEnable.setControl(GPIOPin::OUT_2MHZ);
+    faderEnable.setHigh();
+
     FADER_ADC.beginSample(FADER_ADC_CHAN);
 }
 
@@ -67,6 +74,9 @@ int calibrate(CalibrationState state)
 
 void adcCallback(uint16_t sample) {
     lastReading = sample;
+
+    GPIOPin faderEnable = FADER_MEAS_EN;
+    faderEnable.setControl(GPIOPin::IN_FLOAT);
 
 #ifdef USE_ADC_BATT_MEAS
     BatteryLevel::beginCapture();

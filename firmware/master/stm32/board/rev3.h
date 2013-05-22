@@ -131,6 +131,7 @@
 #define FADER_MIN           0x066
 #define FADER_ADC           Adc::Adc1
 #define FADER_MEAS_GPIO     GPIOPin(&GPIOA, 1)
+#define FADER_MEAS_EN       GPIOPin(&GPIOA, 10)
 #define FADER_ADC_CHAN      1
 
 // B A T T E R Y
