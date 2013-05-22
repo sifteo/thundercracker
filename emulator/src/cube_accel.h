@@ -109,34 +109,34 @@ class I2CAccelerometer {
     uint8_t i2cWrite(uint8_t byte) {
         switch (state) {
 
-        case S_I2C_ADDRESS:
-            if ((byte & 0xFE) == deviceAddress) {
-                if (byte & 1) {
-                    // Read
-                    state = S_DATA;
+            case S_I2C_ADDRESS:
+                if ((byte & 0xFE) == deviceAddress) {
+                    if (byte & 1) {
+                        // Read
+                        state = S_DATA;
+                    } else {
+                        // Write
+                        state = S_REG_ADDRESS;
+                    }
                 } else {
-                    // Write
-                    state = S_REG_ADDRESS;
+                    // Not us
+                    state = S_IDLE;
                 }
-            } else {
-                // Not us
-                state = S_IDLE;
-            }
-            break;
-            
-        case S_REG_ADDRESS:
-            // XXX: MSB enables/disables auto-increment.
-            regAddress = byte & 0x7F;
-            state = S_DATA;
-            break;
+                break;
 
-        case S_DATA:
-            if (regAddress < sizeof regs)
-                regs.bytes[regAddress++] = byte;
-            break;
+            case S_REG_ADDRESS:
+                // XXX: MSB enables/disables auto-increment.
+                regAddress = byte & 0x7F;
+                state = S_DATA;
+                break;
 
-        default:
-            break;
+            case S_DATA:
+                if (regAddress < sizeof regs)
+                    regs.bytes[regAddress++] = byte;
+                break;
+
+            default:
+                break;
         }
 
         return state != S_IDLE;
