@@ -282,23 +282,50 @@ void lcd_address_and_write(void)
      * Assumes we're already set up for writing to the LCD.
      * Leaves with the bus in data mode.
      */
-
+#ifdef HAVE_GRAM_PANEL_MISMATCH
+    uint8_t flags = vram.flags;
+    uint8_t x_offset = (flags & LCD_MADCTR_MX) ? LCD_X_RIGHT_MARGIN : LCD_X_LEFT_MARGIN;
+    uint8_t y_offset = (flags & LCD_MADCTR_MY) ? LCD_Y_BOTTOM_MARGIN : LCD_Y_TOP_MARGIN;
+    uint8_t row_offset, col_offset;
+    if (flags & LCD_MADCTR_MV) {
+        col_offset = y_offset;
+        row_offset = x_offset;
+    } else {
+        col_offset = x_offset;
+        row_offset = y_offset;
+    }
     LCD_CMD_MODE();
     LCD_BYTE(LCD_CMD_CASET);
     LCD_DATA_MODE();
     LCD_BYTE(0);
-    LCD_BYTE(LCD_COL_ADDR(lcd_window_x));
+    LCD_BYTE(col_offset+(lcd_window_x ));
     LCD_BYTE(0);
-    LCD_BYTE(LCD_COL_ADDR(LCD_WIDTH - 1));
+    LCD_BYTE(col_offset+(LCD_WIDTH - 1));
 
     LCD_CMD_MODE();
     LCD_BYTE(LCD_CMD_RASET);
     LCD_DATA_MODE();
     LCD_BYTE(0);
-    LCD_BYTE(LCD_ROW_ADDR(lcd_window_y));
+    LCD_BYTE(row_offset+(lcd_window_y  ));
     LCD_BYTE(0);
-    LCD_BYTE(LCD_ROW_ADDR(LCD_HEIGHT - 1));
+    LCD_BYTE(row_offset+(LCD_HEIGHT - 1));
+#else
+    LCD_CMD_MODE();
+    LCD_BYTE(LCD_CMD_CASET);
+    LCD_DATA_MODE();
+    LCD_BYTE(0);
+    LCD_BYTE((lcd_window_x));
+    LCD_BYTE(0);
+    LCD_BYTE((LCD_WIDTH - 1));
 
+    LCD_CMD_MODE();
+    LCD_BYTE(LCD_CMD_RASET);
+    LCD_DATA_MODE();
+    LCD_BYTE(0);
+    LCD_BYTE((lcd_window_y));
+    LCD_BYTE(0);
+    LCD_BYTE((LCD_HEIGHT - 1));
+#endif
     /*
      * Start writing (RAMWR command).
      *
