@@ -106,7 +106,7 @@ unsigned BTProtocolCallbacks::onProduceData(uint8_t *buffer)
             memcpy(buffer + 1, src->bytes, length);
 
             // Notify userspace that some buffer space is available
-            queue.commit();
+            queue.pop();
             Event::setBasePending(Event::PID_BASE_BT_WRITE_AVAILABLE);
         }
     }
