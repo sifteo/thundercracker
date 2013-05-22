@@ -24,7 +24,7 @@ int FwLoader::run(int argc, char **argv, IODevice &_dev)
     const char *path = NULL;
     unsigned int devicePID = IODevice::BASE_PID;
     unsigned int bootloaderPID = IODevice::BOOTLOADER_PID;
-    
+
     for (int i = 1; i < argc; i++) {
         if (!strcmp(argv[i], "--pid") && i+1 < argc) {
             devicePID = strtoul(argv[i+1], NULL, 0);
@@ -163,7 +163,9 @@ int FwLoader::loadContainer(FILE *f)
                 fprintf(stderr, "fin read err\n");
                 return EIO;
             }
-            return EOK;
+
+            fprintf(stderr, "no image found for bootloader HW Rev %d\n", hwVersion);
+            return EINVAL;
         }
 
         // look for a firmware binary that matches this base's hwVersion

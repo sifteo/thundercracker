@@ -12,6 +12,8 @@ import sys, serial, datetime
 comport = sys.argv[1]
 filepath = sys.argv[2]
 port = serial.Serial(baudrate = 115200, port = comport)
+port.flush()
+
 with open(filepath, "w") as f:
     while True:
         line = port.readline().strip()
