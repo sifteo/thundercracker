@@ -12,7 +12,6 @@
 #include "testjig.h"
 #include "gpio.h"
 #include "bootloader.h"
-#include "powermanager.h"
 
 /*
  * Test Jig application specific entry point.
