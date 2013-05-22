@@ -121,7 +121,7 @@ public:
     }
 
     static FlashLFSKeyFilter makeSingle(unsigned row, unsigned key) {
-        FlashLFSKeyFilter result = { ~bitHash(row, key) };
+        FlashLFSKeyFilter result = { uint16_t(~bitHash(row, key)) };
         return result;
     }
 

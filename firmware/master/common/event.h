@@ -55,6 +55,12 @@ class Event {
         PID_BASE_VOLUME_DELETE,
         PID_BASE_VOLUME_COMMIT,
 
+        // Bluetooth events (disconnect before connect)
+        PID_BASE_BT_DISCONNECT,
+        PID_BASE_BT_CONNECT,
+        PID_BASE_BT_READ_AVAILABLE,
+        PID_BASE_BT_WRITE_AVAILABLE,
+
         // Low-bandwidth sensor events
         PID_NEIGHBORS,
         PID_CUBE_TOUCH,
@@ -96,6 +102,7 @@ class Event {
     static bool callCubeEvent(_SYSVectorID vid, _SYSCubeID cid);
 
     static bool dispatchCubePID(PriorityID pid, _SYSCubeID cid);
+    static bool dispatchBasePID(PriorityID pid, _SYSVectorID vid);
     static void cubeEventsClear(PriorityID pid);
 
     static VectorInfo vectors[_SYS_NUM_VECTORS];

@@ -14,48 +14,41 @@
 #include "sampleprofiler.h"
 #include "systime.h"
 #include "factorytest.h"
-
-/*
- * Hardware instance
- */
+#include "flash_syslfs.h"
+#include "tasks.h"
 
 #ifdef HAVE_NRF8001
-
-NRF8001 NRF8001::instance(NRF8001_REQN_GPIO,
-                          NRF8001_RDYN_GPIO,
-                          SPIMaster(&NRF8001_SPI,
-                                    NRF8001_SCK_GPIO,
-                                    NRF8001_MISO_GPIO,
-                                    NRF8001_MOSI_GPIO,
-                                    staticSpiCompletionHandler));
-
-#if BOARD == BOARD_TC_MASTER_REV2
-// on rev3, this is handled in ISR_EXTI9_5 - see exti.cpp
-IRQ_HANDLER ISR_FN(NRF8001_EXTI_VEC)()
-{
-    NRF8001::instance.isr();
-}
-#endif
-
-#endif // HAVE_NRF8001
 
 /*
  * States for our produceSystemCommand() state machine.
  */
 namespace SysCS {
     enum SystemCommandState {
+        // Actual states
         SetupFirst = 0,
         SetupLast = SetupFirst + NB_SETUP_MESSAGES - 1,
         Idle,           // Must follow SetupLast
+        DrainEventQueue,
         BeginConnect,
         RadioReset,
         InitSysVersion,
         ChangeTimingRequest,
+        Disconnect,
+        ReadDynamicData,
+        WriteDynamicData,
         EnterTest,
         ExitTest,
         Echo,
         DtmRX,
-        DtmEnd
+        DtmEnd,
+
+        // State ordering definitions
+        AfterInit = DrainEventQueue,
+        AfterDrainEventQueue = RadioReset, 
+        AfterReadDynamicData = BeginConnect,
+        AfterWriteDynamicData = InitSysVersion,
+        AfterInitSysVersion = BeginConnect,
+        AfterConnect = ChangeTimingRequest,
     };
 }
 
@@ -94,9 +87,12 @@ void NRF8001::init()
     txBuffer.length = 0;
     requestsPending = 0;
     dataCredits = 0;
-    sysCommandState = SysCS::RadioReset;
+    isBonded = false;
+    isUnbonding = false;
+    isSetupFinished = false;
     sysCommandPending = false;
     testState = Test::Idle;
+    sysCommandState = SysCS::AfterInit;
 
     // Output pin, requesting a transaction
     reqn.setHigh();
@@ -155,6 +151,7 @@ void NRF8001::isr()
      * importantly) to avoid a race condition during the very first ISR
      * we service after initialization. See the comments in NRF8001::init().
      */
+
     if (rdyn.isLow()) {
 
         /*
@@ -172,12 +169,54 @@ void NRF8001::isr()
         // Populate the transmit buffer now, or set it empty if we have nothing to say.
         produceCommand();
 
+        #ifdef TRACE
+        if (txBuffer.length) {
+            UART("BT Cmd >");
+            Usart::Dbg.writeHex(txBuffer.command, 2);
+            Usart::Dbg.put(' ');
+            Usart::Dbg.writeHexBytes(txBuffer.param, txBuffer.length - 1);
+            UART("\r\n");
+        }
+        #endif
+
         // Fire off the asynchronous SPI transfer. We finish up in onSpiComplete().
         STATIC_ASSERT(sizeof txBuffer == sizeof rxBuffer);
         spi.transferDma((uint8_t*) &txBuffer, (uint8_t*) &rxBuffer, sizeof txBuffer);
     }
 
     SampleProfiler::setSubsystem(s);
+}
+
+void NRF8001::task()
+{
+    /*
+     * Our nRF8001 driver is almost entirely interrupt-driven, but we do need
+     * filesytem access in order to load and save bonding state packaged in
+     * hardware-specific "dynamic data" packets. This task handler shuttles
+     * individual dyn packets to and from SysLFS.
+     */
+
+    SysLFS::Key k = static_cast<SysLFS::Key>( SysLFS::kBluetoothBase + dyn.sequence );
+    int result;
+
+    switch (dyn.state) {
+
+        case DynStateLoadRequest:
+            if (SysLFS::read(k, dyn.record.bytes(), sizeof dyn.record) < dyn.record.calculatedLength()) {
+                // I/O error or bad length byte. Treat the record as missing.
+                dyn.record.length = 0;
+            }
+            dyn.state = DynStateLoadComplete;
+            break;
+
+        case DynStateStoreRequest:
+            SysLFS::write(k, dyn.record.bytes(), dyn.record.calculatedLength());
+            dyn.state = DynStateStoreComplete;
+            break;
+    }
+
+    // Wake up our state machine, if they were waiting on us.
+    requestTransaction();
 }
 
 void NRF8001::test(unsigned phase)
@@ -206,6 +245,16 @@ void NRF8001::onSpiComplete()
     // Done with the transaction! End our SPI request.
     reqn.setHigh();
 
+    #ifdef TRACE
+    if (rxBuffer.length) {
+        UART("BT Evt <");
+        Usart::Dbg.writeHex(rxBuffer.event, 2);
+        Usart::Dbg.put(' ');
+        Usart::Dbg.writeHexBytes(rxBuffer.param, rxBuffer.length - 1);
+        UART("\r\n");
+    }
+    #endif
+
     // Handle the event we received, if any.
     // This also may call requestTransaction() to keep the cycle going.
     handleEvent();
@@ -232,7 +281,6 @@ void NRF8001::requestTransaction()
      * we start the transaction immediately by asserting REQN.
      */
 
-#ifdef HAVE_NRF8001
     // Critical section
     NVIC.irqDisable(IVT.NRF8001_EXTI_VEC);
     NVIC.irqDisable(IVT.NRF8001_DMA_CHAN_RX);
@@ -249,19 +297,6 @@ void NRF8001::requestTransaction()
     NVIC.irqEnable(IVT.NRF8001_EXTI_VEC);
     NVIC.irqEnable(IVT.NRF8001_DMA_CHAN_RX);
     NVIC.irqEnable(IVT.NRF8001_DMA_CHAN_TX);
-#endif //  HAVE_NRF8001
-}
-
-void BTProtocolHandler::requestProduceData()
-{
-    /*
-     * The BTProtocolHandler wants us to call onProduceData() at least once.
-     *
-     * If we request a transaction, this will happen. If we're currently blocked due
-     * to flow control, we'll end up requesting a transaction anyway when we get more tokens.
-     */
-
-    NRF8001::instance.requestTransaction();
 }
 
 void NRF8001::produceCommand()
@@ -272,9 +307,9 @@ void NRF8001::produceCommand()
         return;
     }
 
-    // If we can transmit, see if the BTPRotocolHandler wants to.
+    // If we can transmit, see if BTProtocol wants to.
     if (dataCredits && (openPipes & (1 << PIPE_SIFTEO_BASE_DATA_IN_TX))) {
-        unsigned len = BTProtocolHandler::onProduceData(&txBuffer.param[1]);
+        unsigned len = BTProtocolCallbacks::onProduceData(&txBuffer.param[1]);
         if (len) {
             txBuffer.length = len + 2;
             txBuffer.command = Op::SendData;
@@ -290,20 +325,50 @@ void NRF8001::produceCommand()
 
 bool NRF8001::produceSystemCommand()
 {
-    // do we need to inject a test command instead of our regularly
-    // requested sys command?
+    /*
+     * Test state machine
+     * 
+     * Do we need to inject a test command instead of our regularly
+     * requested sys command?
+     */
+
     switch (testState) {
 
-    case TestPhase1:
-        sysCommandState = SysCS::RadioReset;
-        testState = Test::RadioReset;
-        break;
+        case TestPhase1:
+            sysCommandState = SysCS::RadioReset;
+            testState = Test::RadioReset;
+            break;
 
-    case TestPhase2:
-        sysCommandState = SysCS::DtmEnd;
-        testState = Test::EndRX;
-        break;
+        case TestPhase2:
+            sysCommandState = SysCS::DtmEnd;
+            testState = Test::EndRX;
+            break;
     }
+
+    /*
+     * Task state machine
+     *
+     * If a userspace task completed, take the next steps.
+     */
+
+    switch (dyn.state) {
+
+        case DynStateStoreComplete:
+            // Finished storing one dynamic data packet. Move to the next, or go back to Bonding mode.
+            sysCommandState = dyn.record.continued ? SysCS::ReadDynamicData : SysCS::AfterReadDynamicData;
+            dyn.state = DynStateIdle;
+            break;
+
+        case DynStateLoadComplete:
+            // Finished loading one dynamic data packet. Send it maybe.
+            sysCommandState = dyn.record.length ? SysCS::WriteDynamicData : SysCS::AfterWriteDynamicData;
+            dyn.state = DynStateIdle;
+            break;
+    }
+
+    /*
+     * Main state machine
+     */
 
     switch (sysCommandState) {
 
@@ -311,24 +376,36 @@ bool NRF8001::produceSystemCommand()
         case SysCS::Idle:
             return false;
 
+        case SysCS::DrainEventQueue: {
+            /*
+             * Keep requesting transactions until we have no pending events.
+             */
+
+            requestTransaction();
+            return false;
+        }
+
         case SysCS::RadioReset: {
             /*
              * Send a RadioReset command. This may well fail if we aren't setup yet,
              * but we ignore that error. If we experienced a soft reset of any kind, this
              * will ensure the nRF8001 isn't in the middle of anything.
              *
-             * After this finishes, we'll start SETUP.
+             * After this finishes, we'll wait for a DeviceStartedEvent.
              */
 
             txBuffer.length = 1;
             txBuffer.command = Op::RadioReset;
+            sysCommandState = SysCS::Idle;
+            dataCredits = 0;
+            isBonded = false;
+            isSetupFinished = false;
+
             if (testState == Test::RadioReset) {
                 sysCommandState = SysCS::EnterTest;
                 testState = Test::EnterTest;
-            } else {
-                sysCommandState = SysCS::SetupFirst;
             }
-            dataCredits = 0;
+
             return true;
         }
 
@@ -363,7 +440,7 @@ bool NRF8001::produceSystemCommand()
              * same version we report to userspace with _SYS_version().
              *
              * This happens after SETUP is finished and we've entered Standby mode, but
-             * before initiating a Connect.
+             * before initiating a Bond.
              */
 
             txBuffer.length = 6;
@@ -373,17 +450,17 @@ bool NRF8001::produceSystemCommand()
             uint32_t version = _SYS_version();
             memcpy(&txBuffer.param[1], &version, sizeof version);
 
-            // No more local data to set after this.
-            sysCommandState = SysCS::BeginConnect;
-
+            sysCommandState = SysCS::AfterInitSysVersion;
             return true;
         };
 
         case SysCS::BeginConnect: {
             /*
-             * After all setup is complete, send a 'Connect' command. This begins the potentially
-             * long-running process of looking for a peer. This is what enables advertisement
-             * broadcasts.
+             * After all setup is complete, send a 'Connect' or 'Bond' command. This begins
+             * the potentially long-running process of looking for a peer. This is what enables
+             * advertisement broadcasts. Bonding establishes a new long-term encryption key before
+             * establishing an authenticated connection. If we've already bonded, 'Connect' will
+             * reestablish the same prior authenticated session.
              *
              * After this command, we'll be idle until a connection event arrives.
              *
@@ -393,10 +470,19 @@ bool NRF8001::produceSystemCommand()
              * https://developer.apple.com/hardwaredrivers/BluetoothDesignGuidelines.pdf
              */
 
-            txBuffer.length = 5;
-            txBuffer.command = Op::Connect;
-            txBuffer.param16[0] = 0x0000;       // Infinite duration
-            txBuffer.param16[1] = 32;           // 20ms, in 0.625ms units
+            if (isBonded) {
+                // Reconnect to existing bonded peer.
+                txBuffer.length = 5; 
+                txBuffer.command = Op::Connect;
+                txBuffer.param16[0] = 0x0000;       // Infinite duration
+                txBuffer.param16[1] = 32;           // 20ms, in 0.625ms units
+            } else {
+                // Create a new bond
+                txBuffer.length = 5; 
+                txBuffer.command = Op::Bond;
+                txBuffer.param16[0] = 10;           // Try again after 10 seconds
+                txBuffer.param16[1] = 32;           // 20ms, in 0.625ms units
+            }
             sysCommandState = SysCS::Idle;
             return true;
         }
@@ -429,6 +515,59 @@ bool NRF8001::produceSystemCommand()
             txBuffer.param16[2] = 0;        // Slave latency
             txBuffer.param16[3] = 30;       // Supervision timeout
             sysCommandState = SysCS::Idle;
+            return true;
+        }
+
+        case SysCS::Disconnect: {
+            /*
+             * Send an explicit disconnect. We use this when we need to back up a new
+             * link key before letting a connection start for reals.
+             */
+
+            txBuffer.length = 2;
+            txBuffer.command = Op::Disconnect;
+            txBuffer.param[0] = 0x01;       // Connection terminated by peer
+            sysCommandState = SysCS::Idle;
+            return true;
+        }
+
+        case SysCS::ReadDynamicData: {
+            /*
+             * Read the next dynamic data packet out of the nRF8001.
+             */
+
+            txBuffer.length = 1;
+            txBuffer.command = Op::ReadDynamicData;
+            sysCommandState = SysCS::Idle;
+            return true;
+        }
+
+        case SysCS::WriteDynamicData: {
+            /*
+             * Write the next dynamic data packet out to the nRF8001.
+             *
+             * If there are more packets to send after this one, we'll also request
+             * the next one from our Task handler.
+             */
+
+            txBuffer.length = 2 + dyn.record.length;
+            txBuffer.command = Op::WriteDynamicData;
+            txBuffer.param[0] = dyn.sequence + 1;
+            memcpy(&txBuffer.param[1], dyn.record.data, dyn.record.length);
+
+            if (dyn.record.continued) {
+                // Load the next packet
+                sysCommandState = SysCS::Idle;
+                dyn.sequence++;
+                dyn.state = DynStateLoadRequest;
+                Tasks::trigger(Tasks::BluetoothDriver);
+
+            } else {
+                // Move on
+                dyn.state = DynStateIdle;
+                isBonded = true;
+                sysCommandState = SysCS::AfterWriteDynamicData;
+            }
             return true;
         }
 
@@ -472,6 +611,17 @@ void NRF8001::handleEvent()
 {
     if (rxBuffer.length == 0) {
         // No pending event.
+
+        // Were we waiting to drain the remote event queue?
+        if (sysCommandState == SysCS::DrainEventQueue) {
+            #ifdef TRACE
+                UART("BT Event queue drained\r\n");
+            #endif
+
+            sysCommandState = SysCS::AfterDrainEventQueue;
+            requestTransaction();
+        }
+
         return;
     }
 
@@ -486,7 +636,8 @@ void NRF8001::handleEvent()
 
             sysCommandPending = false;
             handleCommandStatus(rxBuffer.param[0], rxBuffer.param[1]);
-            if (sysCommandState != SysCS::Idle) {
+
+            if (sysCommandState != SysCS::Idle || dyn.state != DynStateIdle) {
                 // More work to do, ask for another transaction.
                 requestTransaction();
             }
@@ -503,63 +654,167 @@ void NRF8001::handleEvent()
              *
              * This is also where our pool of data credits gets initialized.
              */
+
             uint8_t mode = rxBuffer.param[0];
             dataCredits = rxBuffer.param[2];
 
-            if (mode == OperatingMode::Standby && sysCommandState == SysCS::Idle) {
+            /*
+             * A command is never in-progress if a DeviceStartedEvent is returned.
+             * Op::Test responds with a DeviceStartedEvent instead of a CommandResponseEvent,
+             * so it's convenient to unblock the next command here.
+             */
+            sysCommandPending = false;
 
-                /*
-                 * We can only enter Test mode from Standby mode, but in normal
-                 * operation we transition immediately from Standby to Active mode by
-                 * sending an Op::Connect.
-                 *
-                 * To get back to Standby, we issue a RadioReset since Op::Disconnect
-                 * fails if we're not yet connected to a host. Check here to see
-                 * whether we're re-entering Standby on our way to Test mode,
-                 * or simply as part of our normal start procedure.
-                 */
+            switch (mode) {
 
-                if (testState == Test::EnterTest) {
-                    sysCommandState = SysCS::EnterTest;
-                    testState = Test::Idle;
-                } else {
-                    // Start sending local data
-                    sysCommandState = SysCS::InitSysVersion;
+                case OperatingMode::Setup: {
+                    /*
+                     * The device has finished its own initialization, and it's waiting
+                     * for us to send our SETUP data. Start sending that, followed by
+                     * any persistent "Dynamic Data" we have.
+                     */
+
+                    sysCommandState = SysCS::SetupFirst;
+                    requestTransaction();
+                    break;
+                }
+
+                case OperatingMode::Standby: {
+                    /*
+                     * The nRF8001 claims it's ready to go. But maybe it actually isn't.
+                     * If we haven't received confirmation that our SETUP worked,
+                     * this packet is a lie and we'll try again.
+                     *
+                     * We can only enter Test mode from Standby mode, but in normal
+                     * operation we transition immediately from Standby to Active mode by
+                     * sending an Op::Bond.
+                     *
+                     * To get back to Standby, we issue a RadioReset since Op::Disconnect
+                     * fails if we're not yet connected to a host. Check here to see
+                     * whether we're re-entering Standby on our way to Test mode,
+                     * or simply as part of our normal start procedure.
+                     */
+
+                    if (!isSetupFinished) {
+
+                        #ifdef TRACE
+                            UART("BT Setup never finished, resetting\r\n");
+                        #endif
+
+                        sysCommandState = SysCS::RadioReset;
+                        requestTransaction();
+
+                    } else if (testState == Test::EnterTest) {
+
+                        sysCommandState = SysCS::EnterTest;
+                        testState = Test::Idle;
+                        requestTransaction();
+
+                    } else if (isUnbonding) {
+                        /*
+                         * We're trying to shed our existing bonding data.
+                         * Don't load it from the filesystem, even if it exists.
+                         *
+                         * This is a one-shot flag used to explicitly remove
+                         * a bond after we know it's no longer any good. Next time
+                         * we enter standby, we'll go back to our usual behavior.
+                         */
+
+                        isUnbonding = false;
+                        isBonded = false;
+                        sysCommandState = SysCS::AfterWriteDynamicData;
+                        requestTransaction();
+
+                    } else {
+                        /*
+                         * Send "Dynamic Data" from the filesystem, to restore a
+                         * persistent bond from earlier.
+                         */
+
+                        dyn.sequence = 0;
+                        dyn.state = DynStateLoadRequest;
+                        Tasks::trigger(Tasks::BluetoothDriver);
+                    }
+                    break;
                 }
             }
+            return;
+        }
 
-            // Op::Test doesn't get a CommandResponseEvent,
-            // so must clear sysCommandPending explicitly
-            sysCommandPending = false;
-            if (sysCommandState != SysCS::Idle) {
-                // More work to do, ask for another transaction.
-                requestTransaction();
+        case Op::BondStatusEvent: {
+            /*
+             * Maybe we established a bonded connection!
+             *
+             * If the bonding failed, we'll also get a DisconnectedEvent,
+             * so we won't bother handling unsuccessful status events here.
+             *
+             * If bonding succeeded, we'd like to:
+             *    - Request new timing parameters, to get more frequent connection windows
+             *    - Notify BTProtocol
+             *    - Back up the new link key we may have just generated.
+             *
+             * Unfortunately, there's no way to back up *just* the link keys.
+             * Nordic expects us to use this "read dynamic data" command which
+             * gives us a binary blob of unspecified size or format. Eww. So...
+             * we could defer saving this until "later", but that seems like a great
+             * way to have a bunch of lingering bugs where keys may not get saved
+             * in this or that situation. So, it seems best to deal with this problem
+             * sooner rather than later.
+             *
+             * If we were provided a pairing code, that might have led to generating
+             * a new link key. We can test for this state by asking BTProtocol whether
+             * we're in pairing mode. If we successfully finish a connection in this
+             * state, we'll actually immediately ask for the nRF8001 to disconnect so
+             * we can save the dynamic data. The peer will have to know to retry the
+             * connection, but the next attempt should succeed without any user
+             * interaction.
+             */
+
+            uint8_t status = rxBuffer.param[0];
+            if (status != 0x00) {
+                // Ignore failure here, we'll get a DisconnectedEvent too.
+                return;
+            }
+
+            // Bonding succeeded
+            isBonded = true;
+
+            // Were we just doing passcode entry? Disconnect to save the new keys.
+            if (BTProtocol::isPairingInProgress()) {
+                sysCommandState = SysCS::Disconnect;
+            } else {
+                sysCommandState = SysCS::AfterConnect;
+                BTProtocolCallbacks::onConnect();
             }
             return;
         }
 
         case Op::ConnectedEvent: {
             /*
-             * Established a connection! Notify the BTProtocolHandler.
-             *
-             * Also, take this opportunity to see if we can get a faster
-             * pipe by lowering the default connection interval.
+             * Established a connection! If we're already bonded to this device
+             * and this is a reconnect, we can go ahead and notify our onConnect
+             * callback. Otherwise, this waits until after BondStatusEvent and
+             * a disconnect/reconnect cycle.
              */
 
-            sysCommandState = SysCS::ChangeTimingRequest;
-            BTProtocolHandler::onConnect();
+            if (isBonded) {
+                sysCommandState = SysCS::AfterConnect;
+                BTProtocolCallbacks::onConnect();
+            }
             return;
         }
 
         case Op::DisconnectedEvent: {
             /*
-             * One connection ended; start trying to establish another.
+             * One connection ended, and now the nRF8001 is back in standby mode.
+             * Start trying to establish another connection, or back up dynamic
+             * data if that's needed.
              */
 
-            sysCommandState = SysCS::BeginConnect;
             openPipes = 0;
+            sysCommandState = isBonded ? SysCS::ReadDynamicData : SysCS::AfterReadDynamicData;
+            BTProtocolCallbacks::onDisconnect();
             requestTransaction();
-            BTProtocolHandler::onDisconnect();
             return;
         }
 
@@ -590,18 +845,28 @@ void NRF8001::handleEvent()
         case Op::DataReceivedEvent: {
             /*
              * Data received from an nRF8001 pipe.
+             * There may be more where this came from, so request another transaction too.
              *
-             * Our data pipe is configured to auto-acknowledge. These over-the-air
-             * ACKs are used as flow control for the radio link, but we currently assume
-             * that our CPU can process incoming data as fast as we read it from the
-             * nRF8001's ACI interface.
+             * Note that we support both acknowledged and unacknowledged writes.
+             * Unack'ed can be faster, since acknowledged writes commonly run at half
+             * speed due to the round-trip delay from the acknowledgment. But unack'ed writes
+             * are also harder to use on iOS, since CoreBluetooth doesn't give any feedback
+             * as to when the packet was actually sent by the local radio. So, for flow control
+             * reasons, we might want the ability to use both types of write and to even
+             * mix the two.
              */
 
-            int length = int(rxBuffer.length) - 1;
+            int length = int(rxBuffer.length) - 2;
             uint8_t pipe = rxBuffer.param[0];
+            if (length > 0) {
+                switch (pipe) {
 
-            if (length > 0 && pipe == PIPE_SIFTEO_BASE_DATA_OUT_RX_ACK_AUTO) {
-                BTProtocolHandler::onReceiveData(&rxBuffer.param[1], length);
+                    case PIPE_SIFTEO_BASE_DATA_OUT_RX:
+                    case PIPE_SIFTEO_BASE_DATA_OUT_RX_ACK_AUTO:
+                        BTProtocolCallbacks::onReceiveData(&rxBuffer.param[1], length);
+                        requestTransaction();
+                        break;
+                }
             }
             return;
         }
@@ -616,6 +881,20 @@ void NRF8001::handleEvent()
 
             dataCredits += rxBuffer.param[0];
             requestTransaction();
+            return;
+        }
+
+        case Op::PipeErrorEvent: {
+            /*
+             * Something went wrong while transmitting a packet. This is relatively
+             * uncommon. I've observed the ACI_STATUS_ERROR_PIPE_STATE_INVALID (0x96)
+             * code when transmitting to a pipe that was just closed.
+             *
+             * For errors like this, we're fine with dropping the packet but we do need to
+             * be sure we don't permanently lose any flow control credits!
+             */
+
+            dataCredits++;
             return;
         }
 
@@ -634,29 +913,119 @@ void NRF8001::handleEvent()
             requestTransaction();
             return;
         }
+
+        case Op::DisplayKeyEvent: {
+            /*
+             * A 6-digit pairing code was received. Display it to the user until we either
+             * finish connecting or the pairing fails and we send a disconnect event.
+             */
+
+            BTProtocolCallbacks::onDisplayPairingCode((const char *) rxBuffer.param);
+            return;
+        }
     }
 }
 
 void NRF8001::handleCommandStatus(unsigned command, unsigned status)
 {
-    if (command == Op::RadioReset) {
-        /*
-         * RadioReset will complain if the device hasn't been setup yet.
-         * We care not, since we send the reset just-in-case. Ignore errors here.
-         */
-        return;
+    switch (command) {
+
+        case Op::RadioReset:
+            /*
+             * RadioReset will complain if the device hasn't been setup yet.
+             * We care not, since we send the reset just-in-case. Ignore errors here.
+             *
+             * If we complete a reset and the device hasn't started setup, begin that process.
+             * Usually we defer setup until the nRF8001 explicitly asks for it with a
+             * DeviceStartedEvent, but in this case we won't get an event.
+             */
+
+            if (!isSetupFinished && sysCommandState == SysCS::Idle) {
+                sysCommandState = SysCS::SetupFirst;
+            }
+
+            // Ignore errors
+            return;
+
+        case Op::DtmCommand:
+            /*
+             * Response to a Direct Test Mode command.
+             * (DTM uses big endian values.)
+             */
+
+            handleDtmResponse(status, (rxBuffer.param[2] << 8) | rxBuffer.param[3]);
+            break;
+
+        case Op::Setup:
+            /*
+             * If we've completed SETUP, the nRF8001 sends us a status code indicating
+             * that no more SETUP data is necessary. If something went wrong, the nRF
+             * tends to send us a DeviceStartedEvent even though it isn't internally
+             * complete with SETUP mode. Ugh.
+             */
+
+            if (status == 0x02) {
+                isSetupFinished = true;
+            }
+            break;
+
+        case Op::ReadDynamicData: {
+            /*
+             * Received some data to back up. Store it and wake up our task handler.
+             * Is there still more to download?
+             */
+
+            unsigned length = rxBuffer.length - 4;
+            unsigned sequence = rxBuffer.param[2] - 1;
+
+            if (length > sizeof dyn.record.data || sequence >= SysLFS::NUM_BLUETOOTH) {
+                // Bad parameter. Give up now.
+
+                sysCommandState = SysCS::RadioReset;
+
+            } else {
+                // Hand this packet off to task() for writing to SysLFS.
+                // We'll resume in produceSystemCommand with DynStateStoreComplete.
+
+                memcpy(dyn.record.data, &rxBuffer.param[3], length);
+                dyn.record.continued = (status == ACI_STATUS_TRANSACTION_CONTINUE);
+                dyn.record.length = length;
+                dyn.sequence = sequence;
+                dyn.state = DynStateStoreRequest;
+                Tasks::trigger(Tasks::BluetoothDriver);
+                sysCommandState = SysCS::Idle;
+            }
+            break;
+        }
     }
 
-    if (command == Op::DtmCommand) {
-        // "Commands and Events are sent most significant octet first,
-        //  followed by the least significant octet"
-        handleDtmResponse(status, (rxBuffer.param[2] << 8) | rxBuffer.param[3]);
-    }
-
-    if (status > ACI_STATUS_TRANSACTION_COMPLETE) {
+    if (status == ACI_BOND_STATUS_FAILED_AUTHENTICATION_REQ) {
         /*
-         * An error occurred! For now, just try resetting as best we can...
+         * A command failed because of insufficient authentication.
+         *
+         * This will happen very soon after connect if we're connected to
+         * a device but our bonding information is out of date. We need to
+         * reset, but this time we'll ignore our existing bonding data.
          */
+
+        #ifdef TRACE
+            UART("BT Unbonding\r\n");
+        #endif
+
+        isUnbonding = true;
+        sysCommandState = SysCS::RadioReset;
+
+    } else if (status > ACI_STATUS_TRANSACTION_COMPLETE) {
+        /*
+         * Unhandled error! For now, just try resetting as best we can...
+         */
+
+        #ifdef TRACE
+            UART("BT Err: ");
+            UART_HEX( (command << 24) | status );
+            UART(" <---\r\n");
+        #endif
+
         sysCommandState = SysCS::RadioReset;
     }
 }
@@ -684,3 +1053,5 @@ void NRF8001::handleDtmResponse(unsigned status, uint16_t response)
         break;
     }
 }
+
+#endif //  HAVE_NRF8001

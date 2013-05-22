@@ -166,4 +166,5 @@ strcpy (char* dst, const char* src)
        "RETURN"
 #endif
        );
+      __builtin_unreachable();
 }

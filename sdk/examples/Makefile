@@ -1,6 +1,7 @@
 SUBDIRS = \
 	accelchart \
 	assetslot \
+	bluetooth \
 	connection \
 	mandelbrot \
 	membrane \

@@ -13,6 +13,7 @@
 #include <sifteo/array.h>
 #include <sifteo/asset.h>
 #include <sifteo/audio.h>
+#include <sifteo/bluetooth.h>
 #include <sifteo/cube.h>
 #include <sifteo/event.h>
 #include <sifteo/filesystem.h>

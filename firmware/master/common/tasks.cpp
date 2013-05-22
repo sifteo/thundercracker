@@ -16,6 +16,7 @@
 #include "faultlogger.h"
 #include "batterylevel.h"
 #include "volume.h"
+#include "btprotocol.h"
 
 #ifdef SIFTEO_SIMULATOR
 #   include "mc_timing.h"
@@ -23,6 +24,7 @@
 #   include "system.h"
 #   include "batterylevel.h"
 #else
+#   include "nrf8001/nrf8001.h"
 #   include "usb/usbdevice.h"
 #   include "sampleprofiler.h"
 #   include "powermanager.h"
@@ -43,29 +45,34 @@ ALWAYS_INLINE void Tasks::taskInvoke(unsigned id)
 
     #ifndef SIFTEO_SIMULATOR
         #if BOARD != BOARD_TEST_JIG
-        case Tasks::PowerManager:   return PowerManager::vbusDebounce();
+        case Tasks::PowerManager:       return PowerManager::vbusDebounce();
         #endif
 
-        case Tasks::UsbOUT:         return UsbDevice::handleOUTData();
+        case Tasks::UsbOUT:             return UsbDevice::handleOUTData();
 
         #if (BOARD == BOARD_TEST_JIG && !defined(BOOTLOADER))
-        case Tasks::TestJig:        return TestJig::task();
+        case Tasks::TestJig:            return TestJig::task();
         #endif
     #endif
 
     #if !defined(BOOTLOADER) && !BOARD_EQUALS(BOARD_TEST_JIG)
-        case Tasks::AudioPull:      return AudioMixer::pullAudio();
-        case Tasks::Debugger:       return SvmDebugger::messageLoop();
-        case Tasks::AssetLoader:    return AssetLoader::task();
-        case Tasks::Pause:          return Pause::task();
-        case Tasks::CubeConnector:  return CubeConnector::task();
-        case Tasks::Heartbeat:      return heartbeatTask();
-        case Tasks::FaultLogger:    return FaultLogger::task();
+        case Tasks::AudioPull:          return AudioMixer::pullAudio();
+        case Tasks::Debugger:           return SvmDebugger::messageLoop();
+        case Tasks::AssetLoader:        return AssetLoader::task();
+        case Tasks::Pause:              return Pause::task();
+        case Tasks::CubeConnector:      return CubeConnector::task();
+        case Tasks::Heartbeat:          return heartbeatTask();
+        case Tasks::FaultLogger:        return FaultLogger::task();
+        case Tasks::BluetoothProtocol:  return BTProtocol::task();
+    #endif
+
+    #if !defined(SIFTEO_SIMULATOR) && defined(HAVE_NRF8001)
+        case Tasks::BluetoothDriver:    return NRF8001::instance.task();
     #endif
 
     #if !defined(SIFTEO_SIMULATOR) && !defined(BOOTLOADER) && (BOARD != BOARD_TEST_JIG)
-        case Tasks::Profiler:       return SampleProfiler::task();
-        case Tasks::FactoryTest:    return FactoryTest::task();
+        case Tasks::Profiler:           return SampleProfiler::task();
+        case Tasks::FactoryTest:        return FactoryTest::task();
     #endif
 
     }

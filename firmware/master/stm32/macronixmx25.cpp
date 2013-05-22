@@ -61,9 +61,9 @@ void MacronixMX25::init()
 void MacronixMX25::read(uint32_t address, uint8_t *buf, unsigned len)
 {
     const uint8_t cmd[] = { FastRead,
-                            address >> 16,
-                            address >> 8,
-                            address >> 0,
+                            uint8_t(address >> 16),
+                            uint8_t(address >> 8),
+                            uint8_t(address >> 0),
                             Nop };  // dummy
 
     waitWhileBusy();
@@ -106,9 +106,9 @@ void MacronixMX25::write(uint32_t address, const uint8_t *buf, unsigned len)
         ensureWriteEnabled();
 
         const uint8_t cmd[] = { PageProgram,
-                                address >> 16,
-                                address >> 8,
-                                address >> 0 };
+                                uint8_t(address >> 16),
+                                uint8_t(address >> 8),
+                                uint8_t(address >> 0) };
 
         // May need to retry in case of DMA failure
         while (1) {

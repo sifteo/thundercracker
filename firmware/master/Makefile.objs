@@ -6,6 +6,7 @@ OBJS_COMMON = \
     $(MASTER_DIR)/common/syscall_asset.o \
     $(MASTER_DIR)/common/syscall_audio.o \
     $(MASTER_DIR)/common/syscall_battery.o \
+    $(MASTER_DIR)/common/syscall_bluetooth.o \
     $(MASTER_DIR)/common/syscall_cube.o \
     $(MASTER_DIR)/common/syscall_filesystem.o \
     $(MASTER_DIR)/common/syscall_prng.o \
@@ -57,6 +58,7 @@ OBJS_COMMON = \
     $(MASTER_DIR)/common/usbprotocol.o \
     $(MASTER_DIR)/common/elfprogram.o \
     $(MASTER_DIR)/common/ui_assets.o \
+    $(MASTER_DIR)/common/ui_bluetoothpairing.o \
     $(MASTER_DIR)/common/ui_coordinator.o \
     $(MASTER_DIR)/common/ui_menu.o \
     $(MASTER_DIR)/common/ui_shutdown.o \
@@ -74,7 +76,8 @@ OBJS_COMMON = \
     $(MASTER_DIR)/common/idletimeout.o \
     $(MASTER_DIR)/common/faultlogger.o \
     $(MASTER_DIR)/common/rfspectrum.o \
-    $(MASTER_DIR)/common/btprotocol.o
+    $(MASTER_DIR)/common/btprotocol.o \
+    $(MASTER_DIR)/common/btqueue.o
 
 # Sources common to all stm32 builds (currently master & testjig)
 OBJS_STM32 = \
@@ -114,7 +117,8 @@ OBJS_STM32 = \
     $(MASTER_DIR)/stm32/syscall_math.stm32.o \
     $(MASTER_DIR)/stm32/batterylevel_adc.stm32.o \
     $(MASTER_DIR)/stm32/batterylevel_rc.stm32.o \
-    $(MASTER_DIR)/stm32/sysinfo.stm32.o
+    $(MASTER_DIR)/stm32/sysinfo.stm32.o \
+    $(MASTER_DIR)/stm32/bluetooth.stm32.o
 
 # Library code.
 #

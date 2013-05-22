@@ -231,3 +231,18 @@ void UICoordinator::letterboxWindow(unsigned height)
     VRAM::pokeb(avb.vbuf, offsetof(_SYSVideoRAM, first_line), (128 - height) >> 1);
     VRAM::pokeb(avb.vbuf, offsetof(_SYSVideoRAM, num_lines), height);
 }
+
+void UICoordinator::setMode(unsigned mode)
+{
+    VRAM::pokeb(avb.vbuf, offsetof(_SYSVideoRAM, mode), mode);
+}
+
+void UICoordinator::drawTiles(unsigned dest, const uint16_t *src, unsigned count, unsigned palette)
+{
+    while (count--) {
+        unsigned tile = palette ^ *src;
+        VRAM::poke(avb.vbuf, dest, _SYS_TILE77(tile));
+        dest++;
+        src++;
+    }
+}

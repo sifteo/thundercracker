@@ -22,6 +22,7 @@ extern const uint16_t v02_BigDigits_data[];
 extern const uint16_t v02_LowBattBase_data[];
 extern const uint16_t v02_FaultMessage_data[];
 extern const uint16_t v02_CubeRangePause_data[];
+extern const uint16_t v02_BluetoothPairing_data[];
 
 
 void UIAssets::init(unsigned version)
@@ -35,10 +36,11 @@ void UIAssets::init(unsigned version)
             iconBack            = v01_IconBack_data;
             iconResume          = v01_IconResume_data;
             shutdownBackground  = v01_ShutdownBackground_data;
-            bigDigits           = v02_BigDigits_data;       // XXX
-            faultMessage        = v02_FaultMessage_data;    // XXX
-            iconCubeRange       = v02_CubeRangePause_data;  // XXX
-            iconLowBattBase     = v02_LowBattBase_data;     // XXX
+            bigDigits           = v02_BigDigits_data;           // XXX - No v01 equivalent yet
+            faultMessage        = v02_FaultMessage_data;        // XXX - No v01 equivalent yet
+            iconCubeRange       = v02_CubeRangePause_data;      // XXX - No v01 equivalent yet
+            iconLowBattBase     = v02_LowBattBase_data;         // XXX - No v01 equivalent yet
+            bluetoothPairing    = v02_BluetoothPairing_data;    // XXX - No v01 equivalent yet
             menuHeight          = 9;
             menuTextPalette     = 11;
             iconSize            = 5;
@@ -60,6 +62,7 @@ void UIAssets::init(unsigned version)
             iconLowBattBase     = v02_LowBattBase_data;
             faultMessage        = v02_FaultMessage_data;
             iconCubeRange       = v02_CubeRangePause_data;
+            bluetoothPairing    = v02_BluetoothPairing_data;
             menuHeight          = 11;
             menuTextPalette     = 8;
             iconSize            = 8;

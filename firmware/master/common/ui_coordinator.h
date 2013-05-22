@@ -39,9 +39,6 @@ public:
     void paint();
     void finish();
     void detach();
-    void setPanX(int x);
-    void setPanY(int y);
-    void letterboxWindow(unsigned height);
     bool isTouching();
 
     void idle();
@@ -54,6 +51,20 @@ public:
     _SYSCubeIDVector uiConnected;
     UIAssets assets;
     _SYSAttachedVideoBuffer avb;
+
+    /*
+     * Drawing utilities
+     */
+
+    ALWAYS_INLINE unsigned xy(unsigned x, unsigned y) {
+        return x + y * _SYS_VRAM_BG0_WIDTH;
+    }
+
+    void setPanX(int x);
+    void setPanY(int y);
+    void setMode(unsigned mode = _SYS_VM_BG0_ROM);
+    void letterboxWindow(unsigned height);
+    void drawTiles(unsigned dest, const uint16_t *src, unsigned count, unsigned palette = 0);
 
 private:
     _SYSVideoBuffer *savedVBuf;

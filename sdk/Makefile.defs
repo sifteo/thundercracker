@@ -19,7 +19,8 @@ CFLAGS += -I.
 CFLAGS += -emit-llvm -ffreestanding -nostdinc -msoft-float
 
 # Disable unwanted warnings, but be generally pretty pedantic
-CFLAGS += -Wall -Werror -Wno-unused -Wno-gnu -Wno-c++11-extensions -Wunused-result
+CFLAGS += -Wall -Werror -Wno-unused -Wno-gnu -Wno-c++11-extensions
+CFLAGS += -Wno-local-type-template-args -Wunused-result
 
 # Disable unwanted features
 CCFLAGS += -fno-exceptions -fno-threadsafe-statics -fno-rtti -fno-stack-protector

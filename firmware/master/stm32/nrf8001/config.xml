@@ -38,7 +38,7 @@
             <AttributeLenType>2</AttributeLenType>
             <ForceOpen>false</ForceOpen>
             <Properties>
-                <WriteWithoutResponse>false</WriteWithoutResponse>
+                <WriteWithoutResponse>true</WriteWithoutResponse>
                 <Write>true</Write>
                 <Notify>false</Notify>
                 <Indicate>false</Indicate>
@@ -58,7 +58,7 @@
             <UserDescription></UserDescription>
             <MaxDataLength>4</MaxDataLength>
             <AttributeLenType>1</AttributeLenType>
-            <ForceOpen>false</ForceOpen>
+            <ForceOpen>true</ForceOpen>
             <Properties>
                 <WriteWithoutResponse>false</WriteWithoutResponse>
                 <Write>false</Write>
@@ -79,19 +79,19 @@
         <LocalPipeOnDeviceName>false</LocalPipeOnDeviceName>
         <DeviceNameShortLength>1</DeviceNameShortLength>
         <Apperance>0000</Apperance>
-        <SecurityLevel>0</SecurityLevel>
-        <AuthenticationReq>0</AuthenticationReq>
-        <IoCapabilities>0</IoCapabilities>
-        <BondTimeout>600</BondTimeout>
+        <SecurityLevel>1</SecurityLevel>
+        <AuthenticationReq>1</AuthenticationReq>
+        <IoCapabilities>1</IoCapabilities>
+        <BondTimeout>0</BondTimeout>
         <SecurityRequestDelay>0</SecurityRequestDelay>
         <MinimumKeySize>7</MinimumKeySize>
         <MaximumKeySize>16</MaximumKeySize>
-        <AdvertisingDataBondedBitmap>0</AdvertisingDataBondedBitmap>
+        <AdvertisingDataBondedBitmap>10</AdvertisingDataBondedBitmap>
         <AdvertisingDataGeneralBitmap>10</AdvertisingDataGeneralBitmap>
         <AdvertisingDataBrodcastBitmap>10</AdvertisingDataBrodcastBitmap>
-        <AdvertisingDataBondedScanResponseBitmap>0</AdvertisingDataBondedScanResponseBitmap>
+        <AdvertisingDataBondedScanResponseBitmap>4a</AdvertisingDataBondedScanResponseBitmap>
         <AdvertisingDataGeneralScanResponseBitmap>4a</AdvertisingDataGeneralScanResponseBitmap>
-        <AdvertisingDataBrodcastScanResponseBitmap>0</AdvertisingDataBrodcastScanResponseBitmap>
+        <AdvertisingDataBrodcastScanResponseBitmap>4a</AdvertisingDataBrodcastScanResponseBitmap>
         <AdvertisingDataBondedBitmapCustom>0</AdvertisingDataBondedBitmapCustom>
         <AdvertisingDataGeneralBitmapCustom>0</AdvertisingDataGeneralBitmapCustom>
         <AdvertisingDataBrodcastBitmapCustom>0</AdvertisingDataBrodcastBitmapCustom>

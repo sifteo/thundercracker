@@ -44,11 +44,11 @@ void UIShutdown::init()
 
     uic.finish();
     uic.letterboxWindow(TILE * uic.assets.shutdownHeight);
-    VRAM::pokeb(uic.avb.vbuf, offsetof(_SYSVideoRAM, mode), _SYS_VM_BG0_ROM);
+    uic.setMode();
 
     drawBackground();
-    drawText(xy(3, uic.assets.shutdownY1), "Shutdown in");
-    drawText(xy(1, uic.assets.shutdownY2), "press to cancel");
+    drawText(uic.xy(3, uic.assets.shutdownY1), "Shutdown in");
+    drawText(uic.xy(1, uic.assets.shutdownY2), "press to cancel");
 
     uic.setPanX(TILE/2);
     uic.setPanY(0);
@@ -138,19 +138,15 @@ void UIShutdown::drawLogo()
     uic.finish();
     uic.setPanX(0);
     uic.setPanY(0);
-    VRAM::pokeb(uic.avb.vbuf, offsetof(_SYSVideoRAM, first_line), 0);
-    VRAM::pokeb(uic.avb.vbuf, offsetof(_SYSVideoRAM, num_lines), 128);
+    uic.letterboxWindow(128);
 
     const uint16_t *src = uic.assets.logoWhiteOnBlue;
     unsigned addr = 0;
 
     for (unsigned y = 0; y < 16; ++y) {
-        for (unsigned x = 0; x < 16; ++x) {
-            VRAM::poke(uic.avb.vbuf, addr, _SYS_TILE77(*src));
-            addr++;
-            src++;
-        }
-        addr += 2;
+        uic.drawTiles(addr, src, 16);
+        addr += 18;
+        src += 16;
     }
 }
 

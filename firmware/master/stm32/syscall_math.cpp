@@ -60,6 +60,7 @@ uint64_t _SYS_mul_i64(uint32_t aL, uint32_t aH, uint32_t bL, uint32_t bH)
         "mov    r1, r3                  \n\t"
         "bx     lr                      \n\t"
     );
+    __builtin_unreachable();
 }
 
 __attribute__((naked, noreturn))
@@ -79,6 +80,7 @@ int64_t _SYS_srem_i64(uint32_t aL, uint32_t aH, uint32_t bL, uint32_t bH)
         "mov    r1, r3                  \n\t"
         "pop    {pc}                    \n\t"
     );
+    __builtin_unreachable();
 }
 
 __attribute__((naked, noreturn))
@@ -98,6 +100,7 @@ uint64_t _SYS_urem_i64(uint32_t aL, uint32_t aH, uint32_t bL, uint32_t bH)
         "mov    r1, r3                  \n\t"
         "pop    {pc}                    \n\t"
     );
+    __builtin_unreachable();
 }
 
 

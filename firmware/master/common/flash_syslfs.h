@@ -48,6 +48,7 @@ namespace SysLFS {
     const unsigned NUM_PAIRINGS = _SYS_NUM_CUBE_SLOTS;
     const unsigned NUM_TOTAL_ASSET_SLOTS = NUM_PAIRINGS * ASSET_SLOTS_PER_CUBE;
     const unsigned NUM_FAULTS = 16;
+    const unsigned NUM_BLUETOOTH = 8;
 
     /*
      * Key space
@@ -56,13 +57,22 @@ namespace SysLFS {
      */
 
     enum Key {
-        kFaultBase      = 0x16,
+        kBluetoothBase  = 14,
+        kFaultBase      = kBluetoothBase + NUM_BLUETOOTH,
         kPairingMRU     = kFaultBase + NUM_FAULTS,
         kPairingID,
         kCubeBase,
         kAssetSlotBase  = kCubeBase + NUM_PAIRINGS,
         kEnd            = kAssetSlotBase + NUM_TOTAL_ASSET_SLOTS,
     };
+
+    /*
+     * Bluetooth records.
+     *
+     * These are for use by individual Bluetooth hardware drivers for driver-specific
+     * data. The format of these records is not defined here. The nRF8001 driver uses
+     * these records to store bonding information in a hardware-specific format.
+     */
 
     /*
      * Fault records.
@@ -219,7 +229,7 @@ namespace SysLFS {
             STATIC_ASSERT(_SYS_ASSET_GROUP_SIZE_UNIT == 16);
             STATIC_ASSERT(TILES_PER_ASSET_SLOT == 4096);
             ASSERT(tileCount >= 1 && tileCount <= 4096);
-            AssetGroupSize result = { (tileCount - 1) >> 4 };
+            AssetGroupSize result = { uint8_t((tileCount - 1) >> 4) };
             return result;
         }
 

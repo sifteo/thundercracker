@@ -161,6 +161,7 @@ __attribute__((naked)) strcmp (const char* s1, const char* s2)
       "RETURN"
 #endif
       );
+  __builtin_unreachable();
 }
 
 #if !(defined(__OPTIMIZE_SIZE__) || defined (PREFER_SIZE_OVER_SPEED) || \

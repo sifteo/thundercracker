@@ -75,6 +75,12 @@ struct BG0ROMDrawable {
         SOLID_FG    = 104,      ///< Solid foreground-colored tile
         V_BARGRAPH  = 224,      ///< First tile in the vertical bargraph series
         H_BARGRAPH  = 231,      ///< First tile in the horizontal bargraph series
+        HEART       = 128,
+        FROWN       = 136,
+        SMILE       = 152,
+        SMILE2      = 141,
+        RIGHT_ARROW = 125, 
+        LEFT_ARROW  = 126,
     };
 
     /**
