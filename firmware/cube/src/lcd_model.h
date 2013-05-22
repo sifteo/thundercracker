@@ -136,38 +136,32 @@
 #endif
 
 /*
- * Some LCDs have different addressing schemes, based on how the
- * controller and the panel are wired together.
+ * Some LCDs are configured with larger GRAMs than the panel size,
+ * We need to specify the margins and handle rotations appropriately
  */
 
-#ifdef LCD_MODEL_GIANTPLUS_ILI9163C
-#define LCD_ROW_ADDR(x)         (x)
-#define LCD_COL_ADDR(x)         (x)
-#endif
-
 #ifdef LCD_MODEL_TRULY_ST7735
-#define LCD_ROW_ADDR(x)         ((x) + 32)
-#define LCD_COL_ADDR(x)         (x)
+#define HAVE_GRAM_PANEL_MISMATCH
+#define LCD_X_LEFT_MARGIN       0
+#define LCD_X_RIGHT_MARGIN      0
+#define LCD_Y_TOP_MARGIN        32
+#define LCD_Y_BOTTOM_MARGIN     0
 #endif
 
 #ifdef LCD_MODEL_TIANMA_ST7715
-#define LCD_ROW_ADDR(x)         ((x) + 3)
-#define LCD_COL_ADDR(x)         ((x) + 2)
-#endif
-
-#ifdef LCD_MODEL_TIANMA_HX8353
-#define LCD_ROW_ADDR(x)         (x)
-#define LCD_COL_ADDR(x)         (x)
+#define HAVE_GRAM_PANEL_MISMATCH
+#define LCD_X_LEFT_MARGIN       2
+#define LCD_X_RIGHT_MARGIN      2
+#define LCD_Y_TOP_MARGIN        3
+#define LCD_Y_BOTTOM_MARGIN     1
 #endif
 
 #ifdef LCD_MODEL_SANTEK_ST7735R
-#define LCD_ROW_ADDR(x)         ((x) + 33)
-#define LCD_COL_ADDR(x)         ((x) + 2)
-#endif
-
-#ifdef LCD_MODEL_WnW_RM68116
-#define LCD_ROW_ADDR(x)         (x)
-#define LCD_COL_ADDR(x)         (x)
+#define HAVE_GRAM_PANEL_MISMATCH
+#define LCD_X_LEFT_MARGIN       2
+#define LCD_X_RIGHT_MARGIN      2
+#define LCD_Y_TOP_MARGIN        33
+#define LCD_Y_BOTTOM_MARGIN     1
 #endif
 
 /*
