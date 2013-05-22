@@ -111,8 +111,8 @@ void main()
      * our onWrite() handler in onConnect() and onDisconnect(), respectively.
      */
 
-    btPipe.attach();
     Events::bluetoothReadAvailable.set(onReadAvailable);
+    btPipe.attach();
     updatePacketCounts(0, 0);
 
     /*
