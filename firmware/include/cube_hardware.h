@@ -24,7 +24,7 @@
 
 #define HWREV_MINIMUM   2
 #define HWREV_LATEST    6
-#define HWREV_DEFAULT   5
+#define HWREV_DEFAULT   6
 
 #ifndef HWREV
 #  define HWREV HWREV_DEFAULT
