@@ -66,7 +66,7 @@ ALWAYS_INLINE void Tasks::taskInvoke(unsigned id)
         case Tasks::BluetoothProtocol:  return BTProtocol::task();
     #endif
 
-    #if !defined(SIFTEO_SIMULATOR) && defined(HAVE_NRF8001)
+    #if !defined(SIFTEO_SIMULATOR) && defined(HAVE_NRF8001) && !defined(BOOTLOADER)
         case Tasks::BluetoothDriver:    return NRF8001::instance.task();
     #endif
 
