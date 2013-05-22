@@ -215,7 +215,7 @@ if __name__ == '__main__':
 
     usage = "usage: python master_binary_blob_gen.py --secondary-path <secondary path> --with-launcher --help"
 
-    if len(sys.argv) > 5 or len(sys.argv) < 2:
+    if len(sys.argv) > 5:
         print >> sys.stderr, usage
         sys.exit(1)
 
