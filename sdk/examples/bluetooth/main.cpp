@@ -73,20 +73,6 @@ void main()
     onCubeTouch(0, cube);
 
     /*
-     * Watch for incoming connections, and display some text on the screen to
-     * indicate connection state.
-     */
-
-    Events::bluetoothConnect.set(onConnect);
-    Events::bluetoothDisconnect.set(onDisconnect);
-
-    if (Bluetooth::isConnected()) {
-        onConnect();
-    } else {
-        onDisconnect();
-    }
-
-    /*
      * Handle sending and receiving Bluetooth data entirely with Events.
      * Our BluetoothPipe is a buffer that holds packets that have been
      * received and are waiting to be processed, and packets we're waiting
@@ -109,11 +95,29 @@ void main()
      * registered at all times. We also want to write as long as there's buffer
      * space, but only when a peer is connected. So we'll register and unregister
      * our onWrite() handler in onConnect() and onDisconnect(), respectively.
+     *
+     * Note that attach() will empty our transmit and receive queues. If we want
+     * to enqueue write packets in onConnct(), we need to be sure the pipe is
+     * attached before we set up onConnect/onDisconnect.
      */
 
     Events::bluetoothReadAvailable.set(onReadAvailable);
     btPipe.attach();
     updatePacketCounts(0, 0);
+
+    /*
+     * Watch for incoming connections, and display some text on the screen to
+     * indicate connection state.
+     */
+
+    Events::bluetoothConnect.set(onConnect);
+    Events::bluetoothDisconnect.set(onDisconnect);
+
+    if (Bluetooth::isConnected()) {
+        onConnect();
+    } else {
+        onDisconnect();
+    }
 
     /*
      * Everything else happens in event handlers, nothing to do in our main loop.
