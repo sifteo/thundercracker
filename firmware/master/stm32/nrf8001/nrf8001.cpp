@@ -845,18 +845,28 @@ void NRF8001::handleEvent()
         case Op::DataReceivedEvent: {
             /*
              * Data received from an nRF8001 pipe.
+             * There may be more where this came from, so request another transaction too.
              *
-             * Our data pipe is configured to auto-acknowledge. These over-the-air
-             * ACKs are used as flow control for the radio link, but we currently assume
-             * that our CPU can process incoming data as fast as we read it from the
-             * nRF8001's ACI interface.
+             * Note that we support both acknowledged and unacknowledged writes.
+             * Unack'ed can be faster, since acknowledged writes commonly run at half
+             * speed due to the round-trip delay from the acknowledgment. But unack'ed writes
+             * are also harder to use on iOS, since CoreBluetooth doesn't give any feedback
+             * as to when the packet was actually sent by the local radio. So, for flow control
+             * reasons, we might want the ability to use both types of write and to even
+             * mix the two.
              */
 
             int length = int(rxBuffer.length) - 2;
             uint8_t pipe = rxBuffer.param[0];
+            if (length > 0) {
+                switch (pipe) {
 
-            if (length > 0 && pipe == PIPE_SIFTEO_BASE_DATA_OUT_RX_ACK_AUTO) {
-                BTProtocolCallbacks::onReceiveData(&rxBuffer.param[1], length);
+                    case PIPE_SIFTEO_BASE_DATA_OUT_RX:
+                    case PIPE_SIFTEO_BASE_DATA_OUT_RX_ACK_AUTO:
+                        BTProtocolCallbacks::onReceiveData(&rxBuffer.param[1], length);
+                        requestTransaction();
+                        break;
+                }
             }
             return;
         }

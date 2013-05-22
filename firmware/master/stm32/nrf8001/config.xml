@@ -38,7 +38,7 @@
             <AttributeLenType>2</AttributeLenType>
             <ForceOpen>false</ForceOpen>
             <Properties>
-                <WriteWithoutResponse>false</WriteWithoutResponse>
+                <WriteWithoutResponse>true</WriteWithoutResponse>
                 <Write>true</Write>
                 <Notify>false</Notify>
                 <Indicate>false</Indicate>
