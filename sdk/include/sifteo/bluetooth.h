@@ -215,7 +215,10 @@ struct BluetoothPacket {
 template < unsigned tCapacity >
 struct BluetoothQueue {
     struct SysType {
-        _SYSBluetoothQueueHeader header;
+        union {
+            _SYSBluetoothQueueHeader header;
+            uint32_t header32;
+        };
         _SYSBluetoothPacket packets[tCapacity + 1];
     } sys;
 
@@ -228,11 +231,11 @@ struct BluetoothQueue {
     {
         unsigned lastIndex = tCapacity;
 
-        STATIC_ASSERT(sizeof sys.header == 4);
+        STATIC_ASSERT(sizeof sys.header == sizeof sys.header32);
         STATIC_ASSERT(lastIndex >= 1);
         STATIC_ASSERT(lastIndex <= 255);
 
-        *reinterpret_cast<uint32_t*>(&sys.header) = lastIndex << 16;
+        sys.header32 = lastIndex << 16;
 
         ASSERT(sys.header.head == 0);
         ASSERT(sys.header.tail == 0);
@@ -463,6 +466,8 @@ struct BluetoothPipe {
      * The previous pipe is automatically detached.
      */
     void attach() {
+        sendQueue.clear();
+        receiveQueue.clear();
         _SYS_bt_setPipe(sendQueue, receiveQueue);
     }
 
