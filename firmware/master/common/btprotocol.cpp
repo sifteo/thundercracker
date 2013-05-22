@@ -111,6 +111,12 @@ unsigned BTProtocolCallbacks::onProduceData(uint8_t *buffer)
         }
     }
 
+    if (result) {
+        // Update transmit counters
+        BTProtocol::instance.counters.txPackets++;
+        BTProtocol::instance.counters.txBytes += result;
+    }
+
     return result;
 }
 
