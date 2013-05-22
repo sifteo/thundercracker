@@ -57,7 +57,7 @@ public:
         ExitTestMode
     };
 
-    void test(unsigned phase);
+    void test(unsigned phase, uint8_t pkt, uint8_t len, uint8_t freq);
 
 private:
     struct ACICommandBuffer {

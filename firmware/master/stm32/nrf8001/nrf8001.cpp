@@ -66,11 +66,13 @@ namespace Test {
         0x06, 0x07, 0x08, 0x09, 0x0a,
     };
 
-    // elements must match the order of their entries in the SysCS enum
-    static const uint16_t dtmParams[] = {
-        0x4150,         // Receiver Test, channel 0x10, length 0x10, 11110000 packet
-        0x4190,         // Transmitter Test, channel 0x10, length 0x10, 11110000 packet
-        (0x3 << 6),     // Test End
+    static uint16_t dtmCmdParams;
+
+    enum DtmCommands {
+        DtmReset            = (0x0 << 6),
+        DtmReceiverTest     = (0x1 << 6),
+        DtmTransmitterTest  = (0x2 << 6),
+        DtmTestEnd          = (0x3 << 6)
     };
 }
 
@@ -220,16 +222,21 @@ void NRF8001::task()
     requestTransaction();
 }
 
-void NRF8001::test(unsigned phase)
+void NRF8001::test(unsigned phase, uint8_t pkt, uint8_t len, uint8_t freq)
 {
     /*
      * A request to enter test mode.
      *
      * Set the command state to enter Test mode at the next opportunity.
      * Testing continues as each step completes.
+     *
+     * NB: DTM command gets ORed in below for the appropriate phases
      */
 
     testState = phase;
+    Test::dtmCmdParams = ((pkt & 0x3) << 8) |   // packet type
+                         ((len & 0x3f) << 10) | // packet length
+                          (freq & 0x3f);        // Frequency
     requestTransaction();
 }
 
@@ -342,15 +349,18 @@ bool NRF8001::produceSystemCommand()
 
         case RXTest:
             sysCommandState = SysCS::DtmRX;
+            Test::dtmCmdParams |= Test::DtmReceiverTest;
             break;
 
         case TXTest:
             sysCommandState = SysCS::DtmTX;
+            Test::dtmCmdParams |= Test::DtmTransmitterTest;
             break;
 
         case ExitTestMode:
             sysCommandState = SysCS::DtmEnd;
             testState = Test::ExitTest;
+            Test::dtmCmdParams |= Test::DtmTestEnd;
             break;
     }
 
@@ -608,7 +618,7 @@ bool NRF8001::produceSystemCommand()
         case SysCS::DtmRX ... SysCS::DtmEnd: {
             txBuffer.length = 3;
             txBuffer.command = Op::DtmCommand;
-            txBuffer.param16[0] = Test::dtmParams[sysCommandState - SysCS::DtmRX];
+            txBuffer.param16[0] = Test::dtmCmdParams;
             sysCommandState = SysCS::Idle;
             return true;
         }
