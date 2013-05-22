@@ -464,6 +464,9 @@ struct BluetoothPipe {
      *
      * If there was already a different pipe attached, this one replaces it.
      * The previous pipe is automatically detached.
+     *
+     * This method clears the send and receive queues. Both queues will be empty
+     * when they're first attached to the system.
      */
     void attach() {
         sendQueue.clear();
