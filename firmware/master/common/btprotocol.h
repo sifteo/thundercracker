@@ -8,6 +8,7 @@
 
 #include "macros.h"
 #include "bits.h"
+#include "btqueue.h"
 #include <stdint.h>
 
 /*
@@ -49,9 +50,13 @@ class BTProtocol {
 public:
     static const unsigned MAX_DATA_LEN = 20;
     static const unsigned PAIRING_CODE_LEN = 6;
+    static const unsigned TYPE_MASK = 0x7F;
+    static const unsigned TYPE_SYS = 0x80;
 
     // Tasks::BluetoothProtocol
     static void task();
+
+    static bool setUserQueues(SvmMemory::VirtAddr send, SvmMemory::VirtAddr receive);
 
     static bool isConnected() {
         return instance.flags.test(ConnectedFlag);
@@ -65,6 +70,10 @@ public:
         return instance.pairingCode;
     }
 
+    static const _SYSBluetoothCounters *getCounters() {
+        return &instance.counters;
+    }
+
 private:
     enum Flags {
         ConnectedFlag,
@@ -73,10 +82,16 @@ private:
         NUM_FLAGS   // Must be last
     };
 
+    void handleSystemPacket(unsigned type, const uint8_t *data, unsigned length);
+    unsigned produceSystemPacket(uint8_t *buffer);
+
     friend class BTProtocolCallbacks;
     static BTProtocol instance;
 
     BitVector<NUM_FLAGS> flags;
+    BTQueue userSendQueue;
+    BTQueue userReceiveQueue;
+    _SYSBluetoothCounters counters;
     char pairingCode[PAIRING_CODE_LEN];
 };
 
