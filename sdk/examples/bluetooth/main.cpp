@@ -18,6 +18,9 @@ Metadata M = Metadata()
  */
 BluetoothPipe <1,8> btPipe;
 
+// Bluetooth packet counters, available for debugging
+BluetoothCounters btCounters;
+
 VideoBuffer vid;
 
 void onCubeTouch(void *, unsigned);
@@ -50,6 +53,9 @@ void main()
         while (1)
             System::paint();
     }
+
+    // Zero out our counters
+    btCounters.reset();
 
     /*
      * Advertise some "game state" to the peer. Mobile apps can read this
@@ -114,7 +120,20 @@ void main()
      */
 
     while (1) {
-        System::paint();
+
+        for (unsigned n = 0; n < 60; n++) {
+            System::paint();
+        }
+
+        /*
+         * For debugging, periodically log the Bluetooth packet counters.
+         */
+
+        btCounters.capture();
+        LOG("BT-Counters: rxPackets=%d txPackets=%d rxBytes=%d txBytes=%d rxUserDropped=%d\n",
+            btCounters.receivedPackets(), btCounters.sentPackets(),
+            btCounters.receivedBytes(), btCounters.sentBytes(),
+            btCounters.userPacketsDropped());
     }
 }
 
