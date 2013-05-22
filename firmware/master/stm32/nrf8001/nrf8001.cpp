@@ -687,6 +687,18 @@ void NRF8001::handleEvent()
                     break;
                 }
 
+                case OperatingMode::Test: {
+                    /*
+                     * We've entered Test mode.
+                     * We always run an Echo test upon entering test mode.
+                     * Once that's complete, we're idle in test mode, ready to run RX/TX tests.
+                     */
+
+                    sysCommandState = SysCS::Echo;
+                    requestTransaction();
+                    break;
+                }
+
                 case OperatingMode::Standby: {
                     /*
                      * The nRF8001 claims it's ready to go. But maybe it actually isn't.
