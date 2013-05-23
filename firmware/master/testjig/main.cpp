@@ -41,12 +41,21 @@ int main()
     power.setControl(GPIOPin::OUT_2MHZ);
     power.setHigh();
     
+    GPIOPin dip3 = DIP_SWITCH3_GPIO;
+    dip3.setControl(GPIOPin::IN_PULL);
+    dip3.pullup();
     /*
      * High-level hardware initialization
      */
 
     SysTime::init();
-    UsbDevice::init();   // fires up USB
+
+    // conditionally fire up USB peripheral as long as the dip
+    // switch is off! enables the use of a testjig as a dummy power supply
+    if(dip3.isHigh()) {
+        UsbDevice::init();   // fires up USB
+    }
+
     Tasks::init();
 
     // This is the earliest point at which it's safe to use Usart::Dbg.

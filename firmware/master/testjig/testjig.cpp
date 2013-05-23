@@ -99,8 +99,8 @@ void TestJig::init()
     Dac::enableChannel(BATTERY_SIM_DAC_CH);
 
     dip1.setControl(GPIOPin::IN_PULL);          // dip1 is used to make the default 2.8V for master stations
-    dip2.setControl(GPIOPin::IN_PULL);
-    dip3.setControl(GPIOPin::IN_PULL);
+    dip2.setControl(GPIOPin::IN_PULL);          // dip2 is used to make the default voltage 2.0V for pairing station
+    dip3.setControl(GPIOPin::IN_PULL);          // dip3 is used to disable the USB peripheral and to be used as power only
     dip4.setControl(GPIOPin::IN_PULL);          // dip4 is used for the bootloader. we shouldn't use this for anything else
 
     dip1.pullup();
