@@ -459,17 +459,35 @@ void FactoryTest::getFirmwareVersion(uint8_t argc, const uint8_t *args)
 
 /*
  *  args[1] -- NRF8001::TestPhase to enter
+ *  args[2] -- DTM packet format
+ *  args[3] -- DTM packet length
+ *  args[4] -- DTM packet frequency
  */
 void FactoryTest::bleCommsHandler(uint8_t argc, const uint8_t *args)
 {
-    btleTest.inProgress = 1;
     uint8_t phase = args[1];
+    uint8_t pkt, len, freq;
+    if (argc >= 5) {
+        pkt = args[2];
+        len = args[3];
+        freq = args[4];
+    } else {
+        pkt = len = freq = 0;
+    }
 
 #ifdef HAVE_NRF8001
-    NRF8001::instance.test(phase);
+    btleTest.inProgress = 1;
+    NRF8001::instance.test(phase, pkt, len, freq);
+    switch (phase) {
+        case NRF8001::EnterTestMode:
+        case NRF8001::ExitTestMode:
+            while (btleTest.inProgress) {
+                Tasks::waitForInterrupt();
+            }
+            break;
 
-    while (btleTest.inProgress) {
-        Tasks::waitForInterrupt();
+        default:
+            break;
     }
 #endif
 

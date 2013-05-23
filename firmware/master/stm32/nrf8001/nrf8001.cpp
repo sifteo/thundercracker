@@ -40,6 +40,7 @@ namespace SysCS {
         ExitTest,
         Echo,
         DtmRX,
+        DtmTX,
         DtmEnd,
 
         // State ordering definitions
@@ -54,11 +55,9 @@ namespace SysCS {
 
 namespace Test {
     enum TestState {
-        Idle = NRF8001::TestPhase2 + 1,
+        Idle = NRF8001::ExitTestMode + 1,
         RadioReset,
         EnterTest,
-        BeginRX,
-        EndRX,
         ExitTest
     };
 
@@ -67,9 +66,13 @@ namespace Test {
         0x06, 0x07, 0x08, 0x09, 0x0a,
     };
 
-    static const uint16_t dtmParams[] = {
-        0x3040,         // Receiver Test, channel 0x10, length 0x10, PRBS9 packet
-        (0x3 << 6),     // Test End
+    static uint16_t dtmCmdParams;
+
+    enum DtmCommands {
+        DtmReset            = (0x0 << 6),
+        DtmReceiverTest     = (0x1 << 6),
+        DtmTransmitterTest  = (0x2 << 6),
+        DtmTestEnd          = (0x3 << 6)
     };
 }
 
@@ -219,16 +222,21 @@ void NRF8001::task()
     requestTransaction();
 }
 
-void NRF8001::test(unsigned phase)
+void NRF8001::test(unsigned phase, uint8_t pkt, uint8_t len, uint8_t freq)
 {
     /*
      * A request to enter test mode.
      *
      * Set the command state to enter Test mode at the next opportunity.
      * Testing continues as each step completes.
+     *
+     * NB: DTM command gets ORed in below for the appropriate phases
      */
 
     testState = phase;
+    Test::dtmCmdParams = ((pkt & 0x3) << 8) |   // packet type
+                         ((len & 0x3f) << 10) | // packet length
+                          (freq & 0x3f);        // Frequency
     requestTransaction();
 }
 
@@ -334,14 +342,25 @@ bool NRF8001::produceSystemCommand()
 
     switch (testState) {
 
-        case TestPhase1:
+        case EnterTestMode:
             sysCommandState = SysCS::RadioReset;
             testState = Test::RadioReset;
             break;
 
-        case TestPhase2:
+        case RXTest:
+            sysCommandState = SysCS::DtmRX;
+            Test::dtmCmdParams |= Test::DtmReceiverTest;
+            break;
+
+        case TXTest:
+            sysCommandState = SysCS::DtmTX;
+            Test::dtmCmdParams |= Test::DtmTransmitterTest;
+            break;
+
+        case ExitTestMode:
             sysCommandState = SysCS::DtmEnd;
-            testState = Test::EndRX;
+            testState = Test::ExitTest;
+            Test::dtmCmdParams |= Test::DtmTestEnd;
             break;
     }
 
@@ -591,16 +610,15 @@ bool NRF8001::produceSystemCommand()
             txBuffer.length = 1 + sizeof(Test::echoData);
             txBuffer.command = Op::Echo;
             memcpy(txBuffer.param, Test::echoData, sizeof Test::echoData);
-            sysCommandState = SysCS::DtmRX;
-            testState = Test::BeginRX;
+            sysCommandState = SysCS::Idle;
+            testState = Test::Idle;
             return true;
         }
 
-        case SysCS::DtmRX:
-        case SysCS::DtmEnd: {
+        case SysCS::DtmRX ... SysCS::DtmEnd: {
             txBuffer.length = 3;
             txBuffer.command = Op::DtmCommand;
-            txBuffer.param16[0] = Test::dtmParams[sysCommandState - SysCS::DtmRX];
+            txBuffer.param16[0] = Test::dtmCmdParams;
             sysCommandState = SysCS::Idle;
             return true;
         }
@@ -675,6 +693,18 @@ void NRF8001::handleEvent()
                      */
 
                     sysCommandState = SysCS::SetupFirst;
+                    requestTransaction();
+                    break;
+                }
+
+                case OperatingMode::Test: {
+                    /*
+                     * We've entered Test mode.
+                     * We always run an Echo test upon entering test mode.
+                     * Once that's complete, we're idle in test mode, ready to run RX/TX tests.
+                     */
+
+                    sysCommandState = SysCS::Echo;
                     requestTransaction();
                     break;
                 }
@@ -923,6 +953,18 @@ void NRF8001::handleEvent()
             BTProtocolCallbacks::onDisplayPairingCode((const char *) rxBuffer.param);
             return;
         }
+
+    #ifdef TRACE
+        case Op::HardwareErrorEvent: {
+
+            uint16_t lineno = (rxBuffer.param[0] << 8) | rxBuffer.param[1];
+            const char *errstr = (const char*)&rxBuffer.param[2];
+
+            UART("BT HW err: "); Usart::Dbg.writeHex(lineno, 4);
+            UART(" - "); UART(errstr); UART(" <---\r\n");
+            return;
+        }
+    #endif
     }
 }
 
@@ -1038,19 +1080,9 @@ void NRF8001::handleDtmResponse(unsigned status, uint16_t response)
     }
 
     // tick along our state machine as appropriate.
-    switch (testState) {
-
-    case Test::BeginRX:
-        // end of Phase1
-        // we're now waiting to receive a Phase2 command to continue
-        testState = Test::Idle;
-        break;
-
-    case Test::EndRX:
-        // this is the last DTM command in Phase2
+    if (testState == Test::ExitTest) {
         sysCommandState = SysCS::ExitTest;
         testState = Test::Idle;
-        break;
     }
 }
 

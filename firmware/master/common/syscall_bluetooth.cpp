@@ -70,7 +70,13 @@ uint32_t _SYS_bt_counters(_SYSBluetoothCounters *buffer, uint32_t bufferSize)
 
 void _SYS_bt_advertiseState(const uint8_t *data, uint32_t length)
 {
-    // Implement me! Copy the advertised state in a system buffer owned by BTProtocol.
+    if (length > _SYS_BT_PACKET_BYTES) {
+        return SvmRuntime::fault(F_SYSCALL_PARAM);
+    }
+
+    if (!BTProtocol::setUserState(reinterpret_cast<SvmMemory::VirtAddr>(data), length)) {
+        return SvmRuntime::fault(F_SYSCALL_ADDRESS);
+    }
 }
 
 
