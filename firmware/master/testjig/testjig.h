@@ -31,6 +31,7 @@ public:
     enum DAC_Out {
         DAC_0v0             = 0,
         DAC_1V2             = 1490,
+        DAC_2V0             = 2482,
         DAC_2V2             = 2730,
         DAC_2V8             = 3475
     };

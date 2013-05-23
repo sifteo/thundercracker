@@ -116,6 +116,8 @@ void TestJig::init()
 
     if(dip1.isLow()) {
         Dac::write(BATTERY_SIM_DAC_CH, DAC_2V8);
+    } else if(dip2.isLow()){
+        Dac::write(BATTERY_SIM_DAC_CH, DAC_2V0); // used as a happy medium for both cube and master for pairing station
     } else {
         Dac::write(BATTERY_SIM_DAC_CH, DAC_1V2); // default to 1v2
     }
