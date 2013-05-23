@@ -16,7 +16,7 @@ touch_debug = 0
 disable_wdt = 0
 disable_sleep = 0
 
-hwrev = 5
+hwrev = 6
 
 date = datetime.date.today().isoformat()
 
