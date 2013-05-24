@@ -75,7 +75,10 @@ void adcCallback(uint16_t sample) {
     }
 #endif
     lastReading = sample;
+
+#ifndef DISABLE_VBATT_CHECK
     PowerManager::shutdownIfVBattIsCritical(lastReading, VBATT_MIN);
+#endif
 }
 
 } // namespace BatteryLevel

@@ -121,7 +121,10 @@ endif
 # gold master disables timeouts
 ifneq ($(RFTEST_GOLD_MASTER),)
     FLAGS += -DDISABLE_IDLETIMEOUT -DDISABLE_WATCHDOG
-    FLAGS += -DRFTEST_GOLD_MASTER 
+    FLAGS += -DRFTEST_GOLD_MASTER
+
+    # disables battery check for bluestreak masters running on USB
+    FLAGS += -DDISABLE_VBATT_CHECK
 endif
 
 # BTLE master tester is the same as normal FW,
