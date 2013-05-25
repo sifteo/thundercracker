@@ -66,44 +66,6 @@ class LCD {
         
         frame_count = 0;
         pixel_count = 0;
-
-#define LCD_MODEL_SANTEK_ST7735R
-#if defined(LCD_MODEL_TIANMA_HX8353)
-        model.madctr_xor = MADCTR_MX | MADCTR_MY;
-        model.left_margin = 0;
-        model.right_margin = 0;
-        model.top_margin = 0;
-        model.bottom_margin = 0;
-        model.order = model.SWAP_BEFORE_MIRROR;
-
-#elif defined(LCD_MODEL_SANTEK_ST7735R)
-        model.madctr_xor = MADCTR_MX | MADCTR_MY;
-        model.left_margin = 2;
-        model.right_margin = 2;
-        model.top_margin = 1;
-        model.bottom_margin = 33;
-        model.order = model.SWAP_BEFORE_MIRROR;
-
-#elif defined(LCD_MODEL_TRULY_ST7735)
-        model.madctr_xor = MADCTR_MX | MADCTR_MY;
-        model.left_margin = 0;
-        model.right_margin = 0;
-        model.top_margin = 32;
-        model.bottom_margin = 0;
-        model.order = model.SWAP_BEFORE_MIRROR;
-
-#elif defined(LCD_MODEL_WnW_RM68116)
-        model.madctr_xor = MADCTR_MX | MADCTR_MY;
-        model.left_margin = 0;
-        model.right_margin = 0;
-        model.top_margin = 0;
-        model.bottom_margin = 0;
-        model.order = model.SWAP_BEFORE_MIRROR;
-
-#else
-        #error No lcd model selected
-#endif
-
     }
 
     ALWAYS_INLINE void cycle(Pins *pins) {
@@ -317,6 +279,48 @@ class LCD {
         case CMD_TEON:
             mode_te = 1;
             break;
+
+        /*
+         * Look for specific magic commands in order to guess what LCD this
+         * firmware build is expecting to talk to. Then, undo that firmware's
+         * model-specific workarounds.
+         */
+
+        case CMD_MAGIC_TRULY:
+            model.madctr_xor = MADCTR_MX | MADCTR_MY;
+            model.left_margin = 0;
+            model.right_margin = 0;
+            model.top_margin = 32;
+            model.bottom_margin = 0;
+            model.order = model.SWAP_BEFORE_MIRROR;
+            break;
+
+        case CMD_MAGIC_TIANMA_HX8353:
+            model.madctr_xor = MADCTR_MX | MADCTR_MY;
+            model.left_margin = 0;
+            model.right_margin = 0;
+            model.top_margin = 0;
+            model.bottom_margin = 0;
+            model.order = model.SWAP_BEFORE_MIRROR;
+            break;
+
+        case CMD_MAGIC_SANTEK_ST7735R:
+            model.madctr_xor = MADCTR_MX | MADCTR_MY;
+            model.left_margin = 2;
+            model.right_margin = 2;
+            model.top_margin = 1;
+            model.bottom_margin = 33;
+            model.order = model.SWAP_BEFORE_MIRROR;
+            break;
+
+        case CMD_MAGIC_WnW_RM68116:
+            model.madctr_xor = MADCTR_MX | MADCTR_MY;
+            model.left_margin = 0;
+            model.right_margin = 0;
+            model.top_margin = 0;
+            model.bottom_margin = 0;
+            model.order = model.SWAP_BEFORE_MIRROR;
+            break;
         }
     }
 
@@ -389,6 +393,8 @@ class LCD {
     // Vendor-specific commands that we use to detect an LCD model
     static const uint8_t CMD_MAGIC_TRULY            = 0xC4;
     static const uint8_t CMD_MAGIC_TIANMA_HX8353    = 0xB9;
+    static const uint8_t CMD_MAGIC_SANTEK_ST7735R   = 0xF6;
+    static const uint8_t CMD_MAGIC_WnW_RM68116      = 0xF8;
 
     // Width of emulated TE pulses
     static const unsigned TE_WIDTH_US = 1000;
