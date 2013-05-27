@@ -78,7 +78,7 @@ class RSTParser:
 
     def parseLine(self, line, module=None):
         address = line[3:7].strip()
-        bytes = line[8:27].replace(' ', '').strip()
+        bytes = line[8:22].replace(' ', '').strip()
         text, comment = (line[32:].strip().split(';', 1) + [''])[:2]
         tokens = text.split()
         ctokens = comment.split()
