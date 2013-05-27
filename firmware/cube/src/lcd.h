@@ -65,7 +65,12 @@ void lcd_address_and_write();
 #define ASM_LCD_WRITE_END()     __endasm; LCD_WRITE_END(); __asm
 #define ASM_LCD_CMD_MODE()      __endasm; LCD_CMD_MODE(); __asm
 #define ASM_LCD_DATA_MODE()     __endasm; LCD_DATA_MODE(); __asm
-    
+
+#define ASM_LCD_BYTE(_b)                        __endasm; \
+    __asm mov   _P2, _b                         __endasm; \
+    __asm ASM_ADDR_INC2();                      __endasm; \
+    __asm
+
 /*
  * Bus Clocking
  */

@@ -281,23 +281,106 @@ void lcd_address_and_write(void)
      *
      * Assumes we're already set up for writing to the LCD.
      * Leaves with the bus in data mode.
+     *
+     * In the case that HAVE_GRAM_PANEL_MISMATCH is defined,
+     * we must calculate the appropriate values for CASET and RASET
+     * based on the current VRAM flags configuration as follows:
+     *
+     * x_offset = (flags & LCD_MADCTR_MX) ? LCD_X_RIGHT_MARGIN : LCD_X_LEFT_MARGIN
+     * y_offset = (flags & LCD_MADCTR_MY) ? LCD_Y_BOTTOM_MARGIN : LCD_Y_TOP_MARGIN
+     * if (flags & LCD_MADCTR_MV) {
+     *   col_offset = y_offset
+     *   row_offset = x_offset
+     * } else {
+     *   col_offset = x_offset
+     *   row_offset = y_offset
+     * }
+     *
+     * Some graphics modes constrain the registers we can use
+     * to implement this - we can only touch b, r0 and r1,
+     * because of the requirements in vm_stamp_pixel(),
+     * by way of vm_fb32_pixel(). Otherwise, we'd be happy
+     * to implement this in C.
      */
 
+#ifdef HAVE_GRAM_PANEL_MISMATCH
+    __asm
+        push    acc
+        push    dpl
+        push    dph
+
+    ; vram.flags in a
+        mov     dptr, #_SYS_VA_FLAGS
+        movx    a, @dptr
+
+    ; select y_margin based on LCD_MADCTR_MY and save in b
+        jnb     acc.7, 1$   ; flags & LCD_MADCTR_MY
+        mov     b, #LCD_Y_BOTTOM_MARGIN
+        sjmp    2$
+1$:
+        mov     b, #LCD_Y_TOP_MARGIN
+
+2$:
+    ; col_offset in r1 and row_offset in r0, based on LCD_MADCTR_MV.
+    ; XXX: because the X margins are both the same for the Santek,
+    ;       we shortcut the test of LCD_MADCTR_MX, since currently
+    ;       more code space is required to enable this test.
+        jnb     acc.5, 3$   ; flags & LCD_MADCTR_MV
+        mov     r1, b
+        mov     r0, #LCD_X_RIGHT_MARGIN
+        sjmp    4$
+3$:
+        mov     r1, #LCD_X_LEFT_MARGIN
+        mov     r0, b
+
+4$:
+        ASM_LCD_CMD_MODE();
+        ASM_LCD_BYTE(#LCD_CMD_CASET);
+        ASM_LCD_DATA_MODE();
+        ASM_LCD_BYTE(#0x0);
+        mov     a, _lcd_window_x
+        add     a, r1
+        ASM_LCD_BYTE(a);
+        ASM_LCD_BYTE(#0x0);
+        mov     a, #(LCD_WIDTH - 1)
+        add     a, r1
+        ASM_LCD_BYTE(a);
+
+        ASM_LCD_CMD_MODE();
+        ASM_LCD_BYTE(#LCD_CMD_RASET);
+        ASM_LCD_DATA_MODE();
+        ASM_LCD_BYTE(#0x0);
+        mov     a, _lcd_window_y
+        add     a, r0
+        ASM_LCD_BYTE(a);
+        ASM_LCD_BYTE(#0x0);
+        mov     a, #(LCD_HEIGHT - 1)
+        add     a, r0
+        ASM_LCD_BYTE(a);
+
+        ; assumption: dptr and a are not touched below
+        pop     dph
+        pop     dpl
+        pop     acc
+
+    __endasm;
+#else
     LCD_CMD_MODE();
     LCD_BYTE(LCD_CMD_CASET);
     LCD_DATA_MODE();
     LCD_BYTE(0);
-    LCD_BYTE(LCD_COL_ADDR(lcd_window_x));
+    LCD_BYTE((lcd_window_x));
     LCD_BYTE(0);
-    LCD_BYTE(LCD_COL_ADDR(LCD_WIDTH - 1));
+    LCD_BYTE((LCD_WIDTH - 1));
 
     LCD_CMD_MODE();
     LCD_BYTE(LCD_CMD_RASET);
     LCD_DATA_MODE();
     LCD_BYTE(0);
-    LCD_BYTE(LCD_ROW_ADDR(lcd_window_y));
+    LCD_BYTE((lcd_window_y));
     LCD_BYTE(0);
-    LCD_BYTE(LCD_ROW_ADDR(LCD_HEIGHT - 1));
+    LCD_BYTE((LCD_HEIGHT - 1));
+#endif
 
     /*
      * Start writing (RAMWR command).

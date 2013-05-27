@@ -47,7 +47,9 @@ static void vm_stamp_pixel() __naked __using(GFX_BANK)
 1$:
 
         ; Fragile assumption... lcd_address_and_write is safe to run in
-        ; GFX_BANK, and it does not dirty any registers other than a, r0, r1.
+        ; GFX_BANK, and it does not dirty any registers other than r0 and r1.
+        ; Notably, the usage of vm_fb32_pixel() below assumes that a will
+        ; be preserved.
         mov     _lcd_window_x, r5
         lcall   _lcd_address_and_write
         inc     r5

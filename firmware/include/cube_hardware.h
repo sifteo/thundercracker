@@ -24,7 +24,7 @@
 
 #define HWREV_MINIMUM   2
 #define HWREV_LATEST    6
-#define HWREV_DEFAULT   5
+#define HWREV_DEFAULT   6
 
 #ifndef HWREV
 #  define HWREV HWREV_DEFAULT
@@ -32,6 +32,20 @@
 
 #if HWREV < HWREV_MINIMUM
 #  error Hardware revision is too old; no longer supported by this codebase!
+#endif
+
+/*
+ * Hardware feature selection
+ */
+
+#if HWREV == 6
+#   define USE_LIS3DE
+#   define LCD_MODEL_SANTEK_ST7735R
+#elif (HWREV >= 0) && (HWREV <= 5)
+#   define USE_LIS3DH
+#   define LCD_MODEL_TIANMA_HX8353
+#else
+    //expects command line feature selection
 #endif
 
 /*
@@ -155,6 +169,16 @@
     __asm clr   _S0CON_TI0                      __endasm; \
     __asm mov   _S0BUF, _b                      __endasm; \
     __asm
+
+/*
+ * Helper to ensure that paramterless function calls from
+ * C code use acall instead of lcall, for the purpose of
+ * size optimizations.
+ *
+ * These can typically be added/removed according to the
+ * output from the sizeprof script.
+ */
+#define ENSURE_ACALL(fn)    __asm acall _ ## fn __endasm
 
 /*
  * nRF24L01 Radio

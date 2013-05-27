@@ -288,15 +288,39 @@ class LCD {
 
         case CMD_MAGIC_TRULY:
             model.madctr_xor = MADCTR_MX | MADCTR_MY;
-            model.row_adj = -32;
-            model.col_adj = 0;
+            model.left_margin = 0;
+            model.right_margin = 0;
+            model.top_margin = 32;
+            model.bottom_margin = 0;
+            model.order = model.SWAP_BEFORE_MIRROR;
             break;
 
         case CMD_MAGIC_TIANMA_HX8353:
             model.madctr_xor = MADCTR_MX | MADCTR_MY;
+            model.left_margin = 0;
+            model.right_margin = 0;
+            model.top_margin = 0;
+            model.bottom_margin = 0;
             model.order = model.SWAP_BEFORE_MIRROR;
             break;
 
+        case CMD_MAGIC_SANTEK_ST7735R:
+            model.madctr_xor = MADCTR_MX | MADCTR_MY;
+            model.left_margin = 2;
+            model.right_margin = 2;
+            model.top_margin = 1;
+            model.bottom_margin = 33;
+            model.order = model.SWAP_BEFORE_MIRROR;
+            break;
+
+        case CMD_MAGIC_WnW_RM68116:
+            model.madctr_xor = MADCTR_MX | MADCTR_MY;
+            model.left_margin = 0;
+            model.right_margin = 0;
+            model.top_margin = 0;
+            model.bottom_margin = 0;
+            model.order = model.SWAP_BEFORE_MIRROR;
+            break;
         }
     }
 
@@ -305,20 +329,25 @@ class LCD {
 
         case CMD_CASET:
             switch (cmd_bytecount++) {
-            case 1:  xs = clamp(byte, 0, 0x83);
-            case 3:  xe = clamp(byte, 0, 0x83);
+            case 1:  xs = byte;
+            case 3:  xe = byte;
             }
             break;
 
         case CMD_RASET:
             switch (cmd_bytecount++) {
-            case 1:  ys = clamp(byte, 0, 0xa1);
-            case 3:  ye = clamp(byte, 0, 0xa1);
+            case 1:  ys = byte;
+            case 3:  ye = byte;
             }
             break;
             
         case CMD_MADCTR:
             madctr = byte;
+            model.row_adj = (madctr & MADCTR_MY) ? -model.bottom_margin : -model.top_margin;
+            model.col_adj = (madctr & MADCTR_MX) ? -model.right_margin : -model.left_margin;
+            if (madctr & MADCTR_MV) {
+                std::swap(model.row_adj, model.col_adj);
+            }
             break;
 
         case CMD_COLMOD:
@@ -364,6 +393,8 @@ class LCD {
     // Vendor-specific commands that we use to detect an LCD model
     static const uint8_t CMD_MAGIC_TRULY            = 0xC4;
     static const uint8_t CMD_MAGIC_TIANMA_HX8353    = 0xB9;
+    static const uint8_t CMD_MAGIC_SANTEK_ST7735R   = 0xF6;
+    static const uint8_t CMD_MAGIC_WnW_RM68116      = 0xF8;
 
     // Width of emulated TE pulses
     static const unsigned TE_WIDTH_US = 1000;
@@ -405,6 +436,10 @@ class LCD {
         uint8_t madctr_xor;
         int8_t row_adj;
         int8_t col_adj;
+        uint8_t right_margin;
+        uint8_t left_margin;
+        uint8_t top_margin;
+        uint8_t bottom_margin;
         enum {
             MIRROR_BEFORE_SWAP,
             SWAP_BEFORE_MIRROR,

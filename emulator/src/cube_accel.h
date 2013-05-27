@@ -109,34 +109,36 @@ class I2CAccelerometer {
     uint8_t i2cWrite(uint8_t byte) {
         switch (state) {
 
-        case S_I2C_ADDRESS:
-            if ((byte & 0xFE) == deviceAddress) {
-                if (byte & 1) {
-                    // Read
-                    state = S_DATA;
+            case S_I2C_ADDRESS: {
+                uint8_t addr = (byte & 0xFE);
+                if (addr == AddressLIS3DH || addr == AddressLIS3DE) {
+                    if (byte & 1) {
+                        // Read
+                        state = S_DATA;
+                    } else {
+                        // Write
+                        state = S_REG_ADDRESS;
+                    }
                 } else {
-                    // Write
-                    state = S_REG_ADDRESS;
+                    // Not us
+                    state = S_IDLE;
                 }
-            } else {
-                // Not us
-                state = S_IDLE;
+                break;
             }
-            break;
-            
-        case S_REG_ADDRESS:
-            // XXX: MSB enables/disables auto-increment.
-            regAddress = byte & 0x7F;
-            state = S_DATA;
-            break;
 
-        case S_DATA:
-            if (regAddress < sizeof regs)
-                regs.bytes[regAddress++] = byte;
-            break;
+            case S_REG_ADDRESS:
+                // XXX: MSB enables/disables auto-increment.
+                regAddress = byte & 0x7F;
+                state = S_DATA;
+                break;
 
-        default:
-            break;
+            case S_DATA:
+                if (regAddress < sizeof regs)
+                    regs.bytes[regAddress++] = byte;
+                break;
+
+            default:
+                break;
         }
 
         return state != S_IDLE;
@@ -172,7 +174,13 @@ class I2CAccelerometer {
     }
 
  private:
-    static const uint8_t deviceAddress = 0x32;
+    /*
+     * Detect one of our 2 supported accelerometers.
+     * XXX: would like a better way to detect/specify this.
+     */
+    static const uint8_t AddressLIS3DH = 0x32;
+    static const uint8_t AddressLIS3DE = 0x52;
+
     uint8_t regAddress;
     unsigned intDuration;
     int lpX, lpY, lpZ;

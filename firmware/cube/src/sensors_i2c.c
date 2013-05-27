@@ -572,7 +572,7 @@ void i2c_battery_store_results_begin_a21() __naked
         mov     _W2DAT, #ACCEL_ADDR_TX
         NEXT    (ts_1)
 
-5$:     ljmp    ts_4                ; Release lock, fall through to factory test
+5$:     ajmp    ts_4                ; Release lock, fall through to factory test
 
     __endasm ;
 }

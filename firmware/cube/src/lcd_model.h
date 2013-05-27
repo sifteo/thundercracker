@@ -24,20 +24,17 @@
  *  -DLCD_MODEL_TIANMA_ST7715
  *  -DLCD_MODEL_TIANMA_HX8353
  *
- * ... or accept the current default.
+ * ... or accept the current default (in cube_hardware.h).
  */
 
 #if !( defined(LCD_MODEL_GIANTPLUS_ILI9163C) || \
        defined(LCD_MODEL_TRULY_ST7735)       || \
        defined(LCD_MODEL_TIANMA_ST7715)      || \
        defined(LCD_MODEL_TIANMA_HX8353)      || \
-       defined(LCD_MODEL_SANTEK_ST7735R)     )
+       defined(LCD_MODEL_SANTEK_ST7735R)     || \
+       defined(LCD_MODEL_WnW_RM68116)           )
 
-    #if HWREV >= 6
-        #define LCD_MODEL_SANTEK_ST7735R
-    #else
-        #define LCD_MODEL_TIANMA_HX8353
-    #endif
+    #error No lcd model selected
 #endif
 
 /********************************************************************/
@@ -134,34 +131,37 @@
 #define LCD_MADCTR_NORMAL       (LCD_MADCTR_RGB | LCD_MADCTR_MY | LCD_MADCTR_MX)
 #endif
 
-/*
- * Some LCDs have different addressing schemes, based on how the
- * controller and the panel are wired together.
- */
-
-#ifdef LCD_MODEL_GIANTPLUS_ILI9163C
-#define LCD_ROW_ADDR(x)         (x)
-#define LCD_COL_ADDR(x)         (x)
+#ifdef LCD_MODEL_WnW_RM68116
+#define LCD_MADCTR_NORMAL       (LCD_MADCTR_RGB | LCD_MADCTR_MY | LCD_MADCTR_MX)
 #endif
 
+/*
+ * Some LCDs are configured with larger GRAMs than the panel size,
+ * We need to specify the margins and handle rotations appropriately
+ */
+
 #ifdef LCD_MODEL_TRULY_ST7735
-#define LCD_ROW_ADDR(x)         ((x) + 32)
-#define LCD_COL_ADDR(x)         (x)
+#define HAVE_GRAM_PANEL_MISMATCH
+#define LCD_X_LEFT_MARGIN       0
+#define LCD_X_RIGHT_MARGIN      0
+#define LCD_Y_TOP_MARGIN        32
+#define LCD_Y_BOTTOM_MARGIN     0
 #endif
 
 #ifdef LCD_MODEL_TIANMA_ST7715
-#define LCD_ROW_ADDR(x)         ((x) + 3)
-#define LCD_COL_ADDR(x)         ((x) + 2)
-#endif
-
-#ifdef LCD_MODEL_TIANMA_HX8353
-#define LCD_ROW_ADDR(x)         (x)
-#define LCD_COL_ADDR(x)         (x)
+#define HAVE_GRAM_PANEL_MISMATCH
+#define LCD_X_LEFT_MARGIN       2
+#define LCD_X_RIGHT_MARGIN      2
+#define LCD_Y_TOP_MARGIN        3
+#define LCD_Y_BOTTOM_MARGIN     1
 #endif
 
 #ifdef LCD_MODEL_SANTEK_ST7735R
-#define LCD_ROW_ADDR(x)         ((x) + 33)
-#define LCD_COL_ADDR(x)         ((x) + 2)
+#define HAVE_GRAM_PANEL_MISMATCH
+#define LCD_X_LEFT_MARGIN       2
+#define LCD_X_RIGHT_MARGIN      2
+#define LCD_Y_TOP_MARGIN        33
+#define LCD_Y_BOTTOM_MARGIN     1
 #endif
 
 /*
@@ -338,6 +338,12 @@ static const __code uint8_t lcd_setup_table[] =
 
 #endif // LCD_MODEL_TIANMA_HX8353
 
+    /**************************************************************
+     * Santek display, with ST7735R Controller.
+     *
+     * Based on the sample init sequence provided by Santek.
+     */
+
 #ifdef LCD_MODEL_SANTEK_ST7735R
     // This delay is a MUST for proper reset sequence
     // ~120ms suffices although santek specifies ~240ms
@@ -352,8 +358,12 @@ static const __code uint8_t lcd_setup_table[] =
     4, LCD_CMD_FRCONTROL, 0x01, 0x2c, 0x2d,
     4, LCD_CMD_FRCONTROL_IDLE, 0x01, 0x2c, 0x2d,
     7, LCD_CMD_FRCONTROL_PAR, 0x01, 0x2c, 0x2d, 0x01, 0x2c, 0x2d,
+    //4, LCD_CMD_FRCONTROL, 0x01, 0x08, 0x05,
+    //4, LCD_CMD_FRCONTROL_IDLE, 0x01, 0x08, 0x05,
+    //7, LCD_CMD_FRCONTROL_PAR, 0x01, 0x08, 0x05, 0x01, 0x08, 0x05,
 
     2, LCD_CMD_INVCTRL, 0x07,
+    //2, LCD_CMD_INVCTRL, 0x00,
 
     4, LCD_CMD_POWER_CTRL1, 0xa2, 0x02, 0x84,
     2, LCD_CMD_POWER_CTRL2, 0xc5,
@@ -362,6 +372,8 @@ static const __code uint8_t lcd_setup_table[] =
     3, LCD_CMD_POWER_CTRL5, 0x8a, 0xee,
 
     2, LCD_CMD_VCOM_CTRL1, 0x0e,
+
+    //1, LCD_CMD_INVOFF,
 
     17, LCD_CMD_POS_GAMMA,
     0x0f, 0x1a, 0x0f, 0x18, 0x2f, 0x28, 0x20, 0x22,
@@ -376,6 +388,49 @@ static const __code uint8_t lcd_setup_table[] =
     2, 0xf6, 0x00,
 
 #endif // LCD_MODEL_SANTEK_ST7735R
+
+    /**************************************************************
+     * W&W display, with RM68116 Controller.
+     *
+     * Based on the sample init sequence provided by W&W.
+     */
+
+#ifdef LCD_MODEL_WnW_RM68116
+
+    1, LCD_CMD_SWRESET,
+    1, LCD_CMD_SLPOUT,
+
+    LONG_DELAY,
+
+    3, LCD_CMD_POWER_CTRL1, 0xd3, 0x13,
+    2, LCD_CMD_INVCTRL, 0x03,
+
+    //Mystery command
+    2, 0xf8, 0x01,
+
+    17, LCD_CMD_POS_GAMMA,
+    0x00, 0x01, 0x05, 0x29, 0x27, 0x1f, 0x07, 0x0e,
+    0x05, 0x04, 0x05, 0x08, 0x06, 0x0c, 0x04, 0x07,
+
+    17, LCD_CMD_NEG_GAMMA,
+    0x00, 0x01, 0x05, 0x29, 0x27, 0x1f, 0x07, 0x0e,
+    0x05, 0x04, 0x05, 0x08, 0x06, 0x0c, 0x04, 0x07,
+
+    //Mystery command
+    5, 0xfe, 0x09, 0xb0, 0x10, 0x48,
+
+    4, LCD_CMD_FRCONTROL, 0x0f, 0x00, 0x04,
+
+    //Mystery command
+    5, 0xfd, 0x10, 0xdf, 0x60, 0xd0,
+    3, 0xf4, 0x00, 0x0c,
+
+    3, LCD_CMD_POWER_CTRL3, 0x02, 0x84,
+
+    //Mystery command
+    2, 0xf8, 0x00,
+
+#endif // LCD_MODEL_WnW_RM68116
 
     /**************************************************************
      * Portable initialization
