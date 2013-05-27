@@ -208,7 +208,6 @@ bsE:
         mov     _DPS, #0
         djnz    R_LOW, 3$       ; Loop
 
-        nop                     ; dummpy operation to fix a potential firmware security issue (critical gadget)
         sjmp    5$
 
     __endasm ;

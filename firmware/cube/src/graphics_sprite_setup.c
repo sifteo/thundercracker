@@ -17,9 +17,9 @@ void vm_bg0_spr_bg1(void) __naked
 {
     lcd_begin_frame();
     i2c_a21_wait();
-    vm_bg0_setup();
-    vm_bg1_setup();
-    vm_spr_setup();
+    ENSURE_ACALL(vm_bg0_setup);
+    ENSURE_ACALL(vm_bg1_setup);
+    ENSURE_ACALL(vm_spr_setup);
 
     do {
         if (y_spr_active) {
@@ -29,14 +29,14 @@ void vm_bg0_spr_bg1(void) __naked
                 vm_bg0_spr_bg1_line();
         } else {
             if (y_bg1_empty)
-                vm_bg0_line();
+                ENSURE_ACALL(vm_bg0_line);
             else
                 vm_bg0_bg1_line();
         }
-                
-        vm_bg0_next();
-        vm_bg1_next();
-        vm_spr_next();
+
+        ENSURE_ACALL(vm_bg0_next);
+        ENSURE_ACALL(vm_bg1_next);
+        ENSURE_ACALL(vm_spr_next);
 
     } while (y_spr_line != y_spr_line_limit);
     

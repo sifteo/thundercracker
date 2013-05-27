@@ -171,6 +171,16 @@
     __asm
 
 /*
+ * Helper to ensure that paramterless function calls from
+ * C code use acall instead of lcall, for the purpose of
+ * size optimizations.
+ *
+ * These can typically be added/removed according to the
+ * output from the sizeprof script.
+ */
+#define ENSURE_ACALL(fn)    __asm acall _ ## fn __endasm
+
+/*
  * nRF24L01 Radio
  */
 
