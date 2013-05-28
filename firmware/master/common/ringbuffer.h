@@ -78,6 +78,11 @@ public:
         mHead = capacity() & (tSize - count);
     }
 
+    void ALWAYS_INLINE zeroBufferContents() {
+        // prevent the DAC's DMA from spinning on junk data.
+        bzero(mBuf, sizeof mBuf);
+    }
+
     /*
      * Copy from 'src' to 'this' until the source is empty or destination
      * has >= fillThreshold items in the queue.
