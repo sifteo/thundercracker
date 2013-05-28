@@ -17,6 +17,7 @@
 #include "batterylevel.h"
 #include "btprotocol.h"
 #include "ui_shutdown.h"
+#include "audiomixer.h"
 
 BitVector<Pause::NUM_WORK_ITEMS> Pause::taskWork;
 
@@ -92,12 +93,7 @@ void Pause::monitorButtonHold()
      * button hold in that loop.
      */
     if (HomeButton::pressDuration() > SysTime::msTicks(1000)) {
-
-        const uint32_t excludedTasks =
-            Intrinsic::LZ(Tasks::AudioPull) |
-            Intrinsic::LZ(Tasks::Pause);
-
-        SvmClock::pause();
+        uint32_t excludedTasks = prepForPause();
         UICoordinator uic(excludedTasks);
         UIShutdown uiShutdown(uic);
         uiShutdown.init();
@@ -109,6 +105,40 @@ void Pause::monitorButtonHold()
         taskWork.atomicMark(ButtonHold);
         Tasks::trigger(Tasks::Pause);
     }
+}
+
+uint32_t Pause::prepForPause()
+{
+    /*
+     * Common operations for entering pause mode,
+     * either via mainLoop() or when shutting down.
+     */
+
+    if (!SvmClock::isPaused())
+        SvmClock::pause();
+
+#ifdef USE_AUDIO_DAC
+    /*
+     * On hardware, the DAC driver's DMA channel is configured
+     * in circular mode, so we need to clear its contents,
+     * since we won't be running Tasks::AudioPull while we're
+     * paused, which is the mechanism that would normally drain it.
+     *
+     * We potentially lose any data already written but not yet
+     * rendered, but we don't have a way to pause the DMA channel
+     * without losing its position.
+     *
+     * Further, it's not great since we get a nice click when
+     * transitioning directly to 0, but we'll leave a cleaner
+     * (and more complex) transition for another day.
+     */
+
+    AudioMixer::instance.output.zeroBufferContents();
+#endif
+
+    uint32_t excludedTasks = Intrinsic::LZ(Tasks::AudioPull) |
+                             Intrinsic::LZ(Tasks::Pause);
+    return excludedTasks;
 }
 
 void Pause::mainLoop(Mode mode)
@@ -128,12 +158,7 @@ void Pause::mainLoop(Mode mode)
      * being shown on a connected cube.
      */
 
-    if (!SvmClock::isPaused())
-        SvmClock::pause();
-
-    const uint32_t excludedTasks =
-        Intrinsic::LZ(Tasks::AudioPull)  |
-        Intrinsic::LZ(Tasks::Pause);
+    uint32_t excludedTasks = prepForPause();
     UICoordinator uic(excludedTasks);
 
     // all possible UI elements
