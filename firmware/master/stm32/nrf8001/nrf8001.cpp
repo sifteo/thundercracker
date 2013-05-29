@@ -234,6 +234,7 @@ void NRF8001::test(unsigned phase, uint8_t pkt, uint8_t len, uint8_t freq)
      */
 
     testState = phase;
+    testStatus = Pending;
     Test::dtmCmdParams = ((pkt & 0x3) << 8) |   // packet type
                          ((len & 0x3f) << 10) | // packet length
                           (freq & 0x3f);        // Frequency
@@ -1077,6 +1078,8 @@ void NRF8001::handleDtmResponse(unsigned status, uint16_t response)
     // is this a packet report?
     if (response & 0x8000) {
         FactoryTest::onBtlePhaseComplete(status, response);
+    } else {
+        testStatus = (response & 0x01) ? Failure : Success;
     }
 
     // tick along our state machine as appropriate.
