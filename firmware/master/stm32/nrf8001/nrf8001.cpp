@@ -69,10 +69,10 @@ namespace Test {
     static uint16_t dtmCmdParams;
 
     enum DtmCommands {
-        DtmReset            = (0x0 << 6),
-        DtmReceiverTest     = (0x1 << 6),
-        DtmTransmitterTest  = (0x2 << 6),
-        DtmTestEnd          = (0x3 << 6)
+        DtmReset            = (0x0 << 14),
+        DtmReceiverTest     = (0x1 << 14),
+        DtmTransmitterTest  = (0x2 << 14),
+        DtmTestEnd          = (0x3 << 14)
     };
 }
 
@@ -235,9 +235,9 @@ void NRF8001::test(unsigned phase, uint8_t pkt, uint8_t len, uint8_t freq)
 
     testState = phase;
     testStatus = Pending;
-    Test::dtmCmdParams = ((pkt & 0x3) << 8) |   // packet type
-                         ((len & 0x3f) << 10) | // packet length
-                          (freq & 0x3f);        // Frequency
+    Test::dtmCmdParams = ((pkt & 0x3)   << 0) |     // packet type
+                         ((len & 0x3f)  << 2) |     // packet length
+                         ((freq & 0x3f) << 8);      // Frequency
     requestTransaction();
 }
 
