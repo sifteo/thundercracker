@@ -31,7 +31,8 @@ void init()
     lastReading = 0;
 
     GPIOPin faderEnable = FADER_MEAS_EN;
-    faderEnable.setControl(GPIOPin::IN_FLOAT);
+    faderEnable.setControl(GPIOPin::OUT_2MHZ);
+    faderEnable.setHigh();
 
     GPIOPin faderMeas = FADER_MEAS_GPIO;
     faderMeas.setControl(GPIOPin::IN_ANALOG);
@@ -52,9 +53,10 @@ int systemVolume()
 
 void beginCapture()
 {
-    GPIOPin faderEnable = FADER_MEAS_EN;
-    faderEnable.setControl(GPIOPin::OUT_2MHZ);
-    faderEnable.setHigh();
+    // Fader meas en always enabled temporarily.
+    // GPIOPin faderEnable = FADER_MEAS_EN;
+    // faderEnable.setControl(GPIOPin::OUT_2MHZ);
+    // faderEnable.setHigh();
 
     FADER_ADC.beginSample(FADER_ADC_CHAN);
 }
