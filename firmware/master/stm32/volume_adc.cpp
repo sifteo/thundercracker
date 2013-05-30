@@ -24,10 +24,12 @@ static uint64_t calibratedScale;
 
 namespace Volume {
 
+static bool charging;
 static unsigned lastReading;
 
 void init()
 {
+    charging = false;
     lastReading = 0;
 
     GPIOPin faderEnable = FADER_MEAS_EN;
@@ -53,12 +55,27 @@ int systemVolume()
 
 void beginCapture()
 {
-    // Fader meas en always enabled temporarily.
-    // GPIOPin faderEnable = FADER_MEAS_EN;
-    // faderEnable.setControl(GPIOPin::OUT_2MHZ);
-    // faderEnable.setHigh();
+    /*
+     * As a power saving measure, we only provide power
+     * to the fader when we want to take a measurement.
+     *
+     * We need a little charge time before taking a sample,
+     * so we alternate between enabling the fader and
+     * actually kicking off the ADC sample each time
+     * we get called here.
+     */
 
-    FADER_ADC.beginSample(FADER_ADC_CHAN);
+    GPIOPin faderEnable = FADER_MEAS_EN;
+
+    if (charging) {
+        FADER_ADC.beginSample(FADER_ADC_CHAN);
+        charging = false;
+
+    } else {
+        faderEnable.setControl(GPIOPin::OUT_2MHZ);
+        faderEnable.setHigh();
+        charging = true;
+    }
 }
 
 int calibrate(CalibrationState state)
@@ -77,8 +94,8 @@ int calibrate(CalibrationState state)
 void adcCallback(uint16_t sample) {
     lastReading = sample;
 
-    // GPIOPin faderEnable = FADER_MEAS_EN;
-    // faderEnable.setControl(GPIOPin::IN_FLOAT);
+     GPIOPin faderEnable = FADER_MEAS_EN;
+     faderEnable.setControl(GPIOPin::IN_FLOAT);
 
 #ifdef USE_ADC_BATT_MEAS
     BatteryLevel::beginCapture();
