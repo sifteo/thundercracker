@@ -57,14 +57,7 @@ public:
         ExitTestMode
     };
 
-    enum TestStatus {
-        Success=0,
-        Failure,
-        Pending
-    };
-
     void test(unsigned phase, uint8_t pkt, uint8_t len, uint8_t freq);
-    TestStatus testStatus;                                              // Result of the test command
 
 private:
     struct ACICommandBuffer {

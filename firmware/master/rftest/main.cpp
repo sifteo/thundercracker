@@ -38,7 +38,6 @@ namespace RfTest {
 class NRF24L01Test {
 public:
     static const uint8_t channels[3];
-    static const unsigned SWEEP_CHAN_MAX = 83;
 
     static void idle() {
         NRF24L01::instance.setConstantCarrier(false);
@@ -59,7 +58,7 @@ public:
         NRF24L01::instance.setPRXMode(false);
 
         for (;;) {
-            for (unsigned i = 0; i < SWEEP_CHAN_MAX; ++i) {
+            for (unsigned i = channels[0]; i <= channels[2]; i++) {
                 NRF24L01::instance.setConstantCarrier(true, i);
                 SysTime::Ticks t = SysTime::ticks() + SysTime::msTicks(100);
                 while (SysTime::ticks() < t) {
@@ -79,13 +78,7 @@ const uint8_t NRF24L01Test::channels[3] = { 4, 41, 79 };
 class NRFBLETest {
     static void waitForCompletion() {
         SysTime::Ticks t = SysTime::ticks() + SysTime::msTicks(500);
-        while(NRF8001::instance.testStatus == NRF8001::instance.Pending) {
-            if (SysTime::ticks() > t) {
-                UART("NRFBLETest: timeout on DTM command\r\n");
-                break;
-            }
-        }
-        UART("RFTest status: "); UART_HEX(NRF8001::instance.testStatus); UART("\r\n");
+        while(SysTime::ticks() < t);
     }
 
     static void enterTestMode() {
@@ -116,9 +109,20 @@ public:
     }
 
     static void txSweep() {
-        idle();
-        enterTestMode();
-        //TODO: need to implement
+        for (;;) {
+            for (unsigned i = channels[0]; i <= channels[2]; i++) {
+                //UART("Sweep-ch: "); UART_HEX(i); UART("\r\n");
+                idle();
+                enterTestMode();
+                NRF8001::instance.test(NRF8001::TXTest, 3, 0, i);
+                SysTime::Ticks t = SysTime::ticks() + SysTime::msTicks(500);
+                while (SysTime::ticks() < t) {
+                    if (HomeButton::isPressed()) {
+                        return;
+                    }
+                }
+            }
+        }
     }
 };
 
@@ -203,29 +207,24 @@ int main()
 
 #ifdef HAVE_NRF8001
                     case RfTest::BLETxLow:
-                        UART("8001: txlow\r\n");
                         red.setLow();
                         NRF24L01Test::idle();
                         NRFBLETest::carrier();
                         break;
 
                     case RfTest::BLETxMid:
-                        UART("8001: txmid\r\n");
                         NRFBLETest::carrier();
                         break;
 
                     case RfTest::BLETxHigh:
-                        UART("8001: txhigh\r\n");
                         NRFBLETest::carrier();
                         break;
 
                     case RfTest::BLERX:
-                        UART("8001: rx\r\n");
                         NRFBLETest::rx();
                         break;
 
                     case RfTest::BLETxSweep:
-                        UART("8001: txsweep\r\n");
                         NRFBLETest::txSweep();
                         break;
 #endif //HAVE_NRF8001
