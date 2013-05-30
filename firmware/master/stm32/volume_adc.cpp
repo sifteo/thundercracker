@@ -77,8 +77,8 @@ int calibrate(CalibrationState state)
 void adcCallback(uint16_t sample) {
     lastReading = sample;
 
-    GPIOPin faderEnable = FADER_MEAS_EN;
-    faderEnable.setControl(GPIOPin::IN_FLOAT);
+    // GPIOPin faderEnable = FADER_MEAS_EN;
+    // faderEnable.setControl(GPIOPin::IN_FLOAT);
 
 #ifdef USE_ADC_BATT_MEAS
     BatteryLevel::beginCapture();
