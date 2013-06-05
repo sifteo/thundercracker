@@ -322,8 +322,8 @@ uint32_t _SYS_fs_info(_SYSFilesystemInfo *buffer, uint32_t bufferSize)
     memset(&info, 0, sizeof info);
 
     info.unitSize = FlashMapBlock::BLOCK_SIZE;
-    info.totalUnits = FlashMapBlock::NUM_BLOCKS;
-    info.freeUnits = FlashMapBlock::NUM_BLOCKS;
+    info.totalUnits = FlashMapBlock::numBlocks();
+    info.freeUnits = FlashMapBlock::numBlocks();
 
     vi.begin();
     while (vi.next(vol)) {

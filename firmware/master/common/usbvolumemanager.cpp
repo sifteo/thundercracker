@@ -193,7 +193,7 @@ void UsbVolumeManager::volumeOverview(USBProtocolMsg &reply)
     reply.header |= VolumeOverview;
 
     r->systemBytes = 0;
-    r->freeBytes = FlashDevice::MAX_CAPACITY;
+    r->freeBytes = FlashDevice::capacity();
     r->bits.clear();
 
     FlashVolumeIter vi;
@@ -410,7 +410,7 @@ void UsbVolumeManager::flashDeviceRead(const USBProtocolMsg &m, USBProtocolMsg &
     const FlashDeviceReadRequest *payload = m.castPayload<FlashDeviceReadRequest>();
 
     unsigned address = payload->address;
-    unsigned length = address > FlashDevice::MAX_CAPACITY ? 0 : FlashDevice::MAX_CAPACITY - address;
+    unsigned length = address > FlashDevice::capacity() ? 0 : FlashDevice::capacity() - address;
     length = MIN(length, payload->length);
     length = MIN(length, reply.bytesFree());
 
