@@ -33,6 +33,7 @@ public:
     void write(uint32_t address, const uint8_t *buf, unsigned len);
     void eraseBlock(uint32_t address);
     void chipErase();
+    void fourByteMode(bool en);
 
     bool busy() {
         if (mightBeBusy) {
@@ -52,11 +53,14 @@ public:
 private:
     enum Command {
         Read                        = 0x03,
+        Read4B                      = 0x13,
         FastRead                    = 0x0B,
+        FastRead4B                  = 0x0C,
         Read2                       = 0xBB,
         Read4                       = 0xEB,
         ReadW4                      = 0xE7,
         PageProgram                 = 0x02,
+        PageProgram4B               = 0x12,
         QuadPageProgram             = 0x38,
         SectorErase                 = 0x20,
         BlockErase32                = 0x52,
@@ -68,6 +72,8 @@ private:
         ReadConfigReg               = 0x15,
         WriteStatusConfigReg        = 0x01,
         WriteProtectSelect          = 0x68,
+        Enter4B                     = 0xB7,
+        Exit4B                      = 0xE9,
         EnableQpi                   = 0x35,
         ResetQpi                    = 0xF5,
         SuspendProgramErase         = 0x30,

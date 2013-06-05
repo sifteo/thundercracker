@@ -18,7 +18,7 @@ class FlashDevice {
 public:
     static const unsigned PAGE_SIZE = 256;                  // programming granularity
     static const unsigned ERASE_BLOCK_SIZE = 1024 * 64;     // coarse erase granularity
-    static const unsigned CAPACITY = 1024 * 1024 * 16;      // total storage capacity
+    static const unsigned CAPACITY = 1024 * 1024 * 32;      // total storage capacity
 
     static const uint8_t MACRONIX_MFGR_ID = 0xC2;
     static const uint8_t WINBOND_MFGR_ID = 0xEF;

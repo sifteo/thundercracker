@@ -60,7 +60,8 @@ void MacronixMX25::init()
 
 void MacronixMX25::read(uint32_t address, uint8_t *buf, unsigned len)
 {
-    const uint8_t cmd[] = { FastRead,
+    const uint8_t cmd[] = { FastRead4B,
+                            uint8_t(address >> 24),
                             uint8_t(address >> 16),
                             uint8_t(address >> 8),
                             uint8_t(address >> 0),
@@ -97,6 +98,8 @@ void MacronixMX25::read(uint32_t address, uint8_t *buf, unsigned len)
 */
 void MacronixMX25::write(uint32_t address, const uint8_t *buf, unsigned len)
 {
+    fourByteMode(true); //enter four byte mode
+
     while (len) {
         // align writes to PAGE_SIZE chunks
         uint32_t pagelen = FlashDevice::PAGE_SIZE - (address & (FlashDevice::PAGE_SIZE - 1));
@@ -106,6 +109,7 @@ void MacronixMX25::write(uint32_t address, const uint8_t *buf, unsigned len)
         ensureWriteEnabled();
 
         const uint8_t cmd[] = { PageProgram,
+                                uint8_t(address >> 24),
                                 uint8_t(address >> 16),
                                 uint8_t(address >> 8),
                                 uint8_t(address >> 0) };
@@ -138,6 +142,23 @@ void MacronixMX25::write(uint32_t address, const uint8_t *buf, unsigned len)
 
         mightBeBusy = true;
     }
+
+    fourByteMode(false); //exit four byte mode
+}
+
+void MacronixMX25::fourByteMode(bool en)
+{
+    waitWhileBusy();
+
+    spiBegin();
+    if (en) {
+        spi.transfer(Enter4B);
+    } else {
+        spi.transfer(Exit4B);
+    }
+    spiEnd();
+
+    mightBeBusy = true;
 }
 
 /*

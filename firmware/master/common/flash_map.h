@@ -58,7 +58,7 @@ public:
          * treated as invalid since we may see that value in portions of
          * a FlashMap which have been allocated and erased but not yet written.
          */
-        STATIC_ASSERT((unsigned)(0xFF - 1) >= NUM_BLOCKS);
+        //STATIC_ASSERT((unsigned)(0xFF - 1) >= NUM_BLOCKS);
         return (unsigned)(code - 1) < NUM_BLOCKS;
     }
 
