@@ -33,17 +33,21 @@ class FlashMapBlock
 public:
     static const unsigned BLOCK_SIZE = 128 * 1024;  // Power of two
     static const unsigned BLOCK_MASK = BLOCK_SIZE - 1;
-    static const unsigned NUM_BLOCKS = FlashDevice::MAX_CAPACITY / BLOCK_SIZE;
+    static const unsigned MAX_NUM_BLOCKS = FlashDevice::MAX_CAPACITY / BLOCK_SIZE;
 
     // A BitVector with one bit for every possible FlashMapBlock index
-    typedef BitVector<NUM_BLOCKS> Set;
+    typedef BitVector<MAX_NUM_BLOCKS> Set;
 
     // A BitVector with one bit for every possible FlashMapBlock index,
     // plus an extra entry for 'invalid' blocks.
-    typedef BitVector<NUM_BLOCKS + 1> ISet;
+    typedef BitVector<MAX_NUM_BLOCKS + 1> ISet;
+
+    static unsigned ALWAYS_INLINE numBlocks() {
+        return FlashDevice::capacity() / BLOCK_SIZE;
+    }
 
     unsigned ALWAYS_INLINE address() const {
-        STATIC_ASSERT(NUM_BLOCKS <= (1ULL << (sizeof(code) * 8)));
+        STATIC_ASSERT(numBlocks() <= (1ULL << (sizeof(code) * 8)));
         return index() * BLOCK_SIZE;
     }
 
@@ -58,8 +62,8 @@ public:
          * treated as invalid since we may see that value in portions of
          * a FlashMap which have been allocated and erased but not yet written.
          */
-        //STATIC_ASSERT((unsigned)(0xFF - 1) >= NUM_BLOCKS);
-        return (unsigned)(code - 1) < NUM_BLOCKS;
+        STATIC_ASSERT((unsigned)(0xFF - 1) >= numBlocks());
+        return (unsigned)(code - 1) < numBlocks();
     }
 
     void ALWAYS_INLINE setInvalid() {

@@ -63,7 +63,7 @@ void FlashStack::reformatDevice()
     FlashBlockRecycler recycler;
     FlashEraseLog log;
 
-    for (unsigned i = 0; i < FlashMapBlock::NUM_BLOCKS; ++i) {
+    for (unsigned i = 0; i < FlashMapBlock::numBlocks(); ++i) {
 
         // Must allocate before checking log.currentVolume below!
         if (!log.allocate(recycler))
