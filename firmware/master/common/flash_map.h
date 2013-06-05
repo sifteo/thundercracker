@@ -33,7 +33,7 @@ class FlashMapBlock
 public:
     static const unsigned BLOCK_SIZE = 128 * 1024;  // Power of two
     static const unsigned BLOCK_MASK = BLOCK_SIZE - 1;
-    static const unsigned NUM_BLOCKS = FlashDevice::CAPACITY / BLOCK_SIZE;
+    static const unsigned NUM_BLOCKS = FlashDevice::MAX_CAPACITY / BLOCK_SIZE;
 
     // A BitVector with one bit for every possible FlashMapBlock index
     typedef BitVector<NUM_BLOCKS> Set;

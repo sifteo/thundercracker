@@ -3,13 +3,14 @@
  * Copyright <c> 2012 Sifteo, Inc. All rights reserved.
  */
 
-#ifndef MACRONIX_MX25_H
-#define MACRONIX_MX25_H
+#ifndef NOR_SPI_H
+#define NOR_SPI_H
 
+#include "board.h"
 #include "spi.h"
 #include "flash_device.h"
 
-class MacronixMX25
+class NorSpi
 {
 public:
     enum Status {
@@ -23,10 +24,22 @@ public:
         WriteProtected      = (1 << 7)
     };
 
-    MacronixMX25(GPIOPin _csn, SPIMaster _spi) :
+    NorSpi(GPIOPin _csn, SPIMaster _spi) :
         csn(_csn), spi(_spi)
     {}
 
+#if defined(USE_MX25L128)
+    static const uint8_t MFGR_ID = 0xC2;                //Macronix mfgr id
+    static const unsigned CAPACITY = 1024*1024*16;      //(=128Mbit)
+#elif defined(USE_MX25L256)
+    static const uint8_t MFGR_ID = 0xC2;                //Macronix mfgr id
+    static const unsigned CAPACITY = 1024*1024*32;      //(=256Mbit)
+#elif defined(USE_W25Q256)
+    static const uint8_t MFGR_ID = 0xEF;                //Winbond mfgr id
+    static const unsigned CAPACITY = 1024*1024*32;      //(=256Mbit)
+#else
+    #error "flash device part not specified"
+#endif
     void init();
 
     void read(uint32_t address, uint8_t *buf, unsigned len);
@@ -118,4 +131,4 @@ private:
     uint8_t readReg(Command cmd);
 };
 
-#endif // MACRONIX_MX25_H
+#endif // NOR_SPI_H

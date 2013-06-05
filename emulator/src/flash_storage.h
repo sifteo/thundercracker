@@ -35,10 +35,10 @@ class FlashStorage {
     };
 
     struct MasterRecord {
-        uint8_t bytes[FlashDevice::CAPACITY];
+        uint8_t bytes[FlashDevice::MAX_CAPACITY];
 
         // Out-of-band endurance data
-        uint64_t eraseCounts[FlashDevice::CAPACITY / FlashDevice::ERASE_BLOCK_SIZE];
+        uint64_t eraseCounts[FlashDevice::MAX_CAPACITY / FlashDevice::ERASE_BLOCK_SIZE];
     };
 
     struct HeaderRecord {

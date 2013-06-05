@@ -79,7 +79,7 @@ private:
             unsigned blockTotal;
 
             // Should be last, for efficiency. This is large!
-            uint32_t blockMissCounts[FlashDevice::CAPACITY / BLOCK_SIZE];
+            uint32_t blockMissCounts[FlashDevice::MAX_CAPACITY / BLOCK_SIZE];
         } periodic;
     };
 
