@@ -4,21 +4,28 @@
  */
 
 #include "flash_device.h"
-#include "macronixmx25.h"
+#include "nor_spi.h"
 #include "board.h"
 
-static MacronixMX25 flash(FLASH_CS_GPIO,
+static NorSpi flash(FLASH_CS_GPIO,
                           SPIMaster(&FLASH_SPI,
                                     FLASH_SCK_GPIO,
                                     FLASH_MISO_GPIO,
                                     FLASH_MOSI_GPIO,
-                                    MacronixMX25::dmaCompletionCallback));
+                                    NorSpi::dmaCompletionCallback));
 
 /* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
     Routines to implement the Flash interface in flash.h
     based on our macronix flash part.
  * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * */
- 
+const unsigned FlashDevice::capacity() {
+    return NorSpi::CAPACITY;
+}
+
+const uint8_t FlashDevice::mfgr_id() {
+    return NorSpi::MFGR_ID;
+}
+
 void FlashDevice::init() {
     flash.init();
 }

@@ -378,9 +378,9 @@ int LuaFilesystem::rawRead(lua_State *L)
     unsigned addr = luaL_checkinteger(L, 1);
     unsigned size = luaL_checkinteger(L, 2);
 
-    if (addr > FlashDevice::CAPACITY ||
-        size > FlashDevice::CAPACITY ||
-        addr + size > FlashDevice::CAPACITY) {
+    if (addr > FlashDevice::MAX_CAPACITY ||
+        size > FlashDevice::MAX_CAPACITY ||
+        addr + size > FlashDevice::MAX_CAPACITY) {
         lua_pushfstring(L, "Flash memory address and/or size out of range");
         lua_error(L);
         return 0;
@@ -407,9 +407,9 @@ int LuaFilesystem::rawWrite(lua_State *L)
     unsigned addr = luaL_checkinteger(L, 1);
     const char *data = lua_tolstring(L, 2, &size);
 
-    if (addr > FlashDevice::CAPACITY ||
-        size > FlashDevice::CAPACITY ||
-        addr + size > FlashDevice::CAPACITY) {
+    if (addr > FlashDevice::MAX_CAPACITY ||
+        size > FlashDevice::MAX_CAPACITY ||
+        addr + size > FlashDevice::MAX_CAPACITY) {
         lua_pushfstring(L, "Flash memory address and/or size out of range");
         lua_error(L);
         return 0;
@@ -428,7 +428,7 @@ int LuaFilesystem::rawErase(lua_State *L)
 
     unsigned addr = luaL_checkinteger(L, 1);
 
-    if (addr >= FlashDevice::CAPACITY ||
+    if (addr >= FlashDevice::MAX_CAPACITY ||
         (addr % FlashDevice::ERASE_BLOCK_SIZE)) {
         lua_pushfstring(L, "Not a valid block-aligned flash address");
         lua_error(L);

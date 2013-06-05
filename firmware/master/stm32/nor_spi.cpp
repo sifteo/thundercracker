@@ -3,7 +3,7 @@
  * Copyright <c> 2012 Sifteo, Inc. All rights reserved.
  */
 
-#include "macronixmx25.h"
+#include "nor_spi.h"
 #include "flash_device.h"
 #include "board.h"
 #include "macros.h"
@@ -11,7 +11,7 @@
 #include "sampleprofiler.h"
 #include "systime.h"
 
-volatile bool MacronixMX25::dmaInProgress = false;
+volatile bool NorSpi::dmaInProgress = false;
 
 /*
  * Flash DMA is the highest priority channel on DMA1.
@@ -22,7 +22,7 @@ static const SPIMaster::Config spicfg = {
     SPIMaster::fPCLK_4
 };
 
-void MacronixMX25::init()
+void NorSpi::init()
 {
     GPIOPin writeProtect = FLASH_WP_GPIO;
     writeProtect.setControl(GPIOPin::OUT_2MHZ);
@@ -58,14 +58,24 @@ void MacronixMX25::init()
     }
 }
 
-void MacronixMX25::read(uint32_t address, uint8_t *buf, unsigned len)
+void NorSpi::read(uint32_t address, uint8_t *buf, unsigned len)
 {
+#if defined(USE_W25Q256) || defined(USE_MX25L256)
+    //4-byte addressing required for >16MB capacity
     const uint8_t cmd[] = { FastRead4B,
                             uint8_t(address >> 24),
                             uint8_t(address >> 16),
                             uint8_t(address >> 8),
                             uint8_t(address >> 0),
                             Nop };  // dummy
+
+#else
+    const uint8_t cmd[] = { FastRead,
+                            uint8_t(address >> 16),
+                            uint8_t(address >> 8),
+                            uint8_t(address >> 0),
+                            Nop };  // dummy
+#endif
 
     waitWhileBusy();
 
@@ -96,9 +106,13 @@ void MacronixMX25::read(uint32_t address, uint8_t *buf, unsigned len)
 /*
     Simple synchronous writing.
 */
-void MacronixMX25::write(uint32_t address, const uint8_t *buf, unsigned len)
+void NorSpi::write(uint32_t address, const uint8_t *buf, unsigned len)
 {
+#if defined(USE_W25Q256)
+    // Must enter (and exit) 4-Byte mode if
+    // PageProgram4B command isnt supported and >16MB capacity
     fourByteMode(true); //enter four byte mode
+#endif
 
     while (len) {
         // align writes to PAGE_SIZE chunks
@@ -108,11 +122,26 @@ void MacronixMX25::write(uint32_t address, const uint8_t *buf, unsigned len)
         waitWhileBusy();
         ensureWriteEnabled();
 
-        const uint8_t cmd[] = { PageProgram,
+#if defined(USE_MX25L256) || defined(USE_W25Q256)
+        // 4-byte addressing required for >16MB capacity
+
+#if defined(USE_MX25L256)
+        uint8_t cmd_byte = PageProgram4B;   //PageProgram4B supported
+#else
+        uint8_t cmd_byte = PageProgram;     //PageProgram4B not-supported
+#endif
+        const uint8_t cmd[] = { cmd_byte,
                                 uint8_t(address >> 24),
                                 uint8_t(address >> 16),
                                 uint8_t(address >> 8),
                                 uint8_t(address >> 0) };
+#else
+        const uint8_t cmd[] = { PageProgram,
+                                uint8_t(address >> 16),
+                                uint8_t(address >> 8),
+                                uint8_t(address >> 0) };
+
+#endif
 
         // May need to retry in case of DMA failure
         while (1) {
@@ -143,10 +172,12 @@ void MacronixMX25::write(uint32_t address, const uint8_t *buf, unsigned len)
         mightBeBusy = true;
     }
 
+#if defined(USE_W25Q256)
     fourByteMode(false); //exit four byte mode
+#endif
 }
 
-void MacronixMX25::fourByteMode(bool en)
+void NorSpi::fourByteMode(bool en)
 {
     waitWhileBusy();
 
@@ -164,7 +195,7 @@ void MacronixMX25::fourByteMode(bool en)
 /*
  * Any address within a block is valid to erase that block.
  */
-void MacronixMX25::eraseBlock(uint32_t address)
+void NorSpi::eraseBlock(uint32_t address)
 {
     waitWhileBusy();
     ensureWriteEnabled();
@@ -179,7 +210,7 @@ void MacronixMX25::eraseBlock(uint32_t address)
     mightBeBusy = true;
 }
 
-void MacronixMX25::chipErase()
+void NorSpi::chipErase()
 {
     waitWhileBusy();
     ensureWriteEnabled();
@@ -191,7 +222,7 @@ void MacronixMX25::chipErase()
     mightBeBusy = true;
 }
 
-void MacronixMX25::ensureWriteEnabled()
+void NorSpi::ensureWriteEnabled()
 {
     do {
         spiBegin();
@@ -200,7 +231,7 @@ void MacronixMX25::ensureWriteEnabled()
     } while (!(readReg(ReadStatusReg) & WriteEnableLatch));
 }
 
-void MacronixMX25::readId(FlashDevice::JedecID *id)
+void NorSpi::readId(FlashDevice::JedecID *id)
 {
     waitWhileBusy();
     spiBegin();
@@ -218,7 +249,7 @@ void MacronixMX25::readId(FlashDevice::JedecID *id)
  * to a command byte. Only used internally for reading status and security
  * registers at the moment.
  */
-uint8_t MacronixMX25::readReg(MacronixMX25::Command cmd)
+uint8_t NorSpi::readReg(NorSpi::Command cmd)
 {
     uint8_t reg;
     spiBegin();
@@ -228,14 +259,14 @@ uint8_t MacronixMX25::readReg(MacronixMX25::Command cmd)
     return reg;
 }
 
-void MacronixMX25::deepSleep()
+void NorSpi::deepSleep()
 {
     spiBegin();
     spi.transfer(DeepPowerDown);
     spiEnd();
 }
 
-void MacronixMX25::wakeFromDeepSleep()
+void NorSpi::wakeFromDeepSleep()
 {
     spiBegin();
     spi.transfer(ReleaseDeepPowerDown);
@@ -249,7 +280,7 @@ void MacronixMX25::wakeFromDeepSleep()
     // TODO - CSN must remain high for 30us on transition out of deep sleep
 }
 
-void MacronixMX25::waitWhileBusy()
+void NorSpi::waitWhileBusy()
 {
     if (mightBeBusy) {
         while (readReg(ReadStatusReg) & WriteInProgress) {
@@ -259,7 +290,7 @@ void MacronixMX25::waitWhileBusy()
     }
 }
 
-bool MacronixMX25::waitForDma()
+bool NorSpi::waitForDma()
 {
     /*
      * Wait for an SPI DMA operation to complete.
@@ -373,7 +404,7 @@ bool MacronixMX25::waitForDma()
     return success;
 }
 
-void MacronixMX25::dmaCompletionCallback()
+void NorSpi::dmaCompletionCallback()
 {
     dmaInProgress = false;
 }

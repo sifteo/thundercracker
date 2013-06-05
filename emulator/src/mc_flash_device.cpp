@@ -91,7 +91,7 @@ void FlashDevice::eraseBlock(uint32_t address)
 {
     FlashStorage::MasterRecord &storage = SystemMC::getSystem()->flash.data->master;
 
-    if (address < FlashDevice::CAPACITY) {
+    if (address < FlashDevice::MAX_CAPACITY) {
         // Address can be anywhere inside the actual sector
         unsigned sector = address - (address % FlashDevice::ERASE_BLOCK_SIZE);
 

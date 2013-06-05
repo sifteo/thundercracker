@@ -127,7 +127,7 @@ void FlashStorage::initMC()
     memset(data->master.eraseCounts, 0x00, sizeof data->master.eraseCounts);
 
     data->header.mc_pageSize = FlashDevice::PAGE_SIZE;
-    data->header.mc_capacity = FlashDevice::CAPACITY;
+    data->header.mc_capacity = FlashDevice::MAX_CAPACITY;
     data->header.mc_blockSize = FlashDevice::ERASE_BLOCK_SIZE;
 }
 
@@ -209,7 +209,7 @@ bool FlashStorage::checkData()
         data->header.cube_extSize != sizeof data->cubes[0].ext ||
         data->header.cube_sectorSize != Cube::FlashModel::SECTOR_SIZE ||
         data->header.mc_pageSize != FlashDevice::PAGE_SIZE ||
-        data->header.mc_capacity != FlashDevice::CAPACITY ||
+        data->header.mc_capacity != FlashDevice::MAX_CAPACITY ||
         data->header.mc_blockSize != FlashDevice::ERASE_BLOCK_SIZE) {
         LOG(("FLASH: Storage file has an unsupported memory layout\n"));
         return false;

@@ -187,13 +187,7 @@ void FactoryTest::flashCommsHandler(uint8_t argc, const uint8_t *args)
 
     uint8_t result = 0;
 
-#ifdef USE_W25Q256
-    result = (id.manufacturerID == FlashDevice::WINBOND_MFGR_ID) ? 1 : 0;
-#elif defined(USE_MX25L128)
-    result = (id.manufacturerID == FlashDevice::MACRONIX_MFGR_ID) ? 1 : 0;
-#else
-#error "flash device part not specified"
-#endif
+    result = (id.manufacturerID == FlashDevice::mfgr_id()) ? 1 : 0;
 
     const uint8_t response[] = { args[0], result };
     UsbDevice::write(response, sizeof response);
