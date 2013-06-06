@@ -18,11 +18,11 @@ static NorSpi flash(FLASH_CS_GPIO,
     Routines to implement the Flash interface in flash.h
     based on our macronix flash part.
  * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * */
-const unsigned FlashDevice::capacity() {
-    return NorSpi::CAPACITY;
+unsigned FlashDevice::capacity() {
+    return MIN(NorSpi::CAPACITY, MAX_CAPACITY);
 }
 
-const uint8_t FlashDevice::mfgr_id() {
+uint8_t FlashDevice::mfgr_id() {
     return NorSpi::MFGR_ID;
 }
 
