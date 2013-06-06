@@ -195,8 +195,12 @@ void SvmLoader::exec(FlashVolume vol, RunLevel level)
     mapVols[0] = vol;
 
     SvmRuntime::StackInfo stack;
-    if (prepareToExec(program, stack))
+    if (prepareToExec(program, stack)) {
+        if (BTProtocol::isConnected()) {
+            BTProtocol::reportVolume();
+        }
         SvmRuntime::exec(program.getEntry(), stack);
+    }
 }
 
 void SvmLoader::execLauncher()
