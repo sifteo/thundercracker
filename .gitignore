@@ -3,6 +3,7 @@
 *.bin
 *.elf
 *.sft
+*.usft
 *.d
 *.pyc
 *.zip

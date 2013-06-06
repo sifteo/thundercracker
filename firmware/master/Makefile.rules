@@ -4,7 +4,7 @@ CDEPS := $(MASTER_DIR)/common/syscall-table.def
 
 all: $(BIN).elf $(BIN).bin $(BIN).hex
 
-encrypted: $(BIN).sft
+encrypted: $(BIN).usft
 
 $(BIN).elf: $(OBJS_STM32) $(LDSCRIPT)
 	@echo Linking $@
@@ -16,8 +16,8 @@ $(BIN).bin: $(BIN).elf
 $(BIN).hex: $(BIN).elf
 	arm-none-eabi-objcopy -O ihex $< $@
 
-$(BIN).sft: $(BIN).bin
-	$(TC_DIR)/tools/fwdeploy/fwdeploy $(BIN).sft --fw-version $(VERSION) --fw $(HWREV) $(BIN).bin
+$(BIN).usft: $(BIN).bin
+	$(TC_DIR)/tools/fwdeploy/fwdeploy $(BIN).usft --fw-version $(VERSION) --fw $(HWREV) $(BIN).bin
 
 %.stm32.o: %.cpp $(CDEPS)
 	@echo Compiling $<
@@ -73,7 +73,7 @@ program: $(BIN).elf
 update: encrypted
 	$(SDK_DIR)/bin/swiss update --init || true
 	sleep 1
-	$(SDK_DIR)/bin/swiss update $(BIN).sft $(UPDATE_ARGS)
+	$(SDK_DIR)/bin/swiss update $(BIN).usft $(UPDATE_ARGS)
 
 objdump: $(BIN).elf
 	arm-none-eabi-objdump -d $< | arm-none-eabi-c++filt -n | less
@@ -96,7 +96,7 @@ sizeprof: $(BIN).elf
 
 # Several steps, to work around Win32 command line length limits
 clean:
-	rm -f $(BIN).bin $(BIN).elf $(BIN).sft $(BIN).hex
+	rm -f $(BIN).bin $(BIN).elf $(BIN).usft $(BIN).hex
 	rm -f $(OBJS_STM32)
 	rm -f $(MASTER_DIR)/stm32/target.ld
 	rm -rf .dep
