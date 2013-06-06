@@ -31,6 +31,11 @@ void FlashDevice::setStealthIO(int counter)
     ASSERT(gStealthIOCounter <= 4);
 }
 
+unsigned FlashDevice::capacity() {
+    //TODO: allow any capacity
+    return FlashDevice::MAX_CAPACITY;
+}
+
 void FlashDevice::read(uint32_t address, uint8_t *buf, unsigned len)
 {
     FlashStorage::MasterRecord &storage = SystemMC::getSystem()->flash.data->master;

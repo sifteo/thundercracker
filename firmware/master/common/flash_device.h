@@ -16,12 +16,16 @@
 
 class FlashDevice {
 public:
-    static const unsigned PAGE_SIZE = 256;                  // programming granularity
-    static const unsigned ERASE_BLOCK_SIZE = 1024 * 64;     // coarse erase granularity
-    static const unsigned MAX_CAPACITY = 1024 * 1024 * 32;  // Max capacity currently supported
+    static const unsigned PAGE_SIZE = 256;                                  // programming granularity
+    static const unsigned ERASE_BLOCK_SIZE = 1024 * 64;                     // coarse erase granularity
+    /*
+     * Max capacity currently supported
+     * This is limited by flashmap architecture (255 * 128 * 1024)
+     */
+    static const unsigned MAX_CAPACITY = (1024 * 1024 * 32) - (128 * 1024);
 
-    static const unsigned capacity();
-    static const uint8_t mfgr_id();
+    static unsigned capacity();
+    static uint8_t mfgr_id();
 
     static void init();
 

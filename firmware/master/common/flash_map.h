@@ -17,7 +17,6 @@
 #include "flash_blockcache.h"
 #include "flash_device.h"
 
-
 /**
  * One of our coarse-grained flash mapping blocks. There are relatively
  * few of these in total, so we can refer to them using small 8-bit IDs.
@@ -27,6 +26,8 @@
  *
  * We need 0 to represent an invalid ID, so that we can mark blocks as
  * invalid (deleted) without erasing the block containing our Map.
+ *
+ * This imposes a limit on the maximum supported flash capacity at (32MB - BLOCK_SIZE)
  */
 class FlashMapBlock
 {
@@ -42,7 +43,8 @@ public:
     // plus an extra entry for 'invalid' blocks.
     typedef BitVector<MAX_NUM_BLOCKS + 1> ISet;
 
-    static unsigned ALWAYS_INLINE numBlocks() {
+    static unsigned numBlocks() {
+        STATIC_ASSERT(FlashDevice::capacity() <= (32*1024*1024 - BLOCK_SIZE));
         return FlashDevice::capacity() / BLOCK_SIZE;
     }
 
