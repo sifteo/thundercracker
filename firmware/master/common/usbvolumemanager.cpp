@@ -278,22 +278,16 @@ void UsbVolumeManager::volumeMetadata(const USBProtocolMsg &m, USBProtocolMsg &r
         return;
 
     const VolumeMetadataRequest *req = m.castPayload<VolumeMetadataRequest>();
-    FlashVolume vol = FlashMapBlock::fromCode(req->volume);
-    FlashBlockRef volRef;
-    Elf::Program program;
 
     reply.header |= VolumeMetadata;
 
-    if (vol.isValid() && program.init(vol.getPayload(volRef))) {
-        FlashBlockRef metaRef;
-        uint32_t size;
+    FlashVolume vol = FlashMapBlock::fromCode(req->volume);
+    if (!vol.isValid())
+        return;
 
-        const uint8_t *meta = (const uint8_t*) program.getMeta(metaRef, req->key, 1, size);
-        if (meta) {
-            size = MIN(size, reply.bytesFree());
-            reply.append(meta, size);
-        }
-    }
+    unsigned metalen = Elf::Program::copyMeta(vol, req->key, 1, sizeof reply.payload, reply.payload);
+    ASSERT(metalen <= reply.MAX_PAYLOAD_BYTES);
+    reply.len += metalen;
 }
 
 void UsbVolumeManager::lfsDetail(const USBProtocolMsg &m, USBProtocolMsg &reply)
