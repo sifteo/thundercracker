@@ -10,6 +10,7 @@
 #include "elfdefs.h"
 #include "flash_blockcache.h"
 #include "flash_map.h"
+#include "flash_volume.h"
 
 namespace Elf {
 
@@ -50,6 +51,9 @@ public:
     const void *getMeta(FlashBlockRef &ref, uint16_t key, uint32_t size) const;
     const void *getMeta(FlashBlockRef &ref, uint16_t key,
         uint32_t minSize, uint32_t &actualSize) const;
+
+    static uint32_t copyMeta(const FlashVolume &vol, uint16_t key, uint32_t minSize,
+                             uint32_t maxSize, uint8_t *buf);
 
     // Return unmapped metadata
     const uint32_t getMetaSpanOffset(FlashBlockRef &ref, uint16_t key,

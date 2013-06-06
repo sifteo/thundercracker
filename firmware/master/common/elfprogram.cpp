@@ -227,6 +227,33 @@ const void *Elf::Program::getMeta(FlashBlockRef &ref, uint16_t key,
         return 0;
 }
 
+uint32_t Elf::Program::copyMeta(const FlashVolume &vol, uint16_t key,
+                                uint32_t minSize, uint32_t maxSize, uint8_t *buf)
+{
+    /*
+     * Convenience wrapper around getMeta() to copy the results directly
+     * into a buffer provided by the caller.
+     */
+
+    FlashBlockRef volRef;
+    Elf::Program program;
+
+    if (program.init(vol.getPayload(volRef))) {
+        FlashBlockRef metaRef;
+        uint32_t size;
+
+        const uint8_t *meta = (const uint8_t*) program.getMeta(metaRef, key, minSize, size);
+        if (meta) {
+            size = MIN(size, maxSize);
+            memcpy(buf, meta, size);
+            return size;
+        }
+    }
+
+    return 0;
+}
+
+
 const uint32_t Elf::Program::getMetaSpanOffset(FlashBlockRef &ref,
         uint16_t key, uint32_t minSize, uint32_t &actualSize) const
 {
