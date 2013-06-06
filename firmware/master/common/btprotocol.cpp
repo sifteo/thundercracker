@@ -8,6 +8,7 @@
 #include "pause.h"
 #include "event.h"
 #include "svmmemory.h"
+#include "svmloader.h"
 #include <stdint.h>
 #include <string.h>
 
@@ -33,6 +34,7 @@ bool BTProtocol::setUserState(SvmMemory::VirtAddr data, unsigned length)
 
 void BTProtocolCallbacks::onConnect()
 {
+    BTProtocol::instance.sysData.setLength(0);
     BTProtocol::instance.flags.atomicClear(BTProtocol::PairingFlag);
     BTProtocol::instance.flags.atomicMark(BTProtocol::ConnectedFlag);
     Event::setBasePending(Event::PID_BASE_BT_CONNECT);
@@ -135,7 +137,27 @@ unsigned BTProtocolCallbacks::onProduceData(uint8_t *buffer)
 
 void BTProtocol::task()
 {
-    // Implement me!
+    if (instance.flags.test(ReportVolumeFlag)) {
+        instance.flags.atomicClear(ReportVolumeFlag);
+        instance.captureCurrentVolume();
+        return;
+    }
+
+    // more handlers here...
+}
+
+void BTProtocol::captureCurrentVolume()
+{
+    uint32_t len = Elf::Program::copyMeta(SvmLoader::getRunningVolume(),
+                                          _SYS_METADATA_PACKAGE_STR,
+                                          1,
+                                          sizeof sysData.payload,
+                                          sysData.payload);
+    if (len) {
+        sysData.type = CurrentApp;
+        sysData.setLength(len);
+        BTProtocolHardware::requestProduceData();
+    }
 }
 
 void BTProtocol::handleSystemPacket(unsigned type, const uint8_t *data, unsigned length)
@@ -165,6 +187,10 @@ unsigned BTProtocol::produceSystemPacket(uint8_t *buffer)
      * to userspace.
      */
 
-    // Implement me!
+    if (sysData.bytesToWrite()) {
+        return sysData.writeTo(buffer);
+    }
+
+    // nothing to send
     return 0;
 }

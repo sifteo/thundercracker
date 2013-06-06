@@ -8,6 +8,7 @@
 
 #include "macros.h"
 #include "bits.h"
+#include "tasks.h"
 #include "btqueue.h"
 #include <stdint.h>
 
@@ -66,6 +67,11 @@ public:
         return instance.flags.test(PairingFlag);
     }
 
+    static void reportVolume() {
+        instance.flags.atomicMark(ReportVolumeFlag);
+        Tasks::trigger(Tasks::BluetoothProtocol);
+    }
+
     static const char *getPairingCode() {
         return instance.pairingCode;
     }
@@ -78,12 +84,20 @@ private:
     enum Flags {
         ConnectedFlag,
         PairingFlag,
+        ReportVolumeFlag,
 
         NUM_FLAGS   // Must be last
     };
 
+    enum SysPackets {
+        CurrentApp,
+    };
+
     void handleSystemPacket(unsigned type, const uint8_t *data, unsigned length);
     unsigned produceSystemPacket(uint8_t *buffer);
+
+    // task handlers
+    ALWAYS_INLINE void captureCurrentVolume();
 
     friend class BTProtocolCallbacks;
     static BTProtocol instance;
@@ -93,6 +107,36 @@ private:
     BTQueue userReceiveQueue;
     _SYSBluetoothCounters counters;
     char pairingCode[PAIRING_CODE_LEN];
+
+    // :( unfortunately, we need somewhere to put data for host-bound
+    // packets that cannot be generated in ISR context (ie, in onProduceData())
+    // This size is currently driven by the maximum package str length we want to support.
+    struct SysDataBuffer {
+        uint8_t length;     // count in 'payload'
+        uint8_t type;       // bluetooth packet type
+        uint8_t *p;         // progress through 'payload'
+        uint8_t payload[40];
+
+        ALWAYS_INLINE void setLength(unsigned sz) {
+            length = sz;
+            p = payload;
+        }
+
+        ALWAYS_INLINE unsigned bytesToWrite() const {
+            return length - (p - payload);
+        }
+
+        ALWAYS_INLINE unsigned writeTo(uint8_t *b) {
+            unsigned chunk = MIN(bytesToWrite(), _SYS_BT_PACKET_BYTES);
+            b[0] = type | TYPE_SYS;
+            memcpy(&b[1], p, chunk);
+            p += chunk;
+            ASSERT((p - payload) < sizeof payload);
+            return chunk + sizeof(type);
+        }
+    };
+
+    SysDataBuffer sysData;
 };
 
 
@@ -125,6 +169,4 @@ public:
     static unsigned onProduceData(uint8_t *buffer);
 };
 
-
 #endif
-
