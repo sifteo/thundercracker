@@ -42,7 +42,7 @@ private:
     static ALWAYS_INLINE void onButtonChange();
     static ALWAYS_INLINE void monitorButtonHold();
 
-    static uint32_t prepForPause();
+    static uint32_t prepareToPause();
     static bool pauseModeHandler(UICoordinator &uic, UIPause &uip, Mode &mode);
     static bool cubeRangeModeHandler(UICoordinator &uic, UICubeRange &uicr, Mode &mode);
     static bool lowBatteryModeHandler(UICoordinator &uic, UILowBatt &uilb, Mode &mode);
