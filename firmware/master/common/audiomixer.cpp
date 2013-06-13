@@ -44,9 +44,17 @@ AudioMixer::AudioMixer() :
 
 void AudioMixer::init()
 {
-    fadeOut();
-    while (!outputBufferIsSilent())
-        Tasks::work();
+#ifdef SIFTEO_SIMULATOR
+    const bool headless = SystemMC::getSystem()->opt_headless;
+#else
+    const bool headless = false;
+#endif
+
+    if (!headless) {
+        fadeOut();
+        while (!outputBufferIsSilent())
+            Tasks::work();
+    }
 
     output.init();
 
