@@ -40,21 +40,15 @@ AudioMixer::AudioMixer() :
 {
     // Fill the buffer with silence
     output.fill(AudioOutDevice::getSampleBias());
+
+    ASSERT(outputBufferIsSilent());
 }
 
 void AudioMixer::init()
 {
-#ifdef SIFTEO_SIMULATOR
-    const bool headless = SystemMC::getSystem()->opt_headless;
-#else
-    const bool headless = false;
-#endif
-
-    if (!headless) {
-        fadeOut();
-        while (!outputBufferIsSilent())
-            Tasks::work();
-    }
+    fadeOut();
+    while (!outputBufferIsSilent())
+        Tasks::work();
 
     output.init();
 
@@ -367,8 +361,6 @@ void AudioMixer::pullAudio()
              * fill the buffer with silence, we can do an early-out next time.
              */
 
-            mixer.numSilentSamples += blockSize;
-
             #ifdef SIFTEO_SIMULATOR
             if (!headless) {
                 if (!endOfStreamSet) {
@@ -386,6 +378,9 @@ void AudioMixer::pullAudio()
 
         trackerCountdown -= blockSize;
         samplesLeft -= blockSize;
+        if (!mixed) {
+            mixer.numSilentSamples += blockSize;
+        }
 
         /*
          * Finish mixing our block of audio, by applying the system-wide

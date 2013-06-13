@@ -60,9 +60,7 @@ public:
     }
 
     ALWAYS_INLINE bool outputBufferIsSilent() const {
-        // + 1 to account for the fact that the physical size of the
-        // ring buffer is 1 greater than its capacity().
-        return numSilentSamples > output.capacity() + 1;
+        return numSilentSamples > output.capacity();
     }
 
     ALWAYS_INLINE bool active() const {
