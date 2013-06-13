@@ -117,6 +117,10 @@ bool SvmLoader::prepareToExec(const Elf::Program &program, SvmRuntime::StackInfo
     BTProtocol::setUserQueues(0, 0);
     BTProtocol::setUserState(0, 0);
 
+    if (BTProtocol::isConnected()) {
+        BTProtocol::reportVolume();
+    }
+
     // Reset any audio left playing by the previous tenant
     AudioMixer::instance.init();
 
@@ -196,9 +200,6 @@ void SvmLoader::exec(FlashVolume vol, RunLevel level)
 
     SvmRuntime::StackInfo stack;
     if (prepareToExec(program, stack)) {
-        if (BTProtocol::isConnected()) {
-            BTProtocol::reportVolume();
-        }
         SvmRuntime::exec(program.getEntry(), stack);
     }
 }
