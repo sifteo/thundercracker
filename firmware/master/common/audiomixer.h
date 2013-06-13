@@ -48,6 +48,17 @@ public:
 
     void setLoop(_SYSAudioChannelID ch, _SYSAudioLoopType loopMode);
 
+    void fadeOut() {
+        if (outputBufferIsSilent())
+            return;
+
+        // http://graphics.stanford.edu/~seander/bithacks.html#CopyIntegerSign
+        // if v < 0 then -1, else +1
+        int sign = +1 | ((lastSample) >> (sizeof(int) * 8 - 1));
+        lastSample &= FADE_MASK;
+        fadeStep = sign * FADE_INCREMENT;
+    }
+
     ALWAYS_INLINE bool outputBufferIsSilent() const {
         // + 1 to account for the fact that the physical size of the
         // ring buffer is 1 greater than its capacity().
@@ -77,6 +88,13 @@ protected:
     void setTrackerCallbackInterval(uint32_t usec);
 
 private:
+    static const int FADE_INCREMENT = 8;
+    static const int FADE_MASK = 0xfffffff8;
+    static const int FADE_TEST = 0x7;
+
+    int lastSample;
+    int fadeStep;
+
     // Tracker callback timer
     uint32_t trackerCallbackInterval;
     uint32_t trackerCallbackCountdown;

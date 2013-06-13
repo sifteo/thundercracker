@@ -12,6 +12,7 @@
 #include "xmtrackerplayer.h"
 #include "volume.h"
 #include "machine.h"
+#include "pause.h"
 
 #ifdef SIFTEO_SIMULATOR
 #   include "system.h"
@@ -30,6 +31,8 @@ AudioMixer::OutputBuffer AudioMixer::output;
 
 
 AudioMixer::AudioMixer() :
+    lastSample(0),
+    fadeStep(0),
     trackerCallbackInterval(0),
     trackerCallbackCountdown(0),
     playingChannelMask(0),
@@ -41,6 +44,10 @@ AudioMixer::AudioMixer() :
 
 void AudioMixer::init()
 {
+    fadeOut();
+    while (!outputBufferIsSilent())
+        Tasks::work();
+
     output.init();
 
     uint32_t mask = playingChannelMask;
@@ -280,7 +287,37 @@ void AudioMixer::pullAudio()
         blockSize = MIN(blockSize, trackerCountdown);
         ASSERT(blockSize > 0);
 
-        if (mixerVolume) {
+        if (AudioMixer::instance.fadeStep) {
+
+            /*
+             * We're fading out.
+             *
+             * A simple linear fade to avoid clicks. This is required when
+             * we need to pause audio globally before it reaches end of stream
+             * on its own, either as a result of pausing or quitting a game.
+             *
+             * Typically, callers will tell us to fadeOut() and then monitor
+             * outputBufferIsSilent() to determine whether we're done.
+             */
+
+            mixed = AudioMixer::instance.lastSample;
+
+            for (int *i = blockBuffer, *e = blockBuffer + blockSize; i != e; ++i) {
+                *i = AudioMixer::instance.lastSample;
+
+                if (AudioMixer::instance.lastSample) {
+                    // ensure last sample is aligned to our FADE_INCREMENT
+                    ASSERT((AudioMixer::instance.lastSample & FADE_TEST) == 0);
+                    AudioMixer::instance.lastSample -= AudioMixer::instance.fadeStep;
+                }
+            }
+
+            if (AudioMixer::instance.outputBufferIsSilent()) {
+                AudioMixer::instance.fadeStep = 0;
+                return;
+            }
+
+        } else if (mixerVolume) {
             // Not muted. Generate audio data
 
             // Zero out the buffer (Faster than memset)
@@ -289,7 +326,9 @@ void AudioMixer::pullAudio()
 
             // Mix data from all channels.
             mixed = AudioMixer::instance.mixAudio(blockBuffer, blockSize);
-    
+            // save our latest sample in the event that we need to begin a fadeout
+            AudioMixer::instance.lastSample = blockBuffer[blockSize - 1];
+
         } else {
             /*  
              * Disable mixing if the output is muted, both to save a little power
