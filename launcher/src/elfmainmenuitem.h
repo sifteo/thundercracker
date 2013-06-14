@@ -24,9 +24,7 @@ public:
         return volume;
     }
 
-    virtual void exec() {
-        volume.exec();
-    }
+    virtual void exec();
 
     virtual CubeRange getCubeRange() const {
         return cubeRange;

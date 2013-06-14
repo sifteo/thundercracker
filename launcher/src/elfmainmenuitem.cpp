@@ -270,3 +270,19 @@ void ELFMainMenuItem::bootstrap(Sifteo::CubeSet cubes, ProgressDelegate &progres
 
     progress.end(cubes);
 }
+
+void ELFMainMenuItem::exec()
+{
+    /*
+     * cubeRange.set() can result in extra cubes getting disconnected.
+     * In this case, a small window of time exists before any disconnected
+     * cubes have been removed from CubeSet::connected(). ensure it's
+     * up to date before launching the target app.
+     */
+
+    while (!cubeRange.isSatisfied(CubeSet::connected())) {
+        System::yield();
+    }
+
+    volume.exec();
+}
