@@ -1070,6 +1070,7 @@ void XmTrackerPlayer::processEnvelope(XmTrackerChannel &channel)
          */
         int16_t v1 = envelopeValue(envPt0);
         int16_t v2 = envelopeValue(envPt1);
+        ASSERT(pointLength);
         envelope.value = v1 + envelope.tick * (v2 - v1) / pointLength;
     }
 
