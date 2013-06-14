@@ -102,11 +102,10 @@ already have one it will be skipped)::
 ARM toolchain
 -------------
 
-On Linux and Windows, the CodeSourcery C++ distribution is preferred.
-On Mac OS, the following script will automatically build a compatible
-toolchain for your machine:
+On all platforms, the ARM GCC Embedded distribution is preferred.
+Binaries are available at:
 
-   https://github.com/jsnyder/arm-eabi-toolchain
+   https://launchpad.net/gcc-arm-embedded
 
 Environment Variables
 ---------------------
