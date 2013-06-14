@@ -26,6 +26,12 @@ bool CubeRange::isValid()
     return sys.minCubes <= sys.maxCubes && sys.minCubes <= _SYS_NUM_CUBE_SLOTS;
 }
 
+bool CubeRange::isSatisfied(const CubeSet &cs)
+{
+    unsigned count = cs.count();
+    return sys.minCubes <= count && count <= sys.maxCubes;
+}
+
 void CubeRange::set()
 {
     LOG("LAUNCHER: Using cube range [%d,%d]\n", sys.minCubes, sys.maxCubes);
