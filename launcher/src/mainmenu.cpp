@@ -127,7 +127,7 @@ void MainMenu::run()
 
 void MainMenu::checkForFirstRun() {
     // Should we short-circuit to the first run?
-    for(auto& item : items) {
+    for (auto item : items) {
         if (item->isFirstRun()) {
             bool shouldExec;
             {
@@ -143,7 +143,7 @@ void MainMenu::checkForFirstRun() {
                 while(!AudioTracker::isStopped()) {
                     System::paint();
                 }
-                item->exec();
+                execItem(item, false);
             }
         }
     }
