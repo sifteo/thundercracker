@@ -200,7 +200,6 @@ void NRF8001::task()
      */
 
     SysLFS::Key k = static_cast<SysLFS::Key>( SysLFS::kBluetoothBase + dyn.sequence );
-    int result;
 
     switch (dyn.state) {
 
@@ -1006,7 +1005,7 @@ void NRF8001::handleCommandStatus(unsigned command, unsigned status)
              * complete with SETUP mode. Ugh.
              */
 
-            if (status == 0x02) {
+            if (status == ACI_STATUS_TRANSACTION_COMPLETE) {
                 isSetupFinished = true;
             }
             break;
