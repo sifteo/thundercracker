@@ -23,6 +23,7 @@ const char LuaFilesystem::callbackHostField[] = "__filesystem_callbackHost";
 bool LuaFilesystem::callbacksEnabled;
 
 Lunar<LuaFilesystem>::RegType LuaFilesystem::methods[] = {
+    LUNAR_DECLARE_METHOD(LuaFilesystem, capacity),
     LUNAR_DECLARE_METHOD(LuaFilesystem, newVolume),
     LUNAR_DECLARE_METHOD(LuaFilesystem, listVolumes),
     LUNAR_DECLARE_METHOD(LuaFilesystem, deleteVolume),
@@ -122,6 +123,18 @@ void LuaFilesystem::onRawErase(uint32_t address)
         if (ret < 0)
             LuaScript::handleError(L, "callback");
     }
+}
+
+int LuaFilesystem::capacity(lua_State *L)
+{
+    /*
+     * Accessor for the capacity of the filesystem.
+     */
+
+    unsigned cap = FlashDevice::capacity();
+    lua_pushinteger(L, cap);
+
+    return 1;
 }
 
 int LuaFilesystem::newVolume(lua_State *L)

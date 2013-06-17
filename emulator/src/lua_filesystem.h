@@ -28,6 +28,7 @@ private:
     static lua_State *callbackHost();
     static bool callbacksEnabled;
 
+    int capacity(lua_State *L);
     int newVolume(lua_State *L);
     int listVolumes(lua_State *L);
     int deleteVolume(lua_State *L);
