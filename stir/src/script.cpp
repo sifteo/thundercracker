@@ -108,7 +108,9 @@ bool Script::run(const char *filename)
 
         proof.writeGroup(*group);
         header.writeGroup(*group);
-        source.writeGroup(*group);
+
+        if (!source.writeGroup(*group))
+            return false;
     }
 
     for (std::vector<ImageList>::iterator i = imageLists.begin(); i!=imageLists.end(); ++i) {
