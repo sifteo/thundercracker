@@ -22,7 +22,6 @@ TESTS = \
 	sdk/bg1 \
 	sdk/tilebuffer \
 	sdk/scripting \
-	sdk/stir \
 	sdk/assetslot \
 	sdk/fastlz \
 	sdk/motion \
