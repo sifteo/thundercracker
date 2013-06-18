@@ -21,5 +21,6 @@ public:
 
     bool isEmpty();
     bool isValid();
+    bool isSatisfied(const Sifteo::CubeSet &cs);
     void set();
 };

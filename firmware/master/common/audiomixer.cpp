@@ -12,6 +12,7 @@
 #include "xmtrackerplayer.h"
 #include "volume.h"
 #include "machine.h"
+#include "pause.h"
 
 #ifdef SIFTEO_SIMULATOR
 #   include "system.h"
@@ -30,6 +31,8 @@ AudioMixer::OutputBuffer AudioMixer::output;
 
 
 AudioMixer::AudioMixer() :
+    lastSample(0),
+    fadeStep(0),
     trackerCallbackInterval(0),
     trackerCallbackCountdown(0),
     playingChannelMask(0),
@@ -37,10 +40,16 @@ AudioMixer::AudioMixer() :
 {
     // Fill the buffer with silence
     output.fill(AudioOutDevice::getSampleBias());
+
+    ASSERT(outputBufferIsSilent());
 }
 
 void AudioMixer::init()
 {
+    fadeOut();
+    while (!outputBufferIsSilent())
+        Tasks::work();
+
     output.init();
 
     uint32_t mask = playingChannelMask;
@@ -175,6 +184,8 @@ void AudioMixer::pullAudio()
         const bool headless = false;
     #endif
 
+    AudioMixer &mixer = AudioMixer::instance;
+
     /*
      * Early out when we can quickly determine that no channels are playing
      * and the tracker is idle.
@@ -192,10 +203,10 @@ void AudioMixer::pullAudio()
     #endif
 
     #ifdef SIFTEO_SIMULATOR
-        MCAudioVisData::instance.mixerActive = AudioMixer::instance.active();
+        MCAudioVisData::instance.mixerActive = mixer.active();
     #endif
 
-    if (!AudioMixer::instance.active()) {
+    if (!mixer.active()) {
 
         // must give simulated audio device a chance to pull any
         // data already in the mix buffer, even if all channels have emptied
@@ -203,7 +214,7 @@ void AudioMixer::pullAudio()
             AudioOutDevice::pullFromMixer();
         }
 
-        if (AudioMixer::instance.trackerCallbackInterval == 0)
+        if (mixer.trackerCallbackInterval == 0)
             return;
     }
 
@@ -244,7 +255,7 @@ void AudioMixer::pullAudio()
         SampleProfiler::setSubsystem(SampleProfiler::AudioPull);
     #endif
 
-    const uint32_t trackerInterval = AudioMixer::instance.trackerCallbackInterval;
+    const uint32_t trackerInterval = mixer.trackerCallbackInterval;
     uint32_t trackerCountdown;
 
     if (trackerInterval == 0) {
@@ -252,7 +263,7 @@ void AudioMixer::pullAudio()
         // assuming a countdown value that's effectively infinite.
         trackerCountdown = 0x10000;
     } else {
-        trackerCountdown = AudioMixer::instance.trackerCallbackCountdown;
+        trackerCountdown = mixer.trackerCallbackCountdown;
         ASSERT(trackerCountdown != 0 && "Countdown should never be stored as zero when the timer is enabled");
     } 
 
@@ -280,7 +291,37 @@ void AudioMixer::pullAudio()
         blockSize = MIN(blockSize, trackerCountdown);
         ASSERT(blockSize > 0);
 
-        if (mixerVolume) {
+        if (mixer.fadeStep) {
+
+            /*
+             * We're fading out.
+             *
+             * A simple linear fade to avoid clicks. This is required when
+             * we need to pause audio globally before it reaches end of stream
+             * on its own, either as a result of pausing or quitting a game.
+             *
+             * Typically, callers will tell us to fadeOut() and then monitor
+             * outputBufferIsSilent() to determine whether we're done.
+             */
+
+            mixed = mixer.lastSample;
+
+            for (int *i = blockBuffer, *e = blockBuffer + blockSize; i != e; ++i) {
+                *i = mixer.lastSample;
+
+                if (mixer.lastSample) {
+                    // ensure last sample is aligned to our FADE_INCREMENT
+                    ASSERT((mixer.lastSample & FADE_TEST) == 0);
+                    mixer.lastSample -= mixer.fadeStep;
+                }
+            }
+
+            if (mixer.outputBufferIsSilent()) {
+                mixer.fadeStep = 0;
+                return;
+            }
+
+        } else if (mixerVolume) {
             // Not muted. Generate audio data
 
             // Zero out the buffer (Faster than memset)
@@ -288,8 +329,10 @@ void AudioMixer::pullAudio()
                 *i = 0;
 
             // Mix data from all channels.
-            mixed = AudioMixer::instance.mixAudio(blockBuffer, blockSize);
-    
+            mixed = mixer.mixAudio(blockBuffer, blockSize);
+            // save our latest sample in the event that we need to begin a fadeout
+            mixer.lastSample = blockBuffer[blockSize - 1];
+
         } else {
             /*  
              * Disable mixing if the output is muted, both to save a little power
@@ -300,13 +343,13 @@ void AudioMixer::pullAudio()
              * mixing operations from occurring.
              */
 
-            AudioMixer::instance.mixAudio(0, blockSize);
+            mixer.mixAudio(0, blockSize);
             mixed = false;
         }
 
         if (mixed) {
             // Output buffer no longer silent
-            AudioMixer::instance.numSilentSamples = 0;
+            mixer.numSilentSamples = 0;
         } else {
             /*
              * The mixer had nothing for us? Normally this means
@@ -318,8 +361,6 @@ void AudioMixer::pullAudio()
              * fill the buffer with silence, we can do an early-out next time.
              */
 
-            AudioMixer::instance.numSilentSamples += blockSize;
-
             #ifdef SIFTEO_SIMULATOR
             if (!headless) {
                 if (!endOfStreamSet) {
@@ -329,7 +370,7 @@ void AudioMixer::pullAudio()
             }
             #endif
 
-            if (trackerInterval == 0 && AudioMixer::instance.outputBufferIsSilent()) {
+            if (trackerInterval == 0 && mixer.outputBufferIsSilent()) {
                 // No need to store these zero samples.
                 break;
             }
@@ -337,6 +378,9 @@ void AudioMixer::pullAudio()
 
         trackerCountdown -= blockSize;
         samplesLeft -= blockSize;
+        if (!mixed) {
+            mixer.numSilentSamples += blockSize;
+        }
 
         /*
          * Finish mixing our block of audio, by applying the system-wide
@@ -380,7 +424,7 @@ void AudioMixer::pullAudio()
 
     if (trackerInterval != 0) {
         // Write back local copy of Countdown, only if it's real.
-        AudioMixer::instance.trackerCallbackCountdown = trackerCountdown;
+        mixer.trackerCallbackCountdown = trackerCountdown;
     }
 
     // Give the output a chance to dequeue data immediately (Only used on Siftulator)

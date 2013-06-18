@@ -127,7 +127,7 @@ void MainMenu::run()
 
 void MainMenu::checkForFirstRun() {
     // Should we short-circuit to the first run?
-    for(auto& item : items) {
+    for (auto item : items) {
         if (item->isFirstRun()) {
             bool shouldExec;
             {
@@ -143,7 +143,7 @@ void MainMenu::checkForFirstRun() {
                 while(!AudioTracker::isStopped()) {
                     System::paint();
                 }
-                item->exec();
+                execItem(item, false);
             }
         }
     }
@@ -213,7 +213,8 @@ void MainMenu::eventLoop()
         }
 
         if (itemIndexChoice >= 0) {
-            return execItem(itemIndexChoice);
+            ASSERT(itemIndexChoice < items.count());
+            return execItem(items[itemIndexChoice]);
         }
     }
 }
@@ -714,16 +715,15 @@ void MainMenu::updateAlerts()
     }
 }
 
-void MainMenu::execItem(unsigned index)
+void MainMenu::execItem(MainMenuItem *item, bool bootstrap)
 {
-    DefaultLoadingAnimation anim;
-
-    ASSERT(index < items.count());
-    MainMenuItem *item = items[index];
-
     item->getCubeRange().set();
-    isBootstrapping = true;
-    item->bootstrap(CubeSet::connected(), anim);
+    if (bootstrap) {
+        DefaultLoadingAnimation anim;
+        isBootstrapping = true;
+        item->bootstrap(CubeSet::connected(), anim);
+    }
+
     item->exec();
 }
 

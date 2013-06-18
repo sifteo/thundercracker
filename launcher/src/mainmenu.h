@@ -103,7 +103,7 @@ private:
 
     // Note: these functions are marked NOINLINE as a cache usage optimization.
     NOINLINE void eventLoop();
-    NOINLINE void execItem(unsigned index);
+    NOINLINE void execItem(MainMenuItem *item, bool bootstrap = true);
     NOINLINE void arriveItem(unsigned index);
     NOINLINE void departItem(unsigned index);
     NOINLINE void paint(unsigned index);

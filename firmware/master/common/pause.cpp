@@ -93,7 +93,7 @@ void Pause::monitorButtonHold()
      * button hold in that loop.
      */
     if (HomeButton::pressDuration() > SysTime::msTicks(1000)) {
-        uint32_t excludedTasks = prepForPause();
+        uint32_t excludedTasks = prepareToPause();
         UICoordinator uic(excludedTasks);
         UIShutdown uiShutdown(uic);
         uiShutdown.init();
@@ -107,7 +107,7 @@ void Pause::monitorButtonHold()
     }
 }
 
-uint32_t Pause::prepForPause()
+uint32_t Pause::prepareToPause()
 {
     /*
      * Common operations for entering pause mode,
@@ -117,7 +117,6 @@ uint32_t Pause::prepForPause()
     if (!SvmClock::isPaused())
         SvmClock::pause();
 
-#ifdef USE_AUDIO_DAC
     /*
      * On hardware, the DAC driver's DMA channel is configured
      * in circular mode, so we need to clear its contents,
@@ -127,14 +126,12 @@ uint32_t Pause::prepForPause()
      * We potentially lose any data already written but not yet
      * rendered, but we don't have a way to pause the DMA channel
      * without losing its position.
-     *
-     * Further, it's not great since we get a nice click when
-     * transitioning directly to 0, but we'll leave a cleaner
-     * (and more complex) transition for another day.
      */
 
-    AudioMixer::instance.output.zeroBufferContents();
-#endif
+    AudioMixer::instance.fadeOut();
+    while (!AudioMixer::instance.outputBufferIsSilent()) {
+        Tasks::work(Intrinsic::LZ(Tasks::Pause));
+    }
 
     uint32_t excludedTasks = Intrinsic::LZ(Tasks::AudioPull) |
                              Intrinsic::LZ(Tasks::Pause);
@@ -158,7 +155,7 @@ void Pause::mainLoop(Mode mode)
      * being shown on a connected cube.
      */
 
-    uint32_t excludedTasks = prepForPause();
+    uint32_t excludedTasks = prepareToPause();
     UICoordinator uic(excludedTasks);
 
     // all possible UI elements

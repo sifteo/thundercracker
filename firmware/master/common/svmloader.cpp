@@ -24,6 +24,7 @@
 #include "led.h"
 #include "assetloader.h"
 #include "btprotocol.h"
+#include "xmtrackerplayer.h"
 
 #ifdef SIFTEO_SIMULATOR
 #   include "system_mc.h"
@@ -117,7 +118,12 @@ bool SvmLoader::prepareToExec(const Elf::Program &program, SvmRuntime::StackInfo
     BTProtocol::setUserQueues(0, 0);
     BTProtocol::setUserState(0, 0);
 
+    if (BTProtocol::isConnected()) {
+        BTProtocol::reportVolume();
+    }
+
     // Reset any audio left playing by the previous tenant
+    XmTrackerPlayer::instance.stop();
     AudioMixer::instance.init();
 
     // Reset the debugging and logging subsystem
@@ -196,9 +202,6 @@ void SvmLoader::exec(FlashVolume vol, RunLevel level)
 
     SvmRuntime::StackInfo stack;
     if (prepareToExec(program, stack)) {
-        if (BTProtocol::isConnected()) {
-            BTProtocol::reportVolume();
-        }
         SvmRuntime::exec(program.getEntry(), stack);
     }
 }

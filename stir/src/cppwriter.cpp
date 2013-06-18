@@ -110,8 +110,13 @@ void CPPWriter::writeArray(const std::vector<uint16_t> &data)
 CPPSourceWriter::CPPSourceWriter(Logger &log, const char *filename)
     : CPPWriter(log, filename), nextGroupOrdinal(0) {}
 
-void CPPSourceWriter::writeGroup(const Group &group)
+bool CPPSourceWriter::writeGroup(const Group &group)
 {
+    if (group.getImages().empty()) {
+        mLog.error("Asset group '%s' is empty - attempting to load it at runtime will fail\n", group.getName().c_str());
+        return false;
+    }
+
     if (!group.isFixed()) {
 
         std::vector<uint8_t> crc;
@@ -159,6 +164,8 @@ void CPPSourceWriter::writeGroup(const Group &group)
         }
     }
     mLog.infoEnd();
+
+    return true;
 }
 
 bool CPPSourceWriter::writeSound(const Sound &sound)

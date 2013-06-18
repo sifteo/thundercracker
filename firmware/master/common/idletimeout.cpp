@@ -3,6 +3,7 @@
 #include "machine.h"
 #include "tasks.h"
 #include "pause.h"
+#include "audiomixer.h"
 
 #include "ui_coordinator.h"
 #include "ui_shutdown.h"
@@ -27,11 +28,15 @@ void IdleTimeout::heartbeat()
 
         reset();    // in case we come back, without actually powering down
 
-        const uint32_t excludedTasks =
-            Intrinsic::LZ(Tasks::AudioPull)     |
-            Intrinsic::LZ(Tasks::Pause)         |
-            Intrinsic::LZ(Tasks::Heartbeat)     |
-            Intrinsic::LZ(Tasks::FaultLogger);
+        // ensure any playing audio is fully flushed from the audio device
+        AudioMixer::instance.fadeOut();
+        const uint32_t excludedFlushTasks =
+                Intrinsic::LZ(Tasks::Pause)         |
+                Intrinsic::LZ(Tasks::Heartbeat)     |
+                Intrinsic::LZ(Tasks::FaultLogger);
+        while (!AudioMixer::instance.outputBufferIsSilent()) {
+            Tasks::work(excludedFlushTasks);
+        }
 
         if (!SvmClock::isPaused())
             SvmClock::pause();
@@ -41,6 +46,12 @@ void IdleTimeout::heartbeat()
          * can still shutdown on idle timeout even when the system has
          * already been paused.
          */
+
+        const uint32_t excludedTasks =
+            Intrinsic::LZ(Tasks::AudioPull)     |
+            Intrinsic::LZ(Tasks::Pause)         |
+            Intrinsic::LZ(Tasks::Heartbeat)     |
+            Intrinsic::LZ(Tasks::FaultLogger);
 
         UICoordinator uic(excludedTasks);
         UIShutdown uiShutdown(uic);
