@@ -16,8 +16,6 @@ writeTotal = 0
 
 TEST_VOL_TYPE = 0x8765
 BLOCK_SIZE = 128 * 1024
-DEVICE_SIZE = 16 * 1024 * 1024
-
 
 function volumeString(vol)
     -- Return a string representation of a volume
@@ -58,7 +56,7 @@ end
 function getFreeSpace()
     -- Estimate how much space is free in the filesystem, in bytes
     local overhead = 1024
-    return DEVICE_SIZE - overhead - BLOCK_SIZE * countUsedBlocks()
+    return fs:capacity() - overhead - BLOCK_SIZE * countUsedBlocks()
 end
 
 
@@ -114,7 +112,7 @@ end
 function checkEndurance()
     -- Ensure that our wear levelling didn't fail too badly.
 
-    local idealEraseCount = writeTotal / DEVICE_SIZE
+    local idealEraseCount = writeTotal / fs:capacity()
     local maxEC = getMaxEraseCount()
     local ratio = maxEC / idealEraseCount
     local ratioLimit = 2.0
@@ -311,12 +309,13 @@ function testAllocFail()
 
     local volumes = {}
     local volId = 0
+    local numBlocks = fs:capacity() / BLOCK_SIZE
 
     assertVolumes{}
 
     repeat
         volId = volId + 1
-        if volId > 128 then
+        if volId > numBlocks then
             error("Filesystem isn't filling up when it should?")
         end
 
