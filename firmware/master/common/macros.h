@@ -210,7 +210,7 @@ uint32_t ALWAYS_INLINE mulsat16x16(uint32_t a, uint32_t b)
  */
 template <typename T> ALWAYS_INLINE bool isAligned(const T *ptr, unsigned alignment=4)
 {
-    STATIC_ASSERT((alignment & (alignment - 1)) == 0);
+    ASSERT((alignment & (alignment - 1)) == 0);
     return (reinterpret_cast<uintptr_t>(ptr) & (alignment - 1)) == 0;
 }
 

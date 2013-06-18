@@ -22,6 +22,9 @@ FLAGS += -DOS_VERSION=$(OSVERSION)
 # Disable unwanted warnings, but be generally pretty pedantic
 WARNFLAGS += -Wall -Werror -Wno-unused -Wno-strict-aliasing -Wno-uninitialized
 
+# ensure STATIC_ASSERT() functions in as many cases as possible
+WARNFLAGS += -Wvla
+
 # Resources
 ifeq ($(BUILD_PLATFORM), windows32)
 	OBJS += resources/winres.o
