@@ -4,6 +4,7 @@
  */
 
 #include "flash_device.h"
+#include "flash_map.h"
 #include "nor_spi.h"
 #include "board.h"
 
@@ -19,6 +20,7 @@ static NorSpi flash(FLASH_CS_GPIO,
     based on our macronix flash part.
  * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * */
 unsigned FlashDevice::capacity() {
+    STATIC_ASSERT(MAP_BLOCK_SIZE == FlashMapBlock::BLOCK_SIZE);
     return MIN(NorSpi::CAPACITY, MAX_CAPACITY);
 }
 

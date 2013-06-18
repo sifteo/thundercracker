@@ -18,11 +18,20 @@ class FlashDevice {
 public:
     static const unsigned PAGE_SIZE = 256;                                  // programming granularity
     static const unsigned ERASE_BLOCK_SIZE = 1024 * 64;                     // coarse erase granularity
+
     /*
-     * Max capacity currently supported
-     * This is limited by flashmap architecture (255 * 128 * 1024)
+     * Max capacity currently supported.
+     *
+     * Flash block codes are uint8_t, but 0 and 0xff are reserved values,
+     * so we have an effective maximum of 256 - 2.
+     *
+     * We don't want to introduce a dependency on flash_map.h in the
+     * next layer up in the stack, so define our own copy here and
+     * verify it in our .cpp file.
      */
-    static const unsigned MAX_CAPACITY = (1024 * 1024 * 32) - (128 * 1024);
+
+    static const unsigned MAP_BLOCK_SIZE = 128 * 1024;
+    static const unsigned MAX_CAPACITY = (1024 * 1024 * 32) - (2 * MAP_BLOCK_SIZE);
 
     static unsigned capacity();
     static uint8_t mfgr_id();
