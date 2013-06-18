@@ -44,12 +44,12 @@ public:
     typedef BitVector<MAX_NUM_BLOCKS + 1> ISet;
 
     static unsigned numBlocks() {
-        STATIC_ASSERT(FlashDevice::capacity() <= (32*1024*1024 - BLOCK_SIZE));
+        ASSERT(FlashDevice::capacity() <= (32*1024*1024 - BLOCK_SIZE));
         return FlashDevice::capacity() / BLOCK_SIZE;
     }
 
     unsigned ALWAYS_INLINE address() const {
-        STATIC_ASSERT(numBlocks() <= (1ULL << (sizeof(code) * 8)));
+        ASSERT(numBlocks() <= (1ULL << (sizeof(code) * 8)));
         return index() * BLOCK_SIZE;
     }
 
@@ -64,7 +64,7 @@ public:
          * treated as invalid since we may see that value in portions of
          * a FlashMap which have been allocated and erased but not yet written.
          */
-        STATIC_ASSERT((unsigned)(0xFF - 1) >= numBlocks());
+        ASSERT((unsigned)(0xFF - 1) >= numBlocks());
         return (unsigned)(code - 1) < numBlocks();
     }
 
