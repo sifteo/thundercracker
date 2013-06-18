@@ -202,7 +202,7 @@ void testFsInfo()
     info.totalUnits = 0xABCDEF;
     ASSERT(5 == _SYS_fs_info(&info, 5));
     ASSERT(info.unitSize == 128*1024);
-    ASSERT(info.totalUnits == 0xABCD80);
+    ASSERT(info.totalUnits == 0xABCDFE);
 
     // Long reads
     ASSERT(sizeof info == _SYS_fs_info(&info, 0x800));
