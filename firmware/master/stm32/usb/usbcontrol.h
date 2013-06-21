@@ -15,15 +15,6 @@ private:
     UsbControl();
 
     static bool setupHandler();
-
-    static void sendChunk();
-    static int receiveChunk();
-
-    static int requestDispatch(Usb::SetupData *req);
-
-    static void setupRead(Usb::SetupData *req);
-    static void setupWrite(Usb::SetupData *req);
-
     static void setErrorState();
 
     enum ControlStatus {
