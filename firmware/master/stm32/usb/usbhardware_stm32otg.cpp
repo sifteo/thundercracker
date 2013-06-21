@@ -1,6 +1,5 @@
 #include "usb/usbhardware_stm32otg.h"
 #include "usb/usbhardware.h"
-#include "usb/usbcontrol.h"
 #include "usb/usbcore.h"
 #include "usb/usbdevice.h"
 
@@ -351,7 +350,7 @@ void inEpISR()
          */
         if (inEpInt & (1 << 0)) {
             if (i == 0) {
-                UsbControl::in();
+                UsbCore::in();
             } else {
                 UsbDevice::inEndpointCallback(i);
             }
@@ -382,12 +381,12 @@ void outEpISR()
         OTG.device.outEps[i].DOEPINT = 0xff;
 
         if (outEpInt & (1 << 3)) {  // setup complete
-            UsbControl::setup();
+            UsbCore::setup();
         }
 
         if (outEpInt & (1 << 0)) {  // OUT transfer complete
             if (i == 0) {
-                UsbControl::out();
+                UsbCore::out();
             } else {
                 // don't receive any more packets until UsbDevice reads this one
                 OTG.global.GINTMSK &= ~RXFLVL;
