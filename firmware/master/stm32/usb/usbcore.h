@@ -25,15 +25,6 @@ public:
         return _conf;
     }
 
-    static int getDescriptor(Usb::SetupData *req, uint8_t **buf, uint16_t *len);
-    // devices write their own string descriptors, but make it easy for the common case
-    static int writeAsciiDescriptor(uint16_t *dst, const char *src, unsigned srclen);
-
-    static int standardDeviceRequest(Usb::SetupData *req, uint8_t **buf, uint16_t *len);
-    static int standardInterfaceRequest(Usb::SetupData *req, uint8_t **buf, uint16_t *len);
-    static int standardEndpointRequest(Usb::SetupData *req, uint8_t **buf, uint16_t *len);
-    static int standardRequest(Usb::SetupData *req, uint8_t **buf, uint16_t *len);
-
 private:
     static const Usb::DeviceDescriptor *_dev;
     static const Usb::ConfigDescriptor *_conf;
