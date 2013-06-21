@@ -8,7 +8,7 @@
  */
 namespace SysInfo {
 
-    extern const void* UniqueId;
+    extern const uint8_t* UniqueId;
     static const unsigned UniqueIdNumBytes = 12;
 
     extern const unsigned HardwareRev;
