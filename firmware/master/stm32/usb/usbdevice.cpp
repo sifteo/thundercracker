@@ -27,7 +27,7 @@
 static const Usb::DeviceDescriptor dev = {
     sizeof(Usb::DeviceDescriptor),  // bLength
     Usb::DescriptorDevice,          // bDescriptorType
-    0x0200,                         // bcdUSB
+    0x0110,                         // bcdUSB
     0xff,                           // bDeviceClass - 0xff == vendor specific
     0,                              // bDeviceSubClass
     0,                              // bDeviceProtocol
