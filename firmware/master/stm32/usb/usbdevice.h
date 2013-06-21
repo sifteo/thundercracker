@@ -40,7 +40,8 @@ public:
     static void init();
     static void deinit();
 
-    static int writeStringDescriptor(unsigned idx, uint16_t *dst);
+    static int getStringDescriptor(unsigned idx, const uint8_t **dst);
+    static int getCompatIDDescriptor(const uint8_t **dst);
 
     static void handleReset();
     static void handleSuspend();

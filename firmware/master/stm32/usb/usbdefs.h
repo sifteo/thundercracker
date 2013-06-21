@@ -14,6 +14,10 @@ static ALWAYS_INLINE uint8_t highByte(uint16_t x) {
     return (x >> 8) & 0xff;
 }
 
+#define USB_DESC_WORD(w)                                                    \
+  (uint8_t)((w) & 255),                                                     \
+  (uint8_t)(((w) >> 8) & 255)
+
 static const unsigned REQ_DIR_MASK  = (1 << 7); // Bit 7=1: Direction bit
 static const unsigned REQ_DIR_IN    = (1 << 7); // Bit 7=1: Device-to-host
 static const unsigned REQ_DIR_OUT   = (0 << 7); // Bit 7=0: Host-to-device
@@ -41,13 +45,14 @@ enum Transaction {
 
 // bmRequestType bit definitions
 enum RequestType {
-    ReqTypeDevice       = 0x00,
-    ReqTypeInterface    = 0x01,
-    ReqTypeEndpoint     = 0x02,
-    ReqTypeClass        = 0x20,
-    ReqTypeVendor       = 0x40,
-    ReqTypeType         = 0x60,
-    ReqTypeDirection    = 0x80
+    ReqTypeDevice           = 0x00,
+    ReqTypeInterface        = 0x01,
+    ReqTypeEndpoint         = 0x02,
+    ReqTypeClass            = 0x20,
+    ReqTypeVendor           = 0x40,
+    ReqTypeMask             = 0x60,
+    ReqTypeDirection        = 0x80,
+    ReqTypeRecipientMask    = 0x1f
 };
 
 enum RequestVal {

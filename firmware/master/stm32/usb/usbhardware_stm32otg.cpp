@@ -293,7 +293,6 @@ void rxflvlISR()
      * take action.
      */
 
-//    Usb::SetupData *ctrlReq;
     uint32_t rxstsp = OTG.global.GRXSTSP;
     uint16_t pktsts = (rxstsp >> 17) & 0xf;
     uint16_t bcnt = (rxstsp >> 4) & 0x3ff;   // BCNT mask
@@ -302,17 +301,6 @@ void rxflvlISR()
 
     case PktStsSetupData:
         UsbHardware::epReadFifo(bcnt);
-#if 0
-        // XXX: capture ep0 state for improved usbcontrol handling
-        ctrlReq = (Usb::SetupData*)rxFifoBuf.bytes;
-
-        // set the state of EP0 based on the direction of this setup request
-        if (Usb::reqIsOUT(ctrlReq->bmRequestType) && ctrlReq->wLength > 0) {
-            ep0Status = UsbControl::Ep0SetupOut;
-        } else {
-            ep0Status = UsbControl::Ep0SetupReady;
-        }
-#endif
         break;
 
     case PktStsOutData:
@@ -363,7 +351,7 @@ void inEpISR()
          */
         if (inEpInt & (1 << 0)) {
             if (i == 0) {
-                UsbControl::controlRequest(0, TransactionIn);
+                UsbControl::in();
             } else {
                 UsbDevice::inEndpointCallback(i);
             }
@@ -394,12 +382,12 @@ void outEpISR()
         OTG.device.outEps[i].DOEPINT = 0xff;
 
         if (outEpInt & (1 << 3)) {  // setup complete
-            UsbControl::controlRequest(0, TransactionSetup);
+            UsbControl::setup();
         }
 
         if (outEpInt & (1 << 0)) {  // OUT transfer complete
             if (i == 0) {
-                UsbControl::controlRequest(0, TransactionIn);
+                UsbControl::out();
             } else {
                 // don't receive any more packets until UsbDevice reads this one
                 OTG.global.GINTMSK &= ~RXFLVL;

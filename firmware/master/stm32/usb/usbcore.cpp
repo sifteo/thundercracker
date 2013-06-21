@@ -216,7 +216,7 @@ int UsbCore::standardRequest(SetupData *req, uint8_t **buf, uint16_t *len)
 {
     const unsigned StandardRequestTest = 0;
     /* FIXME: Have class/vendor requests as well. */
-    if ((req->bmRequestType & ReqTypeType) != StandardRequestTest)
+    if ((req->bmRequestType & ReqTypeMask) != StandardRequestTest)
         return 0;
 
     const unsigned RequestTypeTest = 0x1F;

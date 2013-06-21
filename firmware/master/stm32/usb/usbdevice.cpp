@@ -101,16 +101,84 @@ static const struct {
     }
 };
 
-static const char *descriptorStrings[] = {
-    "Sifteo Inc.",
+
+static const uint8_t lang_string[] = {
+    4,
+    Usb::DescriptorString,
+    USB_DESC_WORD(0x0409)
+};
+
+static const uint8_t win_string[] = {
+    18,
+    Usb::DescriptorString,
+    USB_DESC_WORD(0x004d),                          // M
+    USB_DESC_WORD(0x0053),                          // S
+    USB_DESC_WORD(0x004),                           // F
+    USB_DESC_WORD(0x0054),                          // T
+    USB_DESC_WORD(0x0031),                          // 1
+    USB_DESC_WORD(0x0030),                          // 0
+    USB_DESC_WORD(0x0030),                          // 0
+    USB_DESC_WORD(UsbDevice::WINUSB_COMPATIBLE_ID)  // Vendor Code & padding
+};
+
+static const uint8_t mfr_string[] = {
+    24,                     // bLength
+    Usb::DescriptorString,  // bDescriptorType
+    'S', 0,
+    'i', 0,
+    'f', 0,
+    't', 0,
+    'e', 0,
+    'o', 0,
+    ' ', 0,
+    'I', 0,
+    'n', 0,
+    'c', 0,
+    '.', 0
+};
+
+static const uint8_t device_string[] = {
 #if (BOARD == BOARD_TEST_JIG)
-    "Sifteo TestJig",
+    30,                     // bLength
+    Usb::DescriptorString,  // bDescriptorType
+    'S', 0,
+    'i', 0,
+    'f', 0,
+    't', 0,
+    'e', 0,
+    'o', 0,
+    ' ', 0,
+    'T', 0,
+    'e', 0,
+    's', 0,
+    't', 0,
+    'J', 0,
+    'i', 0,
+    'g', 0
 #else
-    "Sifteo Base",
+    24,                     // bLength
+    Usb::DescriptorString,  // bDescriptorType
+    'S', 0,
+    'i', 0,
+    'f', 0,
+    't', 0,
+    'e', 0,
+    'o', 0,
+    ' ', 0,
+    'B', 0,
+    'a', 0,
+    's', 0,
+    'e', 0
 #endif
 };
 
-int UsbDevice::writeStringDescriptor(unsigned idx, uint16_t *dst)
+// XXX: find a way to avoid allocating this RAM forever...
+static uint8_t uid_string[(SysInfo::UniqueIdNumBytes * 2) + 2] = {
+        sizeof(uid_string),
+        Usb::DescriptorString
+};
+
+int UsbDevice::getStringDescriptor(unsigned idx, const uint8_t **dst)
 {
     /*
      * Render a unicode version of the requested string descriptor.
@@ -121,22 +189,35 @@ int UsbDevice::writeStringDescriptor(unsigned idx, uint16_t *dst)
      * the total length even if only a subset is requested.
      */
 
-    if (idx == 1 || idx == 2) {
-        // string indexes are 1-based, since 0 means "doesn't exist"
-        const char *str = descriptorStrings[idx - 1];
-        return UsbCore::writeAsciiDescriptor(dst, str, strlen(str));
-    }
+    static const char digits[] = "0123456789abcdef";
 
-    if (idx == 3) {
-        static const char digits[] = "0123456789abcdef";
+    switch (idx) {
 
-        const uint8_t *id = static_cast<const uint8_t*>(SysInfo::UniqueId);
+    case 0:
+        *dst = lang_string;
+        return sizeof(lang_string);
+
+    case 1:
+        *dst = mfr_string;
+        return sizeof(mfr_string);
+
+    case 2:
+        *dst = device_string;
+        return sizeof(device_string);
+
+    case 3:
         for (unsigned i = 0; i < SysInfo::UniqueIdNumBytes; ++i) {
-            uint8_t b = id[i];
-            *dst++ = digits[b >> 4];
-            *dst++ = digits[b & 0xf];
+            uint8_t b = SysInfo::UniqueId[i];
+            uid_string[i+2] = digits[b >> 4];
+            uid_string[i+3] = digits[b & 0xf];
         }
-        return ((SysInfo::UniqueIdNumBytes * 2) * sizeof(uint16_t)) + sizeof(uint16_t);
+
+        *dst = uid_string;
+        return sizeof(uid_string);
+
+    case 0xee:
+        *dst = win_string;
+        return sizeof(win_string);
     }
 
     return 0;
@@ -168,6 +249,12 @@ static const struct {
         { 0 }               // reserved2
     }
 };
+
+int UsbDevice::getCompatIDDescriptor(const uint8_t **dst)
+{
+    *dst = (uint8_t*)&compatId;
+    return sizeof compatId;
+}
 
 bool UsbDevice::configured;
 volatile bool UsbDevice::txInProgress;

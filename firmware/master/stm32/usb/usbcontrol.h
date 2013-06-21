@@ -7,14 +7,14 @@
 class UsbControl
 {
 public:
-    UsbControl();
-
-    static bool controlRequest(uint8_t ep, Usb::Transaction txn);
+    static void setup();
+    static void out();
+    static void in();
 
 private:
-    static void setup();
-    static void out(uint8_t ea);
-    static void in(uint8_t ea);
+    UsbControl();
+
+    static bool setupHandler();
 
     static void sendChunk();
     static int receiveChunk();
@@ -23,6 +23,8 @@ private:
 
     static void setupRead(Usb::SetupData *req);
     static void setupWrite(Usb::SetupData *req);
+
+    static void setErrorState();
 
     enum ControlStatus {
         Idle,
@@ -35,12 +37,37 @@ private:
         StatusOut
     };
 
+    enum DeviceState {
+        Uninit      = 0,
+        Stopped     = 1,
+        Ready       = 2,
+        Selected    = 3,
+        Active      = 4
+    };
+
+    enum Ep0State {
+        EP0_WAITING_SETUP,
+        EP0_TX,
+        EP0_WAITING_TX0,
+        EP0_WAITING_STS,
+        EP0_RX,
+        EP0_SENDING_STS,
+        EP0_ERROR
+    };
+
     struct ControlState {
-        ControlStatus status;
+        Ep0State ep0Status;
+        DeviceState state;
+        uint16_t status;
+        uint8_t configuration;
         Usb::SetupData req;
         uint8_t *pdata;
         uint16_t len;
-        uint8_t buf[UsbHardware::MAX_PACKET];
+
+        void ALWAYS_INLINE setupTransfer(const void *b, uint16_t sz) {
+            len = sz;
+            pdata = (uint8_t*)b;
+        }
     };
     static ControlState controlState;
 };

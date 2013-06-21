@@ -9,182 +9,262 @@ using namespace Usb;
 
 UsbControl::ControlState UsbControl::controlState;
 
-void UsbControl::sendChunk()
+static const uint8_t zeroStatus[] = {0x00, 0x00};
+static const uint8_t activeStatus[] ={0x00, 0x00};
+static const uint8_t haltedStatus[] = {0x01, 0x00};
+
+bool UsbControl::setupHandler()
 {
-    unsigned maxPacketSize0 = UsbCore::devDescriptor()->bMaxPacketSize0;
-    if (maxPacketSize0 < controlState.len) {
-        // Data stage, normal transmission
-        UsbHardware::epWritePacket(0, controlState.pdata, maxPacketSize0);
-        controlState.status = DataIn;
-        controlState.pdata += maxPacketSize0;
-        controlState.len -= maxPacketSize0;
-    }
-    else {
-        // Data stage, end of transmission
-        UsbHardware::epWritePacket(0, controlState.pdata, controlState.len);
-        controlState.status = LastDataIn;
-        controlState.len = 0;
-        controlState.pdata = 0;
-    }
-}
+    /*
+     * Our job here is to prepare our setup object based
+     * on the details of the received setup packet.
+     *
+     * Subsequent steps will actually perform the required I/O.
+     */
 
-int UsbControl::receiveChunk()
-{
-    uint16_t packetsize = MIN(UsbCore::devDescriptor()->bMaxPacketSize0, controlState.req.wLength - controlState.len);
-    uint16_t size = UsbHardware::epReadPacket(0, controlState.pdata + controlState.len, packetsize);
+    uint8_t ep;
+    const uint8_t *descriptor;
+    unsigned descLen;
 
-    if (size != packetsize) {
-        UsbHardware::epStall(0);
-        return -1;
-    }
+    uint16_t request = (controlState.req.bRequest << 8) |
+                       (controlState.req.bmRequestType & (ReqTypeMask | ReqTypeRecipientMask));
 
-    controlState.len += size;
+    switch (request) {
 
-    return packetsize;
-}
+    case (RequestGetStatus << 8) | ReqTypeDevice:
+        controlState.setupTransfer(&controlState.status, sizeof controlState.status);
+        return true;
 
-int UsbControl::requestDispatch(SetupData *req)
-{
-
-    int result = UsbDevice::controlRequest(req, &controlState.pdata, &controlState.len);
-    if (result)
-        return result;
-
-    return UsbCore::standardRequest(req, &controlState.pdata, &controlState.len);
-}
-
-void UsbControl::setupRead(SetupData *req)
-{
-    controlState.pdata = controlState.buf;
-    controlState.len = req->wLength;
-
-    if (requestDispatch(req)) {
-        if (controlState.len) {
-            // Go to data out stage if handled
-            sendChunk();
+    case (RequestClearFeature << 8) | ReqTypeDevice:
+        if ((controlState.req.wValue & 0xff) == FeatureDeviceRemoteWakeup) {
+            controlState.status &= ~(1 << FeatureDeviceRemoteWakeup);
+            controlState.setupTransfer(NULL, 0);
+            return true;
         }
-        else {
-            // Go to status stage if handled
-            UsbHardware::epWritePacket(0, 0, 0);
-            controlState.status = StatusIn;
-        }
-    }
-    else {
-        UsbHardware::epStall(0);    // stall on failure
-    }
-}
-
-void UsbControl::setupWrite(SetupData *req)
-{
-    if (req->wLength > controlState.len) {
-        UsbHardware::epStall(0);
-        return;
-    }
-
-    // Buffer into which to write received data
-    controlState.pdata = controlState.buf;
-    controlState.len = 0;
-
-    // Wait for DATA OUT stage
-    if (req->wLength > UsbCore::devDescriptor()->bMaxPacketSize0)
-        controlState.status = DataOut;
-    else
-        controlState.status = LastDataOut;
-}
-
-bool UsbControl::controlRequest(uint8_t ep, Usb::Transaction txn)
-{
-    switch (txn) {
-    case TransactionIn:
-        in(ep);
-        break;
-    case TransactionOut:
-        out(ep);
-        break;
-    case TransactionSetup:
-        setup();
-        break;
-    default:
+        // other features not handled
         return false;
+
+    case (RequestSetFeature << 8) | ReqTypeDevice:
+        if ((controlState.req.wValue & 0xff) == FeatureDeviceRemoteWakeup) {
+            controlState.status |= (1 << FeatureDeviceRemoteWakeup);
+            controlState.setupTransfer(NULL, 0);
+            return true;
+        }
+        // other features not handled
+        return false;
+
+    case (RequestSetAddress << 8) | ReqTypeDevice:
+        UsbHardware::setAddress(controlState.req.wValue);
+        controlState.setupTransfer(NULL, 0);
+        return true;
+
+    case (RequestGetDescriptor << 8) | ReqTypeDevice:
+
+        descLen = 0;
+
+        switch (controlState.req.wValue >> 8) {
+        case DescriptorString:
+            descLen = UsbDevice::getStringDescriptor(controlState.req.wValue & 0xff, &descriptor);
+            break;
+
+        case DescriptorDevice:
+            descriptor = (uint8_t*)UsbCore::devDescriptor();
+            descLen = UsbCore::devDescriptor()->bLength;
+            break;
+
+        case DescriptorConfiguration:
+            descriptor = (uint8_t*)UsbCore::configDescriptor(controlState.req.wValue & 0xff);
+            descLen = UsbCore::configDescriptor(controlState.req.wValue & 0xff)->wTotalLength;
+            break;
+        }
+
+        if (descLen) {
+            controlState.setupTransfer(descriptor, descLen);
+            return true;
+        }
+        return false;
+
+    case (UsbDevice::WINUSB_COMPATIBLE_ID << 8) | ReqTypeVendor:
+        if (controlState.req.wIndex == 0x04) {
+            descLen = UsbDevice::getCompatIDDescriptor(&descriptor);
+            controlState.setupTransfer(descriptor, descLen);
+            return true;
+        }
+        return false;
+
+    case (RequestGetConfiguration << 8) | ReqTypeDevice:
+        controlState.setupTransfer(&controlState.configuration, 1);
+        return true;
+
+    case (RequestSetConfiguration << 8) | ReqTypeDevice:
+        if (controlState.configuration != controlState.req.wValue) {
+            controlState.configuration = controlState.req.wValue;
+            if (controlState.configuration == 0)
+                controlState.state = Selected;
+            else
+                controlState.state = Active;
+
+            UsbHardware::reset();
+            UsbDevice::onConfigComplete(controlState.configuration);
+        }
+
+        controlState.setupTransfer(NULL, 0);
+        return true;
+
+    case (RequestGetStatus << 8) | ReqTypeInterface:
+    case (RequestSyncFrame << 8) | ReqTypeEndpoint:
+        controlState.setupTransfer(zeroStatus, sizeof zeroStatus);
+        return true;
+
+    case (RequestGetStatus << 8) | ReqTypeEndpoint:
+        ep = controlState.req.wIndex;
+        if (UsbHardware::epIsStalled(ep)) {
+            controlState.setupTransfer(haltedStatus, sizeof haltedStatus);
+        } else {
+            controlState.setupTransfer(activeStatus, sizeof activeStatus);
+        }
+        // XXX: handle disabled endpoints
+        return true;
+
+    case (RequestClearFeature << 8) | ReqTypeEndpoint:
+        if (controlState.req.wValue != FeatureEndpointHalt)
+            return false;
+
+        // Clear the EP status, only valid for non-EP0 endpoints
+        ep = controlState.req.wIndex;
+        if (ep & 0x0F) {
+            UsbHardware::epClearStall(ep);
+        }
+        controlState.setupTransfer(NULL, 0);
+        return true;
+
+    case (RequestSetFeature << 8) | ReqTypeEndpoint:
+        if (controlState.req.wValue != FeatureEndpointHalt)
+            return false;
+
+        // Stall the EP, only valid for non-EP0 endpoints
+        ep = controlState.req.wIndex;
+        if (ep & 0x0F) {
+            UsbHardware::epStall(ep);
+        }
+        controlState.setupTransfer(NULL, 0);
+        return true;
     }
-    return true;
+
+    return false;
 }
 
 void UsbControl::setup()
 {
-    SetupData *req = &controlState.req;
+    /*
+     * Entry point for all setup packets.
+     */
 
-    if (UsbHardware::epReadPacket(0, req, 8) != 8) {
-        UsbHardware::epStall(0);
+    SetupData *req = &controlState.req;
+    if (UsbHardware::epReadPacket(0, req, sizeof(*req)) != sizeof(*req)) {
+        setErrorState();
         return;
     }
 
-    if (req->wLength == 0 || (req->bmRequestType & 0x80))
-        setupRead(req);
-    else
-        setupWrite(req);
-}
+    if (!setupHandler()) {
+        setErrorState();
+        return;
+    }
 
-void UsbControl::out(uint8_t ea)
-{
-    (void)ea;
+    // our data pointer and size have been set up, now kick off the transfer.
+    if (reqIsIN(req->bmRequestType)) {
+        if (controlState.len) {
+            unsigned chunk = MIN(controlState.req.wLength, controlState.len);
+            chunk = MIN(chunk, UsbCore::devDescriptor()->bMaxPacketSize0);
 
-    switch (controlState.status) {
-    case DataOut:
-        if (receiveChunk() < 0)
-            break;
-        if ((controlState.req.wLength - controlState.len) <= UsbCore::devDescriptor()->bMaxPacketSize0)
-            controlState.status = LastDataOut;
-        break;
+            UsbHardware::epWritePacket(0, controlState.pdata, chunk);
+            controlState.ep0Status = EP0_TX;
+//            controlState.pdata += chunk;
+//            controlState.len -= chunk;
+        } else {
+            // no data to send, wait for zero-length status packet
+            UART("wait for zlp\r\n");
+            controlState.ep0Status = EP0_WAITING_STS;
+        }
 
-    case LastDataOut:
-        if (receiveChunk() < 0)
-            break;
-
-        // We have now received the full data payload.
-        // Invoke callback to process.
-        if (requestDispatch(&controlState.req)) {
-            // Got to status stage on success
+    } else {
+        // OUT packet handling
+        if (controlState.len) {
+            UART("setup OUT: "); UART_HEX(controlState.len); UART("\r\n");
+            controlState.ep0Status = EP0_RX;
+        } else {
             UsbHardware::epWritePacket(0, NULL, 0);
-            controlState.status = StatusIn;
+            controlState.ep0Status = EP0_SENDING_STS;
         }
-        else {
-            UsbHardware::epStall(0);
-        }
-        break;
-
-    case StatusOut:
-        UsbHardware::epReadPacket(0, NULL, 0);
-        controlState.status = Idle;
-        break;
-
-    default:
-        UsbHardware::epStall(0);
     }
 }
 
-void UsbControl::in(uint8_t ea)
+void UsbControl::out()
 {
-    (void)ea;
-    SetupData &req = controlState.req;
+    /*
+     * An OUT packet for ep0 has arrived.
+     * Update our state accordingly.
+     */
 
-    switch (controlState.status) {
-    case DataIn:
-        sendChunk();
-        break;
+    switch (controlState.ep0Status) {
+    case EP0_RX:
+        // Receive phase over, sending the zero sized status packet.
+        controlState.ep0Status = EP0_SENDING_STS;
+        UsbHardware::epWritePacket(0, NULL, 0);
+        return;
 
-    case LastDataIn:
-        controlState.status = StatusOut;
-        break;
-
-    case StatusIn:
-        // Exception: Handle SET ADDRESS function here...
-        if ((req.bmRequestType == 0) && (req.bRequest == RequestSetAddress))
-            UsbHardware::setAddress(req.wValue);
-        controlState.status = Idle;
-        break;
+    case EP0_WAITING_STS:
+        controlState.ep0Status = EP0_WAITING_SETUP;
+        return;
 
     default:
-        UsbHardware::epStall(0);
+        setErrorState();
+        break;
     }
+}
+
+void UsbControl::in()
+{
+    /*
+     * An IN packet transmission has just completed.
+     * Update our state accordingly.
+     */
+
+    unsigned max;
+
+    switch (controlState.ep0Status) {
+    case EP0_TX:
+        max = controlState.req.wLength;
+        /* If the transmitted size is less than the requested size and it is a
+         multiple of the maximum packet size then a zero size packet must be
+         transmitted.*/
+
+        if ((controlState.len < max) && ((controlState.len % 64) == 0)) {
+            UsbHardware::epWritePacket(0, NULL, 0);
+            controlState.ep0Status = EP0_WAITING_TX0;
+            return;
+        }
+        // Falls in
+
+    case EP0_WAITING_TX0:
+        // Transmit phase over, receiving the zero sized status packet.
+        controlState.ep0Status = EP0_WAITING_STS;
+        return;
+
+    case EP0_SENDING_STS:
+        // Status packet sent, invoking the callback if defined.
+        controlState.ep0Status = EP0_WAITING_SETUP;
+        return;
+
+    default:
+        setErrorState();
+        break;
+    }
+}
+
+void UsbControl::setErrorState()
+{
+    UsbHardware::epStall(0);
+    UsbHardware::epStall(0 | 0x80);
+    controlState.ep0Status = EP0_ERROR;
 }
