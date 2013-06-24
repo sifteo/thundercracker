@@ -20,7 +20,7 @@ namespace SysInfo {
         }
     }
 
-    const void* UniqueId = reinterpret_cast<void*>(&uidBytes[0]);
+    const uint8_t* UniqueId = uidBytes;
 
     const unsigned HardwareRev = 2; // currently BOARD_TC_MASTER_REV2 in board.h
 }
