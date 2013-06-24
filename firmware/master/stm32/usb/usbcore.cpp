@@ -213,14 +213,12 @@ void UsbCore::setup()
             controlState.ep0Status = EP0_TX;
         } else {
             // no data to send, wait for zero-length status packet
-            UART("wait for zlp\r\n");
             controlState.ep0Status = EP0_WAITING_STS;
         }
 
     } else {
         // OUT packet handling
         if (controlState.len) {
-            UART("setup OUT: "); UART_HEX(controlState.len); UART("\r\n");
             controlState.ep0Status = EP0_RX;
         } else {
             UsbHardware::epWritePacket(0, NULL, 0);
