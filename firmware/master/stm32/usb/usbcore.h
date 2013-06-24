@@ -16,23 +16,14 @@ public:
                      const Config & cfg);
     static void reset();
 
-    static ALWAYS_INLINE const Usb::DeviceDescriptor* devDescriptor() {
-        return _dev;
-    }
-
-    static ALWAYS_INLINE const Usb::ConfigDescriptor* configDescriptor(uint8_t idx) {
-        // TODO: calculate offset of subsequent configurations
-        return _conf;
-    }
-
     // control requests
     static void setup();
     static void out();
     static void in();
 
 private:
-    static const Usb::DeviceDescriptor *_dev;
-    static const Usb::ConfigDescriptor *_conf;
+    static const Usb::DeviceDescriptor *devDesc;
+    static const Usb::ConfigDescriptor *configDesc;
 
     static uint16_t address;
     static uint16_t _config;

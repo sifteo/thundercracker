@@ -7,8 +7,8 @@
 
 using namespace Usb;
 
-const DeviceDescriptor *UsbCore::_dev;
-const ConfigDescriptor *UsbCore::_conf;
+const DeviceDescriptor *UsbCore::devDesc;
+const ConfigDescriptor *UsbCore::configDesc;
 
 uint16_t UsbCore::address;
 uint16_t UsbCore::_config;
@@ -23,8 +23,8 @@ void UsbCore::init(const DeviceDescriptor *dev,
                    const ConfigDescriptor *conf,
                    const Config & cfg)
 {
-    _dev = dev;
-    _conf = conf;
+    devDesc = dev;
+    configDesc = conf;
 
     UsbHardware::init(cfg);
 }
@@ -47,7 +47,7 @@ bool UsbCore::setupHandler()
      * Subsequent steps will actually perform the required I/O.
      */
 
-    uint8_t ep;
+    uint8_t ep, idx;
     const uint8_t *descriptor;
     unsigned descLen;
 
@@ -89,17 +89,20 @@ bool UsbCore::setupHandler()
 
         switch (controlState.req.wValue >> 8) {
         case DescriptorString:
-            descLen = UsbDevice::getStringDescriptor(controlState.req.wValue & 0xff, &descriptor);
+            idx = controlState.req.wValue & 0xff;
+            descLen = UsbDevice::getStringDescriptor(idx, &descriptor);
             break;
 
         case DescriptorDevice:
-            descriptor = (uint8_t*)UsbCore::devDescriptor();
-            descLen = UsbCore::devDescriptor()->bLength;
+            descriptor = (uint8_t*)devDesc;
+            descLen = devDesc->bLength;
             break;
 
         case DescriptorConfiguration:
-            descriptor = (uint8_t*)UsbCore::configDescriptor(controlState.req.wValue & 0xff);
-            descLen = UsbCore::configDescriptor(controlState.req.wValue & 0xff)->wTotalLength;
+            // idx = controlState.req.wValue & 0xff;
+            // XXX: calculate offset of subsequent configurations based on idx
+            descriptor = (uint8_t*)configDesc;
+            descLen = configDesc->wTotalLength;
             break;
         }
 
@@ -200,7 +203,7 @@ void UsbCore::setup()
     if (reqIsIN(req->bmRequestType)) {
         if (controlState.len) {
             unsigned chunk = MIN(controlState.req.wLength, controlState.len);
-            chunk = MIN(chunk, UsbCore::devDescriptor()->bMaxPacketSize0);
+            chunk = MIN(chunk, devDesc->bMaxPacketSize0);
 
             UsbHardware::epWritePacket(0, controlState.pdata, chunk);
             controlState.ep0Status = EP0_TX;
