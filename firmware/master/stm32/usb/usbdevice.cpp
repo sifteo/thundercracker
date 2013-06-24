@@ -173,7 +173,7 @@ static const uint8_t device_string[] = {
 };
 
 // XXX: find a way to avoid allocating this RAM forever...
-static uint8_t uid_string[(SysInfo::UniqueIdNumBytes * 2) + 2] = {
+static uint8_t uid_string[(SysInfo::UniqueIdNumBytes * 4) + 2] = {
         sizeof(uid_string),
         Usb::DescriptorString
 };
@@ -190,6 +190,7 @@ int UsbDevice::getStringDescriptor(unsigned idx, const uint8_t **dst)
      */
 
     static const char digits[] = "0123456789abcdef";
+    uint16_t *p;
 
     switch (idx) {
 
@@ -206,10 +207,11 @@ int UsbDevice::getStringDescriptor(unsigned idx, const uint8_t **dst)
         return sizeof(device_string);
 
     case 3:
+        p = (uint16_t*)&uid_string[2];  // begin writing after size and desc type
         for (unsigned i = 0; i < SysInfo::UniqueIdNumBytes; ++i) {
             uint8_t b = SysInfo::UniqueId[i];
-            uid_string[i+2] = digits[b >> 4];
-            uid_string[i+3] = digits[b & 0xf];
+            *p++ = digits[b >> 4];
+            *p++ = digits[b & 0xf];
         }
 
         *dst = uid_string;
