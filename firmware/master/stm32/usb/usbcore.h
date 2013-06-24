@@ -13,6 +13,7 @@ public:
 
     static void init(const Usb::DeviceDescriptor *dev,
                      const Usb::ConfigDescriptor *conf,
+                     const Usb::WinUsbCompatIdHeaderDescriptor *win,
                      const Config & cfg);
     static void reset();
 
@@ -24,6 +25,7 @@ public:
 private:
     static const Usb::DeviceDescriptor *devDesc;
     static const Usb::ConfigDescriptor *configDesc;
+    static const Usb::WinUsbCompatIdHeaderDescriptor *winCompatDesc;
 
     static uint16_t address;
     static uint16_t _config;

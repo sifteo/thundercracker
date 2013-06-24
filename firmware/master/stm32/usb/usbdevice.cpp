@@ -250,12 +250,6 @@ static const struct {
     }
 };
 
-int UsbDevice::getCompatIDDescriptor(const uint8_t **dst)
-{
-    *dst = (uint8_t*)&compatId;
-    return sizeof compatId;
-}
-
 bool UsbDevice::configured;
 volatile bool UsbDevice::txInProgress;
 SysTime::Ticks UsbDevice::timestampINActivity;
@@ -287,7 +281,8 @@ void UsbDevice::init() {
     const UsbCore::Config cfg = {
         false,  // enableSOF
     };
-    UsbCore::init(&dev, (Usb::ConfigDescriptor*)&configurationBlock, cfg);
+    UsbCore::init(&dev, (Usb::ConfigDescriptor*)&configurationBlock,
+                  (Usb::WinUsbCompatIdHeaderDescriptor*)&compatId, cfg);
 }
 
 void UsbDevice::deinit()

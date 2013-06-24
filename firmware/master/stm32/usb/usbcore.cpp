@@ -9,6 +9,7 @@ using namespace Usb;
 
 const DeviceDescriptor *UsbCore::devDesc;
 const ConfigDescriptor *UsbCore::configDesc;
+const WinUsbCompatIdHeaderDescriptor *UsbCore::winCompatDesc;
 
 uint16_t UsbCore::address;
 uint16_t UsbCore::_config;
@@ -21,10 +22,12 @@ static const uint8_t haltedStatus[] = {0x01, 0x00};
 
 void UsbCore::init(const DeviceDescriptor *dev,
                    const ConfigDescriptor *conf,
+                   const WinUsbCompatIdHeaderDescriptor *win,
                    const Config & cfg)
 {
     devDesc = dev;
     configDesc = conf;
+    winCompatDesc = win;
 
     UsbHardware::init(cfg);
 }
@@ -114,7 +117,8 @@ bool UsbCore::setupHandler()
 
     case (UsbDevice::WINUSB_COMPATIBLE_ID << 8) | ReqTypeVendor:
         if (controlState.req.wIndex == 0x04) {
-            descLen = UsbDevice::getCompatIDDescriptor(&descriptor);
+            descriptor = (uint8_t*)winCompatDesc;
+            descLen = winCompatDesc->dwLength;
             controlState.setupTransfer(descriptor, descLen);
             return true;
         }

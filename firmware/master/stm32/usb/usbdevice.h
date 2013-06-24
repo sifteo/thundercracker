@@ -41,7 +41,6 @@ public:
     static void deinit();
 
     static int getStringDescriptor(unsigned idx, const uint8_t **dst);
-    static int getCompatIDDescriptor(const uint8_t **dst);
 
     static void handleReset();
     static void handleSuspend();
