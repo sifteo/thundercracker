@@ -140,6 +140,8 @@ void MainMenu::checkForFirstRun() {
                 shouldExec = breadcrumb.readObject(x, item->getVolume()) < 0 || x == 0;
             }
             if (shouldExec) {
+                waitForACube();
+                ASSERT(!CubeSet::connected().empty());
                 while(!AudioTracker::isStopped()) {
                     System::paint();
                 }
