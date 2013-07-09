@@ -1,4 +1,5 @@
 #include "inspect.h"
+#include "installer.h"
 #include "sifteo/abi/elf.h"
 
 #include <errno.h>
@@ -102,6 +103,17 @@ bool Inspect::inspect(const char *path)
         table.cell() << "0x" << setiosflags(ios::hex) << setw(6) << setfill('0') << minimumOS;
     } else {
         table.cell() << "none";
+    }
+    table.endRow();
+
+    table.cell() << "installable size:";
+    FILE *f = fopen(path, "rb");
+    if (f) {
+        unsigned sz = Installer::getInstallableElfSize(f);
+        table.cell() << int(sz) << " bytes";
+        fclose(f);
+    } else {
+        table.cell() << "unknown";
     }
     table.endRow();
 
