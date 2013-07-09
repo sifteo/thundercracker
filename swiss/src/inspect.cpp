@@ -82,9 +82,14 @@ bool Inspect::inspect(const char *path)
     // Advertised cube range
     uint32_t cuberangeLen;
     uint8_t *cuberange = dbgInfo.metadata(_SYS_METADATA_CUBE_RANGE, cuberangeLen);
-    _SYSMetadataCubeRange *cr = reinterpret_cast<_SYSMetadataCubeRange*>(cuberange);
+
     table.cell() << "cube range:";
-    table.cell() << int(cr->minCubes) << "-" << int(cr->maxCubes);
+    if (cuberange) {
+        _SYSMetadataCubeRange *cr = reinterpret_cast<_SYSMetadataCubeRange*>(cuberange);
+        table.cell() << int(cr->minCubes) << "-" << int(cr->maxCubes);
+    } else {
+        table.cell() << "none";
+    }
     table.endRow();
 
 
