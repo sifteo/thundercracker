@@ -15,10 +15,11 @@ public:
 
     int install(const char *path, int vid, int pid, bool launcher, bool forceLauncher, bool rpc);
 
+    static unsigned getInstallableElfSize(FILE *f);
+
 private:
     int sendHeader(uint32_t filesz);
     bool getPackageMetadata(const char *path);
-    unsigned getInstallableElfSize(FILE *f);
     bool sendFileContents(FILE *f, uint32_t filesz);
     bool commit();
 
