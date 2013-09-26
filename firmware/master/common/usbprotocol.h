@@ -23,6 +23,7 @@ struct USBProtocol {
         Logger          = 4,
         DesktopSync     = 5,
         RFPassThrough   = 6,
+        User            = 7
     };
 
     static void dispatch(const USBProtocolMsg &m);

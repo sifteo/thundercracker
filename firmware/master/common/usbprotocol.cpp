@@ -15,25 +15,15 @@
 #include "sampleprofiler.h"
 #endif
 
-/*
- * Table of USB subsystem handlers.
- * Order in this table must match the SubSystem enum.
- */
-const USBProtocol::SubSystemHandler USBProtocol::subsystemHandlers[] = {
-    UsbVolumeManager::onUsbData,            // 0
-    #if (defined(SIFTEO_SIMULATOR) || ((BOARD == BOARD_TEST_JIG) && !defined(BOOTLOADER) ) || defined(RFTEST))
-    0,
-    0
-    #else
-    FactoryTest::usbHandler,                // 1
-    SampleProfiler::onUSBData               // 2
-    #endif
-};
-
 void USBProtocol::dispatch(const USBProtocolMsg &m)
 {
-    const unsigned subsys = static_cast<unsigned>(m.subsystem());
-    if (subsys < arraysize(subsystemHandlers)) {
-        subsystemHandlers[subsys](m);
+    switch (m.subsystem()) {
+        case Installer:     UsbVolumeManager::onUsbData(m); return;
+    #if (defined(SIFTEO_SIMULATOR) || ((BOARD == BOARD_TEST_JIG) && !defined(BOOTLOADER) ) || defined(RFTEST))
+        case FactoryTest:   FactoryTest::usbHandler(m); return;
+        case Profiler:      SampleProfiler::onUSBData(m); return;
+    #endif
+        default:
+            return;
     }
 }
