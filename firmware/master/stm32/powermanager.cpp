@@ -5,6 +5,7 @@
 #include "tasks.h"
 #include "radio.h"
 #include "batterylevel.h"
+#include "event.h"
 
 #include "macros.h"
 
@@ -192,6 +193,7 @@ void PowerManager::setState(State s)
         batteryPowerOn();
         UsbDevice::deinit();
         vcc3v3.setLow();
+        Event::setBasePending(Event::PID_BASE_USB_DISCONNECT);
         break;
 
     case UsbPwr:
@@ -199,6 +201,7 @@ void PowerManager::setState(State s)
         UsbDevice::init();
         batteryPowerOff();
         Radio::onTransitionToUsbPower();
+        Event::setBasePending(Event::PID_BASE_USB_CONNECT);
         break;
     }    
 #endif
