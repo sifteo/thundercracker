@@ -227,8 +227,7 @@ uint16_t epWritePacket(uint8_t addr, const void *buf, uint16_t len)
      */
     if (len == 0) {
         ep.DIEPTSIZ = (1 << 19);
-    }
-    else {
+    } else {
         uint8_t pktcnt = (len + MAX_PACKET - 1) / MAX_PACKET;
         ep.DIEPTSIZ = (pktcnt << 19) | len;
     }
