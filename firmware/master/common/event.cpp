@@ -58,6 +58,10 @@ void Event::dispatch()
             case PID_BASE_BT_CONNECT:           if (dispatchBasePID(pid, _SYS_BASE_BT_CONNECT           )) return; else break;
             case PID_BASE_BT_READ_AVAILABLE:    if (dispatchBasePID(pid, _SYS_BASE_BT_READ_AVAILABLE    )) return; else break;
             case PID_BASE_BT_WRITE_AVAILABLE:   if (dispatchBasePID(pid, _SYS_BASE_BT_WRITE_AVAILABLE   )) return; else break;
+            case PID_BASE_USB_DISCONNECT:       if (dispatchBasePID(pid, _SYS_BASE_USB_DISCONNECT       )) return; else break;
+            case PID_BASE_USB_CONNECT:          if (dispatchBasePID(pid, _SYS_BASE_USB_CONNECT          )) return; else break;
+            case PID_BASE_USB_READ_AVAILABLE:   if (dispatchBasePID(pid, _SYS_BASE_USB_READ_AVAILABLE    )) return; else break;
+            case PID_BASE_USB_WRITE_AVAILABLE:  if (dispatchBasePID(pid, _SYS_BASE_USB_WRITE_AVAILABLE   )) return; else break;
 
             /*
              * Per-cube Events. Try to dispatch to any pending cube.

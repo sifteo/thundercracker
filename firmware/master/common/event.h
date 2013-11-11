@@ -55,6 +55,12 @@ class Event {
         PID_BASE_VOLUME_DELETE,
         PID_BASE_VOLUME_COMMIT,
 
+        // USB events (disconnect before connect)
+        PID_BASE_USB_DISCONNECT,
+        PID_BASE_USB_CONNECT,
+        PID_BASE_USB_READ_AVAILABLE,
+        PID_BASE_USB_WRITE_AVAILABLE,
+
         // Bluetooth events (disconnect before connect)
         PID_BASE_BT_DISCONNECT,
         PID_BASE_BT_CONNECT,
