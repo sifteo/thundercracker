@@ -211,6 +211,20 @@ struct _SYSFilesystemInfo {
     uint32_t selfObjUnits;      // StoredObjects owned by the currently executing volume (may overlap with above)
 };
 
+
+/*
+ * I/O (common)
+ */
+
+struct _SYSIoQueueHeader {
+    uint8_t head;               /// Index of the first full slot to read from
+    uint8_t tail;               /// Index of the next empty slot to write into
+    uint8_t last;               /// Index of last buffer slot. If head/tail > last, wraps to 0
+    uint8_t reserved;           /// Initialize to zero
+    // Followed by variable-size array of _SYS***Packet
+};
+
+
 /*
  * Bluetooth
  */
@@ -250,24 +264,16 @@ struct _SYSBluetoothCounters {
  */
 
 #define _SYS_USB_PACKET_BYTES            60
-#define _SYS_USB_MAX_QUEUED_PACKETS      256
+#define _SYS_USB_MAX_QUEUED_PACKETS      80
 
 struct _SYSUsbPacket {
-    uint8_t length;             /// Length of in-use portion of bytes[]
-    uint8_t type;               /// Packet type flag (used by some APIs)
     uint8_t bytes[_SYS_USB_PACKET_BYTES];
-};
-
-struct _SYSUsbQueueHeader {
-    uint8_t head;               /// Index of the first full slot to read from
-    uint8_t tail;               /// Index of the next empty slot to write into
-    uint8_t last;               /// Index of last buffer slot. If head/tail > last, wraps to 0
-    uint8_t reserved;           /// Initialize to zero
-    // Followed by variable-size array of _SYSBluetoothPacket
+    uint32_t type;              /// Packet type flag (used by some APIs)
+    uint8_t length;             /// Length of in-use portion of bytes[]
 };
 
 struct _SYSUsbQueue {
-    struct _SYSUsbQueueHeader header;
+    struct _SYSIoQueueHeader header;
     struct _SYSUsbPacket packets[_SYS_USB_MAX_QUEUED_PACKETS];
 };
 
