@@ -11,6 +11,7 @@
 #include "svmmemory.h"
 #include "svmruntime.h"
 #include "macros.h"
+#include "usbprotocol.h"
 
 #ifndef SIFTEO_SIMULATOR
 #include "usb/usbdevice.h"
@@ -29,27 +30,17 @@ uint32_t _SYS_usb_isConnected()
 #endif
 }
 
-
-uint32_t _SYS_usb_write(const uint8_t *buf, uint32_t len, unsigned timeout)
+void _SYS_usb_setPipe(_SYSUsbQueue *send, _SYSUsbQueue *receive)
 {
-#ifndef SIFTEO_SIMULATOR
-    ASSERT(len <= UsbHardware::MAX_PACKET);
-#endif
-
-    FlashBlockRef ref;
-    SvmMemory::VirtAddr va = reinterpret_cast<SvmMemory::VirtAddr>(buf);
-    SvmMemory::PhysAddr pa;
-
-    if (!SvmMemory::mapROData(ref, va, len, pa)) {
+    if (!USBProtocol::setUserQueues(reinterpret_cast<SvmMemory::VirtAddr>(send),
+                                   reinterpret_cast<SvmMemory::VirtAddr>(receive))) {
         SvmRuntime::fault(F_SYSCALL_ADDRESS);
-        return 0;
     }
+}
 
-#ifdef SIFTEO_SIMULATOR
-    return 0;
-#else
-    return UsbDevice::write(pa, len, timeout);
-#endif
+void _SYS_usb_queueWriteHint()
+{
+//    XXX: implement me!
 }
 
 uint32_t _SYS_usb_counters(_SYSUsbCounters *buffer, uint32_t bufferSize)
@@ -59,13 +50,17 @@ uint32_t _SYS_usb_counters(_SYSUsbCounters *buffer, uint32_t bufferSize)
         return 0;
     }
 
-    const _SYSUsbCounters *counters = 0; //BTProtocol::getCounters();
+#ifdef SIFTEO_SIMULATOR
+    return 0;
+#else
+    const _SYSUsbCounters *counters = USBProtocol::getCounters();
 
     unsigned actualSize = MIN(sizeof *counters, bufferSize);
     memset(buffer, 0, bufferSize);
     memcpy(buffer, counters, actualSize);
 
     return actualSize;
+#endif
 }
 
 } // extern "C"

@@ -268,6 +268,8 @@ uint32_t _SYS_bt_counters(_SYSBluetoothCounters *buffer, uint32_t bufferSize) _S
 // USB
 uint32_t _SYS_usb_isConnected() _SC(195);
 uint32_t _SYS_usb_counters(_SYSUsbCounters *buffer, uint32_t bufferSize) _SC(196);
+void _SYS_usb_setPipe(_SYSUsbQueue *send, _SYSUsbQueue *receive) _SC(197);
+void _SYS_usb_queueWriteHint() _SC(198);
 
 #ifdef __cplusplus
 }  // extern "C"

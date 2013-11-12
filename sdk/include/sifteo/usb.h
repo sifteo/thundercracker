@@ -22,9 +22,9 @@ namespace Sifteo {
 
 
 /**
- * @brief Global Bluetooth operations.
+ * @brief Global USB operations.
  *
- * The system provides a basic level of Bluetooth functionality without any
+ * The system provides a basic level of USB functionality without any
  * game-specific code. This includes filesystem access, pairing the base with
  * a Sifteo user account, getting information about the running game, and
  * launching a game.
@@ -132,7 +132,7 @@ template < unsigned tCapacity >
 struct UsbQueue {
     struct SysType {
         union {
-            _SYSUsbQueueHeader header;
+            _SYSIoQueueHeader header;
             uint32_t header32;
         };
         _SYSUsbPacket packets[tCapacity + 1];
@@ -313,49 +313,34 @@ struct UsbQueue {
          * commit(), there's no way to know that the system hasn't dequeued
          * the packet during this function's execution.
          */
-//        _SYS_bt_queueWriteHint();
+        _SYS_usb_queueWriteHint();
     }
 };
 
 
 /**
- * @brief A memory buffer for bidirectional Bluetooth communications.
+ * @brief A memory buffer for bidirectional USB communications.
  *
  * This is a pair of FIFO buffers which can be used for bidirectional
- * communication over Bluetooth. When the pipe is "attached", this
+ * communication over USB. When the pipe is "attached", this
  * Base becomes available to send and receive application-specific
- * packets over Bluetooth.
+ * packets over USB.
  *
  * When the pipe is not attached or no pipe has been allocated,
- * the Sifteo Bluetooth API will throw an error if application-specific
- * packets are sent. However the Bluetooth API provides generic functionality
- * which can be used even without a BluetoothPipe.
+ * the Sifteo USB API will throw an error if application-specific
+ * packets are sent. However the USB API provides generic functionality
+ * which can be used even without a UsbPipe.
  *
- * If the BluetoothPipe's receiveQueue is full, the Sifteo Bluetooth API will
+ * If the UsbPipe's receiveQueue is full, the Sifteo USB API will
  * not be allowed to transmit more packets until our receiveQueue has room.
  * Packets will not be dropped if the buffer fills up.
  *
  * Some applications may desire lower-level access to the data queues
  * we use. Those applications may access 'sendQueue' and 'receiveQueue'
- * directly, and use the methods on those BluetoothQueue objects.
+ * directly, and use the methods on those UsbQueue objects.
  *
  * Applications that do not need this level of control can use the
  * read() and write() methods on this object directly.
- *
- * Bluetooth packets do not have guaranteed delivery like TCP sockets.
- * Instead, they have low latency but it's possible for data to be lost,
- * more like UDP sockets. To summarize the guarantees made by BluetoothPipe:
- *
- *
- * 1. Does NOT guarantee that a packet is ever delivered.
- *    Packets can always be dropped.
- * 2. Does NOT provide end-to-end flow control. Packets received
- *    while the receive queue is full will be dropped.
- * 3. DOES provide data integrity, through the Bluetooth protocol's standard CRC.
- *    If a packet arrives at all, it's very unlikely to be corrupted.
- * 4. DOES guarantee in-order delivery, if packets are ever delivered.
- * 5. DOES provide local transmit flow control, so it's easy to write at
- *    the radio's max transmit rate.
  */
 
 template < unsigned tSendCapacity = 4, unsigned tReceiveCapacity = 4 >
@@ -387,18 +372,18 @@ struct UsbPipe {
     void attach() {
         sendQueue.clear();
         receiveQueue.clear();
-//        _SYS_bt_setPipe(sendQueue, receiveQueue);
+        _SYS_usb_setPipe(sendQueue, receiveQueue);
     }
 
     /**
      * @brief Detach all pipes from the system.
      *
-     * After this call, the Sifteo Bluetooth API will throw an error if
-     * application-specific packets are sent to us. The BluetoothPipe
+     * After this call, the Sifteo USB API will throw an error if
+     * application-specific packets are sent to us. The UsbPipe
      * may be recycled or freed.
      */
     void detach() {
-//        _SYS_bt_setPipe(0, 0);
+        _SYS_usb_setPipe(0, 0);
     }
 
     /**
@@ -410,7 +395,7 @@ struct UsbPipe {
      * For more detailed control over the queue, see the methods on
      * our 'sendQueue' member.
      */
-    bool write(const BluetoothPacket &buffer)
+    bool write(const UsbPacket &buffer)
     {
         if (sendQueue.writeAvailable()) {
             sendQueue.write(buffer);

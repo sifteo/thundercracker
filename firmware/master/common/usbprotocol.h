@@ -7,14 +7,16 @@
 #define USBPROTOCOL_H
 
 #include "macros.h"
+#include "ioqueue.h"
 
 #include <stdint.h>
 #include <string.h>
 
 struct USBProtocolMsg;
 
-struct USBProtocol {
+class USBProtocol {
 
+public:
     enum SubSystem {
         Installer       = 0,
         FactoryTest     = 1,
@@ -27,10 +29,22 @@ struct USBProtocol {
     };
 
     static void dispatch(const USBProtocolMsg &m);
+    static void onReceiveData(const USBProtocolMsg &m);
 
-    typedef void (*SubSystemHandler)(const USBProtocolMsg &m);
-    static const SubSystemHandler subsystemHandlers[];
+    static bool setUserQueues(SvmMemory::VirtAddr send, SvmMemory::VirtAddr receive);
+    static const _SYSUsbCounters *getCounters() {
+        return &instance.counters;
+    }
 
+private:
+    static USBProtocol instance;
+
+    typedef IoQueue<_SYSUsbPacket, _SYSUsbQueue> UsbQueue;
+
+    UsbQueue userSendQueue;
+    UsbQueue userReceiveQueue;
+
+    _SYSUsbCounters counters;
 };
 
 struct USBProtocolMsg {
