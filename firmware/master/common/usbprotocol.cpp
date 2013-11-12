@@ -53,7 +53,7 @@ void USBProtocol::onReceiveData(const USBProtocolMsg &m)
 
         _SYSUsbPacket *dest = queue.reserve();
         dest->length = payloadLen;
-        dest->type = m.header;
+        dest->type = m.header & 0xfffffff;
         memcpy(dest->bytes, m.castPayload<uint8_t>(), payloadLen);
 
         // Notify userspace that some data has arrived.

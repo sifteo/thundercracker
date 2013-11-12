@@ -17,6 +17,15 @@ namespace Sifteo {
  *
  * @brief Support for communicating with a host device via USB.
  *
+ * The Sifteo Base is a USB 2.0 capable, full-speed device and
+ * exposes 2 bulk endpoints - one for reading and one for writing.
+ *
+ * Host software can communicate with the device using http://libusbx.org
+ * or one of the several software libraries compatible with its API.
+ *
+ * Sifteo's USB vendor ID is `0x22FA` and the standard product ID for
+ * the Base is `0x0105`
+ *
  * @{
  */
 
@@ -24,10 +33,7 @@ namespace Sifteo {
 /**
  * @brief Global USB operations.
  *
- * The system provides a basic level of USB functionality without any
- * game-specific code. This includes filesystem access, pairing the base with
- * a Sifteo user account, getting information about the running game, and
- * launching a game.
+ * Check the USB sample in your SDK download for an example of how to use this system.
  */
 
 class Usb {
@@ -36,24 +42,23 @@ public:
     /**
      * @brief Is a device currently connected to a host via USB?
      *
-     * Returns 'true' if a device is connected right now, 'false' if not.
+     * Returns `true` if a device is connected right now, `false` if not.
      *
-     * To get notified when a connection is created or destroyed, you can
+     * To get notified when the Base connects or disconnects, you can
      * attach handlers to Events::usbConnect and Events::usbDisconnect.
      */
 
-    static bool isConnected()
-    {
+    static bool isConnected() {
         return _SYS_usb_isConnected();
     }
 };
 
 
 /**
- * @brief A container for one Bluetooth packet's data.
+ * @brief A container for one Usb packet's data.
  *
- * Each packet consists of a variable-length payload of up to 19 bytes, and
- * a "type" byte of which the low 7 bits are available for games to use.
+ * Each packet consists of a variable-length payload of up to 60 bytes, and
+ * a "type" word of which the low 28 bits are available for games to use.
  */
 
 struct UsbPacket {
@@ -98,21 +103,21 @@ struct UsbPacket {
         return sys.bytes;
     }
 
-    /// Return the packet's 7-bit type code
+    /// Return the packet's 28-bit type code
     unsigned type() const {
         return sys.type;
     }
 
-    /// Set a packet's 7-bit type.
+    /// Set a packet's 28-bit type.
     void setType(unsigned type) {
-        ASSERT(type <= 127);
+        ASSERT(type <= 0xfffffff);
         sys.type = type;
     }
 };
 
 
 /**
- * @brief A memory buffer which holds a queue of Bluetooth packets.
+ * @brief A memory buffer which holds a queue of USB packets.
  *
  * This is a FIFO buffer which holds packets that the game has created
  * but is waiting to transmit, or packets which have been received by the
@@ -125,7 +130,9 @@ struct UsbPacket {
  * UsbQueues are templatized by buffer size. The system supports
  * buffers with between 1 and 255 packets of capacity. You can pick a
  * buffer size based on how many packets you expect may arrive between
- * each opportunity you have to check on the queue. 
+ * each opportunity you have to check on the queue.
+ *
+ * @tparam tCapacity The maximum number of packets this queue can buffer.
  */
 
 template < unsigned tCapacity >
@@ -195,7 +202,7 @@ struct UsbQueue {
      *
      * Must only be called if readAvailable() returns a nonzero value.
      * If no packets are available, try again later or use an Event to
-     * get notified when Bluetooth data arrives.
+     * get notified when USB data arrives.
      *
      * This function copies the data. To read data without copying,
      * use peek() and pop().
@@ -211,7 +218,7 @@ struct UsbQueue {
      *
      * Must only be called if readAvailable() returns a nonzero value.
      * If no packets are available, try again later or use an Event to
-     * get notified when Bluetooth data arrives.
+     * get notified when USB data arrives.
      *
      * This returns a reference to the oldest queued packet in the
      * buffer. This can be used to inspect a packet before read()'ing it,
@@ -238,18 +245,6 @@ struct UsbQueue {
         if (head > tCapacity)
             head = 0;
         sys.header.head = head;
-
-        /*
-         * Notify the system that we have more space for reading. This may
-         * communicate additional flow control tokens to our peer if this
-         * queue is the current read pipe.
-         *
-         * This is only absolutely necessary if the queue transitioned
-         * from being totally full to being less-than-totally full, but
-         * we'd also like to give the system a chance to send flow control
-         * tokens speculatively if it wants.
-         */
-//        _SYS_bt_queueReadHint();
     }
 
     /**
@@ -341,6 +336,9 @@ struct UsbQueue {
  *
  * Applications that do not need this level of control can use the
  * read() and write() methods on this object directly.
+ *
+ * @tparam tSendCapacity Capacity of the send queue in this pipe.
+ * @tparam tReceiveCapacity Capacity of the receive queue in this pipe.
  */
 
 template < unsigned tSendCapacity = 4, unsigned tReceiveCapacity = 4 >
@@ -432,12 +430,12 @@ struct UsbPipe {
 
 
 /**
- * @brief Diagnostic counters for the Bluetooth subsystem
+ * @brief Diagnostic counters for the USB subsystem
  *
  * This object is a container for counter values that are tracked
- * by the Bluetooth subsystem.
+ * by the USB subsystem.
  *
- * The default constructor leaves BluetoothCounters uninitialized.
+ * The default constructor leaves UsbCounters uninitialized.
  * Call reset() once before the event you want to measure, and call
  * capture() to grab the latest counter values. Other accessors in this
  * structure will compare the latest counters with the reference values
