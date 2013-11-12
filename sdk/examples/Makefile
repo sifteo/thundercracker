@@ -10,7 +10,8 @@ SUBDIRS = \
 	stampy \
 	stars \
 	synth \
-	text
+	text \
+	usb
 
 .PHONY: clean subdirs $(SUBDIRS)
 
