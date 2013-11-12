@@ -19,7 +19,7 @@ void USBProtocol::dispatch(const USBProtocolMsg &m)
 {
     switch (m.subsystem()) {
         case Installer:     UsbVolumeManager::onUsbData(m); return;
-    #if (defined(SIFTEO_SIMULATOR) || ((BOARD == BOARD_TEST_JIG) && !defined(BOOTLOADER) ) || defined(RFTEST))
+    #if (!(defined(SIFTEO_SIMULATOR) || ((BOARD == BOARD_TEST_JIG) && !defined(BOOTLOADER)) || defined(RFTEST)))
         case FactoryTest:   FactoryTest::usbHandler(m); return;
         case Profiler:      SampleProfiler::onUSBData(m); return;
     #endif
