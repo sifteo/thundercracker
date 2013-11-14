@@ -276,7 +276,8 @@ void UsbDevice::handleOUTData()
     }
 }
 
-void UsbDevice::init() {
+void UsbDevice::init()
+{
     configured = false;
     txInProgress = false;
 
@@ -335,6 +336,8 @@ void UsbDevice::inEndpointCallback(uint8_t ep)
 
     txInProgress = false;
     timestampINActivity = SysTime::ticks();
+
+    Tasks::trigger(Tasks::UsbIN);
 }
 
 

@@ -64,3 +64,43 @@ void USBProtocol::onReceiveData(const USBProtocolMsg &m)
     // Dropped a user packet on the floor!
     USBProtocol::instance.counters.rxUserDropped++;
 }
+
+void USBProtocol::requestUserINPacket()
+{
+    /*
+     * Write a packet to our host if one is available to write.
+     * Should only be called in task or syscall context.
+     */
+
+    // ensure someone's likely to be there listening to us
+    if (SysTime::ticks() - UsbDevice::lastINActivity() > SysTime::msTicks(250)) {
+        return;
+    }
+
+    UsbQueue &queue = USBProtocol::instance.userSendQueue;
+    if (queue.hasQueue() && !queue.empty()) {
+
+        _SYSUsbPacket *pkt = queue.peek();
+        uint8_t buf[_SYS_USB_PACKET_BYTES + sizeof pkt->type];
+        unsigned length = pkt->length;
+        length = MIN(_SYS_USB_PACKET_BYTES, length);
+
+        uint32_t header = (User << 28) | (pkt->type & 0xfffffff);
+        memcpy(buf, &header, sizeof pkt->type);
+        memcpy(&buf[4], pkt->bytes, length);
+        queue.pop();
+
+        USBProtocol::instance.counters.txPackets++;
+        USBProtocol::instance.counters.txBytes += length;
+
+        // timeout here should leave some headroom for system watchdog,
+        // which is currently 3 seconds.
+        UsbDevice::write(buf, pkt->length + sizeof pkt->type, 1000);
+        return Event::setBasePending(Event::PID_BASE_USB_WRITE_AVAILABLE);
+    }
+}
+
+void USBProtocol::inTask()
+{
+    requestUserINPacket();
+}

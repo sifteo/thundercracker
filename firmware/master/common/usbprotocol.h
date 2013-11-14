@@ -30,6 +30,10 @@ public:
 
     static void dispatch(const USBProtocolMsg &m);
     static void onReceiveData(const USBProtocolMsg &m);
+    static void requestUserINPacket();
+
+    // handler for the UsbIN task
+    static void inTask();
 
     static bool setUserQueues(SvmMemory::VirtAddr send, SvmMemory::VirtAddr receive);
     static const _SYSUsbCounters *getCounters() {

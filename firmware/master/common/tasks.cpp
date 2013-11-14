@@ -49,6 +49,7 @@ ALWAYS_INLINE void Tasks::taskInvoke(unsigned id)
         #endif
 
         case Tasks::UsbOUT:             return UsbDevice::handleOUTData();
+        case Tasks::UsbIN:              return USBProtocol::inTask();
 
         #if (BOARD == BOARD_TEST_JIG && !defined(BOOTLOADER))
         case Tasks::TestJig:            return TestJig::task();

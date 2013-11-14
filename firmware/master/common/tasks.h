@@ -50,6 +50,7 @@ public:
         BluetoothDriver,
         BluetoothProtocol,
         Heartbeat,
+        UsbIN,
         Profiler,
         TestJig,
         FactoryTest

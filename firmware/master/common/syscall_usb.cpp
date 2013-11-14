@@ -40,7 +40,7 @@ void _SYS_usb_setPipe(_SYSUsbQueue *send, _SYSUsbQueue *receive)
 
 void _SYS_usb_queueWriteHint()
 {
-//    XXX: implement me!
+    USBProtocol::requestUserINPacket();
 }
 
 uint32_t _SYS_usb_counters(_SYSUsbCounters *buffer, uint32_t bufferSize)
