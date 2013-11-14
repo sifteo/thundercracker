@@ -51,37 +51,12 @@ void main()
     usbCounters.reset();
 
     /*
-     * Advertise some "game state" to the peer. Mobile apps can read this
-     * "advertisement" buffer without interrupting the game. This may have
-     * information that's useful on its own, or it may be information that
-     * tells a mobile app whether or not we're in a game state where Bluetooth
-     * interaction makes sense.
-     *
-     * In this demo, we'll report the number of times the cube has been touched,
-     * and its current touch state. Advertisement data is totally optional, and
-     * if your game doesn't have a use for this feature it's fine not to use it.
-     */
-
-    Events::cubeTouch.set(onCubeTouch);
-    onCubeTouch(0, cube);
-
-    /*
-     * Handle sending and receiving Bluetooth data entirely with Events.
-     * Our BluetoothPipe is a buffer that holds packets that have been
-     * received and are waiting to be processed, and packets we're waiting
-     * for the system to send.
-     *
-     * To demonstrate the system's performance, we'll be trying to send
-     * and receive packets as fast as possible. Every time there's buffer
-     * space available in the transmit queue, we'll fill it with a packet.
-     * Likewise, every received packet will be dealt with as soon as possible.
-     *
      * When we transmit packets in this example, we'll fill them with our
-     * cube's accelerometer and touch state. When we receive packets, they'll
+     * cube's accelerometer state. When we receive packets, they'll
      * be hex-dumped to the screen. We also keep counters that show how many
      * packets have been processed.
      *
-     * If possible applications are encouraged to use event handlers so that
+     * If possible, applications are encouraged to use event handlers so that
      * they only try to read packets when packets are available, and they only
      * write packets when buffer space is available. In this example, we always
      * want to read packets when they arrive, so we keep an onRead() handler
@@ -125,7 +100,7 @@ void main()
         }
 
         /*
-         * For debugging, periodically log the Bluetooth packet counters.
+         * For debugging, periodically log the USB packet counters.
          */
 
         usbCounters.capture();
@@ -134,47 +109,6 @@ void main()
             usbCounters.receivedBytes(), usbCounters.sentBytes(),
             usbCounters.userPacketsDropped());
     }
-}
-
-void onCubeTouch(void *context, unsigned id)
-{
-    /*
-     * Keep track of how many times this cube has been touched
-     */
-
-    CubeID cube = id;
-    bool isTouching = cube.isTouching();
-    static uint32_t numTouches = 0;
-
-    if (isTouching) {
-        numTouches++;
-    }
-
-    /*
-     * Set our current Bluetooth "advertisement" data to a blob of information about
-     * cube touches. In a real game, you'd use this to store any game state that
-     * a mobile app may passively want to know without explicitly requesting it
-     * from the running game.
-     *
-     * This packet can be up to 19 bytes long. We'll use a maximum-length packet
-     * as an example, but this packet can indeed be shorter.
-     */
-
-    struct {
-        uint8_t count;
-        uint8_t touch;
-        uint8_t placeholder[17];
-    } packet = {
-        numTouches,
-        isTouching
-    };
-
-    // Fill placeholder with some sequential bytes
-    for (unsigned i = 0; i < sizeof packet.placeholder; ++i)
-        packet.placeholder[i] = 'A' + i;
-
-    // LOG("Advertising state: %d bytes, %19h\n", sizeof packet, &packet);
-    // Bluetooth::advertiseState(packet);
 }
 
 void onConnect()
@@ -303,9 +237,9 @@ void onWriteAvailable()
 void writePacket()
 {
    /*
-    * This is one way to write packets to the BluetoothPipe; using reserve()
+    * This is one way to write packets to the UsbPipe; using reserve()
     * and commit(). If you already have a buffer that you want to copy to the
-    * BluetoothPipe, you can use write().
+    * UsbPipe, you can use write().
     */
 
     if (Usb::isConnected() && usbPipe.writeAvailable()) {
@@ -322,7 +256,7 @@ void writePacket()
          * Fill most of the packet with dummy data
          */
 
-        // 7-bit type code, for our own application's use
+        // 28-bit type code, for our own application's use
         packet.setType(0x5A);
 
         packet.resize(packet.capacity());
