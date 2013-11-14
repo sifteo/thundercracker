@@ -267,9 +267,11 @@ struct _SYSBluetoothCounters {
 #define _SYS_USB_MAX_QUEUED_PACKETS      80
 
 struct _SYSUsbPacket {
-    uint8_t bytes[_SYS_USB_PACKET_BYTES];
-    uint32_t type;              /// Packet type flag (used by some APIs)
     uint8_t length;             /// Length of in-use portion of bytes[]
+    uint8_t reserved0;
+    uint16_t reserved1;
+    uint32_t type;              /// Packet type flag (used by some APIs)
+    uint8_t bytes[_SYS_USB_PACKET_BYTES];
 };
 
 struct _SYSUsbQueue {
