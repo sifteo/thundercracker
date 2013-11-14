@@ -16,7 +16,7 @@ Metadata M = Metadata()
  * When you allocate a UsbPipe you can optionally set the size of its transmit and receive queues.
  * We use a minimum-size transmit queue to keep latency low, since we're transmitting continuously.
  */
-UsbPipe <1,8> usbPipe;
+UsbPipe <1,4> usbPipe;
 
 // USB packet counters, available for debugging
 UsbCounters usbCounters;
@@ -26,8 +26,13 @@ VideoBuffer vid;
 void onCubeTouch(void *, unsigned);
 void onConnect();
 void onDisconnect();
+
+void readPacket();
 void onReadAvailable();
+
+void writePacket();
 void onWriteAvailable();
+
 void updatePacketCounts(int tx, int rx);
 
 
@@ -114,6 +119,8 @@ void main()
     while (1) {
 
         for (unsigned n = 0; n < 60; n++) {
+            readPacket();
+            writePacket();
             System::paint();
         }
 
@@ -232,18 +239,30 @@ void packetHexDumpLine(const UsbPacket &packet, String<17> &str, unsigned index)
 void onReadAvailable()
 {
     LOG("onReadAvailable() called\n");
+}
 
+void readPacket()
+{
     /*
      * This is one way to read packets from the BluetoothPipe; using read(),
      * and copying them into our own buffer. A faster but slightly more complex
      * method would use peek() to access the next packet, and pop() to remove it.
+     *
+     * We only attempt to read n packets to avoid the edge case in which packets
+     * are arriving often enough to keep us in this loop indefinitely. Not likely
+     * a concern for real applications, but keeps things flowing smoothly for
+     * this example.
      */
 
     UsbPacket packet;
-    while (usbPipe.read(packet)) {
+    unsigned n = usbPipe.receiveQueue.capacity();
+
+    while (n && usbPipe.read(packet)) {
+
+        n--;
 
         /*
-         * We received a packet over the Bluetooth link!
+         * We received a packet over USB!
          * Dump out its contents in hexadecimal, to the log and the display.
          */
 
@@ -274,12 +293,22 @@ void onWriteAvailable()
     LOG("onWriteAvailable() called\n");
 
     /*
-     * This is one way to write packets to the BluetoothPipe; using reserve()
-     * and commit(). If you already have a buffer that you want to copy to the
-     * BluetoothPipe, you can use write().
+     * We could potentially write here, though in high throughput scenarios,
+     * it's possible for the system to enqueue the writeAvailable event while we're
+     * still in this handler, meaning we wouldn't yield back to the main
+     * execution context.
      */
+}
 
-    while (Usb::isConnected() && usbPipe.writeAvailable()) {
+void writePacket()
+{
+   /*
+    * This is one way to write packets to the BluetoothPipe; using reserve()
+    * and commit(). If you already have a buffer that you want to copy to the
+    * BluetoothPipe, you can use write().
+    */
+
+    if (Usb::isConnected() && usbPipe.writeAvailable()) {
 
         /*
          * Access some buffer space for writing the next packet. This
