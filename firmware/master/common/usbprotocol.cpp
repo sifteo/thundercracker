@@ -49,7 +49,7 @@ void USBProtocol::onReceiveData(const USBProtocolMsg &m)
      */
 
     UsbQueue &queue = USBProtocol::instance.userReceiveQueue;
-    if (queue.hasQueue() && queue.writeAvailable()) {
+    if (queue.hasQueue() && !queue.full()) {
 
         _SYSUsbPacket *dest = queue.reserve();
         dest->length = payloadLen;

@@ -48,13 +48,6 @@ public:
         return true;
     }
 
-    unsigned count() const {
-        ASSERT(hasQueue());
-        unsigned size = last + 1;
-        return (queue->header.tail - queue->header.head) % size;
-    }
-
-
     // Zero-copy read
     P *peek() {
         unsigned size = last + 1;
@@ -92,12 +85,13 @@ public:
         return queue != 0;
     }
 
-    ALWAYS_INLINE unsigned readAvailable() const {
-        return count();
+    ALWAYS_INLINE bool full() const {
+        unsigned size = last + 1;
+        return (queue->header.tail + 1) % size == queue->header.head;
     }
 
-    ALWAYS_INLINE unsigned writeAvailable() const {
-        return last - count();
+    ALWAYS_INLINE bool empty() const {
+        return queue->header.tail == queue->header.head;
     }
 
 private:
