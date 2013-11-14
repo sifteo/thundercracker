@@ -149,6 +149,10 @@ struct UsbQueue {
     operator _SYSUsbQueue* () { return reinterpret_cast<_SYSUsbQueue*>(&sys); }
     operator const _SYSUsbQueue* () const { return reinterpret_cast<const _SYSUsbQueue*>(&sys); }
 
+    unsigned capacity() const {
+        return tCapacity;
+    }
+
     /// Initializes this queue's header, and marks it as empty.
     void clear()
     {
@@ -165,36 +169,15 @@ struct UsbQueue {
         ASSERT(sys.header.last == lastIndex);
     }
 
-    /**
-     * @brief How many packets are sitting in the queue right now?
-     *
-     * Note that the system and your application may be updating the queue
-     * concurrently. This is a single-producer single-consumer lock-free FIFO.
-     * If you're writing to the queue, you can be sure that the number of
-     * packets in the queue won't increase without your knowledge. Likewise,
-     * if you're the one reading from the queue, you can be sure that the number
-     * of packets won't decrease without your knowledge.
-     */
-    unsigned count() const
-    {
+    /// Is the queue full?
+    bool full() const {
         unsigned size = tCapacity + 1;
-        unsigned head = sys.header.head;
-        unsigned tail = sys.header.tail;
-        ASSERT(head < size);
-        ASSERT(tail < size);
-        return (tail - head) % size;
+        return (sys.header.tail + 1) % size == sys.header.head;
     }
 
-    /// How many packets are available to read from this queue right now?
-    unsigned readAvailable() const
-    {
-        return count();
-    }
-
-    /// How many free buffers are available for writing right now?
-    unsigned writeAvailable() const
-    {
-        return tCapacity - count();
+    /// Is the queue empty?
+    bool empty() const {
+        return sys.header.tail == sys.header.head;
     }
 
     /**
@@ -226,7 +209,7 @@ struct UsbQueue {
      */
     const UsbPacket &peek() const
     {
-        ASSERT(readAvailable() > 0);
+        ASSERT(!empty());
         unsigned head = sys.header.head;
         ASSERT(head <= tCapacity);
         return *reinterpret_cast<const UsbPacket *>(&sys.packets[head]);
@@ -240,7 +223,7 @@ struct UsbQueue {
      */
     void pop()
     {
-        ASSERT(readAvailable() > 0);
+        ASSERT(!empty());
         unsigned head = sys.header.head + 1;
         if (head > tCapacity)
             head = 0;
@@ -277,7 +260,7 @@ struct UsbQueue {
      */
     UsbPacket &reserve()
     {
-        ASSERT(writeAvailable() > 0);
+        ASSERT(!full());
         unsigned tail = sys.header.tail;
         ASSERT(tail <= tCapacity);
         return *reinterpret_cast<UsbPacket *>(&sys.packets[tail]);
@@ -291,7 +274,7 @@ struct UsbQueue {
      */
     void commit()
     {
-        ASSERT(writeAvailable() > 0);
+        ASSERT(!full());
         unsigned tail = sys.header.tail + 1;
         if (tail > tCapacity)
             tail = 0;
@@ -395,7 +378,7 @@ struct UsbPipe {
      */
     bool write(const UsbPacket &buffer)
     {
-        if (sendQueue.writeAvailable()) {
+        if (!sendQueue.full()) {
             sendQueue.write(buffer);
             return true;
         }
@@ -410,21 +393,21 @@ struct UsbPipe {
      */
     bool read(UsbPacket &buffer)
     {
-        if (receiveQueue.readAvailable()) {
+        if (!receiveQueue.empty()) {
             receiveQueue.read(buffer);
             return true;
         }
         return false;
     }
 
-    /// How many packets are available to read from this queue right now?
-    unsigned readAvailable() const {
-        return receiveQueue.readAvailable();
+    /// Does this queue have at least one packet to read?
+    bool readAvailable() const {
+        return !receiveQueue.empty();
     }
 
-    /// How many free buffers are available for writing right now?
-    unsigned writeAvailable() const {
-        return sendQueue.writeAvailable();
+    /// Does this queue have room to write at least one packet?
+    bool writeAvailable() const {
+        return !sendQueue.full();
     }
 };
 
