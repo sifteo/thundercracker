@@ -72,10 +72,12 @@ void USBProtocol::requestUserINPacket()
      * Should only be called in task or syscall context.
      */
 
+#ifndef SIFTEO_SIMULATOR
     // ensure someone's likely to be there listening to us
     if (SysTime::ticks() - UsbDevice::lastINActivity() > SysTime::msTicks(250)) {
         return;
     }
+#endif
 
     UsbQueue &queue = USBProtocol::instance.userSendQueue;
     if (queue.hasQueue() && !queue.empty()) {
@@ -95,7 +97,9 @@ void USBProtocol::requestUserINPacket()
 
         // timeout here should leave some headroom for system watchdog,
         // which is currently 3 seconds.
+#ifndef SIFTEO_SIMULATOR
         UsbDevice::write(buf, pkt->length + sizeof pkt->type, 1000);
+#endif
         return Event::setBasePending(Event::PID_BASE_USB_WRITE_AVAILABLE);
     }
 }
