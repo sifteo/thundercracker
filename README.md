@@ -38,11 +38,13 @@ We can't provide any official support for this code, but I still care and I'll t
 Getting Started
 ---------------
 
-If you aren't already familiar with the public documentation for the Sifteo SDK, best to check that out first. It lives in the 'docs' directory.
+If you aren't already familiar with the public documentation for the Sifteo SDK, best to check that out first. The Doxygen sources live in the `docs` directory, or you can view it online:
 
-Most of the tools necessary to build the SDK are included in this repository, in the "deps" directory. There are some exceptions, like Doxygen. On Mac OS, you can install this with "[brew](http://brew.sh/) install doxygen".
+* [Sifteo SDK documentation](https://sifteo.github.io/thundercracker/sdk-docs)
 
-In the top-level Thundercracker directory, type "make". This will build the firmware, compiler, asset preparation tools, documentation, and unit tests. Most of the results will be in the "sdk" directory.
+Most of the tools necessary to build the SDK are included in this repository, in the `deps` directory. There are some exceptions, like Doxygen. On Mac OS, you can install this with `[brew](http://brew.sh/) install doxygen`.
+
+In the top-level Thundercracker directory, type `make`. This will build the firmware, compiler, asset preparation tools, documentation, and unit tests. Most of the results will be in the `sdk` directory.
 
 
 Parts
