@@ -90,7 +90,8 @@ Optional dependencies:
 
 1. OpenOCD, for installing and debugging master firmware
 2. The Python Imaging Library, used by other code generation tools
-3. Linux only:
+
+Linux only:
 
 - The UUID Library for the generation of Universally Unique Identifiers
 - Libusb allows accessing to USB devices on most operating systems
@@ -103,9 +104,9 @@ On most debian-like distros, you still need the arm toolchain (see below)
 but the following command should install all of the useful deps (if you
 already have one it will be skipped)::
 
-  sudo apt-get install -y g++ doxygen upx-ucl python-imaging openocd \
-                          uuid-dev libusb-1.0-0-dev mesa-common-dev \
-                          libglu1-mesa-dev libasound2-dev ia32-libs
+    sudo apt-get install -y g++ doxygen upx-ucl python-imaging openocd \
+                 uuid-dev libusb-1.0-0-dev mesa-common-dev \
+                 libglu1-mesa-dev libasound2-dev ia32-libs
 
 ARM toolchain
 -------------
