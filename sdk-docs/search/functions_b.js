@@ -1,0 +1,28 @@
+var searchData=
+[
+  ['mappedvolume',['MappedVolume',['../class_sifteo_1_1_mapped_volume.html#add9790f82b30c3f4226589d3d47fae54',1,'Sifteo::MappedVolume::MappedVolume()'],['../class_sifteo_1_1_mapped_volume.html#a30d71f4ac5f9e4e5cb7e3a7fb465ccbc',1,'Sifteo::MappedVolume::MappedVolume(Volume vol)']]],
+  ['mark',['mark',['../class_sifteo_1_1_bit_array.html#a6dbd2c0559e821615155f3e7f9881e36',1,'Sifteo::BitArray::mark(unsigned index)'],['../class_sifteo_1_1_bit_array.html#afee073b09426b010401a0186ba00939f',1,'Sifteo::BitArray::mark()']]],
+  ['mask',['mask',['../class_sifteo_1_1_cube_set.html#ad2aa667b04704accb887d5895fb8a505',1,'Sifteo::CubeSet']]],
+  ['maskedimage',['maskedImage',['../struct_sifteo_1_1_b_g1_drawable.html#a932f2739ebaeae983f25679ed648faf2',1,'Sifteo::BG1Drawable::maskedImage(const AssetImage &amp;image, const PinnedAssetImage &amp;key, unsigned frame=0)'],['../struct_sifteo_1_1_b_g1_drawable.html#aaf1c0b29248dcf2ffbab62a14640ad2b',1,'Sifteo::BG1Drawable::maskedImage(UInt2 size, const AssetImage &amp;image, const PinnedAssetImage &amp;key, UInt2 srcXY, unsigned frame=0)']]],
+  ['maximum',['maximum',['../class_sifteo_1_1_motion_median.html#aeed3435a8cfe983475e5108073d2f1e8',1,'Sifteo::MotionMedian']]],
+  ['median',['median',['../class_sifteo_1_1_motion_median.html#ad3ea8f8cef6a95dbefedae89de20dd4b',1,'Sifteo::MotionMedian']]],
+  ['memcmp',['memcmp',['../group__memory.html#gaf0e6dd04c49ce8b089eb67b5e3497406',1,'Sifteo']]],
+  ['memcmp8',['memcmp8',['../group__memory.html#gaebe9db484758c2638b6cda53c5eadf46',1,'Sifteo']]],
+  ['memcpy',['memcpy',['../group__memory.html#ga81b5bc3aea892b0062149ef79b49804b',1,'Sifteo::memcpy(uint8_t *dest, const uint8_t *src, unsigned count)'],['../group__memory.html#ga6db109f78eb84f7d2a5a945d3057cd73',1,'Sifteo::memcpy(uint16_t *dest, const uint16_t *src, unsigned count)'],['../group__memory.html#gae3bb180ccf5530069af0c7c42c0ab50c',1,'Sifteo::memcpy(uint32_t *dest, const uint32_t *src, unsigned count)']]],
+  ['memcpy16',['memcpy16',['../group__memory.html#ga48b6d9063e4dfb57820cee19c8baa6cb',1,'Sifteo']]],
+  ['memcpy32',['memcpy32',['../group__memory.html#ga68b47332aa14a3d4b904dc7df137a85a',1,'Sifteo']]],
+  ['memcpy8',['memcpy8',['../group__memory.html#ga72d1fde88e4991e4c0c40f205da43b75',1,'Sifteo']]],
+  ['memset',['memset',['../group__memory.html#ga966e943cfa47e31ee6a0c6ff72d9984d',1,'Sifteo::memset(uint8_t *dest, uint8_t value, unsigned count)'],['../group__memory.html#gaaa84f4130fb117d2b7ec1dcc8e9bb702',1,'Sifteo::memset(uint16_t *dest, uint16_t value, unsigned count)'],['../group__memory.html#ga3dfb773e496f794f74c15db49c6256c3',1,'Sifteo::memset(uint32_t *dest, uint32_t value, unsigned count)']]],
+  ['memset16',['memset16',['../group__memory.html#gabf33fba18a28e7590c7d475a39b7e09e',1,'Sifteo']]],
+  ['memset32',['memset32',['../group__memory.html#gaaf02b169fa58e92f32128f94887dcfbd',1,'Sifteo']]],
+  ['memset8',['memset8',['../group__memory.html#ga5fd69ce3663f4ac90701bb6b57875cf5',1,'Sifteo']]],
+  ['menu',['Menu',['../group__menu.html#ga270d8dbd22b3ba2837d24d8e94d14ae6',1,'Sifteo::Menu']]],
+  ['metadata',['metadata',['../class_sifteo_1_1_mapped_volume.html#aa996a30a54f8ad245c0299c00a1e2152',1,'Sifteo::MappedVolume::metadata(unsigned key, unsigned minSize, unsigned *actualSize) const '],['../class_sifteo_1_1_mapped_volume.html#af5cd63cd63e7887ccb64457010ff5445',1,'Sifteo::MappedVolume::metadata(unsigned key, unsigned *actualSize=NULL) const '],['../class_sifteo_1_1_metadata.html#a18403c3a5d80caec284b014aa2f3f759',1,'Sifteo::Metadata::Metadata()']]],
+  ['milliseconds',['milliseconds',['../class_sifteo_1_1_time_delta.html#a95f392559b8375a0c60c75febcc92ecc',1,'Sifteo::TimeDelta']]],
+  ['minimum',['minimum',['../class_sifteo_1_1_motion_median.html#a7e3a6787c29077057cc9a69988fcb33c',1,'Sifteo::MotionMedian']]],
+  ['minimumosversion',['minimumOSVersion',['../class_sifteo_1_1_metadata.html#a52584d228e576ae1e17ed9aeb7afab90',1,'Sifteo::Metadata']]],
+  ['mode',['mode',['../struct_sifteo_1_1_video_buffer.html#a55592ef6b768dae50b4dbc8a64994ac5',1,'Sifteo::VideoBuffer']]],
+  ['motioniterator',['MotionIterator',['../class_sifteo_1_1_motion_iterator.html#a882725558803ac1a867884b3caf5ac04',1,'Sifteo::MotionIterator']]],
+  ['motionmedian',['MotionMedian',['../class_sifteo_1_1_motion_median.html#acdb84a9e5df6db28508ee99d4bd2b9b8',1,'Sifteo::MotionMedian::MotionMedian()'],['../class_sifteo_1_1_motion_median.html#a26f7653215a65546bf50d185a4899939',1,'Sifteo::MotionMedian::MotionMedian(_SYSMotionBuffer *mbuf, unsigned duration)']]],
+  ['move',['move',['../struct_sifteo_1_1_sprite_ref.html#ac3c4d07b15caa0eecb715555b106709f',1,'Sifteo::SpriteRef::move(int x, int y) const '],['../struct_sifteo_1_1_sprite_ref.html#a183e9aeb023742bee82a5fba49976232',1,'Sifteo::SpriteRef::move(Int2 pos) const '],['../struct_sifteo_1_1_sprite_ref.html#ad60e4fe649800c49e56b562f3490bee9',1,'Sifteo::SpriteRef::move(Float2 pos) const ']]]
+];
