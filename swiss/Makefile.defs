@@ -21,4 +21,4 @@ ifeq ($(BUILD_PLATFORM), Linux)
     FLAGS += -DSWISS_LINUX
 endif
 
-WARNFLAGS += -Wall -Werror -Wno-unused
+WARNFLAGS += -Wall -Wno-unused
