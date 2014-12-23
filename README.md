@@ -48,50 +48,17 @@ In the top-level Thundercracker directory, type "make". This will build the firm
 Parts
 -----
 
-deps
-  Outside dependencies, included for convenience.
-
-docs
-  Build files for the SDK documentation, as well as other miscellaneous
-  platform documentation.
-
-emulator
-  The Thundercracker hardware emulator. Includes an accurate
-  hardware simulation of the cubes, and the necessary glue to
-  execute "sim" builds of master firmware in lockstep with this
-  hardware simulation. Also includes a unit testing framework.
-
-extras
-  Various userspace programs which are neither full games nor included in
-  the SDK as "example" code. This directory can be used for internal tools
-  and toys which aren't quite up to our standards for inclusion in the SDK.
-
-firmware
-  Firmware source for cubes and master.
-
-launcher
-  Source for the "launcher" app, the shell which contains the game selector
-  menu and other non-game functionality that's packaged with the system.
-  This is compiled with the SDK as an ELF binary.
-
-sdk
-  Development kit for game software, running on the master.
-  This directory is intended to contain only redistributable components.
-  During build, pre-packaged binaries, built binaries, and built docs
-  are copied here.
-
-stir
-  Our asset preparation tool, the Sifteo Tiled Image Reducer.
-
-test
-  Unit tests for firmware, SDK, and simulator.
-
-tools
-  Internal tools for SDK packaging, factory tests, etc.
-
-vm
-  Tools and documentation for the virtual machine sandbox that games execute
-  in. Includes "slinky", the Sifteo linker and code generator for LLVM.
+* `deps` – Outside dependencies, included for convenience.
+* `docs` – Build files for the SDK documentation, as well as other miscellaneous platform documentation.
+* `emulator` – The Thundercracker hardware emulator. Includes an accurate hardware simulation of the cubes, and the necessary glue to execute "sim" builds of master firmware in lockstep with this hardware simulation. Also includes a unit testing framework.
+* `extras` – Various userspace programs which are neither full games nor included in the SDK as "example" code. This directory can be used for internal tools and toys which aren't quite up to our standards for inclusion in the SDK.
+* `firmware` – Firmware source for cubes and master.
+* `launcher` – Source for the "launcher" app, the shell which contains the game selector menu and other non-game functionality that's packaged with the system. This is compiled with the SDK as an ELF binary.
+* `sdk` – Development kit for game software, running on the master. This directory is intended to contain only redistributable components. During build, pre-packaged binaries, built binaries, and built docs are copied here.
+* `stir` – Our asset preparation tool, the Sifteo Tiled Image Reducer.
+* `test` – Unit tests for firmware, SDK, and simulator.
+* `tools` – Internal tools for SDK packaging, factory tests, etc.
+* `vm` – Tools and documentation for the virtual machine sandbox that games execute in. Includes "slinky", the Sifteo linker and code generator for LLVM.
 
 
 Operating System
