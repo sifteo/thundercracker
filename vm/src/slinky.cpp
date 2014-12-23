@@ -3,7 +3,7 @@
  * This file is part of the Sifteo VM (SVM) Target for LLVM.
  * It is based on the LLVM "llc", "opt", and "llvm-link" tools.
  *
- * M. Elizabeth Scott <beth@sifteo.com>
+ * Micah Elizabeth Scott <micah@misc.name>
  * Copyright <c> 2012 Sifteo, Inc.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy

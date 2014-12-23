@@ -5,7 +5,7 @@
 # Reads "abi.h" from stdin, produces a function pointer table on stdout,
 # for use in the SVM runtime implementation.
 #
-# M. Elizabeth Scott <beth@sifteo.com>
+# Micah Elizabeth Scott <micah@misc.name>
 # Copyright <c> 2012 Sifteo, Inc. All rights reserved.
 #
 

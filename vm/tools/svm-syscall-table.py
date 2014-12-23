@@ -7,7 +7,7 @@
 # the SVM target to generate calls to runtime functions that the compiler
 # uses internally, such as our software floating point library.
 #
-# M. Elizabeth Scott <beth@sifteo.com>
+# Micah Elizabeth Scott <micah@misc.name>
 # Copyright <c> 2012 Sifteo, Inc.
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy

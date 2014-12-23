@@ -5,7 +5,7 @@
 # resources, and including them in the binary like this makes it easy to
 # keep the simulator self-contained.
 #
-# M. Elizabeth Scott <beth@sifteo.com>
+# Micah Elizabeth Scott <micah@misc.name>
 # 
 # Copyright (c) 2011 Sifteo, Inc.
 #

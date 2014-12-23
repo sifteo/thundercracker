@@ -6,7 +6,7 @@
 # report on where your program bytes are going and any potential
 # validation problems.
 #
-# M. Elizabeth Scott <beth@sifteo.com>
+# Micah Elizabeth Scott <micah@misc.name>
 # 
 # Copyright (c) 2011-2012 Sifteo, Inc.
 #

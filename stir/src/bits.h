@@ -1,7 +1,7 @@
 /* -*- mode: C; c-basic-offset: 4; intent-tabs-mode: nil -*-
  *
  * STIR -- Sifteo Tiled Image Reducer
- * M. Elizabeth Scott <beth@sifteo.com>
+ * Micah Elizabeth Scott <micah@misc.name>
  *
  * Copyright <c> 2012 Sifteo, Inc.
  *

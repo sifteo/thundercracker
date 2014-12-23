@@ -1,7 +1,7 @@
 --[[
     Utilities for the Lua scripting environment in Siftulator.
 
-    M. Elizabeth Scott <beth@sifteo.com> 
+    Micah Elizabeth Scott <micah@misc.name> 
     Copyright <c> 2012 Sifteo, Inc.
    
     Permission is hereby granted, free of charge, to any person obtaining a copy

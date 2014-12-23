@@ -11,7 +11,7 @@
 # Since we need some hints about basic blocks and data vs. code, we
 # take the SDCC ".rst" files as input, rather than the raw hex file.
 #
-# M. Elizabeth Scott <beth@sifteo.com>
+# Micah Elizabeth Scott <micah@misc.name>
 # 
 # Copyright (c) 2011 Sifteo, Inc.
 #

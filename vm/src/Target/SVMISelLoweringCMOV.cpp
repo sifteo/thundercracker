@@ -2,7 +2,7 @@
  *
  * Sifteo VM (SVM) Target for LLVM
  *
- * M. Elizabeth Scott <beth@sifteo.com>
+ * Micah Elizabeth Scott <micah@misc.name>
  * Copyright <c> 2012 Sifteo, Inc.
  *
  * This file was largely based on the Mips target from LLVM 3.0,

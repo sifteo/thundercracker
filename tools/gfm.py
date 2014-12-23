@@ -10,7 +10,7 @@
 #   http://www.samiam.org/galois.html
 #   http://opencores.org/websvn,filedetails?repname=fast-crc&path=%2Ffast-crc%2Fweb_uploads%2FCRC_ie3_contest.pdf
 #
-# M. Elizabeth Scott <beth@sifteo.com>
+# Micah Elizabeth Scott <micah@misc.name>
 #
 
 import random

@@ -19,7 +19,7 @@ usage: renumber-syscalls.py /path/to/abi.h calls.txt
 
   - A new version of abi.h, with different numbering, is written to stdout.
 
-M. Elizabeth Scott <beth@sifteo.com>
+Micah Elizabeth Scott <micah@misc.name>
 
  Copyright <c> 2012 Sifteo, Inc.
 

@@ -11,7 +11,7 @@
 #    - Padding to next 16-byte boundary
 #    - For each triangle: Three uint16_t indices
 #
-# M. Elizabeth Scott <beth@sifteo.com>
+# Micah Elizabeth Scott <micah@misc.name>
 # 
 # Copyright (c) 2012 Sifteo, Inc.
 #

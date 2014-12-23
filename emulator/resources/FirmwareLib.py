@@ -2,7 +2,7 @@
 #
 # Library module used by our scripts that operate on firmware images.
 #
-# M. Elizabeth Scott <beth@sifteo.com>
+# Micah Elizabeth Scott <micah@misc.name>
 # 
 # Copyright (c) 2011 Sifteo, Inc.
 #

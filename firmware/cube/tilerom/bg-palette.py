@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 #
 # Generates an image with all legal 8-bit background colors
-# M. Elizabeth Scott <beth@sifteo.com>
+# Micah Elizabeth Scott <micah@misc.name>
 # 
 # Copyright (c) 2011 Sifteo, Inc.
 #

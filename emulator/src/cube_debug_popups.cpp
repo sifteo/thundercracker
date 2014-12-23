@@ -399,7 +399,7 @@ void emu_help(CPU::em8051 *aCPU)
     wrefresh(exc);
 
     wmove(exc, 2, 2);
-    waddstr(exc, "Sifteo Thundercracker simulator - M. Elizabeth Scott <beth@sifteo.com>");
+    waddstr(exc, "Sifteo Thundercracker simulator - Micah Elizabeth Scott <micah@misc.name>");
     wmove(exc, 3, 2);
     waddstr(exc, APP_COPYRIGHT_ASCII);
 

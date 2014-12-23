@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 #
 # Generator script for ROM tileset.
-# M. Elizabeth Scott <beth@sifteo.com>
+# Micah Elizabeth Scott <micah@misc.name>
 # 
 # Copyright (c) 2011 Sifteo, Inc.
 #

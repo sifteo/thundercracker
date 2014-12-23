@@ -2,7 +2,7 @@
  *
  * Thundercracker cube firmware
  *
- * M. Elizabeth Scott <beth@sifteo.com>
+ * Micah Elizabeth Scott <micah@misc.name>
  * Copyright <c> 2011 Sifteo, Inc. All rights reserved.
  */
 

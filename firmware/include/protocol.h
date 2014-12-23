@@ -2,7 +2,7 @@
  *
  * Thundercracker common protocol definitions
  *
- * M. Elizabeth Scott <beth@sifteo.com>
+ * Micah Elizabeth Scott <micah@misc.name>
  * Copyright <c> 2011 Sifteo, Inc.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy

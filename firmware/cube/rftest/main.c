@@ -2,7 +2,7 @@
  *
  * Thundercracker cube firmware -- RF Test
  *
- * M. Elizabeth Scott <beth@sifteo.com>
+ * Micah Elizabeth Scott <micah@misc.name>
  *
  * Copyright <c> 2012 Sifteo, Inc.
  *

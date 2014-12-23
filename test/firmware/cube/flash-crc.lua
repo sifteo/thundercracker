@@ -1,7 +1,7 @@
 --[[
     Reference implementation of flash CRC algorithm.
 
-    M. Elizabeth Scott <beth@sifteo.com> 
+    Micah Elizabeth Scott <micah@misc.name> 
 
     Copyright <c> 2011 Sifteo, Inc.
    

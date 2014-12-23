@@ -3,7 +3,7 @@
 # Generator script for proof_html.cpp
 #
 # STIR -- Sifteo Tiled Image Reducer
-# M. Elizabeth Scott <beth@sifteo.com>
+# Micah Elizabeth Scott <micah@misc.name>
 #
 # Copyright <c> 2011 Sifteo, Inc.
 #
@@ -373,7 +373,7 @@ cppTemplate = """
 /* -*- mode: C; c-basic-offset: 4; intent-tabs-mode: nil -*-
  *
  * STIR -- Sifteo Tiled Image Reducer
- * M. Elizabeth Scott <beth@sifteo.com>
+ * Micah Elizabeth Scott <micah@misc.name>
  *
  * Copyright <c> 2011 Sifteo, Inc.
  *
