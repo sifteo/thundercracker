@@ -1,8 +1,0 @@
-Build-time configuration for Clang and LLVM in deps:
-
---enable-targets=arm --target=arm --enable-optimized --enable-static --disable-jit --disable-docs --disable-threads --disable-pthreads --disable-pic --disable-libffi
-
-XXX: on Windows, append LDFLAGS=-static to the configure line to avoid a very slow clang: http://lists.cs.uiuc.edu/pipermail/cfe-dev/2012-April/020558.html
-
-XXX: On the Linux build, this failed while trying to link libclang.so (due to lack of -fPIC) but that's okay... we didn't ask for nor need a shared lib.
-

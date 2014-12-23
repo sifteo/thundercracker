@@ -1,7 +1,0 @@
-*~
-*.o
-*.elf
-*.gen.h
-*.gen.cpp
-*.s
-assets.html

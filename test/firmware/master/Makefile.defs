@@ -1,7 +1,0 @@
-
-include $(TC_DIR)/emulator/Makefile.defs
-
-CFLAGS := $(FLAGS) $(WARNFLAGS) $(INCLUDES)
-CCFLAGS := $(FLAGS) $(WARNFLAGS) $(INCLUDES)
-MFLAGS := $(FLAGS) $(INCLUDES)
-LDFLAGS := $(FLAGS) $(LIBS)

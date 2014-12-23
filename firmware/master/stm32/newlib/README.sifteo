@@ -1,4 +1,0 @@
-This is a slightly modified fork of Newlib 1.20.0,
-so we can fix a few target-specific inefficiencies
-and nitpicks.
-
