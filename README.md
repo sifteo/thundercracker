@@ -40,7 +40,7 @@ Getting Started
 
 If you aren't already familiar with the public documentation for the Sifteo SDK, best to check that out first. The Doxygen sources live in the `docs` directory, or you can view it online:
 
-* [Sifteo SDK documentation](https://sifteo.github.io/thundercracker/sdk-docs)
+* [Sifteo SDK documentation](https://sifteo.github.io/thundercracker)
 
 Most of the tools necessary to build the SDK are included in this repository, in the `deps` directory. There are some exceptions, like Doxygen. On Mac OS, you can install this with "[brew](http://brew.sh/) install doxygen".
 
