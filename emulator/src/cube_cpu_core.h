@@ -3,9 +3,7 @@
 /* 8051 emulator core
  *
  * Copyright (c) 2006 Jari Komppa
- * Copyright <c> 2011 Sifteo, Inc. All rights reserved.
- *
- * License for this file only:
+ * Copyright <c> 2011 Sifteo, Inc.
  *
  * Permission is hereby granted, free of charge, to any person obtaining 
  * a copy of this software and associated documentation files (the 
@@ -25,8 +23,6 @@
  * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING 
  * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS 
  * IN THE SOFTWARE. 
- *
- * (i.e. the MIT License)
  */
 
 #ifndef _CUBE_CPU_CORE_H

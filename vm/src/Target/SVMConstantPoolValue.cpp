@@ -1,10 +1,9 @@
-/*
- * This file is part of the Sifteo VM (SVM) Target for LLVM
+/* -*- mode: C; c-basic-offset: 4; intent-tabs-mode: nil -*-
+ *
+ * Sifteo VM (SVM) Target for LLVM
  *
  * M. Elizabeth Scott <beth@sifteo.com>
- * Copyright <c> 2012 Sifteo, Inc. All rights reserved.
- *
- * ------------------------------------------------------------------------
+ * Copyright <c> 2012 Sifteo, Inc.
  *
  * This file was largely based on the ARMConstantPoolValue code from LLVM 3.0,
  * distributed under the University of Illinois Open Source License.

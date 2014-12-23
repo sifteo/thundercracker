@@ -1,6 +1,5 @@
 /*
  * Sifteo SDK Example.
- * Copyright <c> 2013 Sifteo, Inc. All rights reserved.
  */
 
 #include <sifteo.h>

@@ -1,6 +1,8 @@
-/*
- * Thundercracker Firmware -- Confidential, not for redistribution.
- * Copyright <c> 2012 Sifteo, Inc. All rights reserved.
+/* -*- mode: C; c-basic-offset: 4; intent-tabs-mode: nil -*-
+ *
+ * Thundercracker firmware
+ *
+ * Copyright <c> 2012 Sifteo, Inc.
  *
  * Adapted from FastLZ, the lightning-fast lossless compression library.
  * This version has been pared down to only Level 1 decompression, and it's
