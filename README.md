@@ -46,6 +46,13 @@ Most of the tools necessary to build the SDK are included in this repository, in
 
 In the top-level Thundercracker directory, type `make`. This will build the firmware, compiler, asset preparation tools, documentation, and unit tests. Most of the results will be in the `sdk` directory.
 
+Otherwise, binaries are available (again, no longer officially support, but hopefully helpful):
+
+* [OS X](https://sifteo.github.io/thundercracker/bin/sifteo-sdk-mac64-v1.1.0-371-gaf55784.zip)
+* [Windows](https://sifteo.github.io/thundercracker/bin/sifteo-sdk-windows-v1.1.0-371-gaf55784.zip)
+* [Linux 64-bit](https://sifteo.github.io/thundercracker/bin/sifteo-sdk-linux64-v1.1.0-348-g790b525.zip)
+* [Linux 32-bit](https://sifteo.github.io/thundercracker/bin/sifteo-sdk-linux32-v1.1.0-348-g790b525.zip)
+
 
 Parts
 -----
