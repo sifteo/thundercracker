@@ -5,10 +5,10 @@
 
 * on boot, verify via CRC that the contents of MCU flash constitute a valid image
 * when requested, or in the event that MCU flash is corrupt, load a new firmware image into the master's MCU flash. this involves:
-** receive encrypted data incrementally over USB
-** decrypt it
-** write it to flash
-** loop to verification and continue
+	* receive encrypted data incrementally over USB
+	* decrypt it
+	* write it to flash
+	* loop to verification and continue
 * branch to application firmware
 
 ## Design Requirements
@@ -21,3 +21,5 @@
 ## Concessions
 
 Our encryption is not robust. However, doing something more complete would be more expensive in terms of resources and effort than we're interested in at the moment. Our main motivation is to deter casual copycats.
+
+As of the open source release, the keys are now public. Anyone can compile firmware that will be loaded by the bootloader, or use the bootloader's key to decrypt official firmware images.
