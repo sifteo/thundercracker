@@ -98,7 +98,7 @@ private:
     // fixed point 16.16 scale factor to apply to this channel, based on its
     // distance from the given center channel
     ALWAYS_INLINE static uint32_t scaleFactor(unsigned center, unsigned bucket) {
-        unsigned distance = abs(center - bucket);
+        unsigned distance = abs((int)(center - bucket));
         return MAX(static_cast<int32_t>(GAIN - distance * K), 0);
     }
 };
